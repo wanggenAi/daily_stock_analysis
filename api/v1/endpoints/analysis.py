@@ -17,14 +17,18 @@
 """
 
 import asyncio
+import errno
 import json
 import logging
+import os
 import re
 import threading
+from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Optional, Union, Dict, Any
 
-from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks
+from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks, Body
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from api.deps import get_config_dep
@@ -71,25 +75,182 @@ logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows fallback
+    fcntl = None
+
 _SUPPORTED_FREE_TEXT_RE = re.compile(r"^[A-Za-z0-9.*\-+\u3400-\u9fff\s]+$")
 _market_review_lock = threading.Lock()
 _market_review_running = False
 
 
-def _run_market_review_background(send_notification: bool) -> None:
-    """Run market review after the API response has been accepted."""
+@dataclass
+class _MarketReviewExecutionLock:
+    handle: Any
+    path: Path
+    uses_flock: bool
+
+
+def _market_review_lock_path(config: Config) -> Path:
+    database_path = getattr(config, "database_path", "./data/stock_analysis.db")
+    return Path(database_path).parent / "market_review.lock"
+
+
+def _write_market_review_lock_metadata(handle: Any) -> None:
+    handle.seek(0)
+    handle.truncate()
+    handle.write(f"pid={os.getpid()}\nstarted_at={datetime.now().isoformat()}\n")
+    handle.flush()
+
+
+def _try_acquire_market_review_lock(
+    config: Config,
+) -> Optional[_MarketReviewExecutionLock]:
+    """Acquire an in-process and cross-process market-review execution lock."""
     global _market_review_running
+    lock_path = _market_review_lock_path(config)
+
+    with _market_review_lock:
+        if _market_review_running:
+            return None
+
+        lock_path.parent.mkdir(parents=True, exist_ok=True)
+
+        if fcntl is not None:
+            handle = open(lock_path, "a+", encoding="utf-8")
+            try:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except (BlockingIOError, OSError) as exc:
+                handle.close()
+                if isinstance(exc, BlockingIOError) or getattr(exc, "errno", None) in (
+                    errno.EACCES,
+                    errno.EAGAIN,
+                ):
+                    return None
+                raise
+            uses_flock = True
+        else:  # pragma: no cover - exercised only on platforms without fcntl
+            try:
+                fd = os.open(str(lock_path), os.O_CREAT | os.O_EXCL | os.O_RDWR)
+            except FileExistsError:
+                return None
+            handle = os.fdopen(fd, "w+", encoding="utf-8")
+            uses_flock = False
+
+        _write_market_review_lock_metadata(handle)
+        _market_review_running = True
+        return _MarketReviewExecutionLock(
+            handle=handle,
+            path=lock_path,
+            uses_flock=uses_flock,
+        )
+
+
+def _release_market_review_lock(
+    lock_token: Optional[_MarketReviewExecutionLock],
+) -> None:
+    global _market_review_running
+    with _market_review_lock:
+        _market_review_running = False
+
+    if lock_token is None:
+        return
+
+    try:
+        if lock_token.uses_flock and fcntl is not None:
+            fcntl.flock(lock_token.handle.fileno(), fcntl.LOCK_UN)
+    finally:
+        lock_token.handle.close()
+        if not lock_token.uses_flock:
+            try:
+                lock_token.path.unlink()
+            except FileNotFoundError:
+                pass
+
+
+def _compute_market_review_override_region(config: Config) -> Optional[str]:
+    if not getattr(config, "trading_day_check_enabled", True):
+        return None
+
+    try:
+        from src.core.trading_calendar import (
+            get_open_markets_today,
+            compute_effective_region,
+        )
+
+        open_markets = get_open_markets_today()
+        return compute_effective_region(
+            getattr(config, "market_review_region", "cn") or "cn",
+            open_markets,
+        )
+    except Exception as exc:
+        logger.warning("大盘复盘交易日过滤失败，按配置继续执行: %s", exc)
+        return None
+
+
+def _build_market_review_runtime(config: Config) -> tuple[Any, Any, Any]:
+    from src.analyzer import GeminiAnalyzer
+    from src.notification import NotificationService
+    from src.search_service import SearchService
+
+    notifier = NotificationService()
+
+    search_service = None
+    has_search_capability = getattr(config, "has_search_capability_enabled", None)
+    if callable(has_search_capability) and has_search_capability():
+        search_service = SearchService(
+            bocha_keys=getattr(config, "bocha_api_keys", None),
+            tavily_keys=getattr(config, "tavily_api_keys", None),
+            anspire_keys=getattr(config, "anspire_api_keys", None),
+            brave_keys=getattr(config, "brave_api_keys", None),
+            serpapi_keys=getattr(config, "serpapi_keys", None),
+            minimax_keys=getattr(config, "minimax_api_keys", None),
+            searxng_base_urls=getattr(config, "searxng_base_urls", None),
+            searxng_public_instances_enabled=getattr(
+                config,
+                "searxng_public_instances_enabled",
+                True,
+            ),
+            news_max_age_days=getattr(config, "news_max_age_days", 3),
+            news_strategy_profile=getattr(config, "news_strategy_profile", "short"),
+        )
+
+    analyzer = None
+    if getattr(config, "gemini_api_key", None) or getattr(config, "openai_api_key", None):
+        analyzer = GeminiAnalyzer(api_key=getattr(config, "gemini_api_key", None))
+        if not analyzer.is_available():
+            logger.warning("AI 分析器初始化后不可用，请检查 API Key 配置")
+            analyzer = None
+    else:
+        logger.warning("未检测到 API Key (Gemini/OpenAI)，将仅使用模板生成报告")
+
+    return notifier, analyzer, search_service
+
+
+def _run_market_review_background(
+    send_notification: bool,
+    override_region: Optional[str] = None,
+    lock_token: Optional[_MarketReviewExecutionLock] = None,
+    config: Optional[Config] = None,
+) -> None:
+    """Run market review after the API response has been accepted."""
     try:
         from src.core.market_review import run_market_review
-        from src.notification import NotificationService
 
-        notifier = NotificationService()
-        run_market_review(notifier, send_notification=send_notification)
+        runtime_config = config or get_config_dep()
+        notifier, analyzer, search_service = _build_market_review_runtime(runtime_config)
+        run_market_review(
+            notifier=notifier,
+            analyzer=analyzer,
+            search_service=search_service,
+            send_notification=send_notification,
+            override_region=override_region,
+        )
     except Exception as exc:
         logger.error("大盘复盘后台任务失败: %s", exc, exc_info=True)
     finally:
-        with _market_review_lock:
-            _market_review_running = False
+        _release_market_review_lock(lock_token)
 
 
 def _invalid_analysis_input_error() -> HTTPException:
@@ -430,23 +591,43 @@ def _handle_sync_analysis(
     description="提交一个后台大盘复盘任务，复用 CLI 的大盘复盘链路并保存报告。",
 )
 def trigger_market_review(
-    request: MarketReviewRequest,
     background_tasks: BackgroundTasks,
+    request: Optional[MarketReviewRequest] = Body(None),
+    config: Config = Depends(get_config_dep),
 ) -> MarketReviewAccepted:
     """Trigger market review from Web/API without blocking the request."""
-    global _market_review_running
-    with _market_review_lock:
-        if _market_review_running:
-            raise HTTPException(
-                status_code=409,
-                detail={
-                    "error": "duplicate_market_review",
-                    "message": "大盘复盘正在执行中，请稍后再试",
-                },
-            )
-        _market_review_running = True
+    request = request or MarketReviewRequest()
 
-    background_tasks.add_task(_run_market_review_background, request.send_notification)
+    override_region = _compute_market_review_override_region(config)
+    if override_region == "":
+        return MarketReviewAccepted(
+            status="accepted",
+            message="今日大盘复盘相关市场均为非交易日，已跳过大盘复盘",
+            send_notification=request.send_notification,
+        )
+
+    lock_token = _try_acquire_market_review_lock(config)
+    if lock_token is None:
+        raise HTTPException(
+            status_code=409,
+            detail={
+                "error": "duplicate_market_review",
+                "message": "大盘复盘正在执行中，请稍后再试",
+            },
+        )
+
+    try:
+        background_tasks.add_task(
+            _run_market_review_background,
+            request.send_notification,
+            override_region,
+            lock_token,
+            config,
+        )
+    except Exception:
+        _release_market_review_lock(lock_token)
+        raise
+
     return MarketReviewAccepted(
         status="accepted",
         message="大盘复盘任务已提交，完成后会保存报告并按配置推送通知",

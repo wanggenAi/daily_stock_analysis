@@ -49,15 +49,32 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         background_tasks = MagicMock()
         request = SimpleNamespace(send_notification=False)
+        config = SimpleNamespace(trading_day_check_enabled=False)
+        lock_token = object()
 
-        with patch.object(analysis_endpoint_module, "_market_review_running", False):
-            response = trigger_market_review(request=request, background_tasks=background_tasks)
+        with patch.object(
+            analysis_endpoint_module,
+            "_try_acquire_market_review_lock",
+            return_value=lock_token,
+        ), patch.object(
+            analysis_endpoint_module,
+            "_compute_market_review_override_region",
+            return_value=None,
+        ):
+            response = trigger_market_review(
+                request=request,
+                background_tasks=background_tasks,
+                config=config,
+            )
 
         self.assertEqual(response.status, "accepted")
         self.assertFalse(response.send_notification)
         background_tasks.add_task.assert_called_once_with(
             analysis_endpoint_module._run_market_review_background,
             False,
+            None,
+            lock_token,
+            config,
         )
 
     def test_trigger_market_review_rejects_duplicate_submission(self) -> None:
@@ -66,13 +83,104 @@ class AnalysisApiContractTestCase(unittest.TestCase):
 
         background_tasks = MagicMock()
         request = SimpleNamespace(send_notification=True)
+        config = SimpleNamespace(trading_day_check_enabled=False)
 
-        with patch.object(analysis_endpoint_module, "_market_review_running", True):
+        with patch.object(
+            analysis_endpoint_module,
+            "_try_acquire_market_review_lock",
+            return_value=None,
+        ), patch.object(
+            analysis_endpoint_module,
+            "_compute_market_review_override_region",
+            return_value=None,
+        ):
             with self.assertRaises(Exception) as ctx:
-                trigger_market_review(request=request, background_tasks=background_tasks)
+                trigger_market_review(
+                    request=request,
+                    background_tasks=background_tasks,
+                    config=config,
+                )
 
         self.assertEqual(getattr(ctx.exception, "status_code", None), 409)
         background_tasks.add_task.assert_not_called()
+
+    def test_trigger_market_review_skips_when_configured_markets_closed(self) -> None:
+        if trigger_market_review is None or analysis_endpoint_module is None:
+            self.skipTest("analysis endpoint helpers unavailable in this environment")
+
+        background_tasks = MagicMock()
+        request = SimpleNamespace(send_notification=True)
+        config = SimpleNamespace(trading_day_check_enabled=True, market_review_region="cn")
+
+        with patch.object(
+            analysis_endpoint_module,
+            "_compute_market_review_override_region",
+            return_value="",
+        ), patch.object(analysis_endpoint_module, "_try_acquire_market_review_lock") as acquire:
+            response = trigger_market_review(
+                request=request,
+                background_tasks=background_tasks,
+                config=config,
+            )
+
+        self.assertEqual(response.status, "accepted")
+        self.assertIn("非交易日", response.message)
+        acquire.assert_not_called()
+        background_tasks.add_task.assert_not_called()
+
+    def test_run_market_review_background_uses_configured_pipeline(self) -> None:
+        if analysis_endpoint_module is None:
+            self.skipTest("analysis endpoint helpers unavailable in this environment")
+
+        config = SimpleNamespace(
+            has_search_capability_enabled=lambda: True,
+            bocha_api_keys=["bocha"],
+            tavily_api_keys=["tavily"],
+            anspire_api_keys=["anspire"],
+            brave_api_keys=["brave"],
+            serpapi_keys=["serpapi"],
+            minimax_api_keys=["minimax"],
+            searxng_base_urls=["http://searxng.local"],
+            searxng_public_instances_enabled=False,
+            news_max_age_days=5,
+            news_strategy_profile="balanced",
+            gemini_api_key="gemini-key",
+            openai_api_key=None,
+        )
+
+        with patch("src.notification.NotificationService") as notifier_cls, \
+             patch("src.search_service.SearchService") as search_cls, \
+             patch("src.analyzer.GeminiAnalyzer") as analyzer_cls, \
+             patch("src.core.market_review.run_market_review") as run_market_review:
+            analyzer_cls.return_value.is_available.return_value = True
+
+            analysis_endpoint_module._run_market_review_background(
+                send_notification=False,
+                override_region="cn,us",
+                lock_token=None,
+                config=config,
+            )
+
+        search_cls.assert_called_once_with(
+            bocha_keys=["bocha"],
+            tavily_keys=["tavily"],
+            anspire_keys=["anspire"],
+            brave_keys=["brave"],
+            serpapi_keys=["serpapi"],
+            minimax_keys=["minimax"],
+            searxng_base_urls=["http://searxng.local"],
+            searxng_public_instances_enabled=False,
+            news_max_age_days=5,
+            news_strategy_profile="balanced",
+        )
+        analyzer_cls.assert_called_once_with(api_key="gemini-key")
+        run_market_review.assert_called_once_with(
+            notifier=notifier_cls.return_value,
+            analyzer=analyzer_cls.return_value,
+            search_service=search_cls.return_value,
+            send_notification=False,
+            override_region="cn,us",
+        )
 
     def test_get_analysis_status_completed_db_snapshot_preserves_zero_change_pct(self) -> None:
         if get_analysis_status is None:
@@ -587,6 +695,34 @@ class AnalysisApiContractTestCase(unittest.TestCase):
                 "#/components/schemas/BatchTaskAcceptedResponse",
             },
         )
+
+    def test_market_review_endpoint_accepts_omitted_body(self) -> None:
+        if create_app is None or analysis_endpoint_module is None:
+            self.skipTest("fastapi is not installed in this test environment")
+
+        config = SimpleNamespace(trading_day_check_enabled=True, market_review_region="cn")
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            app = create_app(static_dir=Path(temp_dir))
+            request_body = app.openapi()["paths"]["/api/v1/analysis/market-review"]["post"][
+                "requestBody"
+            ]
+
+        self.assertNotIn("required", request_body)
+
+        with patch.object(
+            analysis_endpoint_module,
+            "_compute_market_review_override_region",
+            return_value="",
+        ):
+            response = trigger_market_review(
+                request=None,
+                background_tasks=MagicMock(),
+                config=config,
+            )
+
+        self.assertTrue(response.send_notification)
+        self.assertIn("非交易日", response.message)
 
     def test_trigger_analysis_rejects_blank_only_stock_inputs(self) -> None:
         if trigger_analysis is None:
