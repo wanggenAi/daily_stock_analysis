@@ -25,6 +25,7 @@ export interface MarketReviewAccepted {
   status: 'accepted';
   message: string;
   sendNotification: boolean;
+  taskId?: string;
 }
 
 // ============ Report Types ============

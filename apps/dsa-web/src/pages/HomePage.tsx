@@ -1,5 +1,5 @@
 import type React from 'react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getParsedApiError, type ParsedApiError } from '../api/error';
 import { analysisApi } from '../api/analysis';
@@ -25,6 +25,16 @@ const HomePage: React.FC = () => {
   const [isSubmittingMarketReview, setIsSubmittingMarketReview] = useState(false);
   const [marketReviewNotice, setMarketReviewNotice] = useState<MarketReviewNotice>(null);
   const [marketReviewError, setMarketReviewError] = useState<ParsedApiError | null>(null);
+  const marketReviewPollTimer = useRef<number | null>(null);
+
+  const stopMarketReviewPolling = useCallback(() => {
+    if (marketReviewPollTimer.current !== null) {
+      window.clearInterval(marketReviewPollTimer.current);
+      marketReviewPollTimer.current = null;
+    }
+  }, []);
+
+  useEffect(() => stopMarketReviewPolling, [stopMarketReviewPolling]);
 
   const {
     query,
@@ -124,6 +134,103 @@ const HomePage: React.FC = () => {
     });
   }, [selectedReport, submitAnalysis]);
 
+  const pollMarketReviewStatus = useCallback(
+    async (taskId: string) => {
+      stopMarketReviewPolling();
+
+      const maxAttempts = 120;
+      const intervalMs = 2000;
+      let attempts = 0;
+
+      const poll = async (): Promise<boolean> => {
+        if (attempts >= maxAttempts) {
+          stopMarketReviewPolling();
+          setMarketReviewNotice({
+            variant: 'danger',
+            title: '大盘复盘已超时',
+            message: '任务长时间未返回最终结果，请在任务列表/历史中查看。',
+          });
+          return false;
+        }
+
+        attempts += 1;
+
+        try {
+          const status = await analysisApi.getStatus(taskId);
+          if (status.status === 'pending' || status.status === 'processing') {
+            const progress = typeof status.progress === 'number'
+              ? `${status.progress}%`
+              : '进行中';
+            setMarketReviewNotice({
+              variant: 'warning',
+              title: '大盘复盘进行中',
+              message: `任务状态：${status.status}（${progress}）`,
+            });
+            return true;
+          }
+
+          if (status.status === 'completed') {
+            stopMarketReviewPolling();
+            setMarketReviewNotice({
+              variant: 'success',
+              title: '大盘复盘已完成',
+              message: '大盘复盘任务已完成，结果已生成并按配置推送。',
+            });
+            setMarketReviewError(null);
+            return false;
+          }
+
+          if (status.status === 'failed') {
+            stopMarketReviewPolling();
+            setMarketReviewError(
+              getParsedApiError({
+                response: {
+                  status: 500,
+                  data: {
+                    error: 'market_review_failed',
+                    message: status.error || '大盘复盘执行失败。',
+                  },
+                },
+              }),
+            );
+            setMarketReviewNotice(null);
+            return false;
+          }
+
+          stopMarketReviewPolling();
+          setMarketReviewNotice({
+            variant: 'danger',
+            title: '大盘复盘状态异常',
+            message: `收到未知任务状态：${status.status}`,
+          });
+          return false;
+        } catch (err: unknown) {
+          const parsed = getParsedApiError(err);
+          if (attempts >= maxAttempts) {
+            stopMarketReviewPolling();
+            setMarketReviewError(parsed);
+            setMarketReviewNotice(null);
+            return false;
+          }
+          return true;
+        }
+
+        return true;
+      };
+
+      if (await poll()) {
+        marketReviewPollTimer.current = window.setInterval(() => {
+          void poll().then((shouldContinue) => {
+            if (!shouldContinue) {
+              stopMarketReviewPolling();
+            }
+          });
+        }, intervalMs);
+      }
+    },
+    [getParsedApiError, stopMarketReviewPolling],
+  );
+
   const handleTriggerMarketReview = useCallback(async () => {
     setIsSubmittingMarketReview(true);
     setMarketReviewNotice(null);
@@ -135,13 +242,17 @@ const HomePage: React.FC = () => {
         title: '大盘复盘已提交',
         message: result.message,
       });
+
+      if (result.taskId) {
+        await pollMarketReviewStatus(result.taskId);
+      }
     } catch (err: unknown) {
       setMarketReviewError(getParsedApiError(err));
       setMarketReviewNotice(null);
     } finally {
       setIsSubmittingMarketReview(false);
     }
-  }, [notify]);
+  }, [notify, pollMarketReviewStatus]);
 
   const handleDeleteSelectedHistory = useCallback(() => {
     void deleteSelectedHistory();

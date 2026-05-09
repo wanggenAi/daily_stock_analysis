@@ -24,7 +24,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional, Union, Dict, Any
 
-from fastapi import APIRouter, HTTPException, Depends, Query, BackgroundTasks, Body
+from fastapi import APIRouter, HTTPException, Depends, Query, Body
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from api.deps import get_config_dep
@@ -57,6 +57,9 @@ from src.core.market_review_lock import (
     market_review_lock_path,
     release_market_review_lock as _release_market_review_lock,
     try_acquire_market_review_lock as _try_acquire_market_review_lock,
+)
+from src.core.market_review_runtime import (
+    build_market_review_runtime as _runtime_build_market_review_runtime,
 )
 from src.report_language import get_localized_stock_name, normalize_report_language
 from src.services.name_to_code_resolver import resolve_name_to_code
@@ -104,69 +107,8 @@ def _compute_market_review_override_region(config: Config) -> Optional[str]:
         return None
 
 
-def _has_configured_llm_runtime(config: Config) -> bool:
-    if (getattr(config, "litellm_model", "") or "").strip():
-        return True
-    if getattr(config, "llm_model_list", None):
-        return True
-
-    for field in (
-        "gemini_api_key",
-        "gemini_api_keys",
-        "anthropic_api_key",
-        "anthropic_api_keys",
-        "deepseek_api_key",
-        "deepseek_api_keys",
-        "openai_api_key",
-        "openai_api_keys",
-    ):
-        value = getattr(config, field, None)
-        if isinstance(value, str):
-            if value.strip():
-                return True
-        elif value:
-            return True
-
-    return False
-
-
-def _build_market_review_runtime(config: Config) -> tuple[Any, Any, Any]:
-    from src.analyzer import GeminiAnalyzer
-    from src.notification import NotificationService
-    from src.search_service import SearchService
-
-    notifier = NotificationService()
-
-    search_service = None
-    has_search_capability = getattr(config, "has_search_capability_enabled", None)
-    if callable(has_search_capability) and has_search_capability():
-        search_service = SearchService(
-            bocha_keys=getattr(config, "bocha_api_keys", None),
-            tavily_keys=getattr(config, "tavily_api_keys", None),
-            anspire_keys=getattr(config, "anspire_api_keys", None),
-            brave_keys=getattr(config, "brave_api_keys", None),
-            serpapi_keys=getattr(config, "serpapi_keys", None),
-            minimax_keys=getattr(config, "minimax_api_keys", None),
-            searxng_base_urls=getattr(config, "searxng_base_urls", None),
-            searxng_public_instances_enabled=getattr(
-                config,
-                "searxng_public_instances_enabled",
-                True,
-            ),
-            news_max_age_days=getattr(config, "news_max_age_days", 3),
-            news_strategy_profile=getattr(config, "news_strategy_profile", "short"),
-        )
-
-    analyzer = None
-    if _has_configured_llm_runtime(config):
-        analyzer = GeminiAnalyzer(config=config)
-        if not analyzer.is_available():
-            logger.warning("AI 分析器初始化后不可用，请检查 LLM 配置")
-            analyzer = None
-    else:
-        logger.warning("未检测到 LLM 模型配置，将仅使用模板生成报告")
-
-    return notifier, analyzer, search_service
+def _build_market_review_runtime(config: Config, source_message: Optional[Any] = None) -> tuple[Any, Any, Any]:
+    return _runtime_build_market_review_runtime(config, source_message)
 
 
 def _run_market_review_background(
@@ -176,11 +118,11 @@ def _run_market_review_background(
     config: Optional[Config] = None,
 ) -> None:
     """Run market review after the API response has been accepted."""
-    try:
-        from src.core.market_review import run_market_review
+    from src.core.market_review import run_market_review
 
-        runtime_config = config or get_config_dep()
-        notifier, analyzer, search_service = _build_market_review_runtime(runtime_config)
+    runtime_config = config or get_config_dep()
+    notifier, analyzer, search_service = _build_market_review_runtime(runtime_config)
+    try:
         run_market_review(
             notifier=notifier,
             analyzer=analyzer,
@@ -188,8 +130,6 @@ def _run_market_review_background(
             send_notification=send_notification,
             override_region=override_region,
         )
-    except Exception as exc:
-        logger.error("大盘复盘后台任务失败: %s", exc, exc_info=True)
     finally:
         _release_market_review_lock(lock_token)
 
@@ -532,7 +472,6 @@ def _handle_sync_analysis(
     description="提交一个后台大盘复盘任务，复用 CLI 的大盘复盘链路并保存报告。接口内部仅提供进程内/单机防重，如多实例（多 Worker/多容器）部署，需结合外部幂等机制避免重复触发。",
 )
 def trigger_market_review(
-    background_tasks: BackgroundTasks,
     request: Optional[MarketReviewRequest] = Body(None),
     config: Config = Depends(get_config_dep),
 ) -> MarketReviewAccepted:
@@ -558,12 +497,16 @@ def trigger_market_review(
         )
 
     try:
-        background_tasks.add_task(
-            _run_market_review_background,
-            request.send_notification,
-            override_region,
-            lock_token,
-            config,
+        task = get_task_queue().submit_background_task(
+            lambda: _run_market_review_background(
+                request.send_notification,
+                override_region=override_region,
+                lock_token=lock_token,
+                config=config,
+            ),
+            stock_code="market_review",
+            stock_name="大盘复盘",
+            message="大盘复盘任务已提交",
         )
     except Exception:
         _release_market_review_lock(lock_token)
@@ -573,6 +516,7 @@ def trigger_market_review(
         status="accepted",
         message="大盘复盘任务已提交，完成后会保存报告并按配置推送通知",
         send_notification=request.send_notification,
+        task_id=task.task_id,
     )
 
 

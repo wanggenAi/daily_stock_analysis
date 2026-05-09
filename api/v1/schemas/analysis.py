@@ -102,6 +102,10 @@ class MarketReviewAccepted(BaseModel):
     status: str = Field("accepted", description="提交状态")
     message: str = Field(..., description="提示信息")
     send_notification: bool = Field(..., description="是否发送通知")
+    task_id: Optional[str] = Field(
+        None,
+        description="任务 ID（仅当任务实际提交时返回）",
+    )
 
 
 class AnalysisResultResponse(BaseModel):

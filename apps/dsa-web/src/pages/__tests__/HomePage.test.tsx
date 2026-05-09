@@ -34,6 +34,7 @@ vi.mock('../../api/analysis', async () => {
     analysisApi: {
       analyzeAsync: vi.fn(),
       triggerMarketReview: vi.fn(),
+      getStatus: vi.fn(),
     },
   };
 });
@@ -169,6 +170,11 @@ describe('HomePage', () => {
       status: 'accepted',
       sendNotification: true,
       message: '大盘复盘任务已提交',
+      taskId: 'task-1',
+    });
+    vi.mocked(analysisApi.getStatus).mockResolvedValue({
+      taskId: 'task-1',
+      status: 'completed',
     });
 
     render(
@@ -182,7 +188,8 @@ describe('HomePage', () => {
     await waitFor(() => {
       expect(analysisApi.triggerMarketReview).toHaveBeenCalledWith({ sendNotification: true });
     });
-    expect(await screen.findByText('大盘复盘已提交')).toBeInTheDocument();
+    expect(await screen.findByText('大盘复盘已完成')).toBeInTheDocument();
+    expect(analysisApi.getStatus).toHaveBeenCalledWith('task-1');
   });
 
   it('navigates to chat with report context when asking a follow-up question', async () => {

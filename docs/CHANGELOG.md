@@ -28,6 +28,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] 大盘复盘“近三日催化线索”改为明确展示摘要片段、来源日期和 URL，避免把搜索摘要截断内容误呈现为完整事件。
 - [新功能] Web 首页新增“大盘复盘”按钮，通过 `POST /api/v1/analysis/market-review` 后台触发复盘并沿用通知配置。
 - [修复] 明确 `POST /api/v1/analysis/market-review` 的配置复用与锁语义：复用现有 Analyzer/SearchService 装配逻辑，仅提供进程内防重，跨实例多容器场景需外部幂等机制；并同步 `full-guide*` 说明与契约测试断言。
+- [修复] 完善 Web “大盘复盘”按钮的可观测性：返回 `task_id` 后轮询 `task status`，在进行中、完成、失败场景展示明确结果与报错；并补充说明 CLI/Bot 与 API 使用同一套 `build_market_review_runtime` 装配语义，未改动 provider/base URL 兼容边界。
 
 ## [3.15.0] - 2026-05-05
 
