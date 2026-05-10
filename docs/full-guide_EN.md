@@ -858,6 +858,7 @@ You can tune the behavior in `.env`:
 
 Single-stock reports calibrate operation advice with support/resistance, volume/chip context, main-force capital flow, and risk events. This reduces direct buy/sell flips caused only by one-day price movement or score thresholds. When price is between support and resistance and capital flow is unclear, the report prefers neutral actionable wording such as hold, range-bound watch, or shakeout watch. Buy calls require support confirmation or a valid resistance breakout with volume/capital-flow confirmation; sell/reduce calls require support failure, sustained outflow, or clearly elevated risk.
 This post-processing update only adjusts advisory wording and stability logic and does not change the configured LLM model/provider routing semantics (including LiteLLM, providers, or API model settings).
+Compatibility check result: only advisory text post-processing/backtesting policy has changed, runtime model/provider/API configuration semantics and persistence behavior are unchanged; rollback is achieved by restoring the previous decision-to-backtest policy and related strategy settings.
 
 ## Backtesting
 

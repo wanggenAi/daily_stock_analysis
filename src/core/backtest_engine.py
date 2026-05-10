@@ -95,6 +95,19 @@ class BacktestEngine:
         "不要", "不", "别", "勿", "没有",  # Chinese
     )
 
+    _NEGATION_CONNECTOR_WORDS = (
+        "建议",
+        "应",
+        "应当",
+        "宜",
+        "先",
+        "再",
+        "暂",
+        "不必",
+        "必须",
+        "无需",
+    )
+
     @classmethod
     def infer_direction_expected(cls, operation_advice: Optional[str]) -> str:
         """Infer expected direction: up/down/not_down/flat."""
@@ -412,12 +425,12 @@ class BacktestEngine:
                     rf"(?<![a-zA-Z0-9_]){re.escape(keyword)}(?![a-zA-Z0-9_])",
                     text,
                 ):
-                    if not cls._is_negated(text[: match.start()]):
+                    if not cls._is_negated(text[: match.start()], keyword):
                         pos = match.start()
                         if best_pos is None or pos < best_pos:
                             best_pos = pos
                             break
-                continue
+                    continue
 
             # For non-ASCII terms (Chinese), use substring matching to keep
             # natural language phrasings like "建议买入" effective.
@@ -432,7 +445,7 @@ class BacktestEngine:
                     match_idx = text.find(keyword, start)
                     if match_idx < 0:
                         break
-                    if not cls._is_negated(text[:match_idx]):
+                    if not cls._is_negated(text[:match_idx], keyword):
                         if best_pos is None or match_idx < best_pos:
                             best_pos = match_idx
                         break
@@ -442,14 +455,17 @@ class BacktestEngine:
         return best_pos
 
     @classmethod
-    def _is_negated(cls, prefix: str) -> bool:
-        """Check if the prefix text ends with a negation pattern."""
+    def _is_negated(cls, prefix: str, keyword: str) -> bool:
+        """Check if the prefix text indicates negation for a candidate intent."""
         stripped = prefix.rstrip()
+        target = (keyword or "").lower().strip()
+        if not target:
+            return False
+
         if any(stripped.endswith(neg) for neg in cls._NEGATION_PATTERNS):
             return True
 
-        # Also handle cases like "不建议买入" where negation does not
-        # directly touch the keyword itself.
+        # 限定“否定 + 动作动词”匹配，避免将“条件位否定”误伤核心建议意图。
         lookback = stripped[-12:]
         for neg in cls._NEGATION_PATTERNS:
             if not neg:
@@ -458,16 +474,43 @@ class BacktestEngine:
             if neg_idx < 0:
                 continue
 
-            suffix_gap = lookback[neg_idx + len(neg):]
+            suffix_gap = lookback[neg_idx + len(neg):].strip()
             if not suffix_gap:
                 return True
             if any(ch in suffix_gap for ch in "，,。；;:!?！？"):
                 continue
-            if len(suffix_gap) > 6:
+
+            if cls._contains_keyword(suffix_gap, target):
+                return True
+
+            # Keep English short-gap behavior where negation words are followed by
+            # connector words such as "to" (e.g. "not to sell").
+            if not any(ch >= "\u4e00" and ch <= "\u9fff" for ch in suffix_gap):
+                if len(suffix_gap) <= 6:
+                    return True
                 continue
-            return True
+
+            if cls._is_negation_connector_gap(suffix_gap):
+                return True
 
         return False
+
+    @classmethod
+    def _contains_keyword(cls, text: str, keyword: str) -> bool:
+        """Check whether *keyword* exists in text with intent-aware boundaries."""
+        if not text or not keyword:
+            return False
+        if bool(re.search(r"[a-z]", keyword)):
+            return bool(re.search(rf"(?<![a-zA-Z0-9_]){re.escape(keyword)}(?![a-zA-Z0-9_])", text))
+        return keyword in text
+
+    @classmethod
+    def _is_negation_connector_gap(cls, gap: str) -> bool:
+        """Whether a short Chinese negation gap is still a valid negation bridge."""
+        compact = re.sub(r"[\s,，。；;:!?！？]", "", gap).strip()
+        if not compact:
+            return True
+        return compact in cls._NEGATION_CONNECTOR_WORDS
 
     @classmethod
     def _classify_outcome(

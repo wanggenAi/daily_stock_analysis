@@ -321,6 +321,17 @@ class BacktestEngineTestCase(unittest.TestCase):
         # "不要卖出" = "don't sell" — should NOT be direction=down
         self.assertNotEqual(BacktestEngine.infer_direction_expected("不要卖出"), "down")
 
+    def test_conditional_support_phrase_not_negating_hold(self):
+        # "不跌破支撑继续持有" means conditional support hold, not explicit negation of hold.
+        self.assertEqual(
+            BacktestEngine.infer_position_recommendation("不跌破支撑继续持有"),
+            "long",
+        )
+        self.assertEqual(
+            BacktestEngine.infer_direction_expected("不跌破支撑继续持有"),
+            "not_down",
+        )
+
     def test_wait_then_buy_classified_as_cash(self):
         # "wait" matches first in priority order → cash
         pos = BacktestEngine.infer_position_recommendation("wait for a dip then buy")
