@@ -244,6 +244,7 @@ class TestFeishuSender(unittest.TestCase):
     @mock.patch("src.notification_sender.feishu_sender.format_feishu_markdown", return_value="F" * 180)
     @mock.patch("src.notification_sender.feishu_sender.requests.post")
     def test_card_failure_chunks_oversized_fallback_text(self, mock_post, mock_format, _mock_sleep):
+        """Interactive 卡片失败时，回退到文本路径并按配置字节上限分片发送。"""
         mock_post.side_effect = (
             [_response(200, {"code": 19024, "msg": "card failed"})]
             + [_response(200, {"code": 0}) for _ in range(10)]

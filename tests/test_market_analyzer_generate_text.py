@@ -667,6 +667,69 @@ class TestMarketAnalyzerBypassFix:
         assert kwargs["max_tokens"] == 8192
         assert kwargs["temperature"] == 0.7
 
+    def test_generate_market_review_keeps_llm_runtime_fields_without_mutation(self):
+        """generate_market_review() should not mutate legacy/provider/runtime model fields."""
+        from src.market_analyzer import MarketOverview, MarketIndex
+
+        ma = self._make_market_analyzer_with_mock_generate_text(return_value="复盘结果")
+        ma.config.litellm_model = "provider/primary"
+        ma.config.litellm_fallback_models = ["provider/backup"]
+        ma.config.openai_base_url = "https://compatibility.example/v1"
+        ma.config.llm_model_list = [
+            {
+                "model_name": "compat",
+                "litellm_params": {
+                    "model": "openai/gpt-4o-mini",
+                    "api_base": "https://compatibility.example/v1",
+                },
+            }
+        ]
+        ma.config.llm_channels = [
+            {
+                "name": "compat",
+                "protocol": "openai",
+                "api_keys": ["sk-test"],
+                "models": ["openai/gpt-4o-mini"],
+            }
+        ]
+
+        overview = MarketOverview(
+            date="2026-03-05",
+            indices=[
+                MarketIndex(
+                    code="000001",
+                    name="上证指数",
+                    current=3300.0,
+                    change=5.0,
+                    change_pct=0.15,
+                )
+            ],
+        )
+
+        result = ma.generate_market_review(overview, [])
+
+        assert isinstance(result, str) and len(result) > 0
+        assert ma.config.litellm_model == "provider/primary"
+        assert ma.config.litellm_fallback_models == ["provider/backup"]
+        assert ma.config.openai_base_url == "https://compatibility.example/v1"
+        assert ma.config.llm_model_list == [
+            {
+                "model_name": "compat",
+                "litellm_params": {
+                    "model": "openai/gpt-4o-mini",
+                    "api_base": "https://compatibility.example/v1",
+                },
+            }
+        ]
+        assert ma.config.llm_channels == [
+            {
+                "name": "compat",
+                "protocol": "openai",
+                "api_keys": ["sk-test"],
+                "models": ["openai/gpt-4o-mini"],
+            }
+        ]
+
     def test_generate_template_review_uses_english_shell_for_cn_when_report_language_is_en(self):
         from src.market_analyzer import MarketOverview, MarketIndex
 
