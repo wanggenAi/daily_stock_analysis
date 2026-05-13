@@ -89,7 +89,7 @@ class SettingsContentErrorBoundary extends Component<
     hasError: false,
   };
 
-  static getDerivedStateFromError(error: unknown): SettingsContentErrorBoundaryState {
+  static getDerivedStateFromError(): SettingsContentErrorBoundaryState {
     return {
       hasError: true,
     };
