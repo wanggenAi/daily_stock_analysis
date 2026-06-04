@@ -1038,6 +1038,158 @@ class AlphaSiftOpportunitiesApiTestCase(unittest.TestCase):
             getattr(fake_litellm.completion, "_alphasift_litellm_completion_bridge", False),
         )
 
+    def test_screen_bridges_openai_channel_base_url_and_headers(self) -> None:
+        config = Config(
+            alphasift_enabled=True,
+            alphasift_install_spec=DEFAULT_ALPHASIFT_TEST_SPEC,
+            litellm_model="openai/gpt-4o-mini",
+            litellm_fallback_models=["openai/gpt-4.1"],
+            llm_channels=[
+                {
+                    "name": "openai",
+                    "protocol": "openai",
+                    "enabled": True,
+                    "base_url": "https://primary-openai.example/v1",
+                    "api_keys": ["dsa-openai-primary"],
+                    "models": ["openai/gpt-4o-mini", "openai/gpt-4.1"],
+                    "extra_headers": {"x-route": "primary", "x-tenant": "dsa"},
+                }
+            ],
+        )
+        completion_calls: list[Dict[str, object]] = []
+
+        def completion_impl(**kwargs: Any) -> Any:
+            completion_calls.append(kwargs)
+            return SimpleNamespace(choices=[])
+
+        fake_litellm = SimpleNamespace(completion=completion_impl)
+
+        captured: dict[str, object] = {}
+
+        def screen_impl(_strategy: str, **kwargs: Dict[str, Any]) -> dict[str, object]:
+            captured["env"] = {
+                "OPENAI_BASE_URL": alphasift_service.os.environ.get("OPENAI_BASE_URL"),
+                "OPENAI_API_KEY": alphasift_service.os.environ.get("OPENAI_API_KEY"),
+                "OPENAI_API_KEYS": alphasift_service.os.environ.get("OPENAI_API_KEYS"),
+                "LLM_CHANNELS": alphasift_service.os.environ.get("LLM_CHANNELS"),
+                "LLM_OPENAI_BASE_URL": alphasift_service.os.environ.get("LLM_OPENAI_BASE_URL"),
+                "LLM_OPENAI_API_KEYS": alphasift_service.os.environ.get("LLM_OPENAI_API_KEYS"),
+            }
+            captured["context"] = kwargs.get("context")
+            fake_litellm.completion(
+                model="openai/gpt-4o-mini",
+                api_key="dsa-openai-primary",
+                api_base="https://primary-openai.example/v1",
+                messages=[{"role": "user", "content": "primary"}],
+            )
+            fake_litellm.completion(
+                model="openai/gpt-4.1",
+                api_key="dsa-openai-primary",
+                api_base="https://primary-openai.example/v1",
+                messages=[{"role": "user", "content": "fallback"}],
+            )
+            return {"candidates": []}
+
+        fake_module = _make_adapter_module(screen=MagicMock(side_effect=screen_impl))
+
+        with (
+            patch.dict(sys.modules, {"litellm": fake_litellm}, clear=False),
+            patch("src.services.alphasift_service._import_alphasift", return_value=fake_module),
+        ):
+            payload = self._screen(config, market="cn", strategy="dual_low", max_results=5)
+
+        self.assertEqual(payload["candidate_count"], 0)
+        self.assertEqual(len(completion_calls), 2)
+        self.assertEqual(captured["env"]["OPENAI_BASE_URL"], "https://primary-openai.example/v1")
+        self.assertEqual(captured["env"]["OPENAI_API_KEYS"], "dsa-openai-primary")
+        self.assertEqual(captured["env"]["OPENAI_API_KEY"], "dsa-openai-primary")
+        self.assertEqual(captured["env"]["LLM_CHANNELS"], "openai")
+        self.assertEqual(captured["env"]["LLM_OPENAI_BASE_URL"], "https://primary-openai.example/v1")
+        self.assertEqual(captured["env"]["LLM_OPENAI_API_KEYS"], "dsa-openai-primary")
+        self.assertEqual(completion_calls[0]["extra_headers"], {"x-route": "primary", "x-tenant": "dsa"})
+        self.assertEqual(completion_calls[1]["extra_headers"], {"x-route": "primary", "x-tenant": "dsa"})
+        context = captured["context"]
+        self.assertIsInstance(context, dict)
+        self.assertEqual(context["llm"]["channels"][0]["base_url"], "https://primary-openai.example/v1")
+        self.assertEqual(context["llm"]["channels"][0]["extra_headers"], {"x-route": "primary", "x-tenant": "dsa"})
+        self.assertEqual(context["llm"]["model_list"][0]["litellm_params"]["api_base"], "https://primary-openai.example/v1")
+        self.assertEqual(context["llm"]["fallback_models"], ["openai/gpt-4.1"])
+        self.assertEqual(payload["candidate_count"], 0)
+
+    def test_screen_injects_openai_compatible_fallback_headers_for_multiple_models(self) -> None:
+        config = Config(
+            alphasift_enabled=True,
+            alphasift_install_spec=DEFAULT_ALPHASIFT_TEST_SPEC,
+            litellm_model="openai/gpt-4o-mini",
+            litellm_fallback_models=["openai/gpt-4.1"],
+            llm_model_list=[
+                {
+                    "model_name": "openai/gpt-4o-mini",
+                    "litellm_params": {
+                        "model": "openai/gpt-4o-mini",
+                        "api_key": "dsa-openai-primary",
+                        "api_base": "https://primary.openai.example/v1",
+                        "extra_headers": {"x-route": "primary", "x-tenant": "dsa"},
+                    },
+                },
+                {
+                    "model_name": "openai/gpt-4.1",
+                    "litellm_params": {
+                        "model": "openai/gpt-4.1",
+                        "api_key": "dsa-openai-fallback",
+                        "api_base": "https://fallback.openai.example/v1",
+                        "extra_headers": {"x-route": "fallback", "x-tenant": "dsa"},
+                    },
+                },
+            ],
+        )
+        completion_calls: list[Dict[str, object]] = []
+
+        def completion_impl(**kwargs: Any) -> Any:
+            completion_calls.append(kwargs)
+            return SimpleNamespace(choices=[])
+
+        fake_litellm = SimpleNamespace(completion=completion_impl)
+
+        def screen_impl(_strategy: str, **_kwargs) -> dict[str, object]:
+            fake_litellm.completion(
+                model="openai/gpt-4o-mini",
+                api_key="dsa-openai-primary",
+                api_base="https://primary.openai.example/v1",
+                messages=[{"role": "user", "content": "rank-1"}],
+            )
+            fake_litellm.completion(
+                model="openai/gpt-4.1",
+                api_key="dsa-openai-fallback",
+                api_base="https://fallback.openai.example/v1",
+                messages=[{"role": "user", "content": "rank-2"}],
+            )
+            return {"candidates": []}
+
+        fake_module = _make_adapter_module(screen=MagicMock(side_effect=screen_impl))
+
+        with (
+            patch.dict(sys.modules, {"litellm": fake_litellm}, clear=False),
+            patch("src.services.alphasift_service._import_alphasift", return_value=fake_module),
+        ):
+            payload = self._screen(config, market="cn", strategy="dual_low", max_results=5)
+
+        self.assertEqual(payload["candidate_count"], 0)
+        primary_call = next(
+            call for call in completion_calls if call["model"] == "openai/gpt-4o-mini"
+        )
+        fallback_call = next(
+            call for call in completion_calls if call["model"] == "openai/gpt-4.1"
+        )
+        self.assertEqual(primary_call["extra_headers"], {"x-route": "primary", "x-tenant": "dsa"})
+        self.assertEqual(
+            fallback_call["extra_headers"],
+            {"x-route": "fallback", "x-tenant": "dsa"},
+        )
+        self.assertEqual(primary_call["api_base"], "https://primary.openai.example/v1")
+        self.assertEqual(fallback_call["api_base"], "https://fallback.openai.example/v1")
+        self.assertTrue(getattr(fake_litellm.completion, "_alphasift_litellm_completion_bridge", False))
+
     def test_screen_handles_concurrent_requests_without_litellm_header_cross_pollution(self) -> None:
         config_a = Config(
             alphasift_enabled=True,
