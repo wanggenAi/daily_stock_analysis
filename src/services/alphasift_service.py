@@ -438,7 +438,7 @@ def _normalize_alphasift_hotspot_detail(detail: Any, *, provider: str, requested
     timeline_value = raw.get("timeline")
     timeline: List[Any] = timeline_value if isinstance(timeline_value, list) else []
     route_value = raw.get("route")
-    route: List[Any] = route_value if isinstance(route_value, list) else _hotspot_timeline_to_route(timeline)
+    route: List[Any] = route_value if isinstance(route_value, list) and route_value else _hotspot_timeline_to_route(timeline)
     source_errors = _list_text_values(raw.get("source_errors") or summary.get("source_errors"))
     topic = _env_text(summary.get("topic") or raw.get("topic") or requested_topic)
     canonical_topic = _env_text(summary.get("canonical_topic") or raw.get("canonical_topic"))

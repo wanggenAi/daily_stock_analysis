@@ -572,6 +572,41 @@ class AlphaSiftOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(payload["stocks"][0]["source"], "last_good_cache.leader_stocks")
         self.assertEqual(payload["route"][0]["title"], "AI算力催化")
 
+    def test_hotspot_detail_prefers_timeline_when_contract_route_is_empty(self) -> None:
+        config = self._config(enabled=True)
+        provider = alphasift_service.DsaEastMoneyHotspotProvider()
+        provider.hotspot_detail = MagicMock(side_effect=RuntimeError("provider fallback should not be used"))
+
+        def get_hotspot_detail(topic: str, **_kwargs: Any) -> Dict[str, Any]:
+            return {
+                "summary": {
+                    "topic": topic,
+                    "name": "算力",
+                    "canonical_topic": "算力",
+                    "quality_status": "available",
+                },
+                "stocks": [{
+                    "code": "300001",
+                    "name": "算力龙头",
+                }],
+                "timeline": [{"date": "2026-06-13", "source": "新闻", "title": "AI算力催化"}],
+                "route": [],
+            }
+
+        with (
+            patch("src.services.alphasift_service._get_alphasift_status_snapshot", return_value=({}, True, {})),
+            patch("src.services.alphasift_service._resolve_hotspot_provider", return_value=("akshare", provider)),
+            patch(
+                "src.services.alphasift_service._import_alphasift_hotspot",
+                return_value=SimpleNamespace(get_hotspot_detail=get_hotspot_detail),
+            ),
+        ):
+            payload = self._hotspot_detail(config=config, provider="akshare", topic="AI算力")
+
+        self.assertEqual(payload["route"][0]["title"], "AI算力催化")
+        self.assertEqual(payload["route"][0]["source"], "新闻")
+        provider.hotspot_detail.assert_not_called()
+
     def test_hotspot_detail_preserves_provider_route_when_contract_detail_has_no_timeline(self) -> None:
         config = self._config(enabled=True)
         provider = alphasift_service.DsaEastMoneyHotspotProvider()
