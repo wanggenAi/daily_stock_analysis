@@ -572,6 +572,52 @@ class AlphaSiftOpportunitiesApiTestCase(unittest.TestCase):
         self.assertEqual(payload["stocks"][0]["source"], "last_good_cache.leader_stocks")
         self.assertEqual(payload["route"][0]["title"], "AI算力催化")
 
+    def test_hotspot_detail_preserves_provider_route_when_contract_detail_has_no_timeline(self) -> None:
+        config = self._config(enabled=True)
+        provider = alphasift_service.DsaEastMoneyHotspotProvider()
+        provider.hotspot_detail = MagicMock(return_value={
+            "topic": "机器人执行器",
+            "summary": "机器人执行器 盘中发酵。",
+            "route": [{
+                "title": "盘中发酵",
+                "description": "机器人执行器 当前有异动记录。",
+                "source": "eastmoney_board_change",
+            }],
+            "stocks": [{"code": "002000", "name": "旧路径个股"}],
+            "stock_count": 1,
+            "source_errors": [],
+        })
+
+        def get_hotspot_detail(topic: str, **_kwargs: Any) -> Dict[str, Any]:
+            return {
+                "summary": {
+                    "topic": topic,
+                    "name": "机器人执行器",
+                    "canonical_topic": "机器人执行器",
+                    "quality_status": "available",
+                },
+                "stocks": [{
+                    "code": "300000",
+                    "name": "合约路径个股",
+                    "source": "alphasift_contract",
+                }],
+            }
+
+        with (
+            patch("src.services.alphasift_service._get_alphasift_status_snapshot", return_value=({}, True, {})),
+            patch("src.services.alphasift_service._resolve_hotspot_provider", return_value=("akshare", provider)),
+            patch(
+                "src.services.alphasift_service._import_alphasift_hotspot",
+                return_value=SimpleNamespace(get_hotspot_detail=get_hotspot_detail),
+            ),
+        ):
+            payload = self._hotspot_detail(config=config, provider="akshare", topic="机器人执行器")
+
+        self.assertEqual(payload["route"][0]["title"], "盘中发酵")
+        self.assertEqual(payload["route"][0]["source"], "eastmoney_board_change")
+        self.assertEqual(payload["stocks"][0]["name"], "合约路径个股")
+        provider.hotspot_detail.assert_called_once_with("机器人执行器")
+
     def test_hotspot_detail_returns_route_and_concept_stocks(self) -> None:
         config = self._config(enabled=True)
 

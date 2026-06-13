@@ -347,6 +347,11 @@ class AlphaSiftService:
                         provider=provider_name,
                         requested_topic=topic_text,
                     )
+                    normalized = _merge_provider_hotspot_route_fallback(
+                        normalized,
+                        provider=provider_arg,
+                        topic=topic_text,
+                    )
                 else:
                     normalized = provider_arg.hotspot_detail(topic_text)
         except Exception as exc:
@@ -511,6 +516,60 @@ def _hotspot_timeline_to_route(timeline: List[Any]) -> List[Dict[str, Any]]:
         "description": "暂未获取到明确催化事件，可继续观察涨跌幅、成交额和核心个股联动。",
         "source": "fallback",
     }]
+
+
+def _merge_provider_hotspot_route_fallback(
+    normalized: Dict[str, Any],
+    *,
+    provider: "DsaEastMoneyHotspotProvider",
+    topic: str,
+) -> Dict[str, Any]:
+    if _has_meaningful_hotspot_route(normalized.get("route")):
+        return normalized
+    try:
+        provider_detail = provider.hotspot_detail(topic)
+    except Exception as exc:
+        logger.warning(
+            "AlphaSift provider route fallback failed for %s; keeping contract detail route: %s",
+            topic,
+            exc,
+        )
+        return normalized
+
+    raw_value = _remove_non_finite_json_values(_to_plain(provider_detail))
+    raw: Dict[str, Any] = raw_value if isinstance(raw_value, dict) else {}
+    provider_route = raw.get("route")
+    if _has_meaningful_hotspot_route(provider_route):
+        normalized["route"] = provider_route
+        provider_timeline = raw.get("timeline")
+        if not normalized.get("timeline") and isinstance(provider_timeline, list):
+            normalized["timeline"] = provider_timeline
+        return normalized
+
+    provider_timeline = raw.get("timeline")
+    if isinstance(provider_timeline, list) and provider_timeline:
+        provider_timeline_route = _hotspot_timeline_to_route(provider_timeline)
+        if _has_meaningful_hotspot_route(provider_timeline_route):
+            normalized["route"] = provider_timeline_route
+            normalized["timeline"] = provider_timeline
+    return normalized
+
+
+def _has_meaningful_hotspot_route(route: Any) -> bool:
+    if not isinstance(route, list):
+        return False
+    for item in route:
+        if not isinstance(item, dict):
+            continue
+        title = _env_text(item.get("title"))
+        description = _env_text(item.get("description"))
+        source = _env_text(item.get("source"))
+        if not title and not description:
+            continue
+        if source == "fallback" and title == "等待发酵":
+            continue
+        return True
+    return False
 
 
 def _build_alphasift_hotspot_summary_text(summary: Dict[str, Any], *, topic: str, canonical_topic: str) -> str:
