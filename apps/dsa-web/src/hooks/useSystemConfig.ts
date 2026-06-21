@@ -306,8 +306,6 @@ export function useSystemConfig() {
     setSaveError(null);
     setRetryAction(null);
 
-    const changedItems = getChangedItems();
-
     try {
       const validateResult = await systemConfigApi.validate({ items: resolvedChangedItems });
       setValidationIssues(validateResult.issues || []);
