@@ -71,6 +71,31 @@ class TestMarketAnalyzerStrategyPrompt(unittest.TestCase):
         self.assertNotIn("### 一、市场总结", prompt)
         self.assertNotIn("A股市场三段式复盘策略", prompt)
 
+    def test_jp_kr_strategy_blocks_are_localized_when_report_language_is_en(self):
+        cases = [
+            ("jp", "Japan Market Regime Strategy", "Macro & FX", "日本市场三段式复盘策略"),
+            ("kr", "Korea Market Regime Strategy", "Technology Cycle", "韩国市场三段式复盘策略"),
+        ]
+
+        for region, title, dimension, chinese_title in cases:
+            with self.subTest(region=region):
+                with patch(
+                    "src.market_analyzer.get_config",
+                    return_value=SimpleNamespace(report_language="en"),
+                ):
+                    analyzer = MarketAnalyzer(region=region)
+
+                prompt_block = analyzer._get_strategy_prompt_block()
+                markdown_block = analyzer._get_strategy_markdown_block("en")
+
+                self.assertIn(title, prompt_block)
+                self.assertIn(dimension, prompt_block)
+                self.assertNotIn(chinese_title, prompt_block)
+                self.assertNotIn("只基于可得指数", prompt_block)
+                self.assertIn("### 6. Strategy Framework", markdown_block)
+                self.assertIn(dimension, markdown_block)
+                self.assertNotIn("### 六、策略框架", markdown_block)
+
     def test_market_stats_passes_market_review_purpose(self):
         analyzer = MarketAnalyzer.__new__(MarketAnalyzer)
         analyzer.region = "hk"

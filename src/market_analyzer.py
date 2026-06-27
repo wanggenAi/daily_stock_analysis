@@ -261,6 +261,60 @@ Focus on HSI trend, southbound flow dynamics, and sector rotation to define next
 - Risk-on: broad index breakout with expanding southbound participation.
 - Neutral: mixed index signals; focus on selective relative strength.
 - Risk-off: failed breakouts and rising volatility; prioritize capital preservation."""
+        if self.region == "jp" and self._get_review_language() == "en":
+            return """## Strategy Blueprint: Japan Market Regime Strategy
+Focus on Nikkei 225, TOPIX, currency dynamics, and global risk appetite to define the next-session trading plan.
+
+### Strategy Principles
+- Read Nikkei 225 and TOPIX alignment first, then assess yen moves, semiconductor/export chains, and financials.
+- Translate index conclusions into position sizing, trading pace, and risk-control actions.
+- Base judgments only on available index data, news, and price action without inventing breadth or sector statistics.
+
+### Analysis Dimensions
+- Trend Regime: Classify Japan equities as advancing, range-bound, or defensive.
+  - Are Nikkei 225 and TOPIX directionally aligned
+  - Have key index ranges been reclaimed or lost
+  - Are large-cap weights and growth chains moving together
+- Macro & FX: Map yen, rates, and global risk appetite into equity impact.
+  - Yen direction and implications for exporters
+  - Bank of Japan and US Treasury yield narratives
+  - Overseas technology and semiconductor read-through
+- Theme Signals: Identify durable leadership and crowded areas to avoid.
+  - Semiconductor, automation, and auto-chain persistence
+  - Rotation between financials and domestic-demand stocks
+  - Whether news catalysts confirm price action
+
+### Action Framework
+- Risk-on: major indices rise together with improving external risk appetite and stronger leadership.
+- Neutral: index divergence or FX disruption; avoid chasing and wait for confirmation.
+- Risk-off: major indices weaken or external risk rises; prioritize position control."""
+        if self.region == "kr" and self._get_review_language() == "en":
+            return """## Strategy Blueprint: Korea Market Regime Strategy
+Focus on KOSPI, KOSDAQ, semiconductor heavyweights, and global technology risk appetite to define the next-session trading plan.
+
+### Strategy Principles
+- Read KOSPI and KOSDAQ alignment first, then assess heavyweight signals from Samsung Electronics, SK Hynix, and related technology leaders.
+- Separate broad index beta, semiconductor cycle exposure, and growth-stock risk appetite.
+- Base judgments only on available index data, news, and price action without inventing breadth or sector statistics.
+
+### Analysis Dimensions
+- Trend Regime: Classify Korea equities as advancing, range-bound, or defensive.
+  - Are KOSPI and KOSDAQ directionally aligned
+  - Are heavyweight technology names supporting the indices
+  - Have key support or resistance levels been reclaimed or lost
+- Technology Cycle: Map semiconductor, AI hardware, and global technology moves into Korea equity risk.
+  - Memory and semiconductor-chain catalysts
+  - US technology-market read-through
+  - Foreign investor risk appetite signals
+- Theme Signals: Identify durable leadership and crowded areas to avoid.
+  - Rotation across batteries, autos, and internet platforms
+  - KOSDAQ growth-stock risk appetite
+  - Whether news catalysts confirm price action
+
+### Action Framework
+- Risk-on: KOSPI and KOSDAQ rise together with confirmed technology leadership and improving external risk appetite.
+- Neutral: index or heavyweight divergence; keep sizing controlled and wait for confirmation.
+- Risk-off: technology heavyweights weaken or external risk rises; prioritize drawdown control."""
         if self.region == "us" and self._get_review_language() == "zh":
             return """## 美股市场三段式复盘策略
 聚焦指数趋势、宏观叙事与板块轮动，给出次日风控与仓位框架。
@@ -315,6 +369,18 @@ Focus on index trend, liquidity, and sector rotation to shape the next-session t
 - **Trend Regime**: Classify the market as momentum, range, or risk-off based on HSI/HSTECH/HSCEI alignment.
 - **Capital Flows**: Track southbound flow direction and macro narrative for risk appetite signals.
 - **Sector Themes**: Focus on tech/internet platform persistence and financials/property policy sensitivity.
+"""
+        if self.region == "jp" and review_language == "en":
+            return """### 6. Strategy Framework
+- **Trend Regime**: Classify Japan equities as advancing, range-bound, or defensive based on Nikkei 225/TOPIX alignment.
+- **Macro & FX**: Track yen, rates, and global risk appetite for exporter and financial-sector implications.
+- **Theme Signals**: Focus on semiconductor, automation, auto-chain, financial, and domestic-demand rotation.
+"""
+        if self.region == "kr" and review_language == "en":
+            return """### 6. Strategy Framework
+- **Trend Regime**: Classify Korea equities as advancing, range-bound, or defensive based on KOSPI/KOSDAQ alignment.
+- **Technology Cycle**: Track semiconductor, AI hardware, and global technology read-through for market risk appetite.
+- **Theme Signals**: Focus on battery, auto, internet-platform, and KOSDAQ growth-stock rotation.
 """
         if self.region == "us" and review_language == "zh":
             return """### 六、策略框架
