@@ -304,7 +304,7 @@ def _available_financial_rows(financial_df: Optional[pd.DataFrame], as_of_date: 
     local = financial_df.copy()
     local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce").dt.date
     local = local.dropna(subset=["report_date"]).copy()
-    has_disclosure_columns = any(column in local.columns for column in DISCLOSURE_DATE_COLUMNS)
+    has_disclosure_columns = any(column in local.columns and local[column].notna().any() for column in DISCLOSURE_DATE_COLUMNS)
     local["available_date"] = local.apply(
         lambda row: _financial_available_date(row, has_disclosure_columns),
         axis=1,

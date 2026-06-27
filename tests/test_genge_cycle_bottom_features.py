@@ -11,6 +11,12 @@ from src.strategies.genge_cycle_bottom.features import (
     compute_price_percentile_score,
     compute_valuation_score,
 )
+from src.strategies.genge_cycle_bottom.fundamentals import (
+    FINANCIAL_COLUMNS,
+    VALUATION_COLUMNS,
+    _normalize_financial_frame,
+    _normalize_valuation_frame,
+)
 
 
 def _price_frame(closes: list[float], start: date = date(2020, 1, 1)) -> pd.DataFrame:
@@ -162,6 +168,37 @@ def test_valuation_future_rows_do_not_affect_as_of_percentile() -> None:
 
     assert base_score == future_score
     assert base_diag["pb_percentile_3y"] == future_diag["pb_percentile_3y"]
+
+
+def test_public_fundamental_normalizers_emit_contract_columns() -> None:
+    valuation = _normalize_valuation_frame(
+        pd.DataFrame(
+            [
+                {"date": "2024-01-01", "pe": "12.5", "pb": "1.8", "ps": "2.1", "market_cap": "100000"},
+                {"date": "bad", "pe": "999"},
+            ]
+        )
+    )
+    financial = _normalize_financial_frame(
+        pd.DataFrame(
+            [
+                {
+                    "日期": "2023-12-31",
+                    "资产负债率(%)": "42.5",
+                    "净利润(元)": "1000000",
+                    "每股经营性现金流(元)": "0.88",
+                    "净资产收益率(%)": "9.1",
+                    "销售毛利率(%)": "21.2",
+                }
+            ]
+        )
+    )
+
+    assert list(valuation.columns) == list(VALUATION_COLUMNS)
+    assert valuation.iloc[0]["pe"] == 12.5
+    assert list(financial.columns) == list(FINANCIAL_COLUMNS)
+    assert financial.iloc[0]["debt_ratio"] == 42.5
+    assert financial.iloc[0]["operating_cash_flow"] == 0.88
 
 
 def test_industry_cycle_missing_degrades_to_neutral_score() -> None:

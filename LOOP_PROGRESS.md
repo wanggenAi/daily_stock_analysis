@@ -177,13 +177,161 @@ python -m src.strategies.genge_cycle_bottom.cli \
 - Objective: verify promise-word guardrails after generated reports.
 - Command:
 
-```bash
-rg -n "保证上涨|确定买入|必买|必卖|保证收益|稳赚" \
-  reports/genge_cycle_bottom_ci_smoke/20260627_222008 \
-  reports/genge_cycle_bottom_real/20260627_222109 \
-  docs/genge_cycle_bottom_strategy.md \
-  src/strategies/genge_cycle_bottom
-```
+Command: scanned generated reports, docs, and strategy source for forbidden promise wording.
 
 - Result: passed with no matches.
 - Next action: improve public-data valuation and financial adapters before trying larger cycle/broad pools or considering any simulated observation stage.
+
+## Loop 11
+
+- Objective: close the P1 engineering gaps for real public-data research without fitting the strategy to fixture results.
+- Modified files:
+  - `.github/workflows/genge-cycle-bottom.yml`
+  - `.gitignore`
+  - `scripts/run_genge_real_research.py`
+  - `src/strategies/genge_cycle_bottom/acceptance.py`
+  - `src/strategies/genge_cycle_bottom/backtest.py`
+  - `src/strategies/genge_cycle_bottom/cli.py`
+  - `src/strategies/genge_cycle_bottom/features.py`
+  - `src/strategies/genge_cycle_bottom/fundamentals.py`
+  - `src/strategies/genge_cycle_bottom/metrics.py`
+  - `src/strategies/genge_cycle_bottom/report.py`
+  - `tests/test_genge_cycle_bottom_backtest.py`
+  - `tests/test_genge_cycle_bottom_features.py`
+  - `tests/test_genge_cycle_bottom_report_cli.py`
+  - `data/examples/*.csv`
+- Changes:
+  - Added public AKShare valuation/financial auto-fetch with successful-result cache at `data/cache/genge_fundamentals`.
+  - Kept fixture/CI runs offline and fixture-only.
+  - Made real runner default to `--step-days 1`; `--fast-smoke` now safely uses 20 unless an explicit step is given.
+  - Added coverage metrics for valuation, financial, PE/PB, and industry-cycle fields.
+  - Added provider error diagnostics without fabricating missing PE/PB/financial data.
+  - Added execution diagnostics for missing next bar, limit-up/limit-down entry risk, abnormal gaps, and low liquidity.
+  - Added explicit `--fixture-smoke-passed` acceptance context flag; it does not change signal generation.
+  - Updated CI smoke schema checks for coverage and execution diagnostics.
+- Targeted test command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  -m pytest \
+  tests/test_genge_cycle_bottom_report_cli.py::test_cli_fixture_smoke_context_flag_for_real_runs \
+  tests/test_genge_cycle_bottom_report_cli.py::test_real_runner_step_days_defaults_and_fast_smoke
+```
+
+- Result: 2 passed, 1 warning.
+- Failure/limitation: none from targeted tests. Warning is a dependency deprecation warning from `fastapi.testclient`.
+- Next action: run full strategy tests, fixture smoke, and real core/cycle/broad research.
+
+## Loop 12
+
+- Objective: run fixture smoke and real public-data research pools with the upgraded diagnostics.
+- Full test command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  -m pytest tests/test_genge_cycle_bottom_*.py
+```
+
+- Result after final docs: 28 passed, 1 warning.
+- Fixture smoke command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  -m src.strategies.genge_cycle_bottom.cli \
+  --codes 000001,000002 \
+  --years 5 \
+  --benchmark 000300 \
+  --price-data-dir tests/fixtures/genge_cycle_bottom/prices \
+  --valuation-data-dir tests/fixtures/genge_cycle_bottom/valuation \
+  --financial-data-dir tests/fixtures/genge_cycle_bottom/financial \
+  --industry-cycle-file tests/fixtures/genge_cycle_bottom/industry_cycle.csv \
+  --stock-industry-map tests/fixtures/genge_cycle_bottom/stock_industry_map.csv \
+  --output-dir reports/genge_cycle_bottom_ci_smoke
+```
+
+- Fixture result: passed.
+- Fixture report directory: `reports/genge_cycle_bottom_ci_smoke/20260628_004518`.
+- Fixture total signals: 2177.
+- Fixture data failures / provider errors: 0 / 0.
+- Fixture PE/PB/financial missing: 0 / 0 / 34.
+- Fixture acceptance enum: `PASS_RESEARCH_ONLY`.
+- Real core command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  scripts/run_genge_real_research.py \
+  --stock-pool-file stock_pools/genge_core_pool.txt \
+  --years 5 \
+  --benchmark 000300 \
+  --output-dir reports/genge_cycle_bottom_real_core \
+  --max-codes 12 \
+  --step-days 1 \
+  --auto-fetch-valuation \
+  --auto-fetch-financial \
+  --fundamental-cache-dir data/cache/genge_fundamentals \
+  --industry-cycle-file data/examples/genge_industry_cycle_manual.csv
+```
+
+- Real core result: passed mechanically, failed strategy expectancy.
+- Runtime: 434.61 seconds.
+- Report directory: `reports/genge_cycle_bottom_real_core/20260627_232412`.
+- Data failures / provider errors: 0 / 1.
+- PE/PB/financial missing: 230 / 0 / 0.
+- Main candidate count: 2646.
+- Risk review count: 5.
+- Acceptance enum: `FAIL_STRATEGY_EXPECTANCY`.
+- Key failure: 60 日平均净收益 -1.9653%，60 日胜率 42.6307%，60 日跑赢基准 37.4802%，250 日低点回撤 -33.5991%。
+- Real cycle command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  scripts/run_genge_real_research.py \
+  --stock-pool-file stock_pools/genge_cycle_pool.txt \
+  --years 5 \
+  --benchmark 000300 \
+  --output-dir reports/genge_cycle_bottom_real_cycle \
+  --max-codes 50 \
+  --step-days 1 \
+  --auto-fetch-valuation \
+  --auto-fetch-financial \
+  --fundamental-cache-dir data/cache/genge_fundamentals \
+  --industry-cycle-file data/examples/genge_industry_cycle_manual.csv
+```
+
+- Real cycle result: passed mechanically, still not paper ready.
+- Runtime: 1549.23 seconds.
+- Report directory: `reports/genge_cycle_bottom_real_cycle/20260627_235033`.
+- Data failures / provider errors: 0 / 0.
+- PE/PB/financial missing: 1000 / 0 / 0.
+- Main candidate count: 8247.
+- Risk review count: 5.
+- Acceptance enum in single-run report: `PASS_RESEARCH_ONLY`.
+- Key limitation: average returns were positive, but 60 日胜率 47.2995%、跑赢基准 45.9274%、250 日低点回撤 -31.8513%，未达模拟盘门槛。
+- Real broad command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  scripts/run_genge_real_research.py \
+  --stock-pool-file stock_pools/genge_broad_pool.txt \
+  --years 5 \
+  --benchmark 000300 \
+  --output-dir reports/genge_cycle_bottom_real_broad \
+  --max-codes 105 \
+  --step-days 1 \
+  --auto-fetch-valuation \
+  --auto-fetch-financial \
+  --fundamental-cache-dir data/cache/genge_fundamentals \
+  --industry-cycle-file data/examples/genge_industry_cycle_manual.csv
+```
+
+- Real broad result: passed mechanically, failed strategy expectancy.
+- Runtime: 3020.33 seconds.
+- Report directory: `reports/genge_cycle_bottom_real_broad/20260628_004115`.
+- Data failures / provider errors: 0 / 0.
+- PE/PB/financial missing: 1392 / 0 / 0.
+- Main candidate count: 20682.
+- Risk review count: 5.
+- Acceptance enum: `FAIL_STRATEGY_EXPECTANCY`.
+- Key failure: 20 日平均净收益 -0.4365%，60 日平均净收益 -0.2626%，60 日胜率 41.94%，60 日跑赢基准 40.1116%，250 日低点回撤 -30.4961%。
+- Failure reason summary: 止损不够严格、买太早、估值陷阱、趋势未确认、行业周期判断不足居前。
+- Next action: do not enter paper trading. Future work should focus on signal quality, left-side risk control, industry-cycle data quality, and performance optimization for broad `step-days=1` runs.

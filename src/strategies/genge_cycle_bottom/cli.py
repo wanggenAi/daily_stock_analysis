@@ -11,6 +11,7 @@ import pandas as pd
 
 from .backtest import BacktestInput, WalkForwardBacktester
 from .features import coerce_date, date_years_ago, prepare_price_frame
+from .fundamentals import PublicFundamentalLoader
 from .metrics import compute_summary
 from .report import write_reports
 
@@ -99,18 +100,73 @@ def _get_manager():
     return DataFetcherManager()
 
 
+def _empty_fundamental_diagnostics(cache_dir: Optional[str]) -> dict[str, object]:
+    return {
+        "valuation_provider": "none",
+        "financial_provider": "none",
+        "valuation_providers": {},
+        "financial_providers": {},
+        "provider_errors": {},
+        "fundamental_cache_dir": cache_dir,
+        "fundamental_cache_hits": {"valuation": 0, "financial": 0},
+        "auto_fetch_valuation": False,
+        "auto_fetch_financial": False,
+    }
+
+
+def _record_provider(counter: dict[str, int], provider: str) -> None:
+    name = provider or "none"
+    counter[name] = counter.get(name, 0) + 1
+
+
+def _record_provider_errors(errors: dict[str, list[str]], code: str, provider_errors: dict[str, list[str]]) -> None:
+    for kind, messages in (provider_errors or {}).items():
+        if messages:
+            errors[f"{code}:{kind}"] = list(messages)
+
+
+def _primary_provider(counter: dict[str, int]) -> str:
+    available = {key: value for key, value in counter.items() if key != "none" and value > 0}
+    if not available:
+        return "none"
+    return max(available.items(), key=lambda item: item[1])[0]
+
+
+def _industry_cycle_source(path: Optional[str], source_mode: str) -> str:
+    if not path:
+        return "none"
+    lowered = Path(path).name.lower()
+    if "manual" in lowered or "template" in lowered or "example" in lowered:
+        return "manual_template"
+    if source_mode == "fixture":
+        return "fixture"
+    return "user_supplied"
+
+
 def _load_inputs(
     *,
     codes: List[str],
     args: argparse.Namespace,
     start_date: date,
     end_date: date,
-) -> tuple[list[BacktestInput], dict[str, str], dict[str, str]]:
+) -> tuple[list[BacktestInput], dict[str, str], dict[str, str], dict[str, object]]:
     inputs: List[BacktestInput] = []
     sources: Dict[str, str] = {}
     errors: Dict[str, str] = {}
+    fundamental_diagnostics = _empty_fundamental_diagnostics(getattr(args, "fundamental_cache_dir", None))
+    fundamental_diagnostics["auto_fetch_valuation"] = bool(getattr(args, "auto_fetch_valuation", False))
+    fundamental_diagnostics["auto_fetch_financial"] = bool(getattr(args, "auto_fetch_financial", False))
+    valuation_providers: dict[str, int] = {}
+    financial_providers: dict[str, int] = {}
+    provider_errors: dict[str, list[str]] = {}
+    cache_hits = {"valuation": 0, "financial": 0}
     manager = None
     manager_error = None
+    fundamental_loader = (
+        PublicFundamentalLoader(args.fundamental_cache_dir)
+        if getattr(args, "auto_fetch_valuation", False) or getattr(args, "auto_fetch_financial", False)
+        else None
+    )
 
     if not args.price_data_dir:
         try:
@@ -142,6 +198,31 @@ def _load_inputs(
                     stock_name = pool_record.get("stock_name") or normalized_code
             valuation_df = _load_optional_csv(args.valuation_data_dir, normalized_code)
             financial_df = _load_optional_csv(args.financial_data_dir, normalized_code)
+            if valuation_df is not None:
+                _record_provider(valuation_providers, "csv")
+            if financial_df is not None:
+                _record_provider(financial_providers, "csv")
+            if fundamental_loader is not None and (valuation_df is None or financial_df is None):
+                fundamental_result = fundamental_loader.load(
+                    normalized_code,
+                    years=int(args.years),
+                    fetch_valuation=bool(args.auto_fetch_valuation and valuation_df is None),
+                    fetch_financial=bool(args.auto_fetch_financial and financial_df is None),
+                )
+                if valuation_df is None and fundamental_result.valuation_df is not None:
+                    valuation_df = fundamental_result.valuation_df
+                    _record_provider(valuation_providers, fundamental_result.valuation_provider)
+                elif bool(args.auto_fetch_valuation):
+                    _record_provider(valuation_providers, fundamental_result.valuation_provider)
+                if financial_df is None and fundamental_result.financial_df is not None:
+                    financial_df = fundamental_result.financial_df
+                    _record_provider(financial_providers, fundamental_result.financial_provider)
+                elif bool(args.auto_fetch_financial):
+                    _record_provider(financial_providers, fundamental_result.financial_provider)
+                for kind, hit in fundamental_result.cache_hits.items():
+                    if hit:
+                        cache_hits[kind] = cache_hits.get(kind, 0) + 1
+                _record_provider_errors(provider_errors, normalized_code, fundamental_result.provider_errors)
             inputs.append(
                 BacktestInput(
                     code=normalized_code,
@@ -154,7 +235,13 @@ def _load_inputs(
             )
         except Exception as exc:
             errors[code] = f"{type(exc).__name__}: {exc}"
-    return inputs, sources, errors
+    fundamental_diagnostics["valuation_providers"] = valuation_providers
+    fundamental_diagnostics["financial_providers"] = financial_providers
+    fundamental_diagnostics["valuation_provider"] = _primary_provider(valuation_providers)
+    fundamental_diagnostics["financial_provider"] = _primary_provider(financial_providers)
+    fundamental_diagnostics["provider_errors"] = provider_errors
+    fundamental_diagnostics["fundamental_cache_hits"] = cache_hits
+    return inputs, sources, errors, fundamental_diagnostics
 
 
 def _load_benchmark(args: argparse.Namespace, start_date: date, end_date: date) -> tuple[Optional[pd.DataFrame], Optional[str]]:
@@ -200,8 +287,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--benchmark-file", help="Optional benchmark CSV file")
     parser.add_argument("--valuation-data-dir", help="Optional CSV directory with valuation files")
     parser.add_argument("--financial-data-dir", help="Optional CSV directory with financial files")
+    parser.add_argument("--auto-fetch-valuation", action="store_true", help="Fetch missing valuation data from public sources and cache successes")
+    parser.add_argument("--auto-fetch-financial", action="store_true", help="Fetch missing financial data from public sources and cache successes")
+    parser.add_argument("--fundamental-cache-dir", default="data/cache/genge_fundamentals", help="Directory for successful public valuation/financial cache")
     parser.add_argument("--industry-cycle-file", help="Optional CSV file with industry cycle scores")
     parser.add_argument("--stock-industry-map", help="Optional CSV file mapping code to industry")
+    parser.add_argument("--fixture-smoke-passed", action="store_true", help="Mark fixture smoke as already verified for acceptance context")
     return parser
 
 
@@ -215,7 +306,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     provisional_end = coerce_date(args.end_date) if args.end_date else date.today()
     provisional_start = coerce_date(args.start_date) if args.start_date else date_years_ago(provisional_end, args.years + 1)
-    inputs, data_sources, data_errors = _load_inputs(
+    inputs, data_sources, data_errors, fundamental_diagnostics = _load_inputs(
         codes=codes,
         args=args,
         start_date=provisional_start,
@@ -236,6 +327,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         slippage_bps=float(args.slippage_bps),
         industry_cycle_df=industry_cycle_df,
     )
+    source_mode = "fixture" if args.price_data_dir else "real"
     diagnostics = {
         "requested_codes": codes,
         "loaded_codes": [item.code for item in inputs],
@@ -249,15 +341,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         "fee_bps": float(args.fee_bps),
         "slippage_bps": float(args.slippage_bps),
         "industry_cycle_file": args.industry_cycle_file,
+        "industry_cycle_source": _industry_cycle_source(args.industry_cycle_file, source_mode),
         "stock_industry_map": args.stock_industry_map,
-        "source_mode": "fixture" if args.price_data_dir else "real",
-        "fixture_smoke_passed": bool(args.price_data_dir),
+        "source_mode": source_mode,
+        "fixture_smoke_passed": bool(args.price_data_dir or args.fixture_smoke_passed),
         "real_5y_passed": bool(not args.price_data_dir and int(args.years) == 5 and inputs and not data_errors),
         "real_10y_passed": bool(not args.price_data_dir and int(args.years) == 10 and inputs and not data_errors),
         "real_10y_safely_degraded": bool(not args.price_data_dir and int(args.years) == 10 and inputs and data_errors),
         "no_lookahead_risk": True,
         "no_auto_trade": True,
     }
+    diagnostics.update(fundamental_diagnostics)
     summary = compute_summary(rows, extra_diagnostics=diagnostics)
     report_dir = write_reports(rows, summary, args.output_dir)
     print(f"report_dir={report_dir}")

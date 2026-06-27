@@ -42,6 +42,39 @@ def _has_data_errors(summary: Dict[str, Any]) -> bool:
     return bool(data_errors)
 
 
+def _coverage(summary: Dict[str, Any], field_name: str) -> float:
+    value = _number(summary.get(field_name))
+    return value if value is not None else 0.0
+
+
+def _price_only_research(summary: Dict[str, Any]) -> bool:
+    diagnostics = summary.get("diagnostics") or {}
+    return bool(diagnostics.get("price_only_research"))
+
+
+def _has_severe_provider_errors(summary: Dict[str, Any]) -> bool:
+    diagnostics = summary.get("diagnostics") or {}
+    provider_errors = diagnostics.get("provider_errors") or {}
+    requested = diagnostics.get("requested_codes") or []
+    if not provider_errors:
+        return False
+    return len(provider_errors) >= max(3, int(len(requested) * 0.5)) if requested else bool(provider_errors)
+
+
+def _execution_risk_rate(summary: Dict[str, Any]) -> float:
+    total = int(summary.get("total_signals") or 0)
+    if total <= 0:
+        return 100.0
+    execution = summary.get("execution_diagnostics") or {}
+    risky = (
+        int(execution.get("limit_up_entry_count") or 0)
+        + int(execution.get("missing_entry_count") or 0)
+        + int(execution.get("degraded_entry_count") or 0)
+        + int(execution.get("low_liquidity_count") or 0)
+    )
+    return risky / total * 100.0
+
+
 def evaluate_paper_trading_gate(
     summary: Dict[str, Any],
     *,
@@ -66,6 +99,12 @@ def evaluate_paper_trading_gate(
     recent = (summary.get("time_split_summary") or {}).get("recent_2y") or {}
     recent_avg_60d = _number(recent.get("avg_net_return_60d"))
     recent_win_60d = _number(recent.get("win_rate_60d"))
+    valuation_coverage = _coverage(summary, "valuation_coverage_rate")
+    financial_coverage = _coverage(summary, "financial_coverage_rate")
+    price_only = _price_only_research(summary)
+    real_run_passed = bool(real_5y_passed or real_10y_passed or real_10y_safely_degraded)
+    severe_provider_errors = _has_severe_provider_errors(summary)
+    execution_risk_rate = _execution_risk_rate(summary)
 
     if ci_passed is not True:
         reasons.append("CI 未确认通过")
@@ -79,6 +118,10 @@ def evaluate_paper_trading_gate(
         reasons.append("真实数据存在拉取失败")
     if total_signals < 100:
         reasons.append("样本数量少于 100")
+    if valuation_coverage <= 30 and financial_coverage <= 30 and not price_only:
+        reasons.append("估值/财务覆盖率均未超过 30%，不能按完整基本面研究通过")
+    if severe_provider_errors:
+        reasons.append("公开数据 provider_errors 较多，需要先复核数据源稳定性")
     if avg_60d is None or avg_60d <= 0:
         reasons.append("60 日平均净收益未转正")
     if win_60d is None or win_60d < 52:
@@ -106,7 +149,19 @@ def evaluate_paper_trading_gate(
         verdict = PASS_RESEARCH_ONLY
     elif avg_60d is not None and avg_60d <= 0 and total_signals >= 100:
         verdict = FAIL_STRATEGY_EXPECTANCY
-    elif source_mode == "real" and real_5y_passed and (real_10y_passed or real_10y_safely_degraded):
+    elif source_mode == "real" and total_signals >= 100 and (valuation_coverage <= 30 and financial_coverage <= 30) and not price_only:
+        verdict = FAIL_DATA_QUALITY
+    elif source_mode == "real" and severe_provider_errors and total_signals >= 100:
+        verdict = FAIL_DATA_QUALITY
+    elif (
+        source_mode == "real"
+        and fixture_smoke_passed is True
+        and real_run_passed
+        and total_signals >= 100
+        and no_lookahead_risk
+        and no_auto_trade
+        and (valuation_coverage > 30 or financial_coverage > 30 or price_only)
+    ):
         verdict = PASS_REAL_DATA_RESEARCH
     else:
         verdict = PASS_RESEARCH_ONLY
@@ -119,7 +174,10 @@ def evaluate_paper_trading_gate(
         and no_lookahead_risk
         and no_auto_trade
         and not _has_data_errors(summary)
-        and total_signals >= 100
+        and total_signals >= 200
+        and (valuation_coverage > 30 or price_only)
+        and (financial_coverage > 30 or price_only)
+        and execution_risk_rate <= 20
         and avg_60d is not None
         and avg_60d > 0
         and win_60d is not None

@@ -15,6 +15,10 @@ from .strategy import GenGeCycleBottomStrategy
 
 EVAL_WINDOWS = (20, 60, 120, 250)
 ENTRY_SIGNAL_TYPES = {SignalType.LEFT_SMALL_BUY, SignalType.CONFIRM_BUY, SignalType.ADD}
+LIMIT_MOVE_THRESHOLD = 9.5
+ABNORMAL_GAP_THRESHOLD = 7.0
+LOW_LIQUIDITY_AMOUNT = 5_000_000.0
+LOW_LIQUIDITY_VOLUME = 100_000.0
 
 
 @dataclass
@@ -78,6 +82,63 @@ def benchmark_return(benchmark_df: Optional[pd.DataFrame], as_of_date: date, day
     return future_return(start_close, future, days) if start_close is not None else None
 
 
+def _pct_change(current: Optional[float], previous: Optional[float]) -> Optional[float]:
+    if current is None or previous is None or previous <= 0:
+        return None
+    return (current - previous) / previous * 100.0
+
+
+def _execution_diagnostics(history: pd.DataFrame, entry_row: Optional[pd.Series], entry_mode: str) -> Dict[str, object]:
+    previous_close = finite_float(history.iloc[-1].get("close")) if not history.empty else None
+    if entry_row is None:
+        return {
+            "suspended_or_missing_bar": True,
+            "limit_up_entry_risk": False,
+            "limit_down_entry_risk": False,
+            "limit_down_exit_risk": False,
+            "abnormal_gap_open": False,
+            "low_liquidity_risk": True,
+            "executable_entry_quality": "missing",
+        }
+
+    next_open = finite_float(entry_row.get("open"))
+    next_close = finite_float(entry_row.get("close"))
+    open_change_pct = _pct_change(next_open, previous_close)
+    amount = finite_float(entry_row.get("amount")) if "amount" in entry_row.index else None
+    volume = finite_float(entry_row.get("volume")) if "volume" in entry_row.index else None
+    low_liquidity = False
+    if amount is not None:
+        low_liquidity = amount < LOW_LIQUIDITY_AMOUNT
+    elif volume is not None:
+        low_liquidity = volume < LOW_LIQUIDITY_VOLUME
+    else:
+        low_liquidity = True
+
+    limit_up = bool(open_change_pct is not None and open_change_pct >= LIMIT_MOVE_THRESHOLD)
+    limit_down = bool(open_change_pct is not None and open_change_pct <= -LIMIT_MOVE_THRESHOLD)
+    abnormal_gap = bool(open_change_pct is not None and abs(open_change_pct) >= ABNORMAL_GAP_THRESHOLD)
+    if entry_mode == "insufficient_entry_data":
+        quality = "missing"
+    elif entry_mode != "next_open" or next_open is None or next_open <= 0:
+        quality = "degraded"
+    elif limit_up or limit_down or low_liquidity:
+        quality = "degraded"
+    else:
+        quality = "normal"
+
+    return {
+        "suspended_or_missing_bar": False,
+        "limit_up_entry_risk": limit_up,
+        "limit_down_entry_risk": limit_down,
+        "limit_down_exit_risk": limit_down,
+        "abnormal_gap_open": abnormal_gap,
+        "low_liquidity_risk": low_liquidity,
+        "executable_entry_quality": quality,
+        "entry_open_change_pct": round(open_change_pct, 4) if open_change_pct is not None else None,
+        "entry_close_available": bool(next_close is not None and next_close > 0),
+    }
+
+
 def evaluate_signal_forward(
     signal: StrategySignal,
     price_df: pd.DataFrame,
@@ -113,9 +174,23 @@ def evaluate_signal_forward(
         "entry_date": signal.entry_date,
         "entry_mode": signal.entry_mode,
     }
+    result.update(_execution_diagnostics(history, entry_row, entry_mode))
     evaluable_future = future.iloc[1:].sort_values("date") if entry_row is not None else pd.DataFrame()
+    execution_risk_flags = []
     if entry_mode == "insufficient_entry_data":
-        result["risk_flags"] = ";".join(sorted(set(str(signal.to_dict().get("risk_flags") or "").split(";") + ["insufficient_entry_data"]))).strip(";")
+        execution_risk_flags.append("insufficient_entry_data")
+    if result.get("limit_up_entry_risk"):
+        execution_risk_flags.append("limit_up_entry_risk")
+    if result.get("limit_down_entry_risk"):
+        execution_risk_flags.append("limit_down_entry_risk")
+    if result.get("low_liquidity_risk"):
+        execution_risk_flags.append("low_liquidity_risk")
+    if result.get("executable_entry_quality") == "degraded":
+        execution_risk_flags.append("degraded_entry_quality")
+    if execution_risk_flags:
+        result["risk_flags"] = ";".join(
+            sorted(set(str(signal.to_dict().get("risk_flags") or "").split(";") + execution_risk_flags))
+        ).strip(";")
 
     for days in EVAL_WINDOWS:
         stock_ret = future_return(entry_price, evaluable_future, days) if entry_price is not None else None

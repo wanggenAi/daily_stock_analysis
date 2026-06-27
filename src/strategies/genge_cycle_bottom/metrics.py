@@ -98,7 +98,74 @@ def _data_gap_counts(rows: Iterable[Dict[str, Any]]) -> Dict[str, int]:
                 counter["pb_missing"] += 1
         if "financial" in missing:
             counter["financial_missing"] += 1
+        if "industry_cycle" in missing:
+            counter["industry_cycle_missing"] += 1
+        if "stock_industry_map" in missing:
+            counter["stock_industry_map_missing"] += 1
     return dict(counter)
+
+
+def _missing_tokens(row: Dict[str, Any]) -> set[str]:
+    raw = row.get("missing_fields") or ""
+    if isinstance(raw, (list, tuple, set)):
+        return {str(part).strip() for part in raw if str(part).strip()}
+    return {part.strip() for part in str(raw).split(";") if part.strip()}
+
+
+def _coverage_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    total = len(rows)
+    if total == 0:
+        return {
+            "valuation_coverage_rate": 0.0,
+            "financial_coverage_rate": 0.0,
+            "industry_cycle_coverage_rate": 0.0,
+            "pe_missing_count": 0,
+            "pb_missing_count": 0,
+            "financial_missing_count": 0,
+            "industry_cycle_missing_count": 0,
+        }
+
+    pe_missing = 0
+    pb_missing = 0
+    valuation_covered = 0
+    financial_covered = 0
+    industry_cycle_covered = 0
+    industry_cycle_missing = 0
+
+    for row in rows:
+        missing = _missing_tokens(row)
+        missing_valuation = "valuation" in missing
+        missing_pe = missing_valuation or "pe" in missing
+        missing_pb = missing_valuation or "pb" in missing
+        pe_missing += int(missing_pe)
+        pb_missing += int(missing_pb)
+        valuation_covered += int(not missing_valuation and not (missing_pe and missing_pb))
+        financial_covered += int("financial" not in missing)
+        industry_missing = "industry_cycle" in missing or "stock_industry_map" in missing
+        industry_cycle_missing += int(industry_missing)
+        industry_cycle_covered += int(not industry_missing)
+
+    financial_missing = total - financial_covered
+    return {
+        "valuation_coverage_rate": round(valuation_covered / total * 100, 4),
+        "financial_coverage_rate": round(financial_covered / total * 100, 4),
+        "industry_cycle_coverage_rate": round(industry_cycle_covered / total * 100, 4),
+        "pe_missing_count": pe_missing,
+        "pb_missing_count": pb_missing,
+        "financial_missing_count": financial_missing,
+        "industry_cycle_missing_count": industry_cycle_missing,
+    }
+
+
+def _execution_diagnostics(rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    return {
+        "limit_up_entry_count": sum(1 for row in rows if row.get("limit_up_entry_risk") is True),
+        "limit_down_entry_count": sum(1 for row in rows if row.get("limit_down_entry_risk") is True),
+        "missing_entry_count": sum(1 for row in rows if row.get("suspended_or_missing_bar") is True or row.get("executable_entry_quality") == "missing"),
+        "degraded_entry_count": sum(1 for row in rows if row.get("executable_entry_quality") == "degraded"),
+        "low_liquidity_count": sum(1 for row in rows if row.get("low_liquidity_risk") is True),
+        "abnormal_gap_open_count": sum(1 for row in rows if row.get("abnormal_gap_open") is True),
+    }
 
 
 def _max_consecutive_losses(rows: List[Dict[str, Any]], return_field: str = "net_return_60d") -> int:
@@ -374,10 +441,14 @@ def compute_summary(
         for days in EVAL_WINDOWS:
             drawdowns.extend(_numbers(rows, f"low_max_drawdown_{days}d"))
     best_signals, worst_signals = _ranked_signals(rows)
+    coverage = _coverage_metrics(rows)
+    execution = _execution_diagnostics(rows)
     diagnostics = {
         "missing_fields": _split_flags(rows, "missing_fields"),
         "risk_flags": _split_flags(rows, "risk_flags"),
         "data_gap_counts": _data_gap_counts(rows),
+        "coverage": coverage,
+        "execution_diagnostics": execution,
         "best_signal_type_by_avg_60d_return": _best_signal_type(rows),
         "best_return_horizon_by_average": _best_horizon(summary),
     }
@@ -416,6 +487,8 @@ def compute_summary(
                 f"{days}d": summary.get(f"outperform_benchmark_rate_{days}d")
                 for days in EVAL_WINDOWS
             },
+            **coverage,
+            "execution_diagnostics": execution,
             "low_max_drawdown": {
                 "avg_250d": summary.get("avg_low_max_drawdown_250d"),
                 "worst": min(drawdowns) if drawdowns else None,

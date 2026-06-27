@@ -34,6 +34,15 @@ SIGNAL_DETAIL_COLUMNS = [
     "entry_price",
     "entry_date",
     "entry_mode",
+    "suspended_or_missing_bar",
+    "limit_up_entry_risk",
+    "limit_down_entry_risk",
+    "limit_down_exit_risk",
+    "abnormal_gap_open",
+    "low_liquidity_risk",
+    "executable_entry_quality",
+    "entry_open_change_pct",
+    "entry_close_available",
     "stop_loss",
     "take_profit",
     "max_position_pct",
@@ -210,6 +219,8 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
     diagnostics = summary.get("diagnostics") or {}
     missing_fields = diagnostics.get("missing_fields") or {}
     risk_flags = diagnostics.get("risk_flags") or {}
+    execution = summary.get("execution_diagnostics") or diagnostics.get("execution_diagnostics") or {}
+    coverage = diagnostics.get("coverage") or {}
     best_signal_type = diagnostics.get("best_signal_type_by_avg_60d_return") or "无可用数据"
     best_horizon = diagnostics.get("best_return_horizon_by_average") or "无可用数据"
     best_signals = summary.get("best_signals") or []
@@ -226,6 +237,8 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
         f"- 扫描步长：{diagnostics.get('step_days', '无可用数据')} 个交易日",
         f"- 入场模式：默认 next_open，缺失时回退 next_close",
         f"- 交易成本：fee_bps={diagnostics.get('fee_bps', '无可用数据')}，slippage_bps={diagnostics.get('slippage_bps', '无可用数据')}",
+        f"- 估值数据源：{diagnostics.get('valuation_provider', '无可用数据')}；财务数据源：{diagnostics.get('financial_provider', '无可用数据')}",
+        f"- 行业周期来源：{diagnostics.get('industry_cycle_source', '无可用数据')}",
         "",
         "## 核心结果",
         "",
@@ -240,6 +253,7 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
         f"- 平均最大回撤：{_format_pct(summary.get('avg_max_drawdown'))}（默认使用 low_max_drawdown）",
         f"- 最差最大回撤：{_format_pct(summary.get('max_drawdown_worst'))}",
         f"- 20/60/120/250 日跑赢基准比例：{_format_pct(summary.get('outperform_benchmark_rate_20d'))} / {_format_pct(summary.get('outperform_benchmark_rate_60d'))} / {_format_pct(summary.get('outperform_benchmark_rate_120d'))} / {_format_pct(summary.get('outperform_benchmark_rate_250d'))}",
+        f"- 估值/财务/行业周期覆盖率：{_format_pct(summary.get('valuation_coverage_rate'))} / {_format_pct(summary.get('financial_coverage_rate'))} / {_format_pct(summary.get('industry_cycle_coverage_rate'))}",
         f"- 最大连续亏损次数：{_format_value(summary.get('max_consecutive_losses'))}",
         f"- 样本数量警告：{_sample_warning(summary)}",
         f"- 最好历史信号：{json.dumps(best_signals[:3], ensure_ascii=False)}",
@@ -266,6 +280,10 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
             f"- 主要风险标签：{json.dumps(risk_flags, ensure_ascii=False) if risk_flags else '无'}",
             f"- 数据缺失字段：{json.dumps(missing_fields, ensure_ascii=False) if missing_fields else '无'}",
             f"- 数据缺口统计：{json.dumps(diagnostics.get('data_gap_counts', {}), ensure_ascii=False)}",
+            f"- 覆盖率统计：{json.dumps(coverage or {'valuation_coverage_rate': summary.get('valuation_coverage_rate'), 'financial_coverage_rate': summary.get('financial_coverage_rate')}, ensure_ascii=False)}",
+            f"- PE/PB/财务缺失数量：{summary.get('pe_missing_count', 0)} / {summary.get('pb_missing_count', 0)} / {summary.get('financial_missing_count', 0)}",
+            f"- 可执行性诊断：{json.dumps(execution, ensure_ascii=False)}",
+            f"- 公开数据 provider_errors：{json.dumps(diagnostics.get('provider_errors', {}), ensure_ascii=False)}",
             f"- 研究验收枚举：{gate.get('verdict', '无可用数据')}；原因：{json.dumps(gate.get('reasons', []), ensure_ascii=False)}",
             "",
             "## 第一版判断",

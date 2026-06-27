@@ -70,6 +70,14 @@ def _build_strategy_args(args: argparse.Namespace, pool_file: Path) -> list[str]
         strategy_args.extend(["--industry-cycle-file", args.industry_cycle_file])
     if args.stock_industry_map:
         strategy_args.extend(["--stock-industry-map", args.stock_industry_map])
+    if args.auto_fetch_valuation:
+        strategy_args.append("--auto-fetch-valuation")
+    if args.auto_fetch_financial:
+        strategy_args.append("--auto-fetch-financial")
+    if args.fundamental_cache_dir:
+        strategy_args.extend(["--fundamental-cache-dir", args.fundamental_cache_dir])
+    if args.fixture_smoke_passed:
+        strategy_args.append("--fixture-smoke-passed")
     return strategy_args
 
 
@@ -98,14 +106,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--benchmark", default="000300", choices=("000300", "000905", "000985"))
     parser.add_argument("--output-dir", default="reports/genge_cycle_bottom_real")
     parser.add_argument("--max-codes", type=int, default=20, help="Limit loaded pool size for local smoke runs.")
-    parser.add_argument("--step-days", type=int, default=20, help="Signal scan interval. Lower is slower.")
+    parser.add_argument("--step-days", type=int, default=None, help="Signal scan interval. Default is 1; fast smoke uses 20 unless overridden.")
+    parser.add_argument("--fast-smoke", action="store_true", help="Use step-days=20 when --step-days is not provided.")
     parser.add_argument("--fee-bps", type=float, default=5.0)
     parser.add_argument("--slippage-bps", type=float, default=10.0)
     parser.add_argument("--start-date")
     parser.add_argument("--end-date")
+    parser.add_argument("--auto-fetch-valuation", action="store_true")
+    parser.add_argument("--auto-fetch-financial", action="store_true")
+    parser.add_argument("--fundamental-cache-dir", default="data/cache/genge_fundamentals")
     parser.add_argument("--industry-cycle-file")
     parser.add_argument("--stock-industry-map")
+    parser.add_argument("--fixture-smoke-passed", action="store_true", help="Pass acceptance context after fixture smoke has been verified")
     return parser
+
+
+def resolve_step_days(args: argparse.Namespace) -> int:
+    if args.step_days is not None:
+        return max(1, int(args.step_days))
+    return 20 if bool(args.fast_smoke) else 1
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -114,6 +133,7 @@ def main(argv: list[str] | None = None) -> int:
     pool_path = Path(args.stock_pool_file)
     if not pool_path.exists():
         parser.error(f"stock pool file not found: {pool_path}")
+    args.step_days = resolve_step_days(args)
 
     lines = _read_pool_lines(pool_path, args.max_codes)
     if not lines:
@@ -136,11 +156,19 @@ def main(argv: list[str] | None = None) -> int:
         summary = json.loads((report_dir / "summary.json").read_text(encoding="utf-8"))
         diagnostics = summary.get("diagnostics") or {}
         data_errors = diagnostics.get("data_errors") or {}
+        provider_errors = diagnostics.get("provider_errors") or {}
         gate = summary.get("paper_trading_gate") or {}
         print(f"elapsed_seconds={elapsed:.2f}")
         print(f"report_dir={report_dir}")
         print(f"data_failures={len(data_errors)}")
+        print(f"provider_error_count={len(provider_errors)}")
+        print(f"pe_missing_count={summary.get('pe_missing_count', 0)}")
+        print(f"pb_missing_count={summary.get('pb_missing_count', 0)}")
+        print(f"financial_missing_count={summary.get('financial_missing_count', 0)}")
+        print(f"valuation_coverage_rate={summary.get('valuation_coverage_rate', 0)}")
+        print(f"financial_coverage_rate={summary.get('financial_coverage_rate', 0)}")
         print(f"total_signals={summary.get('total_signals', 0)}")
+        print(f"risk_review_count={len(summary.get('worst_signals') or [])}")
         print(f"paper_trading_gate={gate.get('verdict', 'UNKNOWN')}")
     else:
         print(f"elapsed_seconds={elapsed:.2f}")

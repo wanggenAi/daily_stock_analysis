@@ -83,6 +83,7 @@ def test_entry_falls_back_to_next_close_when_next_open_missing() -> None:
     assert result["entry_date"] == "2024-01-02"
     assert result["entry_price"] == 110.0
     assert result["entry_mode"] == "next_close"
+    assert result["executable_entry_quality"] == "degraded"
 
 
 def test_stop_loss_is_calculated_per_future_window() -> None:
@@ -95,3 +96,30 @@ def test_stop_loss_is_calculated_per_future_window() -> None:
     assert result["hit_stop_loss_60d"] is True
     assert result["hit_stop_loss_120d"] is True
     assert result["hit_stop_loss_250d"] is True
+
+
+def test_limit_up_entry_and_low_liquidity_are_recorded() -> None:
+    price_df = _price_frame([100.0] + [110.0] * 300)
+    price_df.loc[1, "open"] = 110.0
+    price_df.loc[1, "volume"] = 50_000
+
+    result = evaluate_signal_forward(_signal("2024-01-01"), price_df)
+
+    assert result["limit_up_entry_risk"] is True
+    assert result["abnormal_gap_open"] is True
+    assert result["low_liquidity_risk"] is True
+    assert result["executable_entry_quality"] == "degraded"
+    assert "limit_up_entry_risk" in result["risk_flags"]
+    assert "low_liquidity_risk" in result["risk_flags"]
+
+
+def test_missing_next_bar_is_recorded_as_non_executable() -> None:
+    price_df = _price_frame([100.0])
+
+    result = evaluate_signal_forward(_signal("2024-01-01"), price_df)
+
+    assert result["entry_price"] is None
+    assert result["suspended_or_missing_bar"] is True
+    assert result["executable_entry_quality"] == "missing"
+    assert result["low_liquidity_risk"] is True
+    assert "insufficient_entry_data" in result["risk_flags"]

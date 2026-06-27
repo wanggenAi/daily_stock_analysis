@@ -13,10 +13,10 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Setup Python
-        uses: actions/setup-python@v6
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
@@ -70,10 +70,24 @@ jobs:
               "industry_summary",
               "signal_type_summary",
               "time_split_summary",
+              "valuation_coverage_rate",
+              "financial_coverage_rate",
+              "industry_cycle_coverage_rate",
+              "execution_diagnostics",
               "paper_trading_gate",
           ]
           missing = [key for key in required if key not in summary]
           assert not missing, f"missing summary keys: {missing}"
+          diagnostics = summary.get("diagnostics") or {}
+          for key in ("coverage", "execution_diagnostics", "data_gap_counts"):
+              assert key in diagnostics, f"missing diagnostics key: {key}"
           assert summary["avg_return_20d"] == summary["avg_net_return_20d"], "avg_return_20d must remain net-return compatible"
           print(f"validated={latest}")
           PY
+
+      - name: Upload fixture smoke report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-cycle-bottom-ci-smoke
+          path: reports/genge_cycle_bottom_ci_smoke
