@@ -1129,25 +1129,29 @@ class PortfolioService:
         if not unique_symbols:
             return {}
 
-        fetcher_manager = None
-        try:
-            from data_provider.base import DataFetcherManager
+        shared_fetcher_manager: Optional[Any] = None
+        if len(unique_symbols) >= 5:
+            try:
+                from data_provider.base import DataFetcherManager
 
-            fetcher_manager = DataFetcherManager()
-            if len(unique_symbols) >= 5:
-                fetcher_manager.prefetch_realtime_quotes(unique_symbols)
-        except Exception as exc:
-            logger.warning("Failed to initialize realtime portfolio prefetch manager: %s", exc)
+                fetcher_manager = DataFetcherManager()
+                prefetched_count = fetcher_manager.prefetch_realtime_quotes(unique_symbols)
+                if prefetched_count >= len(unique_symbols):
+                    # Share only after a full bulk cache fill; otherwise manager-owned fetcher locks
+                    # can serialize per-symbol worker calls.
+                    shared_fetcher_manager = fetcher_manager
+            except Exception as exc:
+                logger.warning("Failed to initialize realtime portfolio prefetch manager: %s", exc)
 
         if len(unique_symbols) == 1:
             symbol = unique_symbols[0]
-            return {symbol: self._fetch_realtime_position_price(symbol, fetcher_manager)}
+            return {symbol: self._fetch_realtime_position_price(symbol, shared_fetcher_manager)}
 
         results: Dict[str, Tuple[Optional[float], Optional[str]]] = {}
         max_workers = min(PORTFOLIO_REALTIME_QUOTE_MAX_WORKERS, len(unique_symbols))
         with ThreadPoolExecutor(max_workers=max_workers, thread_name_prefix="portfolio-quote") as executor:
             futures = {
-                executor.submit(self._fetch_realtime_position_price, symbol, fetcher_manager): symbol
+                executor.submit(self._fetch_realtime_position_price, symbol, shared_fetcher_manager): symbol
                 for symbol in unique_symbols
             }
             for future in as_completed(futures):

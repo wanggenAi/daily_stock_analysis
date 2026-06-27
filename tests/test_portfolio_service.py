@@ -224,7 +224,7 @@ class PortfolioServiceTestCase(unittest.TestCase):
         self.assertEqual(pos["price_source"], "history_close")
         self.assertTrue(pos["price_available"])
 
-    def test_current_snapshot_prefetches_realtime_prices_for_multiple_positions(self) -> None:
+    def test_current_snapshot_does_not_serialize_non_bulk_realtime_prefetch(self) -> None:
         today = date.today()
         account = self.service.create_account(name="Main", broker="Demo", market="cn", base_currency="CNY")
         aid = account["id"]
@@ -240,36 +240,39 @@ class PortfolioServiceTestCase(unittest.TestCase):
                 currency="CNY",
             )
 
-        active_fetches = 0
-        max_active_fetches = 0
+        fetch_state = {"active": 0, "max_active": 0}
         lock = threading.Lock()
         release = threading.Event()
         called_symbols: list[str] = []
+        manager_instances: list[object] = []
 
-        def fake_realtime_fetch(symbol: str, _fetcher_manager: object = None) -> tuple[float, str]:
-            nonlocal active_fetches, max_active_fetches
-            with lock:
-                called_symbols.append(symbol)
-                active_fetches += 1
-                max_active_fetches = max(max_active_fetches, active_fetches)
-                if active_fetches >= 2:
-                    release.set()
-            release.wait(timeout=1.0)
-            with lock:
-                active_fetches -= 1
-            return 125.0, "unit-test"
+        class FakeDataFetcherManager:
+            def __init__(self) -> None:
+                self._fetcher_call_lock = threading.Lock()
+                manager_instances.append(self)
 
-        with patch.object(
-            PortfolioService,
-            "_fetch_realtime_position_price",
-            side_effect=fake_realtime_fetch,
-        ):
+            def get_realtime_quote(self, symbol: str, log_final_failure: bool = True) -> SimpleNamespace:
+                del log_final_failure
+                with self._fetcher_call_lock:
+                    with lock:
+                        called_symbols.append(symbol)
+                        fetch_state["active"] += 1
+                        fetch_state["max_active"] = max(fetch_state["max_active"], fetch_state["active"])
+                        if fetch_state["active"] >= 2:
+                            release.set()
+                    release.wait(timeout=1.0)
+                    with lock:
+                        fetch_state["active"] -= 1
+                    return SimpleNamespace(price=125.0, source="unit-test")
+
+        with patch("data_provider.base.DataFetcherManager", new=FakeDataFetcherManager):
             snapshot = self.service.get_portfolio_snapshot(account_id=aid, as_of=today, cost_method="fifo")
 
         positions = snapshot["accounts"][0]["positions"]
         self.assertEqual(len(positions), 3)
         self.assertEqual(set(called_symbols), {position["symbol"] for position in positions})
-        self.assertGreaterEqual(max_active_fetches, 2)
+        self.assertGreaterEqual(len(manager_instances), 2)
+        self.assertGreaterEqual(fetch_state["max_active"], 2)
         self.assertTrue(all(position["price_source"] == "realtime_quote" for position in positions))
         self.assertTrue(all(position["price_provider"] == "unit-test" for position in positions))
 
