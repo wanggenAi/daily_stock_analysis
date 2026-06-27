@@ -34,6 +34,9 @@ class StrategySignal:
     trend_stabilization_score: float
     market_environment_score: float
     industry_cycle_score: float
+    industry: Optional[str] = None
+    industry_cycle_phase: Optional[str] = None
+    market_environment_state: Optional[str] = None
     price_percentile_3y: Optional[float] = None
     price_percentile_5y: Optional[float] = None
     price_percentile_10y: Optional[float] = None

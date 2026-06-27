@@ -44,6 +44,7 @@ class FeatureSet:
     ma250: Optional[float] = None
     industry: Optional[str] = None
     industry_cycle_phase: Optional[str] = None
+    market_environment_state: Optional[str] = None
     risk_flags: List[str] = field(default_factory=list)
     missing_fields: List[str] = field(default_factory=list)
     diagnostics: Dict[str, Any] = field(default_factory=dict)
@@ -443,19 +444,21 @@ def compute_trend_stabilization_score(history: pd.DataFrame) -> Tuple[float, Dic
 
 def compute_market_environment_score(benchmark_history: Optional[pd.DataFrame], as_of_date: date) -> Tuple[float, List[str], Dict[str, Any]]:
     if benchmark_history is None or benchmark_history.empty:
-        return 50.0, ["benchmark"], {}
+        return 50.0, ["benchmark"], {"market_environment_state": "unknown"}
     history = slice_as_of(benchmark_history, as_of_date)
     if history.empty:
-        return 50.0, ["benchmark"], {}
+        return 50.0, ["benchmark"], {"market_environment_state": "unknown"}
     close = finite_float(history.iloc[-1].get("close"))
     ma20 = _moving_average(history, 20)
     ma60 = _moving_average(history, 60)
     ma120 = _moving_average(history, 120)
     diagnostics = {"benchmark_ma20": ma20, "benchmark_ma60": ma60, "benchmark_ma120": ma120}
     if close is None or ma20 is None or ma60 is None:
+        diagnostics["market_environment_state"] = "unknown"
         return 50.0, ["benchmark_ma"], diagnostics
 
     score = 45.0
+    state = "neutral"
     if close >= ma20:
         score += 15
     if close >= ma60:
@@ -464,6 +467,10 @@ def compute_market_environment_score(benchmark_history: Optional[pd.DataFrame], 
         score += 10
     if close < ma20 and close < ma60:
         score -= 20
+        state = "weak"
+    elif close >= ma20 and close >= ma60 and (ma120 is None or close >= ma120):
+        state = "strong"
+    diagnostics["market_environment_state"] = state
     return max(0.0, min(100.0, score)), [], diagnostics
 
 
@@ -560,6 +567,7 @@ def build_feature_set(
     features.ma250 = trend_diag.get("ma250")
     features.industry = industry
     features.industry_cycle_phase = industry_diag.get("industry_cycle_phase")
+    features.market_environment_state = market_diag.get("market_environment_state")
     features.missing_fields = sorted(set(price_missing + valuation_missing + financial_missing + trend_missing + market_missing + industry_missing))
     features.risk_flags = sorted(set(financial_risks + trend_risks))
     features.diagnostics.update(valuation_diag)

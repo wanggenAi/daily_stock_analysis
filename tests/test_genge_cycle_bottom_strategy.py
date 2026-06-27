@@ -18,6 +18,10 @@ def _feature(trend_score: float = 70.0, financial_score: float = 70.0) -> Featur
     )
 
 
+def _confirm_feature() -> FeatureSet:
+    return _feature(trend_score=82.0, financial_score=75.0)
+
+
 def test_signal_classification_thresholds() -> None:
     strategy = GenGeCycleBottomStrategy()
 
@@ -33,3 +37,14 @@ def test_risk_flags_cap_or_reject_signal() -> None:
     assert strategy._classify(80.0, _feature(trend_score=80.0), ["debt_ratio_high"]) == SignalType.WATCH
     assert strategy._classify(80.0, _feature(trend_score=80.0), ["debt_ratio_extreme"]) == SignalType.REJECT
     assert strategy._classify(80.0, _feature(trend_score=80.0, financial_score=30.0), ["loss_making"]) == SignalType.REJECT
+
+
+def test_confirm_buy_requires_trend_and_complete_financial_cycle_context() -> None:
+    strategy = GenGeCycleBottomStrategy()
+    weak_trend = _feature(trend_score=77.9, financial_score=75.0)
+    missing_context = _confirm_feature()
+    missing_context.missing_fields.extend(["financial", "industry_cycle"])
+
+    assert strategy._classify(82.0, weak_trend, []) == SignalType.LEFT_SMALL_BUY
+    assert strategy._classify(82.0, missing_context, []) == SignalType.LEFT_SMALL_BUY
+    assert strategy._classify(82.0, _confirm_feature(), []) == SignalType.CONFIRM_BUY

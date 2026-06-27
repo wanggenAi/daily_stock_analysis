@@ -21,6 +21,9 @@ SIGNAL_DETAIL_COLUMNS = [
     "trend_stabilization_score",
     "market_environment_score",
     "industry_cycle_score",
+    "industry",
+    "industry_cycle_phase",
+    "market_environment_state",
     "price_percentile_3y",
     "price_percentile_5y",
     "price_percentile_10y",
@@ -100,6 +103,87 @@ def _format_value(value: Any) -> str:
     return str(value)
 
 
+def _top_group_lines(title: str, grouped: Dict[str, Any], limit: int = 8) -> List[str]:
+    lines = [f"## {title}", ""]
+    if not grouped:
+        return lines + ["- 无可用数据", ""]
+    ordered = sorted(
+        grouped.items(),
+        key=lambda item: int((item[1] or {}).get("total_signals") or 0),
+        reverse=True,
+    )
+    for name, metrics in ordered[:limit]:
+        metrics = metrics or {}
+        lines.append(
+            "- "
+            f"{name}: 样本 {metrics.get('total_signals', 0)}，"
+            f"60日胜率 {_format_pct(metrics.get('win_rate_60d'))}，"
+            f"60日平均净收益 {_format_pct(metrics.get('avg_net_return_60d'))}，"
+            f"250日低点回撤 {_format_pct(metrics.get('low_max_drawdown_250d'))}，"
+            f"判断 {metrics.get('verdict', '无可用数据')}"
+        )
+    lines.append("")
+    return lines
+
+
+def _failure_reason_text(summary: Dict[str, Any]) -> List[str]:
+    failure = summary.get("failure_reason_summary") or {}
+    reasons = failure.get("reason_counts") or {}
+    industry_drag = failure.get("industry_drag") or {}
+    signal_type_summary = summary.get("signal_type_summary") or {}
+    expectancy = summary.get("expectancy_diagnostics") or {}
+    top_reasons = "、".join(f"{key}({value})" for key, value in list(reasons.items())[:5]) or "样本不足，暂无法归因"
+    drag_industries = "、".join(list(industry_drag.keys())[:5]) or "无可用数据"
+    signal_order = sorted(
+        signal_type_summary.items(),
+        key=lambda item: ((item[1] or {}).get("avg_net_return_60d") is None, (item[1] or {}).get("avg_net_return_60d") or -999),
+        reverse=True,
+    )
+    best_signal = signal_order[0][0] if signal_order else "无可用数据"
+    worst_signal = signal_order[-1][0] if signal_order else "无可用数据"
+    lines = [
+        "## 失败原因诊断",
+        "",
+        f"- 策略当前主要失败原因可能是：{top_reasons}。",
+        f"- 拖累较大的行业包括：{drag_industries}。",
+        f"- LEFT_SMALL_BUY 和 CONFIRM_BUY 谁更有效：当前 60 日平均净收益较好的信号类型是 {best_signal}，较弱的是 {worst_signal}。",
+        f"- 是否应该缩短持有周期：{'是，当前短周期相对更好' if expectancy.get('short_horizon_better') else '暂不能仅凭当前样本判断'}。",
+        f"- 是否应该提高趋势确认门槛：若趋势未确认、买太早或止损不够严格占比靠前，应继续提高 CONFIRM_BUY 趋势门槛并降低左侧信号仓位。",
+        "",
+    ]
+    return lines
+
+
+def _time_split_lines(summary: Dict[str, Any]) -> List[str]:
+    split = summary.get("time_split_summary") or {}
+    labels = {
+        "first_half": "前半段历史",
+        "second_half": "后半段历史",
+        "recent_2y": "最近两年",
+    }
+    lines = ["## 时间切片", ""]
+    for key, label in labels.items():
+        metrics = split.get(key) or {}
+        lines.append(
+            f"- {label}: 样本 {metrics.get('total_signals', 0)}，"
+            f"60日胜率 {_format_pct(metrics.get('win_rate_60d'))}，"
+            f"60日平均净收益 {_format_pct(metrics.get('avg_net_return_60d'))}，"
+            f"250日低点回撤 {_format_pct(metrics.get('low_max_drawdown_250d'))}，"
+            f"判断 {metrics.get('verdict', '无可用数据')}"
+        )
+    lines.append("")
+    return lines
+
+
+def _sample_warning(summary: Dict[str, Any]) -> str:
+    total = int(summary.get("total_signals") or 0)
+    if total < 100:
+        return "样本数量不足 100，不能据此进入模拟盘。"
+    if total < 300:
+        return "样本数量已超过最低门槛，但仍偏少，需要更大真实股票池复核。"
+    return "样本数量达到研究统计门槛，但仍需检查数据质量与市场阶段分布。"
+
+
 def _conclusion(summary: Dict[str, Any]) -> str:
     total = int(summary.get("total_signals") or 0)
     avg_60d = summary.get("avg_return_60d")
@@ -130,13 +214,7 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
     best_horizon = diagnostics.get("best_return_horizon_by_average") or "无可用数据"
     best_signals = summary.get("best_signals") or []
     worst_signals = summary.get("worst_signals") or []
-    threshold_pass = (
-        (summary.get("total_signals") or 0) > 0
-        and (summary.get("avg_return_60d") or 0) > 0
-        and (summary.get("avg_return_120d") or 0) > 0
-        and (summary.get("avg_max_drawdown") is not None)
-    )
-
+    gate = summary.get("paper_trading_gate") or {}
     lines = [
         "# 根哥周期底部硬逻辑策略 - 第一版回测摘要",
         "",
@@ -163,23 +241,42 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
         f"- 最差最大回撤：{_format_pct(summary.get('max_drawdown_worst'))}",
         f"- 20/60/120/250 日跑赢基准比例：{_format_pct(summary.get('outperform_benchmark_rate_20d'))} / {_format_pct(summary.get('outperform_benchmark_rate_60d'))} / {_format_pct(summary.get('outperform_benchmark_rate_120d'))} / {_format_pct(summary.get('outperform_benchmark_rate_250d'))}",
         f"- 最大连续亏损次数：{_format_value(summary.get('max_consecutive_losses'))}",
+        f"- 样本数量警告：{_sample_warning(summary)}",
         f"- 最好历史信号：{json.dumps(best_signals[:3], ensure_ascii=False)}",
         f"- 最差历史信号：{json.dumps(worst_signals[:3], ensure_ascii=False)}",
         "",
-        "## 风险与缺失",
+        "## 分持有周期结果",
         "",
-        f"- 主要风险标签：{json.dumps(risk_flags, ensure_ascii=False) if risk_flags else '无'}",
-        f"- 数据缺失字段：{json.dumps(missing_fields, ensure_ascii=False) if missing_fields else '无'}",
-        f"- 实盘前门槛：{'通过研究门槛，可继续模拟盘前观察' if threshold_pass else '未通过，需要继续调整或补数据'}",
+        f"- 20 日：胜率 {_format_pct(summary.get('win_rate_20d'))}，平均净收益 {_format_pct(summary.get('avg_net_return_20d'))}，跑赢基准 {_format_pct(summary.get('outperform_benchmark_rate_20d'))}",
+        f"- 60 日：胜率 {_format_pct(summary.get('win_rate_60d'))}，平均净收益 {_format_pct(summary.get('avg_net_return_60d'))}，跑赢基准 {_format_pct(summary.get('outperform_benchmark_rate_60d'))}",
+        f"- 120 日：胜率 {_format_pct(summary.get('win_rate_120d'))}，平均净收益 {_format_pct(summary.get('avg_net_return_120d'))}，跑赢基准 {_format_pct(summary.get('outperform_benchmark_rate_120d'))}",
+        f"- 250 日：胜率 {_format_pct(summary.get('win_rate_250d'))}，平均净收益 {_format_pct(summary.get('avg_net_return_250d'))}，跑赢基准 {_format_pct(summary.get('outperform_benchmark_rate_250d'))}",
         "",
-        "## 第一版判断",
-        "",
-        _conclusion(summary),
-        "",
-        "明确结论：不可实盘。第一版仅可用于研究复核，是否进入模拟盘观察必须结合更大股票池、更稳定估值/财务数据和人工复核。",
-        "",
-        "说明：本报告只做历史信号验证，不构成投资建议，不接入券商账户，不自动下单。",
     ]
+    lines.extend(_top_group_lines("分行业结果", summary.get("industry_summary") or {}))
+    lines.extend(_top_group_lines("分 Signal Type 结果", summary.get("signal_type_summary") or {}))
+    lines.extend(_top_group_lines("分 Market Environment 结果", summary.get("market_environment_summary") or {}))
+    lines.extend(_top_group_lines("分 Industry Cycle Phase 结果", summary.get("industry_cycle_phase_summary") or {}))
+    lines.extend(_time_split_lines(summary))
+    lines.extend(_failure_reason_text(summary))
+    lines.extend(
+        [
+            "## 风险与缺失",
+            "",
+            f"- 主要风险标签：{json.dumps(risk_flags, ensure_ascii=False) if risk_flags else '无'}",
+            f"- 数据缺失字段：{json.dumps(missing_fields, ensure_ascii=False) if missing_fields else '无'}",
+            f"- 数据缺口统计：{json.dumps(diagnostics.get('data_gap_counts', {}), ensure_ascii=False)}",
+            f"- 研究验收枚举：{gate.get('verdict', '无可用数据')}；原因：{json.dumps(gate.get('reasons', []), ensure_ascii=False)}",
+            "",
+            "## 第一版判断",
+            "",
+            _conclusion(summary),
+            "",
+            "明确结论：不可实盘。第一版仅可用于研究复核，是否进入模拟盘观察必须结合更大股票池、更稳定估值/财务数据和人工复核。",
+            "",
+            "说明：本报告只做历史信号验证，不构成投资建议，不接入券商账户，不自动下单。",
+        ]
+    )
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 

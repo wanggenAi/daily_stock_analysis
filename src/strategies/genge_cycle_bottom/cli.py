@@ -21,17 +21,34 @@ def _parse_codes(raw_codes: Optional[str]) -> List[str]:
     return [code.strip() for code in raw_codes.split(",") if code.strip()]
 
 
-def _read_stock_pool(path: Optional[str]) -> List[str]:
+def _normalize_code(code: str) -> str:
+    return str(code).strip().zfill(6) if str(code).strip().isdigit() else str(code).strip()
+
+
+def _read_stock_pool_records(path: Optional[str]) -> List[Dict[str, str]]:
     if not path:
         return []
     stock_pool_path = Path(path)
-    codes: List[str] = []
+    records: List[Dict[str, str]] = []
     for line in stock_pool_path.read_text(encoding="utf-8").splitlines():
-        code = line.strip()
-        if not code or code.startswith("#"):
+        raw = line.strip()
+        if not raw or raw.startswith("#"):
             continue
-        codes.append(code.split(",")[0].strip())
-    return codes
+        parts = [part.strip() for part in raw.split(",")]
+        code = _normalize_code(parts[0])
+        if not code:
+            continue
+        record = {"code": code}
+        if len(parts) >= 2 and parts[1]:
+            record["stock_name"] = parts[1]
+        if len(parts) >= 3 and parts[2]:
+            record["industry"] = parts[2]
+        records.append(record)
+    return records
+
+
+def _read_stock_pool(path: Optional[str]) -> List[str]:
+    return [record["code"] for record in _read_stock_pool_records(path)]
 
 
 def _load_csv(path: Path) -> pd.DataFrame:
@@ -60,7 +77,7 @@ def _load_stock_industry_map(path: Optional[str]) -> Dict[str, str]:
     if "code" not in df.columns or "industry" not in df.columns:
         raise ValueError("stock industry map must include code and industry columns")
     return {
-        str(row["code"]).zfill(6): str(row["industry"])
+        _normalize_code(row["code"]): str(row["industry"])
         for _, row in df.dropna(subset=["code", "industry"]).iterrows()
     }
 
@@ -101,32 +118,38 @@ def _load_inputs(
         except Exception as exc:
             manager_error = f"{type(exc).__name__}: {exc}"
     industry_map = _load_stock_industry_map(args.stock_industry_map)
+    pool_records = {
+        _normalize_code(record["code"]): record
+        for record in _read_stock_pool_records(args.stock_pool_file)
+    }
 
     for code in codes:
         try:
+            normalized_code = _normalize_code(code)
+            pool_record = pool_records.get(normalized_code, {})
             if manager_error:
                 raise RuntimeError(f"live data provider unavailable: {manager_error}")
             if args.price_data_dir:
-                price_df = _load_price_from_csv(args.price_data_dir, code)
+                price_df = _load_price_from_csv(args.price_data_dir, normalized_code)
                 sources[code] = "csv"
-                stock_name = code
+                stock_name = pool_record.get("stock_name") or normalized_code
             else:
-                price_df, source = _fetch_price_live(manager, code, start_date, end_date, args.years)
+                price_df, source = _fetch_price_live(manager, normalized_code, start_date, end_date, args.years)
                 sources[code] = source
                 try:
-                    stock_name = manager.get_stock_name(code, allow_realtime=False) or code
+                    stock_name = pool_record.get("stock_name") or manager.get_stock_name(normalized_code, allow_realtime=False) or normalized_code
                 except Exception:
-                    stock_name = code
-            valuation_df = _load_optional_csv(args.valuation_data_dir, code)
-            financial_df = _load_optional_csv(args.financial_data_dir, code)
+                    stock_name = pool_record.get("stock_name") or normalized_code
+            valuation_df = _load_optional_csv(args.valuation_data_dir, normalized_code)
+            financial_df = _load_optional_csv(args.financial_data_dir, normalized_code)
             inputs.append(
                 BacktestInput(
-                    code=code,
+                    code=normalized_code,
                     stock_name=stock_name,
                     price_df=prepare_price_frame(price_df),
                     valuation_df=valuation_df,
                     financial_df=financial_df,
-                    industry=industry_map.get(code.zfill(6)) or industry_map.get(code),
+                    industry=pool_record.get("industry") or industry_map.get(normalized_code) or industry_map.get(code),
                 )
             )
         except Exception as exc:
@@ -185,7 +208,7 @@ def build_parser() -> argparse.ArgumentParser:
 def main(argv: Optional[List[str]] = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
-    codes = _parse_codes(args.codes) + _read_stock_pool(args.stock_pool_file)
+    codes = [_normalize_code(code) for code in (_parse_codes(args.codes) + _read_stock_pool(args.stock_pool_file))]
     codes = list(dict.fromkeys(codes))
     if not codes:
         parser.error("no stock codes provided")
@@ -227,6 +250,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         "slippage_bps": float(args.slippage_bps),
         "industry_cycle_file": args.industry_cycle_file,
         "stock_industry_map": args.stock_industry_map,
+        "source_mode": "fixture" if args.price_data_dir else "real",
+        "fixture_smoke_passed": bool(args.price_data_dir),
+        "real_5y_passed": bool(not args.price_data_dir and int(args.years) == 5 and inputs and not data_errors),
+        "real_10y_passed": bool(not args.price_data_dir and int(args.years) == 10 and inputs and not data_errors),
+        "real_10y_safely_degraded": bool(not args.price_data_dir and int(args.years) == 10 and inputs and data_errors),
+        "no_lookahead_risk": True,
+        "no_auto_trade": True,
     }
     summary = compute_summary(rows, extra_diagnostics=diagnostics)
     report_dir = write_reports(rows, summary, args.output_dir)

@@ -2,14 +2,71 @@ from __future__ import annotations
 
 import csv
 import json
+from datetime import date, timedelta
 from pathlib import Path
 
+from src.strategies.genge_cycle_bottom.acceptance import (
+    FAIL_STRATEGY_EXPECTANCY,
+    PASS_PAPER_TRADING_READY,
+    PASS_RESEARCH_ONLY,
+)
 from src.strategies.genge_cycle_bottom.cli import main
 from src.strategies.genge_cycle_bottom.metrics import compute_summary
 from src.strategies.genge_cycle_bottom.report import SIGNAL_DETAIL_COLUMNS, write_reports
 
 
 FIXTURE_DIR = Path("tests/fixtures/genge_cycle_bottom")
+
+
+def _summary_row(
+    index: int,
+    *,
+    signal_type: str = "LEFT_SMALL_BUY",
+    industry: str = "光伏",
+    net_20d: float = 1.0,
+    net_60d: float = 2.0,
+    net_120d: float = 3.0,
+    net_250d: float = 4.0,
+    drawdown: float = -6.0,
+    missing_fields: str = "",
+    risk_flags: str = "",
+    trend_score: float = 75.0,
+    market_score: float = 60.0,
+    industry_score: float = 65.0,
+    outperform: bool = True,
+) -> dict:
+    as_of = date(2021, 1, 1) + timedelta(days=index * 30)
+    return {
+        "code": f"{index:06d}",
+        "stock_name": f"测试{index}",
+        "as_of_date": as_of.isoformat(),
+        "signal_type": signal_type,
+        "industry": industry,
+        "industry_cycle_phase": "bottom_repair",
+        "market_environment_state": "neutral",
+        "trend_stabilization_score": trend_score,
+        "market_environment_score": market_score,
+        "industry_cycle_score": industry_score,
+        "valuation_score": 55.0,
+        "missing_fields": missing_fields,
+        "risk_flags": risk_flags,
+        "net_return_20d": net_20d,
+        "net_return_60d": net_60d,
+        "net_return_120d": net_120d,
+        "net_return_250d": net_250d,
+        "raw_return_20d": net_20d + 0.3,
+        "raw_return_60d": net_60d + 0.3,
+        "raw_return_120d": net_120d + 0.3,
+        "raw_return_250d": net_250d + 0.3,
+        "low_max_drawdown_20d": drawdown,
+        "low_max_drawdown_60d": drawdown,
+        "low_max_drawdown_120d": drawdown,
+        "low_max_drawdown_250d": drawdown,
+        "outperform_benchmark_20d": outperform,
+        "outperform_benchmark_60d": outperform,
+        "outperform_benchmark_120d": outperform,
+        "outperform_benchmark_250d": outperform,
+    }
 
 
 def test_report_fields_include_p0_required_columns(tmp_path: Path) -> None:
@@ -26,6 +83,9 @@ def test_report_fields_include_p0_required_columns(tmp_path: Path) -> None:
             "trend_stabilization_score": 70,
             "market_environment_score": 60,
             "industry_cycle_score": 50,
+            "industry": "测试行业",
+            "industry_cycle_phase": "bottom_repair",
+            "market_environment_state": "neutral",
             "entry_price": 10,
             "entry_date": "2024-01-02",
             "entry_mode": "next_open",
@@ -41,6 +101,9 @@ def test_report_fields_include_p0_required_columns(tmp_path: Path) -> None:
         header = next(csv.reader(fh))
     for column in (
         "industry_cycle_score",
+        "industry",
+        "industry_cycle_phase",
+        "market_environment_state",
         "entry_price",
         "entry_date",
         "entry_mode",
@@ -61,9 +124,100 @@ def test_summary_defaults_to_net_return_and_low_drawdown() -> None:
     summary = compute_summary(rows)
 
     assert summary["avg_return_60d"] == 2.5
+    assert summary["avg_net_return_60d"] == 2.5
     assert summary["avg_raw_return_60d"] == 4.5
     assert summary["avg_max_drawdown_60d"] == -10.5
     assert summary["drawdown"]["default_basis"] == "low_max_drawdown"
+    assert summary["paper_trading_gate"]["verdict"] == PASS_RESEARCH_ONLY
+
+
+def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() -> None:
+    rows = [
+        _summary_row(0, industry="光伏", signal_type="LEFT_SMALL_BUY", net_60d=5.0),
+        _summary_row(
+            1,
+            industry="光伏",
+            signal_type="CONFIRM_BUY",
+            net_60d=-8.0,
+            net_120d=-12.0,
+            net_250d=-20.0,
+            drawdown=-28.0,
+            missing_fields="financial;industry_cycle",
+            risk_flags="loss_making",
+            trend_score=50.0,
+            market_score=35.0,
+            industry_score=40.0,
+            outperform=False,
+        ),
+        _summary_row(40, industry="猪肉", signal_type="CONFIRM_BUY", net_60d=4.0),
+    ]
+
+    summary = compute_summary(
+        rows,
+        extra_diagnostics={
+            "source_mode": "fixture",
+            "fixture_smoke_passed": True,
+            "data_errors": {"000999": "TimeoutError: fixture diagnostic"},
+        },
+    )
+
+    for key in (
+        "industry_summary",
+        "signal_type_summary",
+        "market_environment_summary",
+        "industry_cycle_phase_summary",
+        "time_split_summary",
+        "drawdown_diagnostics",
+        "expectancy_diagnostics",
+        "failure_reason_summary",
+        "low_max_drawdown",
+        "benchmark_outperform",
+        "paper_trading_gate",
+    ):
+        assert key in summary
+    assert summary["industry_summary"]["光伏"]["total_signals"] == 2
+    assert summary["signal_type_summary"]["CONFIRM_BUY"]["total_signals"] == 2
+    assert "recent_2y" in summary["time_split_summary"]
+    assert summary["diagnostics"]["data_errors"]["000999"].startswith("TimeoutError")
+    assert summary["diagnostics"]["data_gap_counts"]["financial_missing"] == 1
+    assert summary["failure_reason_summary"]["reason_counts"]["趋势未确认"] >= 1
+    assert summary["failure_reason_summary"]["reason_counts"]["财务缺失或恶化"] >= 1
+
+
+def test_paper_trading_gate_rejects_poor_expectancy_and_fixture_stays_research_only() -> None:
+    good_fixture_rows = [_summary_row(index, net_60d=3.0, net_120d=4.0) for index in range(120)]
+    fixture_summary = compute_summary(
+        good_fixture_rows,
+        extra_diagnostics={"ci_passed": True, "fixture_smoke_passed": True, "source_mode": "fixture"},
+    )
+    assert fixture_summary["paper_trading_gate"]["verdict"] == PASS_RESEARCH_ONLY
+
+    poor_real_rows = [
+        _summary_row(index, net_60d=-1.5, net_120d=-2.0, drawdown=-32.0, outperform=False)
+        for index in range(120)
+    ]
+    poor_summary = compute_summary(
+        poor_real_rows,
+        extra_diagnostics={
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "source_mode": "real",
+            "real_5y_passed": True,
+            "real_10y_passed": True,
+        },
+    )
+    assert poor_summary["paper_trading_gate"]["verdict"] == FAIL_STRATEGY_EXPECTANCY
+    assert poor_summary["paper_trading_gate"]["verdict"] != PASS_PAPER_TRADING_READY
+
+
+def test_github_fixture_smoke_workflow_contract_is_present() -> None:
+    workflow = Path(".github/workflows/genge-cycle-bottom.yml").read_text(encoding="utf-8")
+
+    assert "python -m pytest tests/test_genge_cycle_bottom_*.py" in workflow
+    assert "--output-dir reports/genge_cycle_bottom_ci_smoke" in workflow
+    assert "summary.md" in workflow
+    assert "summary.json" in workflow
+    assert "signal_details.csv" in workflow
 
 
 def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
@@ -102,4 +256,7 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
     summary = json.loads((latest / "summary.json").read_text(encoding="utf-8"))
     assert summary["total_signals"] > 0
     assert "avg_return_60d" in summary
+    assert "avg_net_return_60d" in summary
     assert "drawdown" in summary
+    assert "industry_summary" in summary
+    assert "paper_trading_gate" in summary

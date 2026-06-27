@@ -73,6 +73,9 @@ class GenGeCycleBottomStrategy:
             trend_stabilization_score=round(features.trend_stabilization_score, 2),
             market_environment_score=round(features.market_environment_score, 2),
             industry_cycle_score=round(features.industry_cycle_score, 2),
+            industry=features.industry,
+            industry_cycle_phase=features.industry_cycle_phase,
+            market_environment_state=features.market_environment_state,
             price_percentile_3y=features.price_percentile_3y,
             price_percentile_5y=features.price_percentile_5y,
             price_percentile_10y=features.price_percentile_10y,
@@ -111,15 +114,23 @@ class GenGeCycleBottomStrategy:
             signal = SignalType.REJECT
         elif total_score < 65:
             signal = SignalType.WATCH
-        elif total_score < 78:
+        elif total_score < 80:
             signal = SignalType.LEFT_SMALL_BUY
-        elif features.trend_stabilization_score >= 72:
+        elif features.trend_stabilization_score >= 78:
             signal = SignalType.CONFIRM_BUY
         else:
             signal = SignalType.LEFT_SMALL_BUY
 
         if any(flag in WATCH_CAP_RISK_FLAGS for flag in risk_flags) and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
+        if features.market_environment_score < 40 and signal not in (SignalType.REJECT, SignalType.WATCH):
+            return SignalType.WATCH
+        if signal == SignalType.CONFIRM_BUY and (
+            "financial" in features.missing_fields
+            or "stock_industry_map" in features.missing_fields
+            or "industry_cycle" in features.missing_fields
+        ):
+            return SignalType.LEFT_SMALL_BUY
         if features.market_environment_score < 35 and signal == SignalType.CONFIRM_BUY:
             return SignalType.LEFT_SMALL_BUY
         return signal

@@ -1,0 +1,79 @@
+name: GenGe Cycle Bottom
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  fixture-research-smoke:
+    name: Fixture research smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r .github/requirements-ci.txt
+
+      - name: Run GenGe fixture tests
+        run: python -m pytest tests/test_genge_cycle_bottom_*.py
+
+      - name: Run fixture CLI smoke
+        run: |
+          python -m src.strategies.genge_cycle_bottom.cli \
+            --codes 000001,000002 \
+            --years 5 \
+            --benchmark 000300 \
+            --price-data-dir tests/fixtures/genge_cycle_bottom/prices \
+            --valuation-data-dir tests/fixtures/genge_cycle_bottom/valuation \
+            --financial-data-dir tests/fixtures/genge_cycle_bottom/financial \
+            --industry-cycle-file tests/fixtures/genge_cycle_bottom/industry_cycle.csv \
+            --stock-industry-map tests/fixtures/genge_cycle_bottom/stock_industry_map.csv \
+            --output-dir reports/genge_cycle_bottom_ci_smoke
+
+      - name: Validate fixture smoke report schema
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("reports/genge_cycle_bottom_ci_smoke")
+          runs = sorted(path for path in root.iterdir() if path.is_dir())
+          assert runs, "no fixture smoke report directory generated"
+          latest = runs[-1]
+          for filename in ("summary.md", "summary.json", "signal_details.csv"):
+              assert (latest / filename).exists(), f"missing {filename}"
+
+          summary = json.loads((latest / "summary.json").read_text(encoding="utf-8"))
+          required = [
+              "total_signals",
+              "win_rate_20d",
+              "win_rate_60d",
+              "win_rate_120d",
+              "win_rate_250d",
+              "avg_net_return_20d",
+              "avg_net_return_60d",
+              "avg_net_return_120d",
+              "avg_net_return_250d",
+              "low_max_drawdown",
+              "benchmark_outperform",
+              "industry_summary",
+              "signal_type_summary",
+              "time_split_summary",
+              "paper_trading_gate",
+          ]
+          missing = [key for key in required if key not in summary]
+          assert not missing, f"missing summary keys: {missing}"
+          assert summary["avg_return_20d"] == summary["avg_net_return_20d"], "avg_return_20d must remain net-return compatible"
+          print(f"validated={latest}")
+          PY
