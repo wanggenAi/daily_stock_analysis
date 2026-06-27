@@ -53,6 +53,18 @@ def _load_price_from_csv(directory: str, code: str) -> pd.DataFrame:
     return _load_csv(Path(directory) / f"{code}.csv")
 
 
+def _load_stock_industry_map(path: Optional[str]) -> Dict[str, str]:
+    if not path:
+        return {}
+    df = _load_csv(Path(path))
+    if "code" not in df.columns or "industry" not in df.columns:
+        raise ValueError("stock industry map must include code and industry columns")
+    return {
+        str(row["code"]).zfill(6): str(row["industry"])
+        for _, row in df.dropna(subset=["code", "industry"]).iterrows()
+    }
+
+
 def _fetch_price_live(manager, code: str, start_date: date, end_date: date, years: int) -> Tuple[pd.DataFrame, str]:
     days = int((years + 1) * 365.25)
     df, source = manager.get_daily_data(
@@ -88,6 +100,7 @@ def _load_inputs(
             manager = _get_manager()
         except Exception as exc:
             manager_error = f"{type(exc).__name__}: {exc}"
+    industry_map = _load_stock_industry_map(args.stock_industry_map)
 
     for code in codes:
         try:
@@ -113,6 +126,7 @@ def _load_inputs(
                     price_df=prepare_price_frame(price_df),
                     valuation_df=valuation_df,
                     financial_df=financial_df,
+                    industry=industry_map.get(code.zfill(6)) or industry_map.get(code),
                 )
             )
         except Exception as exc:
@@ -156,11 +170,15 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--output-dir", default="reports/genge_cycle_bottom", help="Report output directory")
     parser.add_argument("--start-date", help="Backtest start date YYYY-MM-DD")
     parser.add_argument("--end-date", help="Backtest end date YYYY-MM-DD")
-    parser.add_argument("--step-days", type=int, default=20, help="Signal scan interval in trading rows")
+    parser.add_argument("--step-days", type=int, default=1, help="Signal scan interval in trading rows")
+    parser.add_argument("--fee-bps", type=float, default=5.0, help="One-way transaction fee in basis points")
+    parser.add_argument("--slippage-bps", type=float, default=10.0, help="One-way slippage in basis points")
     parser.add_argument("--price-data-dir", help="Optional CSV directory with <code>.csv price files")
     parser.add_argument("--benchmark-file", help="Optional benchmark CSV file")
     parser.add_argument("--valuation-data-dir", help="Optional CSV directory with valuation files")
     parser.add_argument("--financial-data-dir", help="Optional CSV directory with financial files")
+    parser.add_argument("--industry-cycle-file", help="Optional CSV file with industry cycle scores")
+    parser.add_argument("--stock-industry-map", help="Optional CSV file mapping code to industry")
     return parser
 
 
@@ -183,6 +201,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     end_date = _infer_end_date(inputs, args.end_date)
     start_date = coerce_date(args.start_date) if args.start_date else date_years_ago(end_date, args.years)
     benchmark_df, benchmark_source_or_error = _load_benchmark(args, start_date, end_date)
+    industry_cycle_df = _load_csv(Path(args.industry_cycle_file)) if args.industry_cycle_file else None
 
     rows = WalkForwardBacktester().run(
         inputs=inputs,
@@ -190,6 +209,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         start_date=start_date,
         end_date=end_date,
         step_days=max(1, int(args.step_days)),
+        fee_bps=float(args.fee_bps),
+        slippage_bps=float(args.slippage_bps),
+        industry_cycle_df=industry_cycle_df,
     )
     diagnostics = {
         "requested_codes": codes,
@@ -201,6 +223,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
         "step_days": max(1, int(args.step_days)),
+        "fee_bps": float(args.fee_bps),
+        "slippage_bps": float(args.slippage_bps),
+        "industry_cycle_file": args.industry_cycle_file,
+        "stock_industry_map": args.stock_industry_map,
     }
     summary = compute_summary(rows, extra_diagnostics=diagnostics)
     report_dir = write_reports(rows, summary, args.output_dir)

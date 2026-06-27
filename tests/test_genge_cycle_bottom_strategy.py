@@ -14,6 +14,7 @@ def _feature(trend_score: float = 70.0, financial_score: float = 70.0) -> Featur
         financial_safety_score=financial_score,
         trend_stabilization_score=trend_score,
         market_environment_score=60.0,
+        industry_cycle_score=50.0,
     )
 
 

@@ -33,6 +33,17 @@ class StrategySignal:
     financial_safety_score: float
     trend_stabilization_score: float
     market_environment_score: float
+    industry_cycle_score: float
+    price_percentile_3y: Optional[float] = None
+    price_percentile_5y: Optional[float] = None
+    price_percentile_10y: Optional[float] = None
+    distance_from_5y_low_pct: Optional[float] = None
+    distance_from_5y_high_pct: Optional[float] = None
+    distance_from_10y_low_pct: Optional[float] = None
+    distance_from_10y_high_pct: Optional[float] = None
+    entry_price: Optional[float] = None
+    entry_date: Optional[str] = None
+    entry_mode: str = "next_open"
     risk_flags: List[str] = field(default_factory=list)
     missing_fields: List[str] = field(default_factory=list)
     stop_loss: Optional[float] = None
@@ -47,4 +58,3 @@ class StrategySignal:
         data["risk_flags"] = ";".join(self.risk_flags)
         data["missing_fields"] = ";".join(self.missing_fields)
         return data
-

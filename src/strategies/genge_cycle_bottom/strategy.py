@@ -42,6 +42,8 @@ class GenGeCycleBottomStrategy:
         valuation_df: Optional[pd.DataFrame] = None,
         financial_df: Optional[pd.DataFrame] = None,
         benchmark_df: Optional[pd.DataFrame] = None,
+        industry_cycle_df: Optional[pd.DataFrame] = None,
+        industry: Optional[str] = None,
         extra_risk_flags: Optional[Iterable[str]] = None,
     ) -> StrategySignal:
         features = build_feature_set(
@@ -50,6 +52,8 @@ class GenGeCycleBottomStrategy:
             valuation_df=valuation_df,
             financial_df=financial_df,
             benchmark_df=benchmark_df,
+            industry_cycle_df=industry_cycle_df,
+            industry=industry,
         )
         risk_flags = sorted(set(features.risk_flags + list(extra_risk_flags or [])))
         total_score = self._total_score(features)
@@ -68,6 +72,14 @@ class GenGeCycleBottomStrategy:
             financial_safety_score=round(features.financial_safety_score, 2),
             trend_stabilization_score=round(features.trend_stabilization_score, 2),
             market_environment_score=round(features.market_environment_score, 2),
+            industry_cycle_score=round(features.industry_cycle_score, 2),
+            price_percentile_3y=features.price_percentile_3y,
+            price_percentile_5y=features.price_percentile_5y,
+            price_percentile_10y=features.price_percentile_10y,
+            distance_from_5y_low_pct=features.distance_from_5y_low_pct,
+            distance_from_5y_high_pct=features.distance_from_5y_high_pct,
+            distance_from_10y_low_pct=features.distance_from_10y_low_pct,
+            distance_from_10y_high_pct=features.distance_from_10y_high_pct,
             risk_flags=risk_flags,
             missing_fields=features.missing_fields,
             stop_loss=estimate_stop_loss(features.close, features.ma60) if max_position_pct > 0 else None,
@@ -80,11 +92,12 @@ class GenGeCycleBottomStrategy:
     @staticmethod
     def _total_score(features: FeatureSet) -> float:
         return (
-            features.price_percentile_score * 0.28
+            features.price_percentile_score * 0.24
             + features.valuation_score * 0.18
             + features.financial_safety_score * 0.22
-            + features.trend_stabilization_score * 0.22
-            + features.market_environment_score * 0.10
+            + features.trend_stabilization_score * 0.20
+            + features.market_environment_score * 0.08
+            + features.industry_cycle_score * 0.08
         )
 
     @staticmethod
@@ -136,9 +149,15 @@ class GenGeCycleBottomStrategy:
         percentile = features.price_percentile_5y
         percentile_text = "估值/价格分位数据不足" if percentile is None else f"5年价格分位约 {percentile:.1%}"
         trend_text = "趋势已有右侧确认" if features.trend_stabilization_score >= 72 else "趋势仍偏观察"
+        industry_text = (
+            f"行业周期 {features.industry_cycle_phase}"
+            if features.industry_cycle_phase
+            else "行业周期数据不足"
+        )
         return (
             f"{percentile_text}，技术止跌分 {features.trend_stabilization_score:.1f}，"
-            f"财务安全分 {features.financial_safety_score:.1f}，总分 {total_score:.1f}，"
+            f"财务安全分 {features.financial_safety_score:.1f}，行业周期分 {features.industry_cycle_score:.1f}，"
+            f"总分 {total_score:.1f}，"
             f"信号为 {signal_type.value}；{trend_text}。"
+            f"{industry_text}。"
         )
-

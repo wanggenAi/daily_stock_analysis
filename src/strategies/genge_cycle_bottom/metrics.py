@@ -78,7 +78,7 @@ def _split_flags(rows: Iterable[Dict[str, Any]], field_name: str) -> Dict[str, i
     return dict(counter.most_common())
 
 
-def _max_consecutive_losses(rows: List[Dict[str, Any]], return_field: str = "future_return_60d") -> int:
+def _max_consecutive_losses(rows: List[Dict[str, Any]], return_field: str = "net_return_60d") -> int:
     ordered = sorted(rows, key=lambda row: (str(row.get("as_of_date") or ""), str(row.get("code") or "")))
     worst_run = 0
     current_run = 0
@@ -99,15 +99,18 @@ def _signal_snapshot(row: Dict[str, Any], return_field: str) -> Dict[str, Any]:
         "code": row.get("code"),
         "stock_name": row.get("stock_name"),
         "as_of_date": row.get("as_of_date"),
+        "entry_date": row.get("entry_date"),
+        "entry_price": row.get("entry_price"),
+        "entry_mode": row.get("entry_mode"),
         "signal_type": row.get("signal_type"),
         "total_score": row.get("total_score"),
         return_field: row.get(return_field),
-        "max_drawdown_250d": row.get("max_drawdown_250d"),
+        "low_max_drawdown_250d": row.get("low_max_drawdown_250d"),
         "risk_flags": row.get("risk_flags"),
     }
 
 
-def _ranked_signals(rows: List[Dict[str, Any]], return_field: str = "future_return_60d") -> tuple[list[dict], list[dict]]:
+def _ranked_signals(rows: List[Dict[str, Any]], return_field: str = "net_return_60d") -> tuple[list[dict], list[dict]]:
     available = [row for row in rows if _finite_number(row.get(return_field)) is not None]
     if not available:
         return [], []
@@ -121,7 +124,7 @@ def _best_signal_type(rows: List[Dict[str, Any]]) -> Optional[str]:
     grouped: Dict[str, List[float]] = {}
     for row in rows:
         signal_type = str(row.get("signal_type") or "")
-        value = _finite_number(row.get("future_return_60d"))
+        value = _finite_number(row.get("net_return_60d"))
         if signal_type and value is not None:
             grouped.setdefault(signal_type, []).append(value)
     if not grouped:
@@ -153,19 +156,26 @@ def compute_summary(
     }
 
     for days in EVAL_WINDOWS:
-        return_field = f"future_return_{days}d"
-        drawdown_field = f"max_drawdown_{days}d"
+        return_field = f"net_return_{days}d"
+        raw_return_field = f"raw_return_{days}d"
+        drawdown_field = f"low_max_drawdown_{days}d"
         returns = _numbers(rows, return_field)
         summary[f"win_rate_{days}d"] = _win_rate(rows, return_field)
         summary[f"avg_return_{days}d"] = _avg(returns)
         summary[f"median_return_{days}d"] = _median(returns)
+        summary[f"avg_raw_return_{days}d"] = _avg(_numbers(rows, raw_return_field))
+        summary[f"median_raw_return_{days}d"] = _median(_numbers(rows, raw_return_field))
+        summary[f"avg_net_return_{days}d"] = summary[f"avg_return_{days}d"]
+        summary[f"median_net_return_{days}d"] = summary[f"median_return_{days}d"]
         summary[f"outperform_benchmark_rate_{days}d"] = _ratio_true(rows, f"outperform_benchmark_{days}d")
         summary[f"avg_max_drawdown_{days}d"] = _avg(_numbers(rows, drawdown_field))
+        summary[f"avg_low_max_drawdown_{days}d"] = summary[f"avg_max_drawdown_{days}d"]
+        summary[f"avg_close_max_drawdown_{days}d"] = _avg(_numbers(rows, f"close_max_drawdown_{days}d"))
 
-    drawdowns = _numbers(rows, "max_drawdown_250d")
+    drawdowns = _numbers(rows, "low_max_drawdown_250d")
     if not drawdowns:
         for days in EVAL_WINDOWS:
-            drawdowns.extend(_numbers(rows, f"max_drawdown_{days}d"))
+            drawdowns.extend(_numbers(rows, f"low_max_drawdown_{days}d"))
     best_signals, worst_signals = _ranked_signals(rows)
     diagnostics = {
         "missing_fields": _split_flags(rows, "missing_fields"),
@@ -184,7 +194,7 @@ def compute_summary(
             "best_signals": best_signals,
             "worst_signals": worst_signals,
             "wins": {
-                f"{days}d": _win_record(rows, f"future_return_{days}d")
+                f"{days}d": _win_record(rows, f"net_return_{days}d")
                 for days in EVAL_WINDOWS
             },
             "avg_returns": {
@@ -198,6 +208,7 @@ def compute_summary(
             "drawdown": {
                 "avg_max_drawdown_pct": _avg(drawdowns),
                 "worst_max_drawdown_pct": min(drawdowns) if drawdowns else None,
+                "default_basis": "low_max_drawdown",
                 "by_horizon_avg_pct": {
                     f"{days}d": summary.get(f"avg_max_drawdown_{days}d")
                     for days in EVAL_WINDOWS

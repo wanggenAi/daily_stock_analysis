@@ -15,8 +15,10 @@ import numpy as np
 import pandas as pd
 
 
-PRICE_MIN_OBSERVATIONS = 120
 TRADING_DAYS_PER_YEAR = 250
+PRICE_MIN_OBSERVATIONS_BY_YEARS = {3: 500, 5: 800, 10: 1200}
+VALUATION_MIN_OBSERVATIONS = 120
+DISCLOSURE_DATE_COLUMNS = ("disclosure_date", "publish_date", "ann_date", "announcement_date")
 
 
 @dataclass
@@ -28,13 +30,20 @@ class FeatureSet:
     financial_safety_score: float = 0.0
     trend_stabilization_score: float = 0.0
     market_environment_score: float = 0.0
+    industry_cycle_score: float = 50.0
     price_percentile_3y: Optional[float] = None
     price_percentile_5y: Optional[float] = None
     price_percentile_10y: Optional[float] = None
+    distance_from_5y_low_pct: Optional[float] = None
+    distance_from_5y_high_pct: Optional[float] = None
+    distance_from_10y_low_pct: Optional[float] = None
+    distance_from_10y_high_pct: Optional[float] = None
     ma20: Optional[float] = None
     ma60: Optional[float] = None
     ma120: Optional[float] = None
     ma250: Optional[float] = None
+    industry: Optional[str] = None
+    industry_cycle_phase: Optional[str] = None
     risk_flags: List[str] = field(default_factory=list)
     missing_fields: List[str] = field(default_factory=list)
     diagnostics: Dict[str, Any] = field(default_factory=dict)
@@ -66,6 +75,15 @@ def slice_as_of(df: pd.DataFrame, as_of_date: Any) -> pd.DataFrame:
     prepared = prepare_price_frame(df)
     target = coerce_date(as_of_date)
     return prepared[prepared["date"] <= target].copy().reset_index(drop=True)
+
+
+def _prepare_date_frame(df: Optional[pd.DataFrame], date_column: str = "date") -> pd.DataFrame:
+    if df is None or df.empty or date_column not in df.columns:
+        return pd.DataFrame()
+    local = df.copy()
+    local[date_column] = pd.to_datetime(local[date_column], errors="coerce").dt.date
+    local = local.dropna(subset=[date_column]).sort_values(date_column).reset_index(drop=True)
+    return local
 
 
 def finite_float(value: Any) -> Optional[float]:
@@ -100,18 +118,53 @@ def score_from_low_percentile(percentile: Optional[float]) -> float:
     return 15.0
 
 
+def _window_for_years(history: pd.DataFrame, years: int) -> pd.DataFrame:
+    if history.empty:
+        return history
+    local = history.copy()
+    local["date"] = pd.to_datetime(local["date"], errors="coerce").dt.date
+    local = local.dropna(subset=["date"]).sort_values("date")
+    if local.empty:
+        return local
+    as_of = coerce_date(local.iloc[-1]["date"])
+    cutoff = as_of - timedelta(days=int(years * 365.25))
+    return local[local["date"] >= cutoff].copy()
+
+
+def _distance_from_extreme(current_close: float, extreme: Optional[float]) -> Optional[float]:
+    value = finite_float(extreme)
+    current = finite_float(current_close)
+    if value is None or current is None or value <= 0:
+        return None
+    return round((current - value) / value * 100.0, 4)
+
+
 def compute_price_percentile_score(history: pd.DataFrame, current_close: float) -> Tuple[float, Dict[str, Optional[float]], List[str]]:
     percentiles: Dict[str, Optional[float]] = {}
     missing: List[str] = []
 
     for years in (3, 5, 10):
-        window = history.tail(years * TRADING_DAYS_PER_YEAR)
+        window = _window_for_years(history, years).tail(years * TRADING_DAYS_PER_YEAR)
         key = f"price_percentile_{years}y"
-        if len(window) < PRICE_MIN_OBSERVATIONS:
+        if len(window) < PRICE_MIN_OBSERVATIONS_BY_YEARS[years]:
             percentiles[key] = None
             missing.append(key)
             continue
         percentiles[key] = percentile_rank(window["close"], current_close)
+
+        if years in (5, 10):
+            low = finite_float(window["close"].min())
+            high = finite_float(window["close"].max())
+            percentiles[f"distance_from_{years}y_low_pct"] = _distance_from_extreme(current_close, low)
+            percentiles[f"distance_from_{years}y_high_pct"] = _distance_from_extreme(current_close, high)
+
+    for years in (5, 10):
+        percentiles.setdefault(f"distance_from_{years}y_low_pct", None)
+        percentiles.setdefault(f"distance_from_{years}y_high_pct", None)
+        if percentiles[f"distance_from_{years}y_low_pct"] is None:
+            missing.append(f"distance_from_{years}y_low_pct")
+        if percentiles[f"distance_from_{years}y_high_pct"] is None:
+            missing.append(f"distance_from_{years}y_high_pct")
 
     preferred = percentiles.get("price_percentile_5y")
     if preferred is None:
@@ -133,15 +186,46 @@ def _latest_row_as_of(df: Optional[pd.DataFrame], as_of_date: date, date_column:
     return local.iloc[-1]
 
 
-def compute_valuation_score(valuation_df: Optional[pd.DataFrame], as_of_date: date) -> Tuple[float, List[str], Dict[str, Any]]:
+def _clean_valuation_series(values: pd.Series, field_name: str) -> pd.Series:
+    series = pd.to_numeric(values, errors="coerce").dropna()
+    series = series[series > 0]
+    max_reasonable = {"pe": 300.0, "pb": 50.0, "ps": 100.0}.get(field_name, float("inf"))
+    return series[series <= max_reasonable]
+
+
+def _valuation_percentile(history: pd.DataFrame, field_name: str, current_value: float, as_of_date: date, years: int) -> Optional[float]:
+    cutoff = as_of_date - timedelta(days=int(years * 365.25))
+    window = history[history["date"] >= cutoff]
+    series = _clean_valuation_series(window[field_name], field_name) if field_name in window.columns else pd.Series(dtype="float64")
+    if len(series) < VALUATION_MIN_OBSERVATIONS:
+        return None
+    return percentile_rank(series, current_value)
+
+
+def _is_cycle_industry(industry: Optional[str]) -> bool:
+    if not industry:
+        return False
+    keywords = ("钢铁", "煤炭", "有色", "化工", "养殖", "猪", "航运", "航空", "地产", "建材", "半导体", "面板")
+    return any(keyword in industry for keyword in keywords)
+
+
+def compute_valuation_score(
+    valuation_df: Optional[pd.DataFrame],
+    as_of_date: date,
+    industry: Optional[str] = None,
+) -> Tuple[float, List[str], Dict[str, Any]]:
     missing: List[str] = []
     diagnostics: Dict[str, Any] = {}
-    row = _latest_row_as_of(valuation_df, as_of_date)
-    if row is None:
+    history = _prepare_date_frame(valuation_df, "date")
+    if history.empty:
         return 35.0, ["valuation"], diagnostics
+    history = history[history["date"] <= as_of_date].copy()
+    if history.empty:
+        return 35.0, ["valuation"], diagnostics
+    row = history.iloc[-1]
 
-    scores: List[float] = []
-    for field_name in ("pb", "pe", "ps", "market_cap"):
+    field_scores: Dict[str, float] = {}
+    for field_name in ("pb", "pe", "ps"):
         if field_name not in row.index:
             missing.append(field_name)
             continue
@@ -149,29 +233,95 @@ def compute_valuation_score(valuation_df: Optional[pd.DataFrame], as_of_date: da
         if value is None or value <= 0:
             missing.append(field_name)
             continue
+        if _clean_valuation_series(pd.Series([value]), field_name).empty:
+            missing.append(field_name)
+            continue
         diagnostics[field_name] = value
-        if field_name == "pb":
-            scores.append(90.0 if value <= 1.2 else 75.0 if value <= 2.0 else 50.0 if value <= 4.0 else 25.0)
-        elif field_name == "pe":
-            scores.append(85.0 if value <= 15 else 70.0 if value <= 30 else 45.0 if value <= 60 else 20.0)
-        elif field_name == "ps":
-            scores.append(80.0 if value <= 1.5 else 65.0 if value <= 3.0 else 45.0 if value <= 6.0 else 20.0)
-        else:
-            scores.append(50.0)
+        percentiles = {
+            years: _valuation_percentile(history, field_name, value, as_of_date, years)
+            for years in (3, 5, 10)
+        }
+        for years, percentile in percentiles.items():
+            diagnostics[f"{field_name}_percentile_{years}y"] = percentile
+            if percentile is None:
+                missing.append(f"{field_name}_percentile_{years}y")
+        preferred = percentiles.get(5) if percentiles.get(5) is not None else percentiles.get(3)
+        if preferred is None:
+            preferred = percentiles.get(10)
+        if preferred is None:
+            continue
+        field_scores[field_name] = score_from_low_percentile(preferred)
 
-    if not scores:
+    if not field_scores:
         return 35.0, missing or ["valuation"], diagnostics
-    penalty = min(15.0, len(missing) * 3.0)
-    return max(0.0, float(np.mean(scores)) - penalty), missing, diagnostics
+
+    if _is_cycle_industry(industry):
+        weights = {"pb": 0.55, "ps": 0.35, "pe": 0.10}
+    else:
+        weights = {"pb": 0.40, "pe": 0.40, "ps": 0.20}
+    weighted_total = 0.0
+    weight_total = 0.0
+    for field_name, score in field_scores.items():
+        weight = weights.get(field_name, 0.0)
+        weighted_total += score * weight
+        weight_total += weight
+    if weight_total <= 0:
+        return 35.0, missing or ["valuation"], diagnostics
+    penalty = min(10.0, len([item for item in missing if item in ("pb", "pe", "ps")]) * 3.0)
+    return max(0.0, min(100.0, weighted_total / weight_total - penalty)), sorted(set(missing)), diagnostics
+
+
+def _report_lag_days(report_date: date) -> int:
+    month_day = (report_date.month, report_date.day)
+    if month_day == (12, 31):
+        return 120
+    if month_day == (6, 30):
+        return 90
+    if month_day in {(3, 31), (9, 30)}:
+        return 60
+    return 90
+
+
+def _financial_available_date(row: pd.Series, has_disclosure_columns: bool) -> Optional[date]:
+    for column in DISCLOSURE_DATE_COLUMNS:
+        if column in row.index and pd.notna(row.get(column)):
+            try:
+                return coerce_date(row.get(column))
+            except Exception:
+                return None
+    if has_disclosure_columns:
+        return None
+    if "report_date" not in row.index or pd.isna(row.get("report_date")):
+        return None
+    report_date = coerce_date(row.get("report_date"))
+    return report_date + timedelta(days=_report_lag_days(report_date))
+
+
+def _available_financial_rows(financial_df: Optional[pd.DataFrame], as_of_date: date) -> pd.DataFrame:
+    if financial_df is None or financial_df.empty or "report_date" not in financial_df.columns:
+        return pd.DataFrame()
+    local = financial_df.copy()
+    local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce").dt.date
+    local = local.dropna(subset=["report_date"]).copy()
+    has_disclosure_columns = any(column in local.columns for column in DISCLOSURE_DATE_COLUMNS)
+    local["available_date"] = local.apply(
+        lambda row: _financial_available_date(row, has_disclosure_columns),
+        axis=1,
+    )
+    local = local.dropna(subset=["available_date"])
+    return local[local["available_date"] <= as_of_date].sort_values(["available_date", "report_date"])
 
 
 def compute_financial_safety_score(financial_df: Optional[pd.DataFrame], as_of_date: date) -> Tuple[float, List[str], List[str], Dict[str, Any]]:
     missing: List[str] = []
     risk_flags: List[str] = []
     diagnostics: Dict[str, Any] = {}
-    row = _latest_row_as_of(financial_df, as_of_date, date_column="report_date")
-    if row is None:
+    available = _available_financial_rows(financial_df, as_of_date)
+    if available.empty:
         return 45.0, ["financial"], risk_flags, diagnostics
+    row = available.iloc[-1]
+    diagnostics["financial_report_date"] = row.get("report_date").isoformat() if hasattr(row.get("report_date"), "isoformat") else row.get("report_date")
+    diagnostics["financial_available_date"] = row.get("available_date").isoformat() if hasattr(row.get("available_date"), "isoformat") else row.get("available_date")
 
     score = 70.0
     debt_ratio = finite_float(row.get("debt_ratio")) if "debt_ratio" in row.index else None
@@ -317,12 +467,62 @@ def compute_market_environment_score(benchmark_history: Optional[pd.DataFrame], 
     return max(0.0, min(100.0, score)), [], diagnostics
 
 
+def compute_industry_cycle_score(
+    industry_cycle_df: Optional[pd.DataFrame],
+    industry: Optional[str],
+    as_of_date: date,
+) -> Tuple[float, List[str], Dict[str, Any]]:
+    diagnostics: Dict[str, Any] = {"industry": industry}
+    if not industry:
+        return 50.0, ["stock_industry_map"], diagnostics
+    if industry_cycle_df is None or industry_cycle_df.empty:
+        return 50.0, ["industry_cycle"], diagnostics
+    history = _prepare_date_frame(industry_cycle_df, "date")
+    if history.empty:
+        return 50.0, ["industry_cycle"], diagnostics
+    if "industry" in history.columns:
+        history = history[history["industry"].astype(str) == str(industry)]
+    history = history[history["date"] <= as_of_date].sort_values("date")
+    if history.empty:
+        return 50.0, ["industry_cycle"], diagnostics
+    row = history.iloc[-1]
+    phase = str(row.get("cycle_phase") or "unknown").strip().lower()
+    raw_score = finite_float(row.get("cycle_score")) if "cycle_score" in row.index else None
+    phase_defaults = {
+        "bottom": 82.0,
+        "recovering": 72.0,
+        "neutral": 50.0,
+        "unknown": 50.0,
+        "overheating": 35.0,
+        "declining": 28.0,
+    }
+    score = raw_score if raw_score is not None else phase_defaults.get(phase, 50.0)
+    if phase == "bottom":
+        score = max(score, 80.0)
+    elif phase == "recovering":
+        score = max(score, 70.0)
+    elif phase == "overheating":
+        score = min(score, 40.0)
+    elif phase == "declining":
+        score = min(score, 35.0)
+    diagnostics.update(
+        {
+            "industry_cycle_date": row.get("date").isoformat() if hasattr(row.get("date"), "isoformat") else row.get("date"),
+            "industry_cycle_phase": phase,
+            "industry_cycle_raw_score": raw_score,
+        }
+    )
+    return max(0.0, min(100.0, score)), [], diagnostics
+
+
 def build_feature_set(
     price_df: pd.DataFrame,
     as_of_date: Any,
     valuation_df: Optional[pd.DataFrame] = None,
     financial_df: Optional[pd.DataFrame] = None,
     benchmark_df: Optional[pd.DataFrame] = None,
+    industry_cycle_df: Optional[pd.DataFrame] = None,
+    industry: Optional[str] = None,
 ) -> FeatureSet:
     target = coerce_date(as_of_date)
     history = slice_as_of(price_df, target)
@@ -335,7 +535,8 @@ def build_feature_set(
         return features
 
     price_score, percentiles, price_missing = compute_price_percentile_score(history, close)
-    valuation_score, valuation_missing, valuation_diag = compute_valuation_score(valuation_df, target)
+    industry_score, industry_missing, industry_diag = compute_industry_cycle_score(industry_cycle_df, industry, target)
+    valuation_score, valuation_missing, valuation_diag = compute_valuation_score(valuation_df, target, industry=industry)
     financial_score, financial_missing, financial_risks, financial_diag = compute_financial_safety_score(financial_df, target)
     trend_score, trend_diag, trend_missing, trend_risks = compute_trend_stabilization_score(history)
     market_score, market_missing, market_diag = compute_market_environment_score(benchmark_df, target)
@@ -345,19 +546,27 @@ def build_feature_set(
     features.financial_safety_score = financial_score
     features.trend_stabilization_score = trend_score
     features.market_environment_score = market_score
+    features.industry_cycle_score = industry_score
     features.price_percentile_3y = percentiles.get("price_percentile_3y")
     features.price_percentile_5y = percentiles.get("price_percentile_5y")
     features.price_percentile_10y = percentiles.get("price_percentile_10y")
+    features.distance_from_5y_low_pct = percentiles.get("distance_from_5y_low_pct")
+    features.distance_from_5y_high_pct = percentiles.get("distance_from_5y_high_pct")
+    features.distance_from_10y_low_pct = percentiles.get("distance_from_10y_low_pct")
+    features.distance_from_10y_high_pct = percentiles.get("distance_from_10y_high_pct")
     features.ma20 = trend_diag.get("ma20")
     features.ma60 = trend_diag.get("ma60")
     features.ma120 = trend_diag.get("ma120")
     features.ma250 = trend_diag.get("ma250")
-    features.missing_fields = sorted(set(price_missing + valuation_missing + financial_missing + trend_missing + market_missing))
+    features.industry = industry
+    features.industry_cycle_phase = industry_diag.get("industry_cycle_phase")
+    features.missing_fields = sorted(set(price_missing + valuation_missing + financial_missing + trend_missing + market_missing + industry_missing))
     features.risk_flags = sorted(set(financial_risks + trend_risks))
     features.diagnostics.update(valuation_diag)
     features.diagnostics.update(financial_diag)
     features.diagnostics.update(trend_diag)
     features.diagnostics.update(market_diag)
+    features.diagnostics.update(industry_diag)
     return features
 
 
@@ -378,4 +587,3 @@ def estimate_take_profit(close: Optional[float]) -> Optional[float]:
 
 def date_years_ago(end_date: date, years: int) -> date:
     return end_date - timedelta(days=int(years * 365.25))
-
