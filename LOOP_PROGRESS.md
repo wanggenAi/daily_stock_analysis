@@ -335,3 +335,132 @@ Command: scanned generated reports, docs, and strategy source for forbidden prom
 - Key failure: 20 日平均净收益 -0.4365%，60 日平均净收益 -0.2626%，60 日胜率 41.94%，60 日跑赢基准 40.1116%，250 日低点回撤 -30.4961%。
 - Failure reason summary: 止损不够严格、买太早、估值陷阱、趋势未确认、行业周期判断不足居前。
 - Next action: do not enter paper trading. Future work should focus on signal quality, left-side risk control, industry-cycle data quality, and performance optimization for broad `step-days=1` runs.
+
+## Loop 13
+
+- Objective: correct the acceptance enum boundary so real-data research can pass independently from paper-trading expectancy, then rerun fixture, core, cycle, and broad validations without changing strategy features.
+- Code changes:
+  - `PASS_REAL_DATA_RESEARCH` now requires fixture smoke, a real public-data run, `total_signals >= 100`, no lookahead, no auto-trade, non-severe data/provider errors, and valuation plus financial coverage both above 30% unless explicitly price-only.
+  - Poor 60d expectancy, weak win rate, weak benchmark outperformance, and large drawdown remain in `paper_trading_gate.reasons` and continue to block `PASS_PAPER_TRADING_READY`.
+  - Added `--ci-passed` acceptance context to the strategy CLI and real runner.
+  - Kept fixture/CI workflow fixture-only and kept all real runs public-data only.
+- Full test command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  -m pytest tests/test_genge_cycle_bottom_*.py
+```
+
+- Test result: 28 passed, 1 warning.
+- Fixture smoke command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  -m src.strategies.genge_cycle_bottom.cli \
+  --codes 000001,000002 \
+  --years 5 \
+  --benchmark 000300 \
+  --price-data-dir tests/fixtures/genge_cycle_bottom/prices \
+  --valuation-data-dir tests/fixtures/genge_cycle_bottom/valuation \
+  --financial-data-dir tests/fixtures/genge_cycle_bottom/financial \
+  --industry-cycle-file tests/fixtures/genge_cycle_bottom/industry_cycle.csv \
+  --stock-industry-map tests/fixtures/genge_cycle_bottom/stock_industry_map.csv \
+  --output-dir reports/genge_cycle_bottom_ci_smoke
+```
+
+- Fixture result: passed.
+- Fixture report directory: `reports/genge_cycle_bottom_ci_smoke/20260628_010009`.
+- Fixture total signals: 2177.
+- Fixture data failures / provider errors: 0 / 0.
+- Fixture PE/PB/financial missing: 0 / 0 / 34.
+- Fixture valuation/financial/industry-cycle coverage: 100.0% / 98.4382% / 67.7538%.
+- Fixture acceptance enum: `PASS_RESEARCH_ONLY`.
+- Real core command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  scripts/run_genge_real_research.py \
+  --stock-pool-file stock_pools/genge_core_pool.txt \
+  --years 5 \
+  --benchmark 000300 \
+  --output-dir reports/genge_cycle_bottom_real \
+  --max-codes 12 \
+  --step-days 1 \
+  --auto-fetch-valuation \
+  --auto-fetch-financial \
+  --fundamental-cache-dir data/cache/genge_fundamentals \
+  --industry-cycle-file data/examples/genge_industry_cycle_manual.csv \
+  --fixture-smoke-passed \
+  --ci-passed
+```
+
+- Real core result: passed real-data research gate.
+- Runtime: 200.84 seconds.
+- Report directory: `reports/genge_cycle_bottom_real/20260628_010337`.
+- Data failures / provider errors: 0 / 0.
+- PE/PB/financial missing: 719 / 0 / 0.
+- Main candidate count: 2872.
+- Risk review count: 5.
+- Acceptance enum: `PASS_REAL_DATA_RESEARCH`.
+- Key paper-trading blockers: 60 日平均净收益 -1.1157%，60 日胜率 44.0450%，60 日跑赢基准 40.8860%，250 日低点回撤 -31.5825%。
+- Real cycle command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  scripts/run_genge_real_research.py \
+  --stock-pool-file stock_pools/genge_cycle_pool.txt \
+  --years 5 \
+  --benchmark 000300 \
+  --output-dir reports/genge_cycle_bottom_real_cycle \
+  --max-codes 50 \
+  --step-days 1 \
+  --auto-fetch-valuation \
+  --auto-fetch-financial \
+  --fundamental-cache-dir data/cache/genge_fundamentals \
+  --industry-cycle-file data/examples/genge_industry_cycle_manual.csv \
+  --fixture-smoke-passed \
+  --ci-passed
+```
+
+- Real cycle result: passed real-data research gate.
+- Runtime: 816.13 seconds.
+- Report directory: `reports/genge_cycle_bottom_real_cycle/20260628_011853`.
+- Data failures / provider errors: 0 / 0.
+- PE/PB/financial missing: 1627 / 0 / 0.
+- Main candidate count: 8631.
+- Risk review count: 5.
+- Acceptance enum: `PASS_REAL_DATA_RESEARCH`.
+- Key paper-trading blockers: 60 日胜率 46.8403%，60 日跑赢基准 44.8214%，250 日低点回撤 -31.5143%。
+- Real broad command:
+
+```bash
+/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 \
+  scripts/run_genge_real_research.py \
+  --stock-pool-file stock_pools/genge_broad_pool.txt \
+  --years 5 \
+  --benchmark 000300 \
+  --output-dir reports/genge_cycle_bottom_real_broad \
+  --max-codes 100 \
+  --step-days 1 \
+  --auto-fetch-valuation \
+  --auto-fetch-financial \
+  --fundamental-cache-dir data/cache/genge_fundamentals \
+  --industry-cycle-file data/examples/genge_industry_cycle_manual.csv \
+  --fixture-smoke-passed \
+  --ci-passed
+```
+
+- Real broad result: passed real-data research gate.
+- Runtime: 1669.94 seconds.
+- Report directory: `reports/genge_cycle_bottom_real_broad/20260628_014649`.
+- Data failures / provider errors: 0 / 0.
+- PE/PB/financial missing: 1417 / 0 / 0.
+- Main candidate count: 20076.
+- Risk review count: 5.
+- Acceptance enum: `PASS_REAL_DATA_RESEARCH`.
+- Key paper-trading blockers: 60 日胜率 42.8790%，60 日跑赢基准 40.3188%，250 日低点回撤 -31.2448%。
+- Broad run used `--max-codes 100` because broad `step-days=1` remains slow; this run took 1669.94 seconds.
+- Forbidden promise-word scan: latest real core/cycle/broad summary reports contain 0 matches for `保证上涨`, `确定买入`, or `必卖`.
+- GitHub Actions observation before this loop: run `28302776026` passed.
+- Final acceptance enum: `PASS_REAL_DATA_RESEARCH`.
+- Next action: do not enter paper trading. Future work should improve signal quality, left-side entry timing, stop/exit filters, industry-cycle data source quality, and broad run performance.

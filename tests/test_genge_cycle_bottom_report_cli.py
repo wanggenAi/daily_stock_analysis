@@ -7,7 +7,6 @@ from pathlib import Path
 
 from src.strategies.genge_cycle_bottom.acceptance import (
     FAIL_DATA_QUALITY,
-    FAIL_STRATEGY_EXPECTANCY,
     PASS_PAPER_TRADING_READY,
     PASS_REAL_DATA_RESEARCH,
     PASS_RESEARCH_ONLY,
@@ -210,7 +209,7 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
     assert summary["failure_reason_summary"]["reason_counts"]["财务缺失或恶化"] >= 1
 
 
-def test_paper_trading_gate_rejects_poor_expectancy_and_fixture_stays_research_only() -> None:
+def test_paper_trading_gate_keeps_poor_expectancy_out_of_paper_only() -> None:
     good_fixture_rows = [_summary_row(index, net_60d=3.0, net_120d=4.0) for index in range(120)]
     fixture_summary = compute_summary(
         good_fixture_rows,
@@ -232,8 +231,9 @@ def test_paper_trading_gate_rejects_poor_expectancy_and_fixture_stays_research_o
             "real_10y_passed": True,
         },
     )
-    assert poor_summary["paper_trading_gate"]["verdict"] == FAIL_STRATEGY_EXPECTANCY
+    assert poor_summary["paper_trading_gate"]["verdict"] == PASS_REAL_DATA_RESEARCH
     assert poor_summary["paper_trading_gate"]["verdict"] != PASS_PAPER_TRADING_READY
+    assert "60 日平均净收益未转正" in poor_summary["paper_trading_gate"]["reasons"]
 
 
 def test_real_data_research_gate_requires_samples_and_fundamental_coverage() -> None:
@@ -272,6 +272,61 @@ def test_real_data_research_gate_requires_samples_and_fundamental_coverage() -> 
     assert missing_summary["financial_coverage_rate"] == 0.0
     assert missing_summary["paper_trading_gate"]["verdict"] == FAIL_DATA_QUALITY
     assert missing_summary["paper_trading_gate"]["verdict"] != PASS_PAPER_TRADING_READY
+
+    valuation_missing_rows = [
+        _summary_row(index, missing_fields="valuation", net_60d=2.0, net_120d=2.5)
+        for index in range(120)
+    ]
+    valuation_missing_summary = compute_summary(
+        valuation_missing_rows,
+        extra_diagnostics={
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "source_mode": "real",
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    assert valuation_missing_summary["valuation_coverage_rate"] == 0.0
+    assert valuation_missing_summary["financial_coverage_rate"] == 100.0
+    assert valuation_missing_summary["paper_trading_gate"]["verdict"] == FAIL_DATA_QUALITY
+
+    financial_missing_rows = [
+        _summary_row(index, missing_fields="financial", net_60d=2.0, net_120d=2.5)
+        for index in range(120)
+    ]
+    financial_missing_summary = compute_summary(
+        financial_missing_rows,
+        extra_diagnostics={
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "source_mode": "real",
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    assert financial_missing_summary["valuation_coverage_rate"] == 100.0
+    assert financial_missing_summary["financial_coverage_rate"] == 0.0
+    assert financial_missing_summary["paper_trading_gate"]["verdict"] == FAIL_DATA_QUALITY
+
+    small_sample_summary = compute_summary(
+        [_summary_row(index, net_60d=2.0, net_120d=2.5) for index in range(90)],
+        extra_diagnostics={
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "source_mode": "real",
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    assert small_sample_summary["paper_trading_gate"]["verdict"] != PASS_REAL_DATA_RESEARCH
+    assert small_sample_summary["paper_trading_gate"]["verdict"] != PASS_PAPER_TRADING_READY
 
 
 def test_github_fixture_smoke_workflow_contract_is_present() -> None:
@@ -358,6 +413,7 @@ def test_cli_fixture_smoke_context_flag_for_real_runs(tmp_path: Path) -> None:
             "--step-days",
             "60",
             "--fixture-smoke-passed",
+            "--ci-passed",
             "--output-dir",
             str(output_dir),
         ]
@@ -367,6 +423,7 @@ def test_cli_fixture_smoke_context_flag_for_real_runs(tmp_path: Path) -> None:
     latest = sorted(path for path in output_dir.iterdir() if path.is_dir())[-1]
     summary = json.loads((latest / "summary.json").read_text(encoding="utf-8"))
     assert summary["diagnostics"]["fixture_smoke_passed"] is True
+    assert summary["diagnostics"]["ci_passed"] is True
 
 
 def test_real_runner_step_days_defaults_and_fast_smoke() -> None:
@@ -377,3 +434,4 @@ def test_real_runner_step_days_defaults_and_fast_smoke() -> None:
     assert resolve_step_days(parser.parse_args(["--fast-smoke"])) == 20
     assert resolve_step_days(parser.parse_args(["--fast-smoke", "--step-days", "7"])) == 7
     assert parser.parse_args(["--fixture-smoke-passed"]).fixture_smoke_passed is True
+    assert parser.parse_args(["--ci-passed"]).ci_passed is True

@@ -42,6 +42,15 @@ def _has_data_errors(summary: Dict[str, Any]) -> bool:
     return bool(data_errors)
 
 
+def _has_severe_data_errors(summary: Dict[str, Any]) -> bool:
+    diagnostics = summary.get("diagnostics") or {}
+    data_errors = diagnostics.get("data_errors") or {}
+    requested = diagnostics.get("requested_codes") or []
+    if not data_errors:
+        return False
+    return len(data_errors) >= max(3, int(len(requested) * 0.5)) if requested else bool(data_errors)
+
+
 def _coverage(summary: Dict[str, Any], field_name: str) -> float:
     value = _number(summary.get(field_name))
     return value if value is not None else 0.0
@@ -103,8 +112,10 @@ def evaluate_paper_trading_gate(
     financial_coverage = _coverage(summary, "financial_coverage_rate")
     price_only = _price_only_research(summary)
     real_run_passed = bool(real_5y_passed or real_10y_passed or real_10y_safely_degraded)
+    severe_data_errors = _has_severe_data_errors(summary)
     severe_provider_errors = _has_severe_provider_errors(summary)
     execution_risk_rate = _execution_risk_rate(summary)
+    fundamental_coverage_ready = price_only or (valuation_coverage > 30 and financial_coverage > 30)
 
     if ci_passed is not True:
         reasons.append("CI 未确认通过")
@@ -118,8 +129,10 @@ def evaluate_paper_trading_gate(
         reasons.append("真实数据存在拉取失败")
     if total_signals < 100:
         reasons.append("样本数量少于 100")
-    if valuation_coverage <= 30 and financial_coverage <= 30 and not price_only:
-        reasons.append("估值/财务覆盖率均未超过 30%，不能按完整基本面研究通过")
+    if not fundamental_coverage_ready:
+        reasons.append("估值和财务覆盖率未同时超过 30%，不能按完整基本面研究通过")
+    if severe_data_errors:
+        reasons.append("真实行情 data_errors 较多，需要先复核数据源稳定性")
     if severe_provider_errors:
         reasons.append("公开数据 provider_errors 较多，需要先复核数据源稳定性")
     if avg_60d is None or avg_60d <= 0:
@@ -147,11 +160,9 @@ def evaluate_paper_trading_gate(
         verdict = FAIL_DATA_QUALITY
     elif source_mode == "fixture":
         verdict = PASS_RESEARCH_ONLY
-    elif avg_60d is not None and avg_60d <= 0 and total_signals >= 100:
-        verdict = FAIL_STRATEGY_EXPECTANCY
-    elif source_mode == "real" and total_signals >= 100 and (valuation_coverage <= 30 and financial_coverage <= 30) and not price_only:
+    elif source_mode == "real" and total_signals >= 100 and not fundamental_coverage_ready:
         verdict = FAIL_DATA_QUALITY
-    elif source_mode == "real" and severe_provider_errors and total_signals >= 100:
+    elif source_mode == "real" and (severe_data_errors or severe_provider_errors) and total_signals >= 100:
         verdict = FAIL_DATA_QUALITY
     elif (
         source_mode == "real"
@@ -160,9 +171,11 @@ def evaluate_paper_trading_gate(
         and total_signals >= 100
         and no_lookahead_risk
         and no_auto_trade
-        and (valuation_coverage > 30 or financial_coverage > 30 or price_only)
+        and fundamental_coverage_ready
     ):
         verdict = PASS_REAL_DATA_RESEARCH
+    elif avg_60d is not None and avg_60d <= 0 and total_signals >= 100:
+        verdict = FAIL_STRATEGY_EXPECTANCY
     else:
         verdict = PASS_RESEARCH_ONLY
 
@@ -174,9 +187,10 @@ def evaluate_paper_trading_gate(
         and no_lookahead_risk
         and no_auto_trade
         and not _has_data_errors(summary)
+        and not severe_data_errors
+        and not severe_provider_errors
         and total_signals >= 200
-        and (valuation_coverage > 30 or price_only)
-        and (financial_coverage > 30 or price_only)
+        and fundamental_coverage_ready
         and execution_risk_rate <= 20
         and avg_60d is not None
         and avg_60d > 0

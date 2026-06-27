@@ -48,7 +48,8 @@ python3 scripts/run_genge_real_research.py \
   --auto-fetch-valuation \
   --auto-fetch-financial \
   --industry-cycle-file data/examples/genge_industry_cycle_manual.csv \
-  --fixture-smoke-passed
+  --fixture-smoke-passed \
+  --ci-passed
 ```
 
 可选参数：
@@ -65,6 +66,7 @@ python3 scripts/run_genge_real_research.py \
 - `--industry-cycle-file`：行业周期人工样例或用户维护文件。仓库内的 `data/examples/genge_industry_cycle_manual.csv` 只是研究样例，不是权威行业判断。
 - `--stock-industry-map`：当股票池没有行业列时，用 CSV 补充 `code,industry` 映射。
 - `--fixture-smoke-passed`：真实研究前已经完成 fixture smoke 时传入，用于验收枚举上下文；不会改变信号生成逻辑。
+- `--ci-passed`：GitHub Actions fixture CI 已经观察通过时传入，用于验收枚举上下文；不会改变信号生成逻辑。
 
 内置股票池：
 
@@ -115,7 +117,7 @@ reports/genge_cycle_bottom_real/20260627_203000/
 
 ## Acceptance Gate
 
-`PASS_REAL_DATA_RESEARCH` 必须至少满足：fixture smoke 已通过、真实公开数据运行通过、样本数不少于 100、无已知未来函数风险、无自动交易能力，且估值或财务覆盖率超过 30%（除非明确标记为纯价格研究）。
+`PASS_REAL_DATA_RESEARCH` 是真实公开数据研究链路通过，不代表可以买入或进入模拟盘。它必须至少满足：fixture smoke 已通过、真实公开数据运行通过、样本数不少于 100、无已知未来函数风险、无自动交易能力、data errors/provider errors 不严重，且估值和财务覆盖率都超过 30%（除非明确标记为纯价格研究）。收益期望、胜率、跑赢基准和回撤问题会保留在 `reasons` 中，用于阻止进入 `PASS_PAPER_TRADING_READY`。
 
 `PASS_PAPER_TRADING_READY` 必须同时满足：
 

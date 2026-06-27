@@ -78,6 +78,8 @@ def _build_strategy_args(args: argparse.Namespace, pool_file: Path) -> list[str]
         strategy_args.extend(["--fundamental-cache-dir", args.fundamental_cache_dir])
     if args.fixture_smoke_passed:
         strategy_args.append("--fixture-smoke-passed")
+    if args.ci_passed:
+        strategy_args.append("--ci-passed")
     return strategy_args
 
 
@@ -118,6 +120,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--industry-cycle-file")
     parser.add_argument("--stock-industry-map")
     parser.add_argument("--fixture-smoke-passed", action="store_true", help="Pass acceptance context after fixture smoke has been verified")
+    parser.add_argument("--ci-passed", action="store_true", help="Pass acceptance context after GitHub Actions fixture CI has been observed passed")
     return parser
 
 
