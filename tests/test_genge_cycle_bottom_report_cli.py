@@ -35,7 +35,7 @@ def _summary_row(
     market_score: float = 60.0,
     industry_score: float = 65.0,
     outperform: bool = True,
-    executable_entry_quality: str = "normal",
+    executable_entry_quality: str = "good",
 ) -> dict:
     as_of = date(2021, 1, 1) + timedelta(days=index * 30)
     return {
@@ -49,6 +49,11 @@ def _summary_row(
         "trend_stabilization_score": trend_score,
         "market_environment_score": market_score,
         "industry_cycle_score": industry_score,
+        "trend_confirmation_level": "MEDIUM",
+        "value_trap_score": 20.0,
+        "industry_cycle_quality": "user_supplied",
+        "stop_loss_distance_pct": 8.0,
+        "execution_risk_score": 0.0,
         "valuation_score": 55.0,
         "missing_fields": missing_fields,
         "risk_flags": risk_flags,
@@ -68,7 +73,7 @@ def _summary_row(
         "outperform_benchmark_60d": outperform,
         "outperform_benchmark_120d": outperform,
         "outperform_benchmark_250d": outperform,
-        "suspended_or_missing_bar": executable_entry_quality == "missing",
+        "suspended_or_missing_bar": executable_entry_quality == "unavailable",
         "limit_up_entry_risk": False,
         "limit_down_entry_risk": False,
         "limit_down_exit_risk": False,
@@ -123,6 +128,13 @@ def test_report_fields_include_p0_required_columns(tmp_path: Path) -> None:
         "abnormal_gap_open",
         "low_liquidity_risk",
         "executable_entry_quality",
+        "trend_confirmation_level",
+        "value_trap_score",
+        "industry_cycle_quality",
+        "dynamic_stop_loss",
+        "stop_loss_distance_pct",
+        "execution_risk_score",
+        "stop_adjusted_net_return_60d",
         "net_return_60d",
         "low_max_drawdown_60d",
         "hit_stop_loss_60d",
@@ -193,6 +205,10 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
         "financial_coverage_rate",
         "industry_cycle_coverage_rate",
         "execution_diagnostics",
+        "baseline_comparison",
+        "stop_policy_summary",
+        "quality_filter_summary",
+        "parameter_experiment",
     ):
         assert key in summary
     assert summary["industry_summary"]["光伏"]["total_signals"] == 2
@@ -203,10 +219,44 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
     assert summary["financial_missing_count"] == 1
     assert summary["industry_cycle_missing_count"] == 1
     assert summary["execution_diagnostics"]["missing_entry_count"] == 0
+    assert "trend_confirmation_summary" in summary
+    assert "industry_cycle_quality_summary" in summary
+    assert "execution_entry_quality_summary" in summary
     assert "coverage" in summary["diagnostics"]
     assert "execution_diagnostics" in summary["diagnostics"]
     assert summary["failure_reason_summary"]["reason_counts"]["趋势未确认"] >= 1
     assert summary["failure_reason_summary"]["reason_counts"]["财务缺失或恶化"] >= 1
+
+
+def test_baseline_comparison_and_overfit_warning_are_reported() -> None:
+    rows = [_summary_row(index, net_60d=1.0, outperform=True) for index in range(40)]
+
+    summary = compute_summary(
+        rows,
+        extra_diagnostics={
+            "source_mode": "real",
+            "output_dir": "reports/genge_signal_quality_broad",
+            "requested_codes": [f"{index:06d}" for index in range(100)],
+            "benchmark": "000905",
+        },
+    )
+
+    comparison = summary["baseline_comparison"]
+    assert comparison["available"] is True
+    assert comparison["baseline_group"] == "broad"
+    assert comparison["metrics"]["avg_net_return_60d"]["delta"] is not None
+    assert comparison["overfit_warning"] is True
+
+
+def test_parameter_experiment_contains_train_validation_recent_2y() -> None:
+    rows = [_summary_row(index, net_60d=2.0) for index in range(36)]
+
+    summary = compute_summary(rows)
+
+    experiment = summary["parameter_experiment"]["experiments"]["baseline_current"]
+    assert "train" in experiment
+    assert "validation" in experiment
+    assert "recent_2y" in experiment
 
 
 def test_paper_trading_gate_keeps_poor_expectancy_out_of_paper_only() -> None:
@@ -378,6 +428,8 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
     latest = report_dirs[-1]
     for filename in ("signal_details.csv", "summary.json", "summary.md"):
         assert (latest / filename).exists()
+    for filename in ("baseline_comparison.json", "parameter_experiment.json", "parameter_experiment.md", "paper_observation_candidates.csv"):
+        assert (latest / filename).exists()
     summary = json.loads((latest / "summary.json").read_text(encoding="utf-8"))
     assert summary["total_signals"] > 0
     assert "avg_return_60d" in summary
@@ -388,6 +440,9 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
     assert "execution_diagnostics" in summary
     assert "provider_errors" in summary["diagnostics"]
     assert summary["diagnostics"]["industry_cycle_source"] == "fixture"
+    observation_text = (latest / "paper_observation_candidates.csv").read_text(encoding="utf-8")
+    assert "不构成买入建议" in observation_text
+    assert "仅用于模拟观察和复盘" in observation_text
 
 
 def test_cli_fixture_smoke_context_flag_for_real_runs(tmp_path: Path) -> None:

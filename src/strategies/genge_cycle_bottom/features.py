@@ -42,9 +42,23 @@ class FeatureSet:
     ma60: Optional[float] = None
     ma120: Optional[float] = None
     ma250: Optional[float] = None
+    stabilization_days: int = 0
+    downtrend_exhaustion_score: float = 0.0
+    reclaim_ma_score: float = 0.0
+    no_falling_knife_filter: bool = False
+    second_low_confirmation: bool = False
+    trend_confirmation_level: str = "NONE"
+    dynamic_stop_loss: Optional[float] = None
+    stop_loss_distance_pct: Optional[float] = None
+    invalidation_level: Optional[float] = None
+    value_trap_score: float = 0.0
+    value_trap_flag: bool = False
+    valuation_repair_signal: bool = False
     industry: Optional[str] = None
     industry_cycle_phase: Optional[str] = None
+    industry_cycle_quality: str = "missing"
     market_environment_state: Optional[str] = None
+    execution_risk_score: float = 0.0
     risk_flags: List[str] = field(default_factory=list)
     missing_fields: List[str] = field(default_factory=list)
     diagnostics: Dict[str, Any] = field(default_factory=dict)
@@ -272,6 +286,71 @@ def compute_valuation_score(
     return max(0.0, min(100.0, weighted_total / weight_total - penalty)), sorted(set(missing)), diagnostics
 
 
+def compute_value_trap_diagnostics(
+    *,
+    valuation_diagnostics: Dict[str, Any],
+    financial_diagnostics: Dict[str, Any],
+    financial_missing: List[str],
+    financial_risks: List[str],
+    price_percentile_5y: Optional[float],
+    valuation_score: float,
+) -> Dict[str, Any]:
+    score = 0.0
+    repair_score = 0.0
+    pb = finite_float(valuation_diagnostics.get("pb"))
+    pe = finite_float(valuation_diagnostics.get("pe"))
+    pb_percentile = finite_float(valuation_diagnostics.get("pb_percentile_5y"))
+    pe_percentile = finite_float(valuation_diagnostics.get("pe_percentile_5y"))
+    debt_ratio = finite_float(financial_diagnostics.get("debt_ratio"))
+    net_profit = finite_float(financial_diagnostics.get("net_profit"))
+    operating_cash_flow = finite_float(financial_diagnostics.get("operating_cash_flow"))
+    roe = finite_float(financial_diagnostics.get("roe"))
+
+    looks_cheap = bool(
+        valuation_score >= 70
+        or (pb is not None and pb <= 1.2)
+        or (pb_percentile is not None and pb_percentile <= 0.25)
+        or (pe_percentile is not None and pe_percentile <= 0.25)
+        or (price_percentile_5y is not None and price_percentile_5y <= 0.25)
+    )
+    if looks_cheap:
+        score += 15
+        repair_score += 10
+    if "financial" in financial_missing:
+        score += 35
+    elif financial_missing:
+        score += min(25.0, len(financial_missing) * 6.0)
+    if "loss_making" in financial_risks or (net_profit is not None and net_profit < 0):
+        score += 35
+    if "negative_operating_cash_flow" in financial_risks or (operating_cash_flow is not None and operating_cash_flow < 0):
+        score += 25
+    if "debt_ratio_extreme" in financial_risks:
+        score += 35
+    elif "debt_ratio_high" in financial_risks:
+        score += 22
+    if "negative_roe" in financial_risks or (roe is not None and roe < 0):
+        score += 18
+    if debt_ratio is not None and debt_ratio <= 55:
+        repair_score += 20
+    if net_profit is not None and net_profit > 0:
+        repair_score += 20
+    if operating_cash_flow is not None and operating_cash_flow > 0:
+        repair_score += 20
+    if roe is not None and roe >= 6:
+        repair_score += 15
+    if pe is not None and pe <= 0:
+        score += 10
+    if looks_cheap and repair_score >= 45 and score < 55:
+        repair_signal = True
+    else:
+        repair_signal = False
+    return {
+        "value_trap_score": round(max(0.0, min(100.0, score)), 2),
+        "value_trap_flag": bool(score >= 60),
+        "valuation_repair_signal": repair_signal,
+    }
+
+
 def _report_lag_days(report_date: date) -> int:
     month_day = (report_date.month, report_date.day)
     if month_day == (12, 31):
@@ -383,10 +462,88 @@ def _moving_average(history: pd.DataFrame, window: int) -> Optional[float]:
     return finite_float(value)
 
 
-def compute_trend_stabilization_score(history: pd.DataFrame) -> Tuple[float, Dict[str, Optional[float]], List[str], List[str]]:
+def _pct_change_value(current: Optional[float], previous: Optional[float]) -> Optional[float]:
+    if current is None or previous is None or previous <= 0:
+        return None
+    return (current - previous) / previous * 100.0
+
+
+def _trailing_stabilization_days(history: pd.DataFrame, ma20: Optional[float]) -> int:
+    if len(history) < 6 or "close" not in history.columns:
+        return 0
+    closes = pd.to_numeric(history["close"], errors="coerce")
+    returns = closes.pct_change()
+    rolling_low = closes.rolling(20, min_periods=5).min()
+    days = 0
+    for idx in range(len(history) - 1, max(-1, len(history) - 31), -1):
+        close = finite_float(closes.iloc[idx])
+        low = finite_float(rolling_low.iloc[idx])
+        daily_return = finite_float(returns.iloc[idx])
+        if close is None or low is None:
+            break
+        floor_ok = close >= low * 1.01
+        ma_ok = ma20 is None or close >= ma20 * 0.96
+        daily_ok = daily_return is None or daily_return >= -0.045
+        if floor_ok and ma_ok and daily_ok:
+            days += 1
+        else:
+            break
+    return days
+
+
+def _second_low_confirmation(history: pd.DataFrame) -> bool:
+    if len(history) < 80 or "close" not in history.columns:
+        return False
+    closes = pd.to_numeric(history["close"], errors="coerce")
+    recent = closes.tail(25).dropna()
+    previous = closes.tail(90).head(65).dropna()
+    if recent.empty or previous.empty:
+        return False
+    recent_low = finite_float(recent.min())
+    previous_low = finite_float(previous.min())
+    close = finite_float(closes.iloc[-1])
+    if recent_low is None or previous_low is None or close is None or previous_low <= 0:
+        return False
+    low_not_broken = recent_low >= previous_low * 0.94
+    bounced_from_low = close >= recent_low * 1.025
+    return bool(low_not_broken and bounced_from_low)
+
+
+def _trend_confirmation_level(
+    *,
+    close: float,
+    ma20: Optional[float],
+    ma60: Optional[float],
+    ma120: Optional[float],
+    ma20_slope_pct: Optional[float],
+    stabilization_days: int,
+    downtrend_exhaustion_score: float,
+    reclaim_ma_score: float,
+    no_falling_knife_filter: bool,
+    second_low_confirmation: bool,
+) -> str:
+    if not no_falling_knife_filter:
+        return "NONE"
+    above_ma20 = bool(ma20 is not None and close >= ma20)
+    near_or_above_ma60 = bool(ma60 is not None and close >= ma60 * 0.98)
+    above_ma60 = bool(ma60 is not None and close >= ma60)
+    ma20_turning = bool(ma20_slope_pct is not None and ma20_slope_pct >= -0.5)
+    ma20_rising = bool(ma20_slope_pct is not None and ma20_slope_pct > 0)
+    above_ma120 = bool(ma120 is None or close >= ma120 * 0.97)
+
+    if above_ma20 and above_ma60 and above_ma120 and ma20_rising and second_low_confirmation and stabilization_days >= 8:
+        return "STRONG"
+    if above_ma20 and near_or_above_ma60 and ma20_turning and stabilization_days >= 5 and downtrend_exhaustion_score >= 50:
+        return "MEDIUM"
+    if (above_ma20 or reclaim_ma_score >= 45) and stabilization_days >= 3:
+        return "WEAK"
+    return "NONE"
+
+
+def compute_trend_stabilization_score(history: pd.DataFrame) -> Tuple[float, Dict[str, Any], List[str], List[str]]:
     missing: List[str] = []
     risk_flags: List[str] = []
-    diagnostics: Dict[str, Optional[float]] = {}
+    diagnostics: Dict[str, Any] = {}
     if history.empty or "close" not in history.columns:
         return 0.0, diagnostics, ["daily_price"], ["missing_daily_price"]
 
@@ -399,6 +556,11 @@ def compute_trend_stabilization_score(history: pd.DataFrame) -> Tuple[float, Dic
     ma120 = _moving_average(history, 120)
     ma250 = _moving_average(history, 250)
     diagnostics.update({"ma20": ma20, "ma60": ma60, "ma120": ma120, "ma250": ma250})
+    ma20_slope_pct = None
+    if len(history) >= 25 and ma20 is not None:
+        previous_ma20 = history["close"].tail(25).head(20).mean()
+        ma20_slope_pct = _pct_change_value(ma20, finite_float(previous_ma20))
+    diagnostics["ma20_slope_pct"] = round(ma20_slope_pct, 4) if ma20_slope_pct is not None else None
 
     score = 35.0
     for name, value in (("ma20", ma20), ("ma60", ma60), ("ma120", ma120), ("ma250", ma250)):
@@ -424,7 +586,10 @@ def compute_trend_stabilization_score(history: pd.DataFrame) -> Tuple[float, Dic
             risk_flags.append("accelerating_downtrend")
         elif abs(recent_return) <= 0.08:
             score += 8
+    else:
+        recent_return = None
 
+    volume_ratio = None
     if "volume" in history.columns and len(history) >= 40:
         recent_vol = history["volume"].tail(5).mean()
         base_vol = history["volume"].tail(40).head(35).mean()
@@ -439,6 +604,87 @@ def compute_trend_stabilization_score(history: pd.DataFrame) -> Tuple[float, Dic
         else:
             missing.append("volume")
 
+    stabilization_days = _trailing_stabilization_days(history, ma20)
+    second_low = _second_low_confirmation(history)
+    closes = pd.to_numeric(history["close"], errors="coerce")
+    recent_20_low = finite_float(closes.tail(20).min()) if len(history) >= 20 else None
+    recent_60_low = finite_float(closes.tail(60).min()) if len(history) >= 60 else recent_20_low
+    last_5d_return = None
+    if len(history) >= 6:
+        last_5d_return = _pct_change_value(finite_float(closes.iloc[-1]), finite_float(closes.iloc[-6]))
+
+    downtrend_exhaustion_score = 20.0
+    if recent_return is not None:
+        if recent_return >= -0.03:
+            downtrend_exhaustion_score += 25
+        elif recent_return >= -0.08:
+            downtrend_exhaustion_score += 12
+        elif recent_return < -0.12:
+            downtrend_exhaustion_score -= 25
+    if recent_20_low is not None and close >= recent_20_low * 1.03:
+        downtrend_exhaustion_score += 20
+    if recent_20_low is not None and recent_60_low is not None and recent_60_low > 0 and recent_20_low >= recent_60_low * 0.96:
+        downtrend_exhaustion_score += 20
+    if second_low:
+        downtrend_exhaustion_score += 15
+    if volume_ratio is not None and 0.8 <= volume_ratio <= 1.8:
+        downtrend_exhaustion_score += 10
+    downtrend_exhaustion_score = max(0.0, min(100.0, downtrend_exhaustion_score))
+
+    reclaim_ma_score = 0.0
+    if ma20 is not None and close >= ma20:
+        reclaim_ma_score += 45
+    if ma60 is not None and close >= ma60 * 0.98:
+        reclaim_ma_score += 25
+    if ma60 is not None and close >= ma60:
+        reclaim_ma_score += 10
+    if ma20_slope_pct is not None and ma20_slope_pct > 0:
+        reclaim_ma_score += 15
+    if volume_ratio is not None and 1.0 <= volume_ratio <= 1.8:
+        reclaim_ma_score += 5
+    reclaim_ma_score = max(0.0, min(100.0, reclaim_ma_score))
+
+    no_falling_knife_filter = bool(
+        stabilization_days >= 3
+        and downtrend_exhaustion_score >= 42
+        and (last_5d_return is None or last_5d_return >= -6.0)
+        and (recent_20_low is None or close >= recent_20_low * 1.015)
+    )
+    if not no_falling_knife_filter:
+        risk_flags.append("falling_knife_risk")
+
+    trend_confirmation_level = _trend_confirmation_level(
+        close=close,
+        ma20=ma20,
+        ma60=ma60,
+        ma120=ma120,
+        ma20_slope_pct=ma20_slope_pct,
+        stabilization_days=stabilization_days,
+        downtrend_exhaustion_score=downtrend_exhaustion_score,
+        reclaim_ma_score=reclaim_ma_score,
+        no_falling_knife_filter=no_falling_knife_filter,
+        second_low_confirmation=second_low,
+    )
+    if trend_confirmation_level == "NONE":
+        score -= 10
+    elif trend_confirmation_level == "WEAK":
+        score += 4
+    elif trend_confirmation_level == "MEDIUM":
+        score += 8
+    elif trend_confirmation_level == "STRONG":
+        score += 12
+
+    diagnostics.update(
+        {
+            "stabilization_days": stabilization_days,
+            "downtrend_exhaustion_score": round(downtrend_exhaustion_score, 2),
+            "reclaim_ma_score": round(reclaim_ma_score, 2),
+            "no_falling_knife_filter": no_falling_knife_filter,
+            "second_low_confirmation": second_low,
+            "trend_confirmation_level": trend_confirmation_level,
+            "last_5d_return_pct": round(last_5d_return, 4) if last_5d_return is not None else None,
+        }
+    )
     return max(0.0, min(100.0, score)), diagnostics, missing, risk_flags
 
 
@@ -479,7 +725,7 @@ def compute_industry_cycle_score(
     industry: Optional[str],
     as_of_date: date,
 ) -> Tuple[float, List[str], Dict[str, Any]]:
-    diagnostics: Dict[str, Any] = {"industry": industry}
+    diagnostics: Dict[str, Any] = {"industry": industry, "industry_cycle_quality": "missing"}
     if not industry:
         return 50.0, ["stock_industry_map"], diagnostics
     if industry_cycle_df is None or industry_cycle_df.empty:
@@ -495,6 +741,13 @@ def compute_industry_cycle_score(
     row = history.iloc[-1]
     phase = str(row.get("cycle_phase") or "unknown").strip().lower()
     raw_score = finite_float(row.get("cycle_score")) if "cycle_score" in row.index else None
+    raw_quality = str(row.get("cycle_quality") or row.get("quality") or "").strip().lower()
+    if raw_quality in {"manual_template", "user_supplied", "provider_derived", "verified"}:
+        quality = raw_quality
+    elif str(row.get("source") or "").strip().lower() in {"manual_template", "template", "example"}:
+        quality = "manual_template"
+    else:
+        quality = "user_supplied"
     phase_defaults = {
         "bottom": 82.0,
         "recovering": 72.0,
@@ -517,6 +770,7 @@ def compute_industry_cycle_score(
             "industry_cycle_date": row.get("date").isoformat() if hasattr(row.get("date"), "isoformat") else row.get("date"),
             "industry_cycle_phase": phase,
             "industry_cycle_raw_score": raw_score,
+            "industry_cycle_quality": quality,
         }
     )
     return max(0.0, min(100.0, score)), [], diagnostics
@@ -547,6 +801,14 @@ def build_feature_set(
     financial_score, financial_missing, financial_risks, financial_diag = compute_financial_safety_score(financial_df, target)
     trend_score, trend_diag, trend_missing, trend_risks = compute_trend_stabilization_score(history)
     market_score, market_missing, market_diag = compute_market_environment_score(benchmark_df, target)
+    value_trap_diag = compute_value_trap_diagnostics(
+        valuation_diagnostics=valuation_diag,
+        financial_diagnostics=financial_diag,
+        financial_missing=financial_missing,
+        financial_risks=financial_risks,
+        price_percentile_5y=percentiles.get("price_percentile_5y"),
+        valuation_score=valuation_score,
+    )
 
     features.price_percentile_score = price_score
     features.valuation_score = valuation_score
@@ -565,16 +827,46 @@ def build_feature_set(
     features.ma60 = trend_diag.get("ma60")
     features.ma120 = trend_diag.get("ma120")
     features.ma250 = trend_diag.get("ma250")
+    features.stabilization_days = int(trend_diag.get("stabilization_days") or 0)
+    features.downtrend_exhaustion_score = float(trend_diag.get("downtrend_exhaustion_score") or 0.0)
+    features.reclaim_ma_score = float(trend_diag.get("reclaim_ma_score") or 0.0)
+    features.no_falling_knife_filter = bool(trend_diag.get("no_falling_knife_filter"))
+    features.second_low_confirmation = bool(trend_diag.get("second_low_confirmation"))
+    features.trend_confirmation_level = str(trend_diag.get("trend_confirmation_level") or "NONE")
+    features.dynamic_stop_loss = estimate_stop_loss(close, features.ma60)
+    features.invalidation_level = features.dynamic_stop_loss
+    if features.dynamic_stop_loss is not None and close > 0:
+        features.stop_loss_distance_pct = round((close - features.dynamic_stop_loss) / close * 100.0, 4)
+    features.value_trap_score = float(value_trap_diag.get("value_trap_score") or 0.0)
+    features.value_trap_flag = bool(value_trap_diag.get("value_trap_flag"))
+    features.valuation_repair_signal = bool(value_trap_diag.get("valuation_repair_signal"))
     features.industry = industry
     features.industry_cycle_phase = industry_diag.get("industry_cycle_phase")
+    features.industry_cycle_quality = str(industry_diag.get("industry_cycle_quality") or "missing")
     features.market_environment_state = market_diag.get("market_environment_state")
+    features.execution_risk_score = 0.0
     features.missing_fields = sorted(set(price_missing + valuation_missing + financial_missing + trend_missing + market_missing + industry_missing))
-    features.risk_flags = sorted(set(financial_risks + trend_risks))
+    features.risk_flags = sorted(
+        set(
+            financial_risks
+            + trend_risks
+            + (["value_trap_risk"] if features.value_trap_flag else [])
+            + (["missing_financial_uncertain"] if "financial" in financial_missing else [])
+        )
+    )
     features.diagnostics.update(valuation_diag)
     features.diagnostics.update(financial_diag)
     features.diagnostics.update(trend_diag)
     features.diagnostics.update(market_diag)
     features.diagnostics.update(industry_diag)
+    features.diagnostics.update(value_trap_diag)
+    features.diagnostics.update(
+        {
+            "dynamic_stop_loss": features.dynamic_stop_loss,
+            "stop_loss_distance_pct": features.stop_loss_distance_pct,
+            "invalidation_level": features.invalidation_level,
+        }
+    )
     return features
 
 

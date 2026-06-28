@@ -60,6 +60,8 @@ def test_forward_returns_drawdown_and_benchmark_are_calculated() -> None:
     assert result["benchmark_return_20d"] == 5.0
     assert result["outperform_benchmark_20d"] is True
     assert result["hit_stop_loss_20d"] is False
+    assert result["stop_adjusted_return_20d"] == result["raw_return_20d"]
+    assert result["stop_adjusted_net_return_20d"] == result["net_return_20d"]
 
 
 def test_forward_metrics_return_none_when_future_window_is_missing() -> None:
@@ -96,6 +98,9 @@ def test_stop_loss_is_calculated_per_future_window() -> None:
     assert result["hit_stop_loss_60d"] is True
     assert result["hit_stop_loss_120d"] is True
     assert result["hit_stop_loss_250d"] is True
+    assert result["stop_triggered_60d"] is True
+    assert result["stop_adjusted_return_60d"] < result["raw_return_60d"]
+    assert result["post_entry_adverse_excursion_pct"] is not None
 
 
 def test_limit_up_entry_and_low_liquidity_are_recorded() -> None:
@@ -108,7 +113,8 @@ def test_limit_up_entry_and_low_liquidity_are_recorded() -> None:
     assert result["limit_up_entry_risk"] is True
     assert result["abnormal_gap_open"] is True
     assert result["low_liquidity_risk"] is True
-    assert result["executable_entry_quality"] == "degraded"
+    assert result["executable_entry_quality"] == "risky"
+    assert result["execution_risk_score"] >= 60
     assert "limit_up_entry_risk" in result["risk_flags"]
     assert "low_liquidity_risk" in result["risk_flags"]
 
@@ -120,6 +126,17 @@ def test_missing_next_bar_is_recorded_as_non_executable() -> None:
 
     assert result["entry_price"] is None
     assert result["suspended_or_missing_bar"] is True
-    assert result["executable_entry_quality"] == "missing"
+    assert result["executable_entry_quality"] == "unavailable"
     assert result["low_liquidity_risk"] is True
     assert "insufficient_entry_data" in result["risk_flags"]
+
+
+def test_dynamic_stop_loss_is_never_above_entry_price() -> None:
+    signal = _signal("2024-01-01")
+    signal.stop_loss = 120.0
+    price_df = _price_frame([100.0] + [105.0] * 300)
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result["dynamic_stop_loss"] <= result["entry_price"]
+    assert result["stop_loss_distance_pct"] >= 0

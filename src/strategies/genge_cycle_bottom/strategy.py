@@ -7,12 +7,19 @@ from typing import Iterable, Optional
 
 import pandas as pd
 
-from .features import FeatureSet, build_feature_set, estimate_stop_loss, estimate_take_profit
+from .features import FeatureSet, build_feature_set, estimate_take_profit
 from .signals import SignalType, StrategySignal
 
 
 REJECT_RISK_FLAGS = {"st_or_delisting_risk", "loss_making"}
-WATCH_CAP_RISK_FLAGS = {"debt_ratio_high", "debt_ratio_extreme", "negative_operating_cash_flow"}
+WATCH_CAP_RISK_FLAGS = {
+    "debt_ratio_high",
+    "debt_ratio_extreme",
+    "negative_operating_cash_flow",
+    "value_trap_risk",
+    "missing_financial_uncertain",
+}
+TREND_LEVEL_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
 
 
 @dataclass(frozen=True)
@@ -83,9 +90,23 @@ class GenGeCycleBottomStrategy:
             distance_from_5y_high_pct=features.distance_from_5y_high_pct,
             distance_from_10y_low_pct=features.distance_from_10y_low_pct,
             distance_from_10y_high_pct=features.distance_from_10y_high_pct,
+            stabilization_days=features.stabilization_days,
+            downtrend_exhaustion_score=round(features.downtrend_exhaustion_score, 2),
+            reclaim_ma_score=round(features.reclaim_ma_score, 2),
+            no_falling_knife_filter=features.no_falling_knife_filter,
+            second_low_confirmation=features.second_low_confirmation,
+            trend_confirmation_level=features.trend_confirmation_level,
+            value_trap_score=round(features.value_trap_score, 2),
+            value_trap_flag=features.value_trap_flag,
+            valuation_repair_signal=features.valuation_repair_signal,
+            industry_cycle_quality=features.industry_cycle_quality,
+            dynamic_stop_loss=features.dynamic_stop_loss,
+            stop_loss_distance_pct=features.stop_loss_distance_pct,
+            invalidation_level=features.invalidation_level,
+            execution_risk_score=features.execution_risk_score,
             risk_flags=risk_flags,
             missing_fields=features.missing_fields,
-            stop_loss=estimate_stop_loss(features.close, features.ma60) if max_position_pct > 0 else None,
+            stop_loss=features.dynamic_stop_loss if max_position_pct > 0 else None,
             take_profit=estimate_take_profit(features.close) if max_position_pct > 0 else None,
             invalidation_reason=invalidation_reason,
             max_position_pct=max_position_pct,
@@ -109,6 +130,8 @@ class GenGeCycleBottomStrategy:
             return SignalType.REJECT
         if "loss_making" in risk_flags and features.financial_safety_score < 45:
             return SignalType.REJECT
+        if features.value_trap_score >= 85:
+            return SignalType.REJECT
 
         if total_score < 50:
             signal = SignalType.REJECT
@@ -121,8 +144,26 @@ class GenGeCycleBottomStrategy:
         else:
             signal = SignalType.LEFT_SMALL_BUY
 
+        trend_rank = TREND_LEVEL_RANK.get(str(features.trend_confirmation_level or "NONE"), 0)
+        if trend_rank == 0 and signal not in (SignalType.REJECT, SignalType.WATCH):
+            signal = SignalType.WATCH
+        elif signal == SignalType.LEFT_SMALL_BUY and trend_rank < TREND_LEVEL_RANK["WEAK"]:
+            signal = SignalType.WATCH
+        elif signal == SignalType.CONFIRM_BUY and trend_rank < TREND_LEVEL_RANK["MEDIUM"]:
+            signal = SignalType.LEFT_SMALL_BUY if trend_rank >= TREND_LEVEL_RANK["WEAK"] else SignalType.WATCH
+        elif signal == SignalType.ADD and trend_rank < TREND_LEVEL_RANK["STRONG"]:
+            signal = SignalType.CONFIRM_BUY if trend_rank >= TREND_LEVEL_RANK["MEDIUM"] else SignalType.LEFT_SMALL_BUY
+
+        if not features.no_falling_knife_filter and signal not in (SignalType.REJECT, SignalType.WATCH):
+            signal = SignalType.WATCH
         if any(flag in WATCH_CAP_RISK_FLAGS for flag in risk_flags) and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
+        if features.value_trap_flag and signal not in (SignalType.REJECT, SignalType.WATCH):
+            return SignalType.WATCH
+        if features.stop_loss_distance_pct is not None and features.stop_loss_distance_pct > 14 and signal == SignalType.CONFIRM_BUY:
+            return SignalType.LEFT_SMALL_BUY
+        if features.industry_cycle_quality in {"missing", "manual_template"} and signal == SignalType.CONFIRM_BUY:
+            return SignalType.LEFT_SMALL_BUY
         if features.market_environment_score < 40 and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
         if signal == SignalType.CONFIRM_BUY and (
@@ -151,23 +192,32 @@ class GenGeCycleBottomStrategy:
             reasons.append("收盘价重新跌破 MA20 且三日无法收回")
         if features.ma60 is not None:
             reasons.append("跌破 MA60 或低位平台下沿")
+        if features.invalidation_level is not None:
+            reasons.append(f"跌破动态失效位 {features.invalidation_level:.2f} 且无法收回")
         if any(flag in risk_flags for flag in ("loss_making", "negative_operating_cash_flow", "debt_ratio_extreme")):
             reasons.append("财务安全边际恶化")
+        if "value_trap_risk" in risk_flags:
+            reasons.append("低估值修复逻辑被财务恶化证伪")
         return "；".join(reasons) or "低位修复逻辑失效或数据质量不足"
 
     @staticmethod
     def _explain(features: FeatureSet, total_score: float, signal_type: SignalType) -> str:
         percentile = features.price_percentile_5y
         percentile_text = "估值/价格分位数据不足" if percentile is None else f"5年价格分位约 {percentile:.1%}"
-        trend_text = "趋势已有右侧确认" if features.trend_stabilization_score >= 72 else "趋势仍偏观察"
+        trend_text = (
+            f"趋势确认等级 {features.trend_confirmation_level}"
+            if features.trend_confirmation_level
+            else "趋势仍偏观察"
+        )
         industry_text = (
-            f"行业周期 {features.industry_cycle_phase}"
+            f"行业周期 {features.industry_cycle_phase}，证据质量 {features.industry_cycle_quality}"
             if features.industry_cycle_phase
             else "行业周期数据不足"
         )
         return (
             f"{percentile_text}，技术止跌分 {features.trend_stabilization_score:.1f}，"
             f"财务安全分 {features.financial_safety_score:.1f}，行业周期分 {features.industry_cycle_score:.1f}，"
+            f"估值陷阱分 {features.value_trap_score:.1f}，"
             f"总分 {total_score:.1f}，"
             f"信号为 {signal_type.value}；{trend_text}。"
             f"{industry_text}。"

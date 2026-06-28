@@ -98,7 +98,8 @@ def _execution_diagnostics(history: pd.DataFrame, entry_row: Optional[pd.Series]
             "limit_down_exit_risk": False,
             "abnormal_gap_open": False,
             "low_liquidity_risk": True,
-            "executable_entry_quality": "missing",
+            "executable_entry_quality": "unavailable",
+            "execution_risk_score": 100.0,
         }
 
     next_open = finite_float(entry_row.get("open"))
@@ -118,13 +119,29 @@ def _execution_diagnostics(history: pd.DataFrame, entry_row: Optional[pd.Series]
     limit_down = bool(open_change_pct is not None and open_change_pct <= -LIMIT_MOVE_THRESHOLD)
     abnormal_gap = bool(open_change_pct is not None and abs(open_change_pct) >= ABNORMAL_GAP_THRESHOLD)
     if entry_mode == "insufficient_entry_data":
-        quality = "missing"
+        quality = "unavailable"
     elif entry_mode != "next_open" or next_open is None or next_open <= 0:
         quality = "degraded"
-    elif limit_up or limit_down or low_liquidity:
+    elif limit_up or limit_down:
+        quality = "risky"
+    elif low_liquidity or abnormal_gap:
         quality = "degraded"
     else:
-        quality = "normal"
+        quality = "good"
+    execution_risk_score = 0.0
+    if quality == "unavailable":
+        execution_risk_score = 100.0
+    else:
+        if limit_up:
+            execution_risk_score += 45
+        if limit_down:
+            execution_risk_score += 45
+        if abnormal_gap:
+            execution_risk_score += 20
+        if low_liquidity:
+            execution_risk_score += 25
+        if entry_mode != "next_open":
+            execution_risk_score += 15
 
     return {
         "suspended_or_missing_bar": False,
@@ -134,9 +151,34 @@ def _execution_diagnostics(history: pd.DataFrame, entry_row: Optional[pd.Series]
         "abnormal_gap_open": abnormal_gap,
         "low_liquidity_risk": low_liquidity,
         "executable_entry_quality": quality,
+        "execution_risk_score": round(min(100.0, execution_risk_score), 2),
         "entry_open_change_pct": round(open_change_pct, 4) if open_change_pct is not None else None,
         "entry_close_available": bool(next_close is not None and next_close > 0),
     }
+
+
+def _effective_stop_loss(stop_loss: Optional[float], entry_price: Optional[float]) -> Optional[float]:
+    stop = finite_float(stop_loss)
+    entry = finite_float(entry_price)
+    if stop is None or entry is None or entry <= 0:
+        return None
+    return round(min(stop, entry * 0.995), 4)
+
+
+def _stop_adjusted_return(entry_price: float, future_rows: pd.DataFrame, days: int, stop_loss: Optional[float]) -> tuple[Optional[float], bool, Optional[str]]:
+    raw = future_return(entry_price, future_rows, days)
+    stop = _effective_stop_loss(stop_loss, entry_price)
+    if raw is None or stop is None or len(future_rows) < days or "low" not in future_rows.columns:
+        return raw, False, None
+    window = future_rows.head(days).copy()
+    lows = pd.to_numeric(window["low"], errors="coerce")
+    hit_mask = lows <= stop
+    if not bool(hit_mask.any()):
+        return raw, False, None
+    hit_index = hit_mask[hit_mask].index[0]
+    hit_date = window.loc[hit_index].get("date")
+    adjusted = round((stop - entry_price) / entry_price * 100.0, 4)
+    return adjusted, True, hit_date.isoformat() if hasattr(hit_date, "isoformat") else str(hit_date)
 
 
 def evaluate_signal_forward(
@@ -175,6 +217,16 @@ def evaluate_signal_forward(
         "entry_mode": signal.entry_mode,
     }
     result.update(_execution_diagnostics(history, entry_row, entry_mode))
+    effective_stop = _effective_stop_loss(signal.stop_loss, entry_price)
+    if effective_stop is not None:
+        signal.stop_loss = effective_stop
+        signal.dynamic_stop_loss = effective_stop
+        signal.invalidation_level = effective_stop
+    result["stop_loss"] = effective_stop
+    result["dynamic_stop_loss"] = effective_stop
+    result["invalidation_level"] = effective_stop
+    if effective_stop is not None and entry_price is not None and entry_price > 0:
+        result["stop_loss_distance_pct"] = round((entry_price - effective_stop) / entry_price * 100.0, 4)
     evaluable_future = future.iloc[1:].sort_values("date") if entry_row is not None else pd.DataFrame()
     execution_risk_flags = []
     if entry_mode == "insufficient_entry_data":
@@ -185,13 +237,16 @@ def evaluate_signal_forward(
         execution_risk_flags.append("limit_down_entry_risk")
     if result.get("low_liquidity_risk"):
         execution_risk_flags.append("low_liquidity_risk")
-    if result.get("executable_entry_quality") == "degraded":
+    if result.get("executable_entry_quality") in {"degraded", "risky"}:
         execution_risk_flags.append("degraded_entry_quality")
+    if result.get("executable_entry_quality") == "unavailable":
+        execution_risk_flags.append("unavailable_entry_quality")
     if execution_risk_flags:
         result["risk_flags"] = ";".join(
             sorted(set(str(signal.to_dict().get("risk_flags") or "").split(";") + execution_risk_flags))
         ).strip(";")
 
+    adverse_excursions: list[float] = []
     for days in EVAL_WINDOWS:
         stock_ret = future_return(entry_price, evaluable_future, days) if entry_price is not None else None
         result[f"raw_return_{days}d"] = stock_ret
@@ -207,17 +262,29 @@ def evaluate_signal_forward(
             if entry_price is not None and len(evaluable_future) >= days and "low" in evaluable_future.columns
             else None
         )
+        if result[f"low_max_drawdown_{days}d"] is not None:
+            adverse_excursions.append(float(result[f"low_max_drawdown_{days}d"]))
         result[f"max_drawdown_{days}d"] = result[f"low_max_drawdown_{days}d"]
         bench_ret = benchmark_return(benchmark_df, as_of, days)
         result[f"benchmark_return_{days}d"] = bench_ret
         result[f"outperform_benchmark_{days}d"] = (
             bool(result[f"net_return_{days}d"] > bench_ret) if result[f"net_return_{days}d"] is not None and bench_ret is not None else None
         )
-        if signal.stop_loss is not None and entry_price is not None and len(evaluable_future) >= days and "low" in evaluable_future.columns:
+        stop_adjusted, stop_triggered, stop_trigger_date = (
+            _stop_adjusted_return(entry_price, evaluable_future, days, effective_stop)
+            if entry_price is not None
+            else (None, False, None)
+        )
+        result[f"stop_adjusted_return_{days}d"] = stop_adjusted
+        result[f"stop_adjusted_net_return_{days}d"] = net_return_from_raw(stop_adjusted, fee_bps, slippage_bps)
+        result[f"stop_triggered_{days}d"] = stop_triggered if stop_adjusted is not None else None
+        result[f"stop_trigger_date_{days}d"] = stop_trigger_date
+        if effective_stop is not None and entry_price is not None and len(evaluable_future) >= days and "low" in evaluable_future.columns:
             lows = pd.to_numeric(evaluable_future.head(days)["low"], errors="coerce")
-            result[f"hit_stop_loss_{days}d"] = bool((lows <= signal.stop_loss).any()) if not lows.empty else None
+            result[f"hit_stop_loss_{days}d"] = bool((lows <= effective_stop).any()) if not lows.empty else None
         else:
             result[f"hit_stop_loss_{days}d"] = None
+    result["post_entry_adverse_excursion_pct"] = min(adverse_excursions) if adverse_excursions else None
     result["hit_stop_loss"] = result.get("hit_stop_loss_250d")
     return result
 

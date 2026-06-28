@@ -31,6 +31,20 @@ SIGNAL_DETAIL_COLUMNS = [
     "distance_from_5y_high_pct",
     "distance_from_10y_low_pct",
     "distance_from_10y_high_pct",
+    "stabilization_days",
+    "downtrend_exhaustion_score",
+    "reclaim_ma_score",
+    "no_falling_knife_filter",
+    "second_low_confirmation",
+    "trend_confirmation_level",
+    "value_trap_score",
+    "value_trap_flag",
+    "valuation_repair_signal",
+    "industry_cycle_quality",
+    "dynamic_stop_loss",
+    "stop_loss_distance_pct",
+    "invalidation_level",
+    "execution_risk_score",
     "entry_price",
     "entry_date",
     "entry_mode",
@@ -54,6 +68,19 @@ SIGNAL_DETAIL_COLUMNS = [
     "net_return_60d",
     "net_return_120d",
     "net_return_250d",
+    "stop_adjusted_return_20d",
+    "stop_adjusted_return_60d",
+    "stop_adjusted_return_120d",
+    "stop_adjusted_return_250d",
+    "stop_adjusted_net_return_20d",
+    "stop_adjusted_net_return_60d",
+    "stop_adjusted_net_return_120d",
+    "stop_adjusted_net_return_250d",
+    "stop_triggered_20d",
+    "stop_triggered_60d",
+    "stop_triggered_120d",
+    "stop_triggered_250d",
+    "post_entry_adverse_excursion_pct",
     "future_return_20d",
     "future_return_60d",
     "future_return_120d",
@@ -184,6 +211,57 @@ def _time_split_lines(summary: Dict[str, Any]) -> List[str]:
     return lines
 
 
+def _baseline_lines(summary: Dict[str, Any]) -> List[str]:
+    comparison = summary.get("baseline_comparison") or {}
+    lines = ["## 基线对比", ""]
+    if not comparison.get("available"):
+        return lines + ["- 未匹配到本次运行的 core/cycle/broad 基线，无法做自动对比。", ""]
+    metrics = comparison.get("metrics") or {}
+    label_map = {
+        "total_signals": "样本数",
+        "avg_net_return_60d": "60日平均净收益",
+        "win_rate_60d": "60日胜率",
+        "outperform_benchmark_rate_60d": "60日跑赢基准比例",
+        "avg_low_max_drawdown_250d": "250日低点平均回撤",
+    }
+    lines.append(
+        f"- 基线组：{comparison.get('baseline_group')}；基线 commit：{comparison.get('baseline_commit')}；"
+        f"总体判断：{'改善' if comparison.get('overall_improved') else '未达到整体改善'}。"
+    )
+    lines.append(
+        f"- 样本数变化：{_format_pct(comparison.get('sample_count_change_pct'))}；"
+        f"过拟合/样本骤降警告：{'是' if comparison.get('overfit_warning') else '否'}。"
+    )
+    for field_name, label in label_map.items():
+        item = metrics.get(field_name) or {}
+        lines.append(
+            f"- {label}: 当前 {_format_value(item.get('current'))}，"
+            f"基线 {_format_value(item.get('baseline'))}，"
+            f"变化 {_format_value(item.get('delta'))}，"
+            f"{'改善' if item.get('improved') is True else '未改善' if item.get('improved') is False else '无法比较'}。"
+        )
+    lines.append("")
+    return lines
+
+
+def _quality_lines(summary: Dict[str, Any]) -> List[str]:
+    stop_policy = summary.get("stop_policy_summary") or {}
+    filters = summary.get("quality_filter_summary") or {}
+    lines = [
+        "## 信号质量与止损政策",
+        "",
+        f"- 趋势确认分布：{json.dumps(summary.get('trend_confirmation_summary', {}), ensure_ascii=False)}",
+        f"- 行业周期证据质量分布：{json.dumps(summary.get('industry_cycle_quality_summary', {}), ensure_ascii=False)}",
+        f"- 执行入口质量分布：{json.dumps(summary.get('execution_entry_quality_summary', {}), ensure_ascii=False)}",
+        f"- 估值陷阱/飞刀/执行风险统计：{json.dumps(filters, ensure_ascii=False)}",
+        f"- 止损修正 60/120/250 日平均净收益：{_format_pct(stop_policy.get('avg_stop_adjusted_net_return_60d'))} / {_format_pct(stop_policy.get('avg_stop_adjusted_net_return_120d'))} / {_format_pct(stop_policy.get('avg_stop_adjusted_net_return_250d'))}",
+        f"- 止损触发率 60/120/250 日：{_format_pct(stop_policy.get('stop_trigger_rate_60d'))} / {_format_pct(stop_policy.get('stop_trigger_rate_120d'))} / {_format_pct(stop_policy.get('stop_trigger_rate_250d'))}",
+        f"- 止损是否改善长期收益代理：{'是' if stop_policy.get('reduced_drawdown_proxy') else '否'}；是否可能截断反弹代理：{'是' if stop_policy.get('may_cut_rebound_proxy') else '否'}。",
+        "",
+    ]
+    return lines
+
+
 def _sample_warning(summary: Dict[str, Any]) -> str:
     total = int(summary.get("total_signals") or 0)
     if total < 100:
@@ -213,6 +291,98 @@ def write_signal_details(rows: List[Dict[str, Any]], path: Path) -> None:
         writer.writeheader()
         for row in rows:
             writer.writerow({column: row.get(column) for column in SIGNAL_DETAIL_COLUMNS})
+
+
+def write_baseline_comparison(summary: Dict[str, Any], path: Path) -> None:
+    comparison = summary.get("baseline_comparison") or {}
+    path.write_text(json.dumps(comparison, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def write_parameter_experiment(summary: Dict[str, Any], json_path: Path, markdown_path: Path) -> None:
+    experiment = summary.get("parameter_experiment") or {}
+    json_path.write_text(json.dumps(experiment, ensure_ascii=False, indent=2), encoding="utf-8")
+    lines = [
+        "# 参数实验摘要",
+        "",
+        f"- 结论：{experiment.get('conclusion', '无可用数据')}",
+        f"- 推荐组合：{experiment.get('recommended') or '无稳定推荐'}",
+        "",
+    ]
+    for name, result in (experiment.get("experiments") or {}).items():
+        lines.append(f"## {name}")
+        for split_name in ("train", "validation", "recent_2y"):
+            metrics = (result or {}).get(split_name) or {}
+            lines.append(
+                f"- {split_name}: 样本 {metrics.get('total_signals', 0)}，"
+                f"60日平均净收益 {_format_pct(metrics.get('avg_net_return_60d'))}，"
+                f"60日胜率 {_format_pct(metrics.get('win_rate_60d'))}，"
+                f"60日跑赢基准 {_format_pct(metrics.get('outperform_benchmark_rate_60d'))}"
+            )
+        lines.append("")
+    markdown_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
+def _candidate_reason(row: Dict[str, Any]) -> str:
+    parts = []
+    if row.get("price_percentile_5y") is not None:
+        parts.append(f"5年价格分位 {float(row['price_percentile_5y']):.1%}")
+    if row.get("trend_confirmation_level"):
+        parts.append(f"趋势确认 {row.get('trend_confirmation_level')}")
+    if row.get("valuation_repair_signal"):
+        parts.append("估值修复信号存在")
+    if row.get("industry_cycle_phase"):
+        parts.append(f"行业周期 {row.get('industry_cycle_phase')}")
+    return "；".join(parts) or "触发研究信号，需人工复核公开数据"
+
+
+def write_paper_observation_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
+    columns = [
+        "code",
+        "stock_name",
+        "industry",
+        "as_of_date",
+        "signal_type",
+        "total_score",
+        "trend_confirmation_level",
+        "value_trap_score",
+        "stop_loss_distance_pct",
+        "execution_risk_score",
+        "max_position_pct_research_only",
+        "reason",
+        "invalidation_condition",
+        "disclaimer",
+    ]
+    candidates = [
+        row for row in rows
+        if str(row.get("signal_type") or "") in {"LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"}
+    ]
+    candidates = sorted(
+        candidates,
+        key=lambda row: (float(row.get("total_score") or 0), -float(row.get("value_trap_score") or 0)),
+        reverse=True,
+    )[:50]
+    with path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=columns)
+        writer.writeheader()
+        for row in candidates:
+            writer.writerow(
+                {
+                    "code": row.get("code"),
+                    "stock_name": row.get("stock_name"),
+                    "industry": row.get("industry"),
+                    "as_of_date": row.get("as_of_date"),
+                    "signal_type": row.get("signal_type"),
+                    "total_score": row.get("total_score"),
+                    "trend_confirmation_level": row.get("trend_confirmation_level"),
+                    "value_trap_score": row.get("value_trap_score"),
+                    "stop_loss_distance_pct": row.get("stop_loss_distance_pct"),
+                    "execution_risk_score": row.get("execution_risk_score"),
+                    "max_position_pct_research_only": row.get("max_position_pct"),
+                    "reason": _candidate_reason(row),
+                    "invalidation_condition": row.get("invalidation_reason"),
+                    "disclaimer": "该清单仅用于模拟观察和复盘，不构成买入建议。",
+                }
+            )
 
 
 def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
@@ -272,6 +442,8 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
     lines.extend(_top_group_lines("分 Market Environment 结果", summary.get("market_environment_summary") or {}))
     lines.extend(_top_group_lines("分 Industry Cycle Phase 结果", summary.get("industry_cycle_phase_summary") or {}))
     lines.extend(_time_split_lines(summary))
+    lines.extend(_baseline_lines(summary))
+    lines.extend(_quality_lines(summary))
     lines.extend(_failure_reason_text(summary))
     lines.extend(
         [
@@ -302,5 +474,8 @@ def write_reports(rows: List[Dict[str, Any]], summary: Dict[str, Any], output_di
     path = _run_dir(output_dir)
     write_signal_details(rows, path / "signal_details.csv")
     (path / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
+    write_baseline_comparison(summary, path / "baseline_comparison.json")
+    write_parameter_experiment(summary, path / "parameter_experiment.json", path / "parameter_experiment.md")
+    write_paper_observation_candidates(rows, path / "paper_observation_candidates.csv")
     write_summary_markdown(summary, path / "summary.md")
     return path

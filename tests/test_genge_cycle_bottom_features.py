@@ -207,3 +207,68 @@ def test_industry_cycle_missing_degrades_to_neutral_score() -> None:
     assert score == 50.0
     assert "stock_industry_map" in missing
     assert diag["industry"] is None
+
+
+def test_trend_confirmation_and_no_falling_knife_features_are_recorded() -> None:
+    closes = [20 - i * 0.04 for i in range(120)] + [15.0, 15.1, 15.2, 15.3, 15.5, 15.8, 16.1, 16.4, 16.8, 17.1]
+    price_df = _price_frame(closes)
+
+    features = build_feature_set(price_df=price_df, as_of_date=price_df.iloc[-1]["date"])
+
+    assert features.stabilization_days >= 3
+    assert features.no_falling_knife_filter is True
+    assert features.trend_confirmation_level in {"WEAK", "MEDIUM", "STRONG"}
+    assert features.dynamic_stop_loss is not None
+    assert features.stop_loss_distance_pct is not None
+
+
+def test_accelerating_downtrend_sets_falling_knife_risk() -> None:
+    closes = [30.0] * 130 + [28.0, 26.0, 24.0, 22.0, 20.0]
+    price_df = _price_frame(closes)
+
+    features = build_feature_set(price_df=price_df, as_of_date=price_df.iloc[-1]["date"])
+
+    assert features.no_falling_knife_filter is False
+    assert features.trend_confirmation_level == "NONE"
+    assert "falling_knife_risk" in features.risk_flags
+
+
+def test_value_trap_score_treats_missing_financials_as_uncertain() -> None:
+    price_df = _price_frame([10 + i * 0.01 for i in range(900)])
+    valuation_df = pd.DataFrame(
+        {
+            "date": [(date(2020, 1, 1) + timedelta(days=i)).isoformat() for i in range(900)],
+            "pb": [0.8] * 900,
+            "pe": [8.0] * 900,
+            "ps": [0.7] * 900,
+        }
+    )
+
+    features = build_feature_set(
+        price_df=price_df,
+        valuation_df=valuation_df,
+        as_of_date=price_df.iloc[-1]["date"],
+    )
+
+    assert features.value_trap_score >= 35
+    assert "missing_financial_uncertain" in features.risk_flags
+
+
+def test_manual_template_industry_cycle_quality_is_reported() -> None:
+    industry_cycle_df = pd.DataFrame(
+        [
+            {
+                "date": "2024-01-01",
+                "industry": "测试行业",
+                "cycle_phase": "bottom",
+                "cycle_score": 90,
+                "cycle_quality": "manual_template",
+            }
+        ]
+    )
+
+    score, missing, diag = compute_industry_cycle_score(industry_cycle_df, "测试行业", date(2024, 2, 1))
+
+    assert score >= 80
+    assert missing == []
+    assert diag["industry_cycle_quality"] == "manual_template"

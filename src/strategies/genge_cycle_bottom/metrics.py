@@ -4,12 +4,27 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import date, datetime, timedelta, timezone
+import json
+from pathlib import Path
 from statistics import mean, median
 from typing import Any, Dict, Iterable, List, Optional
 
 from .acceptance import evaluate_paper_trading_gate
 from .backtest import EVAL_WINDOWS
 from .features import coerce_date
+
+
+BASELINE_PATH = Path(__file__).resolve().parents[3] / "config" / "genge_signal_quality_baseline.json"
+BASELINE_METRIC_FIELDS = (
+    "total_signals",
+    "avg_net_return_20d",
+    "avg_net_return_60d",
+    "avg_net_return_120d",
+    "avg_net_return_250d",
+    "win_rate_60d",
+    "outperform_benchmark_rate_60d",
+    "avg_low_max_drawdown_250d",
+)
 
 
 def _finite_number(value: Any) -> Optional[float]:
@@ -158,11 +173,13 @@ def _coverage_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 
 def _execution_diagnostics(rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    unavailable_values = {"missing", "unavailable"}
     return {
         "limit_up_entry_count": sum(1 for row in rows if row.get("limit_up_entry_risk") is True),
         "limit_down_entry_count": sum(1 for row in rows if row.get("limit_down_entry_risk") is True),
-        "missing_entry_count": sum(1 for row in rows if row.get("suspended_or_missing_bar") is True or row.get("executable_entry_quality") == "missing"),
+        "missing_entry_count": sum(1 for row in rows if row.get("suspended_or_missing_bar") is True or row.get("executable_entry_quality") in unavailable_values),
         "degraded_entry_count": sum(1 for row in rows if row.get("executable_entry_quality") == "degraded"),
+        "risky_entry_count": sum(1 for row in rows if row.get("executable_entry_quality") == "risky"),
         "low_liquidity_count": sum(1 for row in rows if row.get("low_liquidity_risk") is True),
         "abnormal_gap_open_count": sum(1 for row in rows if row.get("abnormal_gap_open") is True),
     }
@@ -251,6 +268,7 @@ def _group_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         return_field = f"net_return_{days}d"
         result[f"win_rate_{days}d"] = _win_rate(rows, return_field)
         result[f"avg_net_return_{days}d"] = _avg(_numbers(rows, return_field))
+        result[f"avg_stop_adjusted_net_return_{days}d"] = _avg(_numbers(rows, f"stop_adjusted_net_return_{days}d"))
     result["median_net_return_60d"] = _median(_numbers(rows, "net_return_60d"))
     result["low_max_drawdown_250d"] = _avg(_numbers(rows, "low_max_drawdown_250d"))
     result["outperform_benchmark_rate_60d"] = _ratio_true(rows, "outperform_benchmark_60d")
@@ -271,6 +289,182 @@ def _group_summary(rows: List[Dict[str, Any]], field_name: str, fallback: str = 
     return {
         key: _group_metrics(group_rows)
         for key, group_rows in sorted(grouped.items(), key=lambda item: item[0])
+    }
+
+
+def _count_token(rows: Iterable[Dict[str, Any]], field_name: str, token: str) -> int:
+    return sum(1 for row in rows if _contains_token(row.get(field_name), token))
+
+
+def _stop_policy_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    result: Dict[str, Any] = {}
+    for days in EVAL_WINDOWS:
+        stop_field = f"stop_adjusted_net_return_{days}d"
+        original_field = f"net_return_{days}d"
+        stop_avg = _avg(_numbers(rows, stop_field))
+        original_avg = _avg(_numbers(rows, original_field))
+        result[f"avg_stop_adjusted_net_return_{days}d"] = stop_avg
+        result[f"stop_trigger_rate_{days}d"] = _ratio_true(rows, f"stop_triggered_{days}d")
+        result[f"avg_delta_vs_original_{days}d"] = (
+            round(stop_avg - original_avg, 4)
+            if stop_avg is not None and original_avg is not None
+            else None
+        )
+    result["reduced_drawdown_proxy"] = bool(
+        result.get("avg_delta_vs_original_250d") is not None
+        and result.get("avg_delta_vs_original_250d") >= 0
+    )
+    result["may_cut_rebound_proxy"] = bool(
+        result.get("avg_delta_vs_original_120d") is not None
+        and result.get("avg_delta_vs_original_120d") < 0
+    )
+    result["avg_post_entry_adverse_excursion_pct"] = _avg(_numbers(rows, "post_entry_adverse_excursion_pct"))
+    return result
+
+
+def _load_baseline() -> Dict[str, Any]:
+    if not BASELINE_PATH.exists():
+        return {}
+    try:
+        return json.loads(BASELINE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+
+
+def _baseline_group_from_diagnostics(diagnostics: Dict[str, Any]) -> Optional[str]:
+    output_dir = str(diagnostics.get("output_dir") or "").lower()
+    requested = [str(item) for item in diagnostics.get("requested_codes") or []]
+    benchmark = str(diagnostics.get("benchmark") or "")
+    if "signal_quality_broad" in output_dir or benchmark == "000905" or len(requested) >= 90:
+        return "broad"
+    if "signal_quality_cycle" in output_dir or len(requested) >= 50:
+        return "cycle"
+    if "signal_quality_core" in output_dir or requested:
+        return "core"
+    return None
+
+
+def _baseline_comparison(summary: Dict[str, Any], diagnostics: Dict[str, Any]) -> Dict[str, Any]:
+    baseline = _load_baseline()
+    group = _baseline_group_from_diagnostics(diagnostics)
+    baseline_metrics = ((baseline.get("metrics") or {}).get(group or "") or {})
+    if not group or not baseline_metrics:
+        return {
+            "baseline_commit": baseline.get("commit"),
+            "baseline_group": group,
+            "available": False,
+            "overfit_warning": False,
+            "metrics": {},
+            "overall_improved": False,
+        }
+    metrics: Dict[str, Dict[str, Any]] = {}
+    improved_count = 0
+    comparable_count = 0
+    for field_name in BASELINE_METRIC_FIELDS:
+        current = summary.get(field_name)
+        baseline_value = baseline_metrics.get(field_name)
+        current_number = _finite_number(current)
+        baseline_number = _finite_number(baseline_value)
+        if current_number is None or baseline_number is None:
+            metrics[field_name] = {
+                "current": current,
+                "baseline": baseline_value,
+                "delta": None,
+                "improved": None,
+            }
+            continue
+        delta = round(current_number - baseline_number, 4)
+        if field_name == "avg_low_max_drawdown_250d":
+            improved = current_number >= baseline_number
+        elif field_name == "total_signals":
+            improved = current_number >= baseline_number * 0.5
+        else:
+            improved = current_number > baseline_number
+        comparable_count += 1
+        improved_count += int(improved)
+        metrics[field_name] = {
+            "current": current_number,
+            "baseline": baseline_number,
+            "delta": delta,
+            "improved": improved,
+        }
+    baseline_total = _finite_number(baseline_metrics.get("total_signals"))
+    current_total = _finite_number(summary.get("total_signals"))
+    overfit_warning = bool(
+        baseline_total is not None
+        and current_total is not None
+        and baseline_total > 0
+        and current_total < baseline_total * 0.5
+    )
+    key_improved = [
+        metrics.get("avg_net_return_60d", {}).get("improved") is True,
+        metrics.get("win_rate_60d", {}).get("improved") is True,
+        metrics.get("outperform_benchmark_rate_60d", {}).get("improved") is True,
+        metrics.get("avg_low_max_drawdown_250d", {}).get("improved") is True,
+    ]
+    return {
+        "baseline_commit": baseline.get("commit"),
+        "baseline_group": group,
+        "available": True,
+        "overfit_warning": overfit_warning,
+        "sample_count_change_pct": (
+            round((current_total - baseline_total) / baseline_total * 100.0, 4)
+            if baseline_total not in (None, 0) and current_total is not None
+            else None
+        ),
+        "metrics": metrics,
+        "improved_metric_count": improved_count,
+        "comparable_metric_count": comparable_count,
+        "overall_improved": bool(all(key_improved) and not overfit_warning),
+    }
+
+
+def _parameter_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    split = _time_split_summary(rows)
+    _, end = _date_range(rows)
+    recent_cutoff = end - timedelta(days=int(365.25 * 2)) if end is not None else None
+    experiments = {
+        "baseline_current": rows,
+        "trend_medium_plus": [
+            row for row in rows if str(row.get("trend_confirmation_level") or "") in {"MEDIUM", "STRONG"}
+        ],
+        "low_value_trap": [
+            row for row in rows if (_finite_number(row.get("value_trap_score")) or 0.0) < 60
+        ],
+        "good_execution": [
+            row for row in rows if str(row.get("executable_entry_quality") or "") in {"good", "normal"}
+        ],
+        "tight_stop_distance": [
+            row for row in rows if (_finite_number(row.get("stop_loss_distance_pct")) is None or (_finite_number(row.get("stop_loss_distance_pct")) or 0.0) <= 12)
+        ],
+    }
+    experiment_metrics = {
+        name: {
+            "train": split.get("first_half") if name == "baseline_current" else _group_metrics(group_rows[: max(1, len(group_rows) // 2)]),
+            "validation": split.get("second_half") if name == "baseline_current" else _group_metrics(group_rows[max(1, len(group_rows) // 2):]),
+            "recent_2y": split.get("recent_2y") if name == "baseline_current" else _group_metrics(
+                [
+                    row for row in group_rows
+                    if row.get("as_of_date")
+                    and recent_cutoff is not None
+                    and coerce_date(row["as_of_date"]) >= recent_cutoff
+                ]
+            ),
+        }
+        for name, group_rows in experiments.items()
+    }
+    stable_candidates = [
+        name
+        for name, result in experiment_metrics.items()
+        if (result.get("validation") or {}).get("avg_net_return_60d") is not None
+        and (result.get("recent_2y") or {}).get("avg_net_return_60d") is not None
+        and (result["validation"]["avg_net_return_60d"] or 0) > 0
+        and (result["recent_2y"]["avg_net_return_60d"] or 0) > -2
+    ]
+    return {
+        "experiments": experiment_metrics,
+        "recommended": stable_candidates[0] if stable_candidates else None,
+        "conclusion": "存在相对稳定的候选参数组合" if stable_candidates else "未发现稳定优于当前参数的组合",
     }
 
 
@@ -431,6 +625,8 @@ def compute_summary(
         summary[f"median_raw_return_{days}d"] = _median(_numbers(rows, raw_return_field))
         summary[f"avg_net_return_{days}d"] = summary[f"avg_return_{days}d"]
         summary[f"median_net_return_{days}d"] = summary[f"median_return_{days}d"]
+        summary[f"avg_stop_adjusted_return_{days}d"] = _avg(_numbers(rows, f"stop_adjusted_return_{days}d"))
+        summary[f"avg_stop_adjusted_net_return_{days}d"] = _avg(_numbers(rows, f"stop_adjusted_net_return_{days}d"))
         summary[f"outperform_benchmark_rate_{days}d"] = _ratio_true(rows, f"outperform_benchmark_{days}d")
         summary[f"avg_max_drawdown_{days}d"] = _avg(_numbers(rows, drawdown_field))
         summary[f"avg_low_max_drawdown_{days}d"] = summary[f"avg_max_drawdown_{days}d"]
@@ -454,6 +650,9 @@ def compute_summary(
     }
     if extra_diagnostics:
         diagnostics.update(extra_diagnostics)
+    baseline_comparison = _baseline_comparison(summary, diagnostics)
+    stop_policy = _stop_policy_summary(rows)
+    parameter_experiment = _parameter_experiment_summary(rows)
 
     summary.update(
         {
@@ -497,6 +696,9 @@ def compute_summary(
             "signal_type_summary": _group_summary(rows, "signal_type"),
             "market_environment_summary": _group_summary(rows, "market_environment_state"),
             "industry_cycle_phase_summary": _group_summary(rows, "industry_cycle_phase"),
+            "trend_confirmation_summary": _group_summary(rows, "trend_confirmation_level"),
+            "industry_cycle_quality_summary": _group_summary(rows, "industry_cycle_quality"),
+            "execution_entry_quality_summary": _group_summary(rows, "executable_entry_quality"),
             "time_split_summary": _time_split_summary(rows),
             "drawdown_diagnostics": {
                 "default_basis": "low_max_drawdown",
@@ -507,6 +709,15 @@ def compute_summary(
                 "worst": min(drawdowns) if drawdowns else None,
             },
             "failure_reason_summary": _failure_reason_summary(rows),
+            "stop_policy_summary": stop_policy,
+            "quality_filter_summary": {
+                "falling_knife_filtered_count": _count_token(rows, "risk_flags", "falling_knife_risk"),
+                "value_trap_flagged_count": _count_token(rows, "risk_flags", "value_trap_risk"),
+                "missing_financial_uncertain_count": _count_token(rows, "risk_flags", "missing_financial_uncertain"),
+                "high_execution_risk_count": sum(1 for row in rows if (_finite_number(row.get("execution_risk_score")) or 0.0) >= 60),
+            },
+            "parameter_experiment": parameter_experiment,
+            "baseline_comparison": baseline_comparison,
             "best": best_signals,
             "worst": worst_signals,
             "diagnostics": diagnostics,

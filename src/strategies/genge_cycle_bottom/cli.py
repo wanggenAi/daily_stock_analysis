@@ -342,6 +342,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         "data_errors": data_errors,
         "benchmark": args.benchmark,
         "benchmark_source_or_error": benchmark_source_or_error,
+        "output_dir": str(args.output_dir),
         "start_date": start_date.isoformat(),
         "end_date": end_date.isoformat(),
         "step_days": max(1, int(args.step_days)),

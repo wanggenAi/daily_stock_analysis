@@ -91,6 +91,9 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `summary.md`：中文摘要、分组结果、失败原因、验收枚举。
 - `summary.json`：机器可读统计结果。
 - `signal_details.csv`：逐条历史信号明细。
+- `baseline_comparison.json`：与 `config/genge_signal_quality_baseline.json` 中的 core/cycle/broad 基线做自动对比。
+- `parameter_experiment.json` / `parameter_experiment.md`：小型参数切片实验，包含 train、validation、recent_2y 三段。
+- `paper_observation_candidates.csv`：模拟观察和复盘候选清单，仅用于研究记录，不构成买入建议。
 
 当前模块是研究回测，不生成实盘委托，也不打开券商页面。
 
@@ -111,6 +114,13 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `valuation_coverage_rate` / `financial_coverage_rate`：估值和财务字段覆盖率。两者都低时，不能按完整基本面研究通过。
 - `pe_missing_count` / `pb_missing_count` / `financial_missing_count`：PE、PB、财务字段缺失数量。
 - `execution_diagnostics`：涨停买入风险、跌停/停牌/缺失 bar、低流动性、异常跳空等可成交诊断。该字段是研究风控提示，不代表真实委托结果。
+- `trend_confirmation_summary`：`NONE/WEAK/MEDIUM/STRONG` 趋势确认等级分布。
+- `industry_cycle_quality_summary`：行业周期证据质量分布，取值包括 `missing`、`manual_template`、`user_supplied`、`provider_derived`、`verified`。
+- `execution_entry_quality_summary`：入口执行质量分布，取值为 `good/degraded/risky/unavailable`。
+- `stop_policy_summary`：动态止损修正收益、止损触发率、是否可能改善回撤或截断反弹。
+- `baseline_comparison`：与上一个真实研究基线的 total、60 日收益、60 日胜率、60 日跑赢基准比例、250 日低点回撤对比；样本数下降超过 50% 会标记 `overfit_warning`。
+- `quality_filter_summary`：飞刀风险、估值陷阱、财务缺失不确定和高执行风险统计。
+- `parameter_experiment`：小型参数实验摘要，用来判断过滤是否只在某一段历史中有效。
 - `paper_trading_gate`：当前是否达到模拟盘观察门槛。
 
 报告中的 `avg_return_*` 为向后兼容字段，当前等同于 `avg_net_return_*`，不得改成原始收益口径。
@@ -142,11 +152,30 @@ reports/genge_cycle_bottom_real/20260627_203000/
 ## 当前已做的保守过滤
 
 - `CONFIRM_BUY` 提高趋势确认门槛。
-- 财务缺失或行业周期缺失时，`CONFIRM_BUY` 会降级为 `LEFT_SMALL_BUY`。
+- `LEFT_SMALL_BUY` 至少需要 `trend_confirmation_level=WEAK`，`CONFIRM_BUY` 至少需要 `MEDIUM`，`ADD` 预留为 `STRONG`。
+- 新增 `stabilization_days`、`downtrend_exhaustion_score`、`reclaim_ma_score`、`no_falling_knife_filter` 和 `second_low_confirmation`，低位但未止跌的样本最多观察。
+- 财务缺失、行业周期缺失或行业周期证据质量为 `manual_template` 时，`CONFIRM_BUY` 会降级。
+- 新增 `value_trap_score`、`value_trap_flag` 和 `valuation_repair_signal`；低估值但财务缺失或恶化不默认安全。
+- 新增 `dynamic_stop_loss`、`stop_loss_distance_pct`、`invalidation_level` 和 `post_entry_adverse_excursion_pct`；回测同时保留原始收益、净收益和止损修正收益。
+- 止损距离过宽时，`CONFIRM_BUY` 会降级为更保守信号。
 - 弱市场环境下会降低信号级别或只观察。
 - 严重亏损、高负债、经营现金流异常等会进入风险标签。
 - 涨停买入、跌停、缺失下一交易日、低流动性和异常跳空会进入执行诊断或风险标签。
 - 所有未来收益只在信号生成之后由回测层计算，特征层按 `as_of_date` 截断数据。
+
+## 2026-06-28 信号质量优化验收
+
+本轮基于 `config/genge_signal_quality_baseline.json` 中 commit `b2a298b0` 的真实研究基线复核。
+
+- pytest：36 passed，1 warning。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260628_143138`，`total_signals=1453`，`data_failures=0`。
+- real core：`reports/genge_signal_quality_core/20260628_143543`，耗时 199.05 秒，`total_signals=1876`，`data_failures=0`。
+- real cycle：`reports/genge_signal_quality_cycle/20260628_144911`，耗时 802.18 秒，`total_signals=5807`，`data_failures=0`。
+- real broad：`reports/genge_signal_quality_broad/20260628_151610`，耗时 1610.63 秒，`total_signals=12718`，`data_failures=0`。
+
+broad 相比基线：60 日平均净收益 +1.0338，60 日胜率 +2.9732，60 日跑赢基准比例 +5.4145，250 日低点回撤 +0.0068，样本数下降 36.6507%，未触发大于 50% 的过拟合警告。
+
+最终研究枚举：`PASS_SIGNAL_QUALITY_IMPROVED`。该结论表示 broad 真实样本相对基线的核心信号质量有所改善；由于 core/cycle 回撤略差，且胜率、跑赢基准比例仍未达到更高门槛，不能视为模拟盘就绪。
 
 ## 已知限制
 
