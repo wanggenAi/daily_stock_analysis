@@ -10,8 +10,12 @@ FAIL_REAL_DATA_FETCH = "FAIL_REAL_DATA_FETCH"
 FAIL_DATA_QUALITY = "FAIL_DATA_QUALITY"
 FAIL_LOOKAHEAD_RISK = "FAIL_LOOKAHEAD_RISK"
 FAIL_STRATEGY_EXPECTANCY = "FAIL_STRATEGY_EXPECTANCY"
+FAIL_EXIT_POLICY = "FAIL_EXIT_POLICY"
 PASS_RESEARCH_ONLY = "PASS_RESEARCH_ONLY"
 PASS_REAL_DATA_RESEARCH = "PASS_REAL_DATA_RESEARCH"
+PASS_EXIT_POLICY_RESEARCH = "PASS_EXIT_POLICY_RESEARCH"
+PASS_60D_REPAIR_STRATEGY_VALIDATED = "PASS_60D_REPAIR_STRATEGY_VALIDATED"
+PASS_PAPER_TRADING_CANDIDATE = "PASS_PAPER_TRADING_CANDIDATE"
 PASS_PAPER_TRADING_READY = "PASS_PAPER_TRADING_READY"
 
 ACCEPTANCE_ENUMS = (
@@ -20,8 +24,12 @@ ACCEPTANCE_ENUMS = (
     FAIL_DATA_QUALITY,
     FAIL_LOOKAHEAD_RISK,
     FAIL_STRATEGY_EXPECTANCY,
+    FAIL_EXIT_POLICY,
     PASS_RESEARCH_ONLY,
     PASS_REAL_DATA_RESEARCH,
+    PASS_EXIT_POLICY_RESEARCH,
+    PASS_60D_REPAIR_STRATEGY_VALIDATED,
+    PASS_PAPER_TRADING_CANDIDATE,
     PASS_PAPER_TRADING_READY,
 )
 
@@ -105,6 +113,15 @@ def evaluate_paper_trading_gate(
     win_60d = _number(summary.get("win_rate_60d"))
     outperform_60d = _number(summary.get("outperform_benchmark_rate_60d"))
     drawdown_250d = _number(summary.get("avg_low_max_drawdown_250d", summary.get("avg_max_drawdown_250d")))
+    exit_summary = (summary.get("exit_policy_summary") or {}).get("hybrid_60d_repair_exit") or {}
+    exit_avg_60d = _number(exit_summary.get("avg_exit_adjusted_net_return_60d"))
+    exit_dd_60d = _number(exit_summary.get("avg_exit_adjusted_max_drawdown_60d"))
+    exit_dd_250d = _number(exit_summary.get("avg_exit_adjusted_max_drawdown_250d"))
+    raw_dd_60d = _number(summary.get("avg_low_max_drawdown_60d"))
+    exit_dd_reduction_250d = _number(exit_summary.get("exit_policy_drawdown_reduction_pct"))
+    has_exit_policy = exit_avg_60d is not None and exit_dd_250d is not None
+    overfit_warning = bool((summary.get("baseline_comparison") or {}).get("overfit_warning"))
+    research_candidate_count = int(summary.get("research_observation_candidate_count") or 0)
     recent = (summary.get("time_split_summary") or {}).get("recent_2y") or {}
     recent_avg_60d = _number(recent.get("avg_net_return_60d"))
     recent_win_60d = _number(recent.get("win_rate_60d"))
@@ -151,6 +168,15 @@ def evaluate_paper_trading_gate(
     short_horizon_ok = bool(avg_60d is not None and avg_60d > 0 and avg_120d is not None and avg_120d <= 0)
     if avg_120d is None or avg_120d <= 0:
         reasons.append("120 日平均净收益未转正，最多按 20/60 日短中期研究观察")
+    if has_exit_policy:
+        if exit_avg_60d is not None and avg_60d is not None and exit_avg_60d < avg_60d - 0.5:
+            reasons.append("退出策略对 60 日收益伤害偏大")
+        if exit_dd_60d is not None and raw_dd_60d is not None and abs(exit_dd_60d) > abs(raw_dd_60d) + 0.5:
+            reasons.append("退出策略未降低 60 日最大不利波动")
+        if exit_dd_reduction_250d is None or exit_dd_reduction_250d <= 0:
+            reasons.append("退出策略未降低 250 日死拿风险")
+        if overfit_warning:
+            reasons.append("样本骤降或 broad 样本低于 8000，暂不能提高到 60 日修复策略验证")
 
     if ci_passed is False and source_mode == "ci":
         verdict = FAIL_CI
@@ -178,6 +204,29 @@ def evaluate_paper_trading_gate(
         verdict = FAIL_STRATEGY_EXPECTANCY
     else:
         verdict = PASS_RESEARCH_ONLY
+
+    if source_mode == "real" and has_exit_policy and total_signals >= 100 and verdict == PASS_REAL_DATA_RESEARCH:
+        exit_harms_60d = exit_avg_60d is not None and avg_60d is not None and exit_avg_60d < avg_60d - 1.0
+        exit_worsens_drawdown = exit_dd_reduction_250d is not None and exit_dd_reduction_250d <= 0
+        if exit_harms_60d and exit_worsens_drawdown:
+            verdict = FAIL_EXIT_POLICY
+        else:
+            verdict = PASS_EXIT_POLICY_RESEARCH
+            if (
+                total_signals >= 8000
+                and not overfit_warning
+                and avg_60d is not None
+                and avg_60d > 0
+                and win_60d is not None
+                and win_60d >= 47
+                and outperform_60d is not None
+                and outperform_60d >= 46.5
+                and exit_avg_60d is not None
+                and exit_avg_60d >= avg_60d - 0.5
+                and exit_dd_reduction_250d is not None
+                and exit_dd_reduction_250d > 0
+            ):
+                verdict = PASS_60D_REPAIR_STRATEGY_VALIDATED
 
     can_paper = (
         ci_passed is True
@@ -207,6 +256,22 @@ def evaluate_paper_trading_gate(
     if can_paper:
         verdict = PASS_PAPER_TRADING_READY
         reasons = ["满足当前模拟盘观察门槛，但仍不构成交易建议"]
+
+    can_paper_candidate = (
+        verdict == PASS_60D_REPAIR_STRATEGY_VALIDATED
+        and research_candidate_count > 0
+        and execution_risk_rate <= 20
+        and win_60d is not None
+        and win_60d >= 50
+        and outperform_60d is not None
+        and outperform_60d >= 47
+        and exit_dd_reduction_250d is not None
+        and exit_dd_reduction_250d >= 10
+        and not (recent_avg_60d is not None and recent_avg_60d < -2)
+    )
+    if can_paper_candidate:
+        verdict = PASS_PAPER_TRADING_CANDIDATE
+        reasons = ["满足研究观察候选门槛，仅用于模拟观察和复盘，不构成买入建议"]
 
     return {"verdict": verdict, "reasons": reasons or ["仅通过研究验证，尚未达到更高门槛"]}
 

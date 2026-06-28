@@ -7,6 +7,8 @@ from pathlib import Path
 
 from src.strategies.genge_cycle_bottom.acceptance import (
     FAIL_DATA_QUALITY,
+    PASS_60D_REPAIR_STRATEGY_VALIDATED,
+    PASS_EXIT_POLICY_RESEARCH,
     PASS_PAPER_TRADING_READY,
     PASS_REAL_DATA_RESEARCH,
     PASS_RESEARCH_ONLY,
@@ -88,6 +90,32 @@ def _summary_row(
     }
 
 
+def _summary_row_with_exit(index: int, **kwargs) -> dict:
+    row = _summary_row(index % 120, **kwargs)
+    row["code"] = f"{index:06d}"
+    row["exit_policy_name"] = "hybrid_60d_repair_exit"
+    for days in (20, 60, 120, 250):
+        row[f"exit_adjusted_raw_return_{days}d"] = row.get(f"raw_return_{days}d")
+        row[f"exit_adjusted_net_return_{days}d"] = row.get(f"net_return_{days}d")
+        row[f"exit_adjusted_max_drawdown_{days}d"] = -4.0
+        row[f"exit_holding_days_{days}d"] = min(days, 60)
+        row[f"exit_reason_{days}d"] = "TIME_EXIT"
+        row[f"exit_price_{days}d"] = 10.0
+        row[f"exit_date_{days}d"] = row["as_of_date"]
+        for policy in ("fixed_60d_time_exit", "trend_break_exit", "profit_trailing_exit", "hybrid_60d_repair_exit"):
+            row[f"{policy}_exit_adjusted_raw_return_{days}d"] = row.get(f"raw_return_{days}d")
+            row[f"{policy}_exit_adjusted_net_return_{days}d"] = row.get(f"net_return_{days}d")
+            row[f"{policy}_exit_adjusted_max_drawdown_{days}d"] = -4.0
+            row[f"{policy}_exit_holding_days_{days}d"] = min(days, 60)
+            row[f"{policy}_exit_reason_{days}d"] = "TIME_EXIT"
+        for experiment in ("conservative", "balanced", "loose", "trend_extend"):
+            row[f"exit_policy_experiment_{experiment}_exit_adjusted_net_return_{days}d"] = row.get(f"net_return_{days}d")
+            row[f"exit_policy_experiment_{experiment}_exit_adjusted_max_drawdown_{days}d"] = -4.0
+            row[f"exit_policy_experiment_{experiment}_exit_holding_days_{days}d"] = min(days, 60)
+            row[f"exit_policy_experiment_{experiment}_exit_reason_{days}d"] = "TIME_EXIT"
+    return row
+
+
 def test_report_fields_include_p0_required_columns(tmp_path: Path) -> None:
     rows = [
         {
@@ -145,6 +173,14 @@ def test_report_fields_include_p0_required_columns(tmp_path: Path) -> None:
         "stop_loss_distance_pct",
         "execution_risk_score",
         "stop_adjusted_net_return_60d",
+        "exit_policy_name",
+        "exit_date_60d",
+        "exit_reason_60d",
+        "exit_price_60d",
+        "exit_adjusted_raw_return_60d",
+        "exit_adjusted_net_return_60d",
+        "exit_adjusted_max_drawdown_60d",
+        "exit_holding_days_60d",
         "net_return_60d",
         "low_max_drawdown_60d",
         "hit_stop_loss_60d",
@@ -216,15 +252,23 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
         "industry_cycle_coverage_rate",
         "execution_diagnostics",
         "baseline_comparison",
-        "stop_policy_summary",
-        "quality_filter_summary",
+            "stop_policy_summary",
+            "exit_policy_summary",
+            "exit_policy_experiment",
+            "raw_stop_exit_comparison",
+            "strategy_horizon_profile",
+            "primary_horizon_metrics",
+            "long_horizon_risk_metrics",
+            "quality_filter_summary",
         "parameter_experiment",
         "execution_risk_score_summary",
         "execution_risk_score_distribution",
         "history_sufficiency_quality_summary",
         "long_term_position_risk_score_summary",
-        "paper_observation_candidate_count",
-    ):
+            "paper_observation_candidate_count",
+            "strict_observation_candidate_count",
+            "research_observation_candidate_count",
+        ):
         assert key in summary
     assert summary["industry_summary"]["光伏"]["total_signals"] == 2
     assert summary["signal_type_summary"]["CONFIRM_BUY"]["total_signals"] == 2
@@ -244,6 +288,9 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
     assert summary["failure_reason_summary"]["reason_counts"]["财务缺失或恶化"] >= 1
     assert summary["history_sufficiency_quality_summary"]["adequate"]["total_signals"] == 3
     assert summary["long_term_position_risk_score_summary"]["0_29_low"]["total_signals"] == 3
+    assert summary["strategy_horizon_profile"]["strategy_primary_horizon"] == "60d"
+    assert "hybrid_60d_repair_exit" in summary["exit_policy_summary"]
+    assert "recent_2y" in summary["exit_policy_experiment"]["experiments"]["balanced"]
 
 
 def test_baseline_comparison_and_overfit_warning_are_reported() -> None:
@@ -264,6 +311,53 @@ def test_baseline_comparison_and_overfit_warning_are_reported() -> None:
     assert comparison["baseline_group"] == "broad"
     assert comparison["metrics"]["avg_net_return_60d"]["delta"] is not None
     assert comparison["overfit_warning"] is True
+
+
+def test_exit_policy_summary_and_60d_horizon_gate_are_reported() -> None:
+    rows = [_summary_row_with_exit(index, net_60d=2.0, net_120d=1.0, net_250d=1.0, outperform=True) for index in range(8100)]
+
+    summary = compute_summary(
+        rows,
+        extra_diagnostics={
+            "source_mode": "real",
+            "output_dir": "reports/genge_exit_policy_broad",
+            "requested_codes": [f"{index:06d}" for index in range(100)],
+            "benchmark": "000905",
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    assert summary["strategy_primary_horizon"] == "60d"
+    assert summary["strategy_horizon_profile"]["strategy_risk_horizon"] == "250d"
+    assert summary["primary_horizon_metrics"]["exit_adjusted_net_return_60d"] == 2.0
+    assert summary["long_horizon_risk_metrics"]["exit_adjusted_250d_max_drawdown"] == -4.0
+    assert summary["exit_policy_summary"]["hybrid_60d_repair_exit"]["avg_exit_adjusted_net_return_60d"] == 2.0
+    assert summary["exit_policy_summary"]["raw_hold"]["avg_exit_adjusted_net_return_60d"] == 2.0
+    assert summary["exit_policy_experiment"]["experiments"]["balanced"]["validation"]["total_signals"] > 0
+    assert summary["paper_trading_gate"]["verdict"] in {
+        PASS_60D_REPAIR_STRATEGY_VALIDATED,
+        PASS_EXIT_POLICY_RESEARCH,
+    }
+
+
+def test_broad_sample_below_8000_sets_overfit_warning() -> None:
+    rows = [_summary_row_with_exit(index, net_60d=2.0, outperform=True) for index in range(7999)]
+
+    summary = compute_summary(
+        rows,
+        extra_diagnostics={
+            "source_mode": "real",
+            "output_dir": "reports/genge_exit_policy_broad",
+            "requested_codes": [f"{index:06d}" for index in range(100)],
+            "benchmark": "000905",
+        },
+    )
+
+    assert summary["baseline_comparison"]["overfit_warning"] is True
 
 
 def test_parameter_experiment_contains_train_validation_recent_2y() -> None:
@@ -471,7 +565,16 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
     latest = report_dirs[-1]
     for filename in ("signal_details.csv", "summary.json", "summary.md"):
         assert (latest / filename).exists()
-    for filename in ("baseline_comparison.json", "parameter_experiment.json", "parameter_experiment.md", "paper_observation_candidates.csv"):
+    for filename in (
+        "baseline_comparison.json",
+        "parameter_experiment.json",
+        "parameter_experiment.md",
+        "exit_policy_experiment.json",
+        "exit_policy_experiment.md",
+        "paper_observation_candidates.csv",
+        "strict_observation_candidates.csv",
+        "research_observation_candidates.csv",
+    ):
         assert (latest / filename).exists()
     summary = json.loads((latest / "summary.json").read_text(encoding="utf-8"))
     assert summary["total_signals"] > 0
@@ -483,9 +586,16 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
     assert "execution_diagnostics" in summary
     assert "provider_errors" in summary["diagnostics"]
     assert summary["diagnostics"]["industry_cycle_source"] == "fixture"
+    assert summary["strategy_primary_horizon"] == "60d"
+    assert "exit_policy_summary" in summary
+    assert "exit_policy_experiment" in summary
     observation_text = (latest / "paper_observation_candidates.csv").read_text(encoding="utf-8")
     assert "不构成买入建议" in observation_text
     assert "仅用于模拟观察和复盘" in observation_text
+    research_text = (latest / "research_observation_candidates.csv").read_text(encoding="utf-8")
+    assert "仅用于模拟观察和复盘" in research_text
+    assert "买入清单" not in research_text
+    assert "交易指令" not in research_text
 
 
 def test_cli_fixture_smoke_context_flag_for_real_runs(tmp_path: Path) -> None:

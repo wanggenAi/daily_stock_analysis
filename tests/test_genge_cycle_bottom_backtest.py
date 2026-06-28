@@ -140,3 +140,79 @@ def test_dynamic_stop_loss_is_never_above_entry_price() -> None:
 
     assert result["dynamic_stop_loss"] <= result["entry_price"]
     assert result["stop_loss_distance_pct"] >= 0
+
+
+def test_exit_policy_fields_exist_and_use_net_return_costs() -> None:
+    price_df = _price_frame([100.0] + [100.0] * 80)
+
+    result = evaluate_signal_forward(_signal("2024-01-01"), price_df, fee_bps=5, slippage_bps=10)
+
+    assert result["exit_policy_name"] == "hybrid_60d_repair_exit"
+    assert result["exit_reason_20d"] == "TIME_EXIT"
+    assert result["exit_adjusted_raw_return_20d"] == 0.0
+    assert result["exit_adjusted_net_return_20d"] == -0.3
+    assert result["exit_adjusted_max_drawdown_20d"] <= result["low_max_drawdown_20d"]
+
+
+def test_fixed_60d_time_exit_caps_long_horizon_at_60_days() -> None:
+    closes = [100.0, 100.0] + [101.0] * 58 + [120.0] + [140.0] * 220
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(_signal("2024-01-01"), price_df)
+
+    assert result["fixed_60d_time_exit_exit_reason_120d"] == "TIME_EXIT"
+    assert result["fixed_60d_time_exit_exit_holding_days_120d"] == 60
+    assert result["fixed_60d_time_exit_exit_adjusted_raw_return_120d"] == 20.0
+
+
+def test_exit_policy_stop_loss_has_priority_over_time_exit() -> None:
+    signal = _signal("2024-01-01")
+    signal.stop_loss = 93.0
+    closes = [100.0, 100.0, 80.0] + [120.0] * 260
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result["exit_reason_60d"] == "STOP_LOSS"
+    assert result["exit_adjusted_raw_return_60d"] == -7.0
+    assert result["exit_holding_days_60d"] == 2
+
+
+def test_trend_break_exit_triggers_after_two_closes_below_ma20() -> None:
+    signal = _signal("2024-01-01")
+    signal.stop_loss = 50.0
+    closes = [100.0, 100.0] + [100.0] * 7 + [96.0, 95.0] + [95.0] * 80
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result["trend_break_exit_exit_reason_60d"] == "MA20_LOSS"
+    assert result["trend_break_exit_exit_holding_days_60d"] == 10
+
+
+def test_profit_trailing_exit_does_not_peek_at_future_high() -> None:
+    signal = _signal("2024-01-01")
+    signal.stop_loss = 50.0
+    closes = [100.0, 100.0, 104.0, 109.0, 103.0] + [150.0] * 80
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result["profit_trailing_exit_exit_reason_60d"] == "TAKE_PROFIT_TRAIL"
+    assert result["profit_trailing_exit_exit_price_60d"] == 103.0
+    assert result["profit_trailing_exit_exit_adjusted_raw_return_60d"] == 3.0
+
+
+def test_same_day_exit_conditions_use_conservative_priority() -> None:
+    signal = _signal("2024-01-01")
+    signal.stop_loss = 93.0
+    price_df = _price_frame([100.0] + [120.0] * 80)
+    price_df.loc[1, "open"] = 100.0
+    price_df.loc[1, "low"] = 90.0
+    price_df.loc[1, "high"] = 130.0
+    price_df.loc[1, "close"] = 120.0
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result["exit_reason_20d"] == "STOP_LOSS"
+    assert result["exit_adjusted_raw_return_20d"] == -7.0

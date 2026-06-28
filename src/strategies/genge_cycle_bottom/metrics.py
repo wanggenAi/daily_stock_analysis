@@ -10,7 +10,7 @@ from statistics import mean, median
 from typing import Any, Dict, Iterable, List, Optional
 
 from .acceptance import evaluate_paper_trading_gate
-from .backtest import EVAL_WINDOWS
+from .backtest import EVAL_WINDOWS, EXIT_POLICY_EXPERIMENTS, EXIT_POLICY_NAME, EXIT_POLICY_NAMES
 from .features import coerce_date
 
 
@@ -47,10 +47,25 @@ def _numbers(rows: Iterable[Dict[str, Any]], field_name: str) -> List[float]:
 
 
 def _ratio_true(rows: Iterable[Dict[str, Any]], field_name: str) -> Optional[float]:
-    values = [row.get(field_name) for row in rows if row.get(field_name) is not None]
+    values = []
+    for row in rows:
+        value = row.get(field_name)
+        if value is None:
+            continue
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+            if normalized in {"", "nan", "none"}:
+                continue
+            if normalized in {"true", "1", "yes"}:
+                values.append(True)
+                continue
+            if normalized in {"false", "0", "no"}:
+                values.append(False)
+                continue
+        values.append(bool(value))
     if not values:
         return None
-    return round(sum(1 for value in values if bool(value)) / len(values) * 100, 4)
+    return round(sum(1 for value in values if value) / len(values) * 100, 4)
 
 
 def _win_rate(rows: Iterable[Dict[str, Any]], field_name: str) -> Optional[float]:
@@ -269,6 +284,8 @@ def _group_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         result[f"win_rate_{days}d"] = _win_rate(rows, return_field)
         result[f"avg_net_return_{days}d"] = _avg(_numbers(rows, return_field))
         result[f"avg_stop_adjusted_net_return_{days}d"] = _avg(_numbers(rows, f"stop_adjusted_net_return_{days}d"))
+        result[f"avg_exit_adjusted_net_return_{days}d"] = _avg(_numbers(rows, f"exit_adjusted_net_return_{days}d"))
+        result[f"avg_exit_adjusted_max_drawdown_{days}d"] = _avg(_numbers(rows, f"exit_adjusted_max_drawdown_{days}d"))
         result[f"outperform_benchmark_rate_{days}d"] = _ratio_true(rows, f"outperform_benchmark_{days}d")
     result["median_net_return_60d"] = _median(_numbers(rows, "net_return_60d"))
     result["low_max_drawdown_250d"] = _avg(_numbers(rows, "low_max_drawdown_250d"))
@@ -359,6 +376,29 @@ def _is_observation_candidate(row: Dict[str, Any]) -> bool:
     )
 
 
+def _is_research_observation_candidate(row: Dict[str, Any]) -> bool:
+    trend_rank = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+    signal_type = str(row.get("signal_type") or "")
+    trend_level = str(row.get("trend_confirmation_level") or "NONE")
+    stop_distance = _finite_number(row.get("stop_loss_distance_pct"))
+    execution_risk = _finite_number(row.get("execution_risk_score")) or 0.0
+    value_trap_score = _finite_number(row.get("value_trap_score")) or 0.0
+    total_score = _finite_number(row.get("total_score")) or 0.0
+    entry_quality = str(row.get("executable_entry_quality") or "")
+    long_term_risk = _finite_number(row.get("long_term_position_risk_score")) or 0.0
+    high_quality_left = signal_type == "LEFT_SMALL_BUY" and total_score >= 72 and trend_rank.get(trend_level, 0) >= trend_rank["MEDIUM"]
+    confirm = signal_type == "CONFIRM_BUY" and trend_rank.get(trend_level, 0) >= trend_rank["MEDIUM"]
+    return bool(
+        (confirm or high_quality_left)
+        and value_trap_score < 70
+        and long_term_risk < 60
+        and stop_distance is not None
+        and stop_distance <= 15
+        and execution_risk < 60
+        and entry_quality not in {"risky", "unavailable"}
+    )
+
+
 def _stop_policy_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     result: Dict[str, Any] = {}
     for days in EVAL_WINDOWS:
@@ -385,6 +425,151 @@ def _stop_policy_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     return result
 
 
+def _outperform_rate_for_return_field(rows: Iterable[Dict[str, Any]], return_field: str, benchmark_field: str) -> Optional[float]:
+    values = []
+    for row in rows:
+        value = _finite_number(row.get(return_field))
+        benchmark = _finite_number(row.get(benchmark_field))
+        if value is not None and benchmark is not None:
+            values.append(value > benchmark)
+    if not values:
+        return None
+    return round(sum(1 for value in values if value) / len(values) * 100.0, 4)
+
+
+def _drawdown_reduction_pct(raw_drawdown: Optional[float], adjusted_drawdown: Optional[float]) -> Optional[float]:
+    raw = _finite_number(raw_drawdown)
+    adjusted = _finite_number(adjusted_drawdown)
+    if raw is None or adjusted is None or raw == 0:
+        return None
+    return round((abs(raw) - abs(adjusted)) / abs(raw) * 100.0, 4)
+
+
+def _policy_field(policy_name: str, metric: str, days: int) -> str:
+    if policy_name == "raw_hold":
+        if metric == "net_return":
+            return f"net_return_{days}d"
+        if metric == "raw_return":
+            return f"raw_return_{days}d"
+        if metric == "max_drawdown":
+            return f"low_max_drawdown_{days}d"
+        return f"{metric}_{days}d"
+    if policy_name == EXIT_POLICY_NAME:
+        return f"exit_adjusted_{metric}_{days}d" if metric in {"raw_return", "net_return", "max_drawdown"} else f"exit_{metric}_{days}d"
+    prefix = f"{policy_name}_"
+    return f"{prefix}exit_adjusted_{metric}_{days}d" if metric in {"raw_return", "net_return", "max_drawdown"} else f"{prefix}exit_{metric}_{days}d"
+
+
+def _exit_reason_distribution(rows: List[Dict[str, Any]], field_name: str) -> Dict[str, int]:
+    counter: Counter[str] = Counter()
+    for row in rows:
+        reason = str(row.get(field_name) or "").strip()
+        if reason:
+            counter[reason] += 1
+    return dict(counter.most_common())
+
+
+def _exit_policy_one_summary(rows: List[Dict[str, Any]], policy_name: str) -> Dict[str, Any]:
+    result: Dict[str, Any] = {
+        "policy_name": policy_name,
+        "total_signals": len(rows),
+    }
+    for days in EVAL_WINDOWS:
+        raw_field = _policy_field(policy_name, "raw_return", days)
+        net_field = _policy_field(policy_name, "net_return", days)
+        drawdown_field = _policy_field(policy_name, "max_drawdown", days)
+        holding_days_field = _policy_field(policy_name, "holding_days", days)
+        result[f"avg_exit_adjusted_raw_return_{days}d"] = _avg(_numbers(rows, raw_field))
+        result[f"avg_exit_adjusted_net_return_{days}d"] = _avg(_numbers(rows, net_field))
+        result[f"win_rate_exit_adjusted_{days}d"] = _win_rate(rows, net_field)
+        result[f"outperform_benchmark_exit_adjusted_{days}d"] = _outperform_rate_for_return_field(
+            rows,
+            net_field,
+            f"benchmark_return_{days}d",
+        )
+        result[f"avg_exit_adjusted_max_drawdown_{days}d"] = _avg(_numbers(rows, drawdown_field))
+        if policy_name == "raw_hold":
+            result[f"avg_holding_days_{days}d"] = days if _numbers(rows, net_field) else None
+        else:
+            result[f"avg_holding_days_{days}d"] = _avg(_numbers(rows, holding_days_field))
+            result[f"exit_reason_distribution_{days}d"] = _exit_reason_distribution(
+                rows,
+                _policy_field(policy_name, "reason", days),
+            )
+    result["avg_holding_days"] = result.get("avg_holding_days_60d")
+    if policy_name == "raw_hold":
+        result["exit_reason_distribution"] = {"TIME_EXIT": len(_numbers(rows, "net_return_60d"))}
+    else:
+        result["exit_reason_distribution"] = result.get("exit_reason_distribution_60d", {})
+    raw_dd_250 = _avg(_numbers(rows, "low_max_drawdown_250d"))
+    exit_dd_250 = result.get("avg_exit_adjusted_max_drawdown_250d")
+    raw_net_60 = _avg(_numbers(rows, "net_return_60d"))
+    exit_net_60 = result.get("avg_exit_adjusted_net_return_60d")
+    result["raw_hold_250d_low_drawdown"] = raw_dd_250
+    result["exit_adjusted_250d_max_drawdown"] = exit_dd_250
+    result["exit_policy_drawdown_reduction_pct"] = _drawdown_reduction_pct(raw_dd_250, exit_dd_250)
+    result["exit_policy_return_impact_pct"] = (
+        round(exit_net_60 - raw_net_60, 4)
+        if exit_net_60 is not None and raw_net_60 is not None
+        else None
+    )
+    return result
+
+
+def _exit_policy_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    result: Dict[str, Any] = {
+        "raw_hold": _exit_policy_one_summary(rows, "raw_hold"),
+    }
+    for policy_name in EXIT_POLICY_NAMES:
+        result[policy_name] = _exit_policy_one_summary(rows, policy_name)
+    return result
+
+
+def _raw_stop_exit_comparison(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    result: Dict[str, Any] = {}
+    for days in EVAL_WINDOWS:
+        result[f"{days}d"] = {
+            "raw_hold_avg_net_return": _avg(_numbers(rows, f"net_return_{days}d")),
+            "stop_adjusted_avg_net_return": _avg(_numbers(rows, f"stop_adjusted_net_return_{days}d")),
+            "exit_policy_avg_net_return": _avg(_numbers(rows, f"exit_adjusted_net_return_{days}d")),
+            "raw_hold_avg_low_drawdown": _avg(_numbers(rows, f"low_max_drawdown_{days}d")),
+            "exit_policy_avg_max_drawdown": _avg(_numbers(rows, f"exit_adjusted_max_drawdown_{days}d")),
+            "drawdown_reduction_pct": _drawdown_reduction_pct(
+                _avg(_numbers(rows, f"low_max_drawdown_{days}d")),
+                _avg(_numbers(rows, f"exit_adjusted_max_drawdown_{days}d")),
+            ),
+        }
+    return result
+
+
+def _strategy_horizon_profile(summary: Dict[str, Any], rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    exit_summary = _exit_policy_one_summary(rows, EXIT_POLICY_NAME)
+    return {
+        "strategy_primary_horizon": "60d",
+        "strategy_secondary_horizon": ["20d", "120d"],
+        "strategy_risk_horizon": "250d",
+        "primary_horizon_metrics": {
+            "horizon": "60d",
+            "avg_net_return_60d": summary.get("avg_net_return_60d"),
+            "win_rate_60d": summary.get("win_rate_60d"),
+            "outperform_benchmark_rate_60d": summary.get("outperform_benchmark_rate_60d"),
+            "raw_low_max_drawdown_60d": summary.get("avg_low_max_drawdown_60d"),
+            "exit_adjusted_net_return_60d": exit_summary.get("avg_exit_adjusted_net_return_60d"),
+            "exit_adjusted_max_drawdown_60d": exit_summary.get("avg_exit_adjusted_max_drawdown_60d"),
+        },
+        "long_horizon_risk_metrics": {
+            "risk_horizon": "250d",
+            "raw_hold_250d_low_drawdown": summary.get("avg_low_max_drawdown_250d"),
+            "raw_hold_250d_net_return": summary.get("avg_net_return_250d"),
+            "exit_adjusted_250d_max_drawdown": exit_summary.get("avg_exit_adjusted_max_drawdown_250d"),
+            "exit_adjusted_250d_net_return": exit_summary.get("avg_exit_adjusted_net_return_250d"),
+            "exit_policy_drawdown_reduction_pct": exit_summary.get("exit_policy_drawdown_reduction_pct"),
+            "exit_policy_return_impact_pct": exit_summary.get("exit_policy_return_impact_pct"),
+            "interpretation": "250d raw hold 只作为死拿风险压力测试，本策略不默认持有到 250d。",
+        },
+    }
+
+
 def _load_baseline() -> Dict[str, Any]:
     if not BASELINE_PATH.exists():
         return {}
@@ -398,11 +583,11 @@ def _baseline_group_from_diagnostics(diagnostics: Dict[str, Any]) -> Optional[st
     output_dir = str(diagnostics.get("output_dir") or "").lower()
     requested = [str(item) for item in diagnostics.get("requested_codes") or []]
     benchmark = str(diagnostics.get("benchmark") or "")
-    if "signal_quality_broad" in output_dir or benchmark == "000905" or len(requested) >= 90:
+    if "signal_quality_broad" in output_dir or "exit_policy_broad" in output_dir or benchmark == "000905" or len(requested) >= 90:
         return "broad"
-    if "signal_quality_cycle" in output_dir or len(requested) >= 50:
+    if "signal_quality_cycle" in output_dir or "exit_policy_cycle" in output_dir or len(requested) >= 50:
         return "cycle"
-    if "signal_quality_core" in output_dir or requested:
+    if "signal_quality_core" in output_dir or "exit_policy_core" in output_dir or requested:
         return "core"
     return None
 
@@ -459,6 +644,8 @@ def _baseline_comparison(summary: Dict[str, Any], diagnostics: Dict[str, Any]) -
         and baseline_total > 0
         and current_total < baseline_total * 0.5
     )
+    if group == "broad" and current_total is not None and current_total < 8000:
+        overfit_warning = True
     key_improved = [
         metrics.get("avg_net_return_60d", {}).get("improved") is True,
         metrics.get("win_rate_60d", {}).get("improved") is True,
@@ -598,6 +785,108 @@ def _parameter_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "experiments": experiment_metrics,
         "recommended": stable_candidates[0] if stable_candidates else None,
         "conclusion": "存在相对稳定的候选参数组合" if stable_candidates else "未发现稳定优于当前参数的组合",
+    }
+
+
+def _exit_experiment_group_metrics(rows: List[Dict[str, Any]], experiment_name: str) -> Dict[str, Any]:
+    prefix = f"exit_policy_experiment_{experiment_name}_"
+    result: Dict[str, Any] = {
+        "total_signals": len(rows),
+        "params": EXIT_POLICY_EXPERIMENTS.get(experiment_name, {}),
+    }
+    for days in EVAL_WINDOWS:
+        net_field = f"{prefix}exit_adjusted_net_return_{days}d"
+        drawdown_field = f"{prefix}exit_adjusted_max_drawdown_{days}d"
+        result[f"avg_exit_adjusted_net_return_{days}d"] = _avg(_numbers(rows, net_field))
+        result[f"win_rate_exit_adjusted_{days}d"] = _win_rate(rows, net_field)
+        result[f"outperform_benchmark_exit_adjusted_{days}d"] = _outperform_rate_for_return_field(
+            rows,
+            net_field,
+            f"benchmark_return_{days}d",
+        )
+        result[f"avg_exit_adjusted_max_drawdown_{days}d"] = _avg(_numbers(rows, drawdown_field))
+    result["avg_holding_days"] = _avg(_numbers(rows, f"{prefix}exit_holding_days_60d"))
+    result["exit_reason_distribution"] = _exit_reason_distribution(rows, f"{prefix}exit_reason_60d")
+    result["raw_hold_250d_low_drawdown"] = _avg(_numbers(rows, "low_max_drawdown_250d"))
+    result["exit_adjusted_250d_max_drawdown"] = result.get("avg_exit_adjusted_max_drawdown_250d")
+    result["exit_policy_drawdown_reduction_pct"] = _drawdown_reduction_pct(
+        result.get("raw_hold_250d_low_drawdown"),
+        result.get("exit_adjusted_250d_max_drawdown"),
+    )
+    return result
+
+
+def _exit_policy_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    start, end = _date_range(rows)
+    if start is None or end is None:
+        split_rows = {"train": [], "validation": [], "recent_2y": []}
+    else:
+        midpoint = start + (end - start) / 2
+        recent_cutoff = end - timedelta(days=int(365.25 * 2))
+        dated_rows = []
+        for row in rows:
+            if not row.get("as_of_date"):
+                continue
+            try:
+                dated_rows.append((row, coerce_date(row["as_of_date"])))
+            except Exception:
+                continue
+        split_rows = {
+            "train": [row for row, row_date in dated_rows if row_date <= midpoint],
+            "validation": [row for row, row_date in dated_rows if row_date > midpoint],
+            "recent_2y": [row for row, row_date in dated_rows if row_date >= recent_cutoff],
+        }
+
+    experiments: Dict[str, Dict[str, Any]] = {}
+    for name in EXIT_POLICY_EXPERIMENTS:
+        validation = _exit_experiment_group_metrics(split_rows["validation"], name)
+        recent_2y = _exit_experiment_group_metrics(split_rows["recent_2y"], name)
+        all_sample = _exit_experiment_group_metrics(rows, name)
+        validation_avg = _finite_number(validation.get("avg_exit_adjusted_net_return_60d"))
+        recent_avg = _finite_number(recent_2y.get("avg_exit_adjusted_net_return_60d"))
+        validation_dd = _finite_number(validation.get("avg_exit_adjusted_max_drawdown_250d"))
+        recent_dd = _finite_number(recent_2y.get("avg_exit_adjusted_max_drawdown_250d"))
+        experiments[name] = {
+            "params": EXIT_POLICY_EXPERIMENTS[name],
+            "train": _exit_experiment_group_metrics(split_rows["train"], name),
+            "validation": validation,
+            "recent_2y": recent_2y,
+            "all": all_sample,
+            "overfit_warning": bool(
+                validation_avg is not None
+                and recent_avg is not None
+                and validation_avg > 0
+                and recent_avg + 2 < validation_avg
+            ),
+            "recent_2y_unstable": bool(
+                recent_avg is not None
+                and validation_avg is not None
+                and recent_avg < -2
+                or (recent_dd is not None and validation_dd is not None and recent_dd < validation_dd - 5)
+            ),
+        }
+
+    stable_candidates = [
+        name
+        for name, result in experiments.items()
+        if not result.get("overfit_warning")
+        and not result.get("recent_2y_unstable")
+        and (result.get("validation") or {}).get("avg_exit_adjusted_net_return_60d") is not None
+        and (result.get("recent_2y") or {}).get("avg_exit_adjusted_net_return_60d") is not None
+        and ((result["validation"]["avg_exit_adjusted_net_return_60d"] or 0) > 0)
+        and ((result["recent_2y"]["avg_exit_adjusted_net_return_60d"] or 0) > -2)
+    ]
+    recommended = stable_candidates[0] if stable_candidates else None
+    return {
+        "policy": EXIT_POLICY_NAME,
+        "experiments": experiments,
+        "recommended": recommended,
+        "recommendation_reason": (
+            "validation 与 recent_2y 没有明显失稳，优先选取最早满足条件的参数组。"
+            if recommended
+            else "未发现 validation 与 recent_2y 同时稳定改善的参数组，不推荐参数切换。"
+        ),
+        "conclusion": "存在可继续观察的退出参数组" if recommended else "不推荐参数切换",
     }
 
 
@@ -783,6 +1072,7 @@ def compute_summary(
     execution = _execution_diagnostics(rows)
     execution_risk_distribution = _execution_risk_score_distribution(rows)
     paper_observation_candidate_count = sum(1 for row in rows if _is_observation_candidate(row))
+    research_observation_candidate_count = sum(1 for row in rows if _is_research_observation_candidate(row))
     diagnostics = {
         "missing_fields": _split_flags(rows, "missing_fields"),
         "risk_flags": _split_flags(rows, "risk_flags"),
@@ -797,6 +1087,10 @@ def compute_summary(
     baseline_comparison = _baseline_comparison(summary, diagnostics)
     stop_policy = _stop_policy_summary(rows)
     parameter_experiment = _parameter_experiment_summary(rows)
+    exit_policy_summary = _exit_policy_summary(rows)
+    exit_policy_experiment = _exit_policy_experiment_summary(rows)
+    raw_stop_exit_comparison = _raw_stop_exit_comparison(rows)
+    horizon_profile = _strategy_horizon_profile(summary, rows)
 
     summary.update(
         {
@@ -857,6 +1151,19 @@ def compute_summary(
             },
             "failure_reason_summary": _failure_reason_summary(rows),
             "stop_policy_summary": stop_policy,
+            "exit_policy_summary": exit_policy_summary,
+            "exit_policy_experiment": exit_policy_experiment,
+            "raw_stop_exit_comparison": raw_stop_exit_comparison,
+            "strategy_horizon_profile": horizon_profile,
+            "strategy_primary_horizon": "60d",
+            "strategy_secondary_horizon": "20d/120d",
+            "strategy_risk_horizon": "250d",
+            "primary_horizon_metrics": horizon_profile["primary_horizon_metrics"],
+            "long_horizon_risk_metrics": horizon_profile["long_horizon_risk_metrics"],
+            "raw_hold_250d_low_drawdown": summary.get("avg_low_max_drawdown_250d"),
+            "exit_adjusted_250d_max_drawdown": (exit_policy_summary.get(EXIT_POLICY_NAME) or {}).get("avg_exit_adjusted_max_drawdown_250d"),
+            "exit_policy_drawdown_reduction_pct": (exit_policy_summary.get(EXIT_POLICY_NAME) or {}).get("exit_policy_drawdown_reduction_pct"),
+            "exit_policy_return_impact_pct": (exit_policy_summary.get(EXIT_POLICY_NAME) or {}).get("exit_policy_return_impact_pct"),
             "quality_filter_summary": {
                 "falling_knife_filtered_count": _count_token(rows, "risk_flags", "falling_knife_risk"),
                 "value_trap_flagged_count": _count_token(rows, "risk_flags", "value_trap_risk"),
@@ -869,6 +1176,8 @@ def compute_summary(
             },
             "execution_risk_score_distribution": execution_risk_distribution,
             "paper_observation_candidate_count": paper_observation_candidate_count,
+            "strict_observation_candidate_count": paper_observation_candidate_count,
+            "research_observation_candidate_count": research_observation_candidate_count,
             "parameter_experiment": parameter_experiment,
             "baseline_comparison": baseline_comparison,
             "best": best_signals,
