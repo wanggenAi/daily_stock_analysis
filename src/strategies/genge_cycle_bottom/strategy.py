@@ -24,6 +24,9 @@ WATCH_CAP_RISK_FLAGS = {
     "current_abnormal_move_risk",
     "current_low_liquidity_risk",
     "current_volume_spike_risk",
+    "limited_history_wide_stop_risk",
+    "long_term_risk_wide_stop",
+    "long_term_position_high_risk",
 }
 TREND_LEVEL_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
 
@@ -96,6 +99,11 @@ class GenGeCycleBottomStrategy:
             distance_from_5y_high_pct=features.distance_from_5y_high_pct,
             distance_from_10y_low_pct=features.distance_from_10y_low_pct,
             distance_from_10y_high_pct=features.distance_from_10y_high_pct,
+            history_sufficiency_score=round(features.history_sufficiency_score, 2),
+            history_sufficiency_quality=features.history_sufficiency_quality,
+            long_term_position_risk_score=round(features.long_term_position_risk_score, 2),
+            distance_to_ma250_pct=features.distance_to_ma250_pct,
+            ma250_slope_pct=features.ma250_slope_pct,
             stabilization_days=features.stabilization_days,
             downtrend_exhaustion_score=round(features.downtrend_exhaustion_score, 2),
             reclaim_ma_score=round(features.reclaim_ma_score, 2),
@@ -130,6 +138,11 @@ class GenGeCycleBottomStrategy:
             + features.industry_cycle_score * 0.08
         )
         score -= min(features.execution_risk_score, 60.0) * 0.06
+        score -= min(features.long_term_position_risk_score, 70.0) * 0.05
+        if features.history_sufficiency_quality == "insufficient":
+            score -= 3.0
+        elif features.history_sufficiency_quality == "limited":
+            score -= 1.5
         if features.stop_loss_distance_pct is not None and features.stop_loss_distance_pct > 12:
             score -= min(8.0, (features.stop_loss_distance_pct - 12.0) * 0.8)
         return max(0.0, score)
@@ -171,6 +184,26 @@ class GenGeCycleBottomStrategy:
         if features.execution_risk_score >= 45 and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
         if features.execution_risk_score >= 20 and signal in (SignalType.CONFIRM_BUY, SignalType.ADD):
+            signal = SignalType.LEFT_SMALL_BUY
+        if features.long_term_position_risk_score >= 65 and signal not in (SignalType.REJECT, SignalType.WATCH):
+            return SignalType.WATCH
+        if (
+            features.long_term_position_risk_score >= 50
+            and features.stop_loss_distance_pct is not None
+            and features.stop_loss_distance_pct >= 8
+            and signal not in (SignalType.REJECT, SignalType.WATCH)
+        ):
+            return SignalType.WATCH
+        if features.history_sufficiency_quality == "insufficient" and signal not in (SignalType.REJECT, SignalType.WATCH):
+            return SignalType.WATCH
+        if (
+            features.history_sufficiency_quality == "limited"
+            and features.stop_loss_distance_pct is not None
+            and features.stop_loss_distance_pct >= 8
+            and signal not in (SignalType.REJECT, SignalType.WATCH)
+        ):
+            return SignalType.WATCH
+        if features.long_term_position_risk_score >= 45 and signal == SignalType.CONFIRM_BUY:
             signal = SignalType.LEFT_SMALL_BUY
         if any(flag in WATCH_CAP_RISK_FLAGS for flag in risk_flags) and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
@@ -237,6 +270,8 @@ class GenGeCycleBottomStrategy:
             f"{percentile_text}，技术止跌分 {features.trend_stabilization_score:.1f}，"
             f"财务安全分 {features.financial_safety_score:.1f}，行业周期分 {features.industry_cycle_score:.1f}，"
             f"估值陷阱分 {features.value_trap_score:.1f}，"
+            f"长周期位置风险分 {features.long_term_position_risk_score:.1f}，"
+            f"历史样本质量 {features.history_sufficiency_quality}，"
             f"总分 {total_score:.1f}，"
             f"信号为 {signal_type.value}；{trend_text}。"
             f"{industry_text}。"

@@ -15,6 +15,9 @@ def _feature(trend_score: float = 70.0, financial_score: float = 70.0) -> Featur
         trend_stabilization_score=trend_score,
         market_environment_score=60.0,
         industry_cycle_score=50.0,
+        history_sufficiency_score=82.0,
+        history_sufficiency_quality="adequate",
+        long_term_position_risk_score=20.0,
         no_falling_knife_filter=True,
         stabilization_days=5,
         trend_confirmation_level="WEAK",
@@ -98,3 +101,17 @@ def test_quality_gates_downgrade_confirm_buy() -> None:
     manual_cycle = _confirm_feature()
     manual_cycle.industry_cycle_quality = "manual_template"
     assert strategy._classify(82.0, manual_cycle, []) == SignalType.LEFT_SMALL_BUY
+
+    high_long_term_risk = _confirm_feature()
+    high_long_term_risk.long_term_position_risk_score = 70.0
+    assert strategy._classify(82.0, high_long_term_risk, []) == SignalType.WATCH
+
+    limited_history_wide_stop = _confirm_feature()
+    limited_history_wide_stop.history_sufficiency_quality = "limited"
+    limited_history_wide_stop.stop_loss_distance_pct = 8.0
+    assert strategy._classify(82.0, limited_history_wide_stop, []) == SignalType.WATCH
+
+    degraded_long_term_risk = _confirm_feature()
+    degraded_long_term_risk.long_term_position_risk_score = 46.0
+    degraded_long_term_risk.stop_loss_distance_pct = 6.0
+    assert strategy._classify(82.0, degraded_long_term_risk, []) == SignalType.LEFT_SMALL_BUY

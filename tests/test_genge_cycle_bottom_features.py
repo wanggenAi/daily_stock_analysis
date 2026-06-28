@@ -7,6 +7,7 @@ import pandas as pd
 from src.strategies.genge_cycle_bottom.features import (
     build_feature_set,
     compute_financial_safety_score,
+    compute_long_term_position_risk,
     compute_industry_cycle_score,
     compute_price_percentile_score,
     compute_valuation_score,
@@ -66,6 +67,49 @@ def test_price_percentile_marks_missing_when_history_is_short() -> None:
     assert "price_percentile_3y" in missing
     assert "price_percentile_5y" in missing
     assert "price_percentile_10y" in missing
+
+
+def test_long_term_position_risk_marks_limited_extended_history() -> None:
+    history = _price_frame([10 + index * 0.02 for index in range(900)])
+    current_close = float(history.iloc[-1]["close"])
+    _, percentiles, _ = compute_price_percentile_score(history, current_close)
+    risk_score, diagnostics, missing, risk_flags = compute_long_term_position_risk(
+        history=history,
+        close=current_close,
+        percentiles=percentiles,
+        trend_diagnostics={
+            "ma250": 15.0,
+            "second_low_confirmation": False,
+            "stabilization_days": 5,
+        },
+    )
+
+    assert diagnostics["history_sufficiency_quality"] == "adequate"
+    assert diagnostics["long_term_position_risk_score"] == risk_score
+    assert diagnostics["distance_to_ma250_pct"] is not None
+    assert "extended_from_5y_low_risk" in risk_flags
+    assert "missing_second_low_confirmation" in risk_flags
+    assert "distance_from_5y_low_pct" not in missing
+
+
+def test_feature_set_long_term_risk_ignores_future_price_rows() -> None:
+    base_closes = [12 - index * 0.004 for index in range(850)] + [8.8 + index * 0.03 for index in range(80)]
+    base_df = _price_frame(base_closes)
+    as_of = base_df.iloc[-1]["date"]
+    future_df = pd.concat(
+        [
+            base_df,
+            _price_frame([40 + index for index in range(40)], start=pd.to_datetime(as_of).date() + timedelta(days=1)),
+        ],
+        ignore_index=True,
+    )
+
+    base_features = build_feature_set(price_df=base_df, as_of_date=as_of)
+    future_features = build_feature_set(price_df=future_df, as_of_date=as_of)
+
+    assert base_features.long_term_position_risk_score == future_features.long_term_position_risk_score
+    assert base_features.history_sufficiency_quality == future_features.history_sufficiency_quality
+    assert base_features.distance_to_ma250_pct == future_features.distance_to_ma250_pct
 
 
 def test_missing_valuation_and_financial_data_do_not_crash_and_are_recorded() -> None:

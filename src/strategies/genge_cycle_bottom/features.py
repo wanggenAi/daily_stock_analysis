@@ -42,6 +42,11 @@ class FeatureSet:
     distance_from_5y_high_pct: Optional[float] = None
     distance_from_10y_low_pct: Optional[float] = None
     distance_from_10y_high_pct: Optional[float] = None
+    history_sufficiency_score: float = 0.0
+    history_sufficiency_quality: str = "limited"
+    long_term_position_risk_score: float = 0.0
+    distance_to_ma250_pct: Optional[float] = None
+    ma250_slope_pct: Optional[float] = None
     ma20: Optional[float] = None
     ma60: Optional[float] = None
     ma120: Optional[float] = None
@@ -193,6 +198,120 @@ def compute_price_percentile_score(history: pd.DataFrame, current_close: float) 
     if preferred is None:
         score = 20.0
     return score, percentiles, missing
+
+
+def compute_long_term_position_risk(
+    *,
+    history: pd.DataFrame,
+    close: Optional[float],
+    percentiles: Dict[str, Optional[float]],
+    trend_diagnostics: Dict[str, Any],
+) -> Tuple[float, Dict[str, Any], List[str], List[str]]:
+    missing: List[str] = []
+    risk_flags: List[str] = []
+    diagnostics: Dict[str, Any] = {}
+    close_value = finite_float(close)
+    if close_value is None or close_value <= 0:
+        return 100.0, diagnostics, ["close"], ["missing_close"]
+
+    available_days = int(len(history))
+    diagnostics["price_history_observation_days"] = available_days
+    has_3y = percentiles.get("price_percentile_3y") is not None
+    has_5y = percentiles.get("price_percentile_5y") is not None
+    has_10y = percentiles.get("price_percentile_10y") is not None
+    if has_10y:
+        history_quality = "deep"
+        history_score = 100.0
+    elif has_5y:
+        history_quality = "adequate"
+        history_score = 82.0
+    elif has_3y:
+        history_quality = "limited"
+        history_score = 55.0
+        risk_flags.append("limited_price_history")
+    else:
+        history_quality = "insufficient"
+        history_score = 25.0
+        risk_flags.append("insufficient_price_history")
+
+    risk_score = 0.0
+    if history_quality == "insufficient":
+        risk_score += 35
+    elif history_quality == "limited":
+        risk_score += 20
+
+    distance_from_5y_low = finite_float(percentiles.get("distance_from_5y_low_pct"))
+    distance_from_5y_high = finite_float(percentiles.get("distance_from_5y_high_pct"))
+    if distance_from_5y_low is None:
+        missing.append("distance_from_5y_low_pct")
+    elif distance_from_5y_low >= 180:
+        risk_score += 28
+        risk_flags.append("extended_from_5y_low_risk")
+    elif distance_from_5y_low >= 150:
+        risk_score += 22
+        risk_flags.append("extended_from_5y_low_risk")
+    elif distance_from_5y_low >= 120:
+        risk_score += 12
+    elif distance_from_5y_low <= 80:
+        risk_score -= 6
+
+    if distance_from_5y_high is None:
+        missing.append("distance_from_5y_high_pct")
+    elif distance_from_5y_high <= -75:
+        risk_score += 10
+        risk_flags.append("deep_below_5y_high_risk")
+
+    ma250 = finite_float(trend_diagnostics.get("ma250"))
+    ma250_slope_pct = None
+    if "close" in history.columns and len(history) >= 270:
+        previous_ma250 = pd.to_numeric(history["close"], errors="coerce").tail(270).head(250).mean()
+        ma250_slope_pct = _pct_change_value(ma250, finite_float(previous_ma250))
+    if ma250 is None:
+        missing.append("ma250")
+        risk_score += 8
+    else:
+        distance_to_ma250_pct = _pct_change_value(close_value, ma250)
+        diagnostics["distance_to_ma250_pct"] = round(distance_to_ma250_pct, 4) if distance_to_ma250_pct is not None else None
+        if distance_to_ma250_pct is not None:
+            if distance_to_ma250_pct <= -20:
+                risk_score += 14
+                risk_flags.append("below_ma250_deep_risk")
+            elif distance_to_ma250_pct <= -10:
+                risk_score += 8
+            elif distance_to_ma250_pct >= 25:
+                risk_score += 10
+                risk_flags.append("extended_above_ma250_risk")
+    diagnostics["ma250_slope_pct"] = round(ma250_slope_pct, 4) if ma250_slope_pct is not None else None
+    if ma250_slope_pct is None:
+        missing.append("ma250_slope_pct")
+    elif ma250_slope_pct <= -8:
+        risk_score += 14
+        risk_flags.append("ma250_downtrend_risk")
+    elif ma250_slope_pct <= -4:
+        risk_score += 8
+    elif ma250_slope_pct >= 2:
+        risk_score -= 4
+
+    if not bool(trend_diagnostics.get("second_low_confirmation")):
+        risk_score += 8
+        risk_flags.append("missing_second_low_confirmation")
+    stabilization_days = finite_float(trend_diagnostics.get("stabilization_days")) or 0.0
+    if stabilization_days < 8:
+        risk_score += 6
+    stop_distance_proxy = None
+    if ma250 is not None and close_value > 0:
+        stop_distance_proxy = abs((close_value - ma250) / close_value * 100.0)
+        diagnostics["ma250_gap_abs_pct"] = round(stop_distance_proxy, 4)
+
+    risk_score = round(max(0.0, min(100.0, risk_score)), 2)
+    diagnostics.update(
+        {
+            "history_sufficiency_score": history_score,
+            "history_sufficiency_quality": history_quality,
+            "long_term_position_risk_score": risk_score,
+        }
+    )
+    return risk_score, diagnostics, sorted(set(missing)), sorted(set(risk_flags))
 
 
 def _latest_row_as_of(df: Optional[pd.DataFrame], as_of_date: date, date_column: str = "date") -> Optional[pd.Series]:
@@ -970,6 +1089,12 @@ def build_feature_set(
     valuation_score, valuation_missing, valuation_diag = compute_valuation_score(valuation_df, target, industry=industry)
     financial_score, financial_missing, financial_risks, financial_diag = compute_financial_safety_score(financial_df, target)
     trend_score, trend_diag, trend_missing, trend_risks = compute_trend_stabilization_score(history)
+    long_term_risk_score, long_term_diag, long_term_missing, long_term_risks = compute_long_term_position_risk(
+        history=history,
+        close=close,
+        percentiles=percentiles,
+        trend_diagnostics=trend_diag,
+    )
     market_score, market_missing, market_diag = compute_market_environment_score(benchmark_df, target)
     execution_score, execution_risks, execution_diag = compute_asof_execution_risk(history)
     value_trap_diag = compute_value_trap_diagnostics(
@@ -994,6 +1119,11 @@ def build_feature_set(
     features.distance_from_5y_high_pct = percentiles.get("distance_from_5y_high_pct")
     features.distance_from_10y_low_pct = percentiles.get("distance_from_10y_low_pct")
     features.distance_from_10y_high_pct = percentiles.get("distance_from_10y_high_pct")
+    features.history_sufficiency_score = float(long_term_diag.get("history_sufficiency_score") or 0.0)
+    features.history_sufficiency_quality = str(long_term_diag.get("history_sufficiency_quality") or "limited")
+    features.long_term_position_risk_score = long_term_risk_score
+    features.distance_to_ma250_pct = long_term_diag.get("distance_to_ma250_pct")
+    features.ma250_slope_pct = long_term_diag.get("ma250_slope_pct")
     features.ma20 = trend_diag.get("ma20")
     features.ma60 = trend_diag.get("ma60")
     features.ma120 = trend_diag.get("ma120")
@@ -1008,6 +1138,15 @@ def build_feature_set(
     features.invalidation_level = features.dynamic_stop_loss
     if features.dynamic_stop_loss is not None and close > 0:
         features.stop_loss_distance_pct = round((close - features.dynamic_stop_loss) / close * 100.0, 4)
+    if features.stop_loss_distance_pct is not None:
+        if features.history_sufficiency_quality in {"limited", "insufficient"} and features.stop_loss_distance_pct >= 8:
+            long_term_risks.append("limited_history_wide_stop_risk")
+        if features.long_term_position_risk_score >= 45 and features.stop_loss_distance_pct >= 8:
+            long_term_risks.append("long_term_risk_wide_stop")
+    if features.long_term_position_risk_score >= 60:
+        long_term_risks.append("long_term_position_high_risk")
+    elif features.long_term_position_risk_score >= 45:
+        long_term_risks.append("long_term_position_degraded")
     features.value_trap_score = float(value_trap_diag.get("value_trap_score") or 0.0)
     features.value_trap_flag = bool(value_trap_diag.get("value_trap_flag"))
     features.valuation_repair_signal = bool(value_trap_diag.get("valuation_repair_signal"))
@@ -1017,11 +1156,14 @@ def build_feature_set(
     features.market_environment_state = market_diag.get("market_environment_state")
     features.execution_risk_score = execution_score
     features.execution_risk_quality = str(execution_diag.get("asof_executable_entry_quality") or "good")
-    features.missing_fields = sorted(set(price_missing + valuation_missing + financial_missing + trend_missing + market_missing + industry_missing))
+    features.missing_fields = sorted(
+        set(price_missing + valuation_missing + financial_missing + trend_missing + long_term_missing + market_missing + industry_missing)
+    )
     features.risk_flags = sorted(
         set(
             financial_risks
             + trend_risks
+            + long_term_risks
             + execution_risks
             + (["value_trap_risk"] if features.value_trap_flag else [])
             + (["missing_financial_uncertain"] if "financial" in financial_missing else [])
@@ -1030,6 +1172,7 @@ def build_feature_set(
     features.diagnostics.update(valuation_diag)
     features.diagnostics.update(financial_diag)
     features.diagnostics.update(trend_diag)
+    features.diagnostics.update(long_term_diag)
     features.diagnostics.update(market_diag)
     features.diagnostics.update(industry_diag)
     features.diagnostics.update(value_trap_diag)
@@ -1041,6 +1184,11 @@ def build_feature_set(
             "invalidation_level": features.invalidation_level,
             "execution_risk_score": features.execution_risk_score,
             "execution_risk_quality": features.execution_risk_quality,
+            "history_sufficiency_score": features.history_sufficiency_score,
+            "history_sufficiency_quality": features.history_sufficiency_quality,
+            "long_term_position_risk_score": features.long_term_position_risk_score,
+            "distance_to_ma250_pct": features.distance_to_ma250_pct,
+            "ma250_slope_pct": features.ma250_slope_pct,
         }
     )
     return features

@@ -309,6 +309,19 @@ def _execution_risk_bucket(row: Dict[str, Any]) -> str:
     return "60_100_high"
 
 
+def _long_term_position_risk_bucket(row: Dict[str, Any]) -> str:
+    score = _finite_number(row.get("long_term_position_risk_score"))
+    if score is None:
+        return "missing"
+    if score < 30:
+        return "0_29_low"
+    if score < 45:
+        return "30_44_watch"
+    if score < 60:
+        return "45_59_degraded"
+    return "60_100_high"
+
+
 def _bucket_summary(rows: List[Dict[str, Any]], bucket_func) -> Dict[str, Dict[str, Any]]:
     grouped: Dict[str, List[Dict[str, Any]]] = {}
     for row in rows:
@@ -330,10 +343,14 @@ def _is_observation_candidate(row: Dict[str, Any]) -> bool:
     execution_risk = _finite_number(row.get("execution_risk_score")) or 0.0
     value_trap_score = _finite_number(row.get("value_trap_score")) or 0.0
     market_score = _finite_number(row.get("market_environment_score")) or 0.0
+    long_term_risk = _finite_number(row.get("long_term_position_risk_score")) or 0.0
+    history_quality = str(row.get("history_sufficiency_quality") or "limited")
     return bool(
         str(row.get("signal_type") or "") == "CONFIRM_BUY"
         and trend_rank.get(str(row.get("trend_confirmation_level") or "NONE"), 0) >= trend_rank["MEDIUM"]
         and value_trap_score < 60
+        and long_term_risk <= 45
+        and history_quality not in {"insufficient", "limited"}
         and stop_distance is not None
         and stop_distance <= 12
         and execution_risk <= 25
@@ -512,6 +529,29 @@ def _parameter_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
             and not _contains_token(row.get("risk_flags"), "volume_spike")
             and (_finite_number(row.get("execution_risk_score")) or 0.0) < 45
         ],
+        "adequate_history": [
+            row
+            for row in rows
+            if str(row.get("history_sufficiency_quality") or "") in {"adequate", "deep"}
+        ],
+        "low_long_term_position_risk": [
+            row
+            for row in rows
+            if (_finite_number(row.get("long_term_position_risk_score")) or 0.0) < 45
+        ],
+        "quality_entry_plus_long_term": [
+            row
+            for row in rows
+            if (_finite_number(row.get("stabilization_days")) or 0.0) >= 5
+            and (
+                _finite_number(row.get("stop_loss_distance_pct")) is None
+                or (_finite_number(row.get("stop_loss_distance_pct")) or 0.0) <= 12
+            )
+            and not _contains_token(row.get("risk_flags"), "volume_spike")
+            and (_finite_number(row.get("execution_risk_score")) or 0.0) < 45
+            and (_finite_number(row.get("long_term_position_risk_score")) or 0.0) < 45
+            and str(row.get("history_sufficiency_quality") or "") in {"adequate", "deep"}
+        ],
     }
     experiment_metrics: Dict[str, Dict[str, Any]] = {}
     for name, group_rows in experiments.items():
@@ -624,6 +664,7 @@ def _failure_reasons_for_row(row: Dict[str, Any]) -> List[str]:
     market_score = _finite_number(row.get("market_environment_score"))
     industry_score = _finite_number(row.get("industry_cycle_score"))
     valuation_score = _finite_number(row.get("valuation_score"))
+    long_term_risk = _finite_number(row.get("long_term_position_risk_score"))
 
     if (net_20d is not None and net_20d < 0) or (net_60d is not None and net_60d < 0 and low_dd_60d is not None and low_dd_60d < -8):
         reasons.append("买太早")
@@ -637,6 +678,14 @@ def _failure_reasons_for_row(row: Dict[str, Any]) -> List[str]:
         reasons.append("行业周期判断不足")
     if market_score is not None and market_score < 45:
         reasons.append("大盘环境差")
+    if (
+        (long_term_risk is not None and long_term_risk >= 45)
+        or _contains_token(row.get("risk_flags"), "long_term_position_degraded")
+        or _contains_token(row.get("risk_flags"), "long_term_position_high_risk")
+        or _contains_token(row.get("risk_flags"), "limited_history_wide_stop_risk")
+        or _contains_token(row.get("risk_flags"), "long_term_risk_wide_stop")
+    ):
+        reasons.append("长周期位置风险")
     if net_60d is not None and net_60d > 0 and ((net_120d is not None and net_120d < 0) or (net_250d is not None and net_250d < 0)):
         reasons.append("持有周期不适合")
     if row.get("hit_stop_loss_60d") is True or row.get("hit_stop_loss_120d") is True or (low_dd_250d is not None and low_dd_250d < -25):
@@ -795,6 +844,8 @@ def compute_summary(
             "industry_cycle_quality_summary": _group_summary(rows, "industry_cycle_quality"),
             "execution_entry_quality_summary": _group_summary(rows, "executable_entry_quality"),
             "execution_risk_score_summary": _bucket_summary(rows, _execution_risk_bucket),
+            "history_sufficiency_quality_summary": _group_summary(rows, "history_sufficiency_quality"),
+            "long_term_position_risk_score_summary": _bucket_summary(rows, _long_term_position_risk_bucket),
             "time_split_summary": _time_split_summary(rows),
             "drawdown_diagnostics": {
                 "default_basis": "low_max_drawdown",
@@ -811,6 +862,10 @@ def compute_summary(
                 "value_trap_flagged_count": _count_token(rows, "risk_flags", "value_trap_risk"),
                 "missing_financial_uncertain_count": _count_token(rows, "risk_flags", "missing_financial_uncertain"),
                 "high_execution_risk_count": sum(1 for row in rows if (_finite_number(row.get("execution_risk_score")) or 0.0) >= 60),
+                "limited_history_wide_stop_count": _count_token(rows, "risk_flags", "limited_history_wide_stop_risk"),
+                "long_term_risk_wide_stop_count": _count_token(rows, "risk_flags", "long_term_risk_wide_stop"),
+                "long_term_position_high_risk_count": _count_token(rows, "risk_flags", "long_term_position_high_risk"),
+                "long_term_position_degraded_count": _count_token(rows, "risk_flags", "long_term_position_degraded"),
             },
             "execution_risk_score_distribution": execution_risk_distribution,
             "paper_observation_candidate_count": paper_observation_candidate_count,

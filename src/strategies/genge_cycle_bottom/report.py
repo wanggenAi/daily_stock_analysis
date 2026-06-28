@@ -31,6 +31,11 @@ SIGNAL_DETAIL_COLUMNS = [
     "distance_from_5y_high_pct",
     "distance_from_10y_low_pct",
     "distance_from_10y_high_pct",
+    "history_sufficiency_score",
+    "history_sufficiency_quality",
+    "long_term_position_risk_score",
+    "distance_to_ma250_pct",
+    "ma250_slope_pct",
     "stabilization_days",
     "downtrend_exhaustion_score",
     "reclaim_ma_score",
@@ -255,6 +260,8 @@ def _quality_lines(summary: Dict[str, Any]) -> List[str]:
         f"- 执行入口质量分布：{json.dumps(summary.get('execution_entry_quality_summary', {}), ensure_ascii=False)}",
         f"- 执行风险分数分布：{json.dumps(summary.get('execution_risk_score_distribution', {}), ensure_ascii=False)}",
         f"- 分执行风险表现：{json.dumps(summary.get('execution_risk_score_summary', {}), ensure_ascii=False)}",
+        f"- 历史样本质量分布：{json.dumps(summary.get('history_sufficiency_quality_summary', {}), ensure_ascii=False)}",
+        f"- 长周期位置风险分布：{json.dumps(summary.get('long_term_position_risk_score_summary', {}), ensure_ascii=False)}",
         f"- 估值陷阱/飞刀/执行风险统计：{json.dumps(filters, ensure_ascii=False)}",
         f"- 止损修正 60/120/250 日平均净收益：{_format_pct(stop_policy.get('avg_stop_adjusted_net_return_60d'))} / {_format_pct(stop_policy.get('avg_stop_adjusted_net_return_120d'))} / {_format_pct(stop_policy.get('avg_stop_adjusted_net_return_250d'))}",
         f"- 止损触发率 60/120/250 日：{_format_pct(stop_policy.get('stop_trigger_rate_60d'))} / {_format_pct(stop_policy.get('stop_trigger_rate_120d'))} / {_format_pct(stop_policy.get('stop_trigger_rate_250d'))}",
@@ -334,6 +341,8 @@ def _candidate_reason(row: Dict[str, Any]) -> str:
         parts.append("估值修复信号存在")
     if row.get("industry_cycle_phase"):
         parts.append(f"行业周期 {row.get('industry_cycle_phase')}")
+    if row.get("long_term_position_risk_score") is not None:
+        parts.append(f"长周期位置风险分 {float(row['long_term_position_risk_score']):.1f}")
     return "；".join(parts) or "触发研究信号，需人工复核公开数据"
 
 
@@ -353,10 +362,14 @@ def _observation_candidate_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, An
         execution_risk = number(row.get("execution_risk_score")) or 0.0
         value_trap_score = number(row.get("value_trap_score")) or 0.0
         market_score = number(row.get("market_environment_score")) or 0.0
+        long_term_risk = number(row.get("long_term_position_risk_score")) or 0.0
+        history_quality = str(row.get("history_sufficiency_quality") or "limited")
         if (
             str(row.get("signal_type") or "") == "CONFIRM_BUY"
             and trend_rank.get(str(row.get("trend_confirmation_level") or "NONE"), 0) >= trend_rank["MEDIUM"]
             and value_trap_score < 60
+            and long_term_risk <= 45
+            and history_quality not in {"insufficient", "limited"}
             and stop_distance is not None
             and stop_distance <= 12
             and execution_risk <= 25
@@ -378,6 +391,8 @@ def write_paper_observation_candidates(rows: List[Dict[str, Any]], path: Path) -
         "trend_confirmation_level",
         "value_trap_score",
         "stop_loss_distance_pct",
+        "history_sufficiency_quality",
+        "long_term_position_risk_score",
         "execution_risk_score",
         "max_position_pct_research_only",
         "reason",
@@ -408,6 +423,8 @@ def write_paper_observation_candidates(rows: List[Dict[str, Any]], path: Path) -
                     "trend_confirmation_level": row.get("trend_confirmation_level"),
                     "value_trap_score": row.get("value_trap_score"),
                     "stop_loss_distance_pct": row.get("stop_loss_distance_pct"),
+                    "history_sufficiency_quality": row.get("history_sufficiency_quality"),
+                    "long_term_position_risk_score": row.get("long_term_position_risk_score"),
                     "execution_risk_score": row.get("execution_risk_score"),
                     "max_position_pct_research_only": row.get("max_position_pct"),
                     "reason": _candidate_reason(row),

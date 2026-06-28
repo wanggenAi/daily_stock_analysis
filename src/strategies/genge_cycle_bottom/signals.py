@@ -44,6 +44,11 @@ class StrategySignal:
     distance_from_5y_high_pct: Optional[float] = None
     distance_from_10y_low_pct: Optional[float] = None
     distance_from_10y_high_pct: Optional[float] = None
+    history_sufficiency_score: float = 0.0
+    history_sufficiency_quality: str = "limited"
+    long_term_position_risk_score: float = 0.0
+    distance_to_ma250_pct: Optional[float] = None
+    ma250_slope_pct: Optional[float] = None
     stabilization_days: int = 0
     downtrend_exhaustion_score: float = 0.0
     reclaim_ma_score: float = 0.0

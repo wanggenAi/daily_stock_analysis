@@ -37,6 +37,8 @@ def _summary_row(
     outperform: bool = True,
     executable_entry_quality: str = "good",
     execution_risk_score: float = 0.0,
+    history_sufficiency_quality: str = "adequate",
+    long_term_position_risk_score: float = 20.0,
 ) -> dict:
     as_of = date(2021, 1, 1) + timedelta(days=index * 30)
     return {
@@ -52,6 +54,8 @@ def _summary_row(
         "industry_cycle_score": industry_score,
         "trend_confirmation_level": "MEDIUM",
         "value_trap_score": 20.0,
+        "history_sufficiency_quality": history_sufficiency_quality,
+        "long_term_position_risk_score": long_term_position_risk_score,
         "industry_cycle_quality": "user_supplied",
         "stop_loss_distance_pct": 8.0,
         "execution_risk_score": execution_risk_score,
@@ -131,6 +135,11 @@ def test_report_fields_include_p0_required_columns(tmp_path: Path) -> None:
         "executable_entry_quality",
         "trend_confirmation_level",
         "value_trap_score",
+        "history_sufficiency_score",
+        "history_sufficiency_quality",
+        "long_term_position_risk_score",
+        "distance_to_ma250_pct",
+        "ma250_slope_pct",
         "industry_cycle_quality",
         "dynamic_stop_loss",
         "stop_loss_distance_pct",
@@ -212,6 +221,8 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
         "parameter_experiment",
         "execution_risk_score_summary",
         "execution_risk_score_distribution",
+        "history_sufficiency_quality_summary",
+        "long_term_position_risk_score_summary",
         "paper_observation_candidate_count",
     ):
         assert key in summary
@@ -231,6 +242,8 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
     assert "execution_diagnostics" in summary["diagnostics"]
     assert summary["failure_reason_summary"]["reason_counts"]["趋势未确认"] >= 1
     assert summary["failure_reason_summary"]["reason_counts"]["财务缺失或恶化"] >= 1
+    assert summary["history_sufficiency_quality_summary"]["adequate"]["total_signals"] == 3
+    assert summary["long_term_position_risk_score_summary"]["0_29_low"]["total_signals"] == 3
 
 
 def test_baseline_comparison_and_overfit_warning_are_reported() -> None:
@@ -276,6 +289,17 @@ def test_paper_observation_candidate_count_uses_confirm_quality_gate() -> None:
     summary = compute_summary(rows)
 
     assert summary["paper_observation_candidate_count"] == 1
+
+
+def test_long_term_position_risk_blocks_paper_observation_candidate() -> None:
+    rows = [
+        _summary_row(0, signal_type="CONFIRM_BUY", net_60d=3.0, long_term_position_risk_score=46.0),
+        _summary_row(1, signal_type="CONFIRM_BUY", net_60d=3.0, history_sufficiency_quality="limited"),
+    ]
+
+    summary = compute_summary(rows)
+
+    assert summary["paper_observation_candidate_count"] == 0
 
 
 def test_paper_trading_gate_keeps_poor_expectancy_out_of_paper_only() -> None:
