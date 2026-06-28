@@ -120,6 +120,8 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `stop_policy_summary`：动态止损修正收益、止损触发率、是否可能改善回撤或截断反弹。
 - `baseline_comparison`：与上一个真实研究基线的 total、60 日收益、60 日胜率、60 日跑赢基准比例、250 日低点回撤对比；样本数下降超过 50% 会标记 `overfit_warning`。
 - `quality_filter_summary`：飞刀风险、估值陷阱、财务缺失不确定和高执行风险统计。
+- `history_sufficiency_quality_summary`：历史样本充分性分布，辅助识别 3 年低位样本是否缺少 5 年/10 年长周期验证。
+- `long_term_position_risk_score_summary`：长期位置风险分布，辅助识别低位修复中仍可能继续探底的样本。
 - `parameter_experiment`：小型参数实验摘要，用来判断过滤是否只在某一段历史中有效。
 - `paper_trading_gate`：当前是否达到模拟盘观察门槛。
 
@@ -158,6 +160,8 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - 新增 `value_trap_score`、`value_trap_flag` 和 `valuation_repair_signal`；低估值但财务缺失或恶化不默认安全。
 - 新增 `dynamic_stop_loss`、`stop_loss_distance_pct`、`invalidation_level` 和 `post_entry_adverse_excursion_pct`；回测同时保留原始收益、净收益和止损修正收益。
 - 止损距离过宽时，`CONFIRM_BUY` 会降级为更保守信号。
+- 新增 `history_sufficiency_score/history_sufficiency_quality`、`long_term_position_risk_score`、`distance_to_ma250_pct` 和 `ma250_slope_pct`；长期位置风险高、历史样本不足且止损偏宽、MA250 深度弱势等样本会降级。
+- `stop_loss_distance_pct <= 7` 且长期位置风险未高时，长期位置风险扣分会适度降低，避免把可控失效位的左侧观察样本全部过滤掉；宽止损和高长期风险降级规则不放松。
 - 弱市场环境下会降低信号级别或只观察。
 - 严重亏损、高负债、经营现金流异常等会进入风险标签。
 - 涨停买入、跌停、缺失下一交易日、低流动性和异常跳空会进入执行诊断或风险标签。
@@ -176,6 +180,22 @@ reports/genge_cycle_bottom_real/20260627_203000/
 broad 相比基线：60 日平均净收益 +1.2670，60 日胜率 +3.3642，60 日跑赢基准比例 +6.0326，250 日低点回撤 +0.1670，样本数下降 44.2867%，未触发大于 50% 的过拟合警告。
 
 最终研究枚举：`PASS_REAL_DATA_RESEARCH`。该结论表示真实公开数据研究链路通过，且 broad 的 60 日胜率和跑赢基准明显改善；但 250 日低点回撤只改善 0.1670 个百分点，未达到至少改善 3 个百分点或优于 -28% 的最低线，因此不能声明 `PASS_SIGNAL_QUALITY_IMPROVED`，也不能视为模拟盘就绪。
+
+## 2026-06-28 长周期风险与样本恢复复核
+
+Loop 2 新增长期位置风险和历史样本充分性门控后，core/cycle/broad 的 60 日收益、胜率和跑赢基准继续改善，但 broad 样本数下降 53.3323%，触发 `overfit_warning`；broad 250 日低点回撤为 -30.1682，仍未达到至少改善 3 个百分点或优于 -28% 的最低线。
+
+Loop 3 只放松紧止损、非高长期风险样本的评分扣分，不放开宽止损和高长期风险降级。最新真实运行结果：
+
+- pytest：44 passed，1 warning。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260628_190621`，`total_signals=1451`，`data_failures=0`。
+- real core：`reports/genge_signal_quality_core/20260628_191009`，耗时 211.95 秒，`total_signals=1532`，`data_failures=0`。
+- real cycle：`reports/genge_signal_quality_cycle/20260628_192527`，耗时 903.14 秒，`total_signals=4571`，`data_failures=0`。
+- real broad：`reports/genge_signal_quality_broad/20260628_195432`，耗时 1735.27 秒，`total_signals=9645`，`data_failures=0`。
+
+broad 相比基线：60 日平均净收益 +1.8959，60 日胜率 +3.9829，60 日跑赢基准比例 +6.2084，250 日低点回撤 +1.1159，样本数下降 51.9576%，仍触发大于 50% 的过拟合警告。
+
+最终研究枚举仍为 `PASS_REAL_DATA_RESEARCH`。当前版本可以用于公开数据研究和复盘报告生成，但不能声明 `PASS_SIGNAL_QUALITY_IMPROVED`，也不能视为模拟盘就绪。下一轮重点应继续处理长期深跌后继续探底、行业周期证据不足和 250 日低点回撤控制。
 
 ## 已知限制
 

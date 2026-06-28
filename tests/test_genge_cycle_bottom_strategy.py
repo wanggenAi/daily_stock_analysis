@@ -41,6 +41,26 @@ def test_signal_classification_thresholds() -> None:
     assert strategy._classify(80.0, _confirm_feature(), []) == SignalType.CONFIRM_BUY
 
 
+def test_tight_stop_limited_history_receives_smaller_long_term_score_penalty() -> None:
+    strategy = GenGeCycleBottomStrategy()
+    feature = _feature()
+    feature.history_sufficiency_quality = "limited"
+    feature.long_term_position_risk_score = 34.0
+    feature.stop_loss_distance_pct = 6.8
+
+    assert round(strategy._total_score(feature), 2) == 36.85
+
+
+def test_wide_stop_limited_history_keeps_full_long_term_score_penalty() -> None:
+    strategy = GenGeCycleBottomStrategy()
+    feature = _feature()
+    feature.history_sufficiency_quality = "limited"
+    feature.long_term_position_risk_score = 34.0
+    feature.stop_loss_distance_pct = 8.2
+
+    assert round(strategy._total_score(feature), 2) == 35.0
+
+
 def test_risk_flags_cap_or_reject_signal() -> None:
     strategy = GenGeCycleBottomStrategy()
 

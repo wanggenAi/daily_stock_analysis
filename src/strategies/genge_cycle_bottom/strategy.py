@@ -138,11 +138,18 @@ class GenGeCycleBottomStrategy:
             + features.industry_cycle_score * 0.08
         )
         score -= min(features.execution_risk_score, 60.0) * 0.06
-        score -= min(features.long_term_position_risk_score, 70.0) * 0.05
+        long_term_penalty_rate = 0.05
+        if (
+            features.stop_loss_distance_pct is not None
+            and features.stop_loss_distance_pct <= 7
+            and features.long_term_position_risk_score < 45
+        ):
+            long_term_penalty_rate = 0.025
+        score -= min(features.long_term_position_risk_score, 70.0) * long_term_penalty_rate
         if features.history_sufficiency_quality == "insufficient":
             score -= 3.0
         elif features.history_sufficiency_quality == "limited":
-            score -= 1.5
+            score -= 0.5 if features.stop_loss_distance_pct is not None and features.stop_loss_distance_pct <= 7 else 1.5
         if features.stop_loss_distance_pct is not None and features.stop_loss_distance_pct > 12:
             score -= min(8.0, (features.stop_loss_distance_pct - 12.0) * 0.8)
         return max(0.0, score)
