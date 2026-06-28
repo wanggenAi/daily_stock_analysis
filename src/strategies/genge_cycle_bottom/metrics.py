@@ -269,9 +269,9 @@ def _group_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         result[f"win_rate_{days}d"] = _win_rate(rows, return_field)
         result[f"avg_net_return_{days}d"] = _avg(_numbers(rows, return_field))
         result[f"avg_stop_adjusted_net_return_{days}d"] = _avg(_numbers(rows, f"stop_adjusted_net_return_{days}d"))
+        result[f"outperform_benchmark_rate_{days}d"] = _ratio_true(rows, f"outperform_benchmark_{days}d")
     result["median_net_return_60d"] = _median(_numbers(rows, "net_return_60d"))
     result["low_max_drawdown_250d"] = _avg(_numbers(rows, "low_max_drawdown_250d"))
-    result["outperform_benchmark_rate_60d"] = _ratio_true(rows, "outperform_benchmark_60d")
     result["best_signal_type"] = _best_signal_type(rows)
     result["verdict"] = _verdict_for_group(
         len(rows),
@@ -294,6 +294,52 @@ def _group_summary(rows: List[Dict[str, Any]], field_name: str, fallback: str = 
 
 def _count_token(rows: Iterable[Dict[str, Any]], field_name: str, token: str) -> int:
     return sum(1 for row in rows if _contains_token(row.get(field_name), token))
+
+
+def _execution_risk_bucket(row: Dict[str, Any]) -> str:
+    score = _finite_number(row.get("execution_risk_score"))
+    if score is None:
+        return "missing"
+    if score < 20:
+        return "0_19_low"
+    if score < 45:
+        return "20_44_degraded"
+    if score < 60:
+        return "45_59_risky"
+    return "60_100_high"
+
+
+def _bucket_summary(rows: List[Dict[str, Any]], bucket_func) -> Dict[str, Dict[str, Any]]:
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        grouped.setdefault(bucket_func(row), []).append(row)
+    return {
+        key: _group_metrics(group_rows)
+        for key, group_rows in sorted(grouped.items(), key=lambda item: item[0])
+    }
+
+
+def _execution_risk_score_distribution(rows: List[Dict[str, Any]]) -> Dict[str, int]:
+    counter: Counter[str] = Counter(_execution_risk_bucket(row) for row in rows)
+    return dict(counter)
+
+
+def _is_observation_candidate(row: Dict[str, Any]) -> bool:
+    trend_rank = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+    stop_distance = _finite_number(row.get("stop_loss_distance_pct"))
+    execution_risk = _finite_number(row.get("execution_risk_score")) or 0.0
+    value_trap_score = _finite_number(row.get("value_trap_score")) or 0.0
+    market_score = _finite_number(row.get("market_environment_score")) or 0.0
+    return bool(
+        str(row.get("signal_type") or "") == "CONFIRM_BUY"
+        and trend_rank.get(str(row.get("trend_confirmation_level") or "NONE"), 0) >= trend_rank["MEDIUM"]
+        and value_trap_score < 60
+        and stop_distance is not None
+        and stop_distance <= 12
+        and execution_risk <= 25
+        and str(row.get("industry_cycle_quality") or "missing") not in {"missing", "manual_template"}
+        and market_score >= 40
+    )
 
 
 def _stop_policy_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -425,34 +471,80 @@ def _parameter_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     recent_cutoff = end - timedelta(days=int(365.25 * 2)) if end is not None else None
     experiments = {
         "baseline_current": rows,
+        "min_stabilization_5d": [
+            row for row in rows if (_finite_number(row.get("stabilization_days")) or 0.0) >= 5
+        ],
         "trend_medium_plus": [
             row for row in rows if str(row.get("trend_confirmation_level") or "") in {"MEDIUM", "STRONG"}
         ],
         "low_value_trap": [
             row for row in rows if (_finite_number(row.get("value_trap_score")) or 0.0) < 60
         ],
+        "no_volume_spike": [
+            row for row in rows if not _contains_token(row.get("risk_flags"), "volume_spike")
+        ],
         "good_execution": [
-            row for row in rows if str(row.get("executable_entry_quality") or "") in {"good", "normal"}
+            row
+            for row in rows
+            if str(row.get("executable_entry_quality") or "") in {"good", "normal"}
+            and (_finite_number(row.get("execution_risk_score")) or 0.0) < 20
         ],
         "tight_stop_distance": [
             row for row in rows if (_finite_number(row.get("stop_loss_distance_pct")) is None or (_finite_number(row.get("stop_loss_distance_pct")) or 0.0) <= 12)
         ],
+        "stable_tight_stop": [
+            row
+            for row in rows
+            if (_finite_number(row.get("stabilization_days")) or 0.0) >= 5
+            and (
+                _finite_number(row.get("stop_loss_distance_pct")) is None
+                or (_finite_number(row.get("stop_loss_distance_pct")) or 0.0) <= 12
+            )
+        ],
+        "quality_entry_proxy": [
+            row
+            for row in rows
+            if (_finite_number(row.get("stabilization_days")) or 0.0) >= 5
+            and (
+                _finite_number(row.get("stop_loss_distance_pct")) is None
+                or (_finite_number(row.get("stop_loss_distance_pct")) or 0.0) <= 12
+            )
+            and not _contains_token(row.get("risk_flags"), "volume_spike")
+            and (_finite_number(row.get("execution_risk_score")) or 0.0) < 45
+        ],
     }
-    experiment_metrics = {
-        name: {
-            "train": split.get("first_half") if name == "baseline_current" else _group_metrics(group_rows[: max(1, len(group_rows) // 2)]),
-            "validation": split.get("second_half") if name == "baseline_current" else _group_metrics(group_rows[max(1, len(group_rows) // 2):]),
-            "recent_2y": split.get("recent_2y") if name == "baseline_current" else _group_metrics(
+    experiment_metrics: Dict[str, Dict[str, Any]] = {}
+    for name, group_rows in experiments.items():
+        train = split.get("first_half") if name == "baseline_current" else _group_metrics(group_rows[: max(1, len(group_rows) // 2)])
+        validation = split.get("second_half") if name == "baseline_current" else _group_metrics(group_rows[max(1, len(group_rows) // 2):])
+        recent_2y = split.get("recent_2y") if name == "baseline_current" else _group_metrics(
                 [
                     row for row in group_rows
                     if row.get("as_of_date")
                     and recent_cutoff is not None
                     and coerce_date(row["as_of_date"]) >= recent_cutoff
                 ]
+            )
+        validation_avg = validation.get("avg_net_return_60d")
+        recent_avg = recent_2y.get("avg_net_return_60d")
+        validation_win = validation.get("win_rate_60d")
+        recent_win = recent_2y.get("win_rate_60d")
+        experiment_metrics[name] = {
+            "train": train,
+            "validation": validation,
+            "recent_2y": recent_2y,
+            "overfit_warning": bool(
+                validation_avg is not None
+                and recent_avg is not None
+                and validation_avg > 0
+                and (recent_avg < -2 or (validation_win is not None and recent_win is not None and recent_win + 5 < validation_win))
+            ),
+            "sample_count_change_pct_vs_current": (
+                round((len(group_rows) - len(rows)) / len(rows) * 100.0, 4)
+                if rows
+                else None
             ),
         }
-        for name, group_rows in experiments.items()
-    }
     stable_candidates = [
         name
         for name, result in experiment_metrics.items()
@@ -460,6 +552,7 @@ def _parameter_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         and (result.get("recent_2y") or {}).get("avg_net_return_60d") is not None
         and (result["validation"]["avg_net_return_60d"] or 0) > 0
         and (result["recent_2y"]["avg_net_return_60d"] or 0) > -2
+        and not result.get("overfit_warning")
     ]
     return {
         "experiments": experiment_metrics,
@@ -639,6 +732,8 @@ def compute_summary(
     best_signals, worst_signals = _ranked_signals(rows)
     coverage = _coverage_metrics(rows)
     execution = _execution_diagnostics(rows)
+    execution_risk_distribution = _execution_risk_score_distribution(rows)
+    paper_observation_candidate_count = sum(1 for row in rows if _is_observation_candidate(row))
     diagnostics = {
         "missing_fields": _split_flags(rows, "missing_fields"),
         "risk_flags": _split_flags(rows, "risk_flags"),
@@ -699,6 +794,7 @@ def compute_summary(
             "trend_confirmation_summary": _group_summary(rows, "trend_confirmation_level"),
             "industry_cycle_quality_summary": _group_summary(rows, "industry_cycle_quality"),
             "execution_entry_quality_summary": _group_summary(rows, "executable_entry_quality"),
+            "execution_risk_score_summary": _bucket_summary(rows, _execution_risk_bucket),
             "time_split_summary": _time_split_summary(rows),
             "drawdown_diagnostics": {
                 "default_basis": "low_max_drawdown",
@@ -716,6 +812,8 @@ def compute_summary(
                 "missing_financial_uncertain_count": _count_token(rows, "risk_flags", "missing_financial_uncertain"),
                 "high_execution_risk_count": sum(1 for row in rows if (_finite_number(row.get("execution_risk_score")) or 0.0) >= 60),
             },
+            "execution_risk_score_distribution": execution_risk_distribution,
+            "paper_observation_candidate_count": paper_observation_candidate_count,
             "parameter_experiment": parameter_experiment,
             "baseline_comparison": baseline_comparison,
             "best": best_signals,

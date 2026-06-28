@@ -167,15 +167,15 @@ reports/genge_cycle_bottom_real/20260627_203000/
 
 本轮基于 `config/genge_signal_quality_baseline.json` 中 commit `b2a298b0` 的真实研究基线复核。
 
-- pytest：36 passed，1 warning。
-- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260628_143138`，`total_signals=1453`，`data_failures=0`。
-- real core：`reports/genge_signal_quality_core/20260628_143543`，耗时 199.05 秒，`total_signals=1876`，`data_failures=0`。
-- real cycle：`reports/genge_signal_quality_cycle/20260628_144911`，耗时 802.18 秒，`total_signals=5807`，`data_failures=0`。
-- real broad：`reports/genge_signal_quality_broad/20260628_151610`，耗时 1610.63 秒，`total_signals=12718`，`data_failures=0`。
+- pytest：39 passed，1 warning。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260628_154457`，`total_signals=1451`，`data_failures=0`。
+- real core：`reports/genge_signal_quality_core/20260628_154858`，耗时 224.37 秒，`total_signals=1663`，`data_failures=0`。
+- real cycle：`reports/genge_signal_quality_cycle/20260628_160347`，耗时 873.21 秒，`total_signals=5091`，`data_failures=0`。
+- real broad：`reports/genge_signal_quality_broad/20260628_163352`，耗时 1785.23 秒，`total_signals=11185`，`data_failures=0`。
 
-broad 相比基线：60 日平均净收益 +1.0338，60 日胜率 +2.9732，60 日跑赢基准比例 +5.4145，250 日低点回撤 +0.0068，样本数下降 36.6507%，未触发大于 50% 的过拟合警告。
+broad 相比基线：60 日平均净收益 +1.2670，60 日胜率 +3.3642，60 日跑赢基准比例 +6.0326，250 日低点回撤 +0.1670，样本数下降 44.2867%，未触发大于 50% 的过拟合警告。
 
-最终研究枚举：`PASS_SIGNAL_QUALITY_IMPROVED`。该结论表示 broad 真实样本相对基线的核心信号质量有所改善；由于 core/cycle 回撤略差，且胜率、跑赢基准比例仍未达到更高门槛，不能视为模拟盘就绪。
+最终研究枚举：`PASS_REAL_DATA_RESEARCH`。该结论表示真实公开数据研究链路通过，且 broad 的 60 日胜率和跑赢基准明显改善；但 250 日低点回撤只改善 0.1670 个百分点，未达到至少改善 3 个百分点或优于 -28% 的最低线，因此不能声明 `PASS_SIGNAL_QUALITY_IMPROVED`，也不能视为模拟盘就绪。
 
 ## 已知限制
 

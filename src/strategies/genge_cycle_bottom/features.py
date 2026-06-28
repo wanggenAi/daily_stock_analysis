@@ -19,6 +19,10 @@ TRADING_DAYS_PER_YEAR = 250
 PRICE_MIN_OBSERVATIONS_BY_YEARS = {3: 500, 5: 800, 10: 1200}
 VALUATION_MIN_OBSERVATIONS = 120
 DISCLOSURE_DATE_COLUMNS = ("disclosure_date", "publish_date", "ann_date", "announcement_date")
+LIMIT_MOVE_THRESHOLD = 9.5
+ABNORMAL_INTRADAY_MOVE_THRESHOLD = 7.0
+LOW_LIQUIDITY_AMOUNT = 5_000_000.0
+LOW_LIQUIDITY_VOLUME = 100_000.0
 
 
 @dataclass
@@ -59,6 +63,7 @@ class FeatureSet:
     industry_cycle_quality: str = "missing"
     market_environment_state: Optional[str] = None
     execution_risk_score: float = 0.0
+    execution_risk_quality: str = "good"
     risk_flags: List[str] = field(default_factory=list)
     missing_fields: List[str] = field(default_factory=list)
     diagnostics: Dict[str, Any] = field(default_factory=dict)
@@ -720,6 +725,171 @@ def compute_market_environment_score(benchmark_history: Optional[pd.DataFrame], 
     return max(0.0, min(100.0, score)), [], diagnostics
 
 
+def _average_true_range(history: pd.DataFrame, window: int = 14) -> Optional[float]:
+    if history.empty or not {"high", "low", "close"}.issubset(history.columns):
+        return None
+    local = history.tail(window + 1).copy()
+    high = pd.to_numeric(local["high"], errors="coerce")
+    low = pd.to_numeric(local["low"], errors="coerce")
+    close = pd.to_numeric(local["close"], errors="coerce")
+    previous_close = close.shift(1)
+    true_range = pd.concat(
+        [
+            high - low,
+            (high - previous_close).abs(),
+            (low - previous_close).abs(),
+        ],
+        axis=1,
+    ).max(axis=1).dropna()
+    if true_range.empty:
+        return None
+    value = finite_float(true_range.tail(window).mean())
+    return value if value is not None and value > 0 else None
+
+
+def _historical_low(history: pd.DataFrame, years: int = 5) -> Optional[float]:
+    if history.empty:
+        return None
+    window = _window_for_years(history, years).tail(years * TRADING_DAYS_PER_YEAR)
+    if window.empty:
+        return None
+    field_name = "low" if "low" in window.columns else "close"
+    low = finite_float(pd.to_numeric(window[field_name], errors="coerce").dropna().min())
+    return low if low is not None and low > 0 else None
+
+
+def _recent_platform_low(history: pd.DataFrame) -> Optional[float]:
+    if history.empty:
+        return None
+    field_name = "low" if "low" in history.columns else "close"
+    lows = pd.to_numeric(history[field_name], errors="coerce").dropna()
+    if lows.empty:
+        return None
+    short_low = finite_float(lows.tail(20).min())
+    medium_low = finite_float(lows.tail(60).min()) if len(lows) >= 60 else short_low
+    if short_low is None:
+        return medium_low
+    if medium_low is None:
+        return short_low
+    return max(short_low, medium_low * 0.96)
+
+
+def estimate_dynamic_stop_loss(
+    history: pd.DataFrame,
+    close: Optional[float],
+    ma60: Optional[float],
+) -> Optional[float]:
+    close_value = finite_float(close)
+    if close_value is None or close_value <= 0:
+        return None
+
+    candidates: List[Tuple[str, float]] = [("risk_cap_12pct", close_value * 0.88)]
+    ma60_value = finite_float(ma60)
+    if ma60_value is not None and ma60_value > 0:
+        candidates.append(("ma60_buffer", ma60_value * 0.97))
+
+    atr = _average_true_range(history)
+    if atr is not None:
+        candidates.append(("atr_2_2x", close_value - 2.2 * atr))
+
+    platform_low = _recent_platform_low(history)
+    if platform_low is not None:
+        candidates.append(("platform_low_buffer", platform_low * 0.98))
+
+    five_year_low = _historical_low(history, 5)
+    if five_year_low is not None:
+        candidates.append(("five_year_low_buffer", five_year_low * 0.98))
+
+    valid_candidates = [
+        (name, value)
+        for name, value in candidates
+        if finite_float(value) is not None and 0 < value < close_value
+    ]
+    if not valid_candidates:
+        return round(close_value * 0.88, 2)
+    _, stop = max(valid_candidates, key=lambda item: item[1])
+    stop = min(stop, close_value * 0.995)
+    return round(max(stop, 0.01), 2)
+
+
+def compute_asof_execution_risk(history: pd.DataFrame) -> Tuple[float, List[str], Dict[str, Any]]:
+    diagnostics: Dict[str, Any] = {
+        "asof_executable_entry_quality": "unavailable",
+        "asof_execution_risk_score": 100.0,
+    }
+    if history.empty:
+        return 100.0, ["missing_daily_price"], diagnostics
+
+    latest = history.iloc[-1]
+    close = finite_float(latest.get("close"))
+    previous_close = finite_float(history.iloc[-2].get("close")) if len(history) >= 2 else None
+    if close is None or close <= 0:
+        return 100.0, ["missing_close"], diagnostics
+
+    high = finite_float(latest.get("high")) if "high" in latest.index else None
+    low = finite_float(latest.get("low")) if "low" in latest.index else None
+    amount = finite_float(latest.get("amount")) if "amount" in latest.index else None
+    volume = finite_float(latest.get("volume")) if "volume" in latest.index else None
+
+    close_change_pct = _pct_change_value(close, previous_close)
+    intraday_range_pct = (
+        round((high - low) / previous_close * 100.0, 4)
+        if high is not None and low is not None and previous_close is not None and previous_close > 0
+        else None
+    )
+    low_liquidity = False
+    if amount is not None:
+        low_liquidity = amount < LOW_LIQUIDITY_AMOUNT
+    elif volume is not None:
+        low_liquidity = volume < LOW_LIQUIDITY_VOLUME
+    else:
+        low_liquidity = True
+
+    limit_up = bool(close_change_pct is not None and close_change_pct >= LIMIT_MOVE_THRESHOLD)
+    limit_down = bool(close_change_pct is not None and close_change_pct <= -LIMIT_MOVE_THRESHOLD)
+    abnormal_move = bool(
+        (close_change_pct is not None and abs(close_change_pct) >= ABNORMAL_INTRADAY_MOVE_THRESHOLD)
+        or (intraday_range_pct is not None and intraday_range_pct >= 12.0)
+    )
+
+    score = 0.0
+    flags: List[str] = []
+    if limit_up:
+        score += 45
+        flags.append("current_limit_up_risk")
+    if limit_down:
+        score += 45
+        flags.append("current_limit_down_risk")
+    if abnormal_move:
+        score += 20
+        flags.append("current_abnormal_move_risk")
+    if low_liquidity:
+        score += 25
+        flags.append("current_low_liquidity_risk")
+
+    if "volume" in history.columns and len(history) >= 21:
+        current_volume = finite_float(history.iloc[-1].get("volume"))
+        base_volume = finite_float(pd.to_numeric(history["volume"].tail(21).head(20), errors="coerce").mean())
+        if current_volume is not None and base_volume is not None and base_volume > 0 and current_volume / base_volume > 3.0:
+            score += 15
+            flags.append("current_volume_spike_risk")
+
+    score = round(min(100.0, score), 2)
+    quality = "risky" if score >= 45 else "degraded" if score >= 20 else "good"
+    diagnostics.update(
+        {
+            "asof_executable_entry_quality": quality,
+            "asof_execution_risk_score": score,
+            "asof_close_change_pct": round(close_change_pct, 4) if close_change_pct is not None else None,
+            "asof_intraday_range_pct": intraday_range_pct,
+            "asof_low_liquidity_risk": low_liquidity,
+            "asof_limit_up_risk": limit_up,
+            "asof_limit_down_risk": limit_down,
+        }
+    )
+    return score, flags, diagnostics
+
+
 def compute_industry_cycle_score(
     industry_cycle_df: Optional[pd.DataFrame],
     industry: Optional[str],
@@ -801,6 +971,7 @@ def build_feature_set(
     financial_score, financial_missing, financial_risks, financial_diag = compute_financial_safety_score(financial_df, target)
     trend_score, trend_diag, trend_missing, trend_risks = compute_trend_stabilization_score(history)
     market_score, market_missing, market_diag = compute_market_environment_score(benchmark_df, target)
+    execution_score, execution_risks, execution_diag = compute_asof_execution_risk(history)
     value_trap_diag = compute_value_trap_diagnostics(
         valuation_diagnostics=valuation_diag,
         financial_diagnostics=financial_diag,
@@ -833,7 +1004,7 @@ def build_feature_set(
     features.no_falling_knife_filter = bool(trend_diag.get("no_falling_knife_filter"))
     features.second_low_confirmation = bool(trend_diag.get("second_low_confirmation"))
     features.trend_confirmation_level = str(trend_diag.get("trend_confirmation_level") or "NONE")
-    features.dynamic_stop_loss = estimate_stop_loss(close, features.ma60)
+    features.dynamic_stop_loss = estimate_dynamic_stop_loss(history, close, features.ma60)
     features.invalidation_level = features.dynamic_stop_loss
     if features.dynamic_stop_loss is not None and close > 0:
         features.stop_loss_distance_pct = round((close - features.dynamic_stop_loss) / close * 100.0, 4)
@@ -844,12 +1015,14 @@ def build_feature_set(
     features.industry_cycle_phase = industry_diag.get("industry_cycle_phase")
     features.industry_cycle_quality = str(industry_diag.get("industry_cycle_quality") or "missing")
     features.market_environment_state = market_diag.get("market_environment_state")
-    features.execution_risk_score = 0.0
+    features.execution_risk_score = execution_score
+    features.execution_risk_quality = str(execution_diag.get("asof_executable_entry_quality") or "good")
     features.missing_fields = sorted(set(price_missing + valuation_missing + financial_missing + trend_missing + market_missing + industry_missing))
     features.risk_flags = sorted(
         set(
             financial_risks
             + trend_risks
+            + execution_risks
             + (["value_trap_risk"] if features.value_trap_flag else [])
             + (["missing_financial_uncertain"] if "financial" in financial_missing else [])
         )
@@ -860,11 +1033,14 @@ def build_feature_set(
     features.diagnostics.update(market_diag)
     features.diagnostics.update(industry_diag)
     features.diagnostics.update(value_trap_diag)
+    features.diagnostics.update(execution_diag)
     features.diagnostics.update(
         {
             "dynamic_stop_loss": features.dynamic_stop_loss,
             "stop_loss_distance_pct": features.stop_loss_distance_pct,
             "invalidation_level": features.invalidation_level,
+            "execution_risk_score": features.execution_risk_score,
+            "execution_risk_quality": features.execution_risk_quality,
         }
     )
     return features

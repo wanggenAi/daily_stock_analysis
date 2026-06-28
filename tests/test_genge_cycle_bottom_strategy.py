@@ -79,6 +79,22 @@ def test_quality_gates_downgrade_confirm_buy() -> None:
     wide_stop.stop_loss_distance_pct = 18.0
     assert strategy._classify(82.0, wide_stop, []) == SignalType.LEFT_SMALL_BUY
 
+    wide_left = _feature()
+    wide_left.stop_loss_distance_pct = 16.0
+    assert strategy._classify(70.0, wide_left, []) == SignalType.WATCH
+
+    high_execution_risk = _confirm_feature()
+    high_execution_risk.execution_risk_score = 60.0
+    assert strategy._classify(82.0, high_execution_risk, []) == SignalType.WATCH
+
+    degraded_execution = _confirm_feature()
+    degraded_execution.execution_risk_score = 25.0
+    assert strategy._classify(82.0, degraded_execution, []) == SignalType.LEFT_SMALL_BUY
+
+    early_stabilization = _confirm_feature()
+    early_stabilization.stabilization_days = 3
+    assert strategy._classify(82.0, early_stabilization, []) == SignalType.WATCH
+
     manual_cycle = _confirm_feature()
     manual_cycle.industry_cycle_quality = "manual_template"
     assert strategy._classify(82.0, manual_cycle, []) == SignalType.LEFT_SMALL_BUY

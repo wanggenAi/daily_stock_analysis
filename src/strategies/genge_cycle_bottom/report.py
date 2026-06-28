@@ -253,6 +253,8 @@ def _quality_lines(summary: Dict[str, Any]) -> List[str]:
         f"- 趋势确认分布：{json.dumps(summary.get('trend_confirmation_summary', {}), ensure_ascii=False)}",
         f"- 行业周期证据质量分布：{json.dumps(summary.get('industry_cycle_quality_summary', {}), ensure_ascii=False)}",
         f"- 执行入口质量分布：{json.dumps(summary.get('execution_entry_quality_summary', {}), ensure_ascii=False)}",
+        f"- 执行风险分数分布：{json.dumps(summary.get('execution_risk_score_distribution', {}), ensure_ascii=False)}",
+        f"- 分执行风险表现：{json.dumps(summary.get('execution_risk_score_summary', {}), ensure_ascii=False)}",
         f"- 估值陷阱/飞刀/执行风险统计：{json.dumps(filters, ensure_ascii=False)}",
         f"- 止损修正 60/120/250 日平均净收益：{_format_pct(stop_policy.get('avg_stop_adjusted_net_return_60d'))} / {_format_pct(stop_policy.get('avg_stop_adjusted_net_return_120d'))} / {_format_pct(stop_policy.get('avg_stop_adjusted_net_return_250d'))}",
         f"- 止损触发率 60/120/250 日：{_format_pct(stop_policy.get('stop_trigger_rate_60d'))} / {_format_pct(stop_policy.get('stop_trigger_rate_120d'))} / {_format_pct(stop_policy.get('stop_trigger_rate_250d'))}",
@@ -335,6 +337,36 @@ def _candidate_reason(row: Dict[str, Any]) -> str:
     return "；".join(parts) or "触发研究信号，需人工复核公开数据"
 
 
+def _observation_candidate_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    trend_rank = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+
+    def number(value: Any) -> float | None:
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return None
+        return None if result != result else result
+
+    candidates = []
+    for row in rows:
+        stop_distance = number(row.get("stop_loss_distance_pct"))
+        execution_risk = number(row.get("execution_risk_score")) or 0.0
+        value_trap_score = number(row.get("value_trap_score")) or 0.0
+        market_score = number(row.get("market_environment_score")) or 0.0
+        if (
+            str(row.get("signal_type") or "") == "CONFIRM_BUY"
+            and trend_rank.get(str(row.get("trend_confirmation_level") or "NONE"), 0) >= trend_rank["MEDIUM"]
+            and value_trap_score < 60
+            and stop_distance is not None
+            and stop_distance <= 12
+            and execution_risk <= 25
+            and str(row.get("industry_cycle_quality") or "missing") not in {"missing", "manual_template"}
+            and market_score >= 40
+        ):
+            candidates.append(row)
+    return candidates
+
+
 def write_paper_observation_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
     columns = [
         "code",
@@ -352,10 +384,7 @@ def write_paper_observation_candidates(rows: List[Dict[str, Any]], path: Path) -
         "invalidation_condition",
         "disclaimer",
     ]
-    candidates = [
-        row for row in rows
-        if str(row.get("signal_type") or "") in {"LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"}
-    ]
+    candidates = _observation_candidate_rows(rows)
     candidates = sorted(
         candidates,
         key=lambda row: (float(row.get("total_score") or 0), -float(row.get("value_trap_score") or 0)),
@@ -364,6 +393,9 @@ def write_paper_observation_candidates(rows: List[Dict[str, Any]], path: Path) -
     with path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=columns)
         writer.writeheader()
+        if not candidates:
+            writer.writerow({"disclaimer": "该清单仅用于模拟观察和复盘，不构成买入建议。"})
+            return
         for row in candidates:
             writer.writerow(
                 {
@@ -425,6 +457,7 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
         f"- 20/60/120/250 日跑赢基准比例：{_format_pct(summary.get('outperform_benchmark_rate_20d'))} / {_format_pct(summary.get('outperform_benchmark_rate_60d'))} / {_format_pct(summary.get('outperform_benchmark_rate_120d'))} / {_format_pct(summary.get('outperform_benchmark_rate_250d'))}",
         f"- 估值/财务/行业周期覆盖率：{_format_pct(summary.get('valuation_coverage_rate'))} / {_format_pct(summary.get('financial_coverage_rate'))} / {_format_pct(summary.get('industry_cycle_coverage_rate'))}",
         f"- 最大连续亏损次数：{_format_value(summary.get('max_consecutive_losses'))}",
+        f"- 模拟观察候选数：{_format_value(summary.get('paper_observation_candidate_count'))}",
         f"- 样本数量警告：{_sample_warning(summary)}",
         f"- 最好历史信号：{json.dumps(best_signals[:3], ensure_ascii=False)}",
         f"- 最差历史信号：{json.dumps(worst_signals[:3], ensure_ascii=False)}",

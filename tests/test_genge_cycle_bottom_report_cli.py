@@ -36,6 +36,7 @@ def _summary_row(
     industry_score: float = 65.0,
     outperform: bool = True,
     executable_entry_quality: str = "good",
+    execution_risk_score: float = 0.0,
 ) -> dict:
     as_of = date(2021, 1, 1) + timedelta(days=index * 30)
     return {
@@ -53,7 +54,7 @@ def _summary_row(
         "value_trap_score": 20.0,
         "industry_cycle_quality": "user_supplied",
         "stop_loss_distance_pct": 8.0,
-        "execution_risk_score": 0.0,
+        "execution_risk_score": execution_risk_score,
         "valuation_score": 55.0,
         "missing_fields": missing_fields,
         "risk_flags": risk_flags,
@@ -209,6 +210,9 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
         "stop_policy_summary",
         "quality_filter_summary",
         "parameter_experiment",
+        "execution_risk_score_summary",
+        "execution_risk_score_distribution",
+        "paper_observation_candidate_count",
     ):
         assert key in summary
     assert summary["industry_summary"]["光伏"]["total_signals"] == 2
@@ -222,6 +226,7 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
     assert "trend_confirmation_summary" in summary
     assert "industry_cycle_quality_summary" in summary
     assert "execution_entry_quality_summary" in summary
+    assert summary["execution_risk_score_distribution"]["0_19_low"] >= 1
     assert "coverage" in summary["diagnostics"]
     assert "execution_diagnostics" in summary["diagnostics"]
     assert summary["failure_reason_summary"]["reason_counts"]["趋势未确认"] >= 1
@@ -257,6 +262,20 @@ def test_parameter_experiment_contains_train_validation_recent_2y() -> None:
     assert "train" in experiment
     assert "validation" in experiment
     assert "recent_2y" in experiment
+    assert "overfit_warning" in experiment
+    assert "quality_entry_proxy" in summary["parameter_experiment"]["experiments"]
+
+
+def test_paper_observation_candidate_count_uses_confirm_quality_gate() -> None:
+    rows = [
+        _summary_row(0, signal_type="CONFIRM_BUY", net_60d=3.0),
+        _summary_row(1, signal_type="LEFT_SMALL_BUY", net_60d=3.0),
+        _summary_row(2, signal_type="CONFIRM_BUY", net_60d=3.0, execution_risk_score=60.0),
+    ]
+
+    summary = compute_summary(rows)
+
+    assert summary["paper_observation_candidate_count"] == 1
 
 
 def test_paper_trading_gate_keeps_poor_expectancy_out_of_paper_only() -> None:

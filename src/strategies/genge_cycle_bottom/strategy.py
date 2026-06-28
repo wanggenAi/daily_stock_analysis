@@ -18,6 +18,12 @@ WATCH_CAP_RISK_FLAGS = {
     "negative_operating_cash_flow",
     "value_trap_risk",
     "missing_financial_uncertain",
+    "volume_spike",
+    "current_limit_up_risk",
+    "current_limit_down_risk",
+    "current_abnormal_move_risk",
+    "current_low_liquidity_risk",
+    "current_volume_spike_risk",
 }
 TREND_LEVEL_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
 
@@ -115,7 +121,7 @@ class GenGeCycleBottomStrategy:
 
     @staticmethod
     def _total_score(features: FeatureSet) -> float:
-        return (
+        score = (
             features.price_percentile_score * 0.24
             + features.valuation_score * 0.18
             + features.financial_safety_score * 0.22
@@ -123,6 +129,10 @@ class GenGeCycleBottomStrategy:
             + features.market_environment_score * 0.08
             + features.industry_cycle_score * 0.08
         )
+        score -= min(features.execution_risk_score, 60.0) * 0.06
+        if features.stop_loss_distance_pct is not None and features.stop_loss_distance_pct > 12:
+            score -= min(8.0, (features.stop_loss_distance_pct - 12.0) * 0.8)
+        return max(0.0, score)
 
     @staticmethod
     def _classify(total_score: float, features: FeatureSet, risk_flags: list[str]) -> SignalType:
@@ -156,12 +166,21 @@ class GenGeCycleBottomStrategy:
 
         if not features.no_falling_knife_filter and signal not in (SignalType.REJECT, SignalType.WATCH):
             signal = SignalType.WATCH
+        if features.stabilization_days < 5 and signal not in (SignalType.REJECT, SignalType.WATCH):
+            signal = SignalType.WATCH
+        if features.execution_risk_score >= 45 and signal not in (SignalType.REJECT, SignalType.WATCH):
+            return SignalType.WATCH
+        if features.execution_risk_score >= 20 and signal in (SignalType.CONFIRM_BUY, SignalType.ADD):
+            signal = SignalType.LEFT_SMALL_BUY
         if any(flag in WATCH_CAP_RISK_FLAGS for flag in risk_flags) and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
         if features.value_trap_flag and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
-        if features.stop_loss_distance_pct is not None and features.stop_loss_distance_pct > 14 and signal == SignalType.CONFIRM_BUY:
-            return SignalType.LEFT_SMALL_BUY
+        if features.stop_loss_distance_pct is not None and features.stop_loss_distance_pct > 12:
+            if signal == SignalType.CONFIRM_BUY:
+                return SignalType.LEFT_SMALL_BUY
+            if signal == SignalType.LEFT_SMALL_BUY and features.stop_loss_distance_pct > 15:
+                return SignalType.WATCH
         if features.industry_cycle_quality in {"missing", "manual_template"} and signal == SignalType.CONFIRM_BUY:
             return SignalType.LEFT_SMALL_BUY
         if features.market_environment_score < 40 and signal not in (SignalType.REJECT, SignalType.WATCH):

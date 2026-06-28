@@ -220,6 +220,30 @@ def test_trend_confirmation_and_no_falling_knife_features_are_recorded() -> None
     assert features.trend_confirmation_level in {"WEAK", "MEDIUM", "STRONG"}
     assert features.dynamic_stop_loss is not None
     assert features.stop_loss_distance_pct is not None
+    assert features.dynamic_stop_loss <= features.close
+
+
+def test_dynamic_stop_uses_platform_or_atr_not_only_fixed_pct() -> None:
+    price_df = _price_frame([100.0] * 120)
+
+    features = build_feature_set(price_df=price_df, as_of_date=price_df.iloc[-1]["date"])
+
+    assert features.dynamic_stop_loss is not None
+    assert features.close is not None
+    assert features.dynamic_stop_loss > round(features.close * 0.88, 2)
+    assert features.dynamic_stop_loss <= features.close
+
+
+def test_asof_execution_risk_is_recorded_without_future_bar() -> None:
+    price_df = _price_frame([100.0] * 29 + [110.0])
+    price_df.loc[price_df.index[-1], "volume"] = 50_000
+
+    features = build_feature_set(price_df=price_df, as_of_date=price_df.iloc[-1]["date"])
+
+    assert features.execution_risk_score >= 60
+    assert features.execution_risk_quality == "risky"
+    assert "current_limit_up_risk" in features.risk_flags
+    assert "current_low_liquidity_risk" in features.risk_flags
 
 
 def test_accelerating_downtrend_sets_falling_knife_risk() -> None:
