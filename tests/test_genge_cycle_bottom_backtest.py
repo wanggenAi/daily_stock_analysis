@@ -4,7 +4,9 @@ from datetime import date, timedelta
 
 import pandas as pd
 
+from src.strategies.genge_cycle_bottom.backtest import BALANCED_EXIT_POLICY_NAME
 from src.strategies.genge_cycle_bottom.backtest import evaluate_signal_forward
+from src.strategies.genge_cycle_bottom.backtest import simulate_exit_policy
 from src.strategies.genge_cycle_bottom.signals import SignalType, StrategySignal
 
 
@@ -40,6 +42,13 @@ def _signal(as_of_date: str) -> StrategySignal:
         stop_loss=93.0,
         max_position_pct=5.0,
     )
+
+
+def _signal_with_trend(as_of_date: str, trend_level: str, stop_loss: float = 50.0) -> StrategySignal:
+    signal = _signal(as_of_date)
+    signal.trend_confirmation_level = trend_level
+    signal.stop_loss = stop_loss
+    return signal
 
 
 def test_forward_returns_drawdown_and_benchmark_are_calculated() -> None:
@@ -148,10 +157,13 @@ def test_exit_policy_fields_exist_and_use_net_return_costs() -> None:
     result = evaluate_signal_forward(_signal("2024-01-01"), price_df, fee_bps=5, slippage_bps=10)
 
     assert result["exit_policy_name"] == "hybrid_60d_repair_exit"
+    assert result["balanced_exit_policy_name"] == BALANCED_EXIT_POLICY_NAME
     assert result["exit_reason_20d"] == "TIME_EXIT"
     assert result["exit_adjusted_raw_return_20d"] == 0.0
     assert result["exit_adjusted_net_return_20d"] == -0.3
     assert result["exit_adjusted_max_drawdown_20d"] <= result["low_max_drawdown_20d"]
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] == "TIME_EXIT_60D"
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"] == -0.3
 
 
 def test_fixed_60d_time_exit_caps_long_horizon_at_60_days() -> None:
@@ -216,3 +228,92 @@ def test_same_day_exit_conditions_use_conservative_priority() -> None:
 
     assert result["exit_reason_20d"] == "STOP_LOSS"
     assert result["exit_adjusted_raw_return_20d"] == -7.0
+
+
+def test_balanced_exit_keeps_old_hybrid_fields_separate() -> None:
+    closes = [100.0, 100.0] + [101.0] * 80
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(_signal_with_trend("2024-01-01", "MEDIUM"), price_df)
+
+    assert result["exit_policy_name"] == "hybrid_60d_repair_exit"
+    assert result["exit_reason_60d"] is not None
+    assert result[f"hybrid_60d_repair_exit_exit_reason_60d"] == result["exit_reason_60d"]
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] is not None
+    assert f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d" in result
+
+
+def test_balanced_trend_break_requires_three_closes_below_ma20() -> None:
+    signal = _signal_with_trend("2024-01-01", "MEDIUM")
+    closes = [100.0, 100.0] + [100.0] * 22 + [99.0, 98.0, 97.0] + [97.0] * 80
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] == "TREND_BREAK_CONFIRMED"
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_holding_days_60d"] >= 20
+
+
+def test_balanced_stop_loss_can_use_configured_minimum_distance() -> None:
+    signal = _signal_with_trend("2024-01-01", "MEDIUM", stop_loss=98.0)
+    closes = [100.0, 100.0] + [97.0] + [100.0] * 80
+    price_df = _price_frame(closes)
+    future_rows = price_df.iloc[1:].reset_index(drop=True)
+
+    result = simulate_exit_policy(
+        signal=signal,
+        entry_price=100.0,
+        future_rows=future_rows,
+        horizon_days=60,
+        stop_loss=98.0,
+        policy_name=BALANCED_EXIT_POLICY_NAME,
+        params={
+            "stop_loss_min_pct": 10.0,
+            "stop_loss_max_pct": 12.0,
+            "trail_start_pct": 12.0,
+            "trail_drawdown_pct": 8.0,
+            "profit_high_pct": 20.0,
+            "profit_high_trail_drawdown_pct": 6.0,
+            "trend_break_min_days": 20,
+            "no_repair_days": 40,
+        },
+    )
+
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] == "TIME_EXIT_60D"
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_holding_days_60d"] == 60
+
+
+def test_balanced_profit_trailing_does_not_peek_at_future_high() -> None:
+    signal = _signal_with_trend("2024-01-01", "STRONG")
+    closes = [100.0, 100.0] + [108.0, 115.0, 126.0, 115.0] + [150.0] * 120
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] == "TAKE_PROFIT_TRAIL"
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_price_60d"] == 115.0
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_raw_return_60d"] == 15.0
+
+
+def test_balanced_strong_trend_extends_but_weak_trend_exits_at_60d() -> None:
+    closes = [100.0, 100.0] + [100.0 + offset * 0.3 for offset in range(1, 150)]
+    price_df = _price_frame(closes)
+
+    strong_result = evaluate_signal_forward(_signal_with_trend("2024-01-01", "STRONG"), price_df)
+    weak_result = evaluate_signal_forward(_signal_with_trend("2024-01-01", "WEAK"), price_df)
+
+    assert strong_result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_120d"] == "TREND_EXTENSION_90D"
+    assert strong_result[f"{BALANCED_EXIT_POLICY_NAME}_exit_holding_days_120d"] == 90
+    assert weak_result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_120d"] == "TIME_EXIT_60D"
+    assert weak_result[f"{BALANCED_EXIT_POLICY_NAME}_exit_holding_days_120d"] == 60
+
+
+def test_balanced_no_repair_55d_exits_without_early_20d_cut() -> None:
+    signal = _signal_with_trend("2024-01-01", "WEAK")
+    closes = [100.0, 100.0] + [99.5] * 80
+    price_df = _price_frame(closes)
+
+    result = evaluate_signal_forward(signal, price_df)
+
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] == "NO_REPAIR_40D"
+    assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_holding_days_60d"] == 55

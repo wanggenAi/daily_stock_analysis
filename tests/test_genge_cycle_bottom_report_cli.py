@@ -7,12 +7,14 @@ from pathlib import Path
 
 from src.strategies.genge_cycle_bottom.acceptance import (
     FAIL_DATA_QUALITY,
+    PASS_BALANCED_EXIT_POLICY,
     PASS_60D_REPAIR_STRATEGY_VALIDATED,
     PASS_EXIT_POLICY_RESEARCH,
     PASS_PAPER_TRADING_READY,
     PASS_REAL_DATA_RESEARCH,
     PASS_RESEARCH_ONLY,
 )
+from src.strategies.genge_cycle_bottom.backtest import BALANCED_EXIT_POLICY_NAME, EXIT_POLICY_EXPERIMENTS
 from src.strategies.genge_cycle_bottom.cli import main
 from src.strategies.genge_cycle_bottom.metrics import compute_summary
 from src.strategies.genge_cycle_bottom.report import SIGNAL_DETAIL_COLUMNS, write_reports
@@ -94,6 +96,7 @@ def _summary_row_with_exit(index: int, **kwargs) -> dict:
     row = _summary_row(index % 120, **kwargs)
     row["code"] = f"{index:06d}"
     row["exit_policy_name"] = "hybrid_60d_repair_exit"
+    row["balanced_exit_policy_name"] = BALANCED_EXIT_POLICY_NAME
     for days in (20, 60, 120, 250):
         row[f"exit_adjusted_raw_return_{days}d"] = row.get(f"raw_return_{days}d")
         row[f"exit_adjusted_net_return_{days}d"] = row.get(f"net_return_{days}d")
@@ -102,13 +105,13 @@ def _summary_row_with_exit(index: int, **kwargs) -> dict:
         row[f"exit_reason_{days}d"] = "TIME_EXIT"
         row[f"exit_price_{days}d"] = 10.0
         row[f"exit_date_{days}d"] = row["as_of_date"]
-        for policy in ("fixed_60d_time_exit", "trend_break_exit", "profit_trailing_exit", "hybrid_60d_repair_exit"):
+        for policy in ("fixed_60d_time_exit", "trend_break_exit", "profit_trailing_exit", "hybrid_60d_repair_exit", BALANCED_EXIT_POLICY_NAME):
             row[f"{policy}_exit_adjusted_raw_return_{days}d"] = row.get(f"raw_return_{days}d")
             row[f"{policy}_exit_adjusted_net_return_{days}d"] = row.get(f"net_return_{days}d")
             row[f"{policy}_exit_adjusted_max_drawdown_{days}d"] = -4.0
             row[f"{policy}_exit_holding_days_{days}d"] = min(days, 60)
             row[f"{policy}_exit_reason_{days}d"] = "TIME_EXIT"
-        for experiment in ("conservative", "balanced", "loose", "trend_extend"):
+        for experiment in EXIT_POLICY_EXPERIMENTS:
             row[f"exit_policy_experiment_{experiment}_exit_adjusted_net_return_{days}d"] = row.get(f"net_return_{days}d")
             row[f"exit_policy_experiment_{experiment}_exit_adjusted_max_drawdown_{days}d"] = -4.0
             row[f"exit_policy_experiment_{experiment}_exit_holding_days_{days}d"] = min(days, 60)
@@ -268,6 +271,8 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
             "paper_observation_candidate_count",
             "strict_observation_candidate_count",
             "research_observation_candidate_count",
+            "balanced_research_observation_candidate_count",
+            "watch_only_candidate_count",
         ):
         assert key in summary
     assert summary["industry_summary"]["光伏"]["total_signals"] == 2
@@ -290,7 +295,11 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
     assert summary["long_term_position_risk_score_summary"]["0_29_low"]["total_signals"] == 3
     assert summary["strategy_horizon_profile"]["strategy_primary_horizon"] == "60d"
     assert "hybrid_60d_repair_exit" in summary["exit_policy_summary"]
-    assert "recent_2y" in summary["exit_policy_experiment"]["experiments"]["balanced"]
+    assert BALANCED_EXIT_POLICY_NAME in summary["exit_policy_summary"]
+    assert "balanced_exit_policy_summary" in summary
+    assert "exit_policy_by_trend_confirmation" in summary
+    assert "exit_reason_diagnostics" in summary
+    assert "recent_2y" in summary["exit_policy_experiment"]["experiments"]["balanced_v1"]
 
 
 def test_baseline_comparison_and_overfit_warning_are_reported() -> None:
@@ -315,6 +324,8 @@ def test_baseline_comparison_and_overfit_warning_are_reported() -> None:
 
 def test_exit_policy_summary_and_60d_horizon_gate_are_reported() -> None:
     rows = [_summary_row_with_exit(index, net_60d=2.0, net_120d=1.0, net_250d=1.0, outperform=True) for index in range(8100)]
+    for row in rows:
+        row["benchmark_return_60d"] = 0.0
 
     summary = compute_summary(
         rows,
@@ -336,12 +347,66 @@ def test_exit_policy_summary_and_60d_horizon_gate_are_reported() -> None:
     assert summary["primary_horizon_metrics"]["exit_adjusted_net_return_60d"] == 2.0
     assert summary["long_horizon_risk_metrics"]["exit_adjusted_250d_max_drawdown"] == -4.0
     assert summary["exit_policy_summary"]["hybrid_60d_repair_exit"]["avg_exit_adjusted_net_return_60d"] == 2.0
+    assert summary["exit_policy_summary"][BALANCED_EXIT_POLICY_NAME]["avg_exit_adjusted_net_return_60d"] == 2.0
+    assert summary["exit_policy_summary"][BALANCED_EXIT_POLICY_NAME]["return_retention_rate_60d"] == 100.0
+    assert summary["exit_policy_summary"][BALANCED_EXIT_POLICY_NAME]["drawdown_reduction_rate_250d"] is not None
+    assert summary["exit_policy_summary"][BALANCED_EXIT_POLICY_NAME]["exit_efficiency_score"] is not None
     assert summary["exit_policy_summary"]["raw_hold"]["avg_exit_adjusted_net_return_60d"] == 2.0
-    assert summary["exit_policy_experiment"]["experiments"]["balanced"]["validation"]["total_signals"] > 0
+    assert summary["exit_policy_experiment"]["policy"] == BALANCED_EXIT_POLICY_NAME
+    assert summary["exit_policy_experiment"]["experiments"]["balanced_v1"]["validation"]["total_signals"] > 0
     assert summary["paper_trading_gate"]["verdict"] in {
+        PASS_BALANCED_EXIT_POLICY,
         PASS_60D_REPAIR_STRATEGY_VALIDATED,
         PASS_EXIT_POLICY_RESEARCH,
     }
+
+
+def test_balanced_gate_requires_sample_stability_and_metrics() -> None:
+    rows = []
+    for index in range(9645):
+        row = _summary_row_with_exit(index, net_60d=2.0, net_120d=2.0, net_250d=2.0, drawdown=-30.0)
+        row["benchmark_return_60d"] = 0.0
+        row[f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"] = 1.4
+        row[f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_max_drawdown_250d"] = -9.0
+        rows.append(row)
+
+    summary = compute_summary(
+        rows,
+        extra_diagnostics={
+            "source_mode": "real",
+            "output_dir": "reports/genge_exit_balance_broad",
+            "requested_codes": [f"{index:06d}" for index in range(100)],
+            "benchmark": "000905",
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    balanced = summary["exit_policy_summary"][BALANCED_EXIT_POLICY_NAME]
+    assert balanced["return_retention_rate_60d"] == 70.0
+    assert balanced["drawdown_reduction_rate_250d"] == 70.0
+    assert summary["paper_trading_gate"]["verdict"] == PASS_BALANCED_EXIT_POLICY
+
+    reduced_summary = compute_summary(
+        rows[:8600],
+        extra_diagnostics={
+            "source_mode": "real",
+            "output_dir": "reports/genge_exit_balance_broad",
+            "requested_codes": [f"{index:06d}" for index in range(100)],
+            "benchmark": "000905",
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    assert reduced_summary["baseline_comparison"]["sample_count_change_pct"] < -10
+    assert reduced_summary["paper_trading_gate"]["verdict"] != PASS_BALANCED_EXIT_POLICY
 
 
 def test_broad_sample_below_8000_sets_overfit_warning() -> None:
@@ -574,6 +639,8 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
         "paper_observation_candidates.csv",
         "strict_observation_candidates.csv",
         "research_observation_candidates.csv",
+        "balanced_research_observation_candidates.csv",
+        "watch_only_candidates.csv",
     ):
         assert (latest / filename).exists()
     summary = json.loads((latest / "summary.json").read_text(encoding="utf-8"))
@@ -596,6 +663,12 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
     assert "仅用于模拟观察和复盘" in research_text
     assert "买入清单" not in research_text
     assert "交易指令" not in research_text
+    balanced_text = (latest / "balanced_research_observation_candidates.csv").read_text(encoding="utf-8")
+    watch_text = (latest / "watch_only_candidates.csv").read_text(encoding="utf-8")
+    assert "仅用于模拟观察和复盘" in balanced_text
+    assert "仅用于模拟观察和复盘" in watch_text
+    assert "买入清单" not in balanced_text + watch_text
+    assert "交易指令" not in balanced_text + watch_text
 
 
 def test_cli_fixture_smoke_context_flag_for_real_runs(tmp_path: Path) -> None:

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] GenGe Cycle Bottom 新增 balanced_hybrid_60d_exit、收益保留率/回撤压降率、退出原因诊断和 balanced/watch-only 观察候选报告，用于退出策略收益/回撤平衡研究。
 - [修复] API 异步批量分析共享概念板块排行缓存，避免同批多股重复拉取全市场概念排行。
 - [文档] 补齐概念板块排行字段契约与通知报告行业/概念类型列展示说明。
 - [新功能] #1742 新增信号归因分析功能（dashboard.signal_attribution），解释推荐理由的构成（技术指标、新闻舆情、基本面、市场环境的贡献度，以及最强看多/看空信号）。支持默认通知报告和 Jinja2 模板渲染，包含中英文国际化标签。归一化函数在 _parse_response() 和 parse_dashboard_json() 中显式调用，确保有效非零贡献度归一化到 100，all-zero 保留为 0（表示无有效信号）。

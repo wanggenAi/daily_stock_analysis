@@ -2,7 +2,7 @@
 
 `src/strategies/genge_cycle_bottom` 是一个独立的 A 股历史研究模块，用来验证“低位 + 估值 + 财务安全 + 止跌确认 + 市场环境 + 行业周期”的候选股筛选逻辑。
 
-当前定位是研究验证版：只读取公开行情、估值和财务数据；不接入中信证券或任何券商账户；不读取资产、持仓、密码、验证码；不自动买入、卖出、撤单；报告里的区间、仓位和止损只用于复盘研究，不是交易指令。
+当前定位是研究验证版：只读取公开行情、估值和财务数据；不接入中信证券或任何券商账户；不读取资产、持仓、密码、验证码；不自动买入、卖出、撤单；报告里的区间、仓位和止损只用于复盘研究，不是实盘操作指令。
 
 ## 策略周期定位
 
@@ -99,9 +99,11 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `signal_details.csv`：逐条历史信号明细。
 - `baseline_comparison.json`：与 `config/genge_signal_quality_baseline.json` 中的 core/cycle/broad 基线做自动对比。
 - `parameter_experiment.json` / `parameter_experiment.md`：小型参数切片实验，包含 train、validation、recent_2y 三段。
-- `exit_policy_experiment.json` / `exit_policy_experiment.md`：退出策略参数实验，比较 conservative、balanced、loose、trend_extend。
+- `exit_policy_experiment.json` / `exit_policy_experiment.md`：退出策略参数实验，比较 `balanced_v1`、`balanced_v2_looser_trail`、`balanced_v3_strong_extend`、`balanced_v4_tighter_loss_looser_profit`、`balanced_v5_late_guardrail`，只重算退出条件，不改变入场样本。
 - `strict_observation_candidates.csv`：严格模拟观察候选，仅用于研究记录，不构成买入建议，不应自动交易。
 - `research_observation_candidates.csv`：研究观察候选，门槛比 strict 更宽，但仍不构成买入建议，不应自动交易。
+- `balanced_research_observation_candidates.csv`：按 `balanced_hybrid_60d_exit` 过滤后的研究观察候选，仅用于人工复核和模拟观察。
+- `watch_only_candidates.csv`：趋势、行业周期、估值陷阱或执行风险仍需继续跟踪的 watch-only 样本。
 - `paper_observation_candidates.csv`：兼容旧文件名，内容等同严格模拟观察候选。
 
 当前模块是研究回测，不生成实盘委托，也不打开券商页面。
@@ -130,10 +132,14 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `strategy_horizon_profile`：策略周期定位，固定写明主周期 `60d`、辅助周期 `20d/120d`、风险周期 `250d`。
 - `primary_horizon_metrics`：60 日主周期收益、胜率、跑赢基准、raw 回撤和 exit-adjusted 回撤。
 - `long_horizon_risk_metrics`：250 日 raw hold 风险压力测试和退出策略后的风险变化。
-- `exit_policy_summary`：raw_hold、fixed_60d_time_exit、trend_break_exit、profit_trailing_exit、hybrid_60d_repair_exit 的退出后收益、回撤、持有天数和退出原因分布。
+- `exit_policy_summary`：raw_hold、fixed_60d_time_exit、trend_break_exit、profit_trailing_exit、旧 `hybrid_60d_repair_exit`、新 `balanced_hybrid_60d_exit` 的退出后收益、回撤、持有天数和退出原因分布。
+- `balanced_exit_policy_summary`：`balanced_hybrid_60d_exit` 的单独摘要，包含 60 日收益保留率、250 日回撤压降率和综合效率分。
+- `exit_policy_by_trend_confirmation`：按 `WEAK/MEDIUM/STRONG` 趋势等级分层比较 raw hold、旧 hybrid 和 balanced hybrid。
+- `exit_reason_diagnostics`：统计 STOP_LOSS、TREND_BREAK_CONFIRMED、TAKE_PROFIT_TRAIL、NO_REPAIR_40D、TIME_EXIT_60D、TREND_EXTENSION_90D 的触发占比和收益贡献，用来判断哪类退出最伤收益。
 - `raw_stop_exit_comparison`：raw hold、原动态止损修正、退出策略三种口径的横向对比。
 - `exit_policy_experiment`：不同退出参数在 train、validation、recent_2y 和全样本的稳定性对比。
-- `strict_observation_candidate_count` / `research_observation_candidate_count`：严格候选和研究候选数量。两者都只是模拟观察和复盘入口。
+- `return_retention_rate_60d` / `drawdown_reduction_rate_250d` / `exit_efficiency_score`：新 balanced 退出策略的收益保留、回撤压降和综合平衡指标。
+- `strict_observation_candidate_count` / `research_observation_candidate_count` / `balanced_research_observation_candidate_count` / `watch_only_candidate_count`：严格候选、研究候选、balanced 研究候选和 watch-only 数量。它们都只是模拟观察和复盘入口。
 - `baseline_comparison`：与上一个真实研究基线的 total、60 日收益、60 日胜率、60 日跑赢基准比例、250 日低点回撤对比；样本数下降超过 50% 会标记 `overfit_warning`。
 - `quality_filter_summary`：飞刀风险、估值陷阱、财务缺失不确定和高执行风险统计。
 - `history_sufficiency_quality_summary`：历史样本充分性分布，辅助识别 3 年低位样本是否缺少 5 年/10 年长周期验证。
@@ -149,7 +155,11 @@ reports/genge_cycle_bottom_real/20260627_203000/
 
 `PASS_EXIT_POLICY_RESEARCH` 表示退出策略字段和退出策略实验已经可用，且没有出现“收益显著受损同时回撤也未改善”的失败组合。它仍只是研究通过。
 
-`PASS_60D_REPAIR_STRATEGY_VALIDATED` 表示 broad 样本不少于 8000，60 日主周期收益、胜率、跑赢基准和退出回撤改善达到当前研究门槛，并且没有样本骤降警告。它代表“60 日修复策略研究验证通过”，不代表可以自动交易。
+`FAIL_EXIT_BALANCE` 表示 balanced 退出策略没有做到收益/回撤平衡：例如收益继续被明显砍掉、回撤没有明显降低，或样本稳定性不满足要求。
+
+`PASS_BALANCED_EXIT_POLICY` 表示 broad 样本不少于 9000，样本数相对当前基线变化不低于 -10%，`balanced_hybrid_60d_exit` 的 60 日退出净收益、收益保留率、250 日回撤压降率、60 日胜率和 60 日跑赢基准达到最低研究门槛。它仍不是交易建议。
+
+`PASS_60D_REPAIR_STRATEGY_VALIDATED` 表示在 balanced 退出策略基础上，broad 的 60 日退出净收益、收益保留率、胜率、跑赢基准、recent_2y 稳定性和研究候选数量达到更高门槛。它代表“60 日修复策略研究验证通过”，不代表可以自动交易。
 
 `PASS_PAPER_TRADING_CANDIDATE` 表示在 `PASS_60D_REPAIR_STRATEGY_VALIDATED` 之上存在研究观察候选，可进入人工模拟观察清单。该枚举仍不是 `PASS_PAPER_TRADING_READY`，也不是交易建议。
 
@@ -181,7 +191,8 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - 财务缺失、行业周期缺失或行业周期证据质量为 `manual_template` 时，`CONFIRM_BUY` 会降级。
 - 新增 `value_trap_score`、`value_trap_flag` 和 `valuation_repair_signal`；低估值但财务缺失或恶化不默认安全。
 - 新增 `dynamic_stop_loss`、`stop_loss_distance_pct`、`invalidation_level` 和 `post_entry_adverse_excursion_pct`；回测同时保留原始收益、净收益和止损修正收益。
-- 新增退出策略回测：`fixed_60d_time_exit`、`trend_break_exit`、`profit_trailing_exit` 和 `hybrid_60d_repair_exit`。同一天多条件触发时按 STOP_LOSS、趋势破位/均线丢失、止盈回撤、时间退出的顺序执行。
+- 新增退出策略回测：`fixed_60d_time_exit`、`trend_break_exit`、`profit_trailing_exit`、旧 `hybrid_60d_repair_exit` 和新 `balanced_hybrid_60d_exit`。同一天多条件触发时按 STOP_LOSS、趋势破位/均线丢失、止盈回撤、时间退出的顺序执行。
+- `balanced_hybrid_60d_exit` 不覆盖旧 hybrid：默认观察 60 个交易日，STRONG 且 60 日仍在 MA20/MA60 上方时可延长到 90/120 日；20 日未修复不直接退出，40-55 日仍无修复才退出；MA20 破位要求连续确认，trailing stop 只用入场后的滚动最高收盘价。当前默认参数为 `balanced_v5_late_guardrail`，更接近“动态止损 + 60 日时间退出”，把 trend break 和 trailing 作为较晚保护阀。
 - 退出策略只使用信号之后的价格数据，`ma20_post/ma60_post` 只在 post-entry 窗口内计算，不参与信号生成。
 - 止损距离过宽时，`CONFIRM_BUY` 会降级为更保守信号。
 - 新增 `history_sufficiency_score/history_sufficiency_quality`、`long_term_position_risk_score`、`distance_to_ma250_pct` 和 `ma250_slope_pct`；长期位置风险高、历史样本不足且止损偏宽、MA250 深度弱势等样本会降级。

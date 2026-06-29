@@ -20,42 +20,82 @@ ABNORMAL_GAP_THRESHOLD = 7.0
 LOW_LIQUIDITY_AMOUNT = 5_000_000.0
 LOW_LIQUIDITY_VOLUME = 100_000.0
 EXIT_POLICY_NAME = "hybrid_60d_repair_exit"
+BALANCED_EXIT_POLICY_NAME = "balanced_hybrid_60d_exit"
 EXIT_POLICY_NAMES = (
     "fixed_60d_time_exit",
     "trend_break_exit",
     "profit_trailing_exit",
     EXIT_POLICY_NAME,
+    BALANCED_EXIT_POLICY_NAME,
 )
 EXIT_POLICY_EXPERIMENTS: Dict[str, Dict[str, Any]] = {
-    "conservative": {
-        "stop_loss_max_pct": 8.0,
-        "trail_start_pct": 6.0,
-        "trail_drawdown_pct": 4.0,
-        "max_holding_days": 60,
-        "allow_extension_if_strong_trend": False,
-    },
-    "balanced": {
-        "stop_loss_max_pct": 10.0,
-        "trail_start_pct": 8.0,
-        "trail_drawdown_pct": 5.0,
-        "max_holding_days": 60,
-        "allow_extension_if_strong_trend": False,
-    },
-    "loose": {
+    "balanced_v1": {
         "stop_loss_max_pct": 12.0,
+        "strong_stop_loss_max_pct": 14.0,
         "trail_start_pct": 10.0,
-        "trail_drawdown_pct": 6.0,
-        "max_holding_days": 90,
-        "allow_extension_if_strong_trend": False,
+        "trail_drawdown_pct": 7.0,
+        "profit_high_pct": 18.0,
+        "profit_high_trail_drawdown_pct": 5.5,
+        "trend_break_min_days": 20,
+        "no_repair_days": 40,
+        "extension_days": 90,
+        "strong_extension_days": 90,
+        "allow_extension_if_strong_trend": True,
     },
-    "trend_extend": {
+    "balanced_v2_looser_trail": {
+        "stop_loss_max_pct": 12.0,
+        "strong_stop_loss_max_pct": 14.0,
+        "trail_start_pct": 12.0,
+        "trail_drawdown_pct": 8.0,
+        "profit_high_pct": 20.0,
+        "profit_high_trail_drawdown_pct": 6.0,
+        "trend_break_min_days": 20,
+        "no_repair_days": 40,
+        "extension_days": 90,
+        "strong_extension_days": 90,
+        "allow_extension_if_strong_trend": True,
+    },
+    "balanced_v3_strong_extend": {
+        "stop_loss_max_pct": 12.0,
+        "strong_stop_loss_max_pct": 14.0,
+        "trail_start_pct": 11.0,
+        "trail_drawdown_pct": 7.0,
+        "profit_high_pct": 18.0,
+        "profit_high_trail_drawdown_pct": 5.5,
+        "trend_break_min_days": 20,
+        "no_repair_days": 40,
+        "extension_days": 90,
+        "strong_extension_days": 120,
+        "allow_extension_if_strong_trend": True,
+    },
+    "balanced_v4_tighter_loss_looser_profit": {
         "stop_loss_max_pct": 10.0,
-        "trail_start_pct": 8.0,
-        "trail_drawdown_pct": 6.0,
-        "max_holding_days": 120,
+        "strong_stop_loss_max_pct": 12.0,
+        "trail_start_pct": 13.0,
+        "trail_drawdown_pct": 8.0,
+        "profit_high_pct": 20.0,
+        "profit_high_trail_drawdown_pct": 6.0,
+        "trend_break_min_days": 20,
+        "no_repair_days": 40,
+        "extension_days": 90,
+        "strong_extension_days": 90,
+        "allow_extension_if_strong_trend": True,
+    },
+    "balanced_v5_late_guardrail": {
+        "stop_loss_max_pct": 12.0,
+        "strong_stop_loss_max_pct": 14.0,
+        "trail_start_pct": 18.0,
+        "trail_drawdown_pct": 12.0,
+        "profit_high_pct": 26.0,
+        "profit_high_trail_drawdown_pct": 8.0,
+        "trend_break_min_days": 45,
+        "no_repair_days": 55,
+        "extension_days": 90,
+        "strong_extension_days": 90,
         "allow_extension_if_strong_trend": True,
     },
 }
+DEFAULT_BALANCED_EXIT_PARAMS = dict(EXIT_POLICY_EXPERIMENTS["balanced_v5_late_guardrail"])
 
 
 @dataclass
@@ -227,11 +267,15 @@ def _policy_stop_loss(entry_price: float, stop_loss: Optional[float], params: Op
     return round(stop, 4) if stop is not None else None
 
 
+def _trend_rank(level: str) -> int:
+    return {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}.get(str(level or "NONE").upper(), 0)
+
+
 def _max_policy_holding_days(policy_name: str, horizon_days: int, params: Optional[Dict[str, Any]], signal: StrategySignal) -> int:
     configured = int((params or {}).get("max_holding_days") or 0)
     if policy_name == "profit_trailing_exit":
         default_max = 120 if str(getattr(signal, "trend_confirmation_level", "") or "") == "STRONG" else 60
-    elif policy_name in {"fixed_60d_time_exit", "trend_break_exit", EXIT_POLICY_NAME}:
+    elif policy_name in {"fixed_60d_time_exit", "trend_break_exit", EXIT_POLICY_NAME, BALANCED_EXIT_POLICY_NAME}:
         default_max = 60
     else:
         default_max = 60
@@ -239,6 +283,208 @@ def _max_policy_holding_days(policy_name: str, horizon_days: int, params: Option
     if (params or {}).get("allow_extension_if_strong_trend") and str(getattr(signal, "trend_confirmation_level", "") or "") == "STRONG":
         max_days = max(max_days, 120)
     return max(1, min(int(horizon_days), int(max_days)))
+
+
+def _balanced_policy_stop_loss(entry_price: float, stop_loss: Optional[float], signal: StrategySignal, params: Optional[Dict[str, Any]]) -> Optional[float]:
+    policy_params = dict(params or {})
+    if _trend_rank(str(getattr(signal, "trend_confirmation_level", "") or "NONE")) >= 3:
+        strong_min = finite_float(policy_params.get("strong_stop_loss_min_pct"))
+        if strong_min is not None and strong_min > 0:
+            policy_params["stop_loss_min_pct"] = strong_min
+        strong_max = finite_float(policy_params.get("strong_stop_loss_max_pct"))
+        if strong_max is not None and strong_max > 0:
+            policy_params["stop_loss_max_pct"] = strong_max
+
+    stop = _policy_stop_loss(entry_price, stop_loss, policy_params)
+    min_pct = finite_float(policy_params.get("stop_loss_min_pct"))
+    max_pct = finite_float(policy_params.get("stop_loss_max_pct"))
+    if min_pct is not None and max_pct is not None and min_pct > max_pct:
+        min_pct = max_pct
+    if min_pct is not None and min_pct > 0:
+        min_distance_stop = entry_price * (1.0 - min_pct / 100.0)
+        stop = min(stop, min_distance_stop) if stop is not None else min_distance_stop
+    if max_pct is not None and max_pct > 0:
+        max_loss_stop = entry_price * (1.0 - max_pct / 100.0)
+        stop = max(stop, max_loss_stop) if stop is not None else max_loss_stop
+    return round(stop, 4) if stop is not None else None
+
+
+def _volume_selloff(window: pd.DataFrame, idx: int, close: float, previous_close: Optional[float]) -> bool:
+    if idx <= 0 or previous_close is None or close >= previous_close or "volume" not in window.columns:
+        return False
+    current_volume = finite_float(window.iloc[idx].get("volume"))
+    if current_volume is None:
+        return False
+    start = max(0, idx - 5)
+    recent_volumes = [
+        finite_float(value)
+        for value in window.iloc[start:idx].get("volume", pd.Series(dtype=float)).tolist()
+    ]
+    recent_volumes = [value for value in recent_volumes if value is not None and value > 0]
+    if not recent_volumes:
+        return False
+    return current_volume >= (sum(recent_volumes) / len(recent_volumes)) * 1.35
+
+
+def _simulate_balanced_exit_policy(
+    *,
+    signal: StrategySignal,
+    entry_price: float,
+    future_rows: pd.DataFrame,
+    horizon_days: int,
+    stop_loss: Optional[float],
+    fee_bps: float,
+    slippage_bps: float,
+    params: Optional[Dict[str, Any]],
+) -> Dict[str, object]:
+    if entry_price <= 0:
+        return _exit_result(
+            policy_name=BALANCED_EXIT_POLICY_NAME,
+            horizon_days=horizon_days,
+            entry_price=entry_price,
+            exit_row=None,
+            reason="INSUFFICIENT_DATA",
+            raw_return=None,
+            net_return=None,
+            max_drawdown=None,
+            holding_days=None,
+        )
+
+    policy_params = params or {}
+    trend_level = str(getattr(signal, "trend_confirmation_level", "") or "NONE").upper()
+    trend_rank = _trend_rank(trend_level)
+    base_days = int(policy_params.get("base_holding_days") or 60)
+    extension_days = int(policy_params.get("extension_days") or 90)
+    strong_extension_days = int(policy_params.get("strong_extension_days") or extension_days)
+    desired_days = min(max(horizon_days, 1), strong_extension_days if trend_rank >= 3 else base_days)
+    if horizon_days <= base_days:
+        desired_days = horizon_days
+    if future_rows.empty or len(future_rows) < min(desired_days, horizon_days):
+        return _exit_result(
+            policy_name=BALANCED_EXIT_POLICY_NAME,
+            horizon_days=horizon_days,
+            entry_price=entry_price,
+            exit_row=None,
+            reason="INSUFFICIENT_DATA",
+            raw_return=None,
+            net_return=None,
+            max_drawdown=None,
+            holding_days=None,
+        )
+
+    window = future_rows.head(min(desired_days, horizon_days, len(future_rows))).copy().reset_index(drop=True)
+    if "ma20_post" not in window.columns or "ma60_post" not in window.columns:
+        close_series = pd.to_numeric(window.get("close"), errors="coerce")
+        window["ma20_post"] = close_series.rolling(20, min_periods=5).mean()
+        window["ma60_post"] = close_series.rolling(60, min_periods=20).mean()
+
+    stop = _balanced_policy_stop_loss(entry_price, stop_loss, signal, policy_params)
+    trail_start = float(policy_params.get("trail_start_pct") or 10.0)
+    trail_drawdown = float(policy_params.get("trail_drawdown_pct") or 7.0)
+    profit_high = float(policy_params.get("profit_high_pct") or 18.0)
+    profit_high_trail = float(policy_params.get("profit_high_trail_drawdown_pct") or 5.5)
+    trend_break_min_days = int(policy_params.get("trend_break_min_days") or 20)
+    no_repair_days = int(policy_params.get("no_repair_days") or 40)
+    extension_allowed = bool(policy_params.get("allow_extension_if_strong_trend", True))
+
+    highest_close = entry_price
+    highest_return = 0.0
+    consecutive_below_ma20 = 0
+    consecutive_below_ma60 = 0
+    exit_row: Optional[pd.Series] = None
+    exit_reason = "TIME_EXIT_60D"
+    holding_days = min(base_days, horizon_days, len(window))
+    extended_until: Optional[int] = None
+
+    for idx, row in window.iterrows():
+        day_number = int(idx) + 1
+        close = finite_float(row.get("close"))
+        low = finite_float(row.get("low")) or close
+        if close is None:
+            continue
+
+        highest_close = max(highest_close, close)
+        highest_return = max(highest_return, (highest_close - entry_price) / entry_price * 100.0)
+        current_return = (close - entry_price) / entry_price * 100.0
+        ma20 = finite_float(row.get("ma20_post"))
+        ma60 = finite_float(row.get("ma60_post"))
+        prev_ma20 = finite_float(window.iloc[idx - 1].get("ma20_post")) if idx > 0 else None
+        prev_close = finite_float(window.iloc[idx - 1].get("close")) if idx > 0 else None
+        below_ma20 = ma20 is not None and close < ma20
+        below_ma60 = ma60 is not None and close < ma60
+        consecutive_below_ma20 = consecutive_below_ma20 + 1 if below_ma20 else 0
+        consecutive_below_ma60 = consecutive_below_ma60 + 1 if below_ma60 else 0
+        ma20_turns_down = bool(ma20 is not None and prev_ma20 is not None and ma20 < prev_ma20)
+        heavy_selloff = _volume_selloff(window, idx, close, prev_close)
+        material_trend_loss = current_return <= -1.0
+
+        reason = None
+        if stop is not None and low is not None and low <= stop:
+            row = row.copy()
+            row["close"] = stop
+            reason = "STOP_LOSS"
+        elif material_trend_loss and day_number >= trend_break_min_days and (
+            consecutive_below_ma20 >= 3
+            or (consecutive_below_ma20 >= 2 and ma20_turns_down)
+            or (below_ma60 and (consecutive_below_ma60 >= 2 or heavy_selloff))
+        ):
+            reason = "TREND_BREAK_CONFIRMED"
+
+        if reason is None and highest_return >= trail_start:
+            active_trail = profit_high_trail if highest_return >= profit_high else trail_drawdown
+            if highest_close > 0 and (close - highest_close) / highest_close * 100.0 <= -active_trail:
+                reason = "TAKE_PROFIT_TRAIL"
+
+        if reason is None and day_number >= no_repair_days:
+            weak_or_none = trend_rank <= 1
+            no_repair = current_return <= -0.2 and highest_return < 5.0
+            if no_repair and (weak_or_none or below_ma20):
+                reason = "NO_REPAIR_40D"
+
+        if reason is None and day_number >= base_days:
+            above_ma20 = ma20 is not None and close >= ma20
+            above_ma60 = ma60 is not None and close >= ma60
+            can_extend = (
+                horizon_days > base_days
+                and extension_allowed
+                and trend_rank >= 3
+                and above_ma20
+                and above_ma60
+            )
+            if can_extend and extended_until is None:
+                extended_until = min(strong_extension_days, horizon_days, len(window))
+                if day_number < extended_until:
+                    continue
+            if extended_until is not None and day_number >= extended_until:
+                reason = "TREND_EXTENSION_90D"
+            elif extended_until is None:
+                reason = "TIME_EXIT_60D"
+
+        if reason is not None:
+            exit_row = row
+            exit_reason = reason
+            holding_days = day_number
+            break
+
+    if exit_row is None:
+        exit_row = window.iloc[-1]
+        holding_days = len(window)
+        exit_reason = "TREND_EXTENSION_90D" if extended_until is not None else "TIME_EXIT_60D"
+
+    exit_price = finite_float(exit_row.get("close"))
+    raw_return = round((exit_price - entry_price) / entry_price * 100.0, 4) if exit_price is not None else None
+    max_drawdown = max_drawdown_from_values(entry_price, window.head(holding_days)["low"]) if holding_days else None
+    return _exit_result(
+        policy_name=BALANCED_EXIT_POLICY_NAME,
+        horizon_days=horizon_days,
+        entry_price=entry_price,
+        exit_row=exit_row,
+        reason=exit_reason,
+        raw_return=raw_return,
+        net_return=net_return_from_raw(raw_return, fee_bps, slippage_bps),
+        max_drawdown=max_drawdown,
+        holding_days=holding_days,
+    )
 
 
 def _exit_result(
@@ -280,6 +526,18 @@ def simulate_exit_policy(
     params: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, object]:
     """Simulate a post-entry exit policy without feeding future data into the signal."""
+
+    if policy_name == BALANCED_EXIT_POLICY_NAME:
+        return _simulate_balanced_exit_policy(
+            signal=signal,
+            entry_price=entry_price,
+            future_rows=future_rows,
+            horizon_days=horizon_days,
+            stop_loss=stop_loss,
+            fee_bps=fee_bps,
+            slippage_bps=slippage_bps,
+            params=params or DEFAULT_BALANCED_EXIT_PARAMS,
+        )
 
     if entry_price <= 0:
         return _exit_result(
@@ -469,6 +727,7 @@ def evaluate_signal_forward(
 
     adverse_excursions: list[float] = []
     result["exit_policy_name"] = EXIT_POLICY_NAME
+    result["balanced_exit_policy_name"] = BALANCED_EXIT_POLICY_NAME
     exit_future_rows = future.sort_values("date").copy() if entry_row is not None else pd.DataFrame()
     if not exit_future_rows.empty:
         close_series = pd.to_numeric(exit_future_rows.get("close"), errors="coerce")
@@ -512,18 +771,36 @@ def evaluate_signal_forward(
         else:
             result[f"hit_stop_loss_{days}d"] = None
         if entry_price is None:
-            empty_exit = _exit_result(
-                policy_name=EXIT_POLICY_NAME,
-                horizon_days=days,
-                entry_price=0.0,
-                exit_row=None,
-                reason="INSUFFICIENT_DATA",
-                raw_return=None,
-                net_return=None,
-                max_drawdown=None,
-                holding_days=None,
-            )
-            result.update(_strip_policy_prefix(empty_exit, EXIT_POLICY_NAME))
+            for policy_name in EXIT_POLICY_NAMES:
+                empty_exit = _exit_result(
+                    policy_name=policy_name,
+                    horizon_days=days,
+                    entry_price=0.0,
+                    exit_row=None,
+                    reason="INSUFFICIENT_DATA",
+                    raw_return=None,
+                    net_return=None,
+                    max_drawdown=None,
+                    holding_days=None,
+                )
+                result.update(empty_exit)
+                if policy_name == EXIT_POLICY_NAME:
+                    result.update(_strip_policy_prefix(empty_exit, EXIT_POLICY_NAME))
+            for experiment_name in EXIT_POLICY_EXPERIMENTS:
+                empty_exit = _exit_result(
+                    policy_name=BALANCED_EXIT_POLICY_NAME,
+                    horizon_days=days,
+                    entry_price=0.0,
+                    exit_row=None,
+                    reason="INSUFFICIENT_DATA",
+                    raw_return=None,
+                    net_return=None,
+                    max_drawdown=None,
+                    holding_days=None,
+                )
+                stripped = _strip_policy_prefix(empty_exit, BALANCED_EXIT_POLICY_NAME)
+                for key, value in stripped.items():
+                    result[f"exit_policy_experiment_{experiment_name}_{key}"] = value
             continue
 
         hybrid_result = simulate_exit_policy(
@@ -560,12 +837,12 @@ def evaluate_signal_forward(
                 future_rows=exit_future_rows,
                 horizon_days=days,
                 stop_loss=effective_stop,
-                policy_name=EXIT_POLICY_NAME,
+                policy_name=BALANCED_EXIT_POLICY_NAME,
                 fee_bps=fee_bps,
                 slippage_bps=slippage_bps,
                 params=params,
             )
-            stripped = _strip_policy_prefix(experiment_result, EXIT_POLICY_NAME)
+            stripped = _strip_policy_prefix(experiment_result, BALANCED_EXIT_POLICY_NAME)
             for key, value in stripped.items():
                 result[f"exit_policy_experiment_{experiment_name}_{key}"] = value
     result["post_entry_adverse_excursion_pct"] = min(adverse_excursions) if adverse_excursions else None

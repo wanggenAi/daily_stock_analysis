@@ -8,6 +8,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
+from .backtest import BALANCED_EXIT_POLICY_NAME, EVAL_WINDOWS, EXIT_POLICY_EXPERIMENTS, EXIT_POLICY_NAME
+
 
 SIGNAL_DETAIL_COLUMNS = [
     "code",
@@ -151,6 +153,38 @@ SIGNAL_DETAIL_COLUMNS = [
 ]
 
 
+def _append_unique_columns(columns: List[str], extra_columns: List[str]) -> None:
+    seen = set(columns)
+    for column in extra_columns:
+        if column not in seen:
+            columns.append(column)
+            seen.add(column)
+
+
+_BALANCED_DETAIL_COLUMNS: List[str] = ["balanced_exit_policy_name"]
+for _days in EVAL_WINDOWS:
+    for _metric in (
+        "exit_date",
+        "exit_reason",
+        "exit_price",
+        "exit_adjusted_raw_return",
+        "exit_adjusted_net_return",
+        "exit_adjusted_max_drawdown",
+        "exit_holding_days",
+    ):
+        _BALANCED_DETAIL_COLUMNS.append(f"{BALANCED_EXIT_POLICY_NAME}_{_metric}_{_days}d")
+for _experiment in EXIT_POLICY_EXPERIMENTS:
+    for _days in EVAL_WINDOWS:
+        for _metric in (
+            "exit_reason",
+            "exit_adjusted_net_return",
+            "exit_adjusted_max_drawdown",
+            "exit_holding_days",
+        ):
+            _BALANCED_DETAIL_COLUMNS.append(f"exit_policy_experiment_{_experiment}_{_metric}_{_days}d")
+_append_unique_columns(SIGNAL_DETAIL_COLUMNS, _BALANCED_DETAIL_COLUMNS)
+
+
 def _run_dir(output_dir: str | Path) -> Path:
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     path = Path(output_dir) / timestamp
@@ -171,6 +205,14 @@ def _format_value(value: Any) -> str:
     if value is None:
         return "无可用数据"
     return str(value)
+
+
+def _number(value: Any) -> float | None:
+    try:
+        result = float(value)
+    except (TypeError, ValueError):
+        return None
+    return None if result != result else result
 
 
 def _top_group_lines(title: str, grouped: Dict[str, Any], limit: int = 8) -> List[str]:
@@ -303,7 +345,12 @@ def _quality_lines(summary: Dict[str, Any]) -> List[str]:
 def _exit_policy_lines(summary: Dict[str, Any]) -> List[str]:
     exit_summary = summary.get("exit_policy_summary") or {}
     comparison = summary.get("raw_stop_exit_comparison") or {}
-    hybrid = exit_summary.get("hybrid_60d_repair_exit") or {}
+    hybrid = exit_summary.get(EXIT_POLICY_NAME) or {}
+    balanced = exit_summary.get(BALANCED_EXIT_POLICY_NAME) or {}
+    raw_hold = exit_summary.get("raw_hold") or {}
+    diagnostics = summary.get("exit_reason_diagnostics") or {}
+    worst_reason = diagnostics.get("worst_return_reason") or "无可用数据"
+    reason_metrics = (diagnostics.get("by_reason") or {}).get(worst_reason) or {}
     lines = [
         "## 60 日修复策略与退出机制",
         "",
@@ -311,8 +358,9 @@ def _exit_policy_lines(summary: Dict[str, Any]) -> List[str]:
         "- strategy_secondary_horizon = 20d/120d",
         "- strategy_risk_horizon = 250d",
         "- 250 日 raw hold 是“如果死拿”的风险压力测试；exit_adjusted 250 日是按退出策略模拟后的风险。本策略不默认持有到 250 日。",
-        f"- hybrid_60d_repair_exit 的 60 日退出净收益：{_format_pct(hybrid.get('avg_exit_adjusted_net_return_60d'))}；60 日退出最大不利波动：{_format_pct(hybrid.get('avg_exit_adjusted_max_drawdown_60d'))}。",
-        f"- raw_hold_250d_low_drawdown：{_format_pct(summary.get('raw_hold_250d_low_drawdown'))}；exit_adjusted_250d_max_drawdown：{_format_pct(summary.get('exit_adjusted_250d_max_drawdown'))}；回撤降低比例：{_format_pct(summary.get('exit_policy_drawdown_reduction_pct'))}。",
+        f"- raw_hold 60 日净收益：{_format_pct(raw_hold.get('avg_exit_adjusted_net_return_60d'))}；250 日低点回撤：{_format_pct(raw_hold.get('avg_exit_adjusted_max_drawdown_250d'))}。",
+        f"- {EXIT_POLICY_NAME} 60 日退出净收益：{_format_pct(hybrid.get('avg_exit_adjusted_net_return_60d'))}；250 日退出回撤：{_format_pct(hybrid.get('avg_exit_adjusted_max_drawdown_250d'))}；回撤降低比例：{_format_pct(hybrid.get('drawdown_reduction_rate_250d'))}。",
+        f"- {BALANCED_EXIT_POLICY_NAME} 60 日退出净收益：{_format_pct(balanced.get('avg_exit_adjusted_net_return_60d'))}；收益保留率：{_format_pct(balanced.get('return_retention_rate_60d'))}；250 日退出回撤：{_format_pct(balanced.get('avg_exit_adjusted_max_drawdown_250d'))}；回撤降低比例：{_format_pct(balanced.get('drawdown_reduction_rate_250d'))}；综合效率分：{_format_value(balanced.get('exit_efficiency_score'))}。",
         "",
         "### Raw Hold / Stop / Exit 对比",
         "",
@@ -327,7 +375,6 @@ def _exit_policy_lines(summary: Dict[str, Any]) -> List[str]:
             f"exit 回撤 {_format_pct(item.get('exit_policy_avg_max_drawdown'))}。"
         )
     lines.extend(["", "### Exit Policy 对比", ""])
-    best_stability = None
     best_drawdown = None
     worst_return_impact = None
     for name, metrics in exit_summary.items():
@@ -338,7 +385,9 @@ def _exit_policy_lines(summary: Dict[str, Any]) -> List[str]:
             f"60日胜率 {_format_pct(metrics.get('win_rate_exit_adjusted_60d'))}，"
             f"60日跑赢基准 {_format_pct(metrics.get('outperform_benchmark_exit_adjusted_60d'))}，"
             f"250日退出回撤 {_format_pct(metrics.get('avg_exit_adjusted_max_drawdown_250d'))}，"
-            f"平均持有 {metrics.get('avg_holding_days', '无可用数据')} 天。"
+            f"平均持有 {metrics.get('avg_holding_days', '无可用数据')} 天，"
+            f"收益保留 {_format_pct(metrics.get('return_retention_rate_60d'))}，"
+            f"回撤降低 {_format_pct(metrics.get('drawdown_reduction_rate_250d'))}。"
         )
         dd_reduction = metrics.get("exit_policy_drawdown_reduction_pct")
         return_impact = metrics.get("exit_policy_return_impact_pct")
@@ -346,15 +395,14 @@ def _exit_policy_lines(summary: Dict[str, Any]) -> List[str]:
             best_drawdown = (name, dd_reduction)
         if worst_return_impact is None or (return_impact is not None and return_impact < (worst_return_impact[1] if worst_return_impact else 999)):
             worst_return_impact = (name, return_impact)
-        if best_stability is None and name == "hybrid_60d_repair_exit":
-            best_stability = name
     lines.extend(
         [
             "",
-            f"- 哪个 exit policy 最稳定：当前优先解释 hybrid_60d_repair_exit，因为它把 60 日修复、20 日无修复退出、趋势破位和止盈回撤放在同一框架内。",
+            f"- 哪个 exit policy 最稳定：优先看 {BALANCED_EXIT_POLICY_NAME} 的 validation/recent_2y、收益保留率和 250 日回撤降低率；旧 {EXIT_POLICY_NAME} 保留为风险压缩对照。",
             f"- 哪个 exit policy 降低回撤最多：{best_drawdown[0] if best_drawdown else '无可用数据'}（{_format_pct(best_drawdown[1] if best_drawdown else None)}）。",
             f"- 哪个 exit policy 对收益伤害最大：{worst_return_impact[0] if worst_return_impact else '无可用数据'}（{_format_pct(worst_return_impact[1] if worst_return_impact else None)}）。",
-            f"- 60d 修复策略是否成立：{'需要结合 broad 真实运行指标判断；若 60 日净收益为正、胜率与跑赢基准达到门槛且退出回撤下降，才可提高到 60 日修复策略验证。'}",
+            f"- balanced 退出原因中最拖累收益的是：{worst_reason}，该原因 60 日退出平均净收益 {_format_pct(reason_metrics.get('avg_exit_adjusted_net_return_60d'))}；下一步：{diagnostics.get('next_step', '无可用数据')}",
+            f"- 60d 修复策略是否成立：需要结合 broad 真实运行指标判断；balanced 若能保留 60 日收益并明显降低 250 日 raw hold 风险，才可提高到平衡退出策略验证。",
             f"- 是否应该把主周期定义为 60d：是，当前报告将 60d 作为主观察周期，120d 只作延伸观察，250d 只作风险压力测试。",
             f"- 当前是否可以进入模拟观察候选：严格候选 {summary.get('strict_observation_candidate_count', 0)}，研究候选 {summary.get('research_observation_candidate_count', 0)}；仍需人工复核公开数据。",
             "- 为什么仍然不是交易建议：本系统不接券商、不读取账户、不自动下单，所有输出只用于模拟观察和复盘。",
@@ -449,7 +497,10 @@ def write_exit_policy_experiment(summary: Dict[str, Any], json_path: Path, markd
                 f"60日退出净收益 {_format_pct(metrics.get('avg_exit_adjusted_net_return_60d'))}，"
                 f"60日退出胜率 {_format_pct(metrics.get('win_rate_exit_adjusted_60d'))}，"
                 f"60日跑赢基准 {_format_pct(metrics.get('outperform_benchmark_exit_adjusted_60d'))}，"
-                f"250日退出回撤 {_format_pct(metrics.get('avg_exit_adjusted_max_drawdown_250d'))}"
+                f"250日退出回撤 {_format_pct(metrics.get('avg_exit_adjusted_max_drawdown_250d'))}，"
+                f"收益保留 {_format_pct(metrics.get('return_retention_rate_60d'))}，"
+                f"回撤降低 {_format_pct(metrics.get('drawdown_reduction_rate_250d'))}，"
+                f"效率分 {_format_value(metrics.get('exit_efficiency_score'))}"
             )
         lines.append(
             f"- 过拟合警告：{'是' if result.get('overfit_warning') else '否'}；"
@@ -547,6 +598,58 @@ def _research_observation_candidate_rows(rows: List[Dict[str, Any]]) -> List[Dic
     return candidates
 
 
+def _balanced_research_observation_candidate_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    trend_rank = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+
+    def number(value: Any) -> float | None:
+        try:
+            result = float(value)
+        except (TypeError, ValueError):
+            return None
+        return None if result != result else result
+
+    candidates = []
+    for row in rows:
+        signal_type = str(row.get("signal_type") or "")
+        trend_level = str(row.get("trend_confirmation_level") or "NONE")
+        stop_distance = number(row.get("stop_loss_distance_pct"))
+        execution_risk = number(row.get("execution_risk_score")) or 0.0
+        value_trap_score = number(row.get("value_trap_score")) or 0.0
+        long_term_risk = number(row.get("long_term_position_risk_score")) or 0.0
+        entry_quality = str(row.get("executable_entry_quality") or "")
+        balanced_return = number(row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"))
+        if (
+            signal_type in {"CONFIRM_BUY", "LEFT_SMALL_BUY", "ADD"}
+            and trend_rank.get(trend_level, 0) >= trend_rank["MEDIUM"]
+            and value_trap_score < 70
+            and long_term_risk < 60
+            and stop_distance is not None
+            and stop_distance <= 15
+            and execution_risk < 60
+            and entry_quality not in {"risky", "unavailable"}
+            and (balanced_return is None or balanced_return > -8)
+        ):
+            candidates.append(row)
+    return candidates
+
+
+def _watch_only_candidate_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    candidates = []
+    for row in rows:
+        trend_level = str(row.get("trend_confirmation_level") or "NONE")
+        signal_type = str(row.get("signal_type") or "")
+        value_trap_score = _number(row.get("value_trap_score")) or 0.0
+        execution_risk = _number(row.get("execution_risk_score")) or 0.0
+        if signal_type in {"LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"} and (
+            trend_level in {"NONE", "WEAK"}
+            or value_trap_score >= 60
+            or execution_risk >= 45
+            or str(row.get("industry_cycle_quality") or "") in {"missing", "manual_template"}
+        ):
+            candidates.append(row)
+    return candidates
+
+
 def _candidate_columns() -> List[str]:
     return [
         "code",
@@ -558,6 +661,7 @@ def _candidate_columns() -> List[str]:
         "trend_confirmation_level",
         "value_trap_score",
         "exit_policy_name",
+        "balanced_exit_policy_name",
         "exit_reason_expected",
         "stop_loss",
         "stop_loss_distance_pct",
@@ -582,7 +686,8 @@ def _candidate_output_row(row: Dict[str, Any]) -> Dict[str, Any]:
         "trend_confirmation_level": row.get("trend_confirmation_level"),
         "value_trap_score": row.get("value_trap_score"),
         "exit_policy_name": row.get("exit_policy_name") or "hybrid_60d_repair_exit",
-        "exit_reason_expected": row.get("exit_reason_60d") or "60d repair observation",
+        "balanced_exit_policy_name": row.get("balanced_exit_policy_name") or BALANCED_EXIT_POLICY_NAME,
+        "exit_reason_expected": row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d") or row.get("exit_reason_60d") or "60d repair observation",
         "stop_loss": row.get("stop_loss"),
         "stop_loss_distance_pct": row.get("stop_loss_distance_pct"),
         "take_profit_reference": row.get("take_profit"),
@@ -599,7 +704,7 @@ def _write_candidate_file(candidates: List[Dict[str, Any]], path: Path) -> None:
     columns = _candidate_columns()
     candidates = sorted(
         candidates,
-        key=lambda row: (float(row.get("total_score") or 0), -float(row.get("value_trap_score") or 0)),
+        key=lambda row: (_number(row.get("total_score")) or 0.0, -(_number(row.get("value_trap_score")) or 0.0)),
         reverse=True,
     )[:50]
     with path.open("w", newline="", encoding="utf-8") as file:
@@ -622,6 +727,14 @@ def write_strict_observation_candidates(rows: List[Dict[str, Any]], path: Path) 
 
 def write_research_observation_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
     _write_candidate_file(_research_observation_candidate_rows(rows), path)
+
+
+def write_balanced_research_observation_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
+    _write_candidate_file(_balanced_research_observation_candidate_rows(rows), path)
+
+
+def write_watch_only_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
+    _write_candidate_file(_watch_only_candidate_rows(rows), path)
 
 
 def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
@@ -694,9 +807,10 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
             f"- 数据缺失字段：{json.dumps(missing_fields, ensure_ascii=False) if missing_fields else '无'}",
             f"- 数据缺口统计：{json.dumps(diagnostics.get('data_gap_counts', {}), ensure_ascii=False)}",
             f"- 覆盖率统计：{json.dumps(coverage or {'valuation_coverage_rate': summary.get('valuation_coverage_rate'), 'financial_coverage_rate': summary.get('financial_coverage_rate')}, ensure_ascii=False)}",
-        f"- PE/PB/财务缺失数量：{summary.get('pe_missing_count', 0)} / {summary.get('pb_missing_count', 0)} / {summary.get('financial_missing_count', 0)}",
-        f"- 严格观察候选数 / 研究观察候选数：{summary.get('strict_observation_candidate_count', 0)} / {summary.get('research_observation_candidate_count', 0)}",
-        f"- 可执行性诊断：{json.dumps(execution, ensure_ascii=False)}",
+            f"- PE/PB/财务缺失数量：{summary.get('pe_missing_count', 0)} / {summary.get('pb_missing_count', 0)} / {summary.get('financial_missing_count', 0)}",
+            f"- 严格观察候选数 / 研究观察候选数：{summary.get('strict_observation_candidate_count', 0)} / {summary.get('research_observation_candidate_count', 0)}",
+            f"- balanced 研究观察候选数 / watch-only 候选数：{summary.get('balanced_research_observation_candidate_count', 0)} / {summary.get('watch_only_candidate_count', 0)}",
+            f"- 可执行性诊断：{json.dumps(execution, ensure_ascii=False)}",
             f"- 公开数据 provider_errors：{json.dumps(diagnostics.get('provider_errors', {}), ensure_ascii=False)}",
             f"- 研究验收枚举：{gate.get('verdict', '无可用数据')}；原因：{json.dumps(gate.get('reasons', []), ensure_ascii=False)}",
             "",
@@ -722,5 +836,7 @@ def write_reports(rows: List[Dict[str, Any]], summary: Dict[str, Any], output_di
     write_paper_observation_candidates(rows, path / "paper_observation_candidates.csv")
     write_strict_observation_candidates(rows, path / "strict_observation_candidates.csv")
     write_research_observation_candidates(rows, path / "research_observation_candidates.csv")
+    write_balanced_research_observation_candidates(rows, path / "balanced_research_observation_candidates.csv")
+    write_watch_only_candidates(rows, path / "watch_only_candidates.csv")
     write_summary_markdown(summary, path / "summary.md")
     return path

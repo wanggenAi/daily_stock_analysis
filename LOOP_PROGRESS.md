@@ -65,3 +65,24 @@
 - cycle 指标：60 日 raw 净收益 3.8339、胜率 50.5414、跑赢基准 49.1934；250 日 raw hold 低点回撤 -31.0902；hybrid 60 日退出净收益 1.0512，250 日退出回撤 -4.5716，回撤降低 85.2957%，60 日收益影响 -2.7827。
 - broad 指标：60 日 raw 净收益 2.2924、胜率 46.8619、跑赢基准 46.5272；250 日 raw hold 低点回撤 -30.1289；hybrid 60 日退出净收益 0.1857，250 日退出回撤 -4.7574，回撤降低 84.2098%，60 日收益影响 -2.1067。
 - 结论：退出策略显著降低 250 日“死拿”风险，研究链路和输出文件通过，最终枚举为 `PASS_EXIT_POLICY_RESEARCH`。但 broad 的 60 日退出净收益被削弱，且 60 日胜率低于 52%、跑赢基准比例低于 50%，因此不能提升到 `PASS_60D_REPAIR_STRATEGY_VALIDATED`，也不能输出 `PASS_PAPER_TRADING_READY`。
+
+## Loop 5
+
+- 本轮目标：基于 commit `fa918e90` 之后的当前代码进入“退出策略收益/回撤平衡优化阶段”，新增 `balanced_hybrid_60d_exit`，在不改变入场样本、不接入券商、不自动交易的前提下，尽量保留 60 日修复收益并继续压低 250 日 raw hold 风险。
+- 修改的退出参数：保留旧 `hybrid_60d_repair_exit`，新增 `balanced_v1`、`balanced_v2_looser_trail`、`balanced_v3_strong_extend`、`balanced_v4_tighter_loss_looser_profit`、`balanced_v5_late_guardrail`；当前默认推荐 `balanced_v5_late_guardrail`，参数为 stop loss 上限 12%/STRONG 14%、trailing 18% 启动且 12% 回撤触发、浮盈 26% 后 8% 回撤触发、趋势破坏最早 45 日确认、无修复 55 日退出、STRONG 最长 90 日。
+- 修改文件：`src/strategies/genge_cycle_bottom/backtest.py`、`metrics.py`、`report.py`、`acceptance.py`、`tests/test_genge_cycle_bottom_backtest.py`、`tests/test_genge_cycle_bottom_report_cli.py`、`docs/genge_cycle_bottom_strategy.md`、`docs/CHANGELOG.md`、`LOOP_PROGRESS.md`、`LOOP_ACCEPTANCE_REPORT.md`。
+- pytest 结果：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py -q`，59 passed，1 warning。
+- fixture smoke 结果：`reports/genge_cycle_bottom_ci_smoke/20260629_195104`，`total_signals=1451`，`data_failures=0`。
+- real core result：`reports/genge_exit_balance_core/20260629_185341`，耗时 338.19 秒，`total_signals=1533`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=386`，`pb_missing_count=0`，`financial_missing_count=0`，`risk_review_count=5`，`paper_trading_gate=PASS_EXIT_POLICY_RESEARCH`。
+- real cycle result：`reports/genge_exit_balance_cycle/20260629_191109`，耗时 1027.08 秒，`total_signals=4573`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=798`，`pb_missing_count=0`，`financial_missing_count=0`，`risk_review_count=5`，`paper_trading_gate=PASS_EXIT_POLICY_RESEARCH`。
+- real broad result：`reports/genge_exit_balance_broad/20260629_194612`，耗时 2082.33 秒，`total_signals=9628`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=688`，`pb_missing_count=0`，`financial_missing_count=0`，`risk_review_count=5`，`paper_trading_gate=PASS_EXIT_POLICY_RESEARCH`。
+- raw_hold vs old_hybrid vs balanced_hybrid：core raw 60 日净收益 0.2042、旧 hybrid 0.5716、balanced 1.3564；cycle raw 3.8339、旧 hybrid 1.0512、balanced 2.8661；broad raw 2.3011、旧 hybrid 0.1889、balanced 1.0379。balanced 明显高于旧 hybrid，但 broad 尚未达到 1.2% 最低线。
+- 250 日回撤对比：core raw -31.5759、旧 hybrid -4.7488、balanced -8.0412；cycle raw -31.0975、旧 hybrid -4.5716、balanced -7.9873；broad raw -30.1780、旧 hybrid -4.7560、balanced -7.8005。balanced 放松后回撤高于旧 hybrid，但仍显著优于 raw hold。
+- return_retention_rate_60d：core 664.2507%，cycle 74.7568%，broad 45.1045%。broad 未达到 `PASS_BALANCED_EXIT_POLICY` 要求的 50%。
+- drawdown_reduction_rate_250d：core 74.5337%，cycle 74.3153%，broad 74.1517%，三组均高于 60%。
+- exit_efficiency_score：core 76.6562，cycle 62.7327，broad 53.0676。
+- exit_reason_diagnostics：broad STOP_LOSS 6427 条，占 66.7532%，60 日退出平均净收益 -5.1123；TIME_EXIT_60D 1271 条，占 13.2011%，平均 15.4912；TAKE_PROFIT_TRAIL 1145 条，占 11.8924%，平均 21.9441；TREND_BREAK_CONFIRMED 696 条，占 7.2289%，平均 -2.9406；INSUFFICIENT_DATA 85 条，占 0.8828%；NO_REPAIR_40D 4 条，占 0.0415%。
+- sample count change：相对当前基线 `724b8f9d`，core +0.0653%，cycle +0.0438%，broad -0.1763%，`overfit_warning=false`；相对附件中的 `fa918e90` 目标，broad 仍保持 9628 条，超过 9000 条最低线。
+- observation candidate count：core strict 0、research 694、balanced research 1031、watch-only 1533；cycle strict 0、research 1872、balanced research 3109、watch-only 4573；broad strict 0、research 4667、balanced research 6453、watch-only 9628。候选文件继续写明仅用于模拟观察和复盘，不构成买入建议，不应自动交易。
+- gate verdict：三组真实运行均为 `PASS_EXIT_POLICY_RESEARCH`。broad 未能达到 `PASS_BALANCED_EXIT_POLICY`，原因是 `balanced_exit_net_return_60d=1.0379% < 1.2%`、`return_retention_rate_60d=45.1045% < 50%`，且 balanced 60 日胜率 24.8664% 也低于 46% 门槛；不能输出 `PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
+- 下一步：继续围绕 STOP_LOSS 触发比例过高做收益保留优化，但不能直接取消止损；优先研究“低波动假跌破/信号质量分层止损/入场后前 10-20 日异常波动识别”，并继续保持不接券商、不自动交易、不读取账户。

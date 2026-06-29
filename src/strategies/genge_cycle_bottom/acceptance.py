@@ -11,9 +11,11 @@ FAIL_DATA_QUALITY = "FAIL_DATA_QUALITY"
 FAIL_LOOKAHEAD_RISK = "FAIL_LOOKAHEAD_RISK"
 FAIL_STRATEGY_EXPECTANCY = "FAIL_STRATEGY_EXPECTANCY"
 FAIL_EXIT_POLICY = "FAIL_EXIT_POLICY"
+FAIL_EXIT_BALANCE = "FAIL_EXIT_BALANCE"
 PASS_RESEARCH_ONLY = "PASS_RESEARCH_ONLY"
 PASS_REAL_DATA_RESEARCH = "PASS_REAL_DATA_RESEARCH"
 PASS_EXIT_POLICY_RESEARCH = "PASS_EXIT_POLICY_RESEARCH"
+PASS_BALANCED_EXIT_POLICY = "PASS_BALANCED_EXIT_POLICY"
 PASS_60D_REPAIR_STRATEGY_VALIDATED = "PASS_60D_REPAIR_STRATEGY_VALIDATED"
 PASS_PAPER_TRADING_CANDIDATE = "PASS_PAPER_TRADING_CANDIDATE"
 PASS_PAPER_TRADING_READY = "PASS_PAPER_TRADING_READY"
@@ -25,9 +27,11 @@ ACCEPTANCE_ENUMS = (
     FAIL_LOOKAHEAD_RISK,
     FAIL_STRATEGY_EXPECTANCY,
     FAIL_EXIT_POLICY,
+    FAIL_EXIT_BALANCE,
     PASS_RESEARCH_ONLY,
     PASS_REAL_DATA_RESEARCH,
     PASS_EXIT_POLICY_RESEARCH,
+    PASS_BALANCED_EXIT_POLICY,
     PASS_60D_REPAIR_STRATEGY_VALIDATED,
     PASS_PAPER_TRADING_CANDIDATE,
     PASS_PAPER_TRADING_READY,
@@ -114,13 +118,24 @@ def evaluate_paper_trading_gate(
     outperform_60d = _number(summary.get("outperform_benchmark_rate_60d"))
     drawdown_250d = _number(summary.get("avg_low_max_drawdown_250d", summary.get("avg_max_drawdown_250d")))
     exit_summary = (summary.get("exit_policy_summary") or {}).get("hybrid_60d_repair_exit") or {}
+    balanced_summary = (summary.get("exit_policy_summary") or {}).get("balanced_hybrid_60d_exit") or summary.get("balanced_exit_policy_summary") or {}
     exit_avg_60d = _number(exit_summary.get("avg_exit_adjusted_net_return_60d"))
     exit_dd_60d = _number(exit_summary.get("avg_exit_adjusted_max_drawdown_60d"))
     exit_dd_250d = _number(exit_summary.get("avg_exit_adjusted_max_drawdown_250d"))
     raw_dd_60d = _number(summary.get("avg_low_max_drawdown_60d"))
     exit_dd_reduction_250d = _number(exit_summary.get("exit_policy_drawdown_reduction_pct"))
     has_exit_policy = exit_avg_60d is not None and exit_dd_250d is not None
+    balanced_avg_60d = _number(balanced_summary.get("avg_exit_adjusted_net_return_60d"))
+    balanced_win_60d = _number(balanced_summary.get("win_rate_exit_adjusted_60d"))
+    balanced_outperform_60d = _number(balanced_summary.get("outperform_benchmark_exit_adjusted_60d"))
+    balanced_dd_250d = _number(balanced_summary.get("avg_exit_adjusted_max_drawdown_250d"))
+    balanced_retention_60d = _number(balanced_summary.get("return_retention_rate_60d"))
+    balanced_dd_reduction_250d = _number(balanced_summary.get("drawdown_reduction_rate_250d", balanced_summary.get("exit_policy_drawdown_reduction_pct")))
+    has_balanced_policy = balanced_avg_60d is not None and balanced_dd_250d is not None
     overfit_warning = bool((summary.get("baseline_comparison") or {}).get("overfit_warning"))
+    baseline = summary.get("baseline_comparison") or {}
+    baseline_group = str(baseline.get("baseline_group") or "")
+    sample_count_change_pct = _number(baseline.get("sample_count_change_pct"))
     research_candidate_count = int(summary.get("research_observation_candidate_count") or 0)
     recent = (summary.get("time_split_summary") or {}).get("recent_2y") or {}
     recent_avg_60d = _number(recent.get("avg_net_return_60d"))
@@ -177,6 +192,13 @@ def evaluate_paper_trading_gate(
             reasons.append("退出策略未降低 250 日死拿风险")
         if overfit_warning:
             reasons.append("样本骤降或 broad 样本低于 8000，暂不能提高到 60 日修复策略验证")
+    if has_balanced_policy:
+        if balanced_avg_60d is not None and balanced_avg_60d < 1.2 and baseline_group == "broad":
+            reasons.append("balanced 60 日退出净收益低于 1.2%")
+        if balanced_retention_60d is not None and balanced_retention_60d < 50 and baseline_group == "broad":
+            reasons.append("balanced 60 日收益保留率低于 50%")
+        if balanced_dd_reduction_250d is not None and balanced_dd_reduction_250d < 60 and baseline_group == "broad":
+            reasons.append("balanced 250 日回撤降低率低于 60%")
 
     if ci_passed is False and source_mode == "ci":
         verdict = FAIL_CI
@@ -228,8 +250,55 @@ def evaluate_paper_trading_gate(
             ):
                 verdict = PASS_60D_REPAIR_STRATEGY_VALIDATED
 
+    if source_mode == "real" and has_balanced_policy and total_signals >= 100 and verdict in {PASS_REAL_DATA_RESEARCH, PASS_EXIT_POLICY_RESEARCH, PASS_60D_REPAIR_STRATEGY_VALIDATED}:
+        balanced_harms_60d = (
+            balanced_avg_60d is not None
+            and avg_60d is not None
+            and balanced_avg_60d < avg_60d * 0.35
+            and balanced_dd_reduction_250d is not None
+            and balanced_dd_reduction_250d < 30
+        )
+        if balanced_harms_60d:
+            verdict = FAIL_EXIT_BALANCE
+        else:
+            verdict = PASS_EXIT_POLICY_RESEARCH
+            broad_sample_ok = baseline_group == "broad" and total_signals >= 9000
+            sample_stable = sample_count_change_pct is None or sample_count_change_pct >= -10
+            balanced_minimum_ok = (
+                broad_sample_ok
+                and sample_stable
+                and balanced_avg_60d is not None
+                and balanced_avg_60d >= 1.2
+                and balanced_retention_60d is not None
+                and balanced_retention_60d >= 50
+                and balanced_dd_reduction_250d is not None
+                and balanced_dd_reduction_250d >= 60
+                and balanced_win_60d is not None
+                and balanced_win_60d >= 46
+                and balanced_outperform_60d is not None
+                and balanced_outperform_60d >= 46
+            )
+            if balanced_minimum_ok:
+                verdict = PASS_BALANCED_EXIT_POLICY
+                stricter_recent_ok = not (
+                    recent_avg_60d is not None
+                    and recent_avg_60d < -2
+                    or recent_win_60d is not None
+                    and recent_win_60d < 45
+                )
+                if (
+                    balanced_avg_60d >= 1.5
+                    and balanced_retention_60d >= 65
+                    and balanced_win_60d >= 48
+                    and balanced_outperform_60d >= 47
+                    and stricter_recent_ok
+                    and research_candidate_count > 0
+                ):
+                    verdict = PASS_60D_REPAIR_STRATEGY_VALIDATED
+
     can_paper = (
-        ci_passed is True
+        verdict == PASS_60D_REPAIR_STRATEGY_VALIDATED
+        and ci_passed is True
         and fixture_smoke_passed is True
         and real_5y_passed
         and (real_10y_passed or real_10y_safely_degraded)
@@ -239,10 +308,17 @@ def evaluate_paper_trading_gate(
         and not severe_data_errors
         and not severe_provider_errors
         and total_signals >= 200
+        and research_candidate_count > 0
         and fundamental_coverage_ready
         and execution_risk_rate <= 20
         and avg_60d is not None
         and avg_60d > 0
+        and balanced_avg_60d is not None
+        and balanced_avg_60d >= 1.8
+        and balanced_retention_60d is not None
+        and balanced_retention_60d >= 70
+        and balanced_dd_reduction_250d is not None
+        and balanced_dd_reduction_250d >= 65
         and win_60d is not None
         and win_60d >= 52
         and outperform_60d is not None
@@ -261,12 +337,14 @@ def evaluate_paper_trading_gate(
         verdict == PASS_60D_REPAIR_STRATEGY_VALIDATED
         and research_candidate_count > 0
         and execution_risk_rate <= 20
-        and win_60d is not None
-        and win_60d >= 50
-        and outperform_60d is not None
-        and outperform_60d >= 47
-        and exit_dd_reduction_250d is not None
-        and exit_dd_reduction_250d >= 10
+        and balanced_win_60d is not None
+        and balanced_win_60d >= 50
+        and balanced_outperform_60d is not None
+        and balanced_outperform_60d >= 47
+        and balanced_dd_reduction_250d is not None
+        and balanced_dd_reduction_250d >= 60
+        and balanced_retention_60d is not None
+        and balanced_retention_60d >= 65
         and not (recent_avg_60d is not None and recent_avg_60d < -2)
     )
     if can_paper_candidate:

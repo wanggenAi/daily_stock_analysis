@@ -10,7 +10,7 @@ from statistics import mean, median
 from typing import Any, Dict, Iterable, List, Optional
 
 from .acceptance import evaluate_paper_trading_gate
-from .backtest import EVAL_WINDOWS, EXIT_POLICY_EXPERIMENTS, EXIT_POLICY_NAME, EXIT_POLICY_NAMES
+from .backtest import BALANCED_EXIT_POLICY_NAME, EVAL_WINDOWS, EXIT_POLICY_EXPERIMENTS, EXIT_POLICY_NAME, EXIT_POLICY_NAMES
 from .features import coerce_date
 
 
@@ -286,6 +286,16 @@ def _group_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         result[f"avg_stop_adjusted_net_return_{days}d"] = _avg(_numbers(rows, f"stop_adjusted_net_return_{days}d"))
         result[f"avg_exit_adjusted_net_return_{days}d"] = _avg(_numbers(rows, f"exit_adjusted_net_return_{days}d"))
         result[f"avg_exit_adjusted_max_drawdown_{days}d"] = _avg(_numbers(rows, f"exit_adjusted_max_drawdown_{days}d"))
+        result[f"balanced_exit_adjusted_net_return_{days}d"] = _avg(
+            _numbers(rows, f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_{days}d")
+        )
+        result[f"balanced_exit_adjusted_max_drawdown_{days}d"] = _avg(
+            _numbers(rows, f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_max_drawdown_{days}d")
+        )
+        result[f"balanced_win_rate_exit_adjusted_{days}d"] = _win_rate(
+            rows,
+            f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_{days}d",
+        )
         result[f"outperform_benchmark_rate_{days}d"] = _ratio_true(rows, f"outperform_benchmark_{days}d")
     result["median_net_return_60d"] = _median(_numbers(rows, "net_return_60d"))
     result["low_max_drawdown_250d"] = _avg(_numbers(rows, "low_max_drawdown_250d"))
@@ -399,6 +409,45 @@ def _is_research_observation_candidate(row: Dict[str, Any]) -> bool:
     )
 
 
+def _is_balanced_research_observation_candidate(row: Dict[str, Any]) -> bool:
+    trend_rank = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+    signal_type = str(row.get("signal_type") or "")
+    trend_level = str(row.get("trend_confirmation_level") or "NONE")
+    stop_distance = _finite_number(row.get("stop_loss_distance_pct"))
+    execution_risk = _finite_number(row.get("execution_risk_score")) or 0.0
+    value_trap_score = _finite_number(row.get("value_trap_score")) or 0.0
+    entry_quality = str(row.get("executable_entry_quality") or "")
+    long_term_risk = _finite_number(row.get("long_term_position_risk_score")) or 0.0
+    balanced_return = _finite_number(row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"))
+    return bool(
+        signal_type in {"CONFIRM_BUY", "LEFT_SMALL_BUY", "ADD"}
+        and trend_rank.get(trend_level, 0) >= trend_rank["MEDIUM"]
+        and value_trap_score < 70
+        and long_term_risk < 60
+        and stop_distance is not None
+        and stop_distance <= 15
+        and execution_risk < 60
+        and entry_quality not in {"risky", "unavailable"}
+        and (balanced_return is None or balanced_return > -8)
+    )
+
+
+def _is_watch_only_candidate(row: Dict[str, Any]) -> bool:
+    trend_level = str(row.get("trend_confirmation_level") or "NONE")
+    signal_type = str(row.get("signal_type") or "")
+    value_trap_score = _finite_number(row.get("value_trap_score")) or 0.0
+    execution_risk = _finite_number(row.get("execution_risk_score")) or 0.0
+    return bool(
+        signal_type in {"LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"}
+        and (
+            trend_level in {"NONE", "WEAK"}
+            or value_trap_score >= 60
+            or execution_risk >= 45
+            or str(row.get("industry_cycle_quality") or "") in {"missing", "manual_template"}
+        )
+    )
+
+
 def _stop_policy_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     result: Dict[str, Any] = {}
     for days in EVAL_WINDOWS:
@@ -443,6 +492,38 @@ def _drawdown_reduction_pct(raw_drawdown: Optional[float], adjusted_drawdown: Op
     if raw is None or adjusted is None or raw == 0:
         return None
     return round((abs(raw) - abs(adjusted)) / abs(raw) * 100.0, 4)
+
+
+def _return_retention_pct(raw_return: Optional[float], adjusted_return: Optional[float]) -> Optional[float]:
+    raw = _finite_number(raw_return)
+    adjusted = _finite_number(adjusted_return)
+    if raw is None or adjusted is None:
+        return None
+    if raw <= 0:
+        return 100.0 if adjusted >= raw else 0.0
+    return round(adjusted / raw * 100.0, 4)
+
+
+def _exit_efficiency_score(
+    *,
+    return_retention: Optional[float],
+    drawdown_reduction: Optional[float],
+    win_rate: Optional[float],
+    outperform_rate: Optional[float],
+    sample_stability: Optional[float],
+) -> Optional[float]:
+    values = [return_retention, drawdown_reduction, win_rate, outperform_rate]
+    if any(_finite_number(value) is None for value in values):
+        return None
+    stability = 100.0 if sample_stability is None else max(0.0, min(100.0, 100.0 + sample_stability))
+    score = (
+        max(0.0, min(120.0, float(return_retention))) * 0.30
+        + max(0.0, min(100.0, float(drawdown_reduction))) * 0.30
+        + max(0.0, min(100.0, float(win_rate))) * 0.20
+        + max(0.0, min(100.0, float(outperform_rate))) * 0.15
+        + stability * 0.05
+    )
+    return round(score, 4)
 
 
 def _policy_field(policy_name: str, metric: str, days: int) -> str:
@@ -508,10 +589,19 @@ def _exit_policy_one_summary(rows: List[Dict[str, Any]], policy_name: str) -> Di
     result["raw_hold_250d_low_drawdown"] = raw_dd_250
     result["exit_adjusted_250d_max_drawdown"] = exit_dd_250
     result["exit_policy_drawdown_reduction_pct"] = _drawdown_reduction_pct(raw_dd_250, exit_dd_250)
+    result["drawdown_reduction_rate_250d"] = result["exit_policy_drawdown_reduction_pct"]
+    result["return_retention_rate_60d"] = _return_retention_pct(raw_net_60, exit_net_60)
     result["exit_policy_return_impact_pct"] = (
         round(exit_net_60 - raw_net_60, 4)
         if exit_net_60 is not None and raw_net_60 is not None
         else None
+    )
+    result["exit_efficiency_score"] = _exit_efficiency_score(
+        return_retention=result.get("return_retention_rate_60d"),
+        drawdown_reduction=result.get("drawdown_reduction_rate_250d"),
+        win_rate=result.get("win_rate_exit_adjusted_60d"),
+        outperform_rate=result.get("outperform_benchmark_exit_adjusted_60d"),
+        sample_stability=0.0,
     )
     return result
 
@@ -523,6 +613,75 @@ def _exit_policy_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     for policy_name in EXIT_POLICY_NAMES:
         result[policy_name] = _exit_policy_one_summary(rows, policy_name)
     return result
+
+
+def _exit_policy_by_trend_confirmation(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        level = str(row.get("trend_confirmation_level") or "NONE")
+        grouped.setdefault(level, []).append(row)
+    result: Dict[str, Any] = {}
+    for level in ("NONE", "WEAK", "MEDIUM", "STRONG"):
+        group_rows = grouped.get(level, [])
+        result[level] = {
+            "total_signals": len(group_rows),
+            "raw_hold": _exit_policy_one_summary(group_rows, "raw_hold"),
+            EXIT_POLICY_NAME: _exit_policy_one_summary(group_rows, EXIT_POLICY_NAME),
+            BALANCED_EXIT_POLICY_NAME: _exit_policy_one_summary(group_rows, BALANCED_EXIT_POLICY_NAME),
+        }
+    for level, group_rows in sorted(grouped.items()):
+        if level in result:
+            continue
+        result[level] = {
+            "total_signals": len(group_rows),
+            "raw_hold": _exit_policy_one_summary(group_rows, "raw_hold"),
+            EXIT_POLICY_NAME: _exit_policy_one_summary(group_rows, EXIT_POLICY_NAME),
+            BALANCED_EXIT_POLICY_NAME: _exit_policy_one_summary(group_rows, BALANCED_EXIT_POLICY_NAME),
+        }
+    return result
+
+
+def _exit_reason_diagnostics(rows: List[Dict[str, Any]], policy_name: str = BALANCED_EXIT_POLICY_NAME) -> Dict[str, Any]:
+    reason_field = _policy_field(policy_name, "reason", 60)
+    net_field = _policy_field(policy_name, "net_return", 60)
+    grouped: Dict[str, List[Dict[str, Any]]] = {}
+    for row in rows:
+        reason = str(row.get(reason_field) or "").strip()
+        if not reason:
+            continue
+        grouped.setdefault(reason, []).append(row)
+    total_with_reason = sum(len(group_rows) for group_rows in grouped.values())
+    by_reason: Dict[str, Any] = {}
+    for reason, group_rows in sorted(grouped.items(), key=lambda item: len(item[1]), reverse=True):
+        by_reason[reason] = {
+            "count": len(group_rows),
+            "ratio": round(len(group_rows) / total_with_reason * 100.0, 4) if total_with_reason else None,
+            "avg_exit_adjusted_net_return_60d": _avg(_numbers(group_rows, net_field)),
+            "win_rate_exit_adjusted_60d": _win_rate(group_rows, net_field),
+            "avg_raw_net_return_60d": _avg(_numbers(group_rows, "net_return_60d")),
+        }
+    worst_reason = None
+    worst_avg = None
+    for reason, metrics in by_reason.items():
+        avg_return = _finite_number(metrics.get("avg_exit_adjusted_net_return_60d"))
+        if avg_return is None:
+            continue
+        if worst_avg is None or avg_return < worst_avg:
+            worst_reason = reason
+            worst_avg = avg_return
+    stop_ratio = _finite_number((by_reason.get("STOP_LOSS") or {}).get("ratio")) or 0.0
+    trend_ratio = _finite_number((by_reason.get("TREND_BREAK_CONFIRMED") or {}).get("ratio")) or 0.0
+    if stop_ratio >= 30 or trend_ratio >= 35:
+        next_step = "止损或趋势破位触发偏多，下一轮优先放宽确认条件并复核是否过早退出。"
+    else:
+        next_step = "先观察 validation 与 recent_2y 稳定性，再小幅调整 trailing 或强趋势延长参数。"
+    return {
+        "policy_name": policy_name,
+        "by_reason": by_reason,
+        "worst_return_reason": worst_reason,
+        "worst_return_avg_net_return_60d": worst_avg,
+        "next_step": next_step,
+    }
 
 
 def _raw_stop_exit_comparison(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -583,11 +742,11 @@ def _baseline_group_from_diagnostics(diagnostics: Dict[str, Any]) -> Optional[st
     output_dir = str(diagnostics.get("output_dir") or "").lower()
     requested = [str(item) for item in diagnostics.get("requested_codes") or []]
     benchmark = str(diagnostics.get("benchmark") or "")
-    if "signal_quality_broad" in output_dir or "exit_policy_broad" in output_dir or benchmark == "000905" or len(requested) >= 90:
+    if "signal_quality_broad" in output_dir or "exit_policy_broad" in output_dir or "exit_balance_broad" in output_dir or benchmark == "000905" or len(requested) >= 90:
         return "broad"
-    if "signal_quality_cycle" in output_dir or "exit_policy_cycle" in output_dir or len(requested) >= 50:
+    if "signal_quality_cycle" in output_dir or "exit_policy_cycle" in output_dir or "exit_balance_cycle" in output_dir or len(requested) >= 50:
         return "cycle"
-    if "signal_quality_core" in output_dir or "exit_policy_core" in output_dir or requested:
+    if "signal_quality_core" in output_dir or "exit_policy_core" in output_dir or "exit_balance_core" in output_dir or requested:
         return "core"
     return None
 
@@ -813,6 +972,18 @@ def _exit_experiment_group_metrics(rows: List[Dict[str, Any]], experiment_name: 
         result.get("raw_hold_250d_low_drawdown"),
         result.get("exit_adjusted_250d_max_drawdown"),
     )
+    result["drawdown_reduction_rate_250d"] = result["exit_policy_drawdown_reduction_pct"]
+    result["return_retention_rate_60d"] = _return_retention_pct(
+        _avg(_numbers(rows, "net_return_60d")),
+        result.get("avg_exit_adjusted_net_return_60d"),
+    )
+    result["exit_efficiency_score"] = _exit_efficiency_score(
+        return_retention=result.get("return_retention_rate_60d"),
+        drawdown_reduction=result.get("drawdown_reduction_rate_250d"),
+        win_rate=result.get("win_rate_exit_adjusted_60d"),
+        outperform_rate=result.get("outperform_benchmark_exit_adjusted_60d"),
+        sample_stability=0.0,
+    )
     return result
 
 
@@ -859,10 +1030,16 @@ def _exit_policy_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any
                 and recent_avg + 2 < validation_avg
             ),
             "recent_2y_unstable": bool(
-                recent_avg is not None
-                and validation_avg is not None
-                and recent_avg < -2
-                or (recent_dd is not None and validation_dd is not None and recent_dd < validation_dd - 5)
+                (
+                    recent_avg is not None
+                    and validation_avg is not None
+                    and recent_avg < -2
+                )
+                or (
+                    recent_dd is not None
+                    and validation_dd is not None
+                    and recent_dd < validation_dd - 5
+                )
             ),
         }
 
@@ -875,14 +1052,26 @@ def _exit_policy_experiment_summary(rows: List[Dict[str, Any]]) -> Dict[str, Any
         and (result.get("recent_2y") or {}).get("avg_exit_adjusted_net_return_60d") is not None
         and ((result["validation"]["avg_exit_adjusted_net_return_60d"] or 0) > 0)
         and ((result["recent_2y"]["avg_exit_adjusted_net_return_60d"] or 0) > -2)
+        and ((result["validation"].get("return_retention_rate_60d") or 0) >= 40)
+        and ((result["validation"].get("drawdown_reduction_rate_250d") or 0) > 0)
     ]
-    recommended = stable_candidates[0] if stable_candidates else None
+    recommended = (
+        max(
+            stable_candidates,
+            key=lambda name: (
+                (experiments[name].get("validation") or {}).get("exit_efficiency_score") or -999,
+                (experiments[name].get("recent_2y") or {}).get("exit_efficiency_score") or -999,
+            ),
+        )
+        if stable_candidates
+        else None
+    )
     return {
-        "policy": EXIT_POLICY_NAME,
+        "policy": BALANCED_EXIT_POLICY_NAME,
         "experiments": experiments,
         "recommended": recommended,
         "recommendation_reason": (
-            "validation 与 recent_2y 没有明显失稳，优先选取最早满足条件的参数组。"
+            "按 validation 与 recent_2y 的稳定性、收益保留和回撤降低综合排序，未使用全样本作为推荐依据。"
             if recommended
             else "未发现 validation 与 recent_2y 同时稳定改善的参数组，不推荐参数切换。"
         ),
@@ -1073,6 +1262,8 @@ def compute_summary(
     execution_risk_distribution = _execution_risk_score_distribution(rows)
     paper_observation_candidate_count = sum(1 for row in rows if _is_observation_candidate(row))
     research_observation_candidate_count = sum(1 for row in rows if _is_research_observation_candidate(row))
+    balanced_research_observation_candidate_count = sum(1 for row in rows if _is_balanced_research_observation_candidate(row))
+    watch_only_candidate_count = sum(1 for row in rows if _is_watch_only_candidate(row))
     diagnostics = {
         "missing_fields": _split_flags(rows, "missing_fields"),
         "risk_flags": _split_flags(rows, "risk_flags"),
@@ -1089,8 +1280,22 @@ def compute_summary(
     parameter_experiment = _parameter_experiment_summary(rows)
     exit_policy_summary = _exit_policy_summary(rows)
     exit_policy_experiment = _exit_policy_experiment_summary(rows)
+    balanced_exit_summary = exit_policy_summary.get(BALANCED_EXIT_POLICY_NAME) or {}
+    old_hybrid_exit_summary = exit_policy_summary.get(EXIT_POLICY_NAME) or {}
+    sample_count_change_pct = (baseline_comparison.get("sample_count_change_pct") if baseline_comparison else None)
+    if balanced_exit_summary:
+        balanced_exit_summary["exit_efficiency_score"] = _exit_efficiency_score(
+            return_retention=balanced_exit_summary.get("return_retention_rate_60d"),
+            drawdown_reduction=balanced_exit_summary.get("drawdown_reduction_rate_250d"),
+            win_rate=balanced_exit_summary.get("win_rate_exit_adjusted_60d"),
+            outperform_rate=balanced_exit_summary.get("outperform_benchmark_exit_adjusted_60d"),
+            sample_stability=sample_count_change_pct,
+        )
+        exit_policy_summary[BALANCED_EXIT_POLICY_NAME] = balanced_exit_summary
     raw_stop_exit_comparison = _raw_stop_exit_comparison(rows)
     horizon_profile = _strategy_horizon_profile(summary, rows)
+    exit_policy_by_trend = _exit_policy_by_trend_confirmation(rows)
+    exit_reason_diagnostics = _exit_reason_diagnostics(rows, BALANCED_EXIT_POLICY_NAME)
 
     summary.update(
         {
@@ -1153,6 +1358,17 @@ def compute_summary(
             "stop_policy_summary": stop_policy,
             "exit_policy_summary": exit_policy_summary,
             "exit_policy_experiment": exit_policy_experiment,
+            "balanced_exit_policy_summary": balanced_exit_summary,
+            "old_hybrid_exit_policy_summary": old_hybrid_exit_summary,
+            "balanced_exit_net_return_60d": balanced_exit_summary.get("avg_exit_adjusted_net_return_60d"),
+            "balanced_exit_drawdown_250d": balanced_exit_summary.get("avg_exit_adjusted_max_drawdown_250d"),
+            "balanced_exit_win_rate_60d": balanced_exit_summary.get("win_rate_exit_adjusted_60d"),
+            "balanced_exit_outperform_rate_60d": balanced_exit_summary.get("outperform_benchmark_exit_adjusted_60d"),
+            "return_retention_rate_60d": balanced_exit_summary.get("return_retention_rate_60d"),
+            "drawdown_reduction_rate_250d": balanced_exit_summary.get("drawdown_reduction_rate_250d"),
+            "exit_efficiency_score": balanced_exit_summary.get("exit_efficiency_score"),
+            "exit_policy_by_trend_confirmation": exit_policy_by_trend,
+            "exit_reason_diagnostics": exit_reason_diagnostics,
             "raw_stop_exit_comparison": raw_stop_exit_comparison,
             "strategy_horizon_profile": horizon_profile,
             "strategy_primary_horizon": "60d",
@@ -1178,6 +1394,8 @@ def compute_summary(
             "paper_observation_candidate_count": paper_observation_candidate_count,
             "strict_observation_candidate_count": paper_observation_candidate_count,
             "research_observation_candidate_count": research_observation_candidate_count,
+            "balanced_research_observation_candidate_count": balanced_research_observation_candidate_count,
+            "watch_only_candidate_count": watch_only_candidate_count,
             "parameter_experiment": parameter_experiment,
             "baseline_comparison": baseline_comparison,
             "best": best_signals,
