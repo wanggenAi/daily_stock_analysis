@@ -283,6 +283,62 @@ def test_balanced_stop_loss_can_use_configured_minimum_distance() -> None:
     assert result[f"{BALANCED_EXIT_POLICY_NAME}_exit_holding_days_60d"] == 60
 
 
+def test_balanced_close_confirmed_stop_ignores_intraday_reclaim_but_keeps_hard_stop() -> None:
+    signal = _signal_with_trend("2024-01-01", "MEDIUM", stop_loss=94.0)
+    closes = [100.0] * 90
+    price_df = _price_frame(closes)
+    future_rows = price_df.iloc[1:].reset_index(drop=True)
+    future_rows.loc[1, "low"] = 93.5
+    future_rows.loc[1, "close"] = 96.0
+
+    reclaimed = simulate_exit_policy(
+        signal=signal,
+        entry_price=100.0,
+        future_rows=future_rows,
+        horizon_days=60,
+        stop_loss=94.0,
+        policy_name=BALANCED_EXIT_POLICY_NAME,
+        params={
+            "stop_loss_min_pct": 6.0,
+            "stop_loss_max_pct": 12.0,
+            "stop_confirm_by_close": True,
+            "stop_hard_intraday_pct": 2.5,
+            "trail_start_pct": 18.0,
+            "trail_drawdown_pct": 12.0,
+            "profit_high_pct": 26.0,
+            "profit_high_trail_drawdown_pct": 8.0,
+            "trend_break_min_days": 45,
+            "no_repair_days": 55,
+        },
+    )
+
+    hard_stop_rows = future_rows.copy()
+    hard_stop_rows.loc[1, "low"] = 91.0
+    hard = simulate_exit_policy(
+        signal=signal,
+        entry_price=100.0,
+        future_rows=hard_stop_rows,
+        horizon_days=60,
+        stop_loss=94.0,
+        policy_name=BALANCED_EXIT_POLICY_NAME,
+        params={
+            "stop_loss_min_pct": 6.0,
+            "stop_loss_max_pct": 12.0,
+            "stop_confirm_by_close": True,
+            "stop_hard_intraday_pct": 2.5,
+            "trail_start_pct": 18.0,
+            "trail_drawdown_pct": 12.0,
+            "profit_high_pct": 26.0,
+            "profit_high_trail_drawdown_pct": 8.0,
+            "trend_break_min_days": 45,
+            "no_repair_days": 55,
+        },
+    )
+
+    assert reclaimed[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] == "TIME_EXIT_60D"
+    assert hard[f"{BALANCED_EXIT_POLICY_NAME}_exit_reason_60d"] == "STOP_LOSS"
+
+
 def test_balanced_profit_trailing_does_not_peek_at_future_high() -> None:
     signal = _signal_with_trend("2024-01-01", "STRONG")
     closes = [100.0, 100.0] + [108.0, 115.0, 126.0, 115.0] + [150.0] * 120
