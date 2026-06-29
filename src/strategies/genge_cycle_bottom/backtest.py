@@ -111,8 +111,27 @@ EXIT_POLICY_EXPERIMENTS: Dict[str, Dict[str, Any]] = {
         "strong_extension_days": 90,
         "allow_extension_if_strong_trend": True,
     },
+    "balanced_v7_double_close_stop": {
+        "stop_loss_min_pct": 6.0,
+        "strong_stop_loss_min_pct": 8.0,
+        "stop_loss_max_pct": 12.0,
+        "strong_stop_loss_max_pct": 14.0,
+        "stop_confirm_by_close": True,
+        "stop_confirm_close_days": 2,
+        "stop_confirm_min_trend_rank": 2,
+        "stop_hard_intraday_pct": 2.5,
+        "trail_start_pct": 18.0,
+        "trail_drawdown_pct": 12.0,
+        "profit_high_pct": 26.0,
+        "profit_high_trail_drawdown_pct": 8.0,
+        "trend_break_min_days": 45,
+        "no_repair_days": 55,
+        "extension_days": 90,
+        "strong_extension_days": 90,
+        "allow_extension_if_strong_trend": True,
+    },
 }
-DEFAULT_BALANCED_EXIT_PARAMS = dict(EXIT_POLICY_EXPERIMENTS["balanced_v6_close_confirmed_stop"])
+DEFAULT_BALANCED_EXIT_PARAMS = dict(EXIT_POLICY_EXPERIMENTS["balanced_v7_double_close_stop"])
 
 
 @dataclass
@@ -405,11 +424,14 @@ def _simulate_balanced_exit_policy(
     extension_allowed = bool(policy_params.get("allow_extension_if_strong_trend", True))
     stop_confirm_by_close = bool(policy_params.get("stop_confirm_by_close", False))
     hard_intraday_pct = finite_float(policy_params.get("stop_hard_intraday_pct"))
+    stop_confirm_close_days = max(1, int(policy_params.get("stop_confirm_close_days") or 1))
+    stop_confirm_min_trend_rank = int(policy_params.get("stop_confirm_min_trend_rank") or 99)
 
     highest_close = entry_price
     highest_return = 0.0
     consecutive_below_ma20 = 0
     consecutive_below_ma60 = 0
+    consecutive_close_below_stop = 0
     exit_row: Optional[pd.Series] = None
     exit_reason = "TIME_EXIT_60D"
     holding_days = min(base_days, horizon_days, len(window))
@@ -441,12 +463,24 @@ def _simulate_balanced_exit_policy(
         if stop is not None and low is not None and low <= stop:
             hard_stop = stop * (1.0 - hard_intraday_pct / 100.0) if hard_intraday_pct is not None and hard_intraday_pct > 0 else None
             if stop_confirm_by_close and close > stop and not (hard_stop is not None and low <= hard_stop):
+                consecutive_close_below_stop = 0
+                reason = None
+            elif (
+                stop_confirm_by_close
+                and trend_rank >= stop_confirm_min_trend_rank
+                and not (hard_stop is not None and low <= hard_stop)
+                and close <= stop
+                and consecutive_close_below_stop + 1 < stop_confirm_close_days
+            ):
+                consecutive_close_below_stop += 1
                 reason = None
             else:
                 row = row.copy()
                 row["close"] = stop
                 reason = "STOP_LOSS"
-        elif material_trend_loss and day_number >= trend_break_min_days and (
+        elif stop is not None and close > stop:
+            consecutive_close_below_stop = 0
+        if reason is None and material_trend_loss and day_number >= trend_break_min_days and (
             consecutive_below_ma20 >= 3
             or (consecutive_below_ma20 >= 2 and ma20_turns_down)
             or (below_ma60 and (consecutive_below_ma60 >= 2 or heavy_selloff))

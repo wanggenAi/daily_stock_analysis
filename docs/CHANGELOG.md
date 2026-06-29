@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] GenGe Cycle Bottom balanced 退出策略新增 `balanced_v7_double_close_stop`，对 MEDIUM/STRONG 趋势样本要求连续两日收盘低于止损位才确认止损，同时保留 WEAK 趋势即时止损和 hard intraday stop，用于继续平衡 60 日收益保留和 250 日回撤压降。
 - [改进] GenGe Cycle Bottom balanced 退出策略新增 `balanced_v6_close_confirmed_stop`，对盘中轻微跌破但收盘收回的止损做收盘确认，同时保留 hard intraday stop，用于继续平衡 60 日收益保留和 250 日回撤压降。
 - [改进] GenGe Cycle Bottom 新增 balanced_hybrid_60d_exit、收益保留率/回撤压降率、退出原因诊断和 balanced/watch-only 观察候选报告，用于退出策略收益/回撤平衡研究。
 - [修复] API 异步批量分析共享概念板块排行缓存，避免同批多股重复拉取全市场概念排行。

@@ -99,7 +99,7 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `signal_details.csv`：逐条历史信号明细。
 - `baseline_comparison.json`：与 `config/genge_signal_quality_baseline.json` 中的 core/cycle/broad 基线做自动对比。
 - `parameter_experiment.json` / `parameter_experiment.md`：小型参数切片实验，包含 train、validation、recent_2y 三段。
-- `exit_policy_experiment.json` / `exit_policy_experiment.md`：退出策略参数实验，比较 `balanced_v1`、`balanced_v2_looser_trail`、`balanced_v3_strong_extend`、`balanced_v4_tighter_loss_looser_profit`、`balanced_v5_late_guardrail`，只重算退出条件，不改变入场样本。
+- `exit_policy_experiment.json` / `exit_policy_experiment.md`：退出策略参数实验，比较 `balanced_v1`、`balanced_v2_looser_trail`、`balanced_v3_strong_extend`、`balanced_v4_tighter_loss_looser_profit`、`balanced_v5_late_guardrail`、`balanced_v6_close_confirmed_stop`、`balanced_v7_double_close_stop`，只重算退出条件，不改变入场样本。
 - `strict_observation_candidates.csv`：严格模拟观察候选，仅用于研究记录，不构成买入建议，不应自动交易。
 - `research_observation_candidates.csv`：研究观察候选，门槛比 strict 更宽，但仍不构成买入建议，不应自动交易。
 - `balanced_research_observation_candidates.csv`：按 `balanced_hybrid_60d_exit` 过滤后的研究观察候选，仅用于人工复核和模拟观察。
@@ -192,7 +192,7 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - 新增 `value_trap_score`、`value_trap_flag` 和 `valuation_repair_signal`；低估值但财务缺失或恶化不默认安全。
 - 新增 `dynamic_stop_loss`、`stop_loss_distance_pct`、`invalidation_level` 和 `post_entry_adverse_excursion_pct`；回测同时保留原始收益、净收益和止损修正收益。
 - 新增退出策略回测：`fixed_60d_time_exit`、`trend_break_exit`、`profit_trailing_exit`、旧 `hybrid_60d_repair_exit` 和新 `balanced_hybrid_60d_exit`。同一天多条件触发时按 STOP_LOSS、趋势破位/均线丢失、止盈回撤、时间退出的顺序执行。
-- `balanced_hybrid_60d_exit` 不覆盖旧 hybrid：默认观察 60 个交易日，STRONG 且 60 日仍在 MA20/MA60 上方时可延长到 90/120 日；20 日未修复不直接退出，40-55 日仍无修复才退出；MA20 破位要求连续确认，trailing stop 只用入场后的滚动最高收盘价。当前默认参数为 `balanced_v6_close_confirmed_stop`，在不取消硬止损的前提下，对盘中轻微触碰止损但收盘收回的样本做收盘确认，减少假跌破造成的过早退出。
+- `balanced_hybrid_60d_exit` 不覆盖旧 hybrid：默认观察 60 个交易日，STRONG 且 60 日仍在 MA20/MA60 上方时可延长到 90/120 日；20 日未修复不直接退出，40-55 日仍无修复才退出；MA20 破位要求连续确认，trailing stop 只用入场后的滚动最高收盘价。当前默认参数为 `balanced_v7_double_close_stop`，在不取消硬止损的前提下，对 `MEDIUM/STRONG` 趋势样本要求连续 2 个交易日收盘低于止损位才确认止损；`WEAK` 趋势样本和盘中深跌超过 hard intraday buffer 的样本仍立即按 STOP_LOSS 处理。
 - 退出策略只使用信号之后的价格数据，`ma20_post/ma60_post` 只在 post-entry 窗口内计算，不参与信号生成。
 - 止损距离过宽时，`CONFIRM_BUY` 会降级为更保守信号。
 - 新增 `history_sufficiency_score/history_sufficiency_quality`、`long_term_position_risk_score`、`distance_to_ma250_pct` 和 `ma250_slope_pct`；长期位置风险高、历史样本不足且止损偏宽、MA250 深度弱势等样本会降级。
@@ -261,6 +261,22 @@ broad 关键结论：`balanced_hybrid_60d_exit` 的 60 日净收益从上一轮 
 与旧 hybrid 对比：旧 `hybrid_60d_repair_exit` 的 broad 60 日退出净收益为 0.1889，250 日退出回撤为 -4.7560；新的 balanced 版本保留了更多 60 日修复收益，但接受更宽的退出回撤，以换取收益/回撤平衡。
 
 最终研究枚举仍为 `PASS_EXIT_POLICY_RESEARCH`。原因是 broad 已达到 `total_signals>=9000`、`balanced_exit_net_return_60d>=1.2%`、收益保留率 `>=50%`、250 日回撤压降 `>=60%` 和跑赢基准 `>=46%`，但 balanced 退出后的 60 日胜率为 33.7001%，低于 `PASS_BALANCED_EXIT_POLICY` 的胜率门槛，因此不能升级为 `PASS_BALANCED_EXIT_POLICY`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
+
+## 2026-06-30 Double Close Stop 退出策略复核
+
+本轮继续基于 commit `fa918e90` 的退出策略收益/回撤平衡目标，新增 `balanced_v7_double_close_stop` 参数组，并将其作为 `balanced_hybrid_60d_exit` 默认参数。修改点只在退出策略：`MEDIUM/STRONG` 趋势样本需要连续 2 个交易日收盘低于止损位才确认 `STOP_LOSS`；`WEAK` 趋势样本不延迟止损，盘中深跌超过 hard intraday buffer 时也不延迟。入场信号、股票池、数据源和候选筛选不做放宽。
+
+- pytest：62 passed，1 warning。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260630_001300`，耗时 159.13 秒，`total_signals=1451`，`data_failures=0`。
+- real core：`reports/genge_exit_balance_core/20260630_001811`，耗时 305.26 秒，`total_signals=1535`，`data_failures=0`，`pe_missing_count=386`，`pb_missing_count=0`，`financial_missing_count=0`。
+- real cycle：`reports/genge_exit_balance_cycle/20260630_003658`，耗时 1120.30 秒，`total_signals=4576`，`data_failures=0`，`pe_missing_count=797`，`pb_missing_count=0`，`financial_missing_count=0`。
+- real broad：`reports/genge_exit_balance_broad/20260630_011457`，耗时 2256.74 秒，`total_signals=9627`，`data_failures=0`，`pe_missing_count=687`，`pb_missing_count=0`，`financial_missing_count=0`。
+
+broad 关键结论：`balanced_hybrid_60d_exit` 的 60 日净收益从 v6 的 1.7329 提升到 1.9083，收益保留率从 75.3075% 提升到 82.7752%；250 日退出回撤从 -9.7182 放宽到 -10.0461，仍比 raw hold 的 -30.1730 明显更低，回撤压降率为 66.7050%。样本数保持 9627，未通过压缩样本达成指标。
+
+与旧 hybrid 对比：旧 `hybrid_60d_repair_exit` 的 broad 60 日退出净收益为 0.1900，250 日退出回撤为 -4.7556；新的 v7 balanced 版本保留了更多 60 日修复收益，但接受更宽的退出回撤，以换取收益/回撤平衡。
+
+最终研究枚举仍为 `PASS_EXIT_POLICY_RESEARCH`。原因是 broad 达到 `total_signals>=9000`、`balanced_exit_net_return_60d>=1.2%`、收益保留率 `>=50%`、250 日回撤压降 `>=60%` 和跑赢基准 `>=46%`，但 balanced 退出后的 60 日胜率为 34.3115%，低于 `PASS_BALANCED_EXIT_POLICY` 的胜率门槛，因此不能升级为 `PASS_BALANCED_EXIT_POLICY`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
 
 ## 已知限制
 
