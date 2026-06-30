@@ -143,6 +143,7 @@ class BacktestInput:
     financial_df: Optional[pd.DataFrame] = None
     industry: Optional[str] = None
     extra_risk_flags: Optional[List[str]] = None
+    company_evidence_df: Optional[pd.DataFrame] = None
 
 
 def max_drawdown_from_values(start_price: float, values: Iterable[float]) -> Optional[float]:
@@ -922,6 +923,9 @@ class WalkForwardBacktester:
         fee_bps: float = 5.0,
         slippage_bps: float = 10.0,
         industry_cycle_df: Optional[pd.DataFrame] = None,
+        industry_evidence_df: Optional[pd.DataFrame] = None,
+        company_evidence_df: Optional[pd.DataFrame] = None,
+        industry_evidence_schema: Optional[Dict[str, Any]] = None,
     ) -> List[Dict[str, object]]:
         start = coerce_date(start_date)
         end = coerce_date(end_date)
@@ -950,6 +954,9 @@ class WalkForwardBacktester:
                     financial_df=item.financial_df,
                     benchmark_df=benchmark_df,
                     industry_cycle_df=industry_cycle_df,
+                    industry_evidence_df=industry_evidence_df,
+                    company_evidence_df=item.company_evidence_df if item.company_evidence_df is not None else company_evidence_df,
+                    industry_evidence_schema=industry_evidence_schema,
                     industry=item.industry,
                     extra_risk_flags=item.extra_risk_flags,
                 )

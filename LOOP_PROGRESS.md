@@ -129,3 +129,21 @@
 - observation candidate count：core strict 0、research 695、balanced research 859、watch-only 1535；cycle strict 0、research 1877、balanced research 2621、watch-only 4576；broad strict 0、research 4672、balanced research 5212、watch-only 9627。候选文件继续写明仅用于模拟观察和复盘，不构成买入建议，不应自动交易。
 - gate verdict：三组真实运行均为 `PASS_EXIT_POLICY_RESEARCH`。broad 达到 `total_signals>=9000`、样本稳定、balanced 60 日净收益 >=1.2%、收益保留率 >=50%、250 日回撤压降 >=60%、balanced 60 日跑赢基准 >=46%；但 balanced 60 日胜率 34.3115% 低于 46% 门槛，且原始 60 日胜率/跑赢基准和 250 日回撤仍未达到更高模拟盘要求；因此不能输出 `PASS_BALANCED_EXIT_POLICY`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
 - 下一步：不应继续简单放松止损；优先做入场信号质量分层、STOP_LOSS 后续走势分组、行业周期证据质量和执行风险分层复核，寻找能提高胜率而不明显压缩样本的规则。
+
+## Loop 8
+
+- 本轮目标：基于 commit `85be6b6c`，新增“行业周期证据层”和周期拐点研究观察输出，保持不接入券商、不自动交易、不读取账户、不输出交易指令；本轮不新增回测外交易功能。
+- 新增证据 schema 和模板：`config/industry_evidence_schema.yaml`、`data/examples/industry_cycle_evidence_template.csv`、`data/examples/company_cycle_evidence_template.csv`，覆盖猪肉、面板、稀土、光伏、锂电、化工、有色等行业证据示例。若 `data/user_supplied/*` 缺失，运行脚本会降级使用 example/template，并在报告中标记为 `MANUAL_TEMPLATE`。
+- 新增证据处理模块：`src/strategies/genge_cycle_bottom/industry_evidence.py`，把行业证据、公司证据、证据日期、证据来源类型、过期/缺失/冲突标记合入特征和信号；`STRONG` 硬逻辑不能只靠价格、均线、低位分位或总分产生。
+- 新增输出：`industry_evidence_cards.md/json` 和 `cycle_turning_point_candidates.csv`；候选文件写明“仅用于模拟观察和复盘；研究观察候选需人工复核，不构成买入建议，不应自动交易。”
+- 新增验收枚举：`FAIL_EVIDENCE_LAYER`、`PASS_INDUSTRY_EVIDENCE_FRAMEWORK`、`PASS_HARD_LOGIC_RESEARCH_READY`、`PASS_CYCLE_TURNING_POINT_SCREENER`。当证据主要来自模板、fixture 或缺失时，最终最多只能到 `PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。
+- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py`，72 passed，1 warning，耗时 235.95 秒。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260630_132735`，`total_signals=1451`，`data_failures=0`，`paper_trading_gate=PASS_INDUSTRY_EVIDENCE_FRAMEWORK`，已生成行业证据卡片和周期拐点候选文件。
+- real broad：`reports/genge_industry_evidence_broad/20260630_162940`，耗时 3446.30 秒，`total_signals=9915`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=690`，`pb_missing_count=0`，`financial_missing_count=0`，`valuation_coverage_rate=100.0`，`financial_coverage_rate=100.0`。
+- real broad 候选和复核数量：主候选 `balanced_research_observation_candidate_count=5473`，研究观察候选 4831，严格候选 0，风险复核数量 5，周期拐点研究观察候选 0。
+- 证据覆盖：行业证据覆盖率 0.7161%，行业证据缺失 9844，行业证据来源分布为 `MANUAL_TEMPLATE=71`、`MISSING=9844`；公司证据覆盖率 0.0%，公司证据缺失 9915，来源分布为 `MISSING=9915`。
+- 证据质量和硬逻辑分布：`hard_logic_level_summary` 为 `MEDIUM=5`、`NONE=9910`；`industry_evidence_quality_summary` 为 `MANUAL_TEMPLATE=71`、`MISSING=9844`；`industry_evidence_confidence_summary` 为 `MEDIUM=71`、`LOW=9844`。
+- 60 日和退出指标：raw 60 日净收益 2.0603，raw 60 日胜率 46.5256，raw 60 日跑赢基准 46.4442；balanced 60 日净收益 1.8834，balanced 60 日胜率 34.7671，balanced 60 日跑赢基准 51.3423，收益保留率 91.4139%，250 日回撤压降率 66.1695%。
+- 退出原因诊断：STOP_LOSS 4542 条、占 45.8094%；TIME_EXIT_60D 2099 条、占 21.1699%；TREND_BREAK_CONFIRMED 1754 条、占 17.6904%；TAKE_PROFIT_TRAIL 1393 条、占 14.0494%；INSUFFICIENT_DATA 81 条、NO_REPAIR_40D 46 条。
+- gate verdict：`PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。原因是证据层框架、schema、字段、报告和候选输出可运行，但用户真实证据文件尚未提供，当前主要使用模板和缺失证据；因此不能输出 `PASS_HARD_LOGIC_RESEARCH_READY`、`PASS_CYCLE_TURNING_POINT_SCREENER`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
+- 安全检查：本轮没有接入中信证券或任何券商接口，没有读取账户/持仓/密码/验证码，没有自动下单；报告措辞继续避免承诺收益和交易指令。下一步应先补充真实 `data/user_supplied` 行业/公司证据，再评估硬逻辑和周期拐点筛选效果。

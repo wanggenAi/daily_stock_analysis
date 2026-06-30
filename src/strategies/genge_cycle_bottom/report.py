@@ -48,6 +48,22 @@ SIGNAL_DETAIL_COLUMNS = [
     "value_trap_flag",
     "valuation_repair_signal",
     "industry_cycle_quality",
+    "industry_evidence_score",
+    "industry_evidence_confidence",
+    "industry_evidence_quality",
+    "industry_evidence_source_type",
+    "industry_evidence_summary",
+    "industry_evidence_warning_flags",
+    "industry_evidence_positive_count",
+    "industry_evidence_negative_count",
+    "industry_evidence_neutral_count",
+    "industry_evidence_stale_count",
+    "industry_evidence_missing_fields",
+    "company_evidence_score",
+    "company_evidence_source_type",
+    "company_evidence_summary",
+    "hard_logic_score",
+    "hard_logic_level",
     "dynamic_stop_loss",
     "stop_loss_distance_pct",
     "invalidation_level",
@@ -215,6 +231,39 @@ def _number(value: Any) -> float | None:
     return None if result != result else result
 
 
+TREND_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+HARD_LOGIC_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+RESEARCH_DISCLAIMER = "仅用于模拟观察和复盘；研究观察候选需人工复核，不构成买入建议，不应自动交易。"
+CYCLE_TURNING_POINT_COLUMNS = [
+    "code",
+    "stock_name",
+    "industry",
+    "as_of_date",
+    "cycle_phase",
+    "hard_logic_level",
+    "industry_evidence_score",
+    "industry_evidence_confidence",
+    "price_percentile_5y",
+    "valuation_score",
+    "financial_safety_score",
+    "trend_confirmation_level",
+    "signal_type",
+    "balanced_exit_net_return_60d_backtest_profile",
+    "risk_flags",
+    "reason",
+    "missing_evidence",
+    "disclaimer",
+]
+
+
+def _split_tokens(raw: Any) -> List[str]:
+    if not raw:
+        return []
+    if isinstance(raw, (list, tuple, set)):
+        return [str(part).strip() for part in raw if str(part).strip()]
+    return [part.strip() for part in str(raw).split(";") if part.strip()]
+
+
 def _top_group_lines(title: str, grouped: Dict[str, Any], limit: int = 8) -> List[str]:
     lines = [f"## {title}", ""]
     if not grouped:
@@ -328,6 +377,9 @@ def _quality_lines(summary: Dict[str, Any]) -> List[str]:
         "",
         f"- 趋势确认分布：{json.dumps(summary.get('trend_confirmation_summary', {}), ensure_ascii=False)}",
         f"- 行业周期证据质量分布：{json.dumps(summary.get('industry_cycle_quality_summary', {}), ensure_ascii=False)}",
+        f"- 行业证据质量分布：{json.dumps(summary.get('industry_evidence_quality_summary', {}), ensure_ascii=False)}",
+        f"- 行业证据置信度分布：{json.dumps(summary.get('industry_evidence_confidence_summary', {}), ensure_ascii=False)}",
+        f"- 硬逻辑等级分布：{json.dumps(summary.get('hard_logic_level_summary', {}), ensure_ascii=False)}",
         f"- 执行入口质量分布：{json.dumps(summary.get('execution_entry_quality_summary', {}), ensure_ascii=False)}",
         f"- 执行风险分数分布：{json.dumps(summary.get('execution_risk_score_distribution', {}), ensure_ascii=False)}",
         f"- 分执行风险表现：{json.dumps(summary.get('execution_risk_score_summary', {}), ensure_ascii=False)}",
@@ -520,6 +572,10 @@ def _candidate_reason(row: Dict[str, Any]) -> str:
         parts.append("估值修复信号存在")
     if row.get("industry_cycle_phase"):
         parts.append(f"行业周期 {row.get('industry_cycle_phase')}")
+    if row.get("hard_logic_level"):
+        parts.append(f"硬逻辑 {row.get('hard_logic_level')}")
+    if row.get("industry_evidence_score") is not None:
+        parts.append(f"行业证据分 {float(row['industry_evidence_score']):.1f}")
     if row.get("long_term_position_risk_score") is not None:
         parts.append(f"长周期位置风险分 {float(row['long_term_position_risk_score']):.1f}")
     return "；".join(parts) or "触发研究信号，需人工复核公开数据"
@@ -659,6 +715,10 @@ def _candidate_columns() -> List[str]:
         "signal_type",
         "total_score",
         "trend_confirmation_level",
+        "hard_logic_level",
+        "hard_logic_score",
+        "industry_evidence_score",
+        "industry_evidence_confidence",
         "value_trap_score",
         "exit_policy_name",
         "balanced_exit_policy_name",
@@ -684,6 +744,10 @@ def _candidate_output_row(row: Dict[str, Any]) -> Dict[str, Any]:
         "signal_type": row.get("signal_type"),
         "total_score": row.get("total_score"),
         "trend_confirmation_level": row.get("trend_confirmation_level"),
+        "hard_logic_level": row.get("hard_logic_level"),
+        "hard_logic_score": row.get("hard_logic_score"),
+        "industry_evidence_score": row.get("industry_evidence_score"),
+        "industry_evidence_confidence": row.get("industry_evidence_confidence"),
         "value_trap_score": row.get("value_trap_score"),
         "exit_policy_name": row.get("exit_policy_name") or "hybrid_60d_repair_exit",
         "balanced_exit_policy_name": row.get("balanced_exit_policy_name") or BALANCED_EXIT_POLICY_NAME,
@@ -696,7 +760,7 @@ def _candidate_output_row(row: Dict[str, Any]) -> Dict[str, Any]:
         "primary_horizon": "60d",
         "reason": _candidate_reason(row),
         "invalidation_condition": row.get("invalidation_reason"),
-        "disclaimer": "仅用于模拟观察和复盘，不构成买入建议，不应自动交易。",
+        "disclaimer": RESEARCH_DISCLAIMER,
     }
 
 
@@ -711,7 +775,7 @@ def _write_candidate_file(candidates: List[Dict[str, Any]], path: Path) -> None:
         writer = csv.DictWriter(file, fieldnames=columns)
         writer.writeheader()
         if not candidates:
-            writer.writerow({"disclaimer": "仅用于模拟观察和复盘，不构成买入建议，不应自动交易。"})
+            writer.writerow({"disclaimer": RESEARCH_DISCLAIMER})
             return
         for row in candidates:
             writer.writerow(_candidate_output_row(row))
@@ -735,6 +799,181 @@ def write_balanced_research_observation_candidates(rows: List[Dict[str, Any]], p
 
 def write_watch_only_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
     _write_candidate_file(_watch_only_candidate_rows(rows), path)
+
+
+def _phase_is_turning_point(value: Any) -> bool:
+    normalized = str(value or "").strip().upper()
+    return normalized in {"BOTTOM", "BOTTOMING", "RECOVERING"}
+
+
+def _missing_evidence_text(row: Dict[str, Any]) -> str:
+    tokens = [
+        token
+        for token in _split_tokens(row.get("missing_fields")) + _split_tokens(row.get("industry_evidence_missing_fields"))
+        if token.startswith("industry_evidence") or token.startswith("company_evidence")
+    ]
+    return ";".join(dict.fromkeys(tokens))
+
+
+def _cycle_turning_point_reason(row: Dict[str, Any]) -> str:
+    parts = ["研究观察候选"]
+    if row.get("price_percentile_5y") is not None:
+        parts.append(f"5年价格分位 {float(row['price_percentile_5y']):.1%}")
+    parts.append(f"行业阶段 {row.get('industry_cycle_phase') or 'UNKNOWN'}")
+    parts.append(f"硬逻辑 {row.get('hard_logic_level') or 'NONE'}")
+    if row.get("trend_confirmation_level"):
+        parts.append(f"趋势 {row.get('trend_confirmation_level')}")
+    if row.get("industry_evidence_summary"):
+        parts.append(str(row.get("industry_evidence_summary")))
+    return "；".join(parts)
+
+
+def _cycle_turning_point_candidate_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    candidates = []
+    for row in rows:
+        price_percentile = _number(row.get("price_percentile_5y"))
+        valuation_score = _number(row.get("valuation_score")) or 0.0
+        financial_score = _number(row.get("financial_safety_score")) or 0.0
+        trend_level = str(row.get("trend_confirmation_level") or "NONE")
+        signal_type = str(row.get("signal_type") or "")
+        execution_risk = _number(row.get("execution_risk_score")) or 0.0
+        value_trap_score = _number(row.get("value_trap_score")) or 0.0
+        balanced_return = _number(row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"))
+        if (
+            price_percentile is not None
+            and price_percentile <= 0.35
+            and valuation_score >= 45
+            and financial_score >= 45
+            and TREND_RANK.get(trend_level, 0) >= TREND_RANK["MEDIUM"]
+            and _phase_is_turning_point(row.get("industry_cycle_phase"))
+            and HARD_LOGIC_RANK.get(str(row.get("hard_logic_level") or "NONE"), 0) >= HARD_LOGIC_RANK["MEDIUM"]
+            and execution_risk < 60
+            and value_trap_score < 70
+            and signal_type in {"WATCH", "LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"}
+            and (balanced_return is None or balanced_return > -8)
+        ):
+            candidates.append(row)
+    return sorted(
+        candidates,
+        key=lambda row: (
+            HARD_LOGIC_RANK.get(str(row.get("hard_logic_level") or "NONE"), 0),
+            _number(row.get("industry_evidence_score")) or 0.0,
+            _number(row.get("total_score")) or 0.0,
+        ),
+        reverse=True,
+    )[:100]
+
+
+def _cycle_candidate_output_row(row: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "code": row.get("code"),
+        "stock_name": row.get("stock_name"),
+        "industry": row.get("industry"),
+        "as_of_date": row.get("as_of_date"),
+        "cycle_phase": row.get("industry_cycle_phase"),
+        "hard_logic_level": row.get("hard_logic_level"),
+        "industry_evidence_score": row.get("industry_evidence_score"),
+        "industry_evidence_confidence": row.get("industry_evidence_confidence"),
+        "price_percentile_5y": row.get("price_percentile_5y"),
+        "valuation_score": row.get("valuation_score"),
+        "financial_safety_score": row.get("financial_safety_score"),
+        "trend_confirmation_level": row.get("trend_confirmation_level"),
+        "signal_type": row.get("signal_type"),
+        "balanced_exit_net_return_60d_backtest_profile": row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"),
+        "risk_flags": row.get("risk_flags"),
+        "reason": _cycle_turning_point_reason(row),
+        "missing_evidence": _missing_evidence_text(row),
+        "disclaimer": RESEARCH_DISCLAIMER,
+    }
+
+
+def write_cycle_turning_point_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
+    candidates = _cycle_turning_point_candidate_rows(rows)
+    with path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=CYCLE_TURNING_POINT_COLUMNS)
+        writer.writeheader()
+        if not candidates:
+            writer.writerow({"reason": "本次未产生符合规则的研究观察候选", "disclaimer": RESEARCH_DISCLAIMER})
+            return
+        for row in candidates:
+            writer.writerow(_cycle_candidate_output_row(row))
+
+
+def _industry_card_summary_rows(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    latest_by_industry: Dict[str, Dict[str, Any]] = {}
+    stocks_by_industry: Dict[str, List[str]] = {}
+    risks_by_industry: Dict[str, List[str]] = {}
+    for row in rows:
+        industry = str(row.get("industry") or "UNKNOWN")
+        as_of = str(row.get("as_of_date") or "")
+        current = latest_by_industry.get(industry)
+        if current is None or as_of >= str(current.get("as_of_date") or ""):
+            latest_by_industry[industry] = row
+        if HARD_LOGIC_RANK.get(str(row.get("hard_logic_level") or "NONE"), 0) >= HARD_LOGIC_RANK["MEDIUM"]:
+            label = f"{row.get('code')} {row.get('stock_name')}".strip()
+            if label and label not in stocks_by_industry.setdefault(industry, []):
+                stocks_by_industry[industry].append(label)
+        risks = _split_tokens(row.get("industry_evidence_warning_flags")) + _split_tokens(row.get("risk_flags"))
+        for risk in risks:
+            if risk not in risks_by_industry.setdefault(industry, []):
+                risks_by_industry[industry].append(risk)
+
+    cards: List[Dict[str, Any]] = []
+    for industry, row in sorted(latest_by_industry.items()):
+        missing_required = _split_tokens(row.get("industry_evidence_missing_fields"))
+        stale_count = int(_number(row.get("industry_evidence_stale_count")) or 0)
+        cards.append(
+            {
+                "industry": industry,
+                "as_of_date": row.get("as_of_date"),
+                "cycle_phase": row.get("industry_cycle_phase") or "UNKNOWN",
+                "evidence_score": row.get("industry_evidence_score"),
+                "confidence": row.get("industry_evidence_confidence"),
+                "positive_evidence": row.get("industry_evidence_positive_count", 0),
+                "negative_evidence": row.get("industry_evidence_negative_count", 0),
+                "missing_required_evidence": missing_required,
+                "stale_evidence": stale_count,
+                "warning_flags": risks_by_industry.get(industry, []),
+                "summary": row.get("industry_evidence_summary") or "缺少行业证据，按中性低置信度处理。",
+                "candidate_stocks": stocks_by_industry.get(industry, [])[:20],
+                "risk_notes": risks_by_industry.get(industry, [])[:12],
+            }
+        )
+    return cards
+
+
+def write_industry_evidence_cards(rows: List[Dict[str, Any]], json_path: Path, markdown_path: Path) -> None:
+    cards = _industry_card_summary_rows(rows)
+    json_path.write_text(json.dumps(cards, ensure_ascii=False, indent=2), encoding="utf-8")
+    lines = [
+        "# 行业周期证据卡片",
+        "",
+        "说明：本文件只做公开资料研究观察。WATCH 表示仍需等待或补证据；STRONG 表示行业与公司证据相对一致，但仍不是交易指令。",
+        "",
+    ]
+    if not cards:
+        lines.extend(["- 本次没有可写入的行业证据卡片。", ""])
+    for card in cards:
+        lines.extend(
+            [
+                f"## {card['industry']}",
+                "",
+                f"- as_of_date: {card['as_of_date']}",
+                f"- cycle_phase: {card['cycle_phase']}",
+                f"- evidence_score: {card['evidence_score']}",
+                f"- confidence: {card['confidence']}",
+                f"- positive_evidence: {card['positive_evidence']}",
+                f"- negative_evidence: {card['negative_evidence']}",
+                f"- missing_required_evidence: {json.dumps(card['missing_required_evidence'], ensure_ascii=False)}",
+                f"- stale_evidence: {card['stale_evidence']}",
+                f"- warning_flags: {json.dumps(card['warning_flags'], ensure_ascii=False)}",
+                f"- summary: {card['summary']}",
+                f"- candidate_stocks: {json.dumps(card['candidate_stocks'], ensure_ascii=False)}",
+                f"- risk_notes: {json.dumps(card['risk_notes'], ensure_ascii=False)}",
+                "",
+            ]
+        )
+    markdown_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
@@ -761,6 +1000,7 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
         f"- 交易成本：fee_bps={diagnostics.get('fee_bps', '无可用数据')}，slippage_bps={diagnostics.get('slippage_bps', '无可用数据')}",
         f"- 估值数据源：{diagnostics.get('valuation_provider', '无可用数据')}；财务数据源：{diagnostics.get('financial_provider', '无可用数据')}",
         f"- 行业周期来源：{diagnostics.get('industry_cycle_source', '无可用数据')}",
+        f"- 行业证据来源：{diagnostics.get('industry_evidence_source', '无可用数据')}；公司证据来源：{diagnostics.get('company_evidence_source', '无可用数据')}",
         "",
         "## 核心结果",
         "",
@@ -776,6 +1016,9 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
         f"- 最差最大回撤：{_format_pct(summary.get('max_drawdown_worst'))}",
         f"- 20/60/120/250 日跑赢基准比例：{_format_pct(summary.get('outperform_benchmark_rate_20d'))} / {_format_pct(summary.get('outperform_benchmark_rate_60d'))} / {_format_pct(summary.get('outperform_benchmark_rate_120d'))} / {_format_pct(summary.get('outperform_benchmark_rate_250d'))}",
         f"- 估值/财务/行业周期覆盖率：{_format_pct(summary.get('valuation_coverage_rate'))} / {_format_pct(summary.get('financial_coverage_rate'))} / {_format_pct(summary.get('industry_cycle_coverage_rate'))}",
+        f"- 行业证据覆盖率：{_format_pct(summary.get('industry_evidence_coverage_rate'))}",
+        f"- 硬逻辑等级分布：{json.dumps(summary.get('hard_logic_level_summary', {}), ensure_ascii=False)}",
+        f"- 周期拐点研究候选数：{summary.get('cycle_turning_point_candidate_count', 0)}",
         f"- 最大连续亏损次数：{_format_value(summary.get('max_consecutive_losses'))}",
         f"- 模拟观察候选数：{_format_value(summary.get('paper_observation_candidate_count'))}",
         f"- 样本数量警告：{_sample_warning(summary)}",
@@ -808,8 +1051,10 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
             f"- 数据缺口统计：{json.dumps(diagnostics.get('data_gap_counts', {}), ensure_ascii=False)}",
             f"- 覆盖率统计：{json.dumps(coverage or {'valuation_coverage_rate': summary.get('valuation_coverage_rate'), 'financial_coverage_rate': summary.get('financial_coverage_rate')}, ensure_ascii=False)}",
             f"- PE/PB/财务缺失数量：{summary.get('pe_missing_count', 0)} / {summary.get('pb_missing_count', 0)} / {summary.get('financial_missing_count', 0)}",
+            f"- 行业证据/公司证据缺失数量：{summary.get('industry_evidence_missing_count', 0)} / {summary.get('company_evidence_missing_count', 0)}",
             f"- 严格观察候选数 / 研究观察候选数：{summary.get('strict_observation_candidate_count', 0)} / {summary.get('research_observation_candidate_count', 0)}",
             f"- balanced 研究观察候选数 / watch-only 候选数：{summary.get('balanced_research_observation_candidate_count', 0)} / {summary.get('watch_only_candidate_count', 0)}",
+            f"- 周期拐点研究候选数：{summary.get('cycle_turning_point_candidate_count', 0)}",
             f"- 可执行性诊断：{json.dumps(execution, ensure_ascii=False)}",
             f"- 公开数据 provider_errors：{json.dumps(diagnostics.get('provider_errors', {}), ensure_ascii=False)}",
             f"- 研究验收枚举：{gate.get('verdict', '无可用数据')}；原因：{json.dumps(gate.get('reasons', []), ensure_ascii=False)}",
@@ -826,7 +1071,14 @@ def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
-def write_reports(rows: List[Dict[str, Any]], summary: Dict[str, Any], output_dir: str | Path) -> Path:
+def write_reports(
+    rows: List[Dict[str, Any]],
+    summary: Dict[str, Any],
+    output_dir: str | Path,
+    *,
+    output_industry_evidence_cards: bool = False,
+    output_cycle_turning_point_candidates: bool = False,
+) -> Path:
     path = _run_dir(output_dir)
     write_signal_details(rows, path / "signal_details.csv")
     (path / "summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -838,5 +1090,9 @@ def write_reports(rows: List[Dict[str, Any]], summary: Dict[str, Any], output_di
     write_research_observation_candidates(rows, path / "research_observation_candidates.csv")
     write_balanced_research_observation_candidates(rows, path / "balanced_research_observation_candidates.csv")
     write_watch_only_candidates(rows, path / "watch_only_candidates.csv")
+    if output_cycle_turning_point_candidates:
+        write_cycle_turning_point_candidates(rows, path / "cycle_turning_point_candidates.csv")
+    if output_industry_evidence_cards:
+        write_industry_evidence_cards(rows, path / "industry_evidence_cards.json", path / "industry_evidence_cards.md")
     write_summary_markdown(summary, path / "summary.md")
     return path

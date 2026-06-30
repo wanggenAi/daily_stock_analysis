@@ -1,0 +1,334 @@
+version: 1
+description: GenGe industry cycle evidence schema. Manual rows are research inputs only.
+aliases:
+  养殖: 猪肉
+industries:
+  猪肉:
+    indicators:
+      - name: 生猪价格
+        description: 生猪现货价格或行业价格指数的方向变化
+        direction_rule: price_up_from_cost_or_bottom_is_positive
+        positive_condition: 价格从低位企稳回升，且不依赖单日尖峰
+        negative_condition: 价格继续下行或跌破养殖成本
+        source_hint: 农业农村部、国家统计局、行业公开报价
+        default_weight: 1.2
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 能繁母猪存栏
+        description: 能繁母猪存栏同比或环比变化
+        direction_rule: capacity_down_then_stabilizes_is_positive
+        positive_condition: 去产能后存栏企稳，供给压力缓和
+        negative_condition: 存栏持续扩张导致供给压力加大
+        source_hint: 农业农村部公开数据
+        default_weight: 1.3
+        freshness_limit_days: 60
+        required_or_optional: required
+      - name: 猪粮比
+        description: 猪粮比对养殖盈利和周期底部的提示
+        direction_rule: recovering_from_loss_zone_is_positive
+        positive_condition: 从亏损区间修复并接近盈亏平衡
+        negative_condition: 长期处于深度亏损且未修复
+        source_hint: 发改委、行业公开数据
+        default_weight: 1.0
+        freshness_limit_days: 45
+        required_or_optional: required
+      - name: 出栏均重
+        description: 出栏均重变化反映压栏或供给释放
+        direction_rule: weight_normalization_is_positive
+        positive_condition: 出栏均重回归正常，压栏压力下降
+        negative_condition: 出栏均重异常上升，潜在供给释放
+        source_hint: 行业周报、公开研究摘要
+        default_weight: 0.8
+        freshness_limit_days: 45
+        required_or_optional: optional
+      - name: 饲料成本
+        description: 玉米、豆粕等饲料成本变化
+        direction_rule: cost_down_or_margin_improves_is_positive
+        positive_condition: 饲料成本下降或利润率改善
+        negative_condition: 饲料成本上升挤压利润
+        source_hint: 农产品公开报价
+        default_weight: 0.8
+        freshness_limit_days: 45
+        required_or_optional: optional
+  面板:
+    indicators:
+      - name: 面板价格
+        description: TV/IT 面板价格趋势
+        direction_rule: panel_price_recovery_is_positive
+        positive_condition: 主流尺寸价格企稳或环比回升
+        negative_condition: 主流尺寸价格继续下跌
+        source_hint: WitsView、群智咨询等公开摘要
+        default_weight: 1.3
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 稼动率
+        description: 产线稼动率变化
+        direction_rule: controlled_utilization_is_positive
+        positive_condition: 稼动率维持纪律性，供给不过度扩张
+        negative_condition: 稼动率快速拉升造成供给压力
+        source_hint: 行业公开周报
+        default_weight: 1.1
+        freshness_limit_days: 45
+        required_or_optional: required
+      - name: 库存水位
+        description: 品牌厂和面板厂库存状态
+        direction_rule: inventory_destocking_is_positive
+        positive_condition: 库存下降至合理水平
+        negative_condition: 库存积压或去库停滞
+        source_hint: 公开研究摘要、行业周报
+        default_weight: 1.0
+        freshness_limit_days: 60
+        required_or_optional: required
+      - name: 终端需求
+        description: TV、显示器、笔电等终端需求
+        direction_rule: demand_recovery_is_positive
+        positive_condition: 终端需求同比或环比改善
+        negative_condition: 终端需求继续走弱
+        source_hint: 公开出货量数据
+        default_weight: 1.0
+        freshness_limit_days: 60
+        required_or_optional: optional
+      - name: 供给纪律
+        description: 行业龙头控产、检修或供给纪律
+        direction_rule: supply_discipline_is_positive
+        positive_condition: 控产或检修使供需改善
+        negative_condition: 新增供给释放压低价格
+        source_hint: 公司公告、行业公开资料
+        default_weight: 0.9
+        freshness_limit_days: 90
+        required_or_optional: optional
+  稀土:
+    indicators:
+      - name: 氧化镨钕价格
+        description: 稀土主产品价格方向
+        direction_rule: rare_earth_price_recovery_is_positive
+        positive_condition: 价格低位企稳或回升
+        negative_condition: 价格持续下行
+        source_hint: 上海有色网、公开报价
+        default_weight: 1.2
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 配额变化
+        description: 开采和冶炼分离配额变化
+        direction_rule: quota_discipline_is_positive
+        positive_condition: 配额增速温和或供给约束增强
+        negative_condition: 配额大幅扩张
+        source_hint: 工信部、自然资源部
+        default_weight: 1.1
+        freshness_limit_days: 180
+        required_or_optional: required
+      - name: 磁材需求
+        description: 新能源车、风电、工业电机磁材需求
+        direction_rule: downstream_demand_improves_is_positive
+        positive_condition: 下游需求改善
+        negative_condition: 下游需求走弱
+        source_hint: 行业公开数据
+        default_weight: 1.0
+        freshness_limit_days: 90
+        required_or_optional: required
+      - name: 库存状态
+        description: 产业链库存变化
+        direction_rule: inventory_low_or_destocking_is_positive
+        positive_condition: 库存低位或去库
+        negative_condition: 库存积压
+        source_hint: 公开研究摘要
+        default_weight: 0.9
+        freshness_limit_days: 90
+        required_or_optional: optional
+      - name: 政策监管
+        description: 行业整合、监管和战略资源政策
+        direction_rule: policy_support_or_supply_control_is_positive
+        positive_condition: 监管趋严或战略资源支持
+        negative_condition: 政策扰动压制需求或价格
+        source_hint: 政府公开文件
+        default_weight: 0.8
+        freshness_limit_days: 180
+        required_or_optional: optional
+  光伏:
+    indicators:
+      - name: 硅料价格
+        description: 硅料价格和盈利状态
+        direction_rule: price_stabilization_after_clearance_is_positive
+        positive_condition: 价格低位企稳且产能出清
+        negative_condition: 价格继续下跌且库存压力大
+        source_hint: 硅业分会、行业公开报价
+        default_weight: 1.2
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 组件排产
+        description: 组件排产和订单变化
+        direction_rule: production_schedule_recovery_is_positive
+        positive_condition: 排产回升且订单改善
+        negative_condition: 排产下调
+        source_hint: 行业公开周报
+        default_weight: 1.1
+        freshness_limit_days: 45
+        required_or_optional: required
+      - name: 产业链库存
+        description: 硅料、硅片、电池、组件库存
+        direction_rule: inventory_destocking_is_positive
+        positive_condition: 库存下降
+        negative_condition: 库存高企
+        source_hint: 公开研究摘要
+        default_weight: 1.0
+        freshness_limit_days: 60
+        required_or_optional: required
+      - name: 装机需求
+        description: 国内外装机需求和招标数据
+        direction_rule: installation_demand_recovery_is_positive
+        positive_condition: 装机需求改善
+        negative_condition: 装机需求走弱
+        source_hint: 国家能源局、公开招标数据
+        default_weight: 1.0
+        freshness_limit_days: 90
+        required_or_optional: optional
+      - name: 产能出清
+        description: 落后产能停产、减产或破产重整
+        direction_rule: capacity_clearance_is_positive
+        positive_condition: 产能出清推进
+        negative_condition: 低效产能继续扩张
+        source_hint: 公司公告、行业公开资料
+        default_weight: 0.9
+        freshness_limit_days: 120
+        required_or_optional: optional
+  锂电:
+    indicators:
+      - name: 碳酸锂价格
+        description: 碳酸锂价格和库存状态
+        direction_rule: lithium_price_stabilization_is_positive
+        positive_condition: 价格低位企稳
+        negative_condition: 价格继续下行
+        source_hint: 上海有色网、公开报价
+        default_weight: 1.2
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 动力电池装机
+        description: 动力电池装机量
+        direction_rule: installation_growth_is_positive
+        positive_condition: 装机量改善
+        negative_condition: 装机量走弱
+        source_hint: 中国汽车动力电池产业创新联盟
+        default_weight: 1.1
+        freshness_limit_days: 60
+        required_or_optional: required
+      - name: 新能源车销量
+        description: 新能源车销量和渗透率
+        direction_rule: ev_sales_recovery_is_positive
+        positive_condition: 销量和渗透率改善
+        negative_condition: 销量低于预期
+        source_hint: 中汽协、乘联会
+        default_weight: 1.0
+        freshness_limit_days: 60
+        required_or_optional: required
+      - name: 库存去化
+        description: 电池和材料环节库存变化
+        direction_rule: inventory_destocking_is_positive
+        positive_condition: 库存去化
+        negative_condition: 库存积压
+        source_hint: 公开研究摘要
+        default_weight: 0.9
+        freshness_limit_days: 90
+        required_or_optional: optional
+      - name: 产能利用率
+        description: 电池和材料产能利用率
+        direction_rule: utilization_recovery_is_positive
+        positive_condition: 利用率回升且不过热
+        negative_condition: 利用率低迷或过度扩产
+        source_hint: 行业公开周报
+        default_weight: 0.9
+        freshness_limit_days: 90
+        required_or_optional: optional
+  化工:
+    indicators:
+      - name: 产品价差
+        description: 重点化工品价差
+        direction_rule: spread_recovery_is_positive
+        positive_condition: 价差修复
+        negative_condition: 价差继续压缩
+        source_hint: 公开化工品报价
+        default_weight: 1.2
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 开工率
+        description: 行业开工率和检修情况
+        direction_rule: disciplined_operating_rate_is_positive
+        positive_condition: 开工纪律性或需求驱动恢复
+        negative_condition: 开工过高导致供给压力
+        source_hint: 行业公开周报
+        default_weight: 1.0
+        freshness_limit_days: 45
+        required_or_optional: required
+      - name: 库存
+        description: 生产商和渠道库存
+        direction_rule: inventory_down_is_positive
+        positive_condition: 库存下降
+        negative_condition: 库存上升
+        source_hint: 公开研究摘要
+        default_weight: 1.0
+        freshness_limit_days: 60
+        required_or_optional: required
+      - name: 下游需求
+        description: 地产、纺服、汽车、出口等需求
+        direction_rule: downstream_demand_improves_is_positive
+        positive_condition: 下游需求改善
+        negative_condition: 下游需求走弱
+        source_hint: 公开经济和行业数据
+        default_weight: 1.0
+        freshness_limit_days: 90
+        required_or_optional: optional
+      - name: 原料成本
+        description: 油煤气等原料成本变化
+        direction_rule: margin_improvement_is_positive
+        positive_condition: 成本下降或价差改善
+        negative_condition: 成本上升挤压价差
+        source_hint: 大宗商品公开报价
+        default_weight: 0.8
+        freshness_limit_days: 45
+        required_or_optional: optional
+  有色:
+    indicators:
+      - name: 金属价格
+        description: 主要金属价格趋势
+        direction_rule: metal_price_recovery_is_positive
+        positive_condition: 价格低位企稳或回升
+        negative_condition: 价格继续下行
+        source_hint: LME、上海期货交易所、上海有色网
+        default_weight: 1.2
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 库存
+        description: 交易所和社会库存
+        direction_rule: inventory_low_or_down_is_positive
+        positive_condition: 库存低位或下降
+        negative_condition: 库存累积
+        source_hint: 交易所库存、公开库存数据
+        default_weight: 1.1
+        freshness_limit_days: 30
+        required_or_optional: required
+      - name: 加工费
+        description: 铜铝锌等加工费变化
+        direction_rule: processing_fee_signal_depends_on_subsector
+        positive_condition: 加工费改善或供给瓶颈支撑价格
+        negative_condition: 加工费恶化压缩盈利
+        source_hint: 公开报价和行业周报
+        default_weight: 0.9
+        freshness_limit_days: 60
+        required_or_optional: required
+      - name: 下游需求
+        description: 电网、地产、汽车、出口等需求
+        direction_rule: downstream_demand_improves_is_positive
+        positive_condition: 下游需求改善
+        negative_condition: 下游需求走弱
+        source_hint: 公开经济和行业数据
+        default_weight: 1.0
+        freshness_limit_days: 90
+        required_or_optional: optional
+      - name: 供给扰动
+        description: 矿山、冶炼、能源约束等供给扰动
+        direction_rule: supply_constraint_supports_price_is_positive
+        positive_condition: 供给约束支撑价格且需求不差
+        negative_condition: 供给恢复导致价格承压
+        source_hint: 公司公告、行业公开资料
+        default_weight: 0.8
+        freshness_limit_days: 120
+        required_or_optional: optional

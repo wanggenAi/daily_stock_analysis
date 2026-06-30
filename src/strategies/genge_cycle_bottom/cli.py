@@ -12,8 +12,10 @@ import pandas as pd
 from .backtest import BacktestInput, WalkForwardBacktester
 from .features import coerce_date, date_years_ago, prepare_price_frame
 from .fundamentals import PublicFundamentalLoader
+from .industry_evidence import load_evidence_csv, load_industry_evidence_schema, normalize_evidence_source
 from .metrics import compute_summary
 from .report import write_reports
+from .strategy import GenGeCycleBottomStrategy, StrategyConfig
 
 
 def _parse_codes(raw_codes: Optional[str]) -> List[str]:
@@ -298,6 +300,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fundamental-cache-dir", default="data/cache/genge_fundamentals", help="Directory for successful public valuation/financial cache")
     parser.add_argument("--industry-cycle-file", help="Optional CSV file with industry cycle scores")
     parser.add_argument("--stock-industry-map", help="Optional CSV file mapping code to industry")
+    parser.add_argument("--industry-evidence-file", help="Optional CSV file with industry cycle evidence rows")
+    parser.add_argument("--company-evidence-file", help="Optional CSV file with company cycle evidence rows")
+    parser.add_argument("--industry-evidence-schema", help="Optional YAML schema for industry evidence indicators")
+    parser.add_argument("--enable-hard-logic-filter", action="store_true", help="Require hard-logic evidence level for observation signals")
+    parser.add_argument("--min-hard-logic-level", default="MEDIUM", choices=("NONE", "WEAK", "MEDIUM", "STRONG"))
+    parser.add_argument("--output-industry-evidence-cards", action="store_true", help="Write industry evidence card markdown/json")
+    parser.add_argument("--output-cycle-turning-point-candidates", action="store_true", help="Write cycle turning point research candidates CSV")
     parser.add_argument("--fixture-smoke-passed", action="store_true", help="Mark fixture smoke as already verified for acceptance context")
     parser.add_argument("--ci-passed", action="store_true", help="Mark GitHub Actions fixture CI as observed passed for acceptance context")
     return parser
@@ -323,8 +332,17 @@ def main(argv: Optional[List[str]] = None) -> int:
     start_date = coerce_date(args.start_date) if args.start_date else date_years_ago(end_date, args.years)
     benchmark_df, benchmark_source_or_error = _load_benchmark(args, start_date, end_date)
     industry_cycle_df = _load_csv(Path(args.industry_cycle_file)) if args.industry_cycle_file else None
+    industry_evidence_df = load_evidence_csv(args.industry_evidence_file) if args.industry_evidence_file else None
+    company_evidence_df = load_evidence_csv(args.company_evidence_file) if args.company_evidence_file else None
+    industry_evidence_schema = load_industry_evidence_schema(args.industry_evidence_schema) if args.industry_evidence_schema else {}
+    strategy = GenGeCycleBottomStrategy(
+        StrategyConfig(
+            enable_hard_logic_filter=bool(args.enable_hard_logic_filter),
+            min_hard_logic_level=str(args.min_hard_logic_level),
+        )
+    )
 
-    rows = WalkForwardBacktester().run(
+    rows = WalkForwardBacktester(strategy=strategy).run(
         inputs=inputs,
         benchmark_df=benchmark_df,
         start_date=start_date,
@@ -333,6 +351,9 @@ def main(argv: Optional[List[str]] = None) -> int:
         fee_bps=float(args.fee_bps),
         slippage_bps=float(args.slippage_bps),
         industry_cycle_df=industry_cycle_df,
+        industry_evidence_df=industry_evidence_df,
+        company_evidence_df=company_evidence_df,
+        industry_evidence_schema=industry_evidence_schema,
     )
     source_mode = "fixture" if args.price_data_dir else "real"
     diagnostics = {
@@ -351,6 +372,14 @@ def main(argv: Optional[List[str]] = None) -> int:
         "industry_cycle_file": args.industry_cycle_file,
         "industry_cycle_source": _industry_cycle_source(args.industry_cycle_file, source_mode),
         "stock_industry_map": args.stock_industry_map,
+        "industry_evidence_file": args.industry_evidence_file,
+        "company_evidence_file": args.company_evidence_file,
+        "industry_evidence_schema": args.industry_evidence_schema,
+        "industry_evidence_source": normalize_evidence_source(args.industry_evidence_file, source_mode),
+        "company_evidence_source": normalize_evidence_source(args.company_evidence_file, source_mode),
+        "industry_evidence_schema_industries": sorted((industry_evidence_schema.get("industries") or {}).keys()),
+        "enable_hard_logic_filter": bool(args.enable_hard_logic_filter),
+        "min_hard_logic_level": str(args.min_hard_logic_level),
         "source_mode": source_mode,
         "ci_passed": bool(args.ci_passed),
         "fixture_smoke_passed": bool(args.price_data_dir or args.fixture_smoke_passed),
@@ -362,7 +391,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     }
     diagnostics.update(fundamental_diagnostics)
     summary = compute_summary(rows, extra_diagnostics=diagnostics)
-    report_dir = write_reports(rows, summary, args.output_dir)
+    report_dir = write_reports(
+        rows,
+        summary,
+        args.output_dir,
+        output_industry_evidence_cards=bool(args.output_industry_evidence_cards),
+        output_cycle_turning_point_candidates=bool(args.output_cycle_turning_point_candidates),
+    )
     print(f"report_dir={report_dir}")
     print(f"total_signals={summary['total_signals']}")
     print(f"data_failures={len(data_errors)}")

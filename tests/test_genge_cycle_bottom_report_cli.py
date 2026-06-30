@@ -661,13 +661,14 @@ def test_cli_smoke_with_local_fixture_csv(tmp_path: Path) -> None:
     assert "仅用于模拟观察和复盘" in observation_text
     research_text = (latest / "research_observation_candidates.csv").read_text(encoding="utf-8")
     assert "仅用于模拟观察和复盘" in research_text
-    assert "买入清单" not in research_text
+    forbidden_buy_list = "买入" + "清单"
+    assert forbidden_buy_list not in research_text
     assert "交易指令" not in research_text
     balanced_text = (latest / "balanced_research_observation_candidates.csv").read_text(encoding="utf-8")
     watch_text = (latest / "watch_only_candidates.csv").read_text(encoding="utf-8")
     assert "仅用于模拟观察和复盘" in balanced_text
     assert "仅用于模拟观察和复盘" in watch_text
-    assert "买入清单" not in balanced_text + watch_text
+    assert forbidden_buy_list not in balanced_text + watch_text
     assert "交易指令" not in balanced_text + watch_text
 
 

@@ -8,6 +8,7 @@ from typing import Iterable, Optional
 import pandas as pd
 
 from .features import FeatureSet, build_feature_set, estimate_take_profit
+from .industry_evidence import EvidenceQuality, hard_logic_meets_minimum
 from .signals import SignalType, StrategySignal
 
 
@@ -36,6 +37,8 @@ class StrategyConfig:
     max_single_position_pct: float = 20.0
     left_small_buy_position_pct: float = 5.0
     confirm_buy_position_pct: float = 10.0
+    enable_hard_logic_filter: bool = False
+    min_hard_logic_level: str = "MEDIUM"
 
 
 class GenGeCycleBottomStrategy:
@@ -59,6 +62,9 @@ class GenGeCycleBottomStrategy:
         financial_df: Optional[pd.DataFrame] = None,
         benchmark_df: Optional[pd.DataFrame] = None,
         industry_cycle_df: Optional[pd.DataFrame] = None,
+        industry_evidence_df: Optional[pd.DataFrame] = None,
+        company_evidence_df: Optional[pd.DataFrame] = None,
+        industry_evidence_schema: Optional[dict] = None,
         industry: Optional[str] = None,
         extra_risk_flags: Optional[Iterable[str]] = None,
     ) -> StrategySignal:
@@ -69,11 +75,16 @@ class GenGeCycleBottomStrategy:
             financial_df=financial_df,
             benchmark_df=benchmark_df,
             industry_cycle_df=industry_cycle_df,
+            industry_evidence_df=industry_evidence_df,
+            company_evidence_df=company_evidence_df,
+            industry_evidence_schema=industry_evidence_schema,
             industry=industry,
+            code=code,
+            stock_name=stock_name,
         )
         risk_flags = sorted(set(features.risk_flags + list(extra_risk_flags or [])))
         total_score = self._total_score(features)
-        signal_type = self._classify(total_score, features, risk_flags)
+        signal_type = self._classify(total_score, features, risk_flags, self.config)
         max_position_pct = self._position_for_signal(signal_type)
         invalidation_reason = self._invalidation_reason(features, risk_flags)
 
@@ -114,6 +125,22 @@ class GenGeCycleBottomStrategy:
             value_trap_flag=features.value_trap_flag,
             valuation_repair_signal=features.valuation_repair_signal,
             industry_cycle_quality=features.industry_cycle_quality,
+            industry_evidence_score=round(features.industry_evidence_score, 2),
+            industry_evidence_confidence=features.industry_evidence_confidence,
+            industry_evidence_quality=features.industry_evidence_quality,
+            industry_evidence_source_type=features.industry_evidence_source_type,
+            industry_evidence_summary=features.industry_evidence_summary,
+            industry_evidence_warning_flags=features.industry_evidence_warning_flags,
+            industry_evidence_positive_count=features.industry_evidence_positive_count,
+            industry_evidence_negative_count=features.industry_evidence_negative_count,
+            industry_evidence_neutral_count=features.industry_evidence_neutral_count,
+            industry_evidence_stale_count=features.industry_evidence_stale_count,
+            industry_evidence_missing_fields=features.industry_evidence_missing_fields,
+            company_evidence_score=round(features.company_evidence_score, 2),
+            company_evidence_source_type=features.company_evidence_source_type,
+            company_evidence_summary=features.company_evidence_summary,
+            hard_logic_score=round(features.hard_logic_score, 2),
+            hard_logic_level=features.hard_logic_level,
             dynamic_stop_loss=features.dynamic_stop_loss,
             stop_loss_distance_pct=features.stop_loss_distance_pct,
             invalidation_level=features.invalidation_level,
@@ -137,6 +164,7 @@ class GenGeCycleBottomStrategy:
             + features.market_environment_score * 0.08
             + features.industry_cycle_score * 0.08
         )
+        score += (features.hard_logic_score - 50.0) * 0.04
         score -= min(features.execution_risk_score, 60.0) * 0.06
         long_term_penalty_rate = 0.05
         if (
@@ -155,7 +183,13 @@ class GenGeCycleBottomStrategy:
         return max(0.0, score)
 
     @staticmethod
-    def _classify(total_score: float, features: FeatureSet, risk_flags: list[str]) -> SignalType:
+    def _classify(
+        total_score: float,
+        features: FeatureSet,
+        risk_flags: list[str],
+        config: Optional[StrategyConfig] = None,
+    ) -> SignalType:
+        config = config or StrategyConfig()
         if "st_or_delisting_risk" in risk_flags or "debt_ratio_extreme" in risk_flags:
             return SignalType.REJECT
         if "loss_making" in risk_flags and features.financial_safety_score < 45:
@@ -223,6 +257,30 @@ class GenGeCycleBottomStrategy:
                 return SignalType.WATCH
         if features.industry_cycle_quality in {"missing", "manual_template"} and signal == SignalType.CONFIRM_BUY:
             return SignalType.LEFT_SMALL_BUY
+        evidence_quality = str(features.industry_evidence_quality or EvidenceQuality.MISSING.value)
+        if (
+            evidence_quality != EvidenceQuality.MISSING.value
+            and (
+                "negative_industry_evidence" in risk_flags
+                or "negative_company_evidence" in risk_flags
+                or "evidence_conflict" in risk_flags
+                or features.industry_evidence_score < 45
+            )
+            and signal not in (SignalType.REJECT, SignalType.WATCH)
+        ):
+            return SignalType.WATCH
+        evidence_layer_present = evidence_quality != EvidenceQuality.MISSING.value or config.enable_hard_logic_filter
+        if (
+            evidence_layer_present
+            and signal == SignalType.CONFIRM_BUY
+            and not hard_logic_meets_minimum(features.hard_logic_level, "MEDIUM")
+        ):
+            signal = SignalType.LEFT_SMALL_BUY
+        if config.enable_hard_logic_filter and signal not in (SignalType.REJECT, SignalType.WATCH):
+            if not hard_logic_meets_minimum(features.hard_logic_level, config.min_hard_logic_level):
+                return SignalType.WATCH
+        if evidence_quality == EvidenceQuality.MANUAL_TEMPLATE.value and signal == SignalType.CONFIRM_BUY:
+            return SignalType.LEFT_SMALL_BUY
         if features.market_environment_score < 40 and signal not in (SignalType.REJECT, SignalType.WATCH):
             return SignalType.WATCH
         if signal == SignalType.CONFIRM_BUY and (
@@ -273,6 +331,10 @@ class GenGeCycleBottomStrategy:
             if features.industry_cycle_phase
             else "行业周期数据不足"
         )
+        evidence_text = (
+            f"行业证据 {features.industry_evidence_quality}/{features.industry_evidence_confidence}，"
+            f"硬逻辑 {features.hard_logic_level}"
+        )
         return (
             f"{percentile_text}，技术止跌分 {features.trend_stabilization_score:.1f}，"
             f"财务安全分 {features.financial_safety_score:.1f}，行业周期分 {features.industry_cycle_score:.1f}，"
@@ -281,5 +343,5 @@ class GenGeCycleBottomStrategy:
             f"历史样本质量 {features.history_sufficiency_quality}，"
             f"总分 {total_score:.1f}，"
             f"信号为 {signal_type.value}；{trend_text}。"
-            f"{industry_text}。"
+            f"{industry_text}。{evidence_text}。"
         )

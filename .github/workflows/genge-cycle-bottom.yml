@@ -39,6 +39,9 @@ jobs:
             --financial-data-dir tests/fixtures/genge_cycle_bottom/financial \
             --industry-cycle-file tests/fixtures/genge_cycle_bottom/industry_cycle.csv \
             --stock-industry-map tests/fixtures/genge_cycle_bottom/stock_industry_map.csv \
+            --industry-evidence-file tests/fixtures/genge_cycle_bottom/industry_evidence.csv \
+            --company-evidence-file tests/fixtures/genge_cycle_bottom/company_evidence.csv \
+            --industry-evidence-schema config/industry_evidence_schema.yaml \
             --output-dir reports/genge_cycle_bottom_ci_smoke
 
       - name: Validate fixture smoke report schema
@@ -73,6 +76,9 @@ jobs:
               "valuation_coverage_rate",
               "financial_coverage_rate",
               "industry_cycle_coverage_rate",
+              "industry_evidence_coverage_rate",
+              "hard_logic_level_summary",
+              "industry_evidence_quality_summary",
               "execution_diagnostics",
               "paper_trading_gate",
           ]

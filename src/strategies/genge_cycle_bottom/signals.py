@@ -59,6 +59,22 @@ class StrategySignal:
     value_trap_flag: bool = False
     valuation_repair_signal: bool = False
     industry_cycle_quality: str = "missing"
+    industry_evidence_score: float = 50.0
+    industry_evidence_confidence: str = "LOW"
+    industry_evidence_quality: str = "MISSING"
+    industry_evidence_source_type: str = "MISSING"
+    industry_evidence_summary: str = ""
+    industry_evidence_warning_flags: List[str] = field(default_factory=list)
+    industry_evidence_positive_count: int = 0
+    industry_evidence_negative_count: int = 0
+    industry_evidence_neutral_count: int = 0
+    industry_evidence_stale_count: int = 0
+    industry_evidence_missing_fields: List[str] = field(default_factory=list)
+    company_evidence_score: float = 50.0
+    company_evidence_source_type: str = "MISSING"
+    company_evidence_summary: str = ""
+    hard_logic_score: float = 50.0
+    hard_logic_level: str = "NONE"
     dynamic_stop_loss: Optional[float] = None
     stop_loss_distance_pct: Optional[float] = None
     invalidation_level: Optional[float] = None
@@ -79,4 +95,6 @@ class StrategySignal:
         data["signal_type"] = self.signal_type.value
         data["risk_flags"] = ";".join(self.risk_flags)
         data["missing_fields"] = ";".join(self.missing_fields)
+        data["industry_evidence_warning_flags"] = ";".join(self.industry_evidence_warning_flags)
+        data["industry_evidence_missing_fields"] = ";".join(self.industry_evidence_missing_fields)
         return data

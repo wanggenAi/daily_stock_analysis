@@ -1,101 +1,95 @@
-# GenGe Exit Balance Acceptance Report
+# GenGe Industry Evidence Layer Acceptance Report
 
 ## A Runability
 
-- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py -q`，62 passed，1 warning，耗时 67.13 秒。
-- fixture smoke：通过，报告路径 `reports/genge_cycle_bottom_ci_smoke/20260630_001300`，耗时 159.13 秒，`total_signals=1451`，`data_failures=0`。
-- real core：通过，报告路径 `reports/genge_exit_balance_core/20260630_001811`，耗时 305.26 秒，`total_signals=1535`，`data_failures=0`。
-- real cycle：通过，报告路径 `reports/genge_exit_balance_cycle/20260630_003658`，耗时 1120.30 秒，`total_signals=4576`，`data_failures=0`。
-- real broad：通过，报告路径 `reports/genge_exit_balance_broad/20260630_011457`，耗时 2256.74 秒，`total_signals=9627`，`data_failures=0`。
+- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py`，72 passed，1 warning，耗时 235.95 秒。
+- fixture smoke：通过，报告路径 `reports/genge_cycle_bottom_ci_smoke/20260630_132735`，`total_signals=1451`，`data_failures=0`。
+- real broad：通过，报告路径 `reports/genge_industry_evidence_broad/20260630_162940`，耗时 3446.30 秒，`total_signals=9915`，`data_failures=0`。
 - 不接入券商账户，不读取账户/持仓/密码/验证码，不自动下单，不打开中信证券交易页面。
 
-## B Strategy Horizon
+## B Evidence Layer
 
-- `strategy_primary_horizon = 60d`。
-- `strategy_secondary_horizon = 20d/120d`。
-- `strategy_risk_horizon = 250d`。
-- 250 日 raw hold 只作为风险压力测试，不是默认长期持有目标。
-- `balanced_hybrid_60d_exit` 保留为收益/回撤平衡策略，旧 `hybrid_60d_repair_exit` 保留为风险压缩对照；当前默认参数为 `balanced_v7_double_close_stop`。
+- 行业证据 schema：`config/industry_evidence_schema.yaml`。
+- 行业证据模板：`data/examples/industry_cycle_evidence_template.csv`。
+- 公司证据模板：`data/examples/company_cycle_evidence_template.csv`。
+- 本次真实运行中 `data/user_supplied/industry_cycle_evidence.csv` 和 `data/user_supplied/company_cycle_evidence.csv` 不存在，脚本降级使用 example/template 文件。
+- 行业证据覆盖率 0.7161%，行业证据缺失 9844；公司证据覆盖率 0.0%，公司证据缺失 9915。
+- 证据来源分布：行业 `MANUAL_TEMPLATE=71`、`MISSING=9844`；公司 `MISSING=9915`。
+- 证据质量分布：`MANUAL_TEMPLATE=71`、`MISSING=9844`；证据置信度分布：`MEDIUM=71`、`LOW=9844`。
 
-## C Exit Policy Comparison
+## C Output Files
 
-| pool | raw_net_60 | old_hybrid_net_60 | balanced_net_60 | raw_dd250 | old_hybrid_dd250 | balanced_dd250 | retention_60d | dd_reduction_250d | efficiency |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| core | 0.2100 | 0.5683 | 1.8757 | -31.5738 | -4.7484 | -9.8741 | 893.1905 | 68.7269 | 76.5886 |
-| cycle | 3.8480 | 1.0540 | 3.8867 | -31.0926 | -4.5690 | -10.1031 | 101.0057 | 67.5064 | 70.9423 |
-| broad | 2.3054 | 0.1900 | 1.9083 | -30.1730 | -4.7556 | -10.0461 | 82.7752 | 66.7050 | 64.4014 |
-
-结论：`balanced_v7_double_close_stop` 相比旧 hybrid 明显保留更多 60 日收益，broad 从 0.1900% 提升到 1.9083%；为保留收益，250 日退出回撤从旧 hybrid 的 -4.7556 放宽到 -10.0461，仍显著好于 raw hold 的 -30.1730。
-
-## D Broad Key Metrics
-
-| metric | value | target | result |
-| --- | ---: | ---: | --- |
-| total_signals | 9627 | >= 9000 | pass |
-| sample_change_pct | -0.1866 | >= -10 | pass |
-| raw_net_60 | 2.3054 | reference | - |
-| old_hybrid_exit_net_60 | 0.1900 | reference | - |
-| balanced_exit_net_60 | 1.9083 | >= 1.2 | pass |
-| return_retention_rate_60d | 82.7752 | >= 50 | pass |
-| raw_dd250 | -30.1730 | reference | - |
-| old_hybrid_dd250 | -4.7556 | reference | - |
-| balanced_dd250 | -10.0461 | significantly better than raw | pass |
-| drawdown_reduction_rate_250d | 66.7050 | >= 60 | pass |
-| balanced_win_rate_60d | 34.3115 | >= 46 | fail |
-| balanced_outperform_60d | 51.3624 | >= 46 | pass |
-
-## E Data Quality
-
-| pool | provider_error_count | pe_missing_count | pb_missing_count | financial_missing_count | valuation_coverage_rate | financial_coverage_rate | risk_review_count |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| core | 0 | 386 | 0 | 0 | 100.0 | 100.0 | 5 |
-| cycle | 0 | 797 | 0 | 0 | 100.0 | 100.0 | 5 |
-| broad | 0 | 687 | 0 | 0 | 100.0 | 100.0 | 5 |
-
-PE 缺失继续保留在报告字段中，不被当作安全数据；财务缺失数量为 0，但净利润、经营现金流等字段仍需人工复核公开数据质量。
-
-## F Exit Reason Diagnostics
-
-| reason | broad_count | broad_ratio | avg_exit_net_60 | avg_raw_net_60 |
-| --- | ---: | ---: | ---: | ---: |
-| STOP_LOSS | 4575 | 47.5226 | -7.3781 | -7.2604 |
-| TIME_EXIT_60D | 1911 | 19.8504 | 14.0603 | 14.1564 |
-| TREND_BREAK_CONFIRMED | 1594 | 16.5576 | -3.5769 | -4.5237 |
-| TAKE_PROFIT_TRAIL | 1424 | 14.7917 | 21.6711 | 24.9032 |
-| INSUFFICIENT_DATA | 85 | 0.8829 | 无可用数据 | 无可用数据 |
-| NO_REPAIR_40D | 38 | 0.3947 | -1.6875 | -2.3531 |
-
-STOP_LOSS 触发比例从 v6 的 50.0831% 降到 47.5226%，收益保留继续改善；但 STOP_LOSS 仍是最拖累收益的原因，下一轮应转向信号质量分层和真/假破位识别，不能直接取消风险控制。
-
-## G Output Files
-
-三组真实报告均生成：
+真实报告目录 `reports/genge_industry_evidence_broad/20260630_162940` 已生成：
 
 - `summary.md` / `summary.json`。
 - `signal_details.csv`。
-- `baseline_comparison.json`。
-- `parameter_experiment.json` / `parameter_experiment.md`。
-- `exit_policy_experiment.json` / `exit_policy_experiment.md`。
+- `industry_evidence_cards.md` / `industry_evidence_cards.json`，行业证据卡片 30 个。
+- `cycle_turning_point_candidates.csv`。
 - `strict_observation_candidates.csv`。
 - `research_observation_candidates.csv`。
 - `balanced_research_observation_candidates.csv`。
 - `watch_only_candidates.csv`。
 - `paper_observation_candidates.csv` 兼容旧文件名。
 
-候选文件写明：仅用于模拟观察和复盘，不构成买入建议，不应自动交易。
+候选文件写明：仅用于模拟观察和复盘；研究观察候选需人工复核，不构成买入建议，不应自动交易。
 
-## H Observation Candidates
+## D Hard Logic Integration
 
-| pool | strict_candidates | research_candidates | balanced_research_candidates | watch_only_candidates |
-| --- | ---: | ---: | ---: | ---: |
-| core | 0 | 695 | 859 | 1535 |
-| cycle | 0 | 1877 | 2621 | 4576 |
-| broad | 0 | 4672 | 5212 | 9627 |
+| item | value |
+| --- | ---: |
+| hard_logic_level NONE | 9910 |
+| hard_logic_level MEDIUM | 5 |
+| hard_logic_level STRONG | 0 |
+| industry_evidence_score covered signals | 71 |
+| company evidence covered signals | 0 |
 
-严格候选仍为 0；balanced research 和 watch-only 只能作为人工复核池，不能称为实盘操作入口。
+`STRONG` 硬逻辑不能只靠价格、均线、低位分位或总分产生；模板、过期、冲突或缺失证据都会阻止升级。本轮有 5 条 `MEDIUM` 来自模板证据，只能说明框架链路可运行，不说明行业逻辑已经被真实数据验证。
 
-## I Acceptance Decision
+## E Cycle Screener
 
-最终枚举：`PASS_EXIT_POLICY_RESEARCH`。
+| metric | value |
+| --- | ---: |
+| cycle_turning_point_candidate_count | 0 |
+| strict_observation_candidate_count | 0 |
+| research_observation_candidate_count | 4831 |
+| balanced_research_observation_candidate_count | 5473 |
+| watch_only_candidate_count | 9915 |
+| risk_review_count | 5 |
 
-理由：真实公开数据 core/cycle/broad 均可运行，data failures 和 provider errors 均为 0；broad 样本 9627，未出现样本骤降；balanced 退出策略把 broad 60 日退出净收益提高到 1.9083%，收益保留率提高到 82.7752%，并把 250 日 raw hold 回撤从 -30.1730 降到 -10.0461，回撤压降 66.7050%。但 broad balanced 60 日胜率 34.3115% 仍低于 46% 门槛，原始 60 日胜率/跑赢基准和 250 日回撤也仍阻止更高模拟盘枚举，所以不能输出 `PASS_BALANCED_EXIT_POLICY`，更不能输出 `PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
+`cycle_turning_point_candidates.csv` 本次只有空结果占位行，不能解释为真实周期拐点候选。主候选池仍是人工复核池，不是交易清单。
+
+## F Data Quality
+
+| metric | value |
+| --- | ---: |
+| provider_error_count | 0 |
+| pe_missing_count | 690 |
+| pb_missing_count | 0 |
+| financial_missing_count | 0 |
+| valuation_coverage_rate | 100.0 |
+| financial_coverage_rate | 100.0 |
+
+PE 缺失保留为显式统计项，不被当作安全数据；财务覆盖率为 100.0%，但负债、净利润、经营现金流等字段仍应结合公开财报人工复核。
+
+## G Strategy Impact
+
+| metric | value |
+| --- | ---: |
+| raw avg_net_return_60d | 2.0603 |
+| raw win_rate_60d | 46.5256 |
+| raw benchmark_outperform_60d | 46.4442 |
+| balanced_exit_net_return_60d | 1.8834 |
+| balanced_exit_win_rate_60d | 34.7671 |
+| balanced_exit_outperform_rate_60d | 51.3423 |
+| return_retention_rate_60d | 91.4139 |
+| drawdown_reduction_rate_250d | 66.1695 |
+
+退出原因诊断：STOP_LOSS 4542 条、占 45.8094%；TIME_EXIT_60D 2099 条、占 21.1699%；TREND_BREAK_CONFIRMED 1754 条、占 17.6904%；TAKE_PROFIT_TRAIL 1393 条、占 14.0494%；INSUFFICIENT_DATA 81 条；NO_REPAIR_40D 46 条。
+
+## H Acceptance Decision
+
+最终枚举：`PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。
+
+理由：行业周期证据层的 schema、模板、加载、特征合成、硬逻辑降级、证据卡片、周期拐点候选文件和 summary 统计均可运行；真实 broad 全量运行完成且 `data_failures=0`。但用户真实行业/公司证据文件尚未提供，本次主要是模板和缺失证据，不能声称硬逻辑研究已经通过，也不能声称周期拐点筛选器已被真实证据验证。
+
+因此，本轮不能输出 `PASS_HARD_LOGIC_RESEARCH_READY`、`PASS_CYCLE_TURNING_POINT_SCREENER`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。下一步应先填充 `data/user_supplied` 下的真实行业和公司证据，再重新跑同一命令复核。

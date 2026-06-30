@@ -34,6 +34,9 @@ python3 -m src.strategies.genge_cycle_bottom.cli \
   --financial-data-dir tests/fixtures/genge_cycle_bottom/financial \
   --industry-cycle-file tests/fixtures/genge_cycle_bottom/industry_cycle.csv \
   --stock-industry-map tests/fixtures/genge_cycle_bottom/stock_industry_map.csv \
+  --industry-evidence-file tests/fixtures/genge_cycle_bottom/industry_evidence.csv \
+  --company-evidence-file tests/fixtures/genge_cycle_bottom/company_evidence.csv \
+  --industry-evidence-schema config/industry_evidence_schema.yaml \
   --output-dir reports/genge_cycle_bottom_ci_smoke
 ```
 
@@ -54,6 +57,11 @@ python3 scripts/run_genge_real_research.py \
   --auto-fetch-valuation \
   --auto-fetch-financial \
   --industry-cycle-file data/examples/genge_industry_cycle_manual.csv \
+  --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+  --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+  --industry-evidence-schema config/industry_evidence_schema.yaml \
+  --output-industry-evidence-cards \
+  --output-cycle-turning-point-candidates \
   --fixture-smoke-passed \
   --ci-passed
 ```
@@ -71,6 +79,12 @@ python3 scripts/run_genge_real_research.py \
 - `--fundamental-cache-dir`：估值/财务缓存目录，默认 `data/cache/genge_fundamentals`。缓存目录被 `.gitignore` 忽略。
 - `--industry-cycle-file`：行业周期人工样例或用户维护文件。仓库内的 `data/examples/genge_industry_cycle_manual.csv` 只是研究样例，不是权威行业判断。
 - `--stock-industry-map`：当股票池没有行业列时，用 CSV 补充 `code,industry` 映射。
+- `--industry-evidence-file`：行业周期证据 CSV，建议由 `scripts/update_industry_evidence_from_research.py` 从本地研究记录生成。若使用 example/template 文件，报告会标为 `manual_template`。
+- `--company-evidence-file`：公司层周期证据 CSV，用于判断公司是否跟随行业改善。
+- `--industry-evidence-schema`：行业证据 schema，当前路径为 `config/industry_evidence_schema.yaml`。
+- `--enable-hard-logic-filter` / `--min-hard-logic-level`：可选硬逻辑门槛，默认不破坏历史 fixture；开启后低于门槛的确认类信号会降级。
+- `--output-industry-evidence-cards`：输出 `industry_evidence_cards.md/json`。
+- `--output-cycle-turning-point-candidates`：输出 `cycle_turning_point_candidates.csv`。
 - `--fixture-smoke-passed`：真实研究前已经完成 fixture smoke 时传入，用于验收枚举上下文；不会改变信号生成逻辑。
 - `--ci-passed`：GitHub Actions fixture CI 已经观察通过时传入，用于验收枚举上下文；不会改变信号生成逻辑。
 
@@ -104,6 +118,8 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `research_observation_candidates.csv`：研究观察候选，门槛比 strict 更宽，但仍不构成买入建议，不应自动交易。
 - `balanced_research_observation_candidates.csv`：按 `balanced_hybrid_60d_exit` 过滤后的研究观察候选，仅用于人工复核和模拟观察。
 - `watch_only_candidates.csv`：趋势、行业周期、估值陷阱或执行风险仍需继续跟踪的 watch-only 样本。
+- `industry_evidence_cards.md/json`：按行业汇总证据分、周期阶段、缺失项、过期项、候选股票和风险提示。
+- `cycle_turning_point_candidates.csv`：周期拐点研究观察候选，要求低位、估值/财务不过差、趋势至少 MEDIUM、行业阶段为 BOTTOMING/RECOVERING、硬逻辑至少 MEDIUM。
 - `paper_observation_candidates.csv`：兼容旧文件名，内容等同严格模拟观察候选。
 
 当前模块是研究回测，不生成实盘委托，也不打开券商页面。
@@ -127,6 +143,11 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `execution_diagnostics`：涨停买入风险、跌停/停牌/缺失 bar、低流动性、异常跳空等可成交诊断。该字段是研究风控提示，不代表真实委托结果。
 - `trend_confirmation_summary`：`NONE/WEAK/MEDIUM/STRONG` 趋势确认等级分布。
 - `industry_cycle_quality_summary`：行业周期证据质量分布，取值包括 `missing`、`manual_template`、`user_supplied`、`provider_derived`、`verified`。
+- `industry_evidence_quality_summary` / `industry_evidence_confidence_summary`：行业证据质量和置信度分布。模板或样例证据不会被当作权威结论。
+- `industry_evidence_source_type_summary` / `company_evidence_source_type_summary` / `evidence_source_type_distribution`：行业和公司证据来源类型分布，用来区分 `manual_template`、`user_supplied`、`provider_derived`、`verified` 和 `missing`。
+- `hard_logic_level_summary`：`NONE/WEAK/MEDIUM/STRONG` 硬逻辑等级分布。`STRONG` 必须来自行业和公司证据一致改善，不能只靠价格、均线或评分。
+- `industry_evidence_missing_count` / `company_evidence_missing_count`：行业和公司证据缺失数量。
+- `cycle_turning_point_candidate_count`：周期拐点研究观察候选数量。
 - `execution_entry_quality_summary`：入口执行质量分布，取值为 `good/degraded/risky/unavailable`。
 - `stop_policy_summary`：动态止损修正收益、止损触发率、是否可能改善回撤或截断反弹。
 - `strategy_horizon_profile`：策略周期定位，固定写明主周期 `60d`、辅助周期 `20d/120d`、风险周期 `250d`。
@@ -150,6 +171,17 @@ reports/genge_cycle_bottom_real/20260627_203000/
 报告中的 `avg_return_*` 为向后兼容字段，当前等同于 `avg_net_return_*`，不得改成原始收益口径。
 
 ## Acceptance Gate
+
+行业证据层启用时，报告中的最终行业证据验收枚举只使用：
+
+- `FAIL_EVIDENCE_LAYER`。
+- `PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。
+- `PASS_HARD_LOGIC_RESEARCH_READY`。
+- `PASS_CYCLE_TURNING_POINT_SCREENER`。
+- `PASS_PAPER_TRADING_CANDIDATE`。
+- `PASS_PAPER_TRADING_READY`。
+
+当行业证据来自 example/template/fixture 或缺少真实多源证据时，只能保守返回 `PASS_INDUSTRY_EVIDENCE_FRAMEWORK`；这表示框架、字段和报告输出可运行，不表示行业逻辑已被验证。
 
 `PASS_REAL_DATA_RESEARCH` 是真实公开数据研究链路通过，不代表可以买入或进入模拟盘。它必须至少满足：fixture smoke 已通过、真实公开数据运行通过、样本数不少于 100、无已知未来函数风险、无自动交易能力、data errors/provider errors 不严重，且估值和财务覆盖率都超过 30%（除非明确标记为纯价格研究）。收益期望、胜率、跑赢基准和回撤问题会保留在 `reasons` 中，用于阻止进入 `PASS_PAPER_TRADING_READY`。
 
@@ -189,6 +221,8 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `LEFT_SMALL_BUY` 至少需要 `trend_confirmation_level=WEAK`，`CONFIRM_BUY` 至少需要 `MEDIUM`，`ADD` 预留为 `STRONG`。
 - 新增 `stabilization_days`、`downtrend_exhaustion_score`、`reclaim_ma_score`、`no_falling_knife_filter` 和 `second_low_confirmation`，低位但未止跌的样本最多观察。
 - 财务缺失、行业周期缺失或行业周期证据质量为 `manual_template` 时，`CONFIRM_BUY` 会降级。
+- 行业证据层缺失时，`industry_evidence_score=50` 且 `hard_logic_level=NONE/WEAK`；模板证据最多到 `MEDIUM`，过期或冲突证据会打 warning。
+- 负向行业或公司证据会阻止确认类信号升级，只保留研究观察或拒绝。
 - 新增 `value_trap_score`、`value_trap_flag` 和 `valuation_repair_signal`；低估值但财务缺失或恶化不默认安全。
 - 新增 `dynamic_stop_loss`、`stop_loss_distance_pct`、`invalidation_level` 和 `post_entry_adverse_excursion_pct`；回测同时保留原始收益、净收益和止损修正收益。
 - 新增退出策略回测：`fixed_60d_time_exit`、`trend_break_exit`、`profit_trailing_exit`、旧 `hybrid_60d_repair_exit` 和新 `balanced_hybrid_60d_exit`。同一天多条件触发时按 STOP_LOSS、趋势破位/均线丢失、止盈回撤、时间退出的顺序执行。

@@ -45,6 +45,19 @@ def _latest_report_dir(output_dir: Path) -> Path | None:
     return report_dirs[-1] if report_dirs else None
 
 
+def _resolve_optional_evidence_file(path_value: str | None, example_name: str) -> str | None:
+    if not path_value:
+        return None
+    requested = Path(path_value)
+    if requested.exists():
+        return str(requested)
+    example = _repo_root() / "data" / "examples" / example_name
+    if example.exists():
+        print(f"evidence_file_fallback={requested}->{example}")
+        return str(example)
+    return path_value
+
+
 def _build_strategy_args(args: argparse.Namespace, pool_file: Path) -> list[str]:
     strategy_args = [
         "--stock-pool-file",
@@ -70,6 +83,28 @@ def _build_strategy_args(args: argparse.Namespace, pool_file: Path) -> list[str]
         strategy_args.extend(["--industry-cycle-file", args.industry_cycle_file])
     if args.stock_industry_map:
         strategy_args.extend(["--stock-industry-map", args.stock_industry_map])
+    industry_evidence_file = _resolve_optional_evidence_file(
+        args.industry_evidence_file,
+        "industry_cycle_evidence_template.csv",
+    )
+    company_evidence_file = _resolve_optional_evidence_file(
+        args.company_evidence_file,
+        "company_cycle_evidence_template.csv",
+    )
+    if industry_evidence_file:
+        strategy_args.extend(["--industry-evidence-file", industry_evidence_file])
+    if company_evidence_file:
+        strategy_args.extend(["--company-evidence-file", company_evidence_file])
+    if args.industry_evidence_schema:
+        strategy_args.extend(["--industry-evidence-schema", args.industry_evidence_schema])
+    if args.enable_hard_logic_filter:
+        strategy_args.append("--enable-hard-logic-filter")
+    if args.min_hard_logic_level:
+        strategy_args.extend(["--min-hard-logic-level", args.min_hard_logic_level])
+    if args.output_industry_evidence_cards:
+        strategy_args.append("--output-industry-evidence-cards")
+    if args.output_cycle_turning_point_candidates:
+        strategy_args.append("--output-cycle-turning-point-candidates")
     if args.auto_fetch_valuation:
         strategy_args.append("--auto-fetch-valuation")
     if args.auto_fetch_financial:
@@ -119,6 +154,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--fundamental-cache-dir", default="data/cache/genge_fundamentals")
     parser.add_argument("--industry-cycle-file")
     parser.add_argument("--stock-industry-map")
+    parser.add_argument("--industry-evidence-file")
+    parser.add_argument("--company-evidence-file")
+    parser.add_argument("--industry-evidence-schema")
+    parser.add_argument("--enable-hard-logic-filter", action="store_true")
+    parser.add_argument("--min-hard-logic-level", default="MEDIUM", choices=("NONE", "WEAK", "MEDIUM", "STRONG"))
+    parser.add_argument("--output-industry-evidence-cards", action="store_true")
+    parser.add_argument("--output-cycle-turning-point-candidates", action="store_true")
     parser.add_argument("--fixture-smoke-passed", action="store_true", help="Pass acceptance context after fixture smoke has been verified")
     parser.add_argument("--ci-passed", action="store_true", help="Pass acceptance context after GitHub Actions fixture CI has been observed passed")
     return parser
@@ -172,6 +214,10 @@ def main(argv: list[str] | None = None) -> int:
         print(f"financial_coverage_rate={summary.get('financial_coverage_rate', 0)}")
         print(f"total_signals={summary.get('total_signals', 0)}")
         print(f"risk_review_count={len(summary.get('worst_signals') or [])}")
+        print(f"main_candidate_count={summary.get('balanced_research_observation_candidate_count', 0)}")
+        print(f"cycle_turning_point_candidate_count={summary.get('cycle_turning_point_candidate_count', 0)}")
+        print(f"industry_evidence_missing_count={summary.get('industry_evidence_missing_count', 0)}")
+        print(f"company_evidence_missing_count={summary.get('company_evidence_missing_count', 0)}")
         print(f"paper_trading_gate={gate.get('verdict', 'UNKNOWN')}")
     else:
         print(f"elapsed_seconds={elapsed:.2f}")

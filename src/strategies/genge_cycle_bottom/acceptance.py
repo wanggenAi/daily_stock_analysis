@@ -12,11 +12,15 @@ FAIL_LOOKAHEAD_RISK = "FAIL_LOOKAHEAD_RISK"
 FAIL_STRATEGY_EXPECTANCY = "FAIL_STRATEGY_EXPECTANCY"
 FAIL_EXIT_POLICY = "FAIL_EXIT_POLICY"
 FAIL_EXIT_BALANCE = "FAIL_EXIT_BALANCE"
+FAIL_EVIDENCE_LAYER = "FAIL_EVIDENCE_LAYER"
 PASS_RESEARCH_ONLY = "PASS_RESEARCH_ONLY"
 PASS_REAL_DATA_RESEARCH = "PASS_REAL_DATA_RESEARCH"
 PASS_EXIT_POLICY_RESEARCH = "PASS_EXIT_POLICY_RESEARCH"
 PASS_BALANCED_EXIT_POLICY = "PASS_BALANCED_EXIT_POLICY"
 PASS_60D_REPAIR_STRATEGY_VALIDATED = "PASS_60D_REPAIR_STRATEGY_VALIDATED"
+PASS_INDUSTRY_EVIDENCE_FRAMEWORK = "PASS_INDUSTRY_EVIDENCE_FRAMEWORK"
+PASS_HARD_LOGIC_RESEARCH_READY = "PASS_HARD_LOGIC_RESEARCH_READY"
+PASS_CYCLE_TURNING_POINT_SCREENER = "PASS_CYCLE_TURNING_POINT_SCREENER"
 PASS_PAPER_TRADING_CANDIDATE = "PASS_PAPER_TRADING_CANDIDATE"
 PASS_PAPER_TRADING_READY = "PASS_PAPER_TRADING_READY"
 
@@ -28,11 +32,24 @@ ACCEPTANCE_ENUMS = (
     FAIL_STRATEGY_EXPECTANCY,
     FAIL_EXIT_POLICY,
     FAIL_EXIT_BALANCE,
+    FAIL_EVIDENCE_LAYER,
     PASS_RESEARCH_ONLY,
     PASS_REAL_DATA_RESEARCH,
     PASS_EXIT_POLICY_RESEARCH,
     PASS_BALANCED_EXIT_POLICY,
     PASS_60D_REPAIR_STRATEGY_VALIDATED,
+    PASS_INDUSTRY_EVIDENCE_FRAMEWORK,
+    PASS_HARD_LOGIC_RESEARCH_READY,
+    PASS_CYCLE_TURNING_POINT_SCREENER,
+    PASS_PAPER_TRADING_CANDIDATE,
+    PASS_PAPER_TRADING_READY,
+)
+
+INDUSTRY_EVIDENCE_ACCEPTANCE_ENUMS = (
+    FAIL_EVIDENCE_LAYER,
+    PASS_INDUSTRY_EVIDENCE_FRAMEWORK,
+    PASS_HARD_LOGIC_RESEARCH_READY,
+    PASS_CYCLE_TURNING_POINT_SCREENER,
     PASS_PAPER_TRADING_CANDIDATE,
     PASS_PAPER_TRADING_READY,
 )
@@ -94,6 +111,78 @@ def _execution_risk_rate(summary: Dict[str, Any]) -> float:
         + int(execution.get("low_liquidity_count") or 0)
     )
     return risky / total * 100.0
+
+
+def _summary_group_count(summary: Dict[str, Any], field_name: str, names: set[str]) -> int:
+    grouped = summary.get(field_name) or {}
+    total = 0
+    for name, metrics in grouped.items():
+        if str(name).upper() in names:
+            total += int((metrics or {}).get("total_signals") or 0)
+    return total
+
+
+def _uses_industry_evidence_layer(summary: Dict[str, Any]) -> bool:
+    diagnostics = summary.get("diagnostics") or {}
+    return bool(
+        diagnostics.get("industry_evidence_schema")
+        or diagnostics.get("industry_evidence_schema_industries")
+        or diagnostics.get("industry_evidence_file")
+        or diagnostics.get("company_evidence_file")
+    )
+
+
+def _industry_evidence_layer_gate(
+    summary: Dict[str, Any],
+    *,
+    base_verdict: str,
+    base_reasons: list[str],
+    no_lookahead_risk: bool,
+    no_auto_trade: bool,
+) -> Dict[str, Any] | None:
+    if not _uses_industry_evidence_layer(summary):
+        return None
+
+    diagnostics = summary.get("diagnostics") or {}
+    reasons = list(base_reasons)
+    if not no_lookahead_risk:
+        return {"verdict": FAIL_EVIDENCE_LAYER, "reasons": ["行业证据层存在未来函数风险"]}
+    if not no_auto_trade:
+        return {"verdict": FAIL_EVIDENCE_LAYER, "reasons": ["行业证据层不能包含自动交易能力"]}
+    if not diagnostics.get("industry_evidence_schema_industries"):
+        return {"verdict": FAIL_EVIDENCE_LAYER, "reasons": ["缺少行业证据 schema 或 schema 未加载成功"]}
+    if "FAIL" in base_verdict:
+        return {"verdict": FAIL_EVIDENCE_LAYER, "reasons": reasons or ["基础研究链路未通过，行业证据层不能单独升级"]}
+
+    source_types = {
+        str(diagnostics.get("industry_evidence_source") or "none"),
+        str(diagnostics.get("company_evidence_source") or "none"),
+    }
+    if source_types & {"manual_template", "fixture", "none"}:
+        return {
+            "verdict": PASS_INDUSTRY_EVIDENCE_FRAMEWORK,
+            "reasons": reasons
+            or ["行业证据 schema、信号字段、证据卡和候选输出已可运行；当前证据来源偏模板或 fixture，不能升级硬逻辑结论"],
+        }
+
+    medium_or_strong = _summary_group_count(summary, "hard_logic_level_summary", {"MEDIUM", "STRONG"})
+    strong_count = _summary_group_count(summary, "hard_logic_level_summary", {"STRONG"})
+    cycle_candidate_count = int(summary.get("cycle_turning_point_candidate_count") or 0)
+    evidence_confident = _summary_group_count(summary, "industry_evidence_confidence_summary", {"MEDIUM", "HIGH"})
+    if cycle_candidate_count > 0 and medium_or_strong > 0:
+        return {
+            "verdict": PASS_CYCLE_TURNING_POINT_SCREENER,
+            "reasons": reasons or ["行业证据层已产生周期拐点研究观察候选，仍只用于人工复核"],
+        }
+    if medium_or_strong > 0 and evidence_confident > 0 and strong_count >= 0:
+        return {
+            "verdict": PASS_HARD_LOGIC_RESEARCH_READY,
+            "reasons": reasons or ["存在 MEDIUM 及以上硬逻辑样本，可进入人工研究复核"],
+        }
+    return {
+        "verdict": PASS_INDUSTRY_EVIDENCE_FRAMEWORK,
+        "reasons": reasons or ["行业证据框架可运行，但有效证据不足，保持框架通过级别"],
+    }
 
 
 def evaluate_paper_trading_gate(
@@ -350,6 +439,16 @@ def evaluate_paper_trading_gate(
     if can_paper_candidate:
         verdict = PASS_PAPER_TRADING_CANDIDATE
         reasons = ["满足研究观察候选门槛，仅用于模拟观察和复盘，不构成买入建议"]
+
+    industry_gate = _industry_evidence_layer_gate(
+        summary,
+        base_verdict=verdict,
+        base_reasons=reasons,
+        no_lookahead_risk=no_lookahead_risk,
+        no_auto_trade=no_auto_trade,
+    )
+    if industry_gate is not None:
+        return industry_gate
 
     return {"verdict": verdict, "reasons": reasons or ["仅通过研究验证，尚未达到更高门槛"]}
 

@@ -14,6 +14,13 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+from .industry_evidence import (
+    EvidenceQuality,
+    compute_company_evidence_score,
+    compute_hard_logic_level,
+    compute_industry_evidence_score,
+)
+
 
 TRADING_DAYS_PER_YEAR = 250
 PRICE_MIN_OBSERVATIONS_BY_YEARS = {3: 500, 5: 800, 10: 1200}
@@ -66,6 +73,23 @@ class FeatureSet:
     industry: Optional[str] = None
     industry_cycle_phase: Optional[str] = None
     industry_cycle_quality: str = "missing"
+    industry_evidence_score: float = 50.0
+    industry_evidence_confidence: str = "LOW"
+    industry_evidence_quality: str = "MISSING"
+    industry_evidence_source_type: str = "MISSING"
+    industry_evidence_summary: str = ""
+    industry_evidence_warning_flags: List[str] = field(default_factory=list)
+    industry_evidence_positive_count: int = 0
+    industry_evidence_negative_count: int = 0
+    industry_evidence_neutral_count: int = 0
+    industry_evidence_stale_count: int = 0
+    industry_evidence_missing_fields: List[str] = field(default_factory=list)
+    company_evidence_score: float = 50.0
+    company_evidence_source_type: str = "MISSING"
+    company_evidence_summary: str = ""
+    hard_logic_score: float = 50.0
+    hard_logic_level: str = "NONE"
+    hard_logic_summary: str = ""
     market_environment_state: Optional[str] = None
     execution_risk_score: float = 0.0
     execution_risk_quality: str = "good"
@@ -1073,6 +1097,11 @@ def build_feature_set(
     benchmark_df: Optional[pd.DataFrame] = None,
     industry_cycle_df: Optional[pd.DataFrame] = None,
     industry: Optional[str] = None,
+    code: Optional[str] = None,
+    stock_name: Optional[str] = None,
+    industry_evidence_df: Optional[pd.DataFrame] = None,
+    company_evidence_df: Optional[pd.DataFrame] = None,
+    industry_evidence_schema: Optional[Dict[str, Any]] = None,
 ) -> FeatureSet:
     target = coerce_date(as_of_date)
     history = slice_as_of(price_df, target)
@@ -1086,6 +1115,18 @@ def build_feature_set(
 
     price_score, percentiles, price_missing = compute_price_percentile_score(history, close)
     industry_score, industry_missing, industry_diag = compute_industry_cycle_score(industry_cycle_df, industry, target)
+    evidence_layer_requested = bool(industry_evidence_schema) or bool(
+        industry_evidence_df is not None and not industry_evidence_df.empty
+    ) or bool(company_evidence_df is not None and not company_evidence_df.empty)
+    industry_evidence = compute_industry_evidence_score(industry, target, industry_evidence_df, industry_evidence_schema)
+    company_evidence = compute_company_evidence_score(
+        code or "",
+        target,
+        company_evidence_df,
+        stock_name=stock_name or "",
+        industry=industry or "",
+    )
+    hard_logic = compute_hard_logic_level(industry_evidence, company_evidence)
     valuation_score, valuation_missing, valuation_diag = compute_valuation_score(valuation_df, target, industry=industry)
     financial_score, financial_missing, financial_risks, financial_diag = compute_financial_safety_score(financial_df, target)
     trend_score, trend_diag, trend_missing, trend_risks = compute_trend_stabilization_score(history)
@@ -1111,7 +1152,10 @@ def build_feature_set(
     features.financial_safety_score = financial_score
     features.trend_stabilization_score = trend_score
     features.market_environment_score = market_score
-    features.industry_cycle_score = industry_score
+    if industry_evidence.evidence_quality != EvidenceQuality.MISSING.value:
+        features.industry_cycle_score = round(industry_score * 0.45 + industry_evidence.evidence_score * 0.55, 2)
+    else:
+        features.industry_cycle_score = industry_score
     features.price_percentile_3y = percentiles.get("price_percentile_3y")
     features.price_percentile_5y = percentiles.get("price_percentile_5y")
     features.price_percentile_10y = percentiles.get("price_percentile_10y")
@@ -1151,13 +1195,49 @@ def build_feature_set(
     features.value_trap_flag = bool(value_trap_diag.get("value_trap_flag"))
     features.valuation_repair_signal = bool(value_trap_diag.get("valuation_repair_signal"))
     features.industry = industry
-    features.industry_cycle_phase = industry_diag.get("industry_cycle_phase")
+    features.industry_cycle_phase = (
+        industry_evidence.cycle_phase
+        if industry_evidence.evidence_quality != EvidenceQuality.MISSING.value and industry_evidence.cycle_phase != "UNKNOWN"
+        else industry_diag.get("industry_cycle_phase")
+    )
     features.industry_cycle_quality = str(industry_diag.get("industry_cycle_quality") or "missing")
+    features.industry_evidence_score = industry_evidence.evidence_score
+    features.industry_evidence_confidence = industry_evidence.confidence_level
+    features.industry_evidence_quality = industry_evidence.evidence_quality
+    features.industry_evidence_source_type = industry_evidence.evidence_source_type
+    features.industry_evidence_summary = industry_evidence.summary
+    features.industry_evidence_warning_flags = list(industry_evidence.warning_flags)
+    features.industry_evidence_positive_count = industry_evidence.positive_evidence_count
+    features.industry_evidence_negative_count = industry_evidence.negative_evidence_count
+    features.industry_evidence_neutral_count = industry_evidence.neutral_evidence_count
+    features.industry_evidence_stale_count = industry_evidence.stale_evidence_count
+    features.industry_evidence_missing_fields = list(industry_evidence.missing_evidence_fields)
+    features.company_evidence_score = company_evidence.evidence_score
+    features.company_evidence_source_type = company_evidence.evidence_source_type
+    features.company_evidence_summary = company_evidence.summary
+    features.hard_logic_score = hard_logic.hard_logic_score
+    features.hard_logic_level = hard_logic.hard_logic_level
+    features.hard_logic_summary = hard_logic.summary
     features.market_environment_state = market_diag.get("market_environment_state")
     features.execution_risk_score = execution_score
     features.execution_risk_quality = str(execution_diag.get("asof_executable_entry_quality") or "good")
+    evidence_missing = []
+    if evidence_layer_requested and industry_evidence.evidence_quality == EvidenceQuality.MISSING.value:
+        evidence_missing.append("industry_evidence")
+    if evidence_layer_requested and company_evidence.evidence_quality == EvidenceQuality.MISSING.value:
+        evidence_missing.append("company_evidence")
+    evidence_missing.extend([f"industry_evidence:{name}" for name in industry_evidence.missing_evidence_fields])
     features.missing_fields = sorted(
-        set(price_missing + valuation_missing + financial_missing + trend_missing + long_term_missing + market_missing + industry_missing)
+        set(
+            price_missing
+            + valuation_missing
+            + financial_missing
+            + trend_missing
+            + long_term_missing
+            + market_missing
+            + industry_missing
+            + evidence_missing
+        )
     )
     features.risk_flags = sorted(
         set(
@@ -1165,6 +1245,9 @@ def build_feature_set(
             + trend_risks
             + long_term_risks
             + execution_risks
+            + list(industry_evidence.warning_flags)
+            + list(company_evidence.warning_flags)
+            + list(hard_logic.warning_flags)
             + (["value_trap_risk"] if features.value_trap_flag else [])
             + (["missing_financial_uncertain"] if "financial" in financial_missing else [])
         )
@@ -1175,6 +1258,22 @@ def build_feature_set(
     features.diagnostics.update(long_term_diag)
     features.diagnostics.update(market_diag)
     features.diagnostics.update(industry_diag)
+    features.diagnostics.update(
+        {
+            "industry_evidence_score": features.industry_evidence_score,
+            "industry_evidence_confidence": features.industry_evidence_confidence,
+            "industry_evidence_quality": features.industry_evidence_quality,
+            "industry_evidence_source_type": features.industry_evidence_source_type,
+            "industry_evidence_summary": features.industry_evidence_summary,
+            "industry_evidence_warning_flags": features.industry_evidence_warning_flags,
+            "company_evidence_score": features.company_evidence_score,
+            "company_evidence_source_type": features.company_evidence_source_type,
+            "company_evidence_summary": features.company_evidence_summary,
+            "hard_logic_score": features.hard_logic_score,
+            "hard_logic_level": features.hard_logic_level,
+            "hard_logic_summary": features.hard_logic_summary,
+        }
+    )
     features.diagnostics.update(value_trap_diag)
     features.diagnostics.update(execution_diag)
     features.diagnostics.update(

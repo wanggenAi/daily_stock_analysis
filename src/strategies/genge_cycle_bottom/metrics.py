@@ -25,6 +25,8 @@ BASELINE_METRIC_FIELDS = (
     "outperform_benchmark_rate_60d",
     "avg_low_max_drawdown_250d",
 )
+TREND_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
+HARD_LOGIC_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
 
 
 def _finite_number(value: Any) -> Optional[float]:
@@ -132,6 +134,10 @@ def _data_gap_counts(rows: Iterable[Dict[str, Any]]) -> Dict[str, int]:
             counter["industry_cycle_missing"] += 1
         if "stock_industry_map" in missing:
             counter["stock_industry_map_missing"] += 1
+        if any(token == "industry_evidence" or token.startswith("industry_evidence:") for token in missing):
+            counter["industry_evidence_missing"] += 1
+        if "company_evidence" in missing:
+            counter["company_evidence_missing"] += 1
     return dict(counter)
 
 
@@ -153,6 +159,9 @@ def _coverage_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
             "pb_missing_count": 0,
             "financial_missing_count": 0,
             "industry_cycle_missing_count": 0,
+            "industry_evidence_coverage_rate": 0.0,
+            "industry_evidence_missing_count": 0,
+            "company_evidence_missing_count": 0,
         }
 
     pe_missing = 0
@@ -161,6 +170,10 @@ def _coverage_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
     financial_covered = 0
     industry_cycle_covered = 0
     industry_cycle_missing = 0
+    industry_evidence_covered = 0
+    industry_evidence_missing = 0
+    company_evidence_covered = 0
+    company_evidence_missing = 0
 
     for row in rows:
         missing = _missing_tokens(row)
@@ -174,6 +187,15 @@ def _coverage_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         industry_missing = "industry_cycle" in missing or "stock_industry_map" in missing
         industry_cycle_missing += int(industry_missing)
         industry_cycle_covered += int(not industry_missing)
+        missing_industry_evidence = any(
+            token == "industry_evidence" or token.startswith("industry_evidence:")
+            for token in missing
+        )
+        missing_company_evidence = "company_evidence" in missing
+        industry_evidence_missing += int(missing_industry_evidence)
+        company_evidence_missing += int(missing_company_evidence)
+        industry_evidence_covered += int(not missing_industry_evidence)
+        company_evidence_covered += int(not missing_company_evidence)
 
     financial_missing = total - financial_covered
     return {
@@ -184,6 +206,10 @@ def _coverage_metrics(rows: List[Dict[str, Any]]) -> Dict[str, Any]:
         "pb_missing_count": pb_missing,
         "financial_missing_count": financial_missing,
         "industry_cycle_missing_count": industry_cycle_missing,
+        "industry_evidence_coverage_rate": round(industry_evidence_covered / total * 100, 4),
+        "company_evidence_coverage_rate": round(company_evidence_covered / total * 100, 4),
+        "industry_evidence_missing_count": industry_evidence_missing,
+        "company_evidence_missing_count": company_evidence_missing,
     }
 
 
@@ -364,6 +390,27 @@ def _execution_risk_score_distribution(rows: List[Dict[str, Any]]) -> Dict[str, 
     return dict(counter)
 
 
+def _evidence_source_type_distribution(rows: List[Dict[str, Any]]) -> Dict[str, Dict[str, int]]:
+    industry_counter: Counter[str] = Counter()
+    company_counter: Counter[str] = Counter()
+    for row in rows:
+        industry_source = str(
+            row.get("industry_evidence_source_type")
+            or row.get("industry_evidence_quality")
+            or "MISSING"
+        )
+        company_source = str(
+            row.get("company_evidence_source_type")
+            or "MISSING"
+        )
+        industry_counter[industry_source] += 1
+        company_counter[company_source] += 1
+    return {
+        "industry": dict(industry_counter),
+        "company": dict(company_counter),
+    }
+
+
 def _is_observation_candidate(row: Dict[str, Any]) -> bool:
     trend_rank = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
     stop_distance = _finite_number(row.get("stop_loss_distance_pct"))
@@ -428,6 +475,32 @@ def _is_balanced_research_observation_candidate(row: Dict[str, Any]) -> bool:
         and stop_distance <= 15
         and execution_risk < 60
         and entry_quality not in {"risky", "unavailable"}
+        and (balanced_return is None or balanced_return > -8)
+    )
+
+
+def _is_cycle_turning_point_candidate(row: Dict[str, Any]) -> bool:
+    price_percentile = _finite_number(row.get("price_percentile_5y"))
+    valuation_score = _finite_number(row.get("valuation_score")) or 0.0
+    financial_score = _finite_number(row.get("financial_safety_score")) or 0.0
+    trend_level = str(row.get("trend_confirmation_level") or "NONE")
+    cycle_phase = str(row.get("industry_cycle_phase") or "").upper()
+    hard_logic_level = str(row.get("hard_logic_level") or "NONE")
+    execution_risk = _finite_number(row.get("execution_risk_score")) or 0.0
+    value_trap_score = _finite_number(row.get("value_trap_score")) or 0.0
+    signal_type = str(row.get("signal_type") or "")
+    balanced_return = _finite_number(row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"))
+    return bool(
+        price_percentile is not None
+        and price_percentile <= 0.35
+        and valuation_score >= 45
+        and financial_score >= 45
+        and TREND_RANK.get(trend_level, 0) >= TREND_RANK["MEDIUM"]
+        and cycle_phase in {"BOTTOM", "BOTTOMING", "RECOVERING"}
+        and HARD_LOGIC_RANK.get(hard_logic_level, 0) >= HARD_LOGIC_RANK["MEDIUM"]
+        and execution_risk < 60
+        and value_trap_score < 70
+        and signal_type in {"WATCH", "LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"}
         and (balanced_return is None or balanced_return > -8)
     )
 
@@ -1264,6 +1337,7 @@ def compute_summary(
     research_observation_candidate_count = sum(1 for row in rows if _is_research_observation_candidate(row))
     balanced_research_observation_candidate_count = sum(1 for row in rows if _is_balanced_research_observation_candidate(row))
     watch_only_candidate_count = sum(1 for row in rows if _is_watch_only_candidate(row))
+    cycle_turning_point_candidate_count = sum(1 for row in rows if _is_cycle_turning_point_candidate(row))
     diagnostics = {
         "missing_fields": _split_flags(rows, "missing_fields"),
         "risk_flags": _split_flags(rows, "risk_flags"),
@@ -1341,6 +1415,12 @@ def compute_summary(
             "industry_cycle_phase_summary": _group_summary(rows, "industry_cycle_phase"),
             "trend_confirmation_summary": _group_summary(rows, "trend_confirmation_level"),
             "industry_cycle_quality_summary": _group_summary(rows, "industry_cycle_quality"),
+            "industry_evidence_quality_summary": _group_summary(rows, "industry_evidence_quality"),
+            "industry_evidence_source_type_summary": _group_summary(rows, "industry_evidence_source_type"),
+            "company_evidence_source_type_summary": _group_summary(rows, "company_evidence_source_type"),
+            "evidence_source_type_distribution": _evidence_source_type_distribution(rows),
+            "industry_evidence_confidence_summary": _group_summary(rows, "industry_evidence_confidence"),
+            "hard_logic_level_summary": _group_summary(rows, "hard_logic_level"),
             "execution_entry_quality_summary": _group_summary(rows, "executable_entry_quality"),
             "execution_risk_score_summary": _bucket_summary(rows, _execution_risk_bucket),
             "history_sufficiency_quality_summary": _group_summary(rows, "history_sufficiency_quality"),
@@ -1396,6 +1476,7 @@ def compute_summary(
             "research_observation_candidate_count": research_observation_candidate_count,
             "balanced_research_observation_candidate_count": balanced_research_observation_candidate_count,
             "watch_only_candidate_count": watch_only_candidate_count,
+            "cycle_turning_point_candidate_count": cycle_turning_point_candidate_count,
             "parameter_experiment": parameter_experiment,
             "baseline_comparison": baseline_comparison,
             "best": best_signals,
