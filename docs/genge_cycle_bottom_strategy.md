@@ -120,6 +120,7 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `watch_only_candidates.csv`：趋势、行业周期、估值陷阱或执行风险仍需继续跟踪的 watch-only 样本。
 - `industry_evidence_cards.md/json`：按行业汇总证据分、周期阶段、缺失项、过期项、候选股票和风险提示。
 - `cycle_turning_point_candidates.csv`：周期拐点研究观察候选，要求低位、估值/财务不过差、趋势至少 MEDIUM、行业阶段为 BOTTOMING/RECOVERING、硬逻辑至少 MEDIUM。
+- `pork_panel_deep_dive.md`：样板证据链路专项复核，文件名为兼容上一轮专项复核保留；内容从本次输入证据动态发现样板对象，不把猪肉、面板、牧原股份、TCL科技或其它股票硬编码成候选。
 - `paper_observation_candidates.csv`：兼容旧文件名，内容等同严格模拟观察候选。
 
 当前模块是研究回测，不生成实盘委托，也不打开券商页面。
@@ -144,10 +145,11 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `trend_confirmation_summary`：`NONE/WEAK/MEDIUM/STRONG` 趋势确认等级分布。
 - `industry_cycle_quality_summary`：行业周期证据质量分布，取值包括 `missing`、`manual_template`、`user_supplied`、`provider_derived`、`verified`。
 - `industry_evidence_quality_summary` / `industry_evidence_confidence_summary`：行业证据质量和置信度分布。模板或样例证据不会被当作权威结论。
-- `industry_evidence_source_type_summary` / `company_evidence_source_type_summary` / `evidence_source_type_distribution`：行业和公司证据来源类型分布，用来区分 `manual_template`、`user_supplied`、`provider_derived`、`verified` 和 `missing`。
+- `industry_evidence_source_type_summary` / `company_evidence_source_type_summary` / `evidence_source_type_distribution`：行业和公司证据来源类型分布，用来区分 `official_report`、`company_announcement`、`exchange_disclosure`、`research_report_summary`、`news_summary`、`manual_template`、`user_supplied`、`provider_derived`、`verified` 和 `missing`。
 - `hard_logic_level_summary`：`NONE/WEAK/MEDIUM/STRONG` 硬逻辑等级分布。`STRONG` 必须来自行业和公司证据一致改善，不能只靠价格、均线或评分。
 - `industry_evidence_missing_count` / `company_evidence_missing_count`：行业和公司证据缺失数量。
 - `cycle_turning_point_candidate_count`：周期拐点研究观察候选数量。
+- `cycle_turning_point_candidate_count_by_industry`：周期拐点研究观察候选的行业分布。
 - `execution_entry_quality_summary`：入口执行质量分布，取值为 `good/degraded/risky/unavailable`。
 - `stop_policy_summary`：动态止损修正收益、止损触发率、是否可能改善回撤或截断反弹。
 - `strategy_horizon_profile`：策略周期定位，固定写明主周期 `60d`、辅助周期 `20d/120d`、风险周期 `250d`。
@@ -182,6 +184,8 @@ reports/genge_cycle_bottom_real/20260627_203000/
 - `PASS_PAPER_TRADING_READY`。
 
 当行业证据来自 example/template/fixture 或缺少真实多源证据时，只能保守返回 `PASS_INDUSTRY_EVIDENCE_FRAMEWORK`；这表示框架、字段和报告输出可运行，不表示行业逻辑已被验证。
+
+样板研究记录可以放在 `research/industry_cycle/`，并由 `scripts/update_industry_evidence_from_research.py` 生成 `data/user_supplied/*evidence.csv`。缺少 `source`、`date` 或必需字段的证据会进入 `rejected_evidence.csv`，不会被降级后混入正式证据。猪肉、面板、牧原股份、TCL科技只作为证据链路样板；最终候选可以来自任意行业，取决于“低周期 + 边际改善 + 个股拐点 + 风险可控”的通用证据标准。
 
 `PASS_REAL_DATA_RESEARCH` 是真实公开数据研究链路通过，不代表可以买入或进入模拟盘。它必须至少满足：fixture smoke 已通过、真实公开数据运行通过、样本数不少于 100、无已知未来函数风险、无自动交易能力、data errors/provider errors 不严重，且估值和财务覆盖率都超过 30%（除非明确标记为纯价格研究）。收益期望、胜率、跑赢基准和回撤问题会保留在 `reasons` 中，用于阻止进入 `PASS_PAPER_TRADING_READY`。
 

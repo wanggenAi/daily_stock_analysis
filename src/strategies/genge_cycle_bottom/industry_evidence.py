@@ -30,6 +30,11 @@ class EvidenceQuality(str, Enum):
     MISSING = "MISSING"
     MANUAL_TEMPLATE = "MANUAL_TEMPLATE"
     USER_SUPPLIED = "USER_SUPPLIED"
+    NEWS_SUMMARY = "NEWS_SUMMARY"
+    RESEARCH_REPORT_SUMMARY = "RESEARCH_REPORT_SUMMARY"
+    OFFICIAL_REPORT = "OFFICIAL_REPORT"
+    COMPANY_ANNOUNCEMENT = "COMPANY_ANNOUNCEMENT"
+    EXCHANGE_DISCLOSURE = "EXCHANGE_DISCLOSURE"
     PROVIDER_DERIVED = "PROVIDER_DERIVED"
     VERIFIED_MULTI_SOURCE = "VERIFIED_MULTI_SOURCE"
 
@@ -56,9 +61,14 @@ class HardLogicLevel(str, Enum):
 QUALITY_RANK = {
     EvidenceQuality.MISSING.value: 0,
     EvidenceQuality.MANUAL_TEMPLATE.value: 1,
-    EvidenceQuality.USER_SUPPLIED.value: 2,
-    EvidenceQuality.PROVIDER_DERIVED.value: 3,
-    EvidenceQuality.VERIFIED_MULTI_SOURCE.value: 4,
+    EvidenceQuality.NEWS_SUMMARY.value: 2,
+    EvidenceQuality.USER_SUPPLIED.value: 3,
+    EvidenceQuality.RESEARCH_REPORT_SUMMARY.value: 4,
+    EvidenceQuality.PROVIDER_DERIVED.value: 5,
+    EvidenceQuality.OFFICIAL_REPORT.value: 6,
+    EvidenceQuality.COMPANY_ANNOUNCEMENT.value: 6,
+    EvidenceQuality.EXCHANGE_DISCLOSURE.value: 6,
+    EvidenceQuality.VERIFIED_MULTI_SOURCE.value: 7,
 }
 CONFIDENCE_RANK = {
     ConfidenceLevel.LOW.value: 0,
@@ -72,6 +82,22 @@ HARD_LOGIC_RANK = {
     HardLogicLevel.STRONG.value: 3,
 }
 DEFAULT_SCHEMA_FRESHNESS_DAYS = 180
+AUTHORITATIVE_SOURCE_TYPES = {
+    EvidenceQuality.OFFICIAL_REPORT.value,
+    EvidenceQuality.COMPANY_ANNOUNCEMENT.value,
+    EvidenceQuality.EXCHANGE_DISCLOSURE.value,
+    EvidenceQuality.PROVIDER_DERIVED.value,
+    EvidenceQuality.VERIFIED_MULTI_SOURCE.value,
+}
+HIGH_AUTHORITY_SOURCE_TYPES = {
+    EvidenceQuality.OFFICIAL_REPORT.value,
+    EvidenceQuality.COMPANY_ANNOUNCEMENT.value,
+    EvidenceQuality.EXCHANGE_DISCLOSURE.value,
+}
+LOW_AUTHORITY_SOURCE_TYPES = {
+    EvidenceQuality.MANUAL_TEMPLATE.value,
+    EvidenceQuality.NEWS_SUMMARY.value,
+}
 
 
 @dataclass(frozen=True)
@@ -249,8 +275,18 @@ def _normalize_source_type(value: Any, source: Any = "") -> str:
     source_raw = _as_text(source).lower()
     if raw in {"verified_multi_source", "verified", "multi_source", "multi-source"}:
         return EvidenceQuality.VERIFIED_MULTI_SOURCE.value
+    if raw in {"official_report", "official", "government", "stats", "nbs", "moa", "ndrc"}:
+        return EvidenceQuality.OFFICIAL_REPORT.value
+    if raw in {"company_announcement", "announcement", "annual_report", "quarterly_report"}:
+        return EvidenceQuality.COMPANY_ANNOUNCEMENT.value
+    if raw in {"exchange_disclosure", "exchange", "cninfo", "szse", "sse"}:
+        return EvidenceQuality.EXCHANGE_DISCLOSURE.value
     if raw in {"provider_derived", "provider", "akshare", "qstock", "tushare", "baostock"}:
         return EvidenceQuality.PROVIDER_DERIVED.value
+    if raw in {"research_report_summary", "research_report", "broker_summary", "industry_report"}:
+        return EvidenceQuality.RESEARCH_REPORT_SUMMARY.value
+    if raw in {"news_summary", "news", "media"}:
+        return EvidenceQuality.NEWS_SUMMARY.value
     if raw in {"user_supplied", "research_note", "manual_research", "user"}:
         return EvidenceQuality.USER_SUPPLIED.value
     if raw in {"manual_template", "template", "example", "demo"} or source_raw in {"manual_template", "template", "example", "demo"}:
@@ -287,10 +323,17 @@ def _source_quality(source_types: Iterable[str]) -> str:
         return EvidenceQuality.MISSING.value
     if EvidenceQuality.VERIFIED_MULTI_SOURCE.value in types:
         return EvidenceQuality.VERIFIED_MULTI_SOURCE.value
+    authoritative = sorted((item for item in types if item in AUTHORITATIVE_SOURCE_TYPES), key=lambda value: QUALITY_RANK.get(value, 0), reverse=True)
+    if authoritative:
+        return authoritative[0]
     if EvidenceQuality.PROVIDER_DERIVED.value in types:
         return EvidenceQuality.PROVIDER_DERIVED.value
+    if EvidenceQuality.RESEARCH_REPORT_SUMMARY.value in types:
+        return EvidenceQuality.RESEARCH_REPORT_SUMMARY.value
     if EvidenceQuality.USER_SUPPLIED.value in types:
         return EvidenceQuality.USER_SUPPLIED.value
+    if EvidenceQuality.NEWS_SUMMARY.value in types:
+        return EvidenceQuality.NEWS_SUMMARY.value
     return EvidenceQuality.MANUAL_TEMPLATE.value
 
 
@@ -302,8 +345,13 @@ def _dominant_source_type(source_types: Iterable[str]) -> str:
 def _quality_weight(source_type: str) -> float:
     return {
         EvidenceQuality.MANUAL_TEMPLATE.value: 0.65,
+        EvidenceQuality.NEWS_SUMMARY.value: 0.72,
         EvidenceQuality.USER_SUPPLIED.value: 0.85,
+        EvidenceQuality.RESEARCH_REPORT_SUMMARY.value: 0.9,
         EvidenceQuality.PROVIDER_DERIVED.value: 1.0,
+        EvidenceQuality.OFFICIAL_REPORT.value: 1.08,
+        EvidenceQuality.COMPANY_ANNOUNCEMENT.value: 1.08,
+        EvidenceQuality.EXCHANGE_DISCLOSURE.value: 1.08,
         EvidenceQuality.VERIFIED_MULTI_SOURCE.value: 1.15,
         EvidenceQuality.MISSING.value: 0.0,
     }.get(source_type, 0.8)
@@ -331,8 +379,13 @@ def _confidence(
     missing_required: List[str],
     stale_count: int,
     warning_flags: List[str],
+    positive_count: int,
+    negative_count: int,
 ) -> str:
+    types = set(source_types)
     if total_items == 0 or quality == EvidenceQuality.MISSING.value:
+        return ConfidenceLevel.LOW.value
+    if quality in LOW_AUTHORITY_SOURCE_TYPES and types <= LOW_AUTHORITY_SOURCE_TYPES:
         return ConfidenceLevel.LOW.value
     if quality == EvidenceQuality.MANUAL_TEMPLATE.value:
         return ConfidenceLevel.MEDIUM.value if total_items >= 3 and not missing_required else ConfidenceLevel.LOW.value
@@ -340,15 +393,18 @@ def _confidence(
         return ConfidenceLevel.LOW.value
     if stale_count >= max(1, total_items):
         return ConfidenceLevel.LOW.value
-    if "evidence_conflict" in warning_flags:
+    if any(flag in warning_flags for flag in ("evidence_conflict", "company_evidence_conflict")):
         return ConfidenceLevel.MEDIUM.value
-    types = set(source_types)
     if (
-        quality in {EvidenceQuality.PROVIDER_DERIVED.value, EvidenceQuality.VERIFIED_MULTI_SOURCE.value}
+        quality in HIGH_AUTHORITY_SOURCE_TYPES
         and total_items >= 4
         and len(types) >= 2
+        and bool(types & HIGH_AUTHORITY_SOURCE_TYPES)
+        and positive_count > negative_count
     ):
         return ConfidenceLevel.HIGH.value
+    if types <= {EvidenceQuality.NEWS_SUMMARY.value}:
+        return ConfidenceLevel.LOW.value
     return ConfidenceLevel.MEDIUM.value
 
 
@@ -531,6 +587,8 @@ def compute_industry_evidence_score(
         missing_required=missing_required,
         stale_count=stale_count,
         warning_flags=warning_flags,
+        positive_count=positive,
+        negative_count=negative,
     )
     phase = _phase_from_score(score, positive, negative)
     if negative > positive and phase in {CyclePhase.RECOVERING.value, CyclePhase.EXPANDING.value, CyclePhase.OVERHEATING.value}:
@@ -660,6 +718,8 @@ def compute_company_evidence_score(
         missing_required=[],
         stale_count=stale_count,
         warning_flags=flags,
+        positive_count=positive,
+        negative_count=negative,
     )
     summary = f"公司证据分 {score:.1f}，正/负/中性证据 {positive}/{negative}/{neutral}，置信度 {confidence}。"
     return CompanyEvidence(
@@ -690,6 +750,9 @@ def compute_hard_logic_level(
     score = industry_evidence.evidence_score * 0.75 + company.evidence_score * 0.25
     has_industry_evidence = industry_evidence.evidence_quality != EvidenceQuality.MISSING.value
     has_company_evidence = company.evidence_quality != EvidenceQuality.MISSING.value
+    industry_source_types = {item.source_type for item in industry_evidence.evidence_items}
+    company_source_types = {item.source_type for item in company.evidence_items}
+    combined_source_types = industry_source_types | company_source_types
     negative_industry = (
         industry_evidence.negative_evidence_count > industry_evidence.positive_evidence_count
         or industry_evidence.cycle_phase == CyclePhase.DECLINING.value
@@ -702,8 +765,12 @@ def compute_hard_logic_level(
         warning_flags.append("negative_company_evidence")
     if industry_evidence.stale_evidence_count >= max(1, len(industry_evidence.evidence_items)):
         warning_flags.append("stale_evidence_blocks_strong")
+    if company.stale_evidence_count >= max(1, len(company.evidence_items)):
+        warning_flags.append("stale_company_evidence_blocks_strong")
     if industry_evidence.evidence_quality == EvidenceQuality.MANUAL_TEMPLATE.value:
         warning_flags.append("manual_template_caps_hard_logic")
+    if company.evidence_quality == EvidenceQuality.MANUAL_TEMPLATE.value:
+        warning_flags.append("manual_template_company_caps_hard_logic")
     if not has_industry_evidence and not has_company_evidence:
         return HardLogicResult(
             hard_logic_score=50.0,
@@ -718,27 +785,46 @@ def compute_hard_logic_level(
             warning_flags=tuple(sorted(set(warning_flags))),
             summary="存在负向行业或公司证据，硬逻辑最多为 WEAK。",
         )
-    phase_ok = industry_evidence.cycle_phase in {CyclePhase.BOTTOMING.value, CyclePhase.RECOVERING.value, CyclePhase.EXPANDING.value}
+    if not has_industry_evidence or not has_company_evidence:
+        return HardLogicResult(
+            hard_logic_score=round(min(score, 58.0), 2),
+            hard_logic_level=HardLogicLevel.WEAK.value,
+            warning_flags=tuple(sorted(set(warning_flags + ["industry_and_company_evidence_required"]))),
+            summary="行业和公司证据未同时具备，硬逻辑最多为 WEAK。",
+        )
+    phase_ok = industry_evidence.cycle_phase in {CyclePhase.BOTTOMING.value, CyclePhase.RECOVERING.value}
     evidence_positive = industry_evidence.positive_evidence_count > industry_evidence.negative_evidence_count
-    if phase_ok and evidence_positive and industry_evidence.evidence_score >= 58:
+    confidence_ok = CONFIDENCE_RANK.get(industry_evidence.confidence_level, 0) >= CONFIDENCE_RANK[ConfidenceLevel.MEDIUM.value]
+    company_not_bad = company.evidence_score >= 50 and company.negative_evidence_count <= company.positive_evidence_count
+    if phase_ok and evidence_positive and confidence_ok and company_not_bad and industry_evidence.evidence_score >= 58:
         level = HardLogicLevel.MEDIUM.value
-    elif score >= 55 and (has_industry_evidence or has_company_evidence):
+    elif score >= 55:
         level = HardLogicLevel.WEAK.value
     else:
         level = HardLogicLevel.NONE.value
     can_strong = (
         level == HardLogicLevel.MEDIUM.value
+        and industry_evidence.cycle_phase == CyclePhase.RECOVERING.value
         and industry_evidence.evidence_score >= 68
         and company.evidence_score >= 62
-        and (has_industry_evidence or has_company_evidence)
         and industry_evidence.evidence_quality not in {EvidenceQuality.MANUAL_TEMPLATE.value, EvidenceQuality.MISSING.value}
-        and industry_evidence.confidence_level in {ConfidenceLevel.MEDIUM.value, ConfidenceLevel.HIGH.value}
+        and company.evidence_quality not in {EvidenceQuality.MANUAL_TEMPLATE.value, EvidenceQuality.MISSING.value}
+        and industry_evidence.confidence_level == ConfidenceLevel.HIGH.value
+        and company.confidence_level == ConfidenceLevel.HIGH.value
         and industry_evidence.stale_evidence_count == 0
+        and company.stale_evidence_count == 0
         and "evidence_conflict" not in industry_evidence.warning_flags
+        and "company_evidence_conflict" not in company.warning_flags
+        and len(combined_source_types) >= 2
+        and bool(combined_source_types & HIGH_AUTHORITY_SOURCE_TYPES)
     )
     if can_strong:
         level = HardLogicLevel.STRONG.value
-    summary = f"硬逻辑分 {score:.1f}，等级 {level}；行业证据 {industry_evidence.evidence_quality}，公司证据 {company.evidence_quality}。"
+    summary = (
+        f"硬逻辑分 {score:.1f}，等级 {level}；行业阶段 {industry_evidence.cycle_phase}，"
+        f"行业证据 {industry_evidence.evidence_quality}/{industry_evidence.confidence_level}，"
+        f"公司证据 {company.evidence_quality}/{company.confidence_level}。"
+    )
     return HardLogicResult(
         hard_logic_score=round(max(0.0, min(100.0, score)), 2),
         hard_logic_level=level,

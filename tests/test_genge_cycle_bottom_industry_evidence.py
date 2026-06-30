@@ -49,31 +49,41 @@ def _industry_rows() -> pd.DataFrame:
     return pd.DataFrame(
         [
             {
-                "date": "2024-01-01",
+                "date": "2024-01-02",
                 "industry": "猪肉",
-                "evidence_name": "能繁母猪存栏变化",
-                "evidence_value": "同比下降",
+                "evidence_name": "生猪价格",
+                "evidence_value": "低位企稳",
                 "evidence_direction": "POSITIVE",
                 "source": "统计局",
-                "source_type": "provider_derived",
+                "source_type": "official_report",
                 "confidence": "HIGH",
             },
             {
                 "date": "2024-01-03",
                 "industry": "猪肉",
-                "evidence_name": "猪粮比价",
+                "evidence_name": "猪粮比",
                 "evidence_value": "低位修复",
                 "evidence_direction": "POSITIVE",
-                "source": "发改委",
-                "source_type": "provider_derived",
+                "source": "行业周报",
+                "source_type": "research_report_summary",
+                "confidence": "MEDIUM",
+            },
+            {
+                "date": "2024-01-04",
+                "industry": "猪肉",
+                "evidence_name": "能繁母猪存栏",
+                "evidence_value": "去产能后企稳",
+                "evidence_direction": "POSITIVE",
+                "source": "农业农村部",
+                "source_type": "official_report",
                 "confidence": "HIGH",
             },
             {
                 "date": "2024-01-05",
                 "industry": "猪肉",
-                "evidence_name": "行业亏损持续时间",
-                "evidence_value": "亏损延续后收窄",
-                "evidence_direction": "POSITIVE",
+                "evidence_name": "出栏均重",
+                "evidence_value": "回归正常",
+                "evidence_direction": "NEUTRAL",
                 "source": "行业协会",
                 "source_type": "user_supplied",
                 "confidence": "MEDIUM",
@@ -81,9 +91,9 @@ def _industry_rows() -> pd.DataFrame:
             {
                 "date": "2024-01-05",
                 "industry": "猪肉",
-                "evidence_name": "仔猪价格变化",
-                "evidence_value": "企稳",
-                "evidence_direction": "POSITIVE",
+                "evidence_name": "饲料成本",
+                "evidence_value": "基本稳定",
+                "evidence_direction": "NEUTRAL",
                 "source": "行业协会",
                 "source_type": "user_supplied",
                 "confidence": "MEDIUM",
@@ -131,7 +141,7 @@ def test_pork_and_panel_scoring_use_schema_alias_and_ignore_future_rows() -> Non
                     {
                         "date": "2024-01-02",
                         "industry": "面板",
-                        "evidence_name": "面板价格月度变化",
+                        "evidence_name": "面板价格",
                         "evidence_value": "止跌回升",
                         "evidence_direction": "POSITIVE",
                         "source": "WitsView",
@@ -140,9 +150,18 @@ def test_pork_and_panel_scoring_use_schema_alias_and_ignore_future_rows() -> Non
                     {
                         "date": "2024-01-02",
                         "industry": "面板",
-                        "evidence_name": "稼动率变化",
+                        "evidence_name": "稼动率",
                         "evidence_value": "温和提升",
-                        "evidence_direction": "POSITIVE",
+                        "evidence_direction": "NEUTRAL",
+                        "source": "产业链调研",
+                        "source_type": "user_supplied",
+                    },
+                    {
+                        "date": "2024-01-02",
+                        "industry": "面板",
+                        "evidence_name": "库存水位",
+                        "evidence_value": "去库推进",
+                        "evidence_direction": "NEUTRAL",
                         "source": "产业链调研",
                         "source_type": "user_supplied",
                     },
@@ -169,7 +188,7 @@ def test_stale_missing_manual_and_conflict_flags_are_conservative() -> None:
             {
                 "date": "2022-01-01",
                 "industry": "猪肉",
-                "evidence_name": "能繁母猪存栏变化",
+                "evidence_name": "能繁母猪存栏",
                 "evidence_value": "旧证据",
                 "evidence_direction": "POSITIVE",
                 "source": "模板",
@@ -178,7 +197,7 @@ def test_stale_missing_manual_and_conflict_flags_are_conservative() -> None:
             {
                 "date": "2024-01-01",
                 "industry": "猪肉",
-                "evidence_name": "能繁母猪存栏变化",
+                "evidence_name": "能繁母猪存栏",
                 "evidence_value": "方向冲突",
                 "evidence_direction": "NEGATIVE",
                 "source": "模板",
@@ -214,7 +233,7 @@ def test_hard_logic_strong_requires_non_manual_industry_and_company_evidence() -
                 "evidence_value": "饲料成本下降",
                 "evidence_direction": "POSITIVE",
                 "source": "公告",
-                "source_type": "provider_derived",
+                "source_type": "company_announcement",
             },
             {
                 "date": "2024-01-06",
@@ -225,15 +244,37 @@ def test_hard_logic_strong_requires_non_manual_industry_and_company_evidence() -
                 "evidence_value": "改善",
                 "evidence_direction": "POSITIVE",
                 "source": "公告",
-                "source_type": "provider_derived",
+                "source_type": "exchange_disclosure",
+            },
+            {
+                "date": "2024-01-07",
+                "code": "000001",
+                "stock_name": "测试",
+                "industry": "猪肉",
+                "evidence_name": "净利润",
+                "evidence_value": "亏损收窄",
+                "evidence_direction": "POSITIVE",
+                "source": "公告",
+                "source_type": "company_announcement",
+            },
+            {
+                "date": "2024-01-08",
+                "code": "000001",
+                "stock_name": "测试",
+                "industry": "猪肉",
+                "evidence_name": "资产负债",
+                "evidence_value": "压力可控",
+                "evidence_direction": "NEUTRAL",
+                "source": "公告",
+                "source_type": "exchange_disclosure",
             },
         ]
     )
     company = compute_company_evidence_score("000001", date(2024, 2, 1), company_rows)
     strong = compute_hard_logic_level(industry_evidence, company)
 
-    assert weak.hard_logic_level in {HardLogicLevel.WEAK.value, HardLogicLevel.MEDIUM.value}
-    assert strong.hard_logic_level in {HardLogicLevel.MEDIUM.value, HardLogicLevel.STRONG.value}
+    assert weak.hard_logic_level == HardLogicLevel.WEAK.value
+    assert strong.hard_logic_level == HardLogicLevel.STRONG.value
     manual = compute_industry_evidence_score(
         "猪肉",
         date(2024, 2, 1),
@@ -292,8 +333,35 @@ def _candidate_row() -> dict:
         "industry_evidence_stale_count": 0,
         "industry_evidence_warning_flags": "",
         "industry_evidence_missing_fields": "",
+        "industry_evidence_items": json.dumps(
+            [
+                {
+                    "evidence_date": "2024-01-01",
+                    "evidence_name": "生猪价格",
+                    "evidence_value": "低位企稳",
+                    "evidence_direction": "POSITIVE",
+                    "source_type": "official_report",
+                    "source": "公开来源",
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        "company_evidence_items": json.dumps(
+            [
+                {
+                    "evidence_date": "2024-01-02",
+                    "evidence_name": "现金流",
+                    "evidence_value": "改善",
+                    "evidence_direction": "POSITIVE",
+                    "source_type": "company_announcement",
+                    "source": "公告",
+                }
+            ],
+            ensure_ascii=False,
+        ),
         "hard_logic_level": "MEDIUM",
         "hard_logic_score": 72,
+        "hard_logic_reason": "硬逻辑分 72.0，等级 MEDIUM；行业与公司证据均需人工复核。",
         "value_trap_score": 30,
         "execution_risk_score": 10,
         "executable_entry_quality": "good",
@@ -321,12 +389,21 @@ def test_candidate_csv_evidence_cards_and_disclaimer_have_no_forbidden_words(tmp
 
     candidate_text = (report_dir / "cycle_turning_point_candidates.csv").read_text(encoding="utf-8")
     cards_text = (report_dir / "industry_evidence_cards.md").read_text(encoding="utf-8")
+    deep_dive_text = (report_dir / "pork_panel_deep_dive.md").read_text(encoding="utf-8")
+    signal_rows = list(csv.DictReader((report_dir / "signal_details.csv").open(encoding="utf-8")))
     assert "研究观察候选" in candidate_text
     assert "不构成买入建议" in candidate_text
     assert "STRONG 表示行业与公司证据相对一致" in cards_text
+    assert "仅作为证据链路样板" in deep_dive_text
+    assert "来自本次输入证据和运行结果" in deep_dive_text
+    assert "000001 测试股票" in deep_dive_text
+    assert "TCL科技" not in deep_dive_text
+    assert json.loads(signal_rows[0]["industry_evidence_items"])[0]["evidence_name"] == "生猪价格"
+    assert "硬逻辑分" in signal_rows[0]["hard_logic_reason"]
     for word in FORBIDDEN_WORDS:
         assert word not in candidate_text
         assert word not in cards_text
+        assert word not in deep_dive_text
 
 
 def test_industry_evidence_acceptance_uses_new_conservative_enum() -> None:
@@ -352,9 +429,10 @@ def test_industry_evidence_acceptance_uses_new_conservative_enum() -> None:
     assert summary["paper_trading_gate"]["verdict"] == "PASS_INDUSTRY_EVIDENCE_FRAMEWORK"
     assert summary["evidence_source_type_distribution"]["industry"]["USER_SUPPLIED"] == 1
     assert summary["evidence_source_type_distribution"]["company"]["MISSING"] == 1
+    assert summary["cycle_turning_point_candidate_count_by_industry"]["猪肉"] == 1
 
 
-def test_research_update_script_downgrades_missing_source(tmp_path: Path) -> None:
+def test_research_update_script_rejects_missing_source_or_date(tmp_path: Path) -> None:
     research_dir = tmp_path / "research"
     research_dir.mkdir()
     (research_dir / "pork.json").write_text(
@@ -364,10 +442,18 @@ def test_research_update_script_downgrades_missing_source(tmp_path: Path) -> Non
                     {
                         "date": "2024-01-01",
                         "industry": "猪肉",
-                        "evidence_name": "能繁母猪存栏变化",
+                        "evidence_name": "能繁母猪存栏",
                         "evidence_value": "下降",
                         "evidence_direction": "POSITIVE",
-                    }
+                    },
+                    {
+                        "industry": "猪肉",
+                        "evidence_name": "生猪价格",
+                        "evidence_value": "企稳",
+                        "evidence_direction": "POSITIVE",
+                        "source": "统计局",
+                        "source_type": "official_report",
+                    },
                 ],
                 "company_evidence": [
                     {
@@ -401,11 +487,43 @@ def test_research_update_script_downgrades_missing_source(tmp_path: Path) -> Non
 
     rows = list(csv.DictReader(industry_output.open(encoding="utf-8")))
     company_rows = list(csv.DictReader(company_output.open(encoding="utf-8")))
+    rejected_rows = list(csv.DictReader((industry_output.parent / "rejected_evidence.csv").open(encoding="utf-8")))
     report_text = (industry_output.parent / "evidence_quality_report.md").read_text(encoding="utf-8")
-    assert rows[0]["source_type"] == "manual_template"
-    assert rows[0]["confidence"] == "LOW"
-    assert company_rows[0]["code"] == "000001"
+    assert rows == []
+    assert company_rows == []
+    assert [row["reason"] for row in rejected_rows] == ["missing_source", "missing_date", "missing_source"]
+    assert "rejected_rows: 3" in report_text
     assert "missing_source_rows: 2" in report_text
+    assert "missing_date_rows: 1" in report_text
+
+
+def test_evidence_confidence_requires_quality_diversity_and_freshness() -> None:
+    schema = _schema()
+
+    high = compute_industry_evidence_score("猪肉", date(2024, 2, 1), _industry_rows(), schema)
+    news_only = compute_industry_evidence_score(
+        "猪肉",
+        date(2024, 2, 1),
+        _industry_rows().assign(source_type="news_summary", source="新闻摘要", confidence="HIGH"),
+        schema,
+    )
+    manual = compute_industry_evidence_score(
+        "猪肉",
+        date(2024, 2, 1),
+        _industry_rows().assign(source_type="manual_template", source="模板", confidence="HIGH"),
+        schema,
+    )
+    stale = compute_industry_evidence_score(
+        "猪肉",
+        date(2026, 1, 1),
+        _industry_rows().assign(date="2024-01-01"),
+        schema,
+    )
+
+    assert high.confidence_level == ConfidenceLevel.HIGH.value
+    assert news_only.confidence_level == ConfidenceLevel.LOW.value
+    assert manual.confidence_level != ConfidenceLevel.HIGH.value
+    assert stale.confidence_level == ConfidenceLevel.LOW.value
 
 
 def test_cli_fixture_smoke_with_evidence_args(tmp_path: Path) -> None:

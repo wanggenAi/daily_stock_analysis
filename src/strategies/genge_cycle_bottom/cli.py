@@ -281,7 +281,7 @@ def _infer_end_date(inputs: List[BacktestInput], fallback: Optional[str]) -> dat
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run GenGe Cycle Bottom walk-forward backtest.")
     group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--codes", help="Comma-separated stock codes, e.g. 002714,000100")
+    group.add_argument("--codes", help="Comma-separated stock codes, e.g. 000001,000002")
     group.add_argument("--stock-pool-file", help="Text file with one stock code per line")
     parser.add_argument("--years", type=int, default=5, help="Backtest years, e.g. 5 or 10")
     parser.add_argument("--benchmark", default="000300", help="Benchmark index code")

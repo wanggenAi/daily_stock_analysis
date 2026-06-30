@@ -147,3 +147,17 @@
 - 退出原因诊断：STOP_LOSS 4542 条、占 45.8094%；TIME_EXIT_60D 2099 条、占 21.1699%；TREND_BREAK_CONFIRMED 1754 条、占 17.6904%；TAKE_PROFIT_TRAIL 1393 条、占 14.0494%；INSUFFICIENT_DATA 81 条、NO_REPAIR_40D 46 条。
 - gate verdict：`PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。原因是证据层框架、schema、字段、报告和候选输出可运行，但用户真实证据文件尚未提供，当前主要使用模板和缺失证据；因此不能输出 `PASS_HARD_LOGIC_RESEARCH_READY`、`PASS_CYCLE_TURNING_POINT_SCREENER`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
 - 安全检查：本轮没有接入中信证券或任何券商接口，没有读取账户/持仓/密码/验证码，没有自动下单；报告措辞继续避免承诺收益和交易指令。下一步应先补充真实 `data/user_supplied` 行业/公司证据，再评估硬逻辑和周期拐点筛选效果。
+
+## Loop 9
+
+- 本轮目标：基于 commit `b3a3e` 之后继续强化行业证据层，补充真实公开样板证据和质量门槛；猪肉、面板、牧原股份、TCL科技只作为证据链路样板，不硬编码为候选，不强行入选；最终候选可以来自任意行业。
+- 新增研究数据：`research/industry_cycle/pork.json/md`、`research/industry_cycle/panel.json/md`；生成 `data/user_supplied/industry_cycle_evidence.csv` 16 行、`data/user_supplied/company_cycle_evidence.csv` 20 行、`rejected_evidence.csv` 0 行。
+- 证据质量规则：新增 `official_report`、`company_announcement`、`exchange_disclosure`、`research_report_summary`、`news_summary` 来源类型；缺少 `source`、`date` 或必需字段的证据进入拒绝清单，不再混入正式 CSV；新闻摘要不能单独形成 HIGH，模板来源不能形成 STRONG。
+- 硬逻辑规则：`STRONG` 必须同时具备行业与公司证据、非模板/非缺失来源、至少两类来源、高权威来源、无过期或冲突；`hard_logic_reason`、`industry_evidence_items`、`company_evidence_items` 写入信号明细，便于逐条审计。
+- 报告改造：`pork_panel_deep_dive.md` 保留旧文件名兼容，但内容改为动态样板证据链复核，从本次输入证据和运行结果动态发现样板对象，不再写固定股票名单；样板对象不参与特殊加分。
+- pytest 结果：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_industry_evidence.py -q`，11 passed，1 warning，耗时 161.46 秒；`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_report_cli.py -q`，16 passed，1 warning，耗时 68.70 秒。
+- 静态检查：`py_compile` 通过；`git diff --check` 通过；报告禁用词检查未命中。
+- 最新宽池报告路径：`reports/genge_industry_evidence_broad/20260630_162940`；`full_run_stats.md` 记录 `elapsed_until_stopped=47m21s`、`total_signals=9915`、`data_failures=0`、`provider_error_count=0`、`pe_missing_count=690`、`pb_missing_count=0`、`financial_missing_count=0`、主候选 5473、风险复核 5、周期拐点候选 0。
+- 说明：该宽池报告文件已落盘，但运行摘要仍显示本次长跑使用 example/template 证据文件；当前 commit 已准备好 `data/user_supplied` 证据和动态样板报告逻辑，下一次干净全量运行应用同一命令即可验证真实样板证据 uptake。
+- gate verdict：维持 `PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。原因是证据层、质量门槛、拒绝清单和动态样板复核已可运行，但最新宽池报告尚未完成一次自然退出且确认使用 `data/user_supplied` 的干净全量运行；不能声明 `PASS_HARD_LOGIC_RESEARCH_READY`、`PASS_CYCLE_TURNING_POINT_SCREENER`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
+- 安全检查：没有接入中信证券或任何券商接口，没有读取账户/持仓/密码/验证码，没有自动下单；所有候选仍只是公开数据研究观察和人工复核入口。

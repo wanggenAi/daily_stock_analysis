@@ -59,11 +59,14 @@ SIGNAL_DETAIL_COLUMNS = [
     "industry_evidence_neutral_count",
     "industry_evidence_stale_count",
     "industry_evidence_missing_fields",
+    "industry_evidence_items",
     "company_evidence_score",
     "company_evidence_source_type",
     "company_evidence_summary",
+    "company_evidence_items",
     "hard_logic_score",
     "hard_logic_level",
+    "hard_logic_reason",
     "dynamic_stop_loss",
     "stop_loss_distance_pct",
     "invalidation_level",
@@ -229,6 +232,20 @@ def _number(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return None if result != result else result
+
+
+def _json_list(value: Any) -> List[Dict[str, Any]]:
+    if isinstance(value, list):
+        return [item for item in value if isinstance(item, dict)]
+    if not isinstance(value, str) or not value.strip():
+        return []
+    try:
+        parsed = json.loads(value)
+    except json.JSONDecodeError:
+        return []
+    if isinstance(parsed, list):
+        return [item for item in parsed if isinstance(item, dict)]
+    return []
 
 
 TREND_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
@@ -976,6 +993,195 @@ def write_industry_evidence_cards(rows: List[Dict[str, Any]], json_path: Path, m
     markdown_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def _latest_row_for(rows: List[Dict[str, Any]], *, code: str | None = None, industry: str | None = None) -> Dict[str, Any] | None:
+    matched = []
+    for row in rows:
+        if code and str(row.get("code") or "").zfill(6) != code:
+            continue
+        if industry and str(row.get("industry") or "") != industry:
+            continue
+        matched.append(row)
+    if not matched:
+        return None
+    return sorted(matched, key=lambda item: str(item.get("as_of_date") or ""))[-1]
+
+
+def _has_structured_evidence(row: Dict[str, Any], items_field: str, source_type_field: str) -> bool:
+    source_type = str(row.get(source_type_field) or "").strip().upper()
+    return bool(_json_list(row.get(items_field))) or source_type not in {"", "MISSING"}
+
+
+def _deep_dive_industry_rows(rows: List[Dict[str, Any]], limit: int = 8) -> List[Dict[str, Any]]:
+    latest_by_industry: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        industry = str(row.get("industry") or "").strip()
+        if not industry or not _has_structured_evidence(row, "industry_evidence_items", "industry_evidence_source_type"):
+            continue
+        current = latest_by_industry.get(industry)
+        if current is None or str(row.get("as_of_date") or "") >= str(current.get("as_of_date") or ""):
+            latest_by_industry[industry] = row
+    return sorted(
+        latest_by_industry.values(),
+        key=lambda row: (
+            len(_json_list(row.get("industry_evidence_items"))),
+            _number(row.get("industry_evidence_score")) or 0.0,
+            str(row.get("as_of_date") or ""),
+        ),
+        reverse=True,
+    )[:limit]
+
+
+def _deep_dive_stock_rows(rows: List[Dict[str, Any]], limit: int = 12) -> List[Dict[str, Any]]:
+    latest_by_code: Dict[str, Dict[str, Any]] = {}
+    for row in rows:
+        code = str(row.get("code") or "").strip()
+        if not code or not _has_structured_evidence(row, "company_evidence_items", "company_evidence_source_type"):
+            continue
+        normalized_code = code.zfill(6)
+        current = latest_by_code.get(normalized_code)
+        if current is None or str(row.get("as_of_date") or "") >= str(current.get("as_of_date") or ""):
+            latest_by_code[normalized_code] = row
+    return sorted(
+        latest_by_code.values(),
+        key=lambda row: (
+            len(_json_list(row.get("company_evidence_items"))),
+            HARD_LOGIC_RANK.get(str(row.get("hard_logic_level") or "NONE"), 0),
+            _number(row.get("total_score")) or 0.0,
+            str(row.get("as_of_date") or ""),
+        ),
+        reverse=True,
+    )[:limit]
+
+
+def _deep_dive_candidate_status(row: Dict[str, Any] | None) -> str:
+    if not row:
+        return "未覆盖"
+    return "符合通用候选条件" if _cycle_turning_point_candidate_rows([row]) else "未进入通用候选"
+
+
+def _deep_dive_blockers(row: Dict[str, Any] | None) -> List[str]:
+    if not row:
+        return ["本次股票池或数据中未覆盖该对象"]
+    blockers: List[str] = []
+    price_percentile = _number(row.get("price_percentile_5y"))
+    valuation_score = _number(row.get("valuation_score")) or 0.0
+    financial_score = _number(row.get("financial_safety_score")) or 0.0
+    trend_level = str(row.get("trend_confirmation_level") or "NONE")
+    execution_risk = _number(row.get("execution_risk_score")) or 0.0
+    value_trap_score = _number(row.get("value_trap_score")) or 0.0
+    hard_logic_level = str(row.get("hard_logic_level") or "NONE")
+    signal_type = str(row.get("signal_type") or "")
+    if price_percentile is None or price_percentile > 0.35:
+        blockers.append("5年价格分位未处于通用低位阈值")
+    if valuation_score < 45:
+        blockers.append("估值分不足")
+    if financial_score < 45:
+        blockers.append("财务安全分不足")
+    if TREND_RANK.get(trend_level, 0) < TREND_RANK["MEDIUM"]:
+        blockers.append("趋势确认不足")
+    if not _phase_is_turning_point(row.get("industry_cycle_phase")):
+        blockers.append("行业阶段未满足 BOTTOMING/RECOVERING")
+    if HARD_LOGIC_RANK.get(hard_logic_level, 0) < HARD_LOGIC_RANK["MEDIUM"]:
+        blockers.append("硬逻辑等级不足")
+    if execution_risk >= 60:
+        blockers.append("执行风险偏高")
+    if value_trap_score >= 70:
+        blockers.append("价值陷阱风险偏高")
+    if signal_type not in {"WATCH", "LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"}:
+        blockers.append("信号类型不在观察集合")
+    return blockers or ["已通过通用候选条件，仍需人工复核公开资料"]
+
+
+def _evidence_lines(items: List[Dict[str, Any]], limit: int = 6) -> List[str]:
+    if not items:
+        return ["- 无结构化证据明细"]
+    lines = []
+    for item in items[:limit]:
+        lines.append(
+            "- "
+            f"{item.get('evidence_date', '')} "
+            f"{item.get('evidence_name', '')}: {item.get('evidence_value', '')} "
+            f"({item.get('evidence_direction', '')}, {item.get('source_type', '')}) "
+            f"source={item.get('source', '')}"
+        )
+    return lines
+
+
+def write_pork_panel_deep_dive(rows: List[Dict[str, Any]], path: Path) -> None:
+    industry_rows = _deep_dive_industry_rows(rows)
+    stock_rows = _deep_dive_stock_rows(rows)
+    lines = [
+        "# 样板证据链路专项复核",
+        "",
+        "说明：本报告中的样板对象仅作为证据链路样板，来自本次输入证据和运行结果；系统不会硬编码任何股票为候选，也不会强行让样板对象入选。最终候选可以来自任意行业，且只由通用规则决定。",
+        "",
+    ]
+    lines.extend(["## 行业样板", ""])
+    if not industry_rows:
+        lines.extend(["- 本次运行没有可展示的结构化行业证据样板。", ""])
+    for row in industry_rows:
+        industry = row.get("industry") or "未知行业"
+        lines.extend([f"### 行业样板：{industry}", ""])
+        lines.extend(
+            [
+                f"- as_of_date: {row.get('as_of_date')}",
+                f"- cycle_phase: {row.get('industry_cycle_phase') or 'UNKNOWN'}",
+                f"- evidence_score: {row.get('industry_evidence_score')}",
+                f"- confidence: {row.get('industry_evidence_confidence')}",
+                f"- hard_logic_level: {row.get('hard_logic_level') or 'NONE'}",
+                f"- hard_logic_reason: {row.get('hard_logic_reason') or row.get('industry_evidence_summary') or '无'}",
+                f"- risk_flags: {row.get('risk_flags') or '无'}",
+                "",
+                "#### 行业证据明细",
+                "",
+            ]
+        )
+        lines.extend(_evidence_lines(_json_list(row.get("industry_evidence_items")), limit=8))
+        lines.append("")
+
+    lines.extend(["## 个股样板", ""])
+    if not stock_rows:
+        lines.extend(["- 本次运行没有可展示的结构化公司证据样板；这不会影响其它股票按通用规则入选。", ""])
+    for row in stock_rows:
+        code = str(row.get("code") or "").zfill(6)
+        stock_name = row.get("stock_name") or "未知股票"
+        lines.extend([f"### {code} {stock_name}", ""])
+        lines.extend(
+            [
+                f"- industry: {row.get('industry') or '无可用数据'}",
+                f"- as_of_date: {row.get('as_of_date')}",
+                f"- candidate_status: {_deep_dive_candidate_status(row)}",
+                f"- signal_type: {row.get('signal_type')}",
+                f"- price_percentile_5y: {row.get('price_percentile_5y')}",
+                f"- trend_confirmation_level: {row.get('trend_confirmation_level')}",
+                f"- financial_safety_score: {row.get('financial_safety_score')}",
+                f"- valuation_score: {row.get('valuation_score')}",
+                f"- hard_logic_level: {row.get('hard_logic_level') or 'NONE'}",
+                f"- hard_logic_reason: {row.get('hard_logic_reason') or '无'}",
+                f"- candidate_rule_check: {json.dumps(_deep_dive_blockers(row), ensure_ascii=False)}",
+                f"- risk_flags: {row.get('risk_flags') or '无'}",
+                "",
+                "#### 公司证据明细",
+                "",
+            ]
+        )
+        lines.extend(_evidence_lines(_json_list(row.get("company_evidence_items")), limit=8))
+        lines.append("")
+
+    lines.extend(
+        [
+            "## 风险与边界",
+            "",
+            "- 本报告只复核公开数据证据链路，不接入券商账户，不自动交易。",
+            "- 样板行业和样板股票由输入证据动态发现，不参与特殊加分；若价格、趋势、估值、财务或风险条件不足，会按通用规则排除或降级。",
+            "- 新闻摘要和研究摘要不能单独形成 HIGH 置信度；缺少来源或日期的证据不会进入正式 CSV。",
+            "- 所有观察结论都需要人工结合公告、财报、K线和流动性复核。",
+            "",
+        ]
+    )
+    path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def write_summary_markdown(summary: Dict[str, Any], path: Path) -> None:
     diagnostics = summary.get("diagnostics") or {}
     missing_fields = diagnostics.get("missing_fields") or {}
@@ -1094,5 +1300,6 @@ def write_reports(
         write_cycle_turning_point_candidates(rows, path / "cycle_turning_point_candidates.csv")
     if output_industry_evidence_cards:
         write_industry_evidence_cards(rows, path / "industry_evidence_cards.json", path / "industry_evidence_cards.md")
+        write_pork_panel_deep_dive(rows, path / "pork_panel_deep_dive.md")
     write_summary_markdown(summary, path / "summary.md")
     return path

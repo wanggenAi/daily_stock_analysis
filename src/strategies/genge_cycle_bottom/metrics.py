@@ -1337,7 +1337,11 @@ def compute_summary(
     research_observation_candidate_count = sum(1 for row in rows if _is_research_observation_candidate(row))
     balanced_research_observation_candidate_count = sum(1 for row in rows if _is_balanced_research_observation_candidate(row))
     watch_only_candidate_count = sum(1 for row in rows if _is_watch_only_candidate(row))
-    cycle_turning_point_candidate_count = sum(1 for row in rows if _is_cycle_turning_point_candidate(row))
+    cycle_turning_point_candidate_rows = [row for row in rows if _is_cycle_turning_point_candidate(row)]
+    cycle_turning_point_candidate_count = len(cycle_turning_point_candidate_rows)
+    cycle_turning_point_candidate_count_by_industry = dict(
+        Counter(str(row.get("industry") or "UNKNOWN") for row in cycle_turning_point_candidate_rows)
+    )
     diagnostics = {
         "missing_fields": _split_flags(rows, "missing_fields"),
         "risk_flags": _split_flags(rows, "risk_flags"),
@@ -1477,6 +1481,7 @@ def compute_summary(
             "balanced_research_observation_candidate_count": balanced_research_observation_candidate_count,
             "watch_only_candidate_count": watch_only_candidate_count,
             "cycle_turning_point_candidate_count": cycle_turning_point_candidate_count,
+            "cycle_turning_point_candidate_count_by_industry": cycle_turning_point_candidate_count_by_industry,
             "parameter_experiment": parameter_experiment,
             "baseline_comparison": baseline_comparison,
             "best": best_signals,

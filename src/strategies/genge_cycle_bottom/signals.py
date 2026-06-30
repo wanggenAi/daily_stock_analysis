@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from typing import Any, Dict, List, Optional
@@ -70,11 +71,14 @@ class StrategySignal:
     industry_evidence_neutral_count: int = 0
     industry_evidence_stale_count: int = 0
     industry_evidence_missing_fields: List[str] = field(default_factory=list)
+    industry_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     company_evidence_score: float = 50.0
     company_evidence_source_type: str = "MISSING"
     company_evidence_summary: str = ""
+    company_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     hard_logic_score: float = 50.0
     hard_logic_level: str = "NONE"
+    hard_logic_reason: str = ""
     dynamic_stop_loss: Optional[float] = None
     stop_loss_distance_pct: Optional[float] = None
     invalidation_level: Optional[float] = None
@@ -97,4 +101,6 @@ class StrategySignal:
         data["missing_fields"] = ";".join(self.missing_fields)
         data["industry_evidence_warning_flags"] = ";".join(self.industry_evidence_warning_flags)
         data["industry_evidence_missing_fields"] = ";".join(self.industry_evidence_missing_fields)
+        data["industry_evidence_items"] = json.dumps(self.industry_evidence_items, ensure_ascii=False)
+        data["company_evidence_items"] = json.dumps(self.company_evidence_items, ensure_ascii=False)
         return data

@@ -69,12 +69,17 @@ date,code,stock_name,industry,evidence_name,evidence_value,evidence_direction,so
 
 `source_type` 支持：
 
+- `official_report`
+- `company_announcement`
+- `exchange_disclosure`
+- `research_report_summary`
+- `news_summary`
 - `manual_template`
 - `user_supplied`
 - `provider_derived`
 - `verified_multi_source`
 
-模板或样例证据最多只能支持 `MEDIUM` 硬逻辑；缺失证据默认 `industry_evidence_score=50`、`confidence=LOW`、`hard_logic_level=NONE/WEAK`。
+`official_report`、`company_announcement`、`exchange_disclosure` 属于高权威公开来源；`news_summary` 和 `research_report_summary` 可以作为辅助材料，但不能单独形成 `HIGH` 置信度。模板或样例证据最多只能支持 `MEDIUM` 硬逻辑；缺失证据默认 `industry_evidence_score=50`、`confidence=LOW`、`hard_logic_level=NONE/WEAK`。
 
 ## 本地研究记录转换
 
@@ -87,11 +92,14 @@ python scripts/update_industry_evidence_from_research.py \
   --company-output data/user_supplied/company_cycle_evidence.csv
 ```
 
-支持 `.json` 和包含 `key=value` 或 `key: value` 的 `.md`。脚本只抽取结构化 evidence item，不采纳叙述性结论；缺少 `source` 的证据会降级为 `manual_template/LOW`，并生成：
+支持 `.json` 和包含 `key=value` 或 `key: value` 的 `.md`。脚本只抽取结构化 evidence item，不采纳叙述性结论；缺少 `source`、`date` 或必需字段的证据不会进入正式 CSV，而是写入 `rejected_evidence.csv`。脚本同时生成：
 
 ```text
 data/user_supplied/evidence_quality_report.md
+data/user_supplied/rejected_evidence.csv
 ```
+
+当前仓库包含 `research/industry_cycle/` 样板研究记录和由其生成的 `data/user_supplied/industry_cycle_evidence.csv`、`data/user_supplied/company_cycle_evidence.csv`。猪肉、面板、牧原股份、TCL科技等只用于验证证据链路，不是候选白名单，也不会被强行入选。
 
 ## 策略字段
 
@@ -104,11 +112,14 @@ data/user_supplied/evidence_quality_report.md
 - `industry_evidence_source_type`
 - `industry_evidence_summary`
 - `industry_evidence_warning_flags`
+- `industry_evidence_items`
 - `company_evidence_score`
 - `company_evidence_source_type`
 - `company_evidence_summary`
+- `company_evidence_items`
 - `hard_logic_score`
 - `hard_logic_level`
+- `hard_logic_reason`
 
 `hard_logic_level` 为：
 
@@ -127,6 +138,7 @@ data/user_supplied/evidence_quality_report.md
 industry_evidence_cards.md
 industry_evidence_cards.json
 cycle_turning_point_candidates.csv
+pork_panel_deep_dive.md
 ```
 
 `industry_evidence_cards.*` 包含：
@@ -158,6 +170,8 @@ code,stock_name,industry,as_of_date,cycle_phase,hard_logic_level,industry_eviden
 ```
 
 该文件只表示“周期拐点研究观察候选”，不是交易指令。
+
+`pork_panel_deep_dive.md` 文件名为兼容上一轮专项复核保留，内容是“样板证据链路专项复核”：样板行业和样板股票从本次输入证据和运行结果动态发现，不硬编码固定股票，也不改变候选排序或候选入选规则。
 
 ## 一键运行
 

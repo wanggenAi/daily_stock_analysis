@@ -84,12 +84,15 @@ class FeatureSet:
     industry_evidence_neutral_count: int = 0
     industry_evidence_stale_count: int = 0
     industry_evidence_missing_fields: List[str] = field(default_factory=list)
+    industry_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     company_evidence_score: float = 50.0
     company_evidence_source_type: str = "MISSING"
     company_evidence_summary: str = ""
+    company_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     hard_logic_score: float = 50.0
     hard_logic_level: str = "NONE"
     hard_logic_summary: str = ""
+    hard_logic_reason: str = ""
     market_environment_state: Optional[str] = None
     execution_risk_score: float = 0.0
     execution_risk_quality: str = "good"
@@ -1212,12 +1215,15 @@ def build_feature_set(
     features.industry_evidence_neutral_count = industry_evidence.neutral_evidence_count
     features.industry_evidence_stale_count = industry_evidence.stale_evidence_count
     features.industry_evidence_missing_fields = list(industry_evidence.missing_evidence_fields)
+    features.industry_evidence_items = [item.to_dict() for item in industry_evidence.evidence_items]
     features.company_evidence_score = company_evidence.evidence_score
     features.company_evidence_source_type = company_evidence.evidence_source_type
     features.company_evidence_summary = company_evidence.summary
+    features.company_evidence_items = [item.to_dict() for item in company_evidence.evidence_items]
     features.hard_logic_score = hard_logic.hard_logic_score
     features.hard_logic_level = hard_logic.hard_logic_level
     features.hard_logic_summary = hard_logic.summary
+    features.hard_logic_reason = hard_logic.summary
     features.market_environment_state = market_diag.get("market_environment_state")
     features.execution_risk_score = execution_score
     features.execution_risk_quality = str(execution_diag.get("asof_executable_entry_quality") or "good")
@@ -1272,6 +1278,7 @@ def build_feature_set(
             "hard_logic_score": features.hard_logic_score,
             "hard_logic_level": features.hard_logic_level,
             "hard_logic_summary": features.hard_logic_summary,
+            "hard_logic_reason": features.hard_logic_reason,
         }
     )
     features.diagnostics.update(value_trap_diag)
