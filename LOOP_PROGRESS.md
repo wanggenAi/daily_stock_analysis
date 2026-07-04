@@ -195,3 +195,17 @@
 - 候选输出：`paper_observation_candidates.csv` 真实候选数 0，仅有免责声明占位行；`research_observation_candidates.csv` broad 4841；`balanced_research_observation_candidates.csv` broad 5485；`strict_observation_candidates.csv` 为 0；`watch_only_candidates.csv` broad 9909。
 - 免责声明与安全检查：候选文件继续写明仅用于模拟观察和复盘、需人工复核、不构成买入建议、不应自动交易；禁用确定性承诺和交易指令短语扫描未命中。猪肉、面板、牧原股份、TCL科技只出现在样例或 user supplied evidence 数据中，`src/` 和运行逻辑没有把它们硬编码为候选。
 - gate verdict：最终枚举为 `PASS_REAL_DATA_RESEARCH`。不能升级到 `PASS_SIGNAL_QUALITY_IMPROVED` 的原因是 broad 样本下降超过 50%，250 日低点回撤改善未达到 3pct 或不差于 -28% 的升级线，且 paper observation 候选数仍为 0。本轮收口，不提出新的大功能方向。
+
+## Loop 12
+
+- 本轮目标：基于 commit `1beed4b72b7b36d68a24efb41251262bd7431ea6` 进入 Industry Evidence Layer 终局验收；停止新增功能，不新增行业，不调整退出策略，不重构架构，只修复阻塞测试、CLI、报告生成和 clean evidence path 审计的问题。
+- 本轮代码修复：`scripts/run_genge_real_research.py` 不再把显式 evidence 文件静默回退到 `data/examples` 模板；`summary.json` 写入 `data_failures`、`data_failure_count`、`provider_error_count`；`cycle_turning_point_candidates.csv` 补齐验收字段，并在 0 候选时写入 blocker summary；相关测试同步覆盖。
+- 真实证据文件：`data/user_supplied/industry_cycle_evidence.csv` 16 行，`data/user_supplied/company_cycle_evidence.csv` 20 行，`data/user_supplied/rejected_evidence.csv` 0 行数据；summary 中实际记录的 industry/company evidence 路径均为 `data/user_supplied`，不是 example/template/fixture。
+- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py`，77 passed，1 warning，耗时 276.31 秒；full pytest 已完整跑完，fixture smoke 已包含并通过。
+- final broad run：`reports/genge_industry_evidence_final/20260704_114820`，自然退出，wall time 2400.47 秒，runner 输出 `elapsed_seconds=500.28`，`total_signals=1720`，`data_failures=90`，`provider_error_count=0`，`pe_missing_count=0`，`pb_missing_count=0`，`financial_missing_count=0`。
+- 候选与复核数量：主候选 `balanced_research_observation_candidate_count=915`，研究观察候选 1044，观察列表 1720，paper observation 候选 0，风险复核数量 5，周期拐点候选 0。
+- 证据覆盖结果：行业证据覆盖率 0.0%，公司证据覆盖率 0.0%，行业证据缺失 1720，公司证据缺失 1720；输出来源分布均为 `MISSING=1720`；`hard_logic_level` 为 `NONE=1720`、`WEAK=0`、`MEDIUM=0`、`STRONG=0`。
+- 周期拐点文件：`cycle_turning_point_candidates.csv` 已生成，包含免责声明和 0 候选 blocker summary；主要 blocker 为 `hard_logic_insufficient=1720`、`cycle_phase_mismatch=1720`、`price_percentile_not_low=657`、`trend_insufficient=458`、`balanced_exit_profile_not_passed=361`。
+- 样板对象复核：猪肉、面板、牧原股份、TCL科技只作为 user supplied evidence 和研究说明里的样板对象；生产代码没有把这些股票或行业硬编码为候选，没有强制入选。
+- 安全检查：没有接入中信证券或任何券商接口，没有读取账户/持仓/密码/验证码，没有自动买入、卖出或撤单。
+- gate verdict：最终枚举为 `FAIL_CLEAN_EVIDENCE_RUN`。阻塞原因是 latest final-code 宽池运行 `data_failures=90`，证据覆盖率 0.0% 导致 hard logic 全部安全降级为 NONE，周期拐点真实候选为 0；本轮没有为了结果好看制造候选或放宽规则。

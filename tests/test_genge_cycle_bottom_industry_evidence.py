@@ -355,10 +355,12 @@ def _candidate_row() -> dict:
                     "evidence_direction": "POSITIVE",
                     "source_type": "company_announcement",
                     "source": "公告",
+                    "confidence": "MEDIUM",
                 }
             ],
             ensure_ascii=False,
         ),
+        "company_evidence_score": 66,
         "hard_logic_level": "MEDIUM",
         "hard_logic_score": 72,
         "hard_logic_reason": "硬逻辑分 72.0，等级 MEDIUM；行业与公司证据均需人工复核。",
@@ -390,9 +392,16 @@ def test_candidate_csv_evidence_cards_and_disclaimer_have_no_forbidden_words(tmp
     candidate_text = (report_dir / "cycle_turning_point_candidates.csv").read_text(encoding="utf-8")
     cards_text = (report_dir / "industry_evidence_cards.md").read_text(encoding="utf-8")
     deep_dive_text = (report_dir / "pork_panel_deep_dive.md").read_text(encoding="utf-8")
+    candidate_rows = list(csv.DictReader((report_dir / "cycle_turning_point_candidates.csv").open(encoding="utf-8")))
     signal_rows = list(csv.DictReader((report_dir / "signal_details.csv").open(encoding="utf-8")))
     assert "研究观察候选" in candidate_text
     assert "不构成买入建议" in candidate_text
+    assert candidate_rows[0]["company_evidence_score"] == "66"
+    assert candidate_rows[0]["evidence_confidence"] == "industry=MEDIUM;company=MEDIUM"
+    assert candidate_rows[0]["price_percentile"] == "0.22"
+    assert candidate_rows[0]["valuation_status"] == "pass(score=62.00,threshold=45)"
+    assert candidate_rows[0]["financial_status"] == "pass(score=68.00,threshold=45)"
+    assert candidate_rows[0]["execution_risk"] == "score=10.00;quality=good"
     assert "STRONG 表示行业与公司证据相对一致" in cards_text
     assert "仅作为证据链路样板" in deep_dive_text
     assert "来自本次输入证据和运行结果" in deep_dive_text
@@ -404,6 +413,28 @@ def test_candidate_csv_evidence_cards_and_disclaimer_have_no_forbidden_words(tmp
         assert word not in candidate_text
         assert word not in cards_text
         assert word not in deep_dive_text
+
+
+def test_cycle_turning_point_csv_records_zero_candidate_blockers(tmp_path: Path) -> None:
+    row = _candidate_row()
+    row["hard_logic_level"] = "NONE"
+    row["trend_confirmation_level"] = "NONE"
+    row["industry_cycle_phase"] = "DOWN"
+    row["price_percentile_5y"] = 0.72
+    report_dir = write_reports(
+        [row],
+        compute_summary([row]),
+        tmp_path,
+        output_cycle_turning_point_candidates=True,
+    )
+
+    candidate_rows = list(csv.DictReader((report_dir / "cycle_turning_point_candidates.csv").open(encoding="utf-8")))
+
+    assert candidate_rows[0]["reason"] == "本次未产生符合规则的研究观察候选"
+    blocker_summary = json.loads(candidate_rows[0]["missing_evidence"])
+    assert blocker_summary["hard_logic_insufficient"] == 1
+    assert blocker_summary["trend_insufficient"] == 1
+    assert blocker_summary["cycle_phase_mismatch"] == 1
 
 
 def test_industry_evidence_acceptance_uses_new_conservative_enum() -> None:

@@ -5,6 +5,8 @@ import json
 from datetime import date, timedelta
 from pathlib import Path
 
+import pytest
+
 from src.strategies.genge_cycle_bottom.acceptance import (
     FAIL_DATA_QUALITY,
     FAIL_SIGNAL_QUALITY,
@@ -237,6 +239,7 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
             "source_mode": "fixture",
             "fixture_smoke_passed": True,
             "data_errors": {"000999": "TimeoutError: fixture diagnostic"},
+            "provider_errors": {"000999": ["provider timeout"]},
         },
     )
 
@@ -281,6 +284,11 @@ def test_summary_schema_grouping_time_split_failure_reasons_and_data_errors() ->
     assert summary["signal_type_summary"]["CONFIRM_BUY"]["total_signals"] == 2
     assert "recent_2y" in summary["time_split_summary"]
     assert summary["diagnostics"]["data_errors"]["000999"].startswith("TimeoutError")
+    assert summary["data_failures"] == 1
+    assert summary["data_failure_count"] == 1
+    assert summary["provider_error_count"] == 1
+    assert summary["diagnostics"]["data_failure_count"] == 1
+    assert summary["diagnostics"]["provider_error_count"] == 1
     assert summary["diagnostics"]["data_gap_counts"]["financial_missing"] == 1
     assert summary["financial_missing_count"] == 1
     assert summary["industry_cycle_missing_count"] == 1
@@ -770,3 +778,40 @@ def test_real_runner_step_days_defaults_and_fast_smoke() -> None:
     assert resolve_step_days(parser.parse_args(["--fast-smoke", "--step-days", "7"])) == 7
     assert parser.parse_args(["--fixture-smoke-passed"]).fixture_smoke_passed is True
     assert parser.parse_args(["--ci-passed"]).ci_passed is True
+
+
+def test_real_runner_passes_user_evidence_paths_without_template_fallback(tmp_path: Path) -> None:
+    from scripts.run_genge_real_research import (
+        _build_strategy_args,
+        _resolve_optional_evidence_file,
+        build_parser,
+        resolve_step_days,
+    )
+
+    pool_file = tmp_path / "pool.txt"
+    industry_evidence = tmp_path / "industry_cycle_evidence.csv"
+    company_evidence = tmp_path / "company_cycle_evidence.csv"
+    pool_file.write_text("000001,测试银行,银行\n", encoding="utf-8")
+    industry_evidence.write_text("date,industry,source,source_type,confidence\n", encoding="utf-8")
+    company_evidence.write_text("date,code,stock_name,industry,source,source_type,confidence\n", encoding="utf-8")
+
+    parser = build_parser()
+    args = parser.parse_args(
+        [
+            "--stock-pool-file",
+            str(pool_file),
+            "--industry-evidence-file",
+            str(industry_evidence),
+            "--company-evidence-file",
+            str(company_evidence),
+        ]
+    )
+    args.step_days = resolve_step_days(args)
+
+    strategy_args = _build_strategy_args(args, pool_file)
+
+    assert strategy_args[strategy_args.index("--industry-evidence-file") + 1] == str(industry_evidence)
+    assert strategy_args[strategy_args.index("--company-evidence-file") + 1] == str(company_evidence)
+    assert not any("data/examples" in value or "template" in value for value in strategy_args)
+    with pytest.raises(FileNotFoundError):
+        _resolve_optional_evidence_file(str(tmp_path / "missing_evidence.csv"))

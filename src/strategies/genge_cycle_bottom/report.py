@@ -259,17 +259,24 @@ CYCLE_TURNING_POINT_COLUMNS = [
     "cycle_phase",
     "hard_logic_level",
     "industry_evidence_score",
+    "company_evidence_score",
+    "evidence_confidence",
+    "trend_confirmation_level",
+    "price_percentile",
+    "valuation_status",
+    "financial_status",
+    "execution_risk",
+    "reason",
+    "missing_evidence",
+    "disclaimer",
     "industry_evidence_confidence",
     "price_percentile_5y",
     "valuation_score",
     "financial_safety_score",
-    "trend_confirmation_level",
+    "execution_risk_score",
     "signal_type",
     "balanced_exit_net_return_60d_backtest_profile",
     "risk_flags",
-    "reason",
-    "missing_evidence",
-    "disclaimer",
 ]
 
 
@@ -832,6 +839,34 @@ def _missing_evidence_text(row: Dict[str, Any]) -> str:
     return ";".join(dict.fromkeys(tokens))
 
 
+def _score_status(value: Any, *, passing_score: float = 45.0) -> str:
+    score = _number(value)
+    if score is None:
+        return "missing"
+    status = "pass" if score >= passing_score else "below_threshold"
+    return f"{status}(score={score:.2f},threshold={passing_score:.0f})"
+
+
+def _execution_risk_status(row: Dict[str, Any]) -> str:
+    score = _number(row.get("execution_risk_score"))
+    quality = str(row.get("executable_entry_quality") or row.get("execution_risk_quality") or "").strip()
+    if score is None:
+        return f"missing{f';quality={quality}' if quality else ''}"
+    return f"score={score:.2f}{f';quality={quality}' if quality else ''}"
+
+
+def _evidence_confidence_text(row: Dict[str, Any]) -> str:
+    industry_confidence = str(row.get("industry_evidence_confidence") or "").strip()
+    company_items = _json_list(row.get("company_evidence_items"))
+    company_confidences = [str(item.get("confidence") or "").strip() for item in company_items if item.get("confidence")]
+    parts = []
+    if industry_confidence:
+        parts.append(f"industry={industry_confidence}")
+    if company_confidences:
+        parts.append(f"company={','.join(sorted(set(company_confidences)))}")
+    return ";".join(parts)
+
+
 def _cycle_turning_point_reason(row: Dict[str, Any]) -> str:
     parts = ["研究观察候选"]
     if row.get("price_percentile_5y") is not None:
@@ -890,18 +925,65 @@ def _cycle_candidate_output_row(row: Dict[str, Any]) -> Dict[str, Any]:
         "cycle_phase": row.get("industry_cycle_phase"),
         "hard_logic_level": row.get("hard_logic_level"),
         "industry_evidence_score": row.get("industry_evidence_score"),
+        "company_evidence_score": row.get("company_evidence_score"),
+        "evidence_confidence": _evidence_confidence_text(row),
+        "trend_confirmation_level": row.get("trend_confirmation_level"),
+        "price_percentile": row.get("price_percentile_5y"),
+        "valuation_status": _score_status(row.get("valuation_score")),
+        "financial_status": _score_status(row.get("financial_safety_score")),
+        "execution_risk": _execution_risk_status(row),
+        "reason": _cycle_turning_point_reason(row),
+        "missing_evidence": _missing_evidence_text(row),
+        "disclaimer": RESEARCH_DISCLAIMER,
         "industry_evidence_confidence": row.get("industry_evidence_confidence"),
         "price_percentile_5y": row.get("price_percentile_5y"),
         "valuation_score": row.get("valuation_score"),
         "financial_safety_score": row.get("financial_safety_score"),
-        "trend_confirmation_level": row.get("trend_confirmation_level"),
+        "execution_risk_score": row.get("execution_risk_score"),
         "signal_type": row.get("signal_type"),
         "balanced_exit_net_return_60d_backtest_profile": row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"),
         "risk_flags": row.get("risk_flags"),
-        "reason": _cycle_turning_point_reason(row),
-        "missing_evidence": _missing_evidence_text(row),
-        "disclaimer": RESEARCH_DISCLAIMER,
     }
+
+
+def _cycle_turning_point_blocker_summary(rows: List[Dict[str, Any]]) -> str:
+    counts = {
+        "price_percentile_not_low": 0,
+        "valuation_or_financial_not_passed": 0,
+        "trend_insufficient": 0,
+        "cycle_phase_mismatch": 0,
+        "hard_logic_insufficient": 0,
+        "execution_or_value_trap_risk": 0,
+        "signal_type_not_observable": 0,
+        "balanced_exit_profile_not_passed": 0,
+    }
+    for row in rows:
+        price_percentile = _number(row.get("price_percentile_5y"))
+        valuation_score = _number(row.get("valuation_score")) or 0.0
+        financial_score = _number(row.get("financial_safety_score")) or 0.0
+        trend_level = str(row.get("trend_confirmation_level") or "NONE")
+        hard_logic_level = str(row.get("hard_logic_level") or "NONE")
+        execution_risk = _number(row.get("execution_risk_score")) or 0.0
+        value_trap_score = _number(row.get("value_trap_score")) or 0.0
+        signal_type = str(row.get("signal_type") or "")
+        balanced_return = _number(row.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"))
+        if price_percentile is None or price_percentile > 0.35:
+            counts["price_percentile_not_low"] += 1
+        if valuation_score < 45 or financial_score < 45:
+            counts["valuation_or_financial_not_passed"] += 1
+        if TREND_RANK.get(trend_level, 0) < TREND_RANK["MEDIUM"]:
+            counts["trend_insufficient"] += 1
+        if not _phase_is_turning_point(row.get("industry_cycle_phase")):
+            counts["cycle_phase_mismatch"] += 1
+        if HARD_LOGIC_RANK.get(hard_logic_level, 0) < HARD_LOGIC_RANK["MEDIUM"]:
+            counts["hard_logic_insufficient"] += 1
+        if execution_risk >= 60 or value_trap_score >= 70:
+            counts["execution_or_value_trap_risk"] += 1
+        if signal_type not in {"WATCH", "LEFT_SMALL_BUY", "CONFIRM_BUY", "ADD"}:
+            counts["signal_type_not_observable"] += 1
+        if balanced_return is not None and balanced_return <= -8:
+            counts["balanced_exit_profile_not_passed"] += 1
+    return json.dumps({key: value for key, value in counts.items() if value}, ensure_ascii=False, sort_keys=True)
 
 
 def write_cycle_turning_point_candidates(rows: List[Dict[str, Any]], path: Path) -> None:
@@ -910,7 +992,13 @@ def write_cycle_turning_point_candidates(rows: List[Dict[str, Any]], path: Path)
         writer = csv.DictWriter(file, fieldnames=CYCLE_TURNING_POINT_COLUMNS)
         writer.writeheader()
         if not candidates:
-            writer.writerow({"reason": "本次未产生符合规则的研究观察候选", "disclaimer": RESEARCH_DISCLAIMER})
+            writer.writerow(
+                {
+                    "reason": "本次未产生符合规则的研究观察候选",
+                    "missing_evidence": _cycle_turning_point_blocker_summary(rows),
+                    "disclaimer": RESEARCH_DISCLAIMER,
+                }
+            )
             return
         for row in candidates:
             writer.writerow(_cycle_candidate_output_row(row))

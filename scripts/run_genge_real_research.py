@@ -45,17 +45,13 @@ def _latest_report_dir(output_dir: Path) -> Path | None:
     return report_dirs[-1] if report_dirs else None
 
 
-def _resolve_optional_evidence_file(path_value: str | None, example_name: str) -> str | None:
+def _resolve_optional_evidence_file(path_value: str | None) -> str | None:
     if not path_value:
         return None
     requested = Path(path_value)
-    if requested.exists():
-        return str(requested)
-    example = _repo_root() / "data" / "examples" / example_name
-    if example.exists():
-        print(f"evidence_file_fallback={requested}->{example}")
-        return str(example)
-    return path_value
+    if not requested.exists():
+        raise FileNotFoundError(f"evidence file not found: {requested}")
+    return str(requested)
 
 
 def _build_strategy_args(args: argparse.Namespace, pool_file: Path) -> list[str]:
@@ -83,14 +79,8 @@ def _build_strategy_args(args: argparse.Namespace, pool_file: Path) -> list[str]
         strategy_args.extend(["--industry-cycle-file", args.industry_cycle_file])
     if args.stock_industry_map:
         strategy_args.extend(["--stock-industry-map", args.stock_industry_map])
-    industry_evidence_file = _resolve_optional_evidence_file(
-        args.industry_evidence_file,
-        "industry_cycle_evidence_template.csv",
-    )
-    company_evidence_file = _resolve_optional_evidence_file(
-        args.company_evidence_file,
-        "company_cycle_evidence_template.csv",
-    )
+    industry_evidence_file = _resolve_optional_evidence_file(args.industry_evidence_file)
+    company_evidence_file = _resolve_optional_evidence_file(args.company_evidence_file)
     if industry_evidence_file:
         strategy_args.extend(["--industry-evidence-file", industry_evidence_file])
     if company_evidence_file:

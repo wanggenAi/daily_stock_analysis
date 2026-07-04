@@ -1353,6 +1353,10 @@ def compute_summary(
     }
     if extra_diagnostics:
         diagnostics.update(extra_diagnostics)
+    data_failure_count = len(diagnostics.get("data_errors") or {})
+    provider_error_count = len(diagnostics.get("provider_errors") or {})
+    diagnostics["data_failure_count"] = data_failure_count
+    diagnostics["provider_error_count"] = provider_error_count
     baseline_comparison = _baseline_comparison(summary, diagnostics)
     stop_policy = _stop_policy_summary(rows)
     parameter_experiment = _parameter_experiment_summary(rows)
@@ -1390,6 +1394,9 @@ def compute_summary(
                 f"{days}d": summary.get(f"avg_return_{days}d")
                 for days in EVAL_WINDOWS
             },
+            "data_failures": data_failure_count,
+            "data_failure_count": data_failure_count,
+            "provider_error_count": provider_error_count,
             "median_returns": {
                 f"{days}d": summary.get(f"median_return_{days}d")
                 for days in EVAL_WINDOWS
