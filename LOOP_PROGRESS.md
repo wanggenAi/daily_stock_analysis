@@ -161,3 +161,37 @@
 - 说明：该宽池报告文件已落盘，但运行摘要仍显示本次长跑使用 example/template 证据文件；当前 commit 已准备好 `data/user_supplied` 证据和动态样板报告逻辑，下一次干净全量运行应用同一命令即可验证真实样板证据 uptake。
 - gate verdict：维持 `PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。原因是证据层、质量门槛、拒绝清单和动态样板复核已可运行，但最新宽池报告尚未完成一次自然退出且确认使用 `data/user_supplied` 的干净全量运行；不能声明 `PASS_HARD_LOGIC_RESEARCH_READY`、`PASS_CYCLE_TURNING_POINT_SCREENER`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
 - 安全检查：没有接入中信证券或任何券商接口，没有读取账户/持仓/密码/验证码，没有自动下单；所有候选仍只是公开数据研究观察和人工复核入口。
+
+## Loop 10
+
+- 本轮目标：基于 commit `2d96e66a` 进入 Industry Evidence Layer 终局验收，不新增模块、不新增行业、不调整退出策略、不重构架构；只允许修复阻塞测试/CLI/报告生成的问题，并完成一次使用真实用户证据文件的宽池 full validation run。
+- 本轮代码规则：未为行业证据验收放宽规则，未硬编码猪肉、面板、牧原股份、TCL科技为候选，未接入券商、未自动下单、未读取账户。
+- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py`，75 passed，1 warning，耗时 240.27 秒。full pytest 已完整跑完。
+- 真实宽池命令：指定 `--industry-evidence-file data/user_supplied/industry_cycle_evidence.csv`、`--company-evidence-file data/user_supplied/company_cycle_evidence.csv`、`--output-cycle-turning-point-candidates`、`--fixture-smoke-passed`、`--ci-passed`，使用 `stock_pools/genge_broad_pool.txt`、`--max-codes 100`、`--years 5`、`--benchmark 000905`。
+- full validation run：`reports/genge_industry_evidence_broad/20260703_160805`，自然退出，耗时 3424.62 秒，`total_signals=9909`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=691`，`pb_missing_count=0`，`financial_missing_count=0`，估值覆盖率 100.0%，财务覆盖率 100.0%。
+- 候选与复核数量：主候选 `balanced_research_observation_candidate_count=5485`，研究观察候选 4841，严格候选 0，模拟观察候选 0，风险复核数量 5，周期拐点研究观察候选 0。
+- clean evidence path 核对：`summary.json -> diagnostics -> industry_evidence_file` 为 `data/user_supplied/industry_cycle_evidence.csv`；`company_evidence_file` 为 `data/user_supplied/company_cycle_evidence.csv`。本轮不是 example/template/fixture 证据运行，因此不触发 `FAIL_CLEAN_EVIDENCE_RUN`。
+- 真实证据文件行数：`data/user_supplied/industry_cycle_evidence.csv` 为 16 行数据，`data/user_supplied/company_cycle_evidence.csv` 为 20 行数据，`rejected_evidence.csv` 为 0 行数据。
+- 证据覆盖结果：行业证据覆盖率 0.0%，公司证据覆盖率 0.0%；行业证据缺失 9909，公司证据缺失 9909；`hard_logic_level_summary` 为 `NONE=9909`，`industry_evidence_quality_summary` 为 `MISSING=9909`。证据文件被实际指定和记录，但未形成有效信号覆盖。
+- 周期拐点文件：`cycle_turning_point_candidates.csv` 已生成，文件包含免责声明占位行；`cycle_turning_point_candidate_count=0`。没有强行制造候选。
+- 免责声明与禁用词：`cycle_turning_point_candidates.csv`、`paper_observation_candidates.csv` 均写明“仅用于模拟观察和复盘；研究观察候选需人工复核，不构成买入建议，不应自动交易。”报告目录禁用承诺和交易指令短语检查未命中。
+- 样板对象复核：`000100/TCL科技` 作为普通股票自然出现在宽池信号中，但 `hard_logic_level=NONE`，未进入周期拐点或模拟观察候选；牧原股份未被强行加入本次 100 只宽池。猪肉、面板、TCL、牧原仍只是证据链样板，不参与特殊加分或强制入选。
+- real broad 指标：60 日平均净收益 2.0838，60 日胜率 46.5738%，60 日跑赢基准 46.6653%，250 日低点平均回撤 -29.0947；balanced 60 日退出净收益 1.9090，收益保留率 91.6115%，250 日回撤压降率 66.1887%。
+- 失败原因：行业周期判断不足 6860，止损不够严格 6731，买太早 5823，估值陷阱 4095，持有周期不适合 1605。执行风险分布为低风险 9903，高风险 4，降级 2。
+- gate verdict：`PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。本轮完成干净 user_supplied full run，但因证据覆盖率为 0%、hard logic 全部安全降级为 NONE、周期拐点候选为 0，不能升级为 `PASS_HARD_LOGIC_RESEARCH_READY` 或 `PASS_CYCLE_TURNING_POINT_SCREENER`。
+
+## Loop 11
+
+- 本轮目标：回到 GenGe Cycle Bottom Strategy 信号质量优化终局验收，基于 commit `b2a298b0b2ff35a7454fb0b731c9d5e0c6f07917` 的真实研究基线做可复核比较；停止新增功能，不新增回测，不接入中信客户端，不读取账户，不自动下单，不硬编码样板股票或行业。
+- 本轮规则修正：`config/genge_signal_quality_baseline.json` 已恢复为 b2a baseline；`PASS_SIGNAL_QUALITY_IMPROVED` 只允许 broad 池在样本稳定、60 日收益/胜率/跑赢基准和 250 日低点回撤同时达标时升级。core/cycle 只能作为辅助研究结果，不能单独升级。
+- 测试结果：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_report_cli.py -q`，18 passed，1 warning，耗时 127.18 秒；full pytest `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py`，75 passed，1 warning，耗时 285.93 秒。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260703_212323`，自然退出，`total_signals=1451`，`data_failures=0`。
+- real core：`reports/genge_signal_quality_core/20260703_213113`，自然退出，耗时 460.90 秒，`total_signals=1811`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=396`，`pb_missing_count=0`，`financial_missing_count=0`，主候选 968，风险复核 5，gate 为 `PASS_REAL_DATA_RESEARCH`。
+- real cycle：`reports/genge_signal_quality_cycle/20260703_220538`，自然退出，耗时 2054.69 秒，`total_signals=5253`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=843`，`pb_missing_count=0`，`financial_missing_count=0`，主候选 2858，风险复核 5，gate 为 `PASS_REAL_DATA_RESEARCH`。
+- real broad：`reports/genge_signal_quality_broad/20260703_230046`，自然退出，耗时 3299.67 秒，`total_signals=9909`，`data_failures=0`，`provider_error_count=0`，`pe_missing_count=691`，`pb_missing_count=0`，`financial_missing_count=0`，主候选 5485，风险复核 5，gate 为 `PASS_REAL_DATA_RESEARCH`。
+- broad 相比 b2a baseline：60 日平均净收益改善 +1.6873，60 日胜率改善 +3.6948pct，60 日跑赢基准比例改善 +6.3465pct，250 日低点回撤改善 +2.1501pct；但样本数从 20076 降到 9909，下降 50.6426%，触发 overfit warning。
+- broad 当前核心指标：20/60/120/250 日平均净收益为 -0.1427/2.0838/3.9176/6.9694；60 日胜率 46.5738%，60 日跑赢基准比例 46.6653%，250 日低点平均回撤 -29.0947%。
+- failure reason change：b2a 指标基线没有保存 failure reason 明细，因此原因变化使用本地可复核最早 b2a 标记宽池运行 `reports/genge_signal_quality_broad/20260628_151610` 做对照。当前 broad 相比该运行，买太早 -1778/-1.00pct，止损不够严格 -1948/-0.31pct，估值陷阱 -1327/-1.31pct，趋势未确认 -101/+0.04pct，行业周期判断不足 -2150/-1.61pct；相比上一条 signal-quality 宽池运行 `20260703_145745` 基本持平。
+- 候选输出：`paper_observation_candidates.csv` 真实候选数 0，仅有免责声明占位行；`research_observation_candidates.csv` broad 4841；`balanced_research_observation_candidates.csv` broad 5485；`strict_observation_candidates.csv` 为 0；`watch_only_candidates.csv` broad 9909。
+- 免责声明与安全检查：候选文件继续写明仅用于模拟观察和复盘、需人工复核、不构成买入建议、不应自动交易；禁用确定性承诺和交易指令短语扫描未命中。猪肉、面板、牧原股份、TCL科技只出现在样例或 user supplied evidence 数据中，`src/` 和运行逻辑没有把它们硬编码为候选。
+- gate verdict：最终枚举为 `PASS_REAL_DATA_RESEARCH`。不能升级到 `PASS_SIGNAL_QUALITY_IMPROVED` 的原因是 broad 样本下降超过 50%，250 日低点回撤改善未达到 3pct 或不差于 -28% 的升级线，且 paper observation 候选数仍为 0。本轮收口，不提出新的大功能方向。

@@ -10,11 +10,13 @@ FAIL_REAL_DATA_FETCH = "FAIL_REAL_DATA_FETCH"
 FAIL_DATA_QUALITY = "FAIL_DATA_QUALITY"
 FAIL_LOOKAHEAD_RISK = "FAIL_LOOKAHEAD_RISK"
 FAIL_STRATEGY_EXPECTANCY = "FAIL_STRATEGY_EXPECTANCY"
+FAIL_SIGNAL_QUALITY = "FAIL_SIGNAL_QUALITY"
 FAIL_EXIT_POLICY = "FAIL_EXIT_POLICY"
 FAIL_EXIT_BALANCE = "FAIL_EXIT_BALANCE"
 FAIL_EVIDENCE_LAYER = "FAIL_EVIDENCE_LAYER"
 PASS_RESEARCH_ONLY = "PASS_RESEARCH_ONLY"
 PASS_REAL_DATA_RESEARCH = "PASS_REAL_DATA_RESEARCH"
+PASS_SIGNAL_QUALITY_IMPROVED = "PASS_SIGNAL_QUALITY_IMPROVED"
 PASS_EXIT_POLICY_RESEARCH = "PASS_EXIT_POLICY_RESEARCH"
 PASS_BALANCED_EXIT_POLICY = "PASS_BALANCED_EXIT_POLICY"
 PASS_60D_REPAIR_STRATEGY_VALIDATED = "PASS_60D_REPAIR_STRATEGY_VALIDATED"
@@ -30,11 +32,13 @@ ACCEPTANCE_ENUMS = (
     FAIL_DATA_QUALITY,
     FAIL_LOOKAHEAD_RISK,
     FAIL_STRATEGY_EXPECTANCY,
+    FAIL_SIGNAL_QUALITY,
     FAIL_EXIT_POLICY,
     FAIL_EXIT_BALANCE,
     FAIL_EVIDENCE_LAYER,
     PASS_RESEARCH_ONLY,
     PASS_REAL_DATA_RESEARCH,
+    PASS_SIGNAL_QUALITY_IMPROVED,
     PASS_EXIT_POLICY_RESEARCH,
     PASS_BALANCED_EXIT_POLICY,
     PASS_60D_REPAIR_STRATEGY_VALIDATED,
@@ -130,6 +134,81 @@ def _uses_industry_evidence_layer(summary: Dict[str, Any]) -> bool:
         or diagnostics.get("industry_evidence_file")
         or diagnostics.get("company_evidence_file")
     )
+
+
+def _uses_signal_quality_stage(summary: Dict[str, Any]) -> bool:
+    if _uses_industry_evidence_layer(summary):
+        return False
+    diagnostics = summary.get("diagnostics") or {}
+    output_dir = str(diagnostics.get("output_dir") or "").lower()
+    return "genge_signal_quality" in output_dir
+
+
+def _baseline_metric_improved(summary: Dict[str, Any], field_name: str) -> bool:
+    comparison = summary.get("baseline_comparison") or {}
+    metrics = comparison.get("metrics") or {}
+    return (metrics.get(field_name) or {}).get("improved") is True
+
+
+def _baseline_metric_delta(summary: Dict[str, Any], field_name: str) -> float | None:
+    comparison = summary.get("baseline_comparison") or {}
+    metrics = comparison.get("metrics") or {}
+    return _number((metrics.get(field_name) or {}).get("delta"))
+
+
+def _signal_quality_stage_gate(
+    summary: Dict[str, Any],
+    *,
+    base_verdict: str,
+    base_reasons: list[str],
+) -> Dict[str, Any] | None:
+    if not _uses_signal_quality_stage(summary):
+        return None
+
+    reasons = list(base_reasons)
+    if "FAIL" in base_verdict and base_verdict != FAIL_STRATEGY_EXPECTANCY:
+        return {"verdict": base_verdict, "reasons": reasons or ["基础运行链路未通过，不能评估信号质量升级"]}
+
+    total_signals = int(summary.get("total_signals") or 0)
+    comparison = summary.get("baseline_comparison") or {}
+    baseline_group = str(comparison.get("baseline_group") or "")
+    if not comparison.get("available"):
+        return {
+            "verdict": PASS_REAL_DATA_RESEARCH if base_verdict == PASS_REAL_DATA_RESEARCH else base_verdict,
+            "reasons": reasons or ["缺少 baseline comparison，不能声明信号质量改善"],
+        }
+    if total_signals < 1000:
+        return {"verdict": FAIL_SIGNAL_QUALITY, "reasons": reasons or ["样本数量少于 1000，不能评估信号质量改善"]}
+    if baseline_group != "broad":
+        return {
+            "verdict": PASS_REAL_DATA_RESEARCH,
+            "reasons": reasons or ["core/cycle 池用于复核，信号质量最终升级以 broad 池为准"],
+        }
+
+    avg_60d = _number(summary.get("avg_net_return_60d"))
+    drawdown_250d = _number(summary.get("avg_low_max_drawdown_250d"))
+    quality_minimum_ok = (
+        avg_60d is not None
+        and avg_60d > 0
+        and _baseline_metric_improved(summary, "avg_net_return_60d")
+        and (_baseline_metric_delta(summary, "win_rate_60d") or 0.0) >= 3.0
+        and (_baseline_metric_delta(summary, "outperform_benchmark_rate_60d") or 0.0) >= 3.0
+        and (
+            (_baseline_metric_delta(summary, "avg_low_max_drawdown_250d") or 0.0) >= 3.0
+            or (drawdown_250d is not None and drawdown_250d >= -28.0)
+        )
+    )
+    if quality_minimum_ok and not bool(comparison.get("overfit_warning")):
+        return {
+            "verdict": PASS_SIGNAL_QUALITY_IMPROVED,
+            "reasons": reasons
+            or ["broad 池 60 日收益转正且优于 baseline，胜率/跑赢基准至少提升 3pct，250 日回撤达到信号质量门槛"],
+        }
+    if bool(comparison.get("overfit_warning")):
+        reasons.append("样本数相对 baseline 下降超过 50%，不能声明信号质量改善")
+    if not quality_minimum_ok:
+        reasons.append("broad 池未同时满足 60 日收益、胜率、跑赢基准和 250 日回撤的信号质量最小合格线")
+    return {"verdict": PASS_REAL_DATA_RESEARCH, "reasons": reasons or ["真实数据研究链路通过，但信号质量未达到升级标准"]}
 
 
 def _industry_evidence_layer_gate(
@@ -315,6 +394,14 @@ def evaluate_paper_trading_gate(
         verdict = FAIL_STRATEGY_EXPECTANCY
     else:
         verdict = PASS_RESEARCH_ONLY
+
+    signal_quality_gate = _signal_quality_stage_gate(
+        summary,
+        base_verdict=verdict,
+        base_reasons=reasons,
+    )
+    if signal_quality_gate is not None:
+        return signal_quality_gate
 
     if source_mode == "real" and has_exit_policy and total_signals >= 100 and verdict == PASS_REAL_DATA_RESEARCH:
         exit_harms_60d = exit_avg_60d is not None and avg_60d is not None and exit_avg_60d < avg_60d - 1.0

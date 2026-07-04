@@ -1,85 +1,86 @@
-# GenGe Industry Evidence Layer Acceptance Report
+# GenGe Signal Quality Acceptance Report
 
 ## A Runability
 
-- pytest：行业证据专项测试与报告 CLI 测试已通过，详见 `LOOP_PROGRESS.md` Loop 9 后续记录。
-- 最新宽池报告：`reports/genge_industry_evidence_broad/20260630_162940`。
-- 全量运行统计文件：`reports/genge_industry_evidence_broad/20260630_162940/full_run_stats.md`。
-- 运行耗时记录：`elapsed_until_stopped=47m21s`。报告文件已落盘，但长跑进程最后由人工停止，因此不记为自然退出耗时。
-- 不接入券商账户，不读取账户/持仓/密码/验证码，不自动下单，不打开中信证券交易页面。
+- full pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py`，75 passed，1 warning，耗时 285.93 秒。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260703_212323`，自然退出，`total_signals=1451`，`data_failures=0`。
+- real core：`reports/genge_signal_quality_core/20260703_213113`，自然退出，耗时 460.90 秒，`total_signals=1811`，`data_failures=0`。
+- real cycle：`reports/genge_signal_quality_cycle/20260703_220538`，自然退出，耗时 2054.69 秒，`total_signals=5253`，`data_failures=0`。
+- real broad：`reports/genge_signal_quality_broad/20260703_230046`，自然退出，耗时 3299.67 秒，`total_signals=9909`，`data_failures=0`。
+- 本轮未重新观察 GitHub Actions；本地 full pytest 和 fixture smoke 已通过。
+- 不接入券商，不读取账户/持仓/密码/验证码，不自动下单，不打开中信证券交易页面。
 
-## B Data Quality
+## B Baseline Comparison
 
-| metric | value |
-| --- | ---: |
-| total_signals | 9915 |
-| data_failures | 0 |
-| provider_error_count | 0 |
-| pe_missing_count | 690 |
-| pb_missing_count | 0 |
-| financial_missing_count | 0 |
-| main_candidate_count | 5473 |
-| risk_review_count | 5 |
-| cycle_turning_point_candidate_count | 0 |
+本轮信号质量基线为 `config/genge_signal_quality_baseline.json` 中的 commit `b2a298b0b2ff35a7454fb0b731c9d5e0c6f07917`。
 
-PE 缺失保留为显式统计项，不被当作安全数据；财务字段仍需要结合公开财报人工复核。
+| pool | signals | sample delta | 60d net delta | 60d win delta | 60d outperform delta | 250d low drawdown delta | overfit |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | --- |
+| core | 1811 | -36.9429% | +3.1324 | +6.7328 | n/a | +0.1182 | false |
+| cycle | 5253 | -39.1380% | +2.6904 | +5.2550 | n/a | +1.1470 | false |
+| broad | 9909 | -50.6426% | +1.6873 | +3.6948 | +6.3465 | +2.1501 | true |
 
-## C Evidence Inputs
+core/cycle 的 benchmark `000300` 本轮所有数据源失败，跑赢基准指标不可比；broad 的 benchmark `000905` 由 Akshare 获取成功。broad 虽然 60 日胜率和跑赢率提升达到 3pct 要求，但样本相对 b2a baseline 下降超过 50%，且 250 日低点回撤改善 2.1501pct，未达到 3pct 或不差于 -28% 的升级线。
 
-- 样板研究记录：`research/industry_cycle/pork.json/md`、`research/industry_cycle/panel.json/md`。
-- 生成的行业证据：`data/user_supplied/industry_cycle_evidence.csv`，16 行。
-- 生成的公司证据：`data/user_supplied/company_cycle_evidence.csv`，20 行。
-- 拒绝清单：`data/user_supplied/rejected_evidence.csv`，0 行。
-- 质量报告：`data/user_supplied/evidence_quality_report.md`，`high_confidence_rows=20`。
+## C Strategy Quality
 
-猪肉、面板、牧原股份、TCL科技只作为证据链路样板，用于验证公开来源、结构化证据、质量门槛和报告链路；系统不得把它们硬编码为候选，也不得强行让它们入选。
+| pool | 20d net | 60d net | 120d net | 250d net | 60d win | 60d outperform | 250d low drawdown |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| core | 1.0745 | 2.0167 | 3.8138 | 7.8714 | 50.7778% | n/a | -31.4643% |
+| cycle | 0.8964 | 4.6133 | 7.1859 | 12.6794 | 52.0953% | n/a | -30.3673% |
+| broad | -0.1427 | 2.0838 | 3.9176 | 6.9694 | 46.5738% | 46.6653% | -29.0947% |
 
-## D Evidence Rules
+| pool | stop-adjusted 60d net | balanced 60d net | balanced 60d win | balanced 60d outperform | balanced 250d drawdown |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| core | 2.0485 | 2.1186 | 37.6111% | n/a | -9.7182% |
+| cycle | 3.0325 | 3.5191 | 38.5236% | n/a | -9.8077% |
+| broad | 1.1986 | 1.9090 | 34.9024% | 51.5250% | -9.8373% |
 
-- 支持 `official_report`、`company_announcement`、`exchange_disclosure`、`research_report_summary`、`news_summary` 等来源类型。
-- 缺少 `source`、`date` 或必需字段的证据进入 `rejected_evidence.csv`，不会混入正式 CSV。
-- 新闻摘要和研究摘要不能单独形成 `HIGH` 置信度。
-- 模板或缺失证据不能形成 `STRONG` 硬逻辑。
-- `STRONG` 必须同时具备行业证据和公司证据，且来源质量、来源多样性、时效性和正负方向均通过。
+broad 趋势确认分布为 `STRONG=4450`、`MEDIUM=2789`、`WEAK=2670`。当前 `hard_logic_level` 全部为 `NONE`，说明本轮 signal-quality 跑法没有启用行业证据输入，不把证据模板或样板行业强行转成硬逻辑候选。
 
-## E Output Files
+## D Failure Reason Changes
 
-最新宽池报告目录已生成：
+`config/genge_signal_quality_baseline.json` 中的 b2a 指标基线不包含 failure reason 明细，因此 failure reason change 不能直接声明为相对 20076 条原始 baseline 的变化。这里使用本地可复核的最早 b2a 标记宽池运行 `reports/genge_signal_quality_broad/20260628_151610` 做原因分布对照，并同时观察上一条 signal-quality 宽池运行 `reports/genge_signal_quality_broad/20260703_145745`。
 
-- `summary.md` / `summary.json`。
-- `signal_details.csv`。
-- `industry_evidence_cards.md` / `industry_evidence_cards.json`。
-- `cycle_turning_point_candidates.csv`。
-- `strict_observation_candidates.csv`。
-- `research_observation_candidates.csv`。
-- `balanced_research_observation_candidates.csv`。
-- `watch_only_candidates.csv`。
-- `paper_observation_candidates.csv`。
-- `full_run_stats.md`。
-- `pork_panel_deep_dive.md`，文件名兼容旧专项复核，内容为动态样板证据链复核。
+| failure reason | earliest local b2a run | previous signal-quality run | current broad | current vs earliest | current vs previous |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| 买太早 | 7601 / 59.77% | 5756 / 58.88% | 5823 / 58.76% | -1778 / -1.00pct | +67 / -0.12pct |
+| 止损不够严格 | 8679 / 68.24% | 6637 / 67.90% | 6731 / 67.93% | -1948 / -0.31pct | +94 / +0.03pct |
+| 估值陷阱 | 5422 / 42.63% | 4039 / 41.32% | 4095 / 41.33% | -1327 / -1.31pct | +56 / +0.01pct |
+| 趋势未确认 | 475 / 3.73% | 374 / 3.83% | 374 / 3.77% | -101 / +0.04pct | 0 / -0.05pct |
+| 行业周期判断不足 | 9010 / 70.84% | 6755 / 69.10% | 6860 / 69.23% | -2150 / -1.61pct | +105 / +0.13pct |
 
-候选文件只表示公开数据研究观察，不是交易指令。
+broad 当前失败原因计数：行业周期判断不足 6860，止损不够严格 6731，买太早 5823，估值陷阱 4095，持有周期不适合 1605，趋势未确认 374，长周期位置风险 89，大盘环境差 54。
 
-## F Hard Logic Integration
+质量过滤摘要：`high_execution_risk_count=4`，`long_term_position_degraded_count=114`，`falling_knife_filtered_count=0`，`value_trap_flagged_count=0`，`missing_financial_uncertain_count=0`。
 
-逐条信号明细已加入：
+## E Execution Feasibility
 
-- `industry_evidence_items`
-- `company_evidence_items`
-- `hard_logic_reason`
+broad 执行诊断：`limit_up_entry_count=3`，`limit_down_entry_count=1`，`missing_entry_count=0`，`degraded_entry_count=2`，`low_liquidity_count=0`，`abnormal_gap_open_count=6`，`risky_entry_count=4`。
 
-这三类字段用于解释证据链路，避免只靠价格、均线、低位分位或总分生成硬逻辑。样板对象不参与特殊加分；价格、趋势、估值、财务或风险条件不足时，会按通用规则排除或降级。
+broad 执行风险分布：低风险 9903，降级 2，高风险 4。估值覆盖率 100.0%，财务覆盖率 100.0%，PE 缺失 691，PB 缺失 0，财务缺失 0，风险复核数量 5。
 
-## G Broad Run Note
+## F Observation Candidates
 
-最新宽池报告 `summary.json` 仍记录 evidence file 为 example/template 路径，说明这次落盘报告没有完成一次确认使用 `data/user_supplied` 的干净全量运行。当前 commit 已准备好真实样板证据 CSV、质量门槛和动态样板复核逻辑；下一次用相同宽池命令干净运行，应重点确认 `summary.json -> diagnostics -> industry_evidence_file/company_evidence_file` 指向 `data/user_supplied`。
+- `paper_observation_candidates.csv` 已生成，真实候选数 0，仅有免责声明占位行。
+- `research_observation_candidates.csv` 摘要计数：core 709，cycle 1803，broad 4841。
+- `balanced_research_observation_candidates.csv` 摘要计数：core 968，cycle 2858，broad 5485。
+- `strict_observation_candidates.csv` 摘要计数：0。
+- `watch_only_candidates.csv` 摘要计数：core 1811，cycle 5253，broad 9909。
+- 禁用确定性承诺和交易指令短语扫描未命中。
 
-## H Acceptance Decision
+候选文件免责声明为“仅用于模拟观察和复盘；研究观察候选需人工复核，不构成买入建议，不应自动交易。”
 
-最终枚举：`PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。
+猪肉、面板、牧原股份、TCL科技只作为样板行业和样板股票出现在 example/template 或 user supplied evidence 文件中；`src/` 和运行逻辑没有把它们硬编码为候选，也没有强制入选。
 
-理由：行业周期证据层的 schema、证据字段、质量门槛、拒绝清单、特征合成、硬逻辑降级、证据卡片、周期拐点候选文件和动态样板复核均已可运行；最新宽池报告也保留了完整运行统计。但尚未完成一次自然退出且确认使用 `data/user_supplied` 的干净全量宽池运行，因此不能升级为 `PASS_HARD_LOGIC_RESEARCH_READY`、`PASS_CYCLE_TURNING_POINT_SCREENER`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
+## G Acceptance Decision
 
-## I Safety Boundary
+最终枚举：`PASS_REAL_DATA_RESEARCH`。
 
-本系统只使用公开行情、公开财务和本地结构化研究证据；不接入中信证券或其它券商账户，不读取资产、持仓、密码、验证码，不自动买入、卖出或撤单。所有结论必须由人工结合公告、财报、K线、流动性和风险标签复核。
+没有升级到 `PASS_SIGNAL_QUALITY_IMPROVED` 的阻塞原因：
+
+- broad 样本相对 b2a baseline 下降 50.6426%，超过 50% 的样本稳定性红线。
+- broad 250 日低点回撤为 -29.0947%，只比 baseline 改善 2.1501pct，未达到改善 3pct 或不差于 -28% 的升级线。
+- broad 60 日胜率 46.5738%，仍低于更高模拟观察门槛；paper observation 候选数为 0。
+
+当前版本可以作为真实公开数据研究和复盘报告继续使用；不能声明模拟盘候选、模拟盘就绪或交易可执行。

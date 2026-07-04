@@ -272,7 +272,7 @@ broad 相比基线：60 日平均净收益 +1.8959，60 日胜率 +3.9829，60 �
 
 ## 2026-06-28 退出策略与 60 日修复定位复核
 
-本轮基于 commit `724b8f9d` 的 Loop 3 结果做退出策略研究，不继续压缩样本。`config/genge_signal_quality_baseline.json` 已更新为 `724b8f9d` 基线，core/cycle/broad 本轮样本变化均为 0%，`overfit_warning=false`。
+本轮基于 commit `724b8f9d` 的 Loop 3 结果做退出策略研究，不继续压缩样本。该阶段曾把 `config/genge_signal_quality_baseline.json` 临时切到 `724b8f9d` 基线，用于退出策略样本稳定性判断；后续 signal-quality 终局验收已恢复使用 `b2a298b0` 真实研究基线。
 
 - pytest：52 passed，1 warning。
 - fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260628_233336`，耗时 96 秒，`total_signals=1451`，`data_failures=0`。
@@ -315,6 +315,40 @@ broad 关键结论：`balanced_hybrid_60d_exit` 的 60 日净收益从 v6 的 1.
 与旧 hybrid 对比：旧 `hybrid_60d_repair_exit` 的 broad 60 日退出净收益为 0.1900，250 日退出回撤为 -4.7556；新的 v7 balanced 版本保留了更多 60 日修复收益，但接受更宽的退出回撤，以换取收益/回撤平衡。
 
 最终研究枚举仍为 `PASS_EXIT_POLICY_RESEARCH`。原因是 broad 达到 `total_signals>=9000`、`balanced_exit_net_return_60d>=1.2%`、收益保留率 `>=50%`、250 日回撤压降 `>=60%` 和跑赢基准 `>=46%`，但 balanced 退出后的 60 日胜率为 34.3115%，低于 `PASS_BALANCED_EXIT_POLICY` 的胜率门槛，因此不能升级为 `PASS_BALANCED_EXIT_POLICY`、`PASS_PAPER_TRADING_CANDIDATE` 或 `PASS_PAPER_TRADING_READY`。
+
+## 2026-07-03 User Supplied Evidence Clean Run
+
+本轮基于 commit `2d96e66a` 做 Industry Evidence Layer 终局验收，不新增行业、不调整退出策略、不重构架构。真实宽池命令明确指定：
+
+- `data/user_supplied/industry_cycle_evidence.csv`
+- `data/user_supplied/company_cycle_evidence.csv`
+- `config/industry_evidence_schema.yaml`
+
+full pytest 已完整跑完：75 passed，1 warning。真实宽池报告为 `reports/genge_industry_evidence_broad/20260703_160805`，自然退出，耗时 3424.62 秒，`total_signals=9909`，`data_failures=0`，`provider_error_count=0`，PE/PB/财务缺失数量为 691/0/0。
+
+`summary.json` 明确记录 industry/company evidence file 均来自 `data/user_supplied`，不是 `data/examples` 或 `tests/fixtures`。证据文件本身包含行业证据 16 行、公司证据 20 行、拒绝清单 0 行。
+
+但本次宽池内证据覆盖无效：行业证据覆盖率 0.0%，公司证据覆盖率 0.0%，行业证据缺失 9909，公司证据缺失 9909，`hard_logic_level` 全部为 `NONE`。因此硬逻辑层按规则安全降级，不能声明 `PASS_HARD_LOGIC_RESEARCH_READY` 或 `PASS_CYCLE_TURNING_POINT_SCREENER`。
+
+`cycle_turning_point_candidates.csv` 已生成，但真实候选数为 0；系统没有强行制造候选。猪肉、面板、牧原股份、TCL科技仍只是证据链路样板，不参与特殊加分，不被强行入选。`000100/TCL科技` 作为普通股票自然出现在宽池信号中，但硬逻辑等级仍为 `NONE`，未进入周期拐点或模拟观察候选。
+
+最终验收枚举为 `PASS_INDUSTRY_EVIDENCE_FRAMEWORK`。这表示真实证据输入路径、报告生成、候选文件、免责声明和安全边界通过；但证据覆盖和硬逻辑候选尚未通过升级标准。
+
+## 2026-07-03 Signal Quality Final Acceptance
+
+本轮停止新增功能，回到 GenGe Cycle Bottom Strategy 的信号质量终局验收。当前 `config/genge_signal_quality_baseline.json` 使用 commit `b2a298b0b2ff35a7454fb0b731c9d5e0c6f07917` 的真实研究基线；`724b8f9d` 只保留为退出策略阶段的历史比较口径。
+
+- full pytest：75 passed，1 warning，耗时 285.93 秒。
+- fixture smoke：`reports/genge_cycle_bottom_ci_smoke/20260703_212323`，自然退出，`total_signals=1451`，`data_failures=0`。
+- real core：`reports/genge_signal_quality_core/20260703_213113`，自然退出，耗时 460.90 秒，`total_signals=1811`，`data_failures=0`。
+- real cycle：`reports/genge_signal_quality_cycle/20260703_220538`，自然退出，耗时 2054.69 秒，`total_signals=5253`，`data_failures=0`。
+- real broad：`reports/genge_signal_quality_broad/20260703_230046`，自然退出，耗时 3299.67 秒，`total_signals=9909`，`data_failures=0`。
+
+broad 相比 b2a baseline：60 日平均净收益改善 +1.6873，60 日胜率改善 +3.6948pct，60 日跑赢基准比例改善 +6.3465pct，250 日低点回撤改善 +2.1501pct；但样本数下降 50.6426%，触发 overfit warning。broad 当前 60 日平均净收益为 2.0838，60 日胜率 46.5738%，60 日跑赢基准比例 46.6653%，250 日低点平均回撤 -29.0947%。
+
+最终枚举为 `PASS_REAL_DATA_RESEARCH`，不能升级为 `PASS_SIGNAL_QUALITY_IMPROVED`。原因是 broad 样本稳定性未过线，250 日低点回撤改善未达到 3pct 或不差于 -28% 的升级线，且模拟观察候选数仍为 0。
+
+安全边界保持不变：不接入中信证券或任何券商接口，不读取账户/持仓/密码/验证码，不自动下单。猪肉、面板、牧原股份、TCL科技只作为样例或用户证据数据中的链路验证对象，策略代码没有把它们硬编码为候选。
 
 ## 已知限制
 

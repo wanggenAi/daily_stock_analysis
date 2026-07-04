@@ -7,12 +7,14 @@ from pathlib import Path
 
 from src.strategies.genge_cycle_bottom.acceptance import (
     FAIL_DATA_QUALITY,
+    FAIL_SIGNAL_QUALITY,
     PASS_BALANCED_EXIT_POLICY,
     PASS_60D_REPAIR_STRATEGY_VALIDATED,
     PASS_EXIT_POLICY_RESEARCH,
     PASS_PAPER_TRADING_READY,
     PASS_REAL_DATA_RESEARCH,
     PASS_RESEARCH_ONLY,
+    PASS_SIGNAL_QUALITY_IMPROVED,
 )
 from src.strategies.genge_cycle_bottom.backtest import BALANCED_EXIT_POLICY_NAME, EXIT_POLICY_EXPERIMENTS
 from src.strategies.genge_cycle_bottom.cli import main
@@ -322,6 +324,57 @@ def test_baseline_comparison_and_overfit_warning_are_reported() -> None:
     assert comparison["overfit_warning"] is True
 
 
+def test_signal_quality_stage_can_upgrade_only_without_overfit_warning() -> None:
+    rows = []
+    for index in range(11000):
+        row = _summary_row(index % 120, net_60d=3.0, net_120d=5.0, drawdown=-24.0, outperform=True)
+        row["code"] = f"{index:06d}"
+        rows.append(row)
+
+    summary = compute_summary(
+        rows,
+        extra_diagnostics={
+            "source_mode": "real",
+            "output_dir": "reports/genge_signal_quality_broad",
+            "requested_codes": [f"{index:06d}" for index in range(100)],
+            "benchmark": "000905",
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    assert summary["baseline_comparison"]["overfit_warning"] is False
+    assert summary["paper_trading_gate"]["verdict"] == PASS_SIGNAL_QUALITY_IMPROVED
+
+
+def test_signal_quality_stage_does_not_upgrade_when_sample_shrinks_too_much() -> None:
+    rows = [
+        _summary_row(index, net_60d=3.0, net_120d=5.0, drawdown=-24.0, outperform=True)
+        for index in range(120)
+    ]
+
+    summary = compute_summary(
+        rows,
+        extra_diagnostics={
+            "source_mode": "real",
+            "output_dir": "reports/genge_signal_quality_broad",
+            "requested_codes": [f"{index:06d}" for index in range(100)],
+            "benchmark": "000905",
+            "ci_passed": True,
+            "fixture_smoke_passed": True,
+            "real_5y_passed": True,
+            "no_lookahead_risk": True,
+            "no_auto_trade": True,
+        },
+    )
+
+    assert summary["baseline_comparison"]["overfit_warning"] is True
+    assert summary["paper_trading_gate"]["verdict"] == FAIL_SIGNAL_QUALITY
+
+
 def test_exit_policy_summary_and_60d_horizon_gate_are_reported() -> None:
     rows = [_summary_row_with_exit(index, net_60d=2.0, net_120d=1.0, net_250d=1.0, outperform=True) for index in range(8100)]
     for row in rows:
@@ -363,7 +416,7 @@ def test_exit_policy_summary_and_60d_horizon_gate_are_reported() -> None:
 
 def test_balanced_gate_requires_sample_stability_and_metrics() -> None:
     rows = []
-    for index in range(9645):
+    for index in range(19000):
         row = _summary_row_with_exit(index, net_60d=2.0, net_120d=2.0, net_250d=2.0, drawdown=-30.0)
         row["benchmark_return_60d"] = 0.0
         row[f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"] = 1.4
@@ -391,7 +444,7 @@ def test_balanced_gate_requires_sample_stability_and_metrics() -> None:
     assert summary["paper_trading_gate"]["verdict"] == PASS_BALANCED_EXIT_POLICY
 
     reduced_summary = compute_summary(
-        rows[:8600],
+        rows[:17000],
         extra_diagnostics={
             "source_mode": "real",
             "output_dir": "reports/genge_exit_balance_broad",
