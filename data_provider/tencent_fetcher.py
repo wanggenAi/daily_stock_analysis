@@ -20,6 +20,7 @@ from .base import BaseFetcher, DataFetchError, STANDARD_COLUMNS, normalize_stock
 logger = logging.getLogger(__name__)
 
 _MAX_KLINE_BARS = 800
+_MAX_WINDOW_CALENDAR_DAYS = 730
 
 
 class TencentFetcher(BaseFetcher):
@@ -38,53 +39,16 @@ class TencentFetcher(BaseFetcher):
         if not symbol:
             raise DataFetchError(f"TencentFetcher unsupported stock code: {stock_code}")
 
-        lookback = _estimate_lookback_days(start_date=start_date, end_date=end_date)
-        explicit_start = _format_tencent_date(start_date)
-        explicit_end = _format_tencent_date(end_date)
-        explicit_window = (
-            f"{explicit_start},{explicit_end}"
-            if explicit_start and explicit_end
-            else ","
-        )
-        response = requests.get(
-            self._KLINE_ENDPOINT,
-            params={"param": f"{symbol},day,{explicit_window},{lookback},qfq"},
-            headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"},
+        raw = _fetch_windowed_raw_data(
+            endpoint=self._KLINE_ENDPOINT,
+            symbol=symbol,
+            start_date=start_date,
+            end_date=end_date,
             timeout=self._HTTP_TIMEOUT_SECONDS,
         )
-        response.raise_for_status()
-        payload = response.json()
-        rows = _extract_kline_rows(payload, symbol=symbol)
-        if not rows:
-            logger.info("TencentFetcher empty daily history for %s", stock_code)
-            return _empty_daily_frame()
-
-        df = pd.DataFrame(rows)
-        first_returned_date = _first_returned_date(df)
-        if first_returned_date and _is_capped_history_incomplete(
-            first_returned_date=first_returned_date,
-            start_date=start_date,
-            lookback=lookback,
-            returned_rows=len(rows),
-        ):
-            logger.info(
-                "TencentFetcher incomplete capped daily history for %s: first_date=%s requested_start=%s",
-                stock_code,
-                first_returned_date,
-                start_date,
-            )
-            return _empty_daily_frame()
-
-        df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
-        if df.empty:
-            logger.info(
-                "TencentFetcher daily history outside requested range for %s: %s~%s",
-                stock_code,
-                start_date,
-                end_date,
-            )
-            return _empty_daily_frame()
-        return df
+        if raw.empty:
+            return raw
+        return raw[(raw["date"] >= start_date) & (raw["date"] <= end_date)]
 
     def _normalize_data(self, df: pd.DataFrame, stock_code: str) -> pd.DataFrame:
         normalized = df.copy()
@@ -95,6 +59,92 @@ class TencentFetcher(BaseFetcher):
             normalized["pct_chg"] = normalized["close"].pct_change().fillna(0.0) * 100
         normalized = normalized[["date", "open", "high", "low", "close", "volume", "amount", "pct_chg"]]
         return normalized
+
+
+def _fetch_windowed_raw_data(
+    *,
+    endpoint: str,
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    timeout: int,
+) -> pd.DataFrame:
+    windows = _date_windows(start_date=start_date, end_date=end_date)
+    frames: list[pd.DataFrame] = []
+    for window_start, window_end in windows:
+        frame = _fetch_raw_window(
+            endpoint=endpoint,
+            symbol=symbol,
+            start_date=window_start,
+            end_date=window_end,
+            timeout=timeout,
+        )
+        if frame is not None and not frame.empty:
+            frames.append(frame)
+
+    if not frames:
+        return _empty_daily_frame()
+
+    merged = pd.concat(frames, ignore_index=True)
+    merged = merged.drop_duplicates(subset=["date"], keep="last").sort_values("date").reset_index(drop=True)
+    return merged
+
+
+def _fetch_raw_window(
+    *,
+    endpoint: str,
+    symbol: str,
+    start_date: str,
+    end_date: str,
+    timeout: int,
+) -> pd.DataFrame:
+    lookback = _estimate_lookback_days(start_date=start_date, end_date=end_date)
+    explicit_start = _format_tencent_date(start_date)
+    explicit_end = _format_tencent_date(end_date)
+    explicit_window = (
+        f"{explicit_start},{explicit_end}"
+        if explicit_start and explicit_end
+        else ","
+    )
+    response = requests.get(
+        endpoint,
+        params={"param": f"{symbol},day,{explicit_window},{lookback},qfq"},
+        headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"},
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    rows = _extract_kline_rows(payload, symbol=symbol)
+    if not rows:
+        logger.info("TencentFetcher empty daily history for %s", symbol)
+        return _empty_daily_frame()
+
+    df = pd.DataFrame(rows)
+    first_returned_date = _first_returned_date(df)
+    if first_returned_date and _is_capped_history_incomplete(
+        first_returned_date=first_returned_date,
+        start_date=start_date,
+        lookback=lookback,
+        returned_rows=len(rows),
+    ):
+        logger.info(
+            "TencentFetcher incomplete capped daily history for %s: first_date=%s requested_start=%s",
+            symbol,
+            first_returned_date,
+            start_date,
+        )
+        return _empty_daily_frame()
+
+    df = df[(df["date"] >= start_date) & (df["date"] <= end_date)]
+    if df.empty:
+        logger.info(
+            "TencentFetcher daily history outside requested range for %s: %s~%s",
+            symbol,
+            start_date,
+            end_date,
+        )
+        return _empty_daily_frame()
+    return df
 
 
 def _to_tencent_symbol(stock_code: str) -> str:
@@ -117,6 +167,26 @@ def _estimate_lookback_days(*, start_date: str, end_date: str) -> int:
         calendar_days = 90
     # Trading days are sparse over calendar days; add margin for holidays/suspensions.
     return max(30, min(_MAX_KLINE_BARS, int(calendar_days * 1.8) + 20))
+
+
+def _date_windows(*, start_date: str, end_date: str) -> list[tuple[str, str]]:
+    try:
+        start = datetime.strptime(start_date, "%Y-%m-%d")
+        end = datetime.strptime(end_date, "%Y-%m-%d")
+    except ValueError:
+        return [(start_date, end_date)]
+    if start > end:
+        return [(start_date, end_date)]
+    if (end - start).days + 1 <= _MAX_WINDOW_CALENDAR_DAYS:
+        return [(start_date, end_date)]
+
+    windows: list[tuple[str, str]] = []
+    cursor = start
+    while cursor <= end:
+        window_end = min(end, cursor + timedelta(days=_MAX_WINDOW_CALENDAR_DAYS - 1))
+        windows.append((cursor.strftime("%Y-%m-%d"), window_end.strftime("%Y-%m-%d")))
+        cursor = window_end + timedelta(days=1)
+    return windows
 
 
 def _empty_daily_frame() -> pd.DataFrame:

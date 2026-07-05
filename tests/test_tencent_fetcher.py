@@ -10,6 +10,26 @@ import pandas as pd
 from data_provider.tencent_fetcher import TencentFetcher, _to_tencent_symbol
 
 
+class _FakeResponse:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def raise_for_status(self) -> None:
+        return None
+
+    def json(self):
+        return self._payload
+
+
+def _windowed_response(symbol: str, rows: list[list[str]], kwargs) -> _FakeResponse:
+    parts = kwargs["params"]["param"].split(",")
+    start_date = parts[2]
+    end_date = parts[3]
+    window_rows = [row for row in rows if start_date <= row[0] <= end_date]
+    payload = {"data": {symbol: {"qfqday": window_rows}}}
+    return _FakeResponse(payload)
+
+
 def test_tencent_symbol_conversion_supports_a_share_markets() -> None:
     assert _to_tencent_symbol("600519") == "sh600519"
     assert _to_tencent_symbol("000001") == "sz000001"
@@ -167,16 +187,17 @@ def test_tencent_fetcher_keeps_short_history_when_cap_not_hit() -> None:
         def json(self):
             return payload
 
-    captured = {}
+    captured = {"params": []}
 
     def fake_get(url, **kwargs):
-        captured.update(kwargs)
-        return FakeResponse()
+        captured["params"].append(kwargs["params"]["param"])
+        return _windowed_response("sz000001", payload["data"]["sz000001"]["qfqday"], kwargs)
 
     with patch("data_provider.tencent_fetcher.requests.get", fake_get):
         df = TencentFetcher().get_daily_data("000001", start_date="2020-01-01", end_date="2026-05-10")
 
-    assert ",day,2020-01-01,2026-05-10,800,qfq" in captured["params"]["param"]
+    assert len(captured["params"]) > 1
+    assert captured["params"][0].startswith("sz000001,day,2020-01-01,")
     assert len(df) == 2
     assert float(df.iloc[0]["close"]) == 10.5
 
@@ -203,16 +224,17 @@ def test_tencent_fetcher_keeps_near_cap_short_history_for_new_listing() -> None:
         def json(self):
             return payload
 
-    captured = {}
+    captured = {"params": []}
 
     def fake_get(url, **kwargs):
-        captured.update(kwargs)
-        return FakeResponse()
+        captured["params"].append(kwargs["params"]["param"])
+        return _windowed_response("sz000001", rows, kwargs)
 
     with patch("data_provider.tencent_fetcher.requests.get", fake_get):
         df = TencentFetcher().get_daily_data("000001", start_date="2020-01-01", end_date="2026-05-10")
 
-    assert ",day,2020-01-01,2026-05-10,800,qfq" in captured["params"]["param"]
+    assert len(captured["params"]) > 1
+    assert captured["params"][0].startswith("sz000001,day,2020-01-01,")
     assert len(df) == 799
     assert float(df.iloc[0]["close"]) == 10.5
 
@@ -239,21 +261,22 @@ def test_tencent_fetcher_keeps_capped_history_when_start_is_weekend() -> None:
         def json(self):
             return payload
 
-    captured = {}
+    captured = {"params": []}
 
     def fake_get(url, **kwargs):
-        captured.update(kwargs)
-        return FakeResponse()
+        captured["params"].append(kwargs["params"]["param"])
+        return _windowed_response("sz000001", rows, kwargs)
 
     with patch("data_provider.tencent_fetcher.requests.get", fake_get):
         df = TencentFetcher().get_daily_data("000001", start_date="2024-03-02", end_date="2027-05-10")
 
-    assert ",day,2024-03-02,2027-05-10,800,qfq" in captured["params"]["param"]
+    assert len(captured["params"]) > 1
+    assert captured["params"][0].startswith("sz000001,day,2024-03-02,")
     assert len(df) == 800
     assert pd.Timestamp(df.iloc[0]["date"]).strftime("%Y-%m-%d") == "2024-03-04"
 
 
-def test_tencent_fetcher_rejects_capped_incomplete_history() -> None:
+def test_tencent_fetcher_paginates_long_history_windows() -> None:
     rows = [
         [
             day.strftime("%Y-%m-%d"),
@@ -266,23 +289,16 @@ def test_tencent_fetcher_rejects_capped_incomplete_history() -> None:
         ]
         for index, day in enumerate(pd.date_range("2023-01-03", periods=800, freq="D"))
     ]
-    payload = {"data": {"sz000001": {"qfqday": rows}}}
-
-    class FakeResponse:
-        def raise_for_status(self) -> None:
-            return None
-
-        def json(self):
-            return payload
-
-    captured = {}
+    captured = {"params": []}
 
     def fake_get(url, **kwargs):
-        captured.update(kwargs)
-        return FakeResponse()
+        captured["params"].append(kwargs["params"]["param"])
+        return _windowed_response("sz000001", rows, kwargs)
 
     with patch("data_provider.tencent_fetcher.requests.get", fake_get):
         df = TencentFetcher().get_daily_data("000001", start_date="2020-01-01", end_date="2026-05-10")
 
-    assert ",day,2020-01-01,2026-05-10,800,qfq" in captured["params"]["param"]
-    assert df.empty
+    assert len(captured["params"]) > 1
+    assert captured["params"][0].startswith("sz000001,day,2020-01-01,")
+    assert len(df) == 800
+    assert pd.Timestamp(df.iloc[0]["date"]).strftime("%Y-%m-%d") == "2023-01-03"

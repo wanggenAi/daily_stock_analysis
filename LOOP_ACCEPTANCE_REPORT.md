@@ -10,34 +10,35 @@
 
 ## Current Snapshot Tests
 
-- Compile check passed for `data_provider/efinance_fetcher.py`, current snapshot, CLI, and runner script.
-- Current snapshot unit tests: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_current_snapshot.py -q` -> 6 passed, 1 warning, 0.25 seconds.
-- Full pytest: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py` -> 83 passed, 1 warning, 270.36 seconds.
+- Compile check passed for `data_provider/tencent_fetcher.py` and `src/strategies/genge_cycle_bottom/cli.py`.
+- Targeted data-chain tests: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_tencent_fetcher.py tests/test_genge_cycle_bottom_current_snapshot.py -q` -> 16 passed, 1 warning, 0.41 seconds.
+- Full current snapshot related pytest: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py tests/test_tencent_fetcher.py` -> 93 passed, 1 warning, 272.09 seconds.
 - Full pytest was completed; no requested test group was skipped.
 
 ## Current Snapshot Real Run
 
 - Required command naturally exited with `--stock-pool-file stock_pools/genge_broad_pool.txt`, `--max-codes 100`, `--years 5`, `--benchmark 000905`, `--output-dir reports/genge_current_snapshot`, both `data/user_supplied` evidence files, `config/industry_evidence_schema.yaml`, `config/industry_alias_map.yaml`, `--current-snapshot`, `--output-current-snapshot`, `--fixture-smoke-passed`, and `--ci-passed`.
-- Latest report path: `reports/genge_current_snapshot/20260705_092526`.
-- Runtime: runner `elapsed_seconds=23.71`; wall time `real 24.07`.
+- Latest report path: `reports/genge_current_snapshot/20260705_103627`.
+- Runtime: runner `elapsed_seconds=551.98`; wall time `real 552.20`.
 - `current_snapshot_summary.json -> industry_evidence_file`: `data/user_supplied/industry_cycle_evidence.csv`.
 - `current_snapshot_summary.json -> company_evidence_file`: `data/user_supplied/company_cycle_evidence.csv`.
-- `snapshot_total_stocks=100`, `snapshot_valid_stocks=0`, `fatal_data_failures=0`, `skipped_data_unavailable=100`.
-- `data_failure_status_distribution`: `SKIPPED_DATA_UNAVAILABLE=100`; first 3 stocks hit Eastmoney timeout/remote disconnect, remaining 97 were skipped by current snapshot provider-failure budget.
-- `industry_alias_resolution.csv` has 100 rows: `EXACT=31`, `COMPANY_CODE=2`, `UNRESOLVED=67`.
-- Evidence rows loaded: industry 16, company 20. Current evidence coverage is 0.0% for industry and company because no stock had valid current price data.
-- `hard_logic_level_distribution={}`, `snapshot_decision_distribution={}`, `current_cycle_turning_point_candidate_count=0`.
-- `current_cycle_turning_point_candidates.csv` was generated with a disclaimer placeholder row; no candidate was fabricated.
+- `snapshot_total_stocks=100`, `snapshot_valid_stocks=100`, `fatal_data_failures=0`, `skipped_data_unavailable=0`, `skipped_invalid_or_delisted=0`.
+- Daily price source distribution from diagnostics: `TencentFetcher=100`; Eastmoney/efinance failures were safely bypassed by multi-source fallback instead of stopping the current snapshot pool.
+- `industry_alias_resolution.csv` has 100 rows: 33 matched stocks and 67 unresolved industry stocks.
+- Evidence rows loaded: industry 16, company 20. Current evidence coverage: industry 3.0%, company 2.0%.
+- `hard_logic_level_distribution={'NONE': 98, 'WEAK': 2}`, `snapshot_decision_distribution={'NOT_QUALIFIED': 98, 'WATCH_ONLY': 2}`.
+- `current_cycle_turning_point_candidate_count=0`; `current_cycle_turning_point_candidates.csv` was generated with a disclaimer placeholder row and no candidate was fabricated.
+- Zero-candidate blockers: `cycle_phase_not_turning=100`, `hard_logic_below_medium=100`, `industry_evidence_missing_or_unresolved=97`, `trend_below_medium=87`, `price_not_low=62`, `severe_financial_risk=10`, `valuation_risk=25`.
 
 ## Current Snapshot Acceptance
 
-Final enum: `FAIL_CURRENT_SNAPSHOT`.
+Final enum: `PASS_CURRENT_SNAPSHOT_RESEARCH_READY`.
 
-Blocking reasons, capped at three:
+Not upgraded to `PASS_CURRENT_SNAPSHOT_CANDIDATE_GENERATED` because:
 
-- External Eastmoney/东方财富 current K-line data was unavailable for the sampled broad pool, leaving `snapshot_valid_stocks=0`.
-- With no valid current price rows, hard logic and candidate decisions could not be evaluated on live snapshot data.
-- `current_cycle_turning_point_candidate_count=0`; no candidate was fabricated or force-added.
+- No stock reached `hard_logic_level >= MEDIUM`.
+- Most stocks lacked matched current industry/company evidence, and trend confirmation remained below medium for 87 stocks.
+- No cycle turning point candidate was fabricated or force-added.
 
 # Industry Evidence Layer Prior Acceptance Report
 

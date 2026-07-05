@@ -226,3 +226,17 @@
 - 证据与别名审计：行业证据 16 行、公司证据 20 行；`industry_alias_resolution.csv` 100 行，其中 `EXACT=31`、`COMPANY_CODE=2`、`UNRESOLVED=67`；因无有效当前价格数据，行业/公司 evidence coverage 均为 0.0%。
 - 候选与安全：`current_cycle_turning_point_candidates.csv` 已生成免责声明占位行，真实候选 0；猪肉、面板、牧原股份、TCL科技仍只是样板证据对象，未硬编码为候选，未强制入选；未接券商、未读取账户、未自动下单。
 - current snapshot full validation verdict：`FAIL_CURRENT_SNAPSHOT`。阻塞原因是外部公开行情源不可用导致 `snapshot_valid_stocks=0`，hard logic/候选无法基于当前行情评估，候选数为 0；没有为了结果好看改规则或制造候选。
+
+## Loop 14
+
+- 本轮目标：解决 current snapshot 因单一公开行情源不可用导致 `snapshot_valid_stocks=0` 的实际不可用问题；不放宽候选规则，不新增券商接入，不读取账户，不自动下单。
+- 本轮代码修复：`_fetch_price_live_current_snapshot` 改为走 `DataFetcherManager` 多源 fallback，不再直接只调用 `EfinanceFetcher`；当前快照模式也初始化统一 manager。`TencentFetcher` 支持按日期窗口分页拉取长周期日线，避免 5 年 K 线被 800 根限制截断。
+- 真实单股接口验证：`TencentFetcher().get_daily_data("000001", start_date="2021-07-05", end_date="2026-07-05")` 返回 1211 行，日期范围 2021-07-05 至 2026-07-03。
+- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_tencent_fetcher.py tests/test_genge_cycle_bottom_current_snapshot.py -q`，16 passed，1 warning，耗时 0.41 秒。
+- full current snapshot related pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py tests/test_tencent_fetcher.py`，93 passed，1 warning，耗时 272.09 秒；完整跑完，未跳过。
+- 真实 current snapshot 宽池命令：继续使用 `stock_pools/genge_broad_pool.txt`、`--max-codes 100`、`--years 5`、`--benchmark 000905`、`--auto-fetch-valuation`、`--auto-fetch-financial`、两个 `data/user_supplied` evidence 文件、`config/industry_evidence_schema.yaml`、`config/industry_alias_map.yaml`、`--current-snapshot`、`--output-current-snapshot`、`--fixture-smoke-passed`、`--ci-passed`。
+- 真实运行结果：`reports/genge_current_snapshot/20260705_103627`，自然退出，runner `elapsed_seconds=551.98`，wall time `real 552.20`；`current_snapshot_summary.json` 明确记录 `industry_evidence_file=data/user_supplied/industry_cycle_evidence.csv`、`company_evidence_file=data/user_supplied/company_cycle_evidence.csv`。
+- current snapshot 宽池指标：`snapshot_total_stocks=100`，`snapshot_valid_stocks=100`，`fatal_data_failures=0`，`skipped_data_unavailable=0`，`skipped_invalid_or_delisted=0`；诊断中的行情源分布为 `TencentFetcher=100`。
+- 证据与硬逻辑：行业证据 16 行、公司证据 20 行；当前 evidence coverage 为行业 3.0%、公司 2.0%；`hard_logic_level_distribution={'NONE': 98, 'WEAK': 2}`，`snapshot_decision_distribution={'NOT_QUALIFIED': 98, 'WATCH_ONLY': 2}`。
+- 候选与安全：`current_cycle_turning_point_candidate_count=0`，未强行制造候选；主要 blocker 为 `hard_logic_below_medium=100`、`industry_evidence_missing_or_unresolved=97`、`trend_below_medium=87`、`price_not_low=62`。候选文件包含免责声明；猪肉、面板、牧原股份、TCL科技仍只是样板对象，未硬编码为候选或强制入选。
+- current snapshot full validation verdict：`PASS_CURRENT_SNAPSHOT_RESEARCH_READY`。不能升级为 `PASS_CURRENT_SNAPSHOT_CANDIDATE_GENERATED` 的原因是没有真实股票达到 `hard_logic_level >= MEDIUM`，系统保持安全降级，没有为了结果好看放水。

@@ -101,19 +101,25 @@ def _fetch_price_live(manager, code: str, start_date: date, end_date: date, year
     return df, source
 
 
-def _fetch_price_live_current_snapshot(code: str, start_date: date, end_date: date, years: int) -> Tuple[pd.DataFrame, str]:
+def _fetch_price_live_current_snapshot(
+    code: str,
+    start_date: date,
+    end_date: date,
+    years: int,
+    manager=None,
+) -> Tuple[pd.DataFrame, str]:
     os.environ.setdefault("EFINANCE_CALL_TIMEOUT", "8")
-    from data_provider.efinance_fetcher import EfinanceFetcher
+    os.environ.setdefault("AKSHARE_HISTORY_CALL_TIMEOUT", "8")
 
     days = int((years + 1) * 365.25)
-    fetcher = EfinanceFetcher(sleep_min=0.0, sleep_max=0.0)
-    df = fetcher.get_daily_data(
+    active_manager = manager or _get_manager()
+    df, source = active_manager.get_daily_data(
         code,
         start_date=start_date.isoformat(),
         end_date=end_date.isoformat(),
         days=days,
     )
-    return df, fetcher.name
+    return df, source
 
 
 def _get_manager():
@@ -229,11 +235,11 @@ def _load_inputs(
     if not args.price_data_dir:
         if current_snapshot_mode:
             os.environ.setdefault("EFINANCE_CALL_TIMEOUT", "8")
-        else:
-            try:
-                manager = _get_manager()
-            except Exception as exc:
-                manager_error = f"{type(exc).__name__}: {exc}"
+            os.environ.setdefault("AKSHARE_HISTORY_CALL_TIMEOUT", "8")
+        try:
+            manager = _get_manager()
+        except Exception as exc:
+            manager_error = f"{type(exc).__name__}: {exc}"
     industry_map = _load_stock_industry_map(args.stock_industry_map)
     pool_records = {
         _normalize_code(record["code"]): record
@@ -259,7 +265,13 @@ def _load_inputs(
                 sources[normalized_code] = "csv"
                 stock_name = pool_record.get("stock_name") or normalized_code
             elif current_snapshot_mode:
-                price_df, source = _fetch_price_live_current_snapshot(normalized_code, start_date, end_date, args.years)
+                price_df, source = _fetch_price_live_current_snapshot(
+                    normalized_code,
+                    start_date,
+                    end_date,
+                    args.years,
+                    manager,
+                )
                 sources[normalized_code] = source
                 stock_name = pool_record.get("stock_name") or normalized_code
             else:

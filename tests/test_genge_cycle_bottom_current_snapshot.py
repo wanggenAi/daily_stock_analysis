@@ -407,6 +407,39 @@ def test_current_snapshot_live_price_failure_budget_marks_remaining(monkeypatch,
     assert genge_cli._has_current_snapshot_provider_outage(errors, list(errors))
 
 
+def test_current_snapshot_live_price_uses_manager_fallback() -> None:
+    class FakeManager:
+        def __init__(self) -> None:
+            self.calls: list[dict[str, object]] = []
+
+        def get_daily_data(self, code: str, *, start_date: str, end_date: str, days: int):
+            self.calls.append(
+                {
+                    "code": code,
+                    "start_date": start_date,
+                    "end_date": end_date,
+                    "days": days,
+                }
+            )
+            return _price_frame(with_future=False), "TencentFetcher"
+
+    manager = FakeManager()
+
+    df, source = genge_cli._fetch_price_live_current_snapshot(
+        "000100",
+        date(2021, 7, 5),
+        date(2026, 7, 5),
+        5,
+        manager,
+    )
+
+    assert source == "TencentFetcher"
+    assert not df.empty
+    assert manager.calls[0]["code"] == "000100"
+    assert manager.calls[0]["start_date"] == "2021-07-05"
+    assert manager.calls[0]["end_date"] == "2026-07-05"
+
+
 def test_real_runner_passes_current_snapshot_arguments(tmp_path: Path) -> None:
     pool_file = tmp_path / "pool.txt"
     pool_file.write_text("000100,TCL科技,面板\n", encoding="utf-8")
