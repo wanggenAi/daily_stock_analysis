@@ -86,8 +86,14 @@ class FeatureSet:
     industry_evidence_missing_fields: List[str] = field(default_factory=list)
     industry_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     company_evidence_score: float = 50.0
+    company_evidence_confidence: str = "LOW"
     company_evidence_source_type: str = "MISSING"
     company_evidence_summary: str = ""
+    company_evidence_positive_count: int = 0
+    company_evidence_negative_count: int = 0
+    company_evidence_neutral_count: int = 0
+    company_evidence_stale_count: int = 0
+    company_evidence_warning_flags: List[str] = field(default_factory=list)
     company_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     hard_logic_score: float = 50.0
     hard_logic_level: str = "NONE"
@@ -1217,8 +1223,14 @@ def build_feature_set(
     features.industry_evidence_missing_fields = list(industry_evidence.missing_evidence_fields)
     features.industry_evidence_items = [item.to_dict() for item in industry_evidence.evidence_items]
     features.company_evidence_score = company_evidence.evidence_score
+    features.company_evidence_confidence = company_evidence.confidence_level
     features.company_evidence_source_type = company_evidence.evidence_source_type
     features.company_evidence_summary = company_evidence.summary
+    features.company_evidence_positive_count = company_evidence.positive_evidence_count
+    features.company_evidence_negative_count = company_evidence.negative_evidence_count
+    features.company_evidence_neutral_count = company_evidence.neutral_evidence_count
+    features.company_evidence_stale_count = company_evidence.stale_evidence_count
+    features.company_evidence_warning_flags = list(company_evidence.warning_flags)
     features.company_evidence_items = [item.to_dict() for item in company_evidence.evidence_items]
     features.hard_logic_score = hard_logic.hard_logic_score
     features.hard_logic_level = hard_logic.hard_logic_level
@@ -1273,8 +1285,14 @@ def build_feature_set(
             "industry_evidence_summary": features.industry_evidence_summary,
             "industry_evidence_warning_flags": features.industry_evidence_warning_flags,
             "company_evidence_score": features.company_evidence_score,
+            "company_evidence_confidence": features.company_evidence_confidence,
             "company_evidence_source_type": features.company_evidence_source_type,
             "company_evidence_summary": features.company_evidence_summary,
+            "company_evidence_positive_count": features.company_evidence_positive_count,
+            "company_evidence_negative_count": features.company_evidence_negative_count,
+            "company_evidence_neutral_count": features.company_evidence_neutral_count,
+            "company_evidence_stale_count": features.company_evidence_stale_count,
+            "company_evidence_warning_flags": features.company_evidence_warning_flags,
             "hard_logic_score": features.hard_logic_score,
             "hard_logic_level": features.hard_logic_level,
             "hard_logic_summary": features.hard_logic_summary,

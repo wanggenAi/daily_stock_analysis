@@ -209,3 +209,17 @@
 - 样板对象复核：猪肉、面板、牧原股份、TCL科技只作为 user supplied evidence 和研究说明里的样板对象；生产代码没有把这些股票或行业硬编码为候选，没有强制入选。
 - 安全检查：没有接入中信证券或任何券商接口，没有读取账户/持仓/密码/验证码，没有自动买入、卖出或撤单。
 - gate verdict：最终枚举为 `FAIL_CLEAN_EVIDENCE_RUN`。阻塞原因是 latest final-code 宽池运行 `data_failures=90`，证据覆盖率 0.0% 导致 hard logic 全部安全降级为 NONE，周期拐点真实候选为 0；本轮没有为了结果好看制造候选或放宽规则。
+
+## Loop 13
+
+- 本轮目标：基于 commit `f686c4cba31146d518551de841f14e416016f7ff` 增加“当前快照周期拐点筛选器”，与历史 walk-forward 回测严格分离；不调历史买卖策略，不新增券商接入，不读取账户，不自动下单。
+- 本轮代码修改：新增 `src/strategies/genge_cycle_bottom/current_snapshot.py`、`config/industry_alias_map.yaml`、`tests/test_genge_cycle_bottom_current_snapshot.py`；CLI 和 runner 增加 `--current-snapshot`、`--as-of-date`、`--output-current-snapshot`、`--industry-alias-map` 参数；现有 walk-forward 路径保持原 backtester。
+- 当前快照输出设计：`current_snapshot_summary.md/json`、`current_snapshot_all.csv`、`current_cycle_turning_point_candidates.csv`、`current_watch_only_candidates.csv`、`industry_alias_resolution.csv`、`evidence_match_audit.csv`、`data_failure_audit.csv`、`industry_evidence_cards.md/json`。
+- 证据规则：行业别名只做归一化匹配，company evidence 的 stock code 优先于行业别名；`STRONG` 需要行业证据和公司证据同时有效、方向一致、来源类型足够、非过期且无冲突；未匹配证据时安全降级为 `NONE`。
+- 样板对象复核：猪肉、面板、牧原股份、TCL科技没有被硬编码为候选，也没有强制入选；它们只作为 user supplied evidence 的样板链路，可被审计文件自然追踪。
+- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_current_snapshot.py -q`，4 passed，1 warning，耗时 0.41 秒。
+- targeted pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_industry_evidence.py tests/test_genge_cycle_bottom_report_cli.py -q`，31 passed，1 warning，耗时 279.24 秒。
+- full pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py`，81 passed，1 warning，耗时 277.69 秒；full pytest 已完整跑完。
+- 真实 current snapshot 宽池命令：指定 `--stock-pool-file stock_pools/genge_broad_pool.txt`、`--years 5`、`--benchmark 000905`、`--output-dir reports/genge_current_snapshot`、`--max-codes 100`、`--auto-fetch-valuation`、`--auto-fetch-financial`、`--industry-evidence-file data/user_supplied/industry_cycle_evidence.csv`、`--company-evidence-file data/user_supplied/company_cycle_evidence.csv`、`--industry-evidence-schema config/industry_evidence_schema.yaml`、`--industry-alias-map config/industry_alias_map.yaml`、`--current-snapshot`、`--output-current-snapshot`、`--fixture-smoke-passed`、`--ci-passed`。
+- 真实运行状态：外部东方财富/Eastmoney 历史 K 线接口连续返回 `RemoteDisconnected('Remote end closed connection without response')`，命令长时间停留在取数阶段；按用户最新“推送给 ChatGPT 看”的要求手动停止，没有生成 `reports/genge_current_snapshot` 下的最终 summary 或 CSV。
+- current snapshot full validation verdict：`FAIL_CURRENT_SNAPSHOT`。阻塞原因是本次 run 未自然退出、未生成 `current_snapshot_summary.json`、无法形成可复核的 snapshot candidate/evidence coverage 指标；没有为了结果好看改规则或制造候选。

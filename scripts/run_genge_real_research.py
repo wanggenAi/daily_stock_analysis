@@ -87,6 +87,14 @@ def _build_strategy_args(args: argparse.Namespace, pool_file: Path) -> list[str]
         strategy_args.extend(["--company-evidence-file", company_evidence_file])
     if args.industry_evidence_schema:
         strategy_args.extend(["--industry-evidence-schema", args.industry_evidence_schema])
+    if args.industry_alias_map:
+        strategy_args.extend(["--industry-alias-map", args.industry_alias_map])
+    if args.current_snapshot:
+        strategy_args.append("--current-snapshot")
+    if args.as_of_date:
+        strategy_args.extend(["--as-of-date", args.as_of_date])
+    if args.output_current_snapshot:
+        strategy_args.append("--output-current-snapshot")
     if args.enable_hard_logic_filter:
         strategy_args.append("--enable-hard-logic-filter")
     if args.min_hard_logic_level:
@@ -147,6 +155,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--industry-evidence-file")
     parser.add_argument("--company-evidence-file")
     parser.add_argument("--industry-evidence-schema")
+    parser.add_argument("--industry-alias-map", default="config/industry_alias_map.yaml")
+    parser.add_argument("--current-snapshot", action="store_true")
+    parser.add_argument("--as-of-date")
+    parser.add_argument("--output-current-snapshot", action="store_true")
     parser.add_argument("--enable-hard-logic-filter", action="store_true")
     parser.add_argument("--min-hard-logic-level", default="MEDIUM", choices=("NONE", "WEAK", "MEDIUM", "STRONG"))
     parser.add_argument("--output-industry-evidence-cards", action="store_true")
@@ -187,8 +199,25 @@ def main(argv: list[str] | None = None) -> int:
 
     elapsed = time.perf_counter() - start_ts
     report_dir = _latest_report_dir(args.output_dir)
-    if report_dir and (report_dir / "summary.json").exists():
-        summary = json.loads((report_dir / "summary.json").read_text(encoding="utf-8"))
+    current_summary_path = report_dir / "current_snapshot_summary.json" if report_dir else None
+    historical_summary_path = report_dir / "summary.json" if report_dir else None
+    if args.current_snapshot and current_summary_path and current_summary_path.exists():
+        summary = json.loads(current_summary_path.read_text(encoding="utf-8"))
+        print(f"elapsed_seconds={elapsed:.2f}")
+        print(f"report_dir={report_dir}")
+        print(f"resolved_as_of_date={summary.get('resolved_as_of_date')}")
+        print(f"snapshot_total_stocks={summary.get('snapshot_total_stocks', 0)}")
+        print(f"snapshot_valid_stocks={summary.get('snapshot_valid_stocks', 0)}")
+        print(f"fatal_data_failures={summary.get('fatal_data_failures', 0)}")
+        print(f"skipped_invalid_or_delisted={summary.get('skipped_invalid_or_delisted', 0)}")
+        print(f"current_industry_evidence_coverage={summary.get('current_industry_evidence_coverage', 0)}")
+        print(f"current_company_evidence_coverage={summary.get('current_company_evidence_coverage', 0)}")
+        print(f"industry_alias_matched_stocks={summary.get('industry_alias_matched_stocks', 0)}")
+        print(f"unresolved_industry_stocks={summary.get('unresolved_industry_stocks', 0)}")
+        print(f"current_cycle_turning_point_candidate_count={summary.get('current_cycle_turning_point_candidate_count', 0)}")
+        print(f"acceptance_enum={summary.get('acceptance_enum', 'UNKNOWN')}")
+    elif historical_summary_path and historical_summary_path.exists():
+        summary = json.loads(historical_summary_path.read_text(encoding="utf-8"))
         diagnostics = summary.get("diagnostics") or {}
         data_errors = diagnostics.get("data_errors") or {}
         provider_errors = diagnostics.get("provider_errors") or {}

@@ -73,8 +73,14 @@ class StrategySignal:
     industry_evidence_missing_fields: List[str] = field(default_factory=list)
     industry_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     company_evidence_score: float = 50.0
+    company_evidence_confidence: str = "LOW"
     company_evidence_source_type: str = "MISSING"
     company_evidence_summary: str = ""
+    company_evidence_positive_count: int = 0
+    company_evidence_negative_count: int = 0
+    company_evidence_neutral_count: int = 0
+    company_evidence_stale_count: int = 0
+    company_evidence_warning_flags: List[str] = field(default_factory=list)
     company_evidence_items: List[Dict[str, Any]] = field(default_factory=list)
     hard_logic_score: float = 50.0
     hard_logic_level: str = "NONE"
@@ -83,6 +89,7 @@ class StrategySignal:
     stop_loss_distance_pct: Optional[float] = None
     invalidation_level: Optional[float] = None
     execution_risk_score: float = 0.0
+    execution_risk_quality: str = "good"
     entry_price: Optional[float] = None
     entry_date: Optional[str] = None
     entry_mode: str = "next_open"
@@ -101,6 +108,7 @@ class StrategySignal:
         data["missing_fields"] = ";".join(self.missing_fields)
         data["industry_evidence_warning_flags"] = ";".join(self.industry_evidence_warning_flags)
         data["industry_evidence_missing_fields"] = ";".join(self.industry_evidence_missing_fields)
+        data["company_evidence_warning_flags"] = ";".join(self.company_evidence_warning_flags)
         data["industry_evidence_items"] = json.dumps(self.industry_evidence_items, ensure_ascii=False)
         data["company_evidence_items"] = json.dumps(self.company_evidence_items, ensure_ascii=False)
         return data

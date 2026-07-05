@@ -10,6 +10,7 @@ from typing import Dict, List, Optional, Tuple
 import pandas as pd
 
 from .backtest import BacktestInput, WalkForwardBacktester
+from .current_snapshot import load_industry_alias_map, run_current_snapshot_report
 from .features import coerce_date, date_years_ago, prepare_price_frame
 from .fundamentals import PublicFundamentalLoader
 from .industry_evidence import load_evidence_csv, load_industry_evidence_schema, normalize_evidence_source
@@ -278,6 +279,17 @@ def _infer_end_date(inputs: List[BacktestInput], fallback: Optional[str]) -> dat
     return min(max_dates) if max_dates else date.today()
 
 
+def _infer_latest_available_date(inputs: List[BacktestInput], fallback: Optional[str]) -> date:
+    if fallback:
+        return coerce_date(fallback)
+    max_dates = []
+    for item in inputs:
+        df = prepare_price_frame(item.price_df)
+        if not df.empty:
+            max_dates.append(max(df["date"]))
+    return max(max_dates) if max_dates else date.today()
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run GenGe Cycle Bottom walk-forward backtest.")
     group = parser.add_mutually_exclusive_group(required=True)
@@ -303,6 +315,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--industry-evidence-file", help="Optional CSV file with industry cycle evidence rows")
     parser.add_argument("--company-evidence-file", help="Optional CSV file with company cycle evidence rows")
     parser.add_argument("--industry-evidence-schema", help="Optional YAML schema for industry evidence indicators")
+    parser.add_argument("--industry-alias-map", default="config/industry_alias_map.yaml", help="YAML map for current snapshot industry aliases")
+    parser.add_argument("--current-snapshot", action="store_true", help="Run latest/as-of current snapshot scanner instead of walk-forward backtest")
+    parser.add_argument("--as-of-date", help="Current snapshot date YYYY-MM-DD; only data on or before this date is used")
+    parser.add_argument("--output-current-snapshot", action="store_true", help="Write current snapshot scanner reports")
     parser.add_argument("--enable-hard-logic-filter", action="store_true", help="Require hard-logic evidence level for observation signals")
     parser.add_argument("--min-hard-logic-level", default="MEDIUM", choices=("NONE", "WEAK", "MEDIUM", "STRONG"))
     parser.add_argument("--output-industry-evidence-cards", action="store_true", help="Write industry evidence card markdown/json")
@@ -320,7 +336,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not codes:
         parser.error("no stock codes provided")
 
-    provisional_end = coerce_date(args.end_date) if args.end_date else date.today()
+    provisional_end = coerce_date(args.as_of_date or args.end_date) if (args.as_of_date or args.end_date) else date.today()
     provisional_start = coerce_date(args.start_date) if args.start_date else date_years_ago(provisional_end, args.years + 1)
     inputs, data_sources, data_errors, fundamental_diagnostics = _load_inputs(
         codes=codes,
@@ -328,13 +344,79 @@ def main(argv: Optional[List[str]] = None) -> int:
         start_date=provisional_start,
         end_date=provisional_end,
     )
-    end_date = _infer_end_date(inputs, args.end_date)
+    source_mode = "fixture" if args.price_data_dir else "real"
+    if args.current_snapshot:
+        end_date = _infer_latest_available_date(inputs, args.as_of_date or args.end_date)
+    else:
+        end_date = _infer_end_date(inputs, args.end_date)
     start_date = coerce_date(args.start_date) if args.start_date else date_years_ago(end_date, args.years)
     benchmark_df, benchmark_source_or_error = _load_benchmark(args, start_date, end_date)
     industry_cycle_df = _load_csv(Path(args.industry_cycle_file)) if args.industry_cycle_file else None
     industry_evidence_df = load_evidence_csv(args.industry_evidence_file) if args.industry_evidence_file else None
     company_evidence_df = load_evidence_csv(args.company_evidence_file) if args.company_evidence_file else None
     industry_evidence_schema = load_industry_evidence_schema(args.industry_evidence_schema) if args.industry_evidence_schema else {}
+
+    base_diagnostics = {
+        "requested_codes": codes,
+        "loaded_codes": [item.code for item in inputs],
+        "data_sources": data_sources,
+        "data_errors": data_errors,
+        "benchmark": args.benchmark,
+        "benchmark_source_or_error": benchmark_source_or_error,
+        "output_dir": str(args.output_dir),
+        "start_date": start_date.isoformat(),
+        "end_date": end_date.isoformat(),
+        "step_days": max(1, int(args.step_days)),
+        "fee_bps": float(args.fee_bps),
+        "slippage_bps": float(args.slippage_bps),
+        "industry_cycle_file": args.industry_cycle_file,
+        "industry_cycle_source": _industry_cycle_source(args.industry_cycle_file, source_mode),
+        "stock_industry_map": args.stock_industry_map,
+        "industry_evidence_file": args.industry_evidence_file,
+        "company_evidence_file": args.company_evidence_file,
+        "industry_evidence_schema": args.industry_evidence_schema,
+        "industry_alias_map": args.industry_alias_map,
+        "industry_evidence_source": normalize_evidence_source(args.industry_evidence_file, source_mode),
+        "company_evidence_source": normalize_evidence_source(args.company_evidence_file, source_mode),
+        "industry_evidence_schema_industries": sorted((industry_evidence_schema.get("industries") or {}).keys()),
+        "enable_hard_logic_filter": bool(args.enable_hard_logic_filter),
+        "min_hard_logic_level": str(args.min_hard_logic_level),
+        "source_mode": source_mode,
+        "ci_passed": bool(args.ci_passed),
+        "fixture_smoke_passed": bool(args.price_data_dir or args.fixture_smoke_passed),
+        "real_5y_passed": bool(not args.price_data_dir and int(args.years) == 5 and inputs and not _has_severe_data_errors(data_errors, codes)),
+        "real_10y_passed": bool(not args.price_data_dir and int(args.years) == 10 and inputs and not _has_severe_data_errors(data_errors, codes)),
+        "real_10y_safely_degraded": bool(not args.price_data_dir and int(args.years) == 10 and inputs and data_errors),
+        "no_lookahead_risk": True,
+        "no_auto_trade": True,
+    }
+    base_diagnostics.update(fundamental_diagnostics)
+
+    if args.current_snapshot or args.output_current_snapshot:
+        industry_alias_map = load_industry_alias_map(args.industry_alias_map)
+        report_dir, summary = run_current_snapshot_report(
+            inputs=inputs,
+            requested_codes=codes,
+            data_errors=data_errors,
+            data_sources=data_sources,
+            benchmark_df=benchmark_df,
+            industry_cycle_df=industry_cycle_df,
+            industry_evidence_df=industry_evidence_df,
+            company_evidence_df=company_evidence_df,
+            industry_evidence_schema=industry_evidence_schema,
+            industry_alias_map=industry_alias_map,
+            requested_as_of_date=args.as_of_date or args.end_date,
+            output_dir=args.output_dir,
+            diagnostics=base_diagnostics,
+        )
+        print(f"report_dir={report_dir}")
+        print(f"snapshot_total_stocks={summary['snapshot_total_stocks']}")
+        print(f"snapshot_valid_stocks={summary['snapshot_valid_stocks']}")
+        print(f"fatal_data_failures={summary['fatal_data_failures']}")
+        print(f"current_cycle_turning_point_candidate_count={summary['current_cycle_turning_point_candidate_count']}")
+        print(f"acceptance_enum={summary['acceptance_enum']}")
+        return 0
+
     strategy = GenGeCycleBottomStrategy(
         StrategyConfig(
             enable_hard_logic_filter=bool(args.enable_hard_logic_filter),
@@ -355,42 +437,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         company_evidence_df=company_evidence_df,
         industry_evidence_schema=industry_evidence_schema,
     )
-    source_mode = "fixture" if args.price_data_dir else "real"
-    diagnostics = {
-        "requested_codes": codes,
-        "loaded_codes": [item.code for item in inputs],
-        "data_sources": data_sources,
-        "data_errors": data_errors,
-        "benchmark": args.benchmark,
-        "benchmark_source_or_error": benchmark_source_or_error,
-        "output_dir": str(args.output_dir),
-        "start_date": start_date.isoformat(),
-        "end_date": end_date.isoformat(),
-        "step_days": max(1, int(args.step_days)),
-        "fee_bps": float(args.fee_bps),
-        "slippage_bps": float(args.slippage_bps),
-        "industry_cycle_file": args.industry_cycle_file,
-        "industry_cycle_source": _industry_cycle_source(args.industry_cycle_file, source_mode),
-        "stock_industry_map": args.stock_industry_map,
-        "industry_evidence_file": args.industry_evidence_file,
-        "company_evidence_file": args.company_evidence_file,
-        "industry_evidence_schema": args.industry_evidence_schema,
-        "industry_evidence_source": normalize_evidence_source(args.industry_evidence_file, source_mode),
-        "company_evidence_source": normalize_evidence_source(args.company_evidence_file, source_mode),
-        "industry_evidence_schema_industries": sorted((industry_evidence_schema.get("industries") or {}).keys()),
-        "enable_hard_logic_filter": bool(args.enable_hard_logic_filter),
-        "min_hard_logic_level": str(args.min_hard_logic_level),
-        "source_mode": source_mode,
-        "ci_passed": bool(args.ci_passed),
-        "fixture_smoke_passed": bool(args.price_data_dir or args.fixture_smoke_passed),
-        "real_5y_passed": bool(not args.price_data_dir and int(args.years) == 5 and inputs and not _has_severe_data_errors(data_errors, codes)),
-        "real_10y_passed": bool(not args.price_data_dir and int(args.years) == 10 and inputs and not _has_severe_data_errors(data_errors, codes)),
-        "real_10y_safely_degraded": bool(not args.price_data_dir and int(args.years) == 10 and inputs and data_errors),
-        "no_lookahead_risk": True,
-        "no_auto_trade": True,
-    }
-    diagnostics.update(fundamental_diagnostics)
-    summary = compute_summary(rows, extra_diagnostics=diagnostics)
+    summary = compute_summary(rows, extra_diagnostics=base_diagnostics)
     report_dir = write_reports(
         rows,
         summary,
