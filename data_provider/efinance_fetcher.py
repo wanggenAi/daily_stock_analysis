@@ -431,7 +431,7 @@ class EfinanceFetcher(BaseFetcher):
                 end=end_date_fmt,
                 klt=101,  # 日线
                 fqt=1,    # 前复权
-                timeout=60,
+                timeout=_EF_CALL_TIMEOUT,
             )
             
             api_elapsed = time.time() - api_start
@@ -525,7 +525,7 @@ class EfinanceFetcher(BaseFetcher):
                 fqt=1,    # forward-adjusted
                 quote_id_mode=True,
                 use_id_cache=False,
-                timeout=60,
+                timeout=_EF_CALL_TIMEOUT,
             )
 
             api_elapsed = time.time() - api_start

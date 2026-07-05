@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import argparse
 import csv
 import json
+from datetime import date
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from scripts.run_genge_real_research import _build_strategy_args, build_parser
+from src.strategies.genge_cycle_bottom import cli as genge_cli
 from src.strategies.genge_cycle_bottom.backtest import BacktestInput
 from src.strategies.genge_cycle_bottom.current_snapshot import (
     AliasResolution,
@@ -291,6 +294,7 @@ def test_current_snapshot_report_uses_asof_current_evidence_and_writes_audits(tm
     assert all_rows[0]["snapshot_decision"] in SNAPSHOT_DECISIONS
     assert "BUY" not in all_rows[0]["snapshot_decision"]
     assert "SELL" not in all_rows[0]["snapshot_decision"]
+    assert "未来负向行不应参与 as-of" not in all_rows[0]["evidence_items"]
 
     audit_rows = list(csv.DictReader((report_dir / "data_failure_audit.csv").open(encoding="utf-8")))
     assert audit_rows[0]["final_status"] == "SKIPPED_INVALID_OR_DELISTED"
@@ -299,6 +303,108 @@ def test_current_snapshot_report_uses_asof_current_evidence_and_writes_audits(tm
     assert (report_dir / "current_cycle_turning_point_candidates.csv").exists()
     candidate_text = (report_dir / "current_cycle_turning_point_candidates.csv").read_text(encoding="utf-8")
     assert "仅用于公开数据研究观察和人工复核，不构成买入建议，不应自动交易。" in candidate_text
+
+
+def test_current_snapshot_all_price_failures_write_alias_audit_and_fail(tmp_path: Path) -> None:
+    alias_map = load_industry_alias_map("config/industry_alias_map.yaml")
+    schema = load_industry_evidence_schema("config/industry_evidence_schema.yaml")
+
+    report_dir, summary = run_current_snapshot_report(
+        inputs=[],
+        requested_codes=["000100", "000725"],
+        data_errors={
+            "000100": "RuntimeError: current snapshot live price fetch skipped after 3 consecutive provider failures",
+            "000725": "RuntimeError: current snapshot live price fetch skipped after 3 consecutive provider failures",
+        },
+        data_sources={
+            "000100": "skipped_live_provider_budget",
+            "000725": "skipped_live_provider_budget",
+        },
+        benchmark_df=None,
+        industry_cycle_df=None,
+        industry_evidence_df=_industry_evidence_rows(),
+        company_evidence_df=_company_evidence_rows(),
+        industry_evidence_schema=schema,
+        industry_alias_map=alias_map,
+        requested_as_of_date="2026-06-24",
+        output_dir=tmp_path,
+        diagnostics={
+            "industry_evidence_file": "data/user_supplied/industry_cycle_evidence.csv",
+            "company_evidence_file": "data/user_supplied/company_cycle_evidence.csv",
+            "industry_alias_map": "config/industry_alias_map.yaml",
+            "requested_stock_records": [
+                {"code": "000100", "stock_name": "TCL科技", "industry": "光学光电子"},
+                {"code": "000725", "stock_name": "京东方A", "industry": "显示器件"},
+            ],
+            "no_auto_trade": True,
+        },
+    )
+
+    assert summary["snapshot_total_stocks"] == 2
+    assert summary["snapshot_valid_stocks"] == 0
+    assert summary["fatal_data_failures"] == 0
+    assert summary["skipped_data_unavailable"] == 2
+    assert summary["data_failure_status_distribution"] == {"SKIPPED_DATA_UNAVAILABLE": 2}
+    assert summary["acceptance_enum"] == "FAIL_CURRENT_SNAPSHOT"
+
+    alias_rows = list(csv.DictReader((report_dir / "industry_alias_resolution.csv").open(encoding="utf-8")))
+    assert len(alias_rows) == 2
+    assert {row["normalized_industry"] for row in alias_rows} == {"面板"}
+
+    failure_rows = list(csv.DictReader((report_dir / "data_failure_audit.csv").open(encoding="utf-8")))
+    assert len(failure_rows) == 2
+    assert {row["final_status"] for row in failure_rows} == {"SKIPPED_DATA_UNAVAILABLE"}
+    assert {row["provider"] for row in failure_rows} == {"skipped_live_provider_budget"}
+
+
+def test_current_snapshot_live_price_failure_budget_marks_remaining(monkeypatch, tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    def failing_current_snapshot_fetch(stock_code: str, *_: object) -> tuple[pd.DataFrame, str]:
+        calls.append(stock_code)
+        raise RuntimeError("RemoteDisconnected connection timeout")
+
+    pool_file = tmp_path / "pool.txt"
+    pool_file.write_text(
+        "\n".join(
+            [
+                "000001,测试1,面板",
+                "000002,测试2,面板",
+                "000003,测试3,面板",
+                "000004,测试4,面板",
+                "000005,测试5,面板",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    args = argparse.Namespace(
+        current_snapshot=True,
+        output_current_snapshot=True,
+        price_data_dir=None,
+        valuation_data_dir=None,
+        financial_data_dir=None,
+        stock_industry_map=None,
+        stock_pool_file=str(pool_file),
+        fundamental_cache_dir=str(tmp_path / "cache"),
+        auto_fetch_valuation=False,
+        auto_fetch_financial=False,
+        years=5,
+    )
+
+    monkeypatch.setattr(genge_cli, "_fetch_price_live_current_snapshot", failing_current_snapshot_fetch)
+    inputs, sources, errors, _ = genge_cli._load_inputs(
+        codes=["000001", "000002", "000003", "000004", "000005"],
+        args=args,
+        start_date=date(2020, 1, 1),
+        end_date=date(2026, 7, 5),
+    )
+
+    assert inputs == []
+    assert len(calls) == genge_cli._CURRENT_SNAPSHOT_PRICE_FAILURE_LIMIT
+    assert len(errors) == 5
+    assert sources["000004"] == "skipped_live_provider_budget"
+    assert sources["000005"] == "skipped_live_provider_budget"
+    assert genge_cli._has_current_snapshot_provider_outage(errors, list(errors))
 
 
 def test_real_runner_passes_current_snapshot_arguments(tmp_path: Path) -> None:

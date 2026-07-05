@@ -369,7 +369,7 @@ def _classify_loader_error(message: str) -> Tuple[str, str, str]:
     lower = str(message or "").lower()
     if any(token in lower for token in ("delist", "退市", "invalid", "不存在", "not found")):
         return "price_fetch", "invalid_or_delisted", "SKIPPED_INVALID_OR_DELISTED"
-    if any(token in lower for token in ("timeout", "timed out", "connection", "network", "remote")):
+    if any(token in lower for token in ("timeout", "timed out", "connection", "network", "remote", "provider failures", "provider unavailable")):
         return "price_fetch", "network_or_provider_error", "SKIPPED_DATA_UNAVAILABLE"
     if any(token in lower for token in ("empty", "no data", "无数据")):
         return "price_fetch", "no_valid_history", "DATA_INSUFFICIENT"
@@ -387,6 +387,32 @@ def _write_csv(path: Path, rows: Iterable[Mapping[str, Any]], fieldnames: List[s
 def _is_user_supplied_evidence_path(value: Any) -> bool:
     text = str(value or "").replace("\\", "/")
     return "data/user_supplied/" in text and "data/examples/" not in text and "tests/fixtures/" not in text
+
+
+def _normalize_requested_code(value: Any) -> str:
+    text = str(value or "").strip()
+    return text.zfill(6) if text.isdigit() else text
+
+
+def _requested_record_map(requested_codes: List[str], diagnostics: Optional[Mapping[str, Any]]) -> Dict[str, Dict[str, str]]:
+    records: Dict[str, Dict[str, str]] = {
+        _normalize_requested_code(code): {"code": _normalize_requested_code(code)}
+        for code in requested_codes
+    }
+    for raw in (diagnostics or {}).get("requested_stock_records") or []:
+        if not isinstance(raw, Mapping):
+            continue
+        code = _normalize_requested_code(raw.get("code"))
+        if not code:
+            continue
+        records.setdefault(code, {"code": code}).update(
+            {
+                "code": code,
+                "stock_name": str(raw.get("stock_name") or code),
+                "industry": str(raw.get("industry") or ""),
+            }
+        )
+    return records
 
 
 def _output_row(signal_row: Dict[str, Any], *, resolution: AliasResolution, resolved_as_of_date: date, latest_price_date: Optional[date]) -> Dict[str, Any]:
@@ -439,6 +465,7 @@ def _summary_markdown(summary: Mapping[str, Any], candidate_rows: List[Dict[str,
         f"- snapshot_valid_stocks: {summary.get('snapshot_valid_stocks')}",
         f"- fatal_data_failures: {summary.get('fatal_data_failures')}",
         f"- skipped_invalid_or_delisted: {summary.get('skipped_invalid_or_delisted')}",
+        f"- skipped_data_unavailable: {summary.get('skipped_data_unavailable')}",
         f"- current_industry_evidence_coverage: {summary.get('current_industry_evidence_coverage')}",
         f"- current_company_evidence_coverage: {summary.get('current_company_evidence_coverage')}",
         f"- industry_alias_matched_stocks: {summary.get('industry_alias_matched_stocks')}",
@@ -476,7 +503,8 @@ def run_current_snapshot_report(
     output_dir: str | Path,
     diagnostics: Optional[Mapping[str, Any]] = None,
 ) -> Tuple[Path, Dict[str, Any]]:
-    price_dates: Dict[str, Optional[date]] = {}
+    record_map = _requested_record_map(requested_codes, diagnostics)
+    price_dates: Dict[str, Optional[date]] = {_normalize_requested_code(code): None for code in requested_codes}
     requested_date = coerce_date(requested_as_of_date) if requested_as_of_date else None
     for item in inputs:
         price_df = prepare_price_frame(item.price_df)
@@ -493,17 +521,29 @@ def run_current_snapshot_report(
     evidence_audit_rows: List[Dict[str, Any]] = []
     failure_rows: List[Dict[str, Any]] = []
 
-    pool_by_code = {item.code: item for item in inputs}
+    input_by_code = {item.code: item for item in inputs}
+    alias_by_code: Dict[str, AliasResolution] = {}
+    for code in price_dates:
+        item = input_by_code.get(code)
+        record = record_map.get(code, {"code": code})
+        stock_name = (item.stock_name if item else None) or record.get("stock_name") or code
+        raw_industry = (item.industry if item else None) or record.get("industry") or ""
+        resolution = resolver.resolve(code=code, stock_name=stock_name, raw_industry=raw_industry)
+        alias_by_code[code] = resolution
+        alias_rows.append(resolution.to_dict())
+
     for code, message in data_errors.items():
+        normalized_code = _normalize_requested_code(code)
         stage, error_type, final_status = _classify_loader_error(message)
+        record = record_map.get(normalized_code, {"code": normalized_code})
         failure_rows.append(
             {
-                "code": code,
-                "stock_name": code,
+                "code": normalized_code,
+                "stock_name": record.get("stock_name") or normalized_code,
                 "stage": stage,
                 "error_type": error_type,
                 "error_message": message,
-                "provider": data_sources.get(code, "public_data_provider"),
+                "provider": data_sources.get(normalized_code, data_sources.get(code, "public_data_provider")),
                 "retry_count": 0,
                 "fallback_used": False,
                 "final_status": final_status,
@@ -512,8 +552,7 @@ def run_current_snapshot_report(
 
     for item in inputs:
         latest_price_date = price_dates.get(item.code)
-        resolution = resolver.resolve(code=item.code, stock_name=item.stock_name, raw_industry=item.industry)
-        alias_rows.append(resolution.to_dict())
+        resolution = alias_by_code.get(item.code) or resolver.resolve(code=item.code, stock_name=item.stock_name, raw_industry=item.industry)
         if latest_price_date is None:
             failure_rows.append(
                 {
@@ -600,7 +639,7 @@ def run_current_snapshot_report(
     stale_financial_count = sum(
         1
         for item in inputs
-        if item.code in pool_by_code and (_latest_date(item.financial_df, resolved_as_of) is None or (resolved_as_of - (_latest_date(item.financial_df, resolved_as_of) or resolved_as_of)).days > 540)
+        if _latest_date(item.financial_df, resolved_as_of) is None or (resolved_as_of - (_latest_date(item.financial_df, resolved_as_of) or resolved_as_of)).days > 540
     )
     stale_evidence_count = sum(
         1
@@ -610,6 +649,7 @@ def run_current_snapshot_report(
     )
     fatal_data_failures = sum(1 for row in failure_rows if str(row.get("final_status")) == "FATAL_ERROR")
     skipped_invalid_or_delisted = sum(1 for row in failure_rows if str(row.get("final_status")).startswith("SKIPPED_INVALID"))
+    skipped_data_unavailable = sum(1 for row in failure_rows if str(row.get("final_status")) == "SKIPPED_DATA_UNAVAILABLE")
     summary: Dict[str, Any] = {
         "diagnostics": dict(diagnostics or {}),
         "requested_as_of_date": requested_date.isoformat() if requested_date else None,
@@ -635,6 +675,8 @@ def run_current_snapshot_report(
         "zero_candidate_blockers": dict(blocker_counter),
         "fatal_data_failures": fatal_data_failures,
         "skipped_invalid_or_delisted": skipped_invalid_or_delisted,
+        "skipped_data_unavailable": skipped_data_unavailable,
+        "data_failure_status_distribution": dict(Counter(str(row.get("final_status") or "UNKNOWN") for row in failure_rows)),
         "data_failure_audit_count": len(failure_rows),
         "industry_evidence_rows": int(len(industry_evidence_df)) if industry_evidence_df is not None else 0,
         "company_evidence_rows": int(len(company_evidence_df)) if company_evidence_df is not None else 0,
@@ -648,6 +690,8 @@ def run_current_snapshot_report(
     acceptance = "FAIL_CURRENT_SNAPSHOT"
     if (
         fatal_data_failures == 0
+        and valid_count > 0
+        and alias_matched > 0
         and _is_user_supplied_evidence_path(summary["industry_evidence_file"])
         and _is_user_supplied_evidence_path(summary["company_evidence_file"])
         and alias_rows

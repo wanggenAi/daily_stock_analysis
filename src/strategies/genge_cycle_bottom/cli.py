@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from datetime import date
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
@@ -17,6 +18,9 @@ from .industry_evidence import load_evidence_csv, load_industry_evidence_schema,
 from .metrics import compute_summary
 from .report import write_reports
 from .strategy import GenGeCycleBottomStrategy, StrategyConfig
+
+
+_CURRENT_SNAPSHOT_PRICE_FAILURE_LIMIT = 3
 
 
 def _parse_codes(raw_codes: Optional[str]) -> List[str]:
@@ -97,6 +101,21 @@ def _fetch_price_live(manager, code: str, start_date: date, end_date: date, year
     return df, source
 
 
+def _fetch_price_live_current_snapshot(code: str, start_date: date, end_date: date, years: int) -> Tuple[pd.DataFrame, str]:
+    os.environ.setdefault("EFINANCE_CALL_TIMEOUT", "8")
+    from data_provider.efinance_fetcher import EfinanceFetcher
+
+    days = int((years + 1) * 365.25)
+    fetcher = EfinanceFetcher(sleep_min=0.0, sleep_max=0.0)
+    df = fetcher.get_daily_data(
+        code,
+        start_date=start_date.isoformat(),
+        end_date=end_date.isoformat(),
+        days=days,
+    )
+    return df, fetcher.name
+
+
 def _get_manager():
     from data_provider.base import DataFetcherManager
 
@@ -152,6 +171,32 @@ def _has_severe_data_errors(errors: dict[str, str], requested_codes: list[str]) 
     return len(errors) >= max(3, int(len(requested_codes) * 0.5)) if requested_codes else bool(errors)
 
 
+def _has_current_snapshot_provider_outage(errors: dict[str, str], requested_codes: list[str]) -> bool:
+    if not errors:
+        return False
+    provider_errors = sum(1 for message in errors.values() if _is_live_price_provider_error(message))
+    return provider_errors >= _CURRENT_SNAPSHOT_PRICE_FAILURE_LIMIT and provider_errors == len(errors)
+
+
+def _is_live_price_provider_error(message: str) -> bool:
+    lowered = str(message or "").lower()
+    if any(token in lowered for token in ("delist", "退市", "invalid", "不存在", "not found")):
+        return False
+    return any(
+        token in lowered
+        for token in (
+            "connection",
+            "remote",
+            "timeout",
+            "timed out",
+            "network",
+            "protocolerror",
+            "provider unavailable",
+            "所有数据源",
+        )
+    )
+
+
 def _load_inputs(
     *,
     codes: List[str],
@@ -171,6 +216,10 @@ def _load_inputs(
     cache_hits = {"valuation": 0, "financial": 0}
     manager = None
     manager_error = None
+    current_snapshot_mode = bool(getattr(args, "current_snapshot", False) or getattr(args, "output_current_snapshot", False))
+    live_price_failure_streak = 0
+    live_price_fetch_halted = False
+    live_price_halt_reason = ""
     fundamental_loader = (
         PublicFundamentalLoader(args.fundamental_cache_dir)
         if getattr(args, "auto_fetch_valuation", False) or getattr(args, "auto_fetch_financial", False)
@@ -178,10 +227,13 @@ def _load_inputs(
     )
 
     if not args.price_data_dir:
-        try:
-            manager = _get_manager()
-        except Exception as exc:
-            manager_error = f"{type(exc).__name__}: {exc}"
+        if current_snapshot_mode:
+            os.environ.setdefault("EFINANCE_CALL_TIMEOUT", "8")
+        else:
+            try:
+                manager = _get_manager()
+            except Exception as exc:
+                manager_error = f"{type(exc).__name__}: {exc}"
     industry_map = _load_stock_industry_map(args.stock_industry_map)
     pool_records = {
         _normalize_code(record["code"]): record
@@ -189,22 +241,35 @@ def _load_inputs(
     }
 
     for code in codes:
+        normalized_code = _normalize_code(code)
         try:
-            normalized_code = _normalize_code(code)
             pool_record = pool_records.get(normalized_code, {})
+            if current_snapshot_mode and not args.price_data_dir and live_price_fetch_halted:
+                sources[normalized_code] = "skipped_live_provider_budget"
+                errors[normalized_code] = (
+                    "RuntimeError: current snapshot live price fetch skipped after "
+                    f"{_CURRENT_SNAPSHOT_PRICE_FAILURE_LIMIT} consecutive provider failures; "
+                    f"last_error={live_price_halt_reason}"
+                )
+                continue
             if manager_error:
                 raise RuntimeError(f"live data provider unavailable: {manager_error}")
             if args.price_data_dir:
                 price_df = _load_price_from_csv(args.price_data_dir, normalized_code)
-                sources[code] = "csv"
+                sources[normalized_code] = "csv"
+                stock_name = pool_record.get("stock_name") or normalized_code
+            elif current_snapshot_mode:
+                price_df, source = _fetch_price_live_current_snapshot(normalized_code, start_date, end_date, args.years)
+                sources[normalized_code] = source
                 stock_name = pool_record.get("stock_name") or normalized_code
             else:
                 price_df, source = _fetch_price_live(manager, normalized_code, start_date, end_date, args.years)
-                sources[code] = source
+                sources[normalized_code] = source
                 try:
                     stock_name = pool_record.get("stock_name") or manager.get_stock_name(normalized_code, allow_realtime=False) or normalized_code
                 except Exception:
                     stock_name = pool_record.get("stock_name") or normalized_code
+            live_price_failure_streak = 0
             valuation_df = _load_optional_csv(args.valuation_data_dir, normalized_code)
             financial_df = _load_optional_csv(args.financial_data_dir, normalized_code)
             if valuation_df is not None:
@@ -243,7 +308,15 @@ def _load_inputs(
                 )
             )
         except Exception as exc:
-            errors[code] = f"{type(exc).__name__}: {exc}"
+            error_text = f"{type(exc).__name__}: {exc}"
+            errors[normalized_code] = error_text
+            if current_snapshot_mode and not args.price_data_dir and _is_live_price_provider_error(error_text):
+                live_price_failure_streak += 1
+                if live_price_failure_streak >= _CURRENT_SNAPSHOT_PRICE_FAILURE_LIMIT:
+                    live_price_fetch_halted = True
+                    live_price_halt_reason = error_text
+            else:
+                live_price_failure_streak = 0
     fundamental_diagnostics["valuation_providers"] = valuation_providers
     fundamental_diagnostics["financial_providers"] = financial_providers
     fundamental_diagnostics["valuation_provider"] = _primary_provider(valuation_providers)
@@ -350,7 +423,10 @@ def main(argv: Optional[List[str]] = None) -> int:
     else:
         end_date = _infer_end_date(inputs, args.end_date)
     start_date = coerce_date(args.start_date) if args.start_date else date_years_ago(end_date, args.years)
-    benchmark_df, benchmark_source_or_error = _load_benchmark(args, start_date, end_date)
+    if args.current_snapshot and not args.price_data_dir and _has_current_snapshot_provider_outage(data_errors, codes):
+        benchmark_df, benchmark_source_or_error = None, "skipped_current_snapshot_price_provider_unavailable"
+    else:
+        benchmark_df, benchmark_source_or_error = _load_benchmark(args, start_date, end_date)
     industry_cycle_df = _load_csv(Path(args.industry_cycle_file)) if args.industry_cycle_file else None
     industry_evidence_df = load_evidence_csv(args.industry_evidence_file) if args.industry_evidence_file else None
     company_evidence_df = load_evidence_csv(args.company_evidence_file) if args.company_evidence_file else None
@@ -358,6 +434,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     base_diagnostics = {
         "requested_codes": codes,
+        "requested_stock_records": _read_stock_pool_records(args.stock_pool_file),
         "loaded_codes": [item.code for item in inputs],
         "data_sources": data_sources,
         "data_errors": data_errors,
