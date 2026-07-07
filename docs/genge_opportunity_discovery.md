@@ -106,9 +106,10 @@ GitHub Actions 工作流位于 `.github/workflows/genge-opportunity-discovery.ym
 - `FAIL_CURRENT_SNAPSHOT`
 - `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`
 - `PASS_QUANT_RESEARCH_QUEUE_GENERATED`
-- `PASS_EVIDENCE_ENRICHMENT_READY`
+- `PASS_EVIDENCE_TASKS_GENERATED`
+- `PASS_AUTO_EVIDENCE_COLLECTION_READY`
 - `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`
 - `PASS_TIER_A_CANDIDATE_GENERATED`
 - `PASS_FORWARD_OBSERVATION_READY`
 
-`acceptance_milestones` 会保留本次运行已达到的所有里程碑；`acceptance_enum` 是本次最高状态。`PASS_FORWARD_OBSERVATION_READY` 只在本次运行存在 A/B 观察对象时升级，已有历史账本记录不会单独抬高本次验收。
+`acceptance_milestones` 会保留本次运行已达到的所有里程碑；`acceptance_enum` 是本次最高状态。仅生成任务不能称为证据增强完成，自动证据采集链路必须真实运行并成功取得可验证原文证据，或完成任务并输出可审计失败，才会进入 `PASS_AUTO_EVIDENCE_COLLECTION_READY`。`PASS_FORWARD_OBSERVATION_READY` 只在本次 full 运行存在 A/B 观察对象时升级，已有历史账本记录不会单独抬高本次验收。

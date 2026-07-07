@@ -1,5 +1,17 @@
 # GenGe Signal Quality Loop Progress
 
+## Loop 16 - Opportunity Discovery Blocker Fix
+
+- 本轮目标：只修复机会发现闭环阻塞，不新增评分字段、行业名单、退出参数，不优化历史收益，不接券商、不自动交易。
+- 已完成：自动证据采集模块、URL/PDF/HTML 原文验证、证据缓存、采集失败审计、退出画像生成/读取、跨日状态恢复/保存、三种 run mode 真实执行语义、验收枚举修正、接近度排行硬风险隔离、文档旧枚举清理。
+- pytest：`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py tests/test_genge_opportunity_discovery_*.py -q`，98 passed，1 warning，耗时 325.76 秒。
+- 真实 uncached full：`reports/opportunity_discovery_blocker_fix/20260707_202051`，自然退出，`real 564.18`；自动证据任务 45，实际抓取 61，抓取成功 26，VERIFIED 7，失败 14，缺失 24。
+- 真实 cached full：`reports/opportunity_discovery_blocker_fix/20260707_203704`，自然退出，`real 514.29`；自动证据任务 45，cache hit 45，本轮不重复抓取，VERIFIED 7，失败 14，缺失 24。
+- 最新宽池结果：100 只有效，data_failure_count=0，A/B/C=`0/3/30`，REJECTED=67，行业/公司证据覆盖率从上一轮 `3.0%/2.0%` 提升到 `19.0%/4.0%`。
+- 退出画像分布：PASSED 25、DEGRADED 22、FAILED 29、NOT_AVAILABLE 0；Tier A 仍为 0，未为了验收制造候选。
+- 状态闭环：`previous_state_restored=True`，forward ledger 7 行且 code 唯一；cached rerun opportunity/evidence changes 均为 0，证明第二次读取上一轮状态。
+- 最新 acceptance enum：`PASS_FORWARD_OBSERVATION_READY`。
+
 ## Loop 1
 
 - 本轮目标：针对上一版真实研究结果中的买太早、趋势未确认、止损不够严格、估值陷阱和执行风险，做信号质量优化，不新增回测外功能，不接入券商。
@@ -239,7 +251,7 @@
 - current snapshot 宽池指标：`snapshot_total_stocks=100`，`snapshot_valid_stocks=100`，`fatal_data_failures=0`，`skipped_data_unavailable=0`，`skipped_invalid_or_delisted=0`；诊断中的行情源分布为 `TencentFetcher=100`。
 - 证据与硬逻辑：行业证据 16 行、公司证据 20 行；当前 evidence coverage 为行业 3.0%、公司 2.0%；`hard_logic_level_distribution={'NONE': 98, 'WEAK': 2}`，`snapshot_decision_distribution={'NOT_QUALIFIED': 98, 'WATCH_ONLY': 2}`。
 - 候选与安全：`current_cycle_turning_point_candidate_count=0`，未强行制造候选；主要 blocker 为 `hard_logic_below_medium=100`、`industry_evidence_missing_or_unresolved=97`、`trend_below_medium=87`、`price_not_low=62`。候选文件包含免责声明；猪肉、面板、牧原股份、TCL科技仍只是样板对象，未硬编码为候选或强制入选。
-- current snapshot full validation verdict：`PASS_CURRENT_SNAPSHOT_RESEARCH_READY`。不能升级为 `PASS_CURRENT_SNAPSHOT_CANDIDATE_GENERATED` 的原因是没有真实股票达到 `hard_logic_level >= MEDIUM`，系统保持安全降级，没有为了结果好看放水。
+- 历史 current snapshot full validation verdict：`PASS_CURRENT_SNAPSHOT_RESEARCH_READY`（旧枚举，已由 `PASS_CURRENT_SNAPSHOT_PIPELINE_READY` 取代）。当时不能升级为候选生成的原因是没有真实股票达到 `hard_logic_level >= MEDIUM`，系统保持安全降级，没有为了结果好看放水。
 
 ## Loop 15
 

@@ -29,6 +29,7 @@ from src.strategies.genge_cycle_bottom.features import coerce_date, prepare_pric
 from src.strategies.genge_cycle_bottom.industry_evidence import CONFIDENCE_RANK, QUALITY_RANK
 from src.strategies.genge_cycle_bottom.strategy import GenGeCycleBottomStrategy
 
+from .evidence_collectors import collect_auto_evidence
 from .industry_templates import DEFAULT_PUBLIC_SOURCES, expected_industries, indicator_templates_for
 
 
@@ -152,25 +153,48 @@ EVIDENCE_INVENTORY_COLUMNS = [
     "scope",
     "evidence_date",
     "collected_at",
+    "scraped_at",
     "industry",
     "code",
     "stock_name",
     "indicator",
     "value",
+    "extracted_value",
     "unit",
     "comparison_period",
     "direction",
     "source",
+    "original_url",
     "source_domain",
     "source_type",
     "confidence",
     "freshness_days",
+    "title",
     "raw_excerpt",
     "normalized_summary",
     "parser",
+    "collector",
+    "content_hash",
+    "extraction_confidence",
     "parse_status",
     "evidence_status",
     "warning_flags",
+]
+
+AUTO_EVIDENCE_AUDIT_COLUMNS = [
+    "scope",
+    "code",
+    "stock_name",
+    "industry",
+    "collector",
+    "status",
+    "issue",
+    "detail",
+    "original_url",
+    "source_domain",
+    "title",
+    "collected_at",
+    "cache_hit",
 ]
 
 CHANGE_COLUMNS = [
@@ -282,6 +306,31 @@ def _source_domain(source: Any) -> str:
     return parsed.netloc.lower()
 
 
+def _is_auto_verified_row(raw: Mapping[str, Any]) -> bool:
+    parser = str(raw.get("parser") or raw.get("collector") or "").lower()
+    parse_status = str(raw.get("parse_status") or "").upper()
+    original_url = str(raw.get("original_url") or raw.get("source") or "")
+    has_hash = bool(str(raw.get("content_hash") or "").strip())
+    return bool(parser and "user_supplied" not in parser and parse_status == "OK" and original_url.startswith(("http://", "https://")) and has_hash)
+
+
+def _sanitize_user_evidence_for_strategy(df: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
+    """Downgrade manually supplied authoritative labels unless auto validation exists."""
+
+    if df is None or df.empty or "source_type" not in df.columns:
+        return df
+    local = df.copy()
+    authoritative = {"OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE"}
+    for idx, row in local.iterrows():
+        source_type = str(row.get("source_type") or "").upper()
+        if source_type in authoritative and not _is_auto_verified_row(row.to_dict()):
+            local.at[idx, "source_type"] = "user_supplied"
+            warnings = _as_list(row.get("warning_flags"))
+            warnings.append("user_supplied_authoritative_label_downgraded")
+            local.at[idx, "warning_flags"] = ";".join(dict.fromkeys(warnings))
+    return local
+
+
 def _evidence_date_value(row: Mapping[str, Any]) -> Optional[date]:
     for column in ("evidence_date", "date", "publish_date", "disclosure_date", "ann_date", "announcement_date", "report_date"):
         if column in row and row.get(column) not in (None, ""):
@@ -303,6 +352,7 @@ def _inventory_confidence(source_type: str, value: Any) -> str:
 
 def _inventory_status(
     *,
+    raw: Mapping[str, Any],
     evidence_date: Optional[date],
     as_of: date,
     source: Any,
@@ -327,7 +377,10 @@ def _inventory_status(
         warning_flags.append("lead_only_needs_manual_review")
         return "LEAD_ONLY"
     if source_kind in {"OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE"}:
-        return "VERIFIED"
+        if _is_auto_verified_row(raw):
+            return "VERIFIED"
+        warning_flags.append("user_supplied_authoritative_label_capped_at_partial")
+        return "PARTIALLY_VERIFIED"
     return "PARTIALLY_VERIFIED"
 
 
@@ -356,6 +409,7 @@ def _build_evidence_inventory(
             direction = str(raw.get("direction") or raw.get("evidence_direction") or "").upper()
             warning_flags = _as_list(raw.get("warning_flags"))
             status = _inventory_status(
+                raw=raw,
                 evidence_date=evidence_date,
                 as_of=as_of,
                 source=source,
@@ -370,22 +424,29 @@ def _build_evidence_inventory(
                     "scope": scope,
                     "evidence_date": evidence_date.isoformat() if evidence_date else "",
                     "collected_at": collected_at,
+                    "scraped_at": raw.get("scraped_at") or raw.get("collected_at") or collected_at,
                     "industry": raw.get("industry") or "",
                     "code": _normalize_code(raw.get("code")) if raw.get("code") not in (None, "") else "",
                     "stock_name": raw.get("stock_name") or "",
                     "indicator": indicator,
                     "value": value,
+                    "extracted_value": raw.get("extracted_value") or raw.get("value") or value,
                     "unit": raw.get("unit") or "",
                     "comparison_period": raw.get("comparison_period") or "",
                     "direction": direction,
                     "source": source,
-                    "source_domain": raw.get("source_domain") or _source_domain(source),
+                    "original_url": raw.get("original_url") or source,
+                    "source_domain": raw.get("source_domain") or _source_domain(raw.get("original_url") or source),
                     "source_type": source_type,
                     "confidence": str(raw.get("confidence") or _inventory_confidence(source_type, value)).upper(),
                     "freshness_days": freshness,
+                    "title": _optional_text(raw.get("title")),
                     "raw_excerpt": raw.get("raw_excerpt") or raw.get("evidence_value") or value,
                     "normalized_summary": raw.get("normalized_summary") or value,
-                    "parser": raw.get("parser") or "user_supplied_csv_normalizer",
+                    "parser": _optional_text(raw.get("parser")) or "user_supplied_csv_normalizer",
+                    "collector": _optional_text(raw.get("collector")) or _optional_text(raw.get("parser")) or "user_supplied_csv_normalizer",
+                    "content_hash": _optional_text(raw.get("content_hash")),
+                    "extraction_confidence": _optional_text(raw.get("extraction_confidence")),
                     "parse_status": (
                         "OK"
                         if status in {"VERIFIED", "PARTIALLY_VERIFIED"}
@@ -439,6 +500,17 @@ def _csv_value(value: Any) -> Any:
     if isinstance(value, date):
         return value.isoformat()
     return value
+
+
+def _optional_text(value: Any) -> str:
+    if value is None:
+        return ""
+    try:
+        if pd.isna(value):
+            return ""
+    except (TypeError, ValueError):
+        pass
+    return str(value)
 
 
 def _read_csv_rows(path: Path) -> List[Dict[str, str]]:
@@ -645,6 +717,134 @@ def _exit_profile_by_code(exit_profile_df: Optional[pd.DataFrame]) -> Dict[str, 
         if code:
             result[code] = _normalize_exit_profile_status(row.get(status_column))
     return result
+
+
+def _concat_evidence_frames(*frames: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
+    usable = [frame for frame in frames if frame is not None and not frame.empty]
+    if not usable:
+        return None
+    return pd.concat(usable, ignore_index=True, sort=False)
+
+
+def _research_queues(
+    rows: List[Dict[str, Any]],
+    priority_queue_size: int,
+    secondary_queue_size: int,
+) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    priority_queue = sorted(
+        [row for row in rows if row.get("quant_screen_status") == "PRIORITY_RESEARCH"],
+        key=lambda item: _finite_float(item.get("quant_score")) or 0.0,
+        reverse=True,
+    )[: max(0, int(priority_queue_size))]
+    secondary_queue = sorted(
+        [row for row in rows if row.get("quant_screen_status") == "SECONDARY_RESEARCH"],
+        key=lambda item: _finite_float(item.get("quant_score")) or 0.0,
+        reverse=True,
+    )[: max(0, int(secondary_queue_size))]
+    return priority_queue, secondary_queue
+
+
+def _build_quant_rows(
+    *,
+    inputs: List[BacktestInput],
+    requested_codes: List[str],
+    histories: Mapping[str, pd.DataFrame],
+    benchmark_history: Optional[pd.DataFrame],
+    industry_cycle_df: Optional[pd.DataFrame],
+    industry_evidence_df: Optional[pd.DataFrame],
+    company_evidence_df: Optional[pd.DataFrame],
+    industry_evidence_schema: Optional[Dict[str, Any]],
+    industry_alias_map: Mapping[str, Any],
+    exit_profiles: Mapping[str, str],
+    resolved_as_of: date,
+    diagnostics: Mapping[str, Any],
+) -> List[Dict[str, Any]]:
+    strategy = GenGeCycleBottomStrategy()
+    rows: List[Dict[str, Any]] = []
+    input_by_code = {_normalize_code(item.code): item for item in inputs}
+    requested_records = {
+        _normalize_code(record.get("code")): record
+        for record in diagnostics.get("requested_stock_records", [])
+        if isinstance(record, Mapping)
+    }
+    safe_industry_evidence_df = _sanitize_user_evidence_for_strategy(industry_evidence_df)
+    safe_company_evidence_df = _sanitize_user_evidence_for_strategy(company_evidence_df)
+    resolver = IndustryAliasResolver(industry_alias_map, safe_company_evidence_df)
+
+    for code in [_normalize_code(value) for value in requested_codes]:
+        item = input_by_code.get(code)
+        if item is None:
+            continue
+        history = histories.get(code, pd.DataFrame())
+        latest_date, close = _latest_price(history)
+        record = requested_records.get(code, {})
+        raw_industry = item.industry or record.get("industry") or ""
+        resolution = resolver.resolve(code=code, stock_name=item.stock_name or record.get("stock_name") or code, raw_industry=raw_industry)
+        try:
+            signal = strategy.generate_signal(
+                code=code,
+                stock_name=item.stock_name or record.get("stock_name") or code,
+                as_of_date=resolved_as_of,
+                price_df=item.price_df,
+                valuation_df=item.valuation_df,
+                financial_df=item.financial_df,
+                benchmark_df=benchmark_history,
+                industry_cycle_df=industry_cycle_df,
+                industry_evidence_df=safe_industry_evidence_df,
+                company_evidence_df=safe_company_evidence_df,
+                industry_evidence_schema=industry_evidence_schema,
+                industry=resolution.normalized_industry if resolution.match_type != "UNRESOLVED" else resolution.raw_industry,
+                extra_risk_flags=["industry_alias_unresolved"] if resolution.match_type == "UNRESOLVED" else None,
+            )
+            signal_row = signal.to_dict()
+        except Exception as exc:
+            rows.append(
+                {
+                    "code": code,
+                    "stock_name": item.stock_name or code,
+                    "raw_industry": raw_industry,
+                    "normalized_industry": resolution.normalized_industry,
+                    "as_of_date": resolved_as_of.isoformat(),
+                    "latest_price_date": latest_date.isoformat() if latest_date else "",
+                    "close": close,
+                    "quant_score": 0.0,
+                    "quant_screen_status": "HARD_REJECT",
+                    "quant_reason": f"信号生成失败：{type(exc).__name__}",
+                    "price_position_score": "",
+                    "hard_reject_blockers": "signal_generation_failed",
+                    "soft_blockers": "",
+                    "next_evidence_needed": "price_history;signal_generation_debug",
+                    "missing_fields": "signal_generation",
+                    "risk_flags": type(exc).__name__,
+                    "disclaimer": DISCOVERY_DISCLAIMER,
+                }
+            )
+            continue
+
+        rs20 = _relative_strength(history, benchmark_history, 20)
+        rs60 = _relative_strength(history, benchmark_history, 60)
+        row: Dict[str, Any] = {
+            **signal_row,
+            "raw_industry": raw_industry,
+            "normalized_industry": resolution.normalized_industry,
+            "as_of_date": resolved_as_of.isoformat(),
+            "latest_price_date": latest_date.isoformat() if latest_date else "",
+            "close": close,
+            "relative_strength_20d": rs20,
+            "relative_strength_60d": rs60,
+            "balanced_exit_historical_profile": exit_profiles.get(code, "NOT_AVAILABLE"),
+            "disclaimer": DISCOVERY_DISCLAIMER,
+        }
+        row["quant_score"] = _quant_score(row, rs20, rs60)
+        hard, soft = _screen_blockers(row)
+        row["hard_reject_blockers"] = ";".join(hard)
+        row["soft_blockers"] = ";".join(soft)
+        row["quant_screen_status"] = _screen_status(row, hard, soft)
+        row["quant_reason"] = _quant_reason(row, hard, soft)
+        row["price_position_score"] = _round(row.get("price_percentile_score"))
+        row["next_evidence_needed"] = _next_evidence_needed(row)
+        rows.append(row)
+    return rows
 
 
 def _quant_score(row: Mapping[str, Any], rs20: Optional[float], rs60: Optional[float]) -> float:
@@ -870,8 +1070,19 @@ def _rank_opportunities(rows: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     for index, row in enumerate(quality_sorted, start=1):
         row["opportunity_quality_rank"] = index
 
+    for row in rows:
+        row["opportunity_proximity_rank"] = ""
     proximity_sorted = sorted(
-        rows,
+        [
+            row
+            for row in rows
+            if str(row.get("tier")) not in {"REJECTED", "DATA_INSUFFICIENT"}
+            and not str(row.get("hard_blockers") or row.get("hard_reject_blockers") or "").strip()
+            and (
+                str(row.get("tier")) in {"TIER_B", "TIER_C"}
+                or str(row.get("quant_screen_status")) in RESEARCH_STATUSES
+            )
+        ],
         key=lambda row: (
             int(_finite_float(row.get("a_condition_fail_count")) or 99),
             -TIER_ORDER.get(str(row.get("tier")), -1),
@@ -890,7 +1101,20 @@ def _latest_previous_report(output_dir: Path, current_dir: Path) -> Optional[Pat
     return reports[-1] if reports else None
 
 
-def _load_previous_state(output_dir: Path, current_dir: Path) -> Dict[str, Dict[str, Any]]:
+def _load_previous_state(output_dir: Path, current_dir: Path, state_dir: str | Path | None = None) -> Dict[str, Dict[str, Any]]:
+    if state_dir:
+        state_path = Path(state_dir) / "last_opportunity_state.json"
+        if state_path.exists():
+            try:
+                payload = json.loads(state_path.read_text(encoding="utf-8"))
+                rows = payload.get("all_opportunities") or []
+                return {
+                    _normalize_code(row.get("code")): dict(row)
+                    for row in rows
+                    if isinstance(row, Mapping)
+                }
+            except (OSError, json.JSONDecodeError):
+                pass
     previous = _latest_previous_report(output_dir, current_dir)
     if previous is None:
         return {}
@@ -904,6 +1128,40 @@ def _load_previous_state(output_dir: Path, current_dir: Path) -> Dict[str, Dict[
         if isinstance(row, Mapping):
             result[_normalize_code(row.get("code"))] = dict(row)
     return result
+
+
+def _save_state_snapshots(
+    *,
+    state_dir: str | Path,
+    tier_rows: List[Dict[str, Any]],
+    evidence_inventory_rows: List[Dict[str, Any]],
+    summary: Mapping[str, Any],
+) -> None:
+    path = Path(state_dir)
+    path.mkdir(parents=True, exist_ok=True)
+    _json_dump(
+        path / "last_opportunity_state.json",
+        {
+            "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "summary": {
+                "resolved_as_of_date": summary.get("resolved_as_of_date"),
+                "acceptance_enum": summary.get("acceptance_enum"),
+                "tier_distribution": summary.get("tier_distribution"),
+            },
+            "all_opportunities": tier_rows,
+        },
+    )
+    _json_dump(
+        path / "last_evidence_state.json",
+        {
+            "saved_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+            "summary": {
+                "evidence_inventory_count": summary.get("evidence_inventory_count"),
+                "auto_evidence_collection": summary.get("auto_evidence_collection"),
+            },
+            "evidence_inventory": evidence_inventory_rows,
+        },
+    )
 
 
 def _changes(current_rows: List[Dict[str, Any]], previous: Mapping[str, Mapping[str, Any]]) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
@@ -1299,8 +1557,17 @@ def _summary_markdown(summary: Mapping[str, Any], rows: List[Dict[str, Any]]) ->
         f"- valid_stocks: {summary.get('valid_stocks')}",
         f"- priority_research_queue_count: {summary.get('priority_research_queue_count')}",
         f"- secondary_research_queue_count: {summary.get('secondary_research_queue_count')}",
+        f"- auto_evidence_task_count: {summary.get('auto_evidence_task_count')}",
+        f"- auto_evidence_actual_fetch_count: {summary.get('auto_evidence_actual_fetch_count')}",
+        f"- auto_evidence_fetch_success_count: {summary.get('auto_evidence_fetch_success_count')}",
+        f"- auto_evidence_verified_count: {summary.get('auto_evidence_verified_count')}",
+        f"- auto_evidence_partially_verified_count: {summary.get('auto_evidence_partially_verified_count')}",
+        f"- auto_evidence_failed_count: {summary.get('auto_evidence_failed_count')}",
+        f"- auto_evidence_missing_count: {summary.get('auto_evidence_missing_count')}",
+        f"- auto_evidence_cache_hit_count: {summary.get('auto_evidence_cache_hit_count')}",
         f"- industry_evidence_coverage_rate: {summary.get('industry_evidence_coverage_rate')}",
         f"- company_evidence_coverage_rate: {summary.get('company_evidence_coverage_rate')}",
+        f"- hard_risk_reject_count: {summary.get('hard_risk_reject_count')}",
         f"- provider_distribution: {json.dumps(summary.get('provider_distribution'), ensure_ascii=False, sort_keys=True)}",
         f"- fallback_distribution: {json.dumps(summary.get('fallback_distribution'), ensure_ascii=False, sort_keys=True)}",
         f"- tier_distribution: {json.dumps(summary.get('tier_distribution'), ensure_ascii=False, sort_keys=True)}",
@@ -1351,8 +1618,14 @@ def run_opportunity_discovery(
     secondary_queue_size: int = 150,
     exit_profile_df: Optional[pd.DataFrame] = None,
     ledger_path: str | Path | None = None,
+    run_mode: str = "full",
+    evidence_cache_dir: str | Path = "data/cache/opportunity_evidence",
+    auto_evidence_limit: int = 50,
+    state_dir: str | Path = "data/opportunity_snapshots",
 ) -> Tuple[Path, Dict[str, Any]]:
     pipeline_started = time.perf_counter()
+    if run_mode not in {"quant-only", "quant-evidence", "full"}:
+        raise ValueError(f"unsupported run_mode: {run_mode}")
     requested_date = coerce_date(requested_as_of_date) if requested_as_of_date else None
     price_dates: Dict[str, Optional[date]] = {}
     histories: Dict[str, pd.DataFrame] = {}
@@ -1372,120 +1645,91 @@ def run_opportunity_discovery(
     report_dir = output_path / pd.Timestamp.now().strftime("%Y%m%d_%H%M%S")
     report_dir.mkdir(parents=True, exist_ok=True)
 
-    resolver = IndustryAliasResolver(industry_alias_map, company_evidence_df)
     exit_profiles = _exit_profile_by_code(exit_profile_df)
-    strategy = GenGeCycleBottomStrategy()
-    rows: List[Dict[str, Any]] = []
-    input_by_code = {_normalize_code(item.code): item for item in inputs}
-    requested_records = {
-        _normalize_code(record.get("code")): record
-        for record in (diagnostics or {}).get("requested_stock_records", [])
-        if isinstance(record, Mapping)
+    rows = _build_quant_rows(
+        inputs=inputs,
+        requested_codes=requested_codes,
+        histories=histories,
+        benchmark_history=benchmark_history,
+        industry_cycle_df=industry_cycle_df,
+        industry_evidence_df=industry_evidence_df,
+        company_evidence_df=company_evidence_df,
+        industry_evidence_schema=industry_evidence_schema,
+        industry_alias_map=industry_alias_map,
+        exit_profiles=exit_profiles,
+        resolved_as_of=resolved_as_of,
+        diagnostics=dict(diagnostics or {}),
+    )
+    priority_queue, secondary_queue = _research_queues(rows, priority_queue_size, secondary_queue_size)
+    auto_industry_evidence_df = pd.DataFrame()
+    auto_company_evidence_df = pd.DataFrame()
+    auto_evidence_audit_rows: List[Dict[str, Any]] = []
+    auto_evidence_summary: Dict[str, Any] = {
+        "enabled": run_mode in {"quant-evidence", "full"},
+        "executed": False,
+        "task_count": 0,
+        "actual_fetch_count": 0,
+        "fetch_success_count": 0,
+        "verified_count": 0,
+        "partially_verified_count": 0,
+        "failed_count": 0,
+        "missing_count": 0,
+        "cache_hit_count": 0,
+        "cache_miss_count": 0,
+        "audit_count": 0,
+        "cache_dir": str(evidence_cache_dir),
     }
-
-    for code in [_normalize_code(value) for value in requested_codes]:
-        item = input_by_code.get(code)
-        if item is None:
-            continue
-        history = histories.get(code, pd.DataFrame())
-        latest_date, close = _latest_price(history)
-        record = requested_records.get(code, {})
-        raw_industry = item.industry or record.get("industry") or ""
-        resolution = resolver.resolve(code=code, stock_name=item.stock_name or record.get("stock_name") or code, raw_industry=raw_industry)
-        try:
-            signal = strategy.generate_signal(
-                code=code,
-                stock_name=item.stock_name or record.get("stock_name") or code,
-                as_of_date=resolved_as_of,
-                price_df=item.price_df,
-                valuation_df=item.valuation_df,
-                financial_df=item.financial_df,
-                benchmark_df=benchmark_history,
-                industry_cycle_df=industry_cycle_df,
-                industry_evidence_df=industry_evidence_df,
-                company_evidence_df=company_evidence_df,
-                industry_evidence_schema=industry_evidence_schema,
-                industry=resolution.normalized_industry if resolution.match_type != "UNRESOLVED" else resolution.raw_industry,
-                extra_risk_flags=["industry_alias_unresolved"] if resolution.match_type == "UNRESOLVED" else None,
-            )
-            signal_row = signal.to_dict()
-        except Exception as exc:
-            rows.append(
-                {
-                    "code": code,
-                    "stock_name": item.stock_name or code,
-                    "raw_industry": raw_industry,
-                    "normalized_industry": resolution.normalized_industry,
-                    "as_of_date": resolved_as_of.isoformat(),
-                    "latest_price_date": latest_date.isoformat() if latest_date else "",
-                    "close": close,
-                    "quant_score": 0.0,
-                    "quant_screen_status": "HARD_REJECT",
-                    "quant_reason": f"信号生成失败：{type(exc).__name__}",
-                    "price_position_score": "",
-                    "hard_reject_blockers": "signal_generation_failed",
-                    "soft_blockers": "",
-                    "next_evidence_needed": "price_history;signal_generation_debug",
-                    "missing_fields": "signal_generation",
-                    "risk_flags": type(exc).__name__,
-                    "disclaimer": DISCOVERY_DISCLAIMER,
-                }
-            )
-            continue
-
-        rs20 = _relative_strength(history, benchmark_history, 20)
-        rs60 = _relative_strength(history, benchmark_history, 60)
-        row: Dict[str, Any] = {
-            **signal_row,
-            "raw_industry": raw_industry,
-            "normalized_industry": resolution.normalized_industry,
-            "as_of_date": resolved_as_of.isoformat(),
-            "latest_price_date": latest_date.isoformat() if latest_date else "",
-            "close": close,
-            "relative_strength_20d": rs20,
-            "relative_strength_60d": rs60,
-            "balanced_exit_historical_profile": exit_profiles.get(code, "NOT_AVAILABLE"),
-            "disclaimer": DISCOVERY_DISCLAIMER,
-        }
-        row["quant_score"] = _quant_score(row, rs20, rs60)
-        hard, soft = _screen_blockers(row)
-        row["hard_reject_blockers"] = ";".join(hard)
-        row["soft_blockers"] = ";".join(soft)
-        row["quant_screen_status"] = _screen_status(row, hard, soft)
-        row["quant_reason"] = _quant_reason(row, hard, soft)
-        row["price_position_score"] = _round(row.get("price_percentile_score"))
-        row["next_evidence_needed"] = _next_evidence_needed(row)
-        rows.append(row)
+    if run_mode in {"quant-evidence", "full"}:
+        industry_auto_rows, company_auto_rows, auto_evidence_audit_rows, auto_evidence_summary = collect_auto_evidence(
+            priority_rows=priority_queue,
+            as_of=resolved_as_of,
+            cache_dir=evidence_cache_dir,
+            max_companies=auto_evidence_limit,
+        )
+        auto_industry_evidence_df = pd.DataFrame(industry_auto_rows)
+        auto_company_evidence_df = pd.DataFrame(company_auto_rows)
+        merged_industry_evidence_df = _concat_evidence_frames(industry_evidence_df, auto_industry_evidence_df)
+        merged_company_evidence_df = _concat_evidence_frames(company_evidence_df, auto_company_evidence_df)
+        rows = _build_quant_rows(
+            inputs=inputs,
+            requested_codes=requested_codes,
+            histories=histories,
+            benchmark_history=benchmark_history,
+            industry_cycle_df=industry_cycle_df,
+            industry_evidence_df=merged_industry_evidence_df,
+            company_evidence_df=merged_company_evidence_df,
+            industry_evidence_schema=industry_evidence_schema,
+            industry_alias_map=industry_alias_map,
+            exit_profiles=exit_profiles,
+            resolved_as_of=resolved_as_of,
+            diagnostics=dict(diagnostics or {}),
+        )
+        industry_evidence_df = merged_industry_evidence_df
+        company_evidence_df = merged_company_evidence_df
+        priority_queue, secondary_queue = _research_queues(rows, priority_queue_size, secondary_queue_size)
 
     valid_rows = [row for row in rows if str(row.get("quant_screen_status")) != "HARD_REJECT" or row.get("close") not in (None, "")]
-    priority_queue = sorted(
-        [row for row in rows if row.get("quant_screen_status") == "PRIORITY_RESEARCH"],
-        key=lambda item: _finite_float(item.get("quant_score")) or 0.0,
-        reverse=True,
-    )[: max(0, int(priority_queue_size))]
-    secondary_queue = sorted(
-        [row for row in rows if row.get("quant_screen_status") == "SECONDARY_RESEARCH"],
-        key=lambda item: _finite_float(item.get("quant_score")) or 0.0,
-        reverse=True,
-    )[: max(0, int(secondary_queue_size))]
 
-    tier_rows = _rank_opportunities([_tier_row(dict(row)) for row in rows])
+    tier_rows = _rank_opportunities([_tier_row(dict(row)) for row in rows]) if run_mode in {"quant-evidence", "full"} else []
     tier_a = [row for row in tier_rows if row.get("tier") == "TIER_A"]
     tier_b = [row for row in tier_rows if row.get("tier") == "TIER_B"]
     tier_c = [row for row in tier_rows if row.get("tier") == "TIER_C"]
 
-    industry_tasks, company_tasks, gap_rows = _build_research_tasks(
-        rows=tier_rows,
-        industry_evidence_df=industry_evidence_df,
-        company_evidence_df=company_evidence_df,
-        industry_evidence_schema=industry_evidence_schema,
-        as_of=resolved_as_of,
-    )
-    evidence_inventory_rows = _build_evidence_inventory(
-        industry_evidence_df=industry_evidence_df,
-        company_evidence_df=company_evidence_df,
-        as_of=resolved_as_of,
-    )
+    if run_mode in {"quant-evidence", "full"}:
+        industry_tasks, company_tasks, gap_rows = _build_research_tasks(
+            rows=tier_rows,
+            industry_evidence_df=industry_evidence_df,
+            company_evidence_df=company_evidence_df,
+            industry_evidence_schema=industry_evidence_schema,
+            as_of=resolved_as_of,
+        )
+        evidence_inventory_rows = _build_evidence_inventory(
+            industry_evidence_df=industry_evidence_df,
+            company_evidence_df=company_evidence_df,
+            as_of=resolved_as_of,
+        )
+    else:
+        industry_tasks, company_tasks, gap_rows, evidence_inventory_rows = [], [], [], []
     data_quality_rows = _build_data_quality_rows(
         requested_codes=requested_codes,
         inputs=inputs,
@@ -1495,19 +1739,44 @@ def run_opportunity_discovery(
         company_evidence_df=company_evidence_df,
         as_of=resolved_as_of,
     )
-    previous_state = _load_previous_state(output_path, report_dir)
-    opportunity_changes, evidence_changes = _changes(tier_rows, previous_state)
-
-    target_ledger = Path(ledger_path) if ledger_path else Path("data/opportunity_snapshots/forward_observation_ledger.csv")
-    ledger_rows, forward_summary = _update_forward_ledger(
-        ledger_path=target_ledger,
-        report_dir=report_dir,
-        rows=tier_rows,
-        inputs=inputs,
-        benchmark_df=benchmark_history,
-        as_of=resolved_as_of,
-        diagnostics=diagnostics or {},
-    )
+    for audit in auto_evidence_audit_rows:
+        data_quality_rows.append(
+            {
+                "code": audit.get("code") or "",
+                "stock_name": audit.get("stock_name") or "",
+                "stage": "auto_evidence_collection",
+                "status": audit.get("status"),
+                "issue": audit.get("issue"),
+                "detail": json.dumps(audit, ensure_ascii=False, sort_keys=True),
+            }
+        )
+    if run_mode == "full":
+        previous_state = _load_previous_state(output_path, report_dir, state_dir)
+        opportunity_changes, evidence_changes = _changes(tier_rows, previous_state)
+        target_ledger = Path(ledger_path) if ledger_path else Path("data/opportunity_snapshots/forward_observation_ledger.csv")
+        ledger_rows, forward_summary = _update_forward_ledger(
+            ledger_path=target_ledger,
+            report_dir=report_dir,
+            rows=tier_rows,
+            inputs=inputs,
+            benchmark_df=benchmark_history,
+            as_of=resolved_as_of,
+            diagnostics=diagnostics or {},
+        )
+    else:
+        previous_state = {}
+        opportunity_changes, evidence_changes = [], []
+        ledger_rows = []
+        forward_summary = {
+            "ledger_path": str(ledger_path or "data/opportunity_snapshots/forward_observation_ledger.csv"),
+            "report_ledger_path": "",
+            "tracked_count": 0,
+            "new_records": 0,
+            "observed_tier_a_b_count": 0,
+            "rule_version": RULE_VERSION,
+            "skipped": True,
+            "skip_reason": f"run_mode={run_mode} does not update forward ledger",
+        }
 
     milestones = []
     if not valid_rows:
@@ -1516,13 +1785,25 @@ def run_opportunity_discovery(
         milestones.append("PASS_CURRENT_SNAPSHOT_PIPELINE_READY")
         if priority_queue or secondary_queue:
             milestones.append("PASS_QUANT_RESEARCH_QUEUE_GENERATED")
-        if industry_tasks and gap_rows is not None:
-            milestones.append("PASS_EVIDENCE_ENRICHMENT_READY")
-        if tier_b or tier_c or tier_a or priority_queue or secondary_queue:
+        if run_mode in {"quant-evidence", "full"} and (industry_tasks or company_tasks):
+            milestones.append("PASS_EVIDENCE_TASKS_GENERATED")
+        auto_collection_ready = bool(
+            run_mode in {"quant-evidence", "full"}
+            and auto_evidence_summary.get("executed")
+            and int(auto_evidence_summary.get("task_count") or 0) > 0
+            and (
+                int(auto_evidence_summary.get("verified_count") or 0) > 0
+                or int(auto_evidence_summary.get("failed_count") or 0) + int(auto_evidence_summary.get("missing_count") or 0)
+                >= int(auto_evidence_summary.get("task_count") or 0)
+            )
+        )
+        if auto_collection_ready:
+            milestones.append("PASS_AUTO_EVIDENCE_COLLECTION_READY")
+        if auto_collection_ready and (tier_b or tier_c or tier_a or priority_queue or secondary_queue):
             milestones.append("PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY")
         if tier_a:
             milestones.append("PASS_TIER_A_CANDIDATE_GENERATED")
-        if forward_summary.get("observed_tier_a_b_count"):
+        if run_mode == "full" and forward_summary.get("observed_tier_a_b_count"):
             milestones.append("PASS_FORWARD_OBSERVATION_READY")
         acceptance = milestones[-1] if milestones else "FAIL_CURRENT_SNAPSHOT"
 
@@ -1565,11 +1846,36 @@ def run_opportunity_discovery(
             "failed_conditions": row.get("a_condition_fail_count"),
             "blockers": row.get("a_condition_failed"),
         }
-        for row in sorted(tier_rows, key=lambda item: int(item.get("opportunity_proximity_rank") or 999))[:20]
+        for row in sorted(
+            [row for row in tier_rows if str(row.get("opportunity_proximity_rank") or "").strip()],
+            key=lambda item: int(item.get("opportunity_proximity_rank") or 999),
+        )[:20]
     ]
+    hard_risk_rejects = [
+        {
+            "code": row.get("code"),
+            "stock_name": row.get("stock_name"),
+            "tier": row.get("tier"),
+            "hard_blockers": row.get("hard_blockers") or row.get("hard_reject_blockers"),
+            "quant_screen_status": row.get("quant_screen_status"),
+        }
+        for row in tier_rows
+        if str(row.get("hard_blockers") or row.get("hard_reject_blockers") or "").strip()
+    ][:50]
 
     summary: Dict[str, Any] = {
         "diagnostics": dict(diagnostics or {}),
+        "run_mode": run_mode,
+        "stages_executed": [
+            "quant_screen",
+            "research_queue",
+            *(
+                ["evidence_tasks", "auto_evidence_collection", "tiering"]
+                if run_mode in {"quant-evidence", "full"}
+                else []
+            ),
+            *(["previous_state_compare", "forward_ledger_update"] if run_mode == "full" else []),
+        ],
         "requested_as_of_date": requested_date.isoformat() if requested_date else None,
         "resolved_as_of_date": resolved_as_of.isoformat(),
         "total_stocks": len(requested_codes),
@@ -1578,6 +1884,7 @@ def run_opportunity_discovery(
         "data_sources": dict(data_sources),
         "provider_distribution": provider_distribution,
         "fallback_distribution": fallback_distribution,
+        "exit_profile_distribution": (diagnostics or {}).get("exit_profile_distribution", {}),
         "priority_research_queue_count": len(priority_queue),
         "secondary_research_queue_count": len(secondary_queue),
         "rejected_at_quant_stage_count": sum(1 for row in rows if row.get("quant_screen_status") == "HARD_REJECT"),
@@ -1589,6 +1896,15 @@ def run_opportunity_discovery(
         "company_research_task_count": len(company_tasks),
         "evidence_gap_count": len(gap_rows),
         "evidence_inventory_count": len(evidence_inventory_rows),
+        "auto_evidence_collection": auto_evidence_summary,
+        "auto_evidence_task_count": auto_evidence_summary.get("task_count", 0),
+        "auto_evidence_actual_fetch_count": auto_evidence_summary.get("actual_fetch_count", 0),
+        "auto_evidence_fetch_success_count": auto_evidence_summary.get("fetch_success_count", 0),
+        "auto_evidence_verified_count": auto_evidence_summary.get("verified_count", 0),
+        "auto_evidence_partially_verified_count": auto_evidence_summary.get("partially_verified_count", 0),
+        "auto_evidence_failed_count": auto_evidence_summary.get("failed_count", 0),
+        "auto_evidence_missing_count": auto_evidence_summary.get("missing_count", 0),
+        "auto_evidence_cache_hit_count": auto_evidence_summary.get("cache_hit_count", 0),
         "industry_evidence_coverage_rate": industry_coverage_rate,
         "company_evidence_coverage_rate": company_coverage_rate,
         "evidence_status_distribution": {
@@ -1597,6 +1913,11 @@ def run_opportunity_discovery(
         },
         "opportunity_quality_top20": quality_top20,
         "opportunity_proximity_top20": proximity_top20,
+        "hard_risk_rejects": hard_risk_rejects,
+        "hard_risk_reject_count": len(hard_risk_rejects),
+        "previous_state_restored": bool(previous_state),
+        "opportunity_change_count": sum(1 for row in opportunity_changes if row.get("change_type") != "UNCHANGED"),
+        "evidence_change_count": sum(1 for row in evidence_changes if row.get("change_type") != "UNCHANGED"),
         "acceptance_enum": acceptance,
         "acceptance_milestones": milestones,
         "forward_observation": forward_summary,
@@ -1606,6 +1927,13 @@ def run_opportunity_discovery(
         "candidate_semantics": "research_candidate_manual_review_only",
         "rule_version": RULE_VERSION,
     }
+    if run_mode == "full":
+        _save_state_snapshots(
+            state_dir=state_dir,
+            tier_rows=tier_rows,
+            evidence_inventory_rows=evidence_inventory_rows,
+            summary=summary,
+        )
 
     _write_csv(report_dir / "quant_screen_all.csv", rows, QUANT_COLUMNS)
     _write_csv(report_dir / "priority_research_queue.csv", priority_queue, QUANT_COLUMNS)
@@ -1617,6 +1945,7 @@ def run_opportunity_discovery(
     _write_csv(report_dir / "evidence_changes.csv", evidence_changes, EVIDENCE_CHANGE_COLUMNS)
     _write_csv(report_dir / "evidence_gap_report.csv", gap_rows, GAP_COLUMNS)
     _write_csv(report_dir / "evidence_inventory.csv", evidence_inventory_rows, EVIDENCE_INVENTORY_COLUMNS)
+    _write_csv(report_dir / "auto_evidence_audit.csv", auto_evidence_audit_rows, AUTO_EVIDENCE_AUDIT_COLUMNS)
     _write_csv(report_dir / "data_quality_audit.csv", data_quality_rows, DATA_QUALITY_COLUMNS)
     _json_dump(report_dir / "industry_research_tasks.json", {"tasks": industry_tasks})
     _json_dump(report_dir / "company_research_tasks.json", {"tasks": company_tasks})

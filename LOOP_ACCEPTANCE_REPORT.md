@@ -1,5 +1,33 @@
 # Opportunity Discovery Acceptance Report
 
+## Loop 16 Blocker Fix Validation
+
+- Scope: close the opportunity discovery loop blockers without adding new scoring rules, industry lists, backtest optimization, broker integration, or trading actions.
+- Implemented automatic evidence collection modules under `src/strategies/genge_opportunity_discovery/evidence_collectors/`: company announcements/annual reports, public government/industry pages, URL/PDF/HTML validation, cache, and failure audit.
+- User CSV evidence is no longer allowed to become `VERIFIED` by `source_type` alone; without fetched original URL, content hash, and successful value extraction, it is capped at `PARTIALLY_VERIFIED` or lower.
+- Exit profile generation now reads existing historical `signal_details.csv` files into `data/opportunity_snapshots/exit_profile.csv`; no exit parameter optimization is performed.
+- Run modes are now executable stages: `quant-only` skips evidence and ledger, `quant-evidence` skips forward ledger, and `full` restores state, compares changes, and updates the ledger.
+- GitHub Actions now restores and saves `data/opportunity_snapshots` plus `data/cache/opportunity_evidence`, and explicitly passes `--exit-profile-file`, `--forward-ledger-file`, `--state-dir`, and `--evidence-cache-dir`.
+
+## Loop 16 Tests
+
+- Required pytest: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py tests/test_genge_opportunity_discovery_*.py -q` -> 98 passed, 1 warning, 325.76 seconds.
+- Added coverage for run-mode stage differences, Tier A requiring `PASSED` exit profile, non-`PASSED` profiles excluded from Tier A, cross-day ledger preservation and later return updates, cache reuse, proximity rank excluding hard-risk rejects, and workflow restore/save contract.
+
+## Loop 16 Real Full Runs
+
+- Uncached full run: `reports/opportunity_discovery_blocker_fix/20260707_202051`, natural exit, wall time `real 564.18`; automatic evidence `task_count=45`, `actual_fetch_count=61`, `fetch_success_count=26`, `VERIFIED=7`, `PARTIALLY_VERIFIED=0`, `failed=14`, `missing=24`, `cache_hit=0`.
+- Cached full run on latest code: `reports/opportunity_discovery_blocker_fix/20260707_203704`, natural exit, wall time `real 514.29`; automatic evidence `task_count=45`, `actual_fetch_count=0`, `fetch_success_count=0`, `VERIFIED=7`, `PARTIALLY_VERIFIED=0`, `failed=14`, `missing=24`, `cache_hit=45`.
+- Latest cached run: `total_stocks=100`, `valid_stocks=100`, `data_failure_count=0`, provider/fallback distribution both `TencentFetcher=100`.
+- Evidence coverage improved from the prior Loop 15 broad run industry/company `3.0%/2.0%` to `19.0%/4.0%`.
+- Exit profile distribution: `PASSED=25`, `DEGRADED=22`, `FAILED=29`, `NOT_AVAILABLE=0`.
+- Tier result: `tier_a_count=0`, `tier_b_count=3`, `tier_c_count=30`, `REJECTED=67`; Tier A was not fabricated.
+- Forward ledger was restored: `previous_state_restored=True`, tracked rows `7`, new records `0` on the cached rerun, unique codes `7`.
+- Opportunity/evidence changes on cached rerun: `0/0` changed; prior uncached run correctly created the state and ledger updates.
+- Latest acceptance milestones: `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`, `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, `PASS_EVIDENCE_TASKS_GENERATED`, `PASS_AUTO_EVIDENCE_COLLECTION_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`, `PASS_FORWARD_OBSERVATION_READY`.
+- Latest final enum: `PASS_FORWARD_OBSERVATION_READY`.
+- Forbidden promise/trade-command scan on latest report did not match `保证上涨`, `确定买入`, `必买`, `必卖`, `BUY`, `SELL`, `自动买入`, `自动卖出`, or `自动下单`.
+
 ## Loop 15 Scope
 
 - Scope: daily opportunity discovery research workflow on top of GenGe Cycle Bottom features.
@@ -7,7 +35,7 @@
 - Outputs: quant coarse screen, priority/secondary research queues, A/B/C opportunity tiers, evidence gap report, industry/company research tasks, daily changes, data quality audit, and forward observation ledger.
 - Safety boundary: no broker integration, no Citic Securities client access, no account/position/password/captcha reading, no automatic buy/sell/cancel behavior.
 - Candidate semantics: every output is a research candidate, manual review candidate, watchlist object, or evidence-incomplete object. Missing data is downgraded explicitly.
-- Current snapshot acceptance enum is corrected to `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`; opportunity discovery milestones add `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, `PASS_EVIDENCE_ENRICHMENT_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`, `PASS_TIER_A_CANDIDATE_GENERATED`, and `PASS_FORWARD_OBSERVATION_READY`.
+- Current snapshot acceptance enum is corrected to `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`; opportunity discovery milestones are `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, `PASS_EVIDENCE_TASKS_GENERATED`, `PASS_AUTO_EVIDENCE_COLLECTION_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`, `PASS_TIER_A_CANDIDATE_GENERATED`, and `PASS_FORWARD_OBSERVATION_READY`.
 
 ## Loop 15 Tests
 
@@ -36,7 +64,7 @@
 - Generated rows: `quant_screen_all.csv` 100 data rows, `priority_research_queue.csv` 21, `secondary_research_queue.csv` 36, `tier_c_evidence_incomplete.csv` 57, `evidence_gap_report.csv` 151, `evidence_inventory.csv` 36.
 - `opportunity_quality_top20` and `opportunity_proximity_top20` were both written to `daily_opportunity_report.json`.
 - Forbidden promise/trade-command scan on the latest report did not match `保证上涨`, `确定买入`, `必买`, `必卖`, `BUY`, or `SELL`.
-- Acceptance milestones: `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`, `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, `PASS_EVIDENCE_ENRICHMENT_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`.
+- Historical Loop 15 acceptance milestones before automatic evidence collection: `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`, `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, superseded `PASS_EVIDENCE_ENRICHMENT_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`.
 - Final enum: `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`.
 - Not upgraded to `PASS_TIER_A_CANDIDATE_GENERATED` or `PASS_FORWARD_OBSERVATION_READY` because no Tier A/B opportunity was generated in the current run; the system kept evidence gaps as Tier C instead of forcing stronger candidates.
 
@@ -74,7 +102,7 @@
 
 ## Current Snapshot Acceptance
 
-Final enum: `PASS_CURRENT_SNAPSHOT_RESEARCH_READY`.
+Historical enum before the current-snapshot enum correction: `PASS_CURRENT_SNAPSHOT_RESEARCH_READY` (superseded by `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`).
 
 Not upgraded to `PASS_CURRENT_SNAPSHOT_CANDIDATE_GENERATED` because:
 

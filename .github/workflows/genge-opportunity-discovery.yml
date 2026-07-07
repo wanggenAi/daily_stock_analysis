@@ -73,8 +73,12 @@ jobs:
             --industry-alias-map config/industry_alias_map.yaml \
             --as-of-date 2024-04-18 \
             --run-mode "${{ inputs.run_mode || 'full' }}" \
+            --auto-evidence-limit 0 \
             --output-dir reports/opportunity_discovery_ci_smoke \
             --forward-ledger-file reports/opportunity_discovery_ci_smoke/forward_observation_ledger.csv \
+            --exit-profile-file reports/opportunity_discovery_ci_smoke/exit_profile.csv \
+            --state-dir reports/opportunity_discovery_ci_smoke/state \
+            --evidence-cache-dir reports/opportunity_discovery_ci_smoke/evidence_cache \
             --fixture-smoke-passed \
             --ci-passed
 
@@ -88,33 +92,42 @@ jobs:
           runs = sorted(path for path in root.iterdir() if path.is_dir())
           assert runs, "no opportunity discovery report directory generated"
           latest = runs[-1]
+          payload = json.loads((latest / "daily_opportunity_report.json").read_text(encoding="utf-8"))
+          summary = payload["summary"]
+          run_mode = summary.get("run_mode")
           required = [
               "quant_screen_all.csv",
               "priority_research_queue.csv",
               "secondary_research_queue.csv",
-              "tier_a_candidates.csv",
-              "tier_b_watchlist.csv",
-              "tier_c_evidence_incomplete.csv",
-              "evidence_gap_report.csv",
-              "evidence_inventory.csv",
-              "industry_research_tasks.json",
-              "company_research_tasks.json",
               "data_quality_audit.csv",
               "daily_opportunity_report.json",
-              "forward_observation_ledger.csv",
           ]
+          if run_mode in {"quant-evidence", "full"}:
+              required.extend(
+                  [
+                      "tier_a_candidates.csv",
+                      "tier_b_watchlist.csv",
+                      "tier_c_evidence_incomplete.csv",
+                      "evidence_gap_report.csv",
+                      "evidence_inventory.csv",
+                      "auto_evidence_audit.csv",
+                      "industry_research_tasks.json",
+                      "company_research_tasks.json",
+                  ]
+              )
+          if run_mode == "full":
+              required.append("forward_observation_ledger.csv")
           for filename in required:
               assert (latest / filename).exists(), f"missing {filename}"
 
-          payload = json.loads((latest / "daily_opportunity_report.json").read_text(encoding="utf-8"))
-          summary = payload["summary"]
           assert summary["no_auto_trade"] is True
           assert summary["no_broker_integration"] is True
           assert summary["acceptance_enum"] in {
               "FAIL_CURRENT_SNAPSHOT",
               "PASS_CURRENT_SNAPSHOT_PIPELINE_READY",
               "PASS_QUANT_RESEARCH_QUEUE_GENERATED",
-              "PASS_EVIDENCE_ENRICHMENT_READY",
+              "PASS_EVIDENCE_TASKS_GENERATED",
+              "PASS_AUTO_EVIDENCE_COLLECTION_READY",
               "PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY",
               "PASS_TIER_A_CANDIDATE_GENERATED",
               "PASS_FORWARD_OBSERVATION_READY",
@@ -148,6 +161,19 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r .github/requirements-ci.txt
 
+      - name: Restore opportunity state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/opportunity_snapshots
+            data/cache/opportunity_evidence
+          key: genge-opportunity-state-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            genge-opportunity-state-${{ runner.os }}-
+
+      - name: Prepare opportunity state directories
+        run: mkdir -p data/opportunity_snapshots data/cache/opportunity_evidence
+
       - name: Run daily opportunity discovery
         env:
           RUN_MODE: ${{ inputs.run_mode || 'full' }}
@@ -167,8 +193,21 @@ jobs:
             --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
             --industry-evidence-schema config/industry_evidence_schema.yaml \
             --industry-alias-map config/industry_alias_map.yaml \
+            --exit-profile-file data/opportunity_snapshots/exit_profile.csv \
+            --forward-ledger-file data/opportunity_snapshots/forward_observation_ledger.csv \
+            --state-dir data/opportunity_snapshots \
+            --evidence-cache-dir data/cache/opportunity_evidence \
             --fixture-smoke-passed \
             --ci-passed
+
+      - name: Save opportunity state
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            data/opportunity_snapshots
+            data/cache/opportunity_evidence
+          key: genge-opportunity-state-${{ runner.os }}-${{ github.run_id }}
 
       - name: Upload daily opportunity report
         uses: actions/upload-artifact@v4

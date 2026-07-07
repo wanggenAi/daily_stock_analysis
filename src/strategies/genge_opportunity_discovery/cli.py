@@ -29,6 +29,7 @@ from src.strategies.genge_cycle_bottom.industry_evidence import (
     normalize_evidence_source,
 )
 
+from .exit_profile import generate_exit_profile_from_reports, load_exit_profile_distribution
 from .pipeline import run_opportunity_discovery
 
 
@@ -63,8 +64,13 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--company-evidence-file", help="Optional CSV file with company cycle evidence rows")
     parser.add_argument("--industry-evidence-schema", default="config/industry_evidence_schema.yaml", help="YAML schema for industry evidence indicators")
     parser.add_argument("--industry-alias-map", default="config/industry_alias_map.yaml", help="YAML map for industry aliases")
-    parser.add_argument("--exit-profile-file", help="Optional CSV with code and balanced_exit_historical_profile/exit_profile_status")
+    parser.add_argument("--exit-profile-file", default="data/opportunity_snapshots/exit_profile.csv", help="CSV with code and balanced_exit_historical_profile/exit_profile_status; generated from historical signal_details.csv if missing")
+    parser.add_argument("--exit-profile-source-dir", default="reports", help="Directory containing historical signal_details.csv files used to generate exit_profile.csv if needed")
+    parser.add_argument("--regenerate-exit-profile", action="store_true", help="Regenerate exit profile from existing historical reports before running")
     parser.add_argument("--forward-ledger-file", default="data/opportunity_snapshots/forward_observation_ledger.csv", help="Persistent forward observation ledger CSV")
+    parser.add_argument("--state-dir", default="data/opportunity_snapshots", help="Persistent opportunity state directory restored by schedulers")
+    parser.add_argument("--evidence-cache-dir", default="data/cache/opportunity_evidence", help="Automatic evidence cache directory restored by schedulers")
+    parser.add_argument("--auto-evidence-limit", type=int, default=50, help="Maximum priority queue stocks for automatic evidence collection")
     parser.add_argument("--priority-queue-size", type=int, default=50, help="Max rows in priority research queue")
     parser.add_argument("--secondary-queue-size", type=int, default=150, help="Max rows in secondary research queue")
     parser.add_argument("--fixture-smoke-passed", action="store_true", help="Mark fixture smoke as already verified for acceptance context")
@@ -112,7 +118,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     company_evidence_df = load_evidence_csv(args.company_evidence_file) if args.company_evidence_file else None
     industry_evidence_schema = load_industry_evidence_schema(args.industry_evidence_schema) if args.industry_evidence_schema else {}
     industry_alias_map = load_industry_alias_map(args.industry_alias_map)
-    exit_profile_df = pd.read_csv(args.exit_profile_file) if args.exit_profile_file else None
+    exit_profile_generation = {"generated": False, "exit_profile_file": args.exit_profile_file}
+    if args.exit_profile_file and (args.regenerate_exit_profile or not Path(args.exit_profile_file).exists()):
+        _, exit_profile_generation = generate_exit_profile_from_reports(
+            output_file=args.exit_profile_file,
+            source_dirs=[args.exit_profile_source_dir],
+        )
+    exit_profile_df = pd.read_csv(args.exit_profile_file) if args.exit_profile_file and Path(args.exit_profile_file).exists() else None
+    exit_profile_distribution = load_exit_profile_distribution(args.exit_profile_file)
     stage_timings["load_evidence_seconds"] = round(time.perf_counter() - stage_started, 4)
 
     diagnostics = {
@@ -134,7 +147,13 @@ def main(argv: Optional[List[str]] = None) -> int:
         "industry_evidence_schema": args.industry_evidence_schema,
         "industry_alias_map": args.industry_alias_map,
         "exit_profile_file": args.exit_profile_file,
+        "exit_profile_generation": exit_profile_generation,
+        "exit_profile_distribution": exit_profile_distribution,
+        "exit_profile_source_dir": args.exit_profile_source_dir,
         "forward_ledger_file": args.forward_ledger_file,
+        "state_dir": args.state_dir,
+        "evidence_cache_dir": args.evidence_cache_dir,
+        "auto_evidence_limit": args.auto_evidence_limit,
         "run_mode": args.run_mode,
         "stage_elapsed_seconds": stage_timings,
         "industry_evidence_source": normalize_evidence_source(args.industry_evidence_file, source_mode),
@@ -168,6 +187,10 @@ def main(argv: Optional[List[str]] = None) -> int:
         secondary_queue_size=args.secondary_queue_size,
         exit_profile_df=exit_profile_df,
         ledger_path=args.forward_ledger_file,
+        run_mode=args.run_mode,
+        evidence_cache_dir=args.evidence_cache_dir,
+        auto_evidence_limit=args.auto_evidence_limit,
+        state_dir=args.state_dir,
     )
     stage_timings["build_report_seconds"] = round(time.perf_counter() - stage_started, 4)
     summary["diagnostics"]["stage_elapsed_seconds"] = stage_timings
