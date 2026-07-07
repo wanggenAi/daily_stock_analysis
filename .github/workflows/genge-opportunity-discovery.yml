@@ -89,7 +89,7 @@ jobs:
           from pathlib import Path
 
           root = Path("reports/opportunity_discovery_ci_smoke")
-          runs = sorted(path for path in root.iterdir() if path.is_dir())
+          runs = sorted(path for path in root.iterdir() if path.is_dir() and (path / "daily_opportunity_report.json").exists())
           assert runs, "no opportunity discovery report directory generated"
           latest = runs[-1]
           payload = json.loads((latest / "daily_opportunity_report.json").read_text(encoding="utf-8"))
