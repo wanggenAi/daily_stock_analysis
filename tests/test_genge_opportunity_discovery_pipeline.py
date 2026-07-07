@@ -184,9 +184,13 @@ def test_opportunity_discovery_writes_research_outputs_and_forward_ledger(tmp_pa
     assert "PASS_EVIDENCE_ENRICHMENT_READY" in summary["acceptance_milestones"]
     assert (report_dir / "priority_research_queue.csv").exists()
     assert (report_dir / "evidence_gap_report.csv").exists()
+    assert (report_dir / "evidence_inventory.csv").exists()
     assert (report_dir / "industry_research_tasks.json").exists()
     assert (report_dir / "company_research_tasks.json").exists()
     assert (report_dir / "forward_observation_ledger.csv").exists()
+    assert summary["provider_distribution"] == {"fixture": 1}
+    assert "opportunity_quality_top20" in summary
+    assert "opportunity_proximity_top20" in summary
 
     tier_files = ["tier_a_candidates.csv", "tier_b_watchlist.csv", "tier_c_evidence_incomplete.csv"]
     tier_rows = []
@@ -196,6 +200,33 @@ def test_opportunity_discovery_writes_research_outputs_and_forward_ledger(tmp_pa
     assert tier_rows[0]["code"] == "000100"
     assert "BUY" not in tier_rows[0]["research_label"]
     assert "SELL" not in tier_rows[0]["research_label"]
+    assert tier_rows[0]["opportunity_logic"]
+    assert tier_rows[0]["top_risks"]
+    assert tier_rows[0]["upgrade_conditions"]
+    assert tier_rows[0]["downgrade_conditions"]
+
+    evidence_rows = list(csv.DictReader((report_dir / "evidence_inventory.csv").open(encoding="utf-8")))
+    required_columns = {
+        "evidence_date",
+        "collected_at",
+        "industry",
+        "indicator",
+        "value",
+        "direction",
+        "source",
+        "source_type",
+        "confidence",
+        "freshness_days",
+        "raw_excerpt",
+        "normalized_summary",
+        "parser",
+        "parse_status",
+        "evidence_status",
+        "warning_flags",
+    }
+    assert required_columns.issubset(evidence_rows[0].keys())
+    assert any(row["evidence_status"] == "PARSE_FAILED" for row in evidence_rows)
+    assert any("future_dated_evidence_excluded" in row["warning_flags"] for row in evidence_rows)
 
     quality_rows = list(csv.DictReader((report_dir / "data_quality_audit.csv").open(encoding="utf-8")))
     assert any(row["issue"] == "future_dated_evidence_excluded" for row in quality_rows)
@@ -294,3 +325,101 @@ def test_existing_ledger_does_not_upgrade_without_current_tier_a_or_b(tmp_path: 
     assert summary["forward_observation"]["observed_tier_a_b_count"] == 0
     assert "PASS_FORWARD_OBSERVATION_READY" not in summary["acceptance_milestones"]
     assert summary["acceptance_enum"] == "PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY"
+
+
+def test_conflicting_and_stale_evidence_are_audited(tmp_path: Path) -> None:
+    schema = load_industry_evidence_schema("config/industry_evidence_schema.yaml")
+    alias_map = load_industry_alias_map("config/industry_alias_map.yaml")
+    industry_evidence = pd.DataFrame(
+        [
+            {
+                "date": "2025-01-01",
+                "industry": "面板",
+                "evidence_name": "面板价格",
+                "evidence_value": "价格上涨 3%",
+                "evidence_direction": "POSITIVE",
+                "source": "官方公开数据",
+                "source_type": "official_report",
+            },
+            {
+                "date": "2025-01-02",
+                "industry": "面板",
+                "evidence_name": "面板价格",
+                "evidence_value": "价格下跌 2%",
+                "evidence_direction": "NEGATIVE",
+                "source": "交易所披露",
+                "source_type": "exchange_disclosure",
+            },
+            {
+                "date": "2024-01-01",
+                "industry": "面板",
+                "evidence_name": "库存水位",
+                "evidence_value": "库存处于历史低位 1",
+                "evidence_direction": "POSITIVE",
+                "source": "行业公开摘要",
+                "source_type": "research_report_summary",
+            },
+        ]
+    )
+
+    report_dir, _summary = run_opportunity_discovery(
+        inputs=[_input()],
+        requested_codes=["000100"],
+        data_errors={},
+        data_sources={"000100": "fixture"},
+        benchmark_df=_price_frame(),
+        industry_cycle_df=None,
+        industry_evidence_df=industry_evidence,
+        company_evidence_df=pd.DataFrame(),
+        industry_evidence_schema=schema,
+        industry_alias_map=alias_map,
+        requested_as_of_date="2026-06-24",
+        output_dir=tmp_path / "reports",
+        diagnostics=_diagnostics(),
+        ledger_path=tmp_path / "ledger.csv",
+    )
+
+    evidence_rows = list(csv.DictReader((report_dir / "evidence_inventory.csv").open(encoding="utf-8")))
+    statuses = {row["indicator"]: row["evidence_status"] for row in evidence_rows}
+    assert statuses["面板价格"] == "CONFLICTING"
+    assert statuses["库存水位"] == "STALE"
+    assert any("conflicting_evidence" in row["warning_flags"] for row in evidence_rows)
+
+
+def test_single_stock_failure_does_not_block_other_outputs(tmp_path: Path) -> None:
+    schema = load_industry_evidence_schema("config/industry_evidence_schema.yaml")
+    alias_map = load_industry_alias_map("config/industry_alias_map.yaml")
+
+    report_dir, summary = run_opportunity_discovery(
+        inputs=[_input()],
+        requested_codes=["000100", "000999"],
+        data_errors={"000999": "RuntimeError: provider unavailable"},
+        data_sources={"000100": "fixture", "000999": "failed"},
+        benchmark_df=_price_frame(),
+        industry_cycle_df=None,
+        industry_evidence_df=_industry_evidence(),
+        company_evidence_df=_company_evidence(),
+        industry_evidence_schema=schema,
+        industry_alias_map=alias_map,
+        requested_as_of_date="2026-06-24",
+        output_dir=tmp_path / "reports",
+        diagnostics=_diagnostics(),
+        ledger_path=tmp_path / "ledger.csv",
+    )
+
+    assert summary["total_stocks"] == 2
+    assert summary["valid_stocks"] == 1
+    assert summary["data_failure_count"] == 1
+    quality_rows = list(csv.DictReader((report_dir / "data_quality_audit.csv").open(encoding="utf-8")))
+    assert any(row["code"] == "000999" and row["issue"] == "data_error" for row in quality_rows)
+
+
+def test_github_actions_opportunity_workflow_contract() -> None:
+    workflow = Path(".github/workflows/genge-opportunity-discovery.yml").read_text(encoding="utf-8")
+    assert "cron:" in workflow
+    assert "workflow_dispatch:" in workflow
+    assert "run_mode:" in workflow
+    assert "actions/upload-artifact@v4" in workflow
+    assert "tests/test_genge_opportunity_discovery_*.py" in workflow
+    assert "--run-mode" in workflow
+    assert "daily-opportunity-report:" in workflow

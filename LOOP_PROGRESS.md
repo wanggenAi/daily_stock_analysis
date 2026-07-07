@@ -245,15 +245,15 @@
 
 - 本轮目标：把 GenGe Cycle Bottom 从“当前行情/规则扫描器”升级为日常机会发现研究流程，覆盖全池量化粗筛、研究队列、行业/公司证据任务、A/B/C 分层、每日变化和前向观察；不接券商、不读取账户、不自动买卖撤单。
 - 新增模块：`src/strategies/genge_opportunity_discovery/`，入口为 `python3 -m src.strategies.genge_opportunity_discovery.cli`。
-- 新增输出：`quant_screen_all.csv`、`priority_research_queue.csv`、`secondary_research_queue.csv`、`tier_a_candidates.csv`、`tier_b_watchlist.csv`、`tier_c_evidence_incomplete.csv`、`evidence_gap_report.csv`、`industry_research_tasks.json`、`company_research_tasks.json`、`opportunity_changes.csv`、`evidence_changes.csv`、`data_quality_audit.csv`、`forward_observation_ledger.csv`、`daily_opportunity_report.md/json`。
+- 新增输出：`quant_screen_all.csv`、`priority_research_queue.csv`、`secondary_research_queue.csv`、`tier_a_candidates.csv`、`tier_b_watchlist.csv`、`tier_c_evidence_incomplete.csv`、`evidence_gap_report.csv`、`evidence_inventory.csv`、`industry_research_tasks.json`、`company_research_tasks.json`、`opportunity_changes.csv`、`evidence_changes.csv`、`data_quality_audit.csv`、`forward_observation_ledger.csv`、`daily_opportunity_report.md/json`。
 - 安全边界：所有输出仅为研究候选/人工复核候选/观察对象；缺失证据显式降级为 C 或 gap，不强行制造候选；`NOT_AVAILABLE/DEGRADED/FAILED` 退出画像不得进入 A 类。
 - current snapshot 修正：acceptance enum 改为 `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`；退出画像统一为 `PASSED/DEGRADED/NOT_AVAILABLE/FAILED`。
-- 本轮修复：`genge_opportunity_discovery.cli` 补齐 `--max-codes`，方便与既有 100 只宽池验收命令对齐；`PASS_FORWARD_OBSERVATION_READY` 改为仅当本次运行产生 Tier A/B 观察对象时才升级，避免历史账本已有记录造成虚高验收。
-- 测试进度：新增 opportunity discovery 回归测试；`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_current_snapshot.py tests/test_genge_opportunity_discovery.py -q`，11 passed，1 warning，耗时 0.79 秒。
-- fixture CLI smoke：`reports/opportunity_discovery_ci_smoke_local/20260707_161447`，自然退出，2 只样本全部有效，优先研究队列 2，B 类观察 2，`acceptance_enum=PASS_FORWARD_OBSERVATION_READY`。
-- 真实 opportunity discovery 宽池命令：使用 `stock_pools/genge_broad_pool.txt`、`--max-codes 100`、`--years 5`、`--benchmark 000905`、`--auto-fetch-valuation`、`--auto-fetch-financial`、两个 `data/user_supplied` evidence 文件、`config/industry_evidence_schema.yaml`、`config/industry_alias_map.yaml`、`--as-of-date 2026-07-07`、`--fixture-smoke-passed`、`--ci-passed`。
-- 真实运行结果：`reports/opportunity_discovery/20260707_163507`，自然退出，wall time `real 532.59` 秒；`total_stocks=100`，`valid_stocks=100`，`data_failure_count=0`，行情源分布 `TencentFetcher=100`。
-- 队列与分层：优先研究队列 25，次级研究队列 31；`tier_distribution={'TIER_C': 56, 'REJECTED': 44}`，A 类 0，B 类 0，C 类 56。没有为了结果好看制造 A/B 候选。
-- 证据与账本：行业证据状态 `MISSING=97`、`STALE=3`；公司证据状态 `MISSING=98`、`VERIFIED=2`；前向账本报告副本生成，已有跟踪 4 条，但本次 Tier A/B 观察数 0，因此不升级到 forward-ready。
+- 本轮修复：`genge_opportunity_discovery.cli` 补齐 `--max-codes` 和 `--run-mode`；新增 `evidence_inventory.csv` 标准化证据清单；summary 写入 provider/fallback 分布、阶段耗时、证据覆盖率、证据任务数量、质量/接近度 Top20；`PASS_FORWARD_OBSERVATION_READY` 仅当本次运行产生 Tier A/B 观察对象时才升级，避免历史账本已有记录造成虚高验收。
+- 测试进度：新增 opportunity discovery 回归测试；`/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py tests/test_genge_opportunity_discovery_*.py -q`，91 passed，1 warning，耗时 291.89 秒。
+- fixture CLI smoke：`reports/opportunity_discovery_ci_smoke_local/20260707_191222`，自然退出，2 只样本全部有效，优先研究队列 2，B 类观察 2，`acceptance_enum=PASS_FORWARD_OBSERVATION_READY`。
+- 真实 opportunity discovery 宽池命令：使用 `stock_pools/genge_broad_pool.txt`、`--max-codes 100`、`--run-mode full`、`--years 5`、`--benchmark 000905`、`--auto-fetch-valuation`、`--auto-fetch-financial`、两个 `data/user_supplied` evidence 文件、`config/industry_evidence_schema.yaml`、`config/industry_alias_map.yaml`、`--as-of-date 2026-07-07`、`--fixture-smoke-passed`、`--ci-passed`。
+- 真实运行结果：`reports/opportunity_discovery/20260707_192130`，自然退出，wall time `real 538.26` 秒；`total_stocks=100`，`valid_stocks=100`，`data_failure_count=0`，provider/fallback 分布均为 `TencentFetcher=100`；阶段耗时为 `load_inputs=533.4016s`、`load_benchmark=3.2958s`、`load_evidence=0.0237s`、`pipeline=1.247s`。
+- 队列与分层：优先研究队列 21，次级研究队列 36，量化阶段拒绝 43；`tier_distribution={'TIER_C': 57, 'REJECTED': 43}`，A 类 0，B 类 0，C 类 57。没有为了结果好看制造 A/B 候选。
+- 证据与账本：行业证据覆盖率 3.0%，公司证据覆盖率 2.0%；行业证据状态 `MISSING=97`、`STALE=3`；公司证据状态 `MISSING=98`、`VERIFIED=2`；行业研究任务 30，公司研究任务 57，证据缺口 151，标准化证据清单 36；前向账本报告副本生成，已有跟踪 4 条，但本次 Tier A/B 观察数 0，因此不升级到 forward-ready。
 - 安全扫描：最新 opportunity discovery 报告未命中 `保证上涨`、`确定买入`、`必买`、`必卖`、`BUY`、`SELL`；未接券商、未读取账户、未自动下单。
 - gate verdict：`PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`。不能升级为 `PASS_TIER_A_CANDIDATE_GENERATED` 或 `PASS_FORWARD_OBSERVATION_READY`，原因是本次没有 Tier A/B 观察对象，证据缺口被保守留在 C 类和 gap report。

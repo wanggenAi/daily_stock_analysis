@@ -105,6 +105,7 @@ python3 -m src.strategies.genge_opportunity_discovery.cli \
   --benchmark 000905 \
   --output-dir reports/opportunity_discovery \
   --max-codes 100 \
+  --run-mode full \
   --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
   --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
   --industry-evidence-schema config/industry_evidence_schema.yaml \

@@ -10,8 +10,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 - [新功能] GenGe 新增 `genge_opportunity_discovery` 日常机会发现流程，输出量化研究队列、A/B/C 分层、证据缺口、每日变化和前向观察账本，所有结果限定为研究候选/人工复核候选。
+- [新功能] Opportunity discovery 新增 `evidence_inventory.csv` 标准化证据清单、provider/fallback 分布、阶段耗时、质量/接近度 Top20 和机会逻辑/风险/升级降级条件输出。
 - [改进] GenGe current snapshot acceptance enum 调整为 `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`，退出画像统一为 `PASSED/DEGRADED/NOT_AVAILABLE/FAILED`，缺失或降级退出画像不得进入正式研究候选。
-- [测试] 补充 opportunity discovery 的分层、证据缺口、防未来证据审计和前向账本回归测试，并新增 fixture GitHub Actions workflow。
+- [测试] 补充 opportunity discovery 的分层、证据缺口、防未来证据审计、冲突/过期证据、前向账本和 GitHub Actions workflow 回归测试，并新增定时/手动 fixture 与每日报告工作流。
 - [改进] GenGe Cycle Bottom 行业证据层加入用户维护样板证据、来源质量门槛、缺失 source/date 拒绝清单和动态样板证据链复核，样板股票不再作为固定候选名单。
 - [测试] 补充行业证据 HIGH/MEDIUM/LOW 置信度、新闻摘要不能单独 HIGH、模板证据不能 STRONG、证据转换拒绝行和专项复核报告的回归覆盖。
 - [改进] GenGe Cycle Bottom balanced 退出策略新增 `balanced_v7_double_close_stop`，对 MEDIUM/STRONG 趋势样本要求连续两日收盘低于止损位才确认止损，同时保留 WEAK 趋势即时止损和 hard intraday stop，用于继续平衡 60 日收益保留和 250 日回撤压降。

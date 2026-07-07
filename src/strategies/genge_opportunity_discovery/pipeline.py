@@ -11,10 +11,12 @@ import csv
 import json
 import math
 import shutil
+import time
 from collections import Counter
-from datetime import date, timedelta
+from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Mapping, Optional, Tuple
+from urllib.parse import urlparse
 
 import pandas as pd
 
@@ -56,6 +58,8 @@ QUANT_COLUMNS = [
     "close",
     "quant_score",
     "quant_screen_status",
+    "quant_reason",
+    "price_position_score",
     "price_percentile_5y",
     "distance_from_5y_low_pct",
     "trend_confirmation_level",
@@ -69,6 +73,7 @@ QUANT_COLUMNS = [
     "value_trap_score",
     "hard_reject_blockers",
     "soft_blockers",
+    "next_evidence_needed",
     "missing_fields",
     "risk_flags",
     "disclaimer",
@@ -93,6 +98,10 @@ OPPORTUNITY_COLUMNS = [
     "a_condition_failed",
     "hard_blockers",
     "soft_blockers",
+    "opportunity_logic",
+    "top_risks",
+    "upgrade_conditions",
+    "downgrade_conditions",
     "improvement_flags",
     "deterioration_flags",
     "price_percentile_5y",
@@ -137,6 +146,31 @@ DATA_QUALITY_COLUMNS = [
     "status",
     "issue",
     "detail",
+]
+
+EVIDENCE_INVENTORY_COLUMNS = [
+    "scope",
+    "evidence_date",
+    "collected_at",
+    "industry",
+    "code",
+    "stock_name",
+    "indicator",
+    "value",
+    "unit",
+    "comparison_period",
+    "direction",
+    "source",
+    "source_domain",
+    "source_type",
+    "confidence",
+    "freshness_days",
+    "raw_excerpt",
+    "normalized_summary",
+    "parser",
+    "parse_status",
+    "evidence_status",
+    "warning_flags",
 ]
 
 CHANGE_COLUMNS = [
@@ -240,6 +274,156 @@ def _date_column(df: pd.DataFrame) -> Optional[str]:
     return None
 
 
+def _source_domain(source: Any) -> str:
+    text = str(source or "").strip()
+    if not text:
+        return ""
+    parsed = urlparse(text if "://" in text else "")
+    return parsed.netloc.lower()
+
+
+def _evidence_date_value(row: Mapping[str, Any]) -> Optional[date]:
+    for column in ("evidence_date", "date", "publish_date", "disclosure_date", "ann_date", "announcement_date", "report_date"):
+        if column in row and row.get(column) not in (None, ""):
+            parsed = pd.to_datetime(row.get(column), errors="coerce")
+            if not pd.isna(parsed):
+                return parsed.date()
+    return None
+
+
+def _inventory_confidence(source_type: str, value: Any) -> str:
+    source_kind = str(source_type or "").upper()
+    has_number = any(char.isdigit() for char in str(value or ""))
+    if source_kind in {"OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE"} and has_number:
+        return "MEDIUM"
+    if source_kind in {"OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE", "RESEARCH_REPORT_SUMMARY"}:
+        return "LOW" if not has_number else "MEDIUM"
+    return "LOW"
+
+
+def _inventory_status(
+    *,
+    evidence_date: Optional[date],
+    as_of: date,
+    source: Any,
+    indicator: Any,
+    value: Any,
+    source_type: str,
+    warning_flags: List[str],
+) -> str:
+    if evidence_date is None or not str(source or "").strip() or not str(indicator or "").strip():
+        warning_flags.append("missing_required_field")
+        return "PARSE_FAILED"
+    if evidence_date > as_of:
+        warning_flags.append("future_dated_evidence_excluded")
+        return "PARSE_FAILED"
+    freshness_days = (as_of - evidence_date).days
+    if freshness_days > 180:
+        warning_flags.append("stale_evidence")
+        return "STALE"
+    source_kind = str(source_type or "").upper()
+    has_number = any(char.isdigit() for char in str(value or ""))
+    if source_kind == "NEWS_SUMMARY" or not has_number:
+        warning_flags.append("lead_only_needs_manual_review")
+        return "LEAD_ONLY"
+    if source_kind in {"OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE"}:
+        return "VERIFIED"
+    return "PARTIALLY_VERIFIED"
+
+
+def _build_evidence_inventory(
+    *,
+    industry_evidence_df: Optional[pd.DataFrame],
+    company_evidence_df: Optional[pd.DataFrame],
+    as_of: date,
+) -> List[Dict[str, Any]]:
+    collected_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    rows: List[Dict[str, Any]] = []
+    sources = [
+        ("industry", industry_evidence_df),
+        ("company", company_evidence_df),
+    ]
+    for scope, df in sources:
+        if df is None or df.empty:
+            continue
+        for _, raw_row in df.iterrows():
+            raw = raw_row.to_dict()
+            evidence_date = _evidence_date_value(raw)
+            indicator = raw.get("indicator") or raw.get("evidence_name") or ""
+            value = raw.get("value") or raw.get("evidence_value") or ""
+            source = raw.get("source") or ""
+            source_type = str(raw.get("source_type") or raw.get("evidence_source_type") or "user_supplied").upper()
+            direction = str(raw.get("direction") or raw.get("evidence_direction") or "").upper()
+            warning_flags = _as_list(raw.get("warning_flags"))
+            status = _inventory_status(
+                evidence_date=evidence_date,
+                as_of=as_of,
+                source=source,
+                indicator=indicator,
+                value=value,
+                source_type=source_type,
+                warning_flags=warning_flags,
+            )
+            freshness = (as_of - evidence_date).days if evidence_date is not None else ""
+            rows.append(
+                {
+                    "scope": scope,
+                    "evidence_date": evidence_date.isoformat() if evidence_date else "",
+                    "collected_at": collected_at,
+                    "industry": raw.get("industry") or "",
+                    "code": _normalize_code(raw.get("code")) if raw.get("code") not in (None, "") else "",
+                    "stock_name": raw.get("stock_name") or "",
+                    "indicator": indicator,
+                    "value": value,
+                    "unit": raw.get("unit") or "",
+                    "comparison_period": raw.get("comparison_period") or "",
+                    "direction": direction,
+                    "source": source,
+                    "source_domain": raw.get("source_domain") or _source_domain(source),
+                    "source_type": source_type,
+                    "confidence": str(raw.get("confidence") or _inventory_confidence(source_type, value)).upper(),
+                    "freshness_days": freshness,
+                    "raw_excerpt": raw.get("raw_excerpt") or raw.get("evidence_value") or value,
+                    "normalized_summary": raw.get("normalized_summary") or value,
+                    "parser": raw.get("parser") or "user_supplied_csv_normalizer",
+                    "parse_status": (
+                        "OK"
+                        if status in {"VERIFIED", "PARTIALLY_VERIFIED"}
+                        else "NEEDS_MANUAL_REVIEW"
+                    ),
+                    "evidence_status": status,
+                    "warning_flags": ";".join(dict.fromkeys(warning_flags)),
+                }
+            )
+
+    by_key: Dict[Tuple[str, str, str, str], set[str]] = {}
+    for row in rows:
+        if row.get("evidence_status") == "PARSE_FAILED":
+            continue
+        key = (
+            str(row.get("scope") or ""),
+            str(row.get("industry") or ""),
+            str(row.get("code") or ""),
+            str(row.get("indicator") or ""),
+        )
+        by_key.setdefault(key, set()).add(str(row.get("direction") or "").upper())
+    for row in rows:
+        key = (
+            str(row.get("scope") or ""),
+            str(row.get("industry") or ""),
+            str(row.get("code") or ""),
+            str(row.get("indicator") or ""),
+        )
+        directions = by_key.get(key, set())
+        if "POSITIVE" in directions and "NEGATIVE" in directions and row.get("evidence_status") != "PARSE_FAILED":
+            flags = _as_list(row.get("warning_flags"))
+            flags.append("conflicting_evidence")
+            row["warning_flags"] = ";".join(dict.fromkeys(flags))
+            row["evidence_status"] = "CONFLICTING"
+            row["parse_status"] = "NEEDS_MANUAL_REVIEW"
+    return rows
+
+
 def _write_csv(path: Path, rows: Iterable[Mapping[str, Any]], fieldnames: List[str]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w", newline="", encoding="utf-8") as file:
@@ -304,6 +488,89 @@ def _status_from_score(value: Any) -> str:
     if score >= 40:
         return "DEGRADED"
     return "FAILED"
+
+
+def _quant_reason(row: Mapping[str, Any], hard: List[str], soft: List[str]) -> str:
+    if hard:
+        return "量化层硬拒绝：" + ";".join(hard)
+    parts = []
+    price = _finite_float(row.get("price_percentile_5y"))
+    if price is not None:
+        parts.append(f"5年价格分位 {round(price, 4)}")
+    trend = str(row.get("trend_confirmation_level") or "NONE")
+    parts.append(f"趋势确认 {trend}")
+    valuation = _status_from_score(row.get("valuation_score"))
+    financial = _status_from_score(row.get("financial_safety_score"))
+    parts.append(f"估值 {valuation}")
+    parts.append(f"财务 {financial}")
+    if soft:
+        parts.append("待确认：" + ";".join(soft[:3]))
+    return "；".join(parts)
+
+
+def _next_evidence_needed(row: Mapping[str, Any]) -> str:
+    needs = []
+    if _evidence_status(row, "industry") in {"MISSING", "LEAD_ONLY", "STALE", "CONFLICTING", "PARSE_FAILED"}:
+        needs.append("industry_cycle_evidence")
+    if _evidence_status(row, "company") in {"MISSING", "LEAD_ONLY", "STALE", "CONFLICTING", "PARSE_FAILED"}:
+        needs.append("company_cycle_evidence")
+    if _status_from_score(row.get("financial_safety_score")) != "PASSED":
+        needs.append("financial_safety_review")
+    if _status_from_score(row.get("valuation_score")) == "FAILED":
+        needs.append("valuation_review")
+    if TREND_RANK.get(str(row.get("trend_confirmation_level") or "NONE"), 0) < TREND_RANK["MEDIUM"]:
+        needs.append("trend_confirmation")
+    return ";".join(dict.fromkeys(needs))
+
+
+def _top_risks(row: Mapping[str, Any], hard: List[str], soft: List[str]) -> str:
+    risks = list(hard) + list(soft)
+    risks.extend(_as_list(row.get("risk_flags")))
+    if _status_from_score(row.get("financial_safety_score")) != "PASSED":
+        risks.append("financial_safety_not_passed")
+    if _status_from_score(row.get("valuation_score")) == "FAILED":
+        risks.append("valuation_failed")
+    if not risks:
+        risks.append("no_major_risk_detected_by_public_data")
+    return ";".join(list(dict.fromkeys(risks))[:3])
+
+
+def _opportunity_logic(row: Mapping[str, Any], tier: str) -> str:
+    price = _finite_float(row.get("price_percentile_5y"))
+    trend = str(row.get("trend_confirmation_level") or "NONE")
+    hard_logic = str(row.get("hard_logic_level") or "NONE")
+    industry = str(row.get("industry_evidence_status") or "MISSING")
+    company = str(row.get("company_evidence_status") or "MISSING")
+    price_text = "价格位置未知" if price is None else f"5年价格分位约 {round(price, 4)}"
+    return (
+        f"{tier}：{price_text}，趋势 {trend}，硬逻辑 {hard_logic}，"
+        f"行业证据 {industry}，公司证据 {company}。仅作为人工复核研究对象。"
+    )
+
+
+def _upgrade_conditions(failed: List[str], industry_status: str, company_status: str) -> str:
+    conditions = []
+    if "trend_medium" in failed or "no_falling_knife" in failed:
+        conditions.append("趋势企稳达到 MEDIUM 且不再持续创新低")
+    if industry_status in {"MISSING", "LEAD_ONLY", "STALE", "CONFLICTING", "PARSE_FAILED"}:
+        conditions.append("补齐非过期且无冲突的行业证据")
+    if company_status in {"MISSING", "LEAD_ONLY", "STALE", "CONFLICTING", "PARSE_FAILED"}:
+        conditions.append("补齐公司公告/财报/经营层面的可核验证据")
+    if "exit_profile_passed" in failed:
+        conditions.append("历史退出画像达到 PASSED")
+    if "hard_logic_medium" in failed:
+        conditions.append("hard_logic_level 升至 MEDIUM 及以上")
+    return "；".join(conditions) if conditions else "保持证据有效且风险不恶化，等待人工复核。"
+
+
+def _downgrade_conditions(row: Mapping[str, Any]) -> str:
+    return "；".join(
+        [
+            "行业或公司证据出现冲突/过期",
+            "趋势重新转弱或跌破关键平台",
+            "财务、估值陷阱或执行风险恶化",
+        ]
+    )
 
 
 def _evidence_status(row: Mapping[str, Any], scope: str) -> str:
@@ -542,6 +809,17 @@ def _tier_row(row: Dict[str, Any]) -> Dict[str, Any]:
         "a_condition_failed": ";".join(failed),
         "hard_blockers": ";".join(sorted(set(hard))),
         "soft_blockers": ";".join(sorted(set(soft))),
+        "opportunity_logic": _opportunity_logic(
+            {
+                **row,
+                "industry_evidence_status": industry_status,
+                "company_evidence_status": company_status,
+            },
+            tier,
+        ),
+        "top_risks": _top_risks(row, hard, soft),
+        "upgrade_conditions": _upgrade_conditions(failed, industry_status, company_status),
+        "downgrade_conditions": _downgrade_conditions(row),
         "improvement_flags": "",
         "deterioration_flags": "",
         "next_review_trigger": _next_review_trigger(failed, industry_status, company_status),
@@ -1021,6 +1299,10 @@ def _summary_markdown(summary: Mapping[str, Any], rows: List[Dict[str, Any]]) ->
         f"- valid_stocks: {summary.get('valid_stocks')}",
         f"- priority_research_queue_count: {summary.get('priority_research_queue_count')}",
         f"- secondary_research_queue_count: {summary.get('secondary_research_queue_count')}",
+        f"- industry_evidence_coverage_rate: {summary.get('industry_evidence_coverage_rate')}",
+        f"- company_evidence_coverage_rate: {summary.get('company_evidence_coverage_rate')}",
+        f"- provider_distribution: {json.dumps(summary.get('provider_distribution'), ensure_ascii=False, sort_keys=True)}",
+        f"- fallback_distribution: {json.dumps(summary.get('fallback_distribution'), ensure_ascii=False, sort_keys=True)}",
         f"- tier_distribution: {json.dumps(summary.get('tier_distribution'), ensure_ascii=False, sort_keys=True)}",
         f"- acceptance_enum: {summary.get('acceptance_enum')}",
         f"- acceptance_milestones: {json.dumps(summary.get('acceptance_milestones'), ensure_ascii=False)}",
@@ -1033,11 +1315,13 @@ def _summary_markdown(summary: Mapping[str, Any], rows: List[Dict[str, Any]]) ->
     else:
         for row in sorted(top_rows, key=lambda item: int(item.get("opportunity_quality_rank") or 999))[:20]:
             lines.append(
-                "- {code} {name} / {industry} / {tier} / quant={score} / evidence={industry_status}/{company_status} / trigger={trigger}".format(
+                "- {code} {name} / {industry} / {tier} / quality_rank={quality_rank} / proximity_rank={proximity_rank} / quant={score} / evidence={industry_status}/{company_status} / trigger={trigger}".format(
                     code=row.get("code"),
                     name=row.get("stock_name"),
                     industry=row.get("normalized_industry"),
                     tier=row.get("tier"),
+                    quality_rank=row.get("opportunity_quality_rank"),
+                    proximity_rank=row.get("opportunity_proximity_rank"),
                     score=row.get("quant_score"),
                     industry_status=row.get("industry_evidence_status"),
                     company_status=row.get("company_evidence_status"),
@@ -1068,6 +1352,7 @@ def run_opportunity_discovery(
     exit_profile_df: Optional[pd.DataFrame] = None,
     ledger_path: str | Path | None = None,
 ) -> Tuple[Path, Dict[str, Any]]:
+    pipeline_started = time.perf_counter()
     requested_date = coerce_date(requested_as_of_date) if requested_as_of_date else None
     price_dates: Dict[str, Optional[date]] = {}
     histories: Dict[str, pd.DataFrame] = {}
@@ -1136,8 +1421,11 @@ def run_opportunity_discovery(
                     "close": close,
                     "quant_score": 0.0,
                     "quant_screen_status": "HARD_REJECT",
+                    "quant_reason": f"信号生成失败：{type(exc).__name__}",
+                    "price_position_score": "",
                     "hard_reject_blockers": "signal_generation_failed",
                     "soft_blockers": "",
+                    "next_evidence_needed": "price_history;signal_generation_debug",
                     "missing_fields": "signal_generation",
                     "risk_flags": type(exc).__name__,
                     "disclaimer": DISCOVERY_DISCLAIMER,
@@ -1164,6 +1452,9 @@ def run_opportunity_discovery(
         row["hard_reject_blockers"] = ";".join(hard)
         row["soft_blockers"] = ";".join(soft)
         row["quant_screen_status"] = _screen_status(row, hard, soft)
+        row["quant_reason"] = _quant_reason(row, hard, soft)
+        row["price_position_score"] = _round(row.get("price_percentile_score"))
+        row["next_evidence_needed"] = _next_evidence_needed(row)
         rows.append(row)
 
     valid_rows = [row for row in rows if str(row.get("quant_screen_status")) != "HARD_REJECT" or row.get("close") not in (None, "")]
@@ -1188,6 +1479,11 @@ def run_opportunity_discovery(
         industry_evidence_df=industry_evidence_df,
         company_evidence_df=company_evidence_df,
         industry_evidence_schema=industry_evidence_schema,
+        as_of=resolved_as_of,
+    )
+    evidence_inventory_rows = _build_evidence_inventory(
+        industry_evidence_df=industry_evidence_df,
+        company_evidence_df=company_evidence_df,
         as_of=resolved_as_of,
     )
     data_quality_rows = _build_data_quality_rows(
@@ -1230,6 +1526,48 @@ def run_opportunity_discovery(
             milestones.append("PASS_FORWARD_OBSERVATION_READY")
         acceptance = milestones[-1] if milestones else "FAIL_CURRENT_SNAPSHOT"
 
+    provider_distribution = dict(Counter(str(source or "unknown") for source in data_sources.values()))
+    fallback_distribution = {
+        provider: count
+        for provider, count in provider_distribution.items()
+        if provider not in {"EfinanceFetcher", "csv", "fixture"}
+    }
+    industry_status_counts = Counter(str(row.get("industry_evidence_status") or "UNKNOWN") for row in tier_rows)
+    company_status_counts = Counter(str(row.get("company_evidence_status") or "UNKNOWN") for row in tier_rows)
+    evidence_positive_statuses = {"VERIFIED", "PARTIALLY_VERIFIED", "LEAD_ONLY", "STALE", "CONFLICTING"}
+    denominator = max(1, len(valid_rows))
+    industry_coverage_rate = round(
+        sum(industry_status_counts.get(status, 0) for status in evidence_positive_statuses) / denominator * 100.0,
+        4,
+    )
+    company_coverage_rate = round(
+        sum(company_status_counts.get(status, 0) for status in evidence_positive_statuses) / denominator * 100.0,
+        4,
+    )
+    quality_top20 = [
+        {
+            "rank": row.get("opportunity_quality_rank"),
+            "code": row.get("code"),
+            "stock_name": row.get("stock_name"),
+            "tier": row.get("tier"),
+            "quant_score": row.get("quant_score"),
+            "opportunity_quality_score": row.get("opportunity_quality_score"),
+            "blockers": row.get("a_condition_failed"),
+        }
+        for row in sorted(tier_rows, key=lambda item: int(item.get("opportunity_quality_rank") or 999))[:20]
+    ]
+    proximity_top20 = [
+        {
+            "rank": row.get("opportunity_proximity_rank"),
+            "code": row.get("code"),
+            "stock_name": row.get("stock_name"),
+            "tier": row.get("tier"),
+            "failed_conditions": row.get("a_condition_fail_count"),
+            "blockers": row.get("a_condition_failed"),
+        }
+        for row in sorted(tier_rows, key=lambda item: int(item.get("opportunity_proximity_rank") or 999))[:20]
+    ]
+
     summary: Dict[str, Any] = {
         "diagnostics": dict(diagnostics or {}),
         "requested_as_of_date": requested_date.isoformat() if requested_date else None,
@@ -1238,19 +1576,31 @@ def run_opportunity_discovery(
         "valid_stocks": len(valid_rows),
         "data_failure_count": len(data_errors),
         "data_sources": dict(data_sources),
+        "provider_distribution": provider_distribution,
+        "fallback_distribution": fallback_distribution,
         "priority_research_queue_count": len(priority_queue),
         "secondary_research_queue_count": len(secondary_queue),
+        "rejected_at_quant_stage_count": sum(1 for row in rows if row.get("quant_screen_status") == "HARD_REJECT"),
         "tier_distribution": dict(Counter(str(row.get("tier") or "UNKNOWN") for row in tier_rows)),
         "tier_a_count": len(tier_a),
         "tier_b_count": len(tier_b),
         "tier_c_count": len(tier_c),
+        "industry_research_task_count": len(industry_tasks),
+        "company_research_task_count": len(company_tasks),
+        "evidence_gap_count": len(gap_rows),
+        "evidence_inventory_count": len(evidence_inventory_rows),
+        "industry_evidence_coverage_rate": industry_coverage_rate,
+        "company_evidence_coverage_rate": company_coverage_rate,
         "evidence_status_distribution": {
-            "industry": dict(Counter(str(row.get("industry_evidence_status") or "UNKNOWN") for row in tier_rows)),
-            "company": dict(Counter(str(row.get("company_evidence_status") or "UNKNOWN") for row in tier_rows)),
+            "industry": dict(industry_status_counts),
+            "company": dict(company_status_counts),
         },
+        "opportunity_quality_top20": quality_top20,
+        "opportunity_proximity_top20": proximity_top20,
         "acceptance_enum": acceptance,
         "acceptance_milestones": milestones,
         "forward_observation": forward_summary,
+        "pipeline_elapsed_seconds": round(time.perf_counter() - pipeline_started, 4),
         "no_auto_trade": True,
         "no_broker_integration": True,
         "candidate_semantics": "research_candidate_manual_review_only",
@@ -1266,6 +1616,7 @@ def run_opportunity_discovery(
     _write_csv(report_dir / "opportunity_changes.csv", opportunity_changes, CHANGE_COLUMNS)
     _write_csv(report_dir / "evidence_changes.csv", evidence_changes, EVIDENCE_CHANGE_COLUMNS)
     _write_csv(report_dir / "evidence_gap_report.csv", gap_rows, GAP_COLUMNS)
+    _write_csv(report_dir / "evidence_inventory.csv", evidence_inventory_rows, EVIDENCE_INVENTORY_COLUMNS)
     _write_csv(report_dir / "data_quality_audit.csv", data_quality_rows, DATA_QUALITY_COLUMNS)
     _json_dump(report_dir / "industry_research_tasks.json", {"tasks": industry_tasks})
     _json_dump(report_dir / "company_research_tasks.json", {"tasks": company_tasks})

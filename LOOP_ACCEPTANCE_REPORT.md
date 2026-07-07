@@ -11,25 +11,30 @@
 
 ## Loop 15 Tests
 
-- Targeted pytest: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_current_snapshot.py tests/test_genge_opportunity_discovery.py -q` -> 11 passed, 1 warning, 0.79 seconds.
+- Required pytest: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_*.py tests/test_genge_opportunity_discovery_*.py -q` -> 91 passed, 1 warning, 291.89 seconds.
 - Compile check passed for `src/strategies/genge_cycle_bottom/current_snapshot.py`, `src/strategies/genge_opportunity_discovery/pipeline.py`, and `src/strategies/genge_opportunity_discovery/cli.py`.
 - Fixture CLI smoke generated all required opportunity discovery output files under `reports/opportunity_discovery_ci_smoke_local`.
 - Acceptance guardrail fixed: an existing forward ledger no longer upgrades the run to `PASS_FORWARD_OBSERVATION_READY` unless the current run has Tier A/B observations.
 
 ## Loop 15 Real Run
 
-- Real broad-pool command naturally exited with `--stock-pool-file stock_pools/genge_broad_pool.txt`, `--max-codes 100`, `--years 5`, `--benchmark 000905`, `--output-dir reports/opportunity_discovery`, both `data/user_supplied` evidence files, `config/industry_evidence_schema.yaml`, `config/industry_alias_map.yaml`, `--as-of-date 2026-07-07`, `--fixture-smoke-passed`, and `--ci-passed`.
-- Latest report path: `reports/opportunity_discovery/20260707_163507`.
-- Runtime: wall time `real 532.59` seconds.
+- Real broad-pool command naturally exited with `--stock-pool-file stock_pools/genge_broad_pool.txt`, `--max-codes 100`, `--years 5`, `--benchmark 000905`, `--output-dir reports/opportunity_discovery`, `--run-mode full`, both `data/user_supplied` evidence files, `config/industry_evidence_schema.yaml`, `config/industry_alias_map.yaml`, `--as-of-date 2026-07-07`, `--fixture-smoke-passed`, and `--ci-passed`.
+- Latest report path: `reports/opportunity_discovery/20260707_192130`.
+- Runtime: wall time `real 538.26` seconds.
 - `daily_opportunity_report.json -> diagnostics.industry_evidence_file`: `data/user_supplied/industry_cycle_evidence.csv`.
 - `daily_opportunity_report.json -> diagnostics.company_evidence_file`: `data/user_supplied/company_cycle_evidence.csv`.
 - `total_stocks=100`, `valid_stocks=100`, `data_failure_count=0`.
 - Daily price source distribution from diagnostics: `TencentFetcher=100`; Eastmoney/efinance failures were safely bypassed by multi-source fallback.
-- `priority_research_queue_count=25`, `secondary_research_queue_count=31`.
-- `tier_distribution={'TIER_C': 56, 'REJECTED': 44}`; `tier_a_count=0`, `tier_b_count=0`, `tier_c_count=56`.
+- Provider distribution: `TencentFetcher=100`; fallback distribution: `TencentFetcher=100`.
+- Stage elapsed seconds: `load_inputs=533.4016`, `load_benchmark=3.2958`, `load_evidence=0.0237`, `pipeline=1.247`.
+- `priority_research_queue_count=21`, `secondary_research_queue_count=36`, `rejected_at_quant_stage_count=43`.
+- `tier_distribution={'TIER_C': 57, 'REJECTED': 43}`; `tier_a_count=0`, `tier_b_count=0`, `tier_c_count=57`.
 - Evidence status distribution: industry `MISSING=97`, `STALE=3`; company `MISSING=98`, `VERIFIED=2`.
+- Evidence coverage: industry 3.0%, company 2.0%.
+- Evidence work products: `industry_research_task_count=30`, `company_research_task_count=57`, `evidence_gap_count=151`, `evidence_inventory_count=36`.
 - Forward ledger was generated and copied into the report. Existing tracked rows: 4; current observed Tier A/B rows: 0; no new records.
-- Generated rows: `quant_screen_all.csv` 100 data rows, `priority_research_queue.csv` 25, `secondary_research_queue.csv` 31, `tier_c_evidence_incomplete.csv` 56, `evidence_gap_report.csv` 150.
+- Generated rows: `quant_screen_all.csv` 100 data rows, `priority_research_queue.csv` 21, `secondary_research_queue.csv` 36, `tier_c_evidence_incomplete.csv` 57, `evidence_gap_report.csv` 151, `evidence_inventory.csv` 36.
+- `opportunity_quality_top20` and `opportunity_proximity_top20` were both written to `daily_opportunity_report.json`.
 - Forbidden promise/trade-command scan on the latest report did not match `保证上涨`, `确定买入`, `必买`, `必卖`, `BUY`, or `SELL`.
 - Acceptance milestones: `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`, `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, `PASS_EVIDENCE_ENRICHMENT_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`.
 - Final enum: `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`.

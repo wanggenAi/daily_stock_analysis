@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import time
 from datetime import date
 from pathlib import Path
 from typing import List, Optional
@@ -40,6 +41,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--benchmark", default="000905", help="Benchmark index code")
     parser.add_argument("--output-dir", default="reports/opportunity_discovery", help="Report output directory")
     parser.add_argument("--max-codes", type=int, help="Optional cap for stock codes loaded from the pool")
+    parser.add_argument(
+        "--run-mode",
+        choices=("quant-only", "quant-evidence", "full"),
+        default="full",
+        help="Execution scope for schedulers; full still avoids broker/trading actions",
+    )
     parser.add_argument("--as-of-date", help="Research as-of date YYYY-MM-DD; only data on or before this date is used")
     parser.add_argument("--start-date", help="Optional data start date YYYY-MM-DD")
     parser.add_argument("--end-date", help="Optional data end date YYYY-MM-DD")
@@ -78,6 +85,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     if not codes:
         parser.error("no stock codes provided")
 
+    stage_timings: dict[str, float] = {}
+    stage_started = time.perf_counter()
     provisional_end = coerce_date(args.as_of_date or args.end_date) if (args.as_of_date or args.end_date) else date.today()
     provisional_start = coerce_date(args.start_date) if args.start_date else date_years_ago(provisional_end, args.years + 1)
     inputs, data_sources, data_errors, fundamental_diagnostics = _load_inputs(
@@ -86,13 +95,17 @@ def main(argv: Optional[List[str]] = None) -> int:
         start_date=provisional_start,
         end_date=provisional_end,
     )
+    stage_timings["load_inputs_seconds"] = round(time.perf_counter() - stage_started, 4)
     end_date = coerce_date(args.as_of_date or args.end_date) if (args.as_of_date or args.end_date) else provisional_end
     start_date = coerce_date(args.start_date) if args.start_date else date_years_ago(end_date, args.years)
+    stage_started = time.perf_counter()
     if not args.price_data_dir and _has_current_snapshot_provider_outage(data_errors, codes):
         benchmark_df, benchmark_source_or_error = None, "skipped_current_snapshot_price_provider_unavailable"
     else:
         benchmark_df, benchmark_source_or_error = _load_benchmark(args, start_date, end_date)
+    stage_timings["load_benchmark_seconds"] = round(time.perf_counter() - stage_started, 4)
 
+    stage_started = time.perf_counter()
     source_mode = "fixture" if args.price_data_dir else "real"
     industry_cycle_df = _load_csv(Path(args.industry_cycle_file)) if args.industry_cycle_file else None
     industry_evidence_df = load_evidence_csv(args.industry_evidence_file) if args.industry_evidence_file else None
@@ -100,6 +113,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     industry_evidence_schema = load_industry_evidence_schema(args.industry_evidence_schema) if args.industry_evidence_schema else {}
     industry_alias_map = load_industry_alias_map(args.industry_alias_map)
     exit_profile_df = pd.read_csv(args.exit_profile_file) if args.exit_profile_file else None
+    stage_timings["load_evidence_seconds"] = round(time.perf_counter() - stage_started, 4)
 
     diagnostics = {
         "requested_codes": codes,
@@ -121,6 +135,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         "industry_alias_map": args.industry_alias_map,
         "exit_profile_file": args.exit_profile_file,
         "forward_ledger_file": args.forward_ledger_file,
+        "run_mode": args.run_mode,
+        "stage_elapsed_seconds": stage_timings,
         "industry_evidence_source": normalize_evidence_source(args.industry_evidence_file, source_mode),
         "company_evidence_source": normalize_evidence_source(args.company_evidence_file, source_mode),
         "industry_evidence_schema_industries": sorted((industry_evidence_schema.get("industries") or {}).keys()),
@@ -133,6 +149,7 @@ def main(argv: Optional[List[str]] = None) -> int:
     }
     diagnostics.update(fundamental_diagnostics)
 
+    stage_started = time.perf_counter()
     report_dir, summary = run_opportunity_discovery(
         inputs=inputs,
         requested_codes=codes,
@@ -152,6 +169,8 @@ def main(argv: Optional[List[str]] = None) -> int:
         exit_profile_df=exit_profile_df,
         ledger_path=args.forward_ledger_file,
     )
+    stage_timings["build_report_seconds"] = round(time.perf_counter() - stage_started, 4)
+    summary["diagnostics"]["stage_elapsed_seconds"] = stage_timings
     print(f"report_dir={report_dir}")
     print(f"total_stocks={summary['total_stocks']}")
     print(f"valid_stocks={summary['valid_stocks']}")
