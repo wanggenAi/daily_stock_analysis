@@ -94,6 +94,28 @@ python3 scripts/run_genge_real_research.py \
 - `stock_pools/genge_cycle_pool.txt`：50 只周期行业池。
 - `stock_pools/genge_broad_pool.txt`：100+ 只中大市值扩展池。
 
+## 日常机会发现
+
+如果目标是“今天收盘后，明天盘前看哪些股票值得人工复核”，使用独立入口：
+
+```bash
+python3 -m src.strategies.genge_opportunity_discovery.cli \
+  --stock-pool-file stock_pools/genge_broad_pool.txt \
+  --years 5 \
+  --benchmark 000905 \
+  --output-dir reports/opportunity_discovery \
+  --max-codes 100 \
+  --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+  --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+  --industry-evidence-schema config/industry_evidence_schema.yaml \
+  --industry-alias-map config/industry_alias_map.yaml \
+  --as-of-date 2026-07-06 \
+  --fixture-smoke-passed \
+  --ci-passed
+```
+
+该入口会生成 `priority_research_queue.csv`、`tier_a_candidates.csv`、`tier_b_watchlist.csv`、`tier_c_evidence_incomplete.csv`、`evidence_gap_report.csv`、`opportunity_changes.csv` 和 `forward_observation_ledger.csv`。完整说明见 `docs/genge_opportunity_discovery.md`。
+
 真实数据通过 `DataFetcherManager` 拉取，优先使用仓库既有数据源链路。若 AKShare 或其他公开源失败，错误会写入 `summary.json -> diagnostics -> data_errors`，不会伪造成功数据。
 
 估值和财务自动抓取只使用公开数据源。`summary.json -> diagnostics -> provider_errors` 会记录 PE/PB/财务 provider 的异常；`valuation_coverage_rate`、`financial_coverage_rate`、`pe_missing_count`、`pb_missing_count` 和 `financial_missing_count` 用来判断基本面字段是否足够可信。

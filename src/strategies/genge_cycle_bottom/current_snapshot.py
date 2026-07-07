@@ -28,6 +28,7 @@ from .strategy import GenGeCycleBottomStrategy
 
 SNAPSHOT_DISCLAIMER = "仅用于公开数据研究观察和人工复核，不构成买入建议，不应自动交易。"
 SNAPSHOT_DECISIONS = ("RESEARCH_CANDIDATE", "WATCH_ONLY", "NOT_QUALIFIED", "DATA_INSUFFICIENT")
+EXIT_PROFILE_STATUSES = ("PASSED", "DEGRADED", "NOT_AVAILABLE", "FAILED")
 TREND_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
 TURNING_PHASES = {"BOTTOMING", "RECOVERING", "bottom_repair", "recovering"}
 HIGH_QUALITY_SOURCE_TYPES = {"OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE"}
@@ -350,9 +351,31 @@ def _current_candidate_blockers(row: Dict[str, Any]) -> List[str]:
         blockers.append("value_trap_high")
     if not row.get("latest_price_date"):
         blockers.append("latest_price_missing")
-    if str(row.get("balanced_exit_historical_profile") or "").startswith("failed"):
+    exit_profile = _normalize_exit_profile_status(row.get("balanced_exit_historical_profile"))
+    if exit_profile == "FAILED":
         blockers.append("balanced_exit_profile_failed")
+    elif exit_profile == "DEGRADED":
+        blockers.append("balanced_exit_profile_degraded")
+    elif exit_profile == "NOT_AVAILABLE":
+        blockers.append("balanced_exit_profile_not_available")
     return blockers
+
+
+def _normalize_exit_profile_status(value: Any) -> str:
+    text = str(value or "").strip()
+    upper = text.upper()
+    if upper in EXIT_PROFILE_STATUSES:
+        return upper
+    lowered = text.lower()
+    if lowered.startswith("pass"):
+        return "PASSED"
+    if lowered.startswith("degrad") or "partial" in lowered:
+        return "DEGRADED"
+    if lowered.startswith("fail"):
+        return "FAILED"
+    if lowered.startswith("not_available") or lowered in {"", "na", "n/a", "none"}:
+        return "NOT_AVAILABLE"
+    return "NOT_AVAILABLE"
 
 
 def _decision(blockers: List[str], row: Dict[str, Any]) -> str:
@@ -429,7 +452,7 @@ def _output_row(signal_row: Dict[str, Any], *, resolution: AliasResolution, reso
     row["hard_logic_score"] = round(hard_score, 2)
     row["hard_logic_level"] = hard_level
     row["hard_logic_reason"] = hard_reason
-    row["balanced_exit_historical_profile"] = row.get("balanced_exit_historical_profile") or "not_available_current_snapshot"
+    row["balanced_exit_historical_profile"] = _normalize_exit_profile_status(row.get("balanced_exit_historical_profile"))
     candidate_blockers = sorted(set(_current_candidate_blockers(row) + hard_blockers))
     row["snapshot_decision"] = _decision(candidate_blockers, row)
     row["blockers"] = ";".join(candidate_blockers)
@@ -696,7 +719,7 @@ def run_current_snapshot_report(
         and _is_user_supplied_evidence_path(summary["company_evidence_file"])
         and alias_rows
     ):
-        acceptance = "PASS_CURRENT_SNAPSHOT_CANDIDATE_GENERATED" if candidates else "PASS_CURRENT_SNAPSHOT_RESEARCH_READY"
+        acceptance = "PASS_CURRENT_SNAPSHOT_PIPELINE_READY"
     summary["acceptance_enum"] = acceptance
 
     _write_csv(timestamp_path / "current_snapshot_all.csv", rows, CURRENT_SNAPSHOT_COLUMNS)

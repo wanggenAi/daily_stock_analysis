@@ -1,3 +1,40 @@
+# Opportunity Discovery Acceptance Report
+
+## Loop 15 Scope
+
+- Scope: daily opportunity discovery research workflow on top of GenGe Cycle Bottom features.
+- New entry point: `python3 -m src.strategies.genge_opportunity_discovery.cli`.
+- Outputs: quant coarse screen, priority/secondary research queues, A/B/C opportunity tiers, evidence gap report, industry/company research tasks, daily changes, data quality audit, and forward observation ledger.
+- Safety boundary: no broker integration, no Citic Securities client access, no account/position/password/captcha reading, no automatic buy/sell/cancel behavior.
+- Candidate semantics: every output is a research candidate, manual review candidate, watchlist object, or evidence-incomplete object. Missing data is downgraded explicitly.
+- Current snapshot acceptance enum is corrected to `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`; opportunity discovery milestones add `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, `PASS_EVIDENCE_ENRICHMENT_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`, `PASS_TIER_A_CANDIDATE_GENERATED`, and `PASS_FORWARD_OBSERVATION_READY`.
+
+## Loop 15 Tests
+
+- Targeted pytest: `/Users/seker./.cache/codex-runtimes/codex-primary-runtime/dependencies/python/bin/python3 -m pytest tests/test_genge_cycle_bottom_current_snapshot.py tests/test_genge_opportunity_discovery.py -q` -> 11 passed, 1 warning, 0.79 seconds.
+- Compile check passed for `src/strategies/genge_cycle_bottom/current_snapshot.py`, `src/strategies/genge_opportunity_discovery/pipeline.py`, and `src/strategies/genge_opportunity_discovery/cli.py`.
+- Fixture CLI smoke generated all required opportunity discovery output files under `reports/opportunity_discovery_ci_smoke_local`.
+- Acceptance guardrail fixed: an existing forward ledger no longer upgrades the run to `PASS_FORWARD_OBSERVATION_READY` unless the current run has Tier A/B observations.
+
+## Loop 15 Real Run
+
+- Real broad-pool command naturally exited with `--stock-pool-file stock_pools/genge_broad_pool.txt`, `--max-codes 100`, `--years 5`, `--benchmark 000905`, `--output-dir reports/opportunity_discovery`, both `data/user_supplied` evidence files, `config/industry_evidence_schema.yaml`, `config/industry_alias_map.yaml`, `--as-of-date 2026-07-07`, `--fixture-smoke-passed`, and `--ci-passed`.
+- Latest report path: `reports/opportunity_discovery/20260707_163507`.
+- Runtime: wall time `real 532.59` seconds.
+- `daily_opportunity_report.json -> diagnostics.industry_evidence_file`: `data/user_supplied/industry_cycle_evidence.csv`.
+- `daily_opportunity_report.json -> diagnostics.company_evidence_file`: `data/user_supplied/company_cycle_evidence.csv`.
+- `total_stocks=100`, `valid_stocks=100`, `data_failure_count=0`.
+- Daily price source distribution from diagnostics: `TencentFetcher=100`; Eastmoney/efinance failures were safely bypassed by multi-source fallback.
+- `priority_research_queue_count=25`, `secondary_research_queue_count=31`.
+- `tier_distribution={'TIER_C': 56, 'REJECTED': 44}`; `tier_a_count=0`, `tier_b_count=0`, `tier_c_count=56`.
+- Evidence status distribution: industry `MISSING=97`, `STALE=3`; company `MISSING=98`, `VERIFIED=2`.
+- Forward ledger was generated and copied into the report. Existing tracked rows: 4; current observed Tier A/B rows: 0; no new records.
+- Generated rows: `quant_screen_all.csv` 100 data rows, `priority_research_queue.csv` 25, `secondary_research_queue.csv` 31, `tier_c_evidence_incomplete.csv` 56, `evidence_gap_report.csv` 150.
+- Forbidden promise/trade-command scan on the latest report did not match `保证上涨`, `确定买入`, `必买`, `必卖`, `BUY`, or `SELL`.
+- Acceptance milestones: `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`, `PASS_QUANT_RESEARCH_QUEUE_GENERATED`, `PASS_EVIDENCE_ENRICHMENT_READY`, `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`.
+- Final enum: `PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY`.
+- Not upgraded to `PASS_TIER_A_CANDIDATE_GENERATED` or `PASS_FORWARD_OBSERVATION_READY` because no Tier A/B opportunity was generated in the current run; the system kept evidence gaps as Tier C instead of forcing stronger candidates.
+
 # Current Snapshot Scanner Acceptance Report
 
 ## Current Push Summary

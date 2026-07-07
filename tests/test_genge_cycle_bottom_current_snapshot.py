@@ -283,10 +283,7 @@ def test_current_snapshot_report_uses_asof_current_evidence_and_writes_audits(tm
     assert summary["skipped_invalid_or_delisted"] == 1
     assert summary["current_industry_evidence_coverage"] == 100.0
     assert summary["current_company_evidence_coverage"] == 100.0
-    assert summary["acceptance_enum"] in {
-        "PASS_CURRENT_SNAPSHOT_RESEARCH_READY",
-        "PASS_CURRENT_SNAPSHOT_CANDIDATE_GENERATED",
-    }
+    assert summary["acceptance_enum"] == "PASS_CURRENT_SNAPSHOT_PIPELINE_READY"
 
     all_rows = list(csv.DictReader((report_dir / "current_snapshot_all.csv").open(encoding="utf-8")))
     assert all_rows[0]["latest_price_date"] == "2026-06-24"

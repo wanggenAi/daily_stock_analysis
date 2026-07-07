@@ -1,0 +1,91 @@
+name: GenGe Opportunity Discovery
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+jobs:
+  fixture-opportunity-smoke:
+    name: Fixture opportunity smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r .github/requirements-ci.txt
+
+      - name: Run opportunity discovery tests
+        run: python -m pytest tests/test_genge_opportunity_discovery.py
+
+      - name: Run fixture opportunity CLI smoke
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.cli \
+            --codes 000001,000002 \
+            --years 5 \
+            --benchmark 000300 \
+            --price-data-dir tests/fixtures/genge_cycle_bottom/prices \
+            --valuation-data-dir tests/fixtures/genge_cycle_bottom/valuation \
+            --financial-data-dir tests/fixtures/genge_cycle_bottom/financial \
+            --stock-industry-map tests/fixtures/genge_cycle_bottom/stock_industry_map.csv \
+            --industry-evidence-file tests/fixtures/genge_cycle_bottom/industry_evidence.csv \
+            --company-evidence-file tests/fixtures/genge_cycle_bottom/company_evidence.csv \
+            --industry-evidence-schema config/industry_evidence_schema.yaml \
+            --industry-alias-map config/industry_alias_map.yaml \
+            --as-of-date 2024-04-18 \
+            --output-dir reports/opportunity_discovery_ci_smoke \
+            --forward-ledger-file reports/opportunity_discovery_ci_smoke/forward_observation_ledger.csv \
+            --fixture-smoke-passed \
+            --ci-passed
+
+      - name: Validate fixture opportunity report
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("reports/opportunity_discovery_ci_smoke")
+          runs = sorted(path for path in root.iterdir() if path.is_dir())
+          assert runs, "no opportunity discovery report directory generated"
+          latest = runs[-1]
+          required = [
+              "quant_screen_all.csv",
+              "priority_research_queue.csv",
+              "secondary_research_queue.csv",
+              "tier_a_candidates.csv",
+              "tier_b_watchlist.csv",
+              "tier_c_evidence_incomplete.csv",
+              "evidence_gap_report.csv",
+              "industry_research_tasks.json",
+              "company_research_tasks.json",
+              "data_quality_audit.csv",
+              "daily_opportunity_report.json",
+              "forward_observation_ledger.csv",
+          ]
+          for filename in required:
+              assert (latest / filename).exists(), f"missing {filename}"
+
+          payload = json.loads((latest / "daily_opportunity_report.json").read_text(encoding="utf-8"))
+          summary = payload["summary"]
+          assert summary["no_auto_trade"] is True
+          assert summary["no_broker_integration"] is True
+          assert summary["acceptance_enum"] in {
+              "FAIL_CURRENT_SNAPSHOT",
+              "PASS_CURRENT_SNAPSHOT_PIPELINE_READY",
+              "PASS_QUANT_RESEARCH_QUEUE_GENERATED",
+              "PASS_EVIDENCE_ENRICHMENT_READY",
+              "PASS_OPPORTUNITY_DISCOVERY_RESEARCH_READY",
+              "PASS_TIER_A_CANDIDATE_GENERATED",
+              "PASS_FORWARD_OBSERVATION_READY",
+          }
+          PY
