@@ -244,6 +244,9 @@ LEDGER_COLUMNS = [
     "max_down_pct",
     "benchmark_return_20d_pct",
     "status",
+    "closed_date",
+    "close_reason",
+    "logic_invalidated",
 ]
 
 
@@ -1440,6 +1443,8 @@ def _update_forward_ledger(
     by_code = {_normalize_code(row.get("code")): dict(row) for row in existing}
     input_by_code = {_normalize_code(item.code): item for item in inputs}
     observed = [row for row in rows if row.get("tier") in {"TIER_A", "TIER_B"}]
+    observed_codes = {_normalize_code(row.get("code")) for row in observed}
+    current_by_code = {_normalize_code(row.get("code")): row for row in rows}
     new_records = 0
 
     for row in observed:
@@ -1469,6 +1474,9 @@ def _update_forward_ledger(
                 "latest_tier": row.get("tier"),
                 "latest_close": row.get("close"),
                 "status": "OPEN",
+                "closed_date": "",
+                "close_reason": "",
+                "logic_invalidated": "False",
             }
             new_records += 1
         else:
@@ -1476,6 +1484,33 @@ def _update_forward_ledger(
             by_code[code]["latest_tier"] = row.get("tier")
             by_code[code]["latest_close"] = row.get("close")
             by_code[code]["status"] = "OPEN"
+            by_code[code]["closed_date"] = ""
+            by_code[code]["close_reason"] = ""
+            by_code[code]["logic_invalidated"] = "False"
+
+    for code, record in by_code.items():
+        if code in observed_codes:
+            continue
+        current = current_by_code.get(code)
+        was_open = str(record.get("status") or "OPEN").upper() == "OPEN"
+        if not was_open:
+            continue
+        if current:
+            current_tier = str(current.get("tier") or "")
+            record["latest_tier"] = current_tier
+            record["latest_close"] = current.get("close") or record.get("latest_close")
+            hard = str(current.get("hard_blockers") or current.get("hard_reject_blockers") or "")
+            failed = str(current.get("a_condition_failed") or "")
+            reason = hard or failed or f"current_tier_{current_tier or 'not_observed'}"
+            invalidated = bool(hard or current_tier in {"REJECTED", "DATA_INSUFFICIENT"})
+        else:
+            reason = "left_research_queue"
+            invalidated = False
+        record["latest_observation_date"] = as_of.isoformat()
+        record["status"] = "CLOSED"
+        record["closed_date"] = as_of.isoformat()
+        record["close_reason"] = reason
+        record["logic_invalidated"] = str(bool(invalidated))
 
     for code, record in by_code.items():
         item = input_by_code.get(code)

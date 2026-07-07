@@ -12,6 +12,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [新功能] GenGe 新增 `genge_opportunity_discovery` 日常机会发现流程，输出量化研究队列、A/B/C 分层、证据缺口、每日变化和前向观察账本，所有结果限定为研究候选/人工复核候选。
 - [新功能] Opportunity discovery 新增 `evidence_inventory.csv` 标准化证据清单、provider/fallback 分布、阶段耗时、质量/接近度 Top20 和机会逻辑/风险/升级降级条件输出。
 - [新功能] Opportunity discovery 新增自动证据采集器、证据缓存、采集失败审计、退出画像生成、跨日状态恢复/保存，以及 `quant-only`、`quant-evidence`、`full` 的真实执行语义。
+- [新功能] Opportunity discovery 新增 2026-07-08 明日自选与条件化价格计划输出，使用未复权可交易价格生成回踩区间、突破价、止损、逻辑失效价、分批区间和止盈规则。
+- [修复] Opportunity discovery 收紧公开行业证据和退出画像冷启动：官网列表页不再直接 `VERIFIED`，退出画像少于 20 条样本不能 `PASSED`，前向账本会关闭已降级观察对象。
 - [改进] Opportunity discovery 验收枚举改为 `PASS_EVIDENCE_TASKS_GENERATED` 和 `PASS_AUTO_EVIDENCE_COLLECTION_READY` 分层表达，人工 CSV 的权威来源标签不再直接升级为 `VERIFIED`。
 - [改进] GenGe current snapshot acceptance enum 调整为 `PASS_CURRENT_SNAPSHOT_PIPELINE_READY`，退出画像统一为 `PASSED/DEGRADED/NOT_AVAILABLE/FAILED`，缺失或降级退出画像不得进入正式研究候选。
 - [测试] 补充 opportunity discovery 的分层、证据缺口、防未来证据审计、冲突/过期证据、前向账本和 GitHub Actions workflow 回归测试，并新增定时/手动 fixture 与每日报告工作流。

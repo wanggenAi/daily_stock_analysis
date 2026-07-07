@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+from datetime import date
 from pathlib import Path
 
 import numpy as np
@@ -11,8 +12,10 @@ from src.strategies.genge_cycle_bottom.backtest import BacktestInput
 from src.strategies.genge_cycle_bottom.current_snapshot import load_industry_alias_map
 from src.strategies.genge_cycle_bottom.industry_evidence import load_industry_evidence_schema
 from src.strategies.genge_opportunity_discovery.evidence_collectors.cache import EvidenceCache
+from src.strategies.genge_opportunity_discovery.evidence_collectors.validators import extract_numeric_context, extract_text_from_response
 from src.strategies.genge_opportunity_discovery.exit_profile import generate_exit_profile_from_reports
 from src.strategies.genge_opportunity_discovery.pipeline import _rank_opportunities, run_opportunity_discovery
+from src.strategies.genge_opportunity_discovery.tomorrow_watchlist import PriceContext, _plan_prices, generate_tomorrow_watchlist
 
 
 def _price_frame() -> pd.DataFrame:
@@ -225,6 +228,48 @@ def _fake_auto_collector(*, company_rows: list[dict[str, object]] | None = None)
         )
 
     return _collect
+
+
+def test_pdf_fixture_extracts_text_and_numeric_context() -> None:
+    content = Path("tests/fixtures/genge_opportunity_discovery/evidence_numeric.pdf").read_bytes()
+
+    text, parser = extract_text_from_response(content, "application/pdf")
+    numeric = extract_numeric_context(text, keywords=["operating revenue"])
+
+    assert parser == "pdf_pypdf"
+    assert "operating revenue" in text
+    assert numeric["value"] == "123.45"
+    assert numeric["unit"] == ""
+
+
+def test_public_data_homepage_number_is_not_verified(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import src.strategies.genge_opportunity_discovery.evidence_collectors.public_data as public_data
+
+    class FakeResponse:
+        def __init__(self, html: str) -> None:
+            self.content = html.encode("utf-8")
+            self.headers = {"content-type": "text/html; charset=utf-8"}
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeSession:
+        def get(self, *_args, **_kwargs) -> FakeResponse:
+            return FakeResponse("<html><body><p>有色 行业公开数据增长 100%</p></body></html>")
+
+    monkeypatch.setattr(public_data.requests, "Session", lambda: FakeSession())
+
+    evidence_rows, audit_rows, summary = public_data.collect_public_industry_data(
+        industries=["有色"],
+        as_of=date(2026, 7, 7),
+        cache=EvidenceCache(tmp_path / "cache"),
+    )
+
+    assert evidence_rows == []
+    assert summary["industry_evidence_rows"] == 0
+    assert audit_rows
+    assert {row["issue"] for row in audit_rows} == {"specific_article_not_found"}
+    assert {row["status"] for row in audit_rows} == {"MISSING"}
 
 
 def test_opportunity_discovery_writes_research_outputs_and_forward_ledger(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
@@ -741,25 +786,82 @@ def test_forward_ledger_preserves_first_observation_and_updates_returns(tmp_path
     assert summary_2["previous_state_restored"] is True
 
 
+def test_forward_ledger_closes_downgraded_observation(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    schema = load_industry_evidence_schema("config/industry_evidence_schema.yaml")
+    alias_map = load_industry_alias_map("config/industry_alias_map.yaml")
+    monkeypatch.setattr(
+        "src.strategies.genge_opportunity_discovery.pipeline.collect_auto_evidence",
+        _fake_auto_collector(),
+    )
+    ledger_path = tmp_path / "ledger.csv"
+
+    run_opportunity_discovery(
+        inputs=[_input()],
+        requested_codes=["000100"],
+        data_errors={},
+        data_sources={"000100": "fixture"},
+        benchmark_df=_price_frame(),
+        industry_cycle_df=None,
+        industry_evidence_df=_industry_evidence(),
+        company_evidence_df=_company_evidence(),
+        industry_evidence_schema=schema,
+        industry_alias_map=alias_map,
+        requested_as_of_date="2026-06-18",
+        output_dir=tmp_path / "reports_1",
+        diagnostics=_diagnostics(),
+        exit_profile_df=pd.DataFrame([{"code": "000100", "balanced_exit_historical_profile": "PASSED"}]),
+        ledger_path=ledger_path,
+        state_dir=tmp_path / "state_1",
+    )
+
+    report_2, _summary_2 = run_opportunity_discovery(
+        inputs=[_input()],
+        requested_codes=["000100"],
+        data_errors={},
+        data_sources={"000100": "fixture"},
+        benchmark_df=_price_frame(),
+        industry_cycle_df=None,
+        industry_evidence_df=_industry_evidence(),
+        company_evidence_df=_company_evidence(),
+        industry_evidence_schema=schema,
+        industry_alias_map=alias_map,
+        requested_as_of_date="2026-06-24",
+        output_dir=tmp_path / "reports_2",
+        diagnostics=_diagnostics(),
+        exit_profile_df=pd.DataFrame([{"code": "000100", "balanced_exit_historical_profile": "FAILED"}]),
+        ledger_path=ledger_path,
+        state_dir=tmp_path / "state_2",
+    )
+
+    rows = list(csv.DictReader((report_2 / "forward_observation_ledger.csv").open(encoding="utf-8")))
+    assert len(rows) == 1
+    assert rows[0]["status"] == "CLOSED"
+    assert rows[0]["latest_tier"] == "REJECTED"
+    assert rows[0]["closed_date"] == "2026-06-24"
+    assert "balanced_exit_profile_failed" in rows[0]["close_reason"]
+    assert rows[0]["logic_invalidated"] == "True"
+    assert rows[0]["latest_close"] != ""
+
+
 def test_exit_profile_generation_from_historical_signal_details(tmp_path: Path) -> None:
     report = tmp_path / "reports" / "sample" / "signal_details.csv"
     report.parent.mkdir(parents=True)
-    report.write_text(
-        "code,stock_name,balanced_hybrid_60d_exit_exit_adjusted_net_return_60d,balanced_hybrid_60d_exit_exit_adjusted_max_drawdown_250d\n"
-        "600123,测试周期,2.5,-8\n"
-        "600123,测试周期,1.5,-9\n"
-        "600456,测试退化,1,-15\n"
-        "600456,测试退化,-3,-16\n"
-        "600789,测试失败,-9,-25\n"
-        "600789,测试失败,-8,-20\n",
-        encoding="utf-8",
-    )
+    rows = ["code,stock_name,balanced_hybrid_60d_exit_exit_adjusted_net_return_60d,balanced_hybrid_60d_exit_exit_adjusted_max_drawdown_250d"]
+    rows.extend(["600123,测试周期,2.5,-8"] * 20)
+    rows.extend(["600456,测试退化,1.0,-12"] * 6)
+    rows.extend(["600456,测试退化,-2.0,-14"] * 6)
+    rows.extend(["600111,样本不足,3.0,-7"] * 8)
+    rows.extend(["600789,测试失败,-9,-25"] * 20)
+    report.write_text("\n".join(rows) + "\n", encoding="utf-8")
     output, summary = generate_exit_profile_from_reports(output_file=tmp_path / "exit_profile.csv", source_dirs=[tmp_path / "reports"])
     rows = {row["code"]: row for row in csv.DictReader(output.open(encoding="utf-8"))}
-    assert summary["row_count"] == 3
+    assert summary["row_count"] == 4
     assert rows["600123"]["balanced_exit_historical_profile"] == "PASSED"
     assert rows["600456"]["balanced_exit_historical_profile"] == "DEGRADED"
+    assert rows["600111"]["balanced_exit_historical_profile"] == "NOT_AVAILABLE"
     assert rows["600789"]["balanced_exit_historical_profile"] == "FAILED"
+    assert int(rows["600123"]["signal_count"]) == 20
+    assert int(rows["600111"]["signal_count"]) == 8
 
 
 def test_proximity_rank_excludes_hard_risk_rejects() -> None:
@@ -822,8 +924,109 @@ def test_evidence_cache_reuses_unexpired_payload(tmp_path: Path) -> None:
     assert cache.cache_hits == 1
 
 
+def test_tomorrow_watchlist_writes_conditional_price_plan(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    schema = load_industry_evidence_schema("config/industry_evidence_schema.yaml")
+    alias_map = load_industry_alias_map("config/industry_alias_map.yaml")
+    monkeypatch.setattr(
+        "src.strategies.genge_opportunity_discovery.pipeline.collect_auto_evidence",
+        _fake_auto_collector(),
+    )
+    monkeypatch.setattr(
+        "src.strategies.genge_opportunity_discovery.tomorrow_watchlist.fetch_unadjusted_history",
+        lambda *_args, **_kwargs: _price_frame(),
+    )
+    report_dir, _summary = run_opportunity_discovery(
+        inputs=[_input()],
+        requested_codes=["000100"],
+        data_errors={},
+        data_sources={"000100": "fixture"},
+        benchmark_df=_price_frame(),
+        industry_cycle_df=None,
+        industry_evidence_df=_industry_evidence(),
+        company_evidence_df=_company_evidence(),
+        industry_evidence_schema=schema,
+        industry_alias_map=alias_map,
+        requested_as_of_date="2026-06-24",
+        output_dir=tmp_path / "reports",
+        diagnostics=_diagnostics(),
+        exit_profile_df=pd.DataFrame([{"code": "000100", "balanced_exit_historical_profile": "PASSED"}]),
+        ledger_path=tmp_path / "ledger.csv",
+        state_dir=tmp_path / "state",
+    )
+
+    output_dir, watch_summary = generate_tomorrow_watchlist(
+        opportunity_report_dir=report_dir,
+        output_dir=tmp_path / "tomorrow_watchlist",
+        as_of="2026-06-24",
+        tomorrow="2026-06-25",
+    )
+
+    for file_name in [
+        "tomorrow_watchlist.md",
+        "tomorrow_watchlist.csv",
+        "buy_sell_price_plan.csv",
+        "buy_sell_price_plan.json",
+        "evidence_review.md",
+        "data_quality_audit.csv",
+        "run_summary.json",
+    ]:
+        assert (output_dir / file_name).exists()
+    rows = list(csv.DictReader((output_dir / "buy_sell_price_plan.csv").open(encoding="utf-8")))
+    assert rows
+    row = rows[0]
+    entry = float(row["initial_entry_high"])
+    assert float(row["technical_stop_price"]) < entry
+    assert float(row["logic_invalidation_price"]) <= float(row["technical_stop_price"])
+    assert float(row["target_1_price"]) > entry
+    assert float(row["target_2_price"]) > float(row["target_1_price"])
+    assert float(row["reward_risk_ratio"]) >= 1.0
+    assert row["latest_trade_date"] == "2026-06-24"
+    assert row["data_warnings"] == ""
+    assert watch_summary["no_broker_integration"] is True
+
+
+def test_wait_for_breakout_targets_use_breakout_entry_price() -> None:
+    ctx = PriceContext(
+        latest_trade_date=date(2026, 7, 7),
+        latest_close=7.07,
+        atr14=0.24,
+        ma20=7.30,
+        ma60=8.51,
+        support_20d=6.66,
+        support_60d=6.66,
+        resistance_20d=7.85,
+        resistance_60d=10.33,
+        local_low=6.66,
+        local_high=7.50,
+        avg_volume_20d=900_000,
+        latest_volume=800_000,
+    )
+    row = {
+        "tier": "TIER_C",
+        "hard_blockers": "",
+        "industry_evidence_status": "PARTIALLY_VERIFIED",
+        "company_evidence_status": "PARTIALLY_VERIFIED",
+        "hard_logic_level": "NONE",
+        "balanced_exit_historical_profile": "DEGRADED",
+        "a_condition_failed": "trend_medium;hard_logic_medium",
+    }
+
+    plan = _plan_prices(row, ctx, ["https://example.com/evidence"])
+    breakout = float(plan["breakout_trigger_price"])
+    stop = float(plan["technical_stop_price"])
+    target1 = float(plan["target_1_price"])
+    target2 = float(plan["target_2_price"])
+
+    assert plan["tomorrow_status"] == "WAIT_FOR_BREAKOUT"
+    assert target1 > breakout
+    assert target2 > target1
+    assert float(plan["reward_risk_ratio"]) == round((target2 - breakout) / (breakout - stop), 2)
+
+
 def test_github_actions_opportunity_workflow_contract() -> None:
     workflow = Path(".github/workflows/genge-opportunity-discovery.yml").read_text(encoding="utf-8")
+    requirements = Path("requirements.txt").read_text(encoding="utf-8")
+    ci_requirements = Path(".github/requirements-ci.txt").read_text(encoding="utf-8")
     assert "cron:" in workflow
     assert "workflow_dispatch:" in workflow
     assert "run_mode:" in workflow
@@ -839,3 +1042,7 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "--evidence-cache-dir" in workflow
     assert "daily-opportunity-report:" in workflow
     assert "PASS_EVIDENCE_ENRICHMENT_READY" not in workflow
+    assert "pypdf" in requirements
+    assert "beautifulsoup4" in requirements
+    assert "pypdf" in ci_requirements
+    assert "beautifulsoup4" in ci_requirements

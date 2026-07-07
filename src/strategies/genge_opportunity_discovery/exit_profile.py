@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import csv
+import shutil
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -49,12 +50,13 @@ def _candidate_signal_files(source_dirs: Iterable[str | Path]) -> list[Path]:
 
 
 def _status_for(values: list[float], drawdowns: list[float]) -> str:
-    if len(values) < 2:
+    sample_count = len(values)
+    if sample_count < 10:
         return "NOT_AVAILABLE"
     avg_return = sum(values) / len(values)
     win_rate = sum(1 for value in values if value > 0) / len(values) * 100.0
     avg_drawdown = sum(drawdowns) / len(drawdowns) if drawdowns else None
-    if avg_return >= 0 and win_rate >= 45 and (avg_drawdown is None or avg_drawdown >= -12):
+    if sample_count >= 20 and avg_return >= 0 and win_rate >= 45 and (avg_drawdown is None or avg_drawdown >= -12):
         return "PASSED"
     if avg_return >= -4 and win_rate >= 30 and (avg_drawdown is None or avg_drawdown >= -18):
         return "DEGRADED"
@@ -66,6 +68,7 @@ def generate_exit_profile_from_reports(
     output_file: str | Path,
     source_dirs: Iterable[str | Path] = ("reports",),
     max_files: int = 3,
+    seed_file: str | Path | None = "data/opportunity_snapshots/exit_profile_seed.csv",
 ) -> tuple[Path, dict[str, Any]]:
     """Generate a per-stock exit profile from existing historical signal files.
 
@@ -123,12 +126,25 @@ def generate_exit_profile_from_reports(
                 "avg_balanced_exit_max_drawdown_250d": round(sum(drawdowns) / len(drawdowns), 4) if drawdowns else "",
                 "source_signal_details": source_by_code.get(code, ""),
                 "generated_at": generated_at,
-                "rule": "avg_return>=0/win_rate>=45/drawdown>=-12 => PASSED; avg_return>=-4/win_rate>=30/drawdown>=-18 => DEGRADED; else FAILED",
+                "rule": "signals<10 => NOT_AVAILABLE; signals 10-19 max DEGRADED; signals>=20 and avg_return>=0/win_rate>=45/drawdown>=-12 => PASSED; avg_return>=-4/win_rate>=30/drawdown>=-18 => DEGRADED; else FAILED",
             }
         )
 
     path = Path(output_file)
     path.parent.mkdir(parents=True, exist_ok=True)
+    if not rows and seed_file and Path(seed_file).exists():
+        shutil.copyfile(seed_file, path)
+        with path.open(encoding="utf-8") as file:
+            row_count = max(0, sum(1 for _ in file) - 1)
+        return path, {
+            "exit_profile_file": str(path),
+            "source_signal_detail_files": [str(path) for path in files],
+            "seed_file": str(seed_file),
+            "generated": False,
+            "seed_used": True,
+            "row_count": row_count,
+            "distribution": load_exit_profile_distribution(path),
+        }
     with path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=EXIT_PROFILE_COLUMNS)
         writer.writeheader()

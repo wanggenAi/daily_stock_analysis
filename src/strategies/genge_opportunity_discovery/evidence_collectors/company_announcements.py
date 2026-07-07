@@ -179,7 +179,16 @@ def collect_company_announcements(
             continue
         task_count += 1
         collector = "cninfo_company_announcement" if code.startswith(("0", "2", "3")) else "sse_company_announcement"
-        key = cache.key_for({"collector": collector, "code": code, "as_of": as_of.isoformat(), "version": 1})
+        report_period = str(as_of.year - 1)
+        key = cache.key_for(
+            {
+                "collector": collector,
+                "code": code,
+                "announcement_type": "annual_report",
+                "report_period": report_period,
+                "version": 2,
+            }
+        )
         cached = cache.get(key)
         if cached is not None:
             evidence_rows.extend(cached.get("evidence_rows") or [])

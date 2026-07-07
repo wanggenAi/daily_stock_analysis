@@ -63,6 +63,18 @@ python3 -m src.strategies.genge_opportunity_discovery.cli \
 - `forward_observation_ledger.csv`：本次报告内的前向观察账本副本。
 - `daily_opportunity_report.md/json`：日常汇总报告。
 
+明日自选与条件化价格计划可在 full 报告生成后运行：
+
+```bash
+python3 -m src.strategies.genge_opportunity_discovery.tomorrow_watchlist \
+  --opportunity-report-dir reports/opportunity_discovery/<timestamp> \
+  --output-dir reports/tomorrow_watchlist/20260708 \
+  --as-of-date 2026-07-07 \
+  --tomorrow 2026-07-08
+```
+
+该步骤只生成公开数据研究观察文件，不接券商、不读取账户、不自动下单。输出目录包含 `tomorrow_watchlist.md`、`tomorrow_watchlist.csv`、`buy_sell_price_plan.csv/json`、`evidence_review.md`、`data_quality_audit.csv` 和 `run_summary.json`。价格计划使用未复权可交易价格，并用区间和条件表达回踩、突破、止损、逻辑失效与止盈，不输出确定性买卖结论。
+
 持久前向账本默认写入 `data/opportunity_snapshots/forward_observation_ledger.csv`。它只记录 A/B 观察对象，不重复追加同一天同一代码。
 
 `evidence_inventory.csv` 使用以下核心字段：`evidence_date`、`collected_at`、`industry`、`code`、`stock_name`、`indicator`、`value`、`unit`、`comparison_period`、`direction`、`source`、`source_domain`、`source_type`、`confidence`、`freshness_days`、`raw_excerpt`、`normalized_summary`、`parser`、`parse_status`、`evidence_status`、`warning_flags`。新闻摘要、缺少数值支撑或只有链接的内容只会进入 `LEAD_ONLY` 或 `NEEDS_MANUAL_REVIEW`，不会作为高置信度硬证据。
