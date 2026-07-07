@@ -39,6 +39,30 @@ python3 -m src.strategies.genge_opportunity_discovery.cli \
   --exit-profile-file reports/path/to/exit_profile.csv
 ```
 
+深市主板A股全量机会扫描：
+
+```bash
+python3 -m src.strategies.genge_opportunity_discovery.shenzhen_full_scan \
+  --as-of-date 2026-07-07 \
+  --tomorrow 2026-07-08 \
+  --output-dir reports/shenzhen_full_scan/20260708 \
+  --stock-pool-output stock_pools/shenzhen_mainboard_a_full_20260707.csv \
+  --max-workers 16 \
+  --evidence-queue-size 80 \
+  --deep-review-size 30 \
+  --max-watchlist 12 \
+  --fundamental-limit 30 \
+  --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+  --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+  --industry-evidence-schema config/industry_evidence_schema.yaml \
+  --industry-alias-map config/industry_alias_map.yaml \
+  --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+```
+
+该入口优先使用深交所公开清单中的板块/证券类型字段构建股票池，不用代码前缀猜测主板范围。它先对完整有效股票池做低成本量化粗筛，再只对 Top80/Top30 做重点证据和机会评估。输出位于 `reports/shenzhen_full_scan/20260708/`，股票池快照位于 `stock_pools/shenzhen_mainboard_a_full_20260707.csv`。
+
+深市全量扫描会生成 `shenzhen_universe.csv`、`universe_exclusion_audit.csv`、`shenzhen_quant_screen_all.csv`、`top80_evidence_queue.csv`、`top30_deep_review.csv`、`buy_ready.csv`、`near_ready.csv`、`deep_watch.csv`、`tomorrow_watchlist_top12.csv`、`buy_sell_price_plan.csv/json`、`evidence_review.md`、`rejection_summary.csv`、`run_summary.json` 和 `tomorrow_watchlist.md`。回踩和突破计划分开计算，正式买入资格只使用真实压力位下的收益风险比；非 `BUY_READY` 对象仓位始终为 0。
+
 `exit_profile_file` 至少包含 `code` 和 `balanced_exit_historical_profile` 或 `exit_profile_status`。取值为 `PASSED`、`DEGRADED`、`NOT_AVAILABLE`、`FAILED`。`NOT_AVAILABLE` 和 `DEGRADED` 不会进入 A 类严格候选。
 
 `--run-mode` 支持 `quant-only`、`quant-evidence` 和 `full`，供本地或 GitHub Actions 调度区分运行意图。当前实现仍会生成完整审计文件，但报告会记录 run mode，方便后续按阶段扩展缓存和深度证据抓取。

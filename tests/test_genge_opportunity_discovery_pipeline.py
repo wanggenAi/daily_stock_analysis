@@ -15,6 +15,12 @@ from src.strategies.genge_opportunity_discovery.evidence_collectors.cache import
 from src.strategies.genge_opportunity_discovery.evidence_collectors.validators import extract_numeric_context, extract_text_from_response
 from src.strategies.genge_opportunity_discovery.exit_profile import generate_exit_profile_from_reports
 from src.strategies.genge_opportunity_discovery.pipeline import _rank_opportunities, run_opportunity_discovery
+from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
+    ScanConfig,
+    build_official_universe,
+    build_price_plan,
+    quant_screen,
+)
 from src.strategies.genge_opportunity_discovery.tomorrow_watchlist import PriceContext, _plan_prices, generate_tomorrow_watchlist
 
 
@@ -1021,6 +1027,69 @@ def test_wait_for_breakout_targets_use_breakout_entry_price() -> None:
     assert target1 > breakout
     assert target2 > target1
     assert float(plan["reward_risk_ratio"]) == round((target2 - breakout) / (breakout - stop), 2)
+
+
+def test_shenzhen_universe_uses_official_board_fields() -> None:
+    raw = pd.DataFrame(
+        [
+            {"板块": "主板", "A股代码": 1, "A股简称": "平安银行", "A股上市日期": "1991-04-03", "所属行业": "J 金融业"},
+            {"板块": "创业板", "A股代码": 300001, "A股简称": "特锐德", "A股上市日期": "2009-10-30", "所属行业": "C 制造业"},
+            {"板块": "主板", "A股代码": 5, "A股简称": "ST星源", "A股上市日期": "1990-12-10", "所属行业": "K 房地产"},
+        ]
+    )
+
+    rows, counts = build_official_universe(raw, as_of=date(2026, 7, 7))
+
+    by_code = {row["code"]: row for row in rows}
+    assert counts["raw_security_count"] == 3
+    assert counts["excluded_chinext_count"] == 1
+    assert counts["shenzhen_mainboard_a_count"] == 2
+    assert by_code["000001"]["board"] == "主板"
+    assert by_code["000005"]["exclusion_reason"] == "st_or_delisting_risk"
+    assert "300001" not in by_code
+
+
+def test_shenzhen_quant_screen_and_price_plan_are_actionable(tmp_path: Path) -> None:
+    history = _price_frame().tail(900).copy()
+    history["amount"] = history["close"] * history["volume"] * 100
+    config = ScanConfig(
+        as_of=date(2026, 6, 24),
+        tomorrow=date(2026, 6, 25),
+        output_dir=tmp_path / "out",
+        stock_pool_output=tmp_path / "pool.csv",
+    )
+    universe = [
+        {
+            "code": "000001",
+            "stock_name": "平安银行",
+            "industry": "银行",
+            "latest_trade_date": "2026-06-24",
+            "latest_close": 11.8,
+            "avg_turnover_20d": 50_000_000,
+            "exclusion_reason": "",
+        }
+    ]
+
+    rows = quant_screen(universe, {"000001": history}, history, config)
+    plan = build_price_plan(
+        {
+            "code": "000001",
+            "stock_name": "平安银行",
+            "trend_confirmation_level": "WEAK",
+            "industry_evidence_status": "PARTIALLY_VERIFIED",
+            "company_evidence_status": "PARTIALLY_VERIFIED",
+            "balanced_exit_historical_profile": "PASSED",
+        },
+        history,
+        ["https://example.com/evidence"],
+    )
+
+    assert rows and rows[0]["quant_rank"] == 1
+    assert rows[0]["code"] == "000001"
+    assert float(plan["breakout_stop_price"]) < float(plan["breakout_trigger_price"])
+    if plan["pullback_status"] == "READY":
+        assert float(plan["pullback_stop_price"]) < float(plan["pullback_entry_high"])
+    assert plan["theoretical_target_1"] != plan["real_resistance_target_1"]
 
 
 def test_github_actions_opportunity_workflow_contract() -> None:

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] Opportunity discovery 新增深市主板A股全量机会扫描入口，动态获取深交所主板A股清单，输出全量股票池、量化粗筛、Top80证据队列、Top30深度评估和最多12只明日观察名单。
+- [改进] 深市全量扫描的明日价格计划拆分回踩/突破两套条件化方案，使用真实压力位计算收益风险比，并对非 BUY_READY 对象保持动态仓位为0。
 - [新功能] GenGe 新增 `genge_opportunity_discovery` 日常机会发现流程，输出量化研究队列、A/B/C 分层、证据缺口、每日变化和前向观察账本，所有结果限定为研究候选/人工复核候选。
 - [新功能] Opportunity discovery 新增 `evidence_inventory.csv` 标准化证据清单、provider/fallback 分布、阶段耗时、质量/接近度 Top20 和机会逻辑/风险/升级降级条件输出。
 - [新功能] Opportunity discovery 新增自动证据采集器、证据缓存、采集失败审计、退出画像生成、跨日状态恢复/保存，以及 `quant-only`、`quant-evidence`、`full` 的真实执行语义。
