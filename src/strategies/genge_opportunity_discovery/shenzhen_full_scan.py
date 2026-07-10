@@ -266,14 +266,34 @@ def _status_from_score(value: Any) -> str:
     return "FAILED"
 
 
+def _get_with_retries(
+    url: str,
+    *,
+    params: Mapping[str, Any],
+    headers: Mapping[str, str],
+    timeout: int,
+    attempts: int = 3,
+) -> requests.Response:
+    last_error: Exception | None = None
+    for attempt in range(1, max(1, attempts) + 1):
+        try:
+            response = requests.get(url, params=params, headers=headers, timeout=timeout)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt < attempts:
+                time.sleep(float(attempt))
+    raise RuntimeError(f"public_data_request_failed:{url}:{type(last_error).__name__}:{last_error}")
+
+
 def fetch_szse_listing() -> pd.DataFrame:
     params = {"SHOWTYPE": "xlsx", "CATALOGID": "1110", "TABKEY": "tab1", "random": str(time.time())}
     headers = {
         "User-Agent": "Mozilla/5.0",
         "Referer": "https://www.szse.cn/market/product/stock/list/index.html",
     }
-    response = requests.get(SZSE_LIST_URL, params=params, headers=headers, timeout=30)
-    response.raise_for_status()
+    response = _get_with_retries(SZSE_LIST_URL, params=params, headers=headers, timeout=30)
     return pd.read_excel(io.BytesIO(response.content))
 
 
@@ -329,6 +349,85 @@ def build_official_universe(raw_df: pd.DataFrame, *, as_of: date) -> tuple[list[
         )
     counts["shenzhen_mainboard_a_count"] = len(rows)
     return rows, counts
+
+
+def load_recent_universe_snapshot(
+    *,
+    as_of: date,
+    stock_pool_dir: Path = Path("stock_pools"),
+    report_root: Path = Path("reports/shenzhen_full_scan"),
+    max_age_days: int = 7,
+) -> tuple[list[dict[str, Any]], dict[str, int], dict[str, Any]]:
+    candidates: list[tuple[date, Path]] = []
+    for path in stock_pool_dir.glob("shenzhen_mainboard_a_full_*.csv"):
+        suffix = path.stem.rsplit("_", 1)[-1]
+        try:
+            snapshot_date = datetime.strptime(suffix, "%Y%m%d").date()
+        except ValueError:
+            continue
+        if snapshot_date <= as_of:
+            candidates.append((snapshot_date, path))
+    if not candidates:
+        raise RuntimeError("no repository Shenzhen universe snapshot available")
+    snapshot_date, snapshot_path = max(candidates, key=lambda item: item[0])
+    age_days = (as_of - snapshot_date).days
+    if age_days > max_age_days:
+        raise RuntimeError(
+            f"latest repository Shenzhen universe snapshot is {age_days} days old; max allowed is {max_age_days}"
+        )
+
+    with snapshot_path.open(encoding="utf-8") as file:
+        snapshot_rows = list(csv.DictReader(file))
+    rows: list[dict[str, Any]] = []
+    static_reasons = {"st_or_delisting_risk", "listing_after_as_of"}
+    for item in snapshot_rows:
+        reason = str(item.get("exclusion_reason") or "")
+        rows.append(
+            {
+                **item,
+                "is_st": str(item.get("is_st") or "").lower() == "true",
+                "is_suspended": "",
+                "latest_trade_date": "",
+                "latest_close": "",
+                "avg_turnover_20d": "",
+                "exclusion_reason": reason if reason in static_reasons else "",
+            }
+        )
+
+    counts: dict[str, int] | None = None
+    if report_root.exists():
+        for summary_path in sorted(report_root.glob("*/run_summary.json"), reverse=True):
+            try:
+                summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            except Exception:
+                continue
+            if summary.get("as_of_date") == snapshot_date.isoformat():
+                counts = {
+                    "raw_security_count": int(summary.get("raw_security_count") or len(rows)),
+                    "excluded_chinext_count": int(summary.get("excluded_chinext_count") or 0),
+                    "excluded_st_or_delist_count": int(summary.get("excluded_st_or_delist_count") or 0),
+                    "excluded_listing_after_as_of_count": int(summary.get("excluded_listing_after_as_of_count") or 0),
+                    "shenzhen_mainboard_a_count": len(rows),
+                }
+                break
+    if counts is None:
+        counts = {
+            "raw_security_count": len(rows),
+            "excluded_chinext_count": 0,
+            "excluded_st_or_delist_count": sum(
+                1 for row in rows if row.get("exclusion_reason") == "st_or_delisting_risk"
+            ),
+            "excluded_listing_after_as_of_count": sum(
+                1 for row in rows if row.get("exclusion_reason") == "listing_after_as_of"
+            ),
+            "shenzhen_mainboard_a_count": len(rows),
+        }
+    diagnostics = {
+        "listing_source": f"repository_snapshot:{snapshot_path}",
+        "listing_snapshot_date": snapshot_date.isoformat(),
+        "listing_fallback_age_days": age_days,
+    }
+    return rows, counts, diagnostics
 
 
 def fetch_baostock_industry_map() -> tuple[dict[str, dict[str, str]], dict[str, Any]]:
@@ -408,13 +507,12 @@ def _tencent_symbol(code: str) -> str:
 
 def fetch_unadjusted_history(code: str, *, as_of: date, timeout: int = 12) -> pd.DataFrame:
     symbol = _tencent_symbol(code)
-    response = requests.get(
+    response = _get_with_retries(
         "https://web.ifzq.gtimg.cn/appstock/app/kline/kline",
         params={"param": f"{symbol},day,,{as_of:%Y-%m-%d},2000"},
         headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"},
         timeout=timeout,
     )
-    response.raise_for_status()
     payload = response.json()
     rows = (((payload.get("data") or {}).get(symbol) or {}).get("day") or [])
     parsed: list[dict[str, Any]] = []
@@ -1229,10 +1327,30 @@ def run_scan(
 ) -> tuple[Path, dict[str, Any]]:
     started = time.perf_counter()
     config.output_dir.mkdir(parents=True, exist_ok=True)
-    raw = fetch_szse_listing()
-    official_rows, official_counts = build_official_universe(raw, as_of=config.as_of)
+    listing_diagnostics: dict[str, Any]
+    try:
+        raw = fetch_szse_listing()
+        official_rows, official_counts = build_official_universe(raw, as_of=config.as_of)
+        listing_diagnostics = {
+            "listing_source": "SZSE ShowReport CATALOGID=1110 TABKEY=tab1",
+            "listing_snapshot_date": config.as_of.isoformat(),
+            "listing_fallback_age_days": 0,
+            "listing_fetch_error": "",
+        }
+    except Exception as exc:
+        official_rows, official_counts, listing_diagnostics = load_recent_universe_snapshot(as_of=config.as_of)
+        listing_diagnostics["listing_fetch_error"] = f"{type(exc).__name__}: {exc}"
     industry_map, industry_diagnostics = fetch_baostock_industry_map()
-    official_rows, industry_enriched_count = enrich_universe_industries(official_rows, industry_map)
+    if industry_map:
+        official_rows, industry_enriched_count = enrich_universe_industries(official_rows, industry_map)
+    else:
+        industry_enriched_count = sum(
+            1
+            for row in official_rows
+            if row.get("industry") and row.get("industry_source") == "baostock.query_stock_industry"
+        )
+        if industry_enriched_count > 1000:
+            industry_diagnostics["industry_enrichment_status"] = "SNAPSHOT_FALLBACK"
     industry_diagnostics["industry_enriched_count"] = industry_enriched_count
     histories, sources, errors = fetch_histories(official_rows, config)
     universe_rows, universe_audit, history_counts = enrich_universe_with_history(official_rows, histories, errors, config)
@@ -1277,6 +1395,7 @@ def run_scan(
     summary = {
         **official_counts,
         **history_counts,
+        **listing_diagnostics,
         **industry_diagnostics,
         "as_of_date": config.as_of.isoformat(),
         "tomorrow": config.tomorrow.isoformat(),

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import csv
+import json
 from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -21,6 +22,7 @@ from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     build_official_universe,
     build_price_plan,
     enrich_universe_industries,
+    load_recent_universe_snapshot,
     quant_screen,
     resolve_scan_dates,
 )
@@ -1091,6 +1093,105 @@ def test_shenzhen_universe_enriches_structured_industry_without_changing_scope()
     assert enriched[1]["industry"] == "K 房地产"
 
 
+def test_shenzhen_recent_snapshot_fallback_resets_runtime_exclusions(tmp_path: Path) -> None:
+    pool_dir = tmp_path / "stock_pools"
+    report_root = tmp_path / "reports"
+    pool_dir.mkdir()
+    report_dir = report_root / "20260713"
+    report_dir.mkdir(parents=True)
+    pool_path = pool_dir / "shenzhen_mainboard_a_full_20260710.csv"
+    fieldnames = [
+        "code",
+        "stock_name",
+        "exchange",
+        "board",
+        "security_type",
+        "listing_status",
+        "listing_date",
+        "is_st",
+        "is_suspended",
+        "latest_trade_date",
+        "latest_close",
+        "avg_turnover_20d",
+        "industry",
+        "industry_source",
+        "industry_update_date",
+        "universe_source",
+        "exclusion_reason",
+    ]
+    with pool_path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=fieldnames, lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(
+            [
+                {
+                    "code": "000001",
+                    "stock_name": "平安银行",
+                    "exchange": "SZSE",
+                    "board": "主板",
+                    "security_type": "A_SHARE",
+                    "listing_status": "listed",
+                    "listing_date": "1991-04-03",
+                    "is_st": "False",
+                    "is_suspended": "False",
+                    "latest_trade_date": "2026-07-10",
+                    "latest_close": "10.0",
+                    "avg_turnover_20d": "100000000",
+                    "industry": "J66货币金融服务",
+                    "industry_source": "baostock.query_stock_industry",
+                    "industry_update_date": "2026-07-06",
+                    "universe_source": "SZSE",
+                    "exclusion_reason": "insufficient_history",
+                },
+                {
+                    "code": "000005",
+                    "stock_name": "ST测试",
+                    "exchange": "SZSE",
+                    "board": "主板",
+                    "security_type": "A_SHARE",
+                    "listing_status": "listed",
+                    "listing_date": "1990-12-10",
+                    "is_st": "True",
+                    "is_suspended": "False",
+                    "latest_trade_date": "2026-07-10",
+                    "latest_close": "2.0",
+                    "avg_turnover_20d": "50000000",
+                    "industry": "C 制造业",
+                    "industry_source": "baostock.query_stock_industry",
+                    "industry_update_date": "2026-07-06",
+                    "universe_source": "SZSE",
+                    "exclusion_reason": "st_or_delisting_risk",
+                },
+            ]
+        )
+    (report_dir / "run_summary.json").write_text(
+        json.dumps(
+            {
+                "as_of_date": "2026-07-10",
+                "raw_security_count": 2895,
+                "excluded_chinext_count": 1399,
+                "excluded_st_or_delist_count": 84,
+                "excluded_listing_after_as_of_count": 0,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    rows, counts, diagnostics = load_recent_universe_snapshot(
+        as_of=date(2026, 7, 10),
+        stock_pool_dir=pool_dir,
+        report_root=report_root,
+    )
+
+    by_code = {row["code"]: row for row in rows}
+    assert counts["raw_security_count"] == 2895
+    assert diagnostics["listing_fallback_age_days"] == 0
+    assert diagnostics["listing_source"].startswith("repository_snapshot:")
+    assert by_code["000001"]["exclusion_reason"] == ""
+    assert by_code["000001"]["latest_trade_date"] == ""
+    assert by_code["000005"]["exclusion_reason"] == "st_or_delisting_risk"
+
+
 def test_shenzhen_quant_screen_and_price_plan_are_actionable(tmp_path: Path) -> None:
     history = _price_frame().tail(900).copy()
     history["amount"] = history["close"] * history["volume"] * 100
@@ -1205,8 +1306,9 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "--max-codes" not in workflow
     assert 'summary["effective_scan_count"] > 100' in workflow
     assert 'summary["data_fetch_failure_count"] == 0' in workflow
-    assert 'summary["industry_enrichment_status"] == "OK"' in workflow
+    assert 'summary["industry_enrichment_status"] in {"OK", "SNAPSHOT_FALLBACK"}' in workflow
     assert 'summary["industry_enriched_count"] > 1000' in workflow
+    assert 'summary["listing_fallback_age_days"] <= 7' in workflow
     assert "genge-shenzhen-full-scan-report" in workflow
     assert "daily-opportunity-report:" in workflow
     assert "PASS_EVIDENCE_ENRICHMENT_READY" not in workflow
