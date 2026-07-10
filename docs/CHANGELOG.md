@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] GitHub `GenGe Opportunity Discovery` 定时任务改为执行深市主板A股全量扫描，不再把 `genge_broad_pool.txt --max-codes 100` 的旧流程误标为全量结果；同时增加交易日、数据失败、行业覆盖和价格计划硬验收。
+- [修复] 深市全量扫描使用中国交易日历自动选择最近完整收盘日和下一交易日，并修复报告日期写死、Top30 混入量化行、展示价格与收益风险比复算不一致的问题。
+- [改进] 深市股票池使用 BaoStock 证监会行业分类补充深交所大类行业，记录来源与更新时间；行业别名仅在唯一 canonical 命中时允许结构化长名称匹配，并忽略 `UNRESOLVED` 占位值。
+- [改进] `GenGe Cycle Bottom` GitHub fixture job 超时从 20 分钟提高到 35 分钟，避免完整测试通过后 CLI smoke 被平台强制取消。
 - [新功能] Opportunity discovery 新增深市主板A股全量机会扫描入口，动态获取深交所主板A股清单，输出全量股票池、量化粗筛、Top80证据队列、Top30深度评估和最多12只明日观察名单。
 - [改进] 深市全量扫描的明日价格计划拆分回踩/突破两套条件化方案，使用真实压力位计算收益风险比，并对非 BUY_READY 对象保持动态仓位为0。
 - [新功能] GenGe 新增 `genge_opportunity_discovery` 日常机会发现流程，输出量化研究队列、A/B/C 分层、证据缺口、每日变化和前向观察账本，所有结果限定为研究候选/人工复核候选。

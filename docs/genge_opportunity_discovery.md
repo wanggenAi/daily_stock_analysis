@@ -43,10 +43,6 @@ python3 -m src.strategies.genge_opportunity_discovery.cli \
 
 ```bash
 python3 -m src.strategies.genge_opportunity_discovery.shenzhen_full_scan \
-  --as-of-date 2026-07-07 \
-  --tomorrow 2026-07-08 \
-  --output-dir reports/shenzhen_full_scan/20260708 \
-  --stock-pool-output stock_pools/shenzhen_mainboard_a_full_20260707.csv \
   --max-workers 16 \
   --evidence-queue-size 80 \
   --deep-review-size 30 \
@@ -59,7 +55,9 @@ python3 -m src.strategies.genge_opportunity_discovery.shenzhen_full_scan \
   --exit-profile-file data/opportunity_snapshots/exit_profile.csv
 ```
 
-该入口优先使用深交所公开清单中的板块/证券类型字段构建股票池，不用代码前缀猜测主板范围。它先对完整有效股票池做低成本量化粗筛，再只对 Top80/Top30 做重点证据和机会评估。输出位于 `reports/shenzhen_full_scan/20260708/`，股票池快照位于 `stock_pools/shenzhen_mainboard_a_full_20260707.csv`。
+未显式传入日期时，入口使用 `exchange-calendars` 的中国交易日历选择最近已经完整收盘的交易日，并把下一交易日作为报告目标日。盘中手动运行会回退到上一完整交易日，周五收盘后或周末运行会把目标日指向下周一；也可以同时显式传入 `--as-of-date` 和 `--tomorrow` 复现历史报告。
+
+该入口优先使用深交所公开清单中的板块/证券类型字段构建股票池，不用代码前缀猜测主板范围；BaoStock 的证监会行业分类只用于补充细行业，不改变证券范围，也不作为行业硬证据。它先对完整有效股票池做低成本量化粗筛，再只对 Top80/Top30 做重点证据和机会评估。输出目录默认为 `reports/shenzhen_full_scan/<目标交易日 YYYYMMDD>/`，股票池快照默认为 `stock_pools/shenzhen_mainboard_a_full_<行情日 YYYYMMDD>.csv`。
 
 深市全量扫描会生成 `shenzhen_universe.csv`、`universe_exclusion_audit.csv`、`shenzhen_quant_screen_all.csv`、`top80_evidence_queue.csv`、`top30_deep_review.csv`、`buy_ready.csv`、`near_ready.csv`、`deep_watch.csv`、`tomorrow_watchlist_top12.csv`、`buy_sell_price_plan.csv/json`、`evidence_review.md`、`rejection_summary.csv`、`run_summary.json` 和 `tomorrow_watchlist.md`。回踩和突破计划分开计算，正式买入资格只使用真实压力位下的收益风险比；非 `BUY_READY` 对象仓位始终为 0。
 

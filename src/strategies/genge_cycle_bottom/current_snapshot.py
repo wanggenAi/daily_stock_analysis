@@ -148,6 +148,9 @@ class IndustryAliasResolver:
             for _, row in local.iterrows():
                 code = str(row.get("code") or "").zfill(6)
                 industry = str(row.get("industry") or "").strip()
+                industry_key = normalize_industry_key(industry)
+                if industry_key in {"unresolved", "unknown", "未知行业"}:
+                    continue
                 if code and industry and code not in self.company_industry_by_code:
                     self.company_industry_by_code[code] = industry
 
@@ -178,6 +181,23 @@ class IndustryAliasResolver:
                 matched_evidence_industry=canonical,
                 match_type=match_type,
                 match_confidence="HIGH" if match_type == "EXACT" else "MEDIUM",
+            )
+        substring_matches = [
+            (alias_key, canonical)
+            for alias_key, (canonical, _match_type) in self.by_key.items()
+            if len(alias_key) >= 2 and alias_key in key
+        ]
+        matched_canonicals = {canonical for _alias_key, canonical in substring_matches}
+        if len(matched_canonicals) == 1:
+            canonical = matched_canonicals.pop()
+            return AliasResolution(
+                code=normalized_code,
+                stock_name=stock_name,
+                raw_industry=raw,
+                normalized_industry=canonical,
+                matched_evidence_industry=canonical,
+                match_type="SUBSTRING_ALIAS",
+                match_confidence="MEDIUM",
             )
         return AliasResolution(
             code=normalized_code,

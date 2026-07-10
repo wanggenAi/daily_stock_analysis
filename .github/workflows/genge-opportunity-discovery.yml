@@ -5,24 +5,6 @@ on:
     # 18:30 Beijing time on weekdays (10:30 UTC). Public data may still lag; reports audit gaps.
     - cron: "30 10 * * 1-5"
   workflow_dispatch:
-    inputs:
-      run_mode:
-        description: "Execution scope"
-        required: true
-        default: "full"
-        type: choice
-        options:
-          - quant-only
-          - quant-evidence
-          - full
-      stock_pool_file:
-        description: "Stock pool file for manual full runs"
-        required: false
-        default: "stock_pools/genge_broad_pool.txt"
-      max_codes:
-        description: "Maximum codes for manual full runs"
-        required: false
-        default: "100"
   pull_request:
     branches: [main]
   push:
@@ -72,7 +54,7 @@ jobs:
             --industry-evidence-schema config/industry_evidence_schema.yaml \
             --industry-alias-map config/industry_alias_map.yaml \
             --as-of-date 2024-04-18 \
-            --run-mode "${{ inputs.run_mode || 'full' }}" \
+            --run-mode full \
             --auto-evidence-limit 0 \
             --output-dir reports/opportunity_discovery_ci_smoke \
             --forward-ledger-file reports/opportunity_discovery_ci_smoke/forward_observation_ledger.csv \
@@ -167,38 +149,114 @@ jobs:
           path: |
             data/opportunity_snapshots
             data/cache/opportunity_evidence
+            data/cache/shenzhen_full_scan
+            data/cache/genge_fundamentals
           key: genge-opportunity-state-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             genge-opportunity-state-${{ runner.os }}-
 
       - name: Prepare opportunity state directories
-        run: mkdir -p data/opportunity_snapshots data/cache/opportunity_evidence
-
-      - name: Run daily opportunity discovery
-        env:
-          RUN_MODE: ${{ inputs.run_mode || 'full' }}
-          STOCK_POOL_FILE: ${{ inputs.stock_pool_file || 'stock_pools/genge_broad_pool.txt' }}
-          MAX_CODES: ${{ inputs.max_codes || '100' }}
         run: |
-          python -m src.strategies.genge_opportunity_discovery.cli \
-            --stock-pool-file "$STOCK_POOL_FILE" \
-            --years 5 \
-            --benchmark 000905 \
-            --output-dir reports/opportunity_discovery_daily \
-            --max-codes "$MAX_CODES" \
-            --run-mode "$RUN_MODE" \
-            --auto-fetch-valuation \
-            --auto-fetch-financial \
+          mkdir -p data/opportunity_snapshots data/cache/opportunity_evidence data/cache/shenzhen_full_scan data/cache/genge_fundamentals
+          if [ ! -s data/opportunity_snapshots/exit_profile.csv ]; then
+            cp data/opportunity_snapshots/exit_profile_seed.csv data/opportunity_snapshots/exit_profile.csv
+          fi
+
+      - name: Run Shenzhen mainboard full scan
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.shenzhen_full_scan \
+            --max-workers 16 \
+            --evidence-queue-size 80 \
+            --deep-review-size 30 \
+            --max-watchlist 12 \
+            --fundamental-limit 30 \
             --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
             --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
             --industry-evidence-schema config/industry_evidence_schema.yaml \
             --industry-alias-map config/industry_alias_map.yaml \
-            --exit-profile-file data/opportunity_snapshots/exit_profile.csv \
-            --forward-ledger-file data/opportunity_snapshots/forward_observation_ledger.csv \
-            --state-dir data/opportunity_snapshots \
-            --evidence-cache-dir data/cache/opportunity_evidence \
-            --fixture-smoke-passed \
-            --ci-passed
+            --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+
+      - name: Validate Shenzhen full scan report
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path("reports/shenzhen_full_scan")
+          runs = sorted(path for path in root.iterdir() if path.is_dir() and (path / "run_summary.json").exists())
+          assert runs, "no Shenzhen full scan report generated"
+          latest = runs[-1]
+          summary = json.loads((latest / "run_summary.json").read_text(encoding="utf-8"))
+          required = [
+              "shenzhen_universe.csv",
+              "universe_exclusion_audit.csv",
+              "shenzhen_quant_screen_all.csv",
+              "top80_evidence_queue.csv",
+              "top30_deep_review.csv",
+              "buy_ready.csv",
+              "near_ready.csv",
+              "deep_watch.csv",
+              "tomorrow_watchlist_top12.csv",
+              "buy_sell_price_plan.csv",
+              "buy_sell_price_plan.json",
+              "evidence_review.md",
+              "rejection_summary.csv",
+              "run_summary.json",
+              "tomorrow_watchlist.md",
+          ]
+          missing = [name for name in required if not (latest / name).exists()]
+          assert not missing, f"missing report files: {missing}"
+          assert summary["effective_scan_count"] > 100
+          assert summary["actual_scanned_count"] == summary["effective_scan_count"]
+          assert summary["data_fetch_failure_count"] == 0
+          assert summary["industry_enrichment_status"] == "OK"
+          assert summary["industry_enriched_count"] > 1000
+          assert summary["industry_evidence_file"] == "data/user_supplied/industry_cycle_evidence.csv"
+          assert summary["company_evidence_file"] == "data/user_supplied/company_cycle_evidence.csv"
+          assert summary["price_adjustment"] == "unadjusted/tencent_kline"
+          assert summary["no_auto_trade"] is True
+          assert summary["no_broker_integration"] is True
+
+          with (latest / "buy_sell_price_plan.csv").open(encoding="utf-8") as file:
+              plans = list(csv.DictReader(file))
+          with (latest / "top30_deep_review.csv").open(encoding="utf-8") as file:
+              deep_rows = list(csv.DictReader(file))
+          assert len(deep_rows) == 30
+          assert all(row["actionability_score"] for row in deep_rows)
+          assert all(row["industry_evidence_status"] for row in deep_rows)
+          assert all(row["company_evidence_status"] for row in deep_rows)
+          for row in plans:
+              assert not row["code"].startswith("3"), row["code"]
+              assert row["latest_trade_date"] <= summary["as_of_date"]
+              if row["pullback_entry_low"]:
+                  entry = float(row["pullback_entry_high"])
+                  stop = float(row["pullback_stop_price"])
+                  target = float(row["pullback_target_1"])
+                  assert stop < float(row["pullback_entry_low"]) <= entry < target
+                  assert float(row["pullback_real_reward_risk"]) == round((target - entry) / (entry - stop), 2)
+              if row["breakout_trigger_price"]:
+                  entry = float(row["breakout_trigger_price"])
+                  stop = float(row["breakout_stop_price"])
+                  target = float(row["breakout_target_1"])
+                  assert stop < entry < target
+                  assert float(row["breakout_real_reward_risk"]) == round((target - entry) / (entry - stop), 2)
+              if row["classification"] != "BUY_READY":
+                  for key in (
+                      "pullback_initial_position_pct",
+                      "pullback_max_position_pct",
+                      "breakout_initial_position_pct",
+                      "breakout_max_position_pct",
+                  ):
+                      assert float(row[key] or 0) == 0.0, (row["code"], key)
+          forbidden = ("必买", "必卖", "肯定上涨", "稳赚", "保证上涨", "确定买入", "自动下单")
+          for path in latest.glob("*"):
+              if path.suffix.lower() in {".md", ".csv", ".json"}:
+                  text = path.read_text(encoding="utf-8")
+                  assert not any(term in text for term in forbidden), path
+          print(f"validated={latest}")
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
 
       - name: Save opportunity state
         uses: actions/cache/save@v4
@@ -207,12 +265,16 @@ jobs:
           path: |
             data/opportunity_snapshots
             data/cache/opportunity_evidence
+            data/cache/shenzhen_full_scan
+            data/cache/genge_fundamentals
           key: genge-opportunity-state-${{ runner.os }}-${{ github.run_id }}
 
-      - name: Upload daily opportunity report
+      - name: Upload Shenzhen full scan report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: genge-opportunity-discovery-daily-report
-          path: reports/opportunity_discovery_daily
+          name: genge-shenzhen-full-scan-report
+          path: |
+            reports/shenzhen_full_scan
+            stock_pools/shenzhen_mainboard_a_full_*.csv
           if-no-files-found: warn

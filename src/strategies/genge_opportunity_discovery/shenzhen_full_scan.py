@@ -16,10 +16,12 @@ import math
 import time
 from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -67,6 +69,8 @@ UNIVERSE_COLUMNS = [
     "latest_close",
     "avg_turnover_20d",
     "industry",
+    "industry_source",
+    "industry_update_date",
     "universe_source",
     "exclusion_reason",
 ]
@@ -76,6 +80,8 @@ QUANT_COLUMNS = [
     "code",
     "stock_name",
     "industry",
+    "industry_source",
+    "industry_update_date",
     "latest_trade_date",
     "latest_close",
     "price_percentile_5y",
@@ -175,6 +181,44 @@ class ScanConfig:
     fundamental_cache_dir: Path = Path("data/cache/genge_fundamentals")
     auto_fetch_fundamentals: bool = True
     fundamental_limit: int = 30
+
+
+def resolve_scan_dates(
+    reference_time: datetime | None = None,
+    *,
+    calendar: Any | None = None,
+) -> tuple[date, date]:
+    """Return the latest completed China session and its next session."""
+    market_time = reference_time or datetime.now(ZoneInfo("Asia/Shanghai"))
+    if market_time.tzinfo is None:
+        market_time = market_time.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+    else:
+        market_time = market_time.astimezone(ZoneInfo("Asia/Shanghai"))
+    if calendar is None:
+        try:
+            import exchange_calendars as xcals
+        except ImportError as exc:
+            raise RuntimeError(
+                "exchange-calendars is required when --as-of-date/--tomorrow are omitted"
+            ) from exc
+        calendar = xcals.get_calendar("XSHG")
+
+    local_date = market_time.date()
+    if calendar.is_session(local_date):
+        session = calendar.date_to_session(local_date, direction="previous")
+        session_close = calendar.session_close(session)
+        if hasattr(session_close, "tz_convert"):
+            close_local = session_close.tz_convert("Asia/Shanghai").to_pydatetime()
+        elif session_close.tzinfo is not None:
+            close_local = session_close.astimezone(ZoneInfo("Asia/Shanghai"))
+        else:
+            close_local = session_close.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
+        if market_time < close_local:
+            session = calendar.previous_session(session)
+    else:
+        session = calendar.date_to_session(local_date, direction="previous")
+    next_session = calendar.next_session(session)
+    return coerce_date(session), coerce_date(next_session)
 
 
 def _normalize_code(value: Any) -> str:
@@ -277,12 +321,85 @@ def build_official_universe(raw_df: pd.DataFrame, *, as_of: date) -> tuple[list[
                 "latest_close": "",
                 "avg_turnover_20d": "",
                 "industry": str(item.get("所属行业") or "").strip(),
+                "industry_source": "SZSE ShowReport 所属行业",
+                "industry_update_date": "",
                 "universe_source": "SZSE ShowReport CATALOGID=1110 TABKEY=tab1",
                 "exclusion_reason": exclusion,
             }
         )
     counts["shenzhen_mainboard_a_count"] = len(rows)
     return rows, counts
+
+
+def fetch_baostock_industry_map() -> tuple[dict[str, dict[str, str]], dict[str, Any]]:
+    diagnostics: dict[str, Any] = {
+        "industry_enrichment_provider": "baostock.query_stock_industry",
+        "industry_enrichment_status": "FAILED",
+        "industry_enrichment_row_count": 0,
+        "industry_enrichment_update_date": "",
+        "industry_enrichment_error": "",
+    }
+    try:
+        import baostock as bs
+    except Exception as exc:
+        diagnostics["industry_enrichment_error"] = f"import_baostock:{type(exc).__name__}"
+        return {}, diagnostics
+
+    result: dict[str, dict[str, str]] = {}
+    logged_in = False
+    try:
+        with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+            login = bs.login()
+            if str(login.error_code) != "0":
+                raise RuntimeError(f"baostock_login:{login.error_code}:{login.error_msg}")
+            logged_in = True
+            query = bs.query_stock_industry()
+            if str(query.error_code) != "0":
+                raise RuntimeError(f"baostock_query:{query.error_code}:{query.error_msg}")
+            while query.next():
+                row = dict(zip(query.fields, query.get_row_data()))
+                code = _normalize_code(str(row.get("code") or "").split(".")[-1])
+                industry = str(row.get("industry") or "").strip()
+                if code and industry:
+                    result[code] = {
+                        "industry": industry,
+                        "update_date": str(row.get("updateDate") or "").strip(),
+                    }
+    except Exception as exc:
+        diagnostics["industry_enrichment_error"] = f"{type(exc).__name__}: {exc}"
+        return {}, diagnostics
+    finally:
+        if logged_in:
+            with redirect_stdout(io.StringIO()), redirect_stderr(io.StringIO()):
+                bs.logout()
+
+    update_dates = sorted({row["update_date"] for row in result.values() if row.get("update_date")})
+    diagnostics.update(
+        {
+            "industry_enrichment_status": "OK" if result else "EMPTY",
+            "industry_enrichment_row_count": len(result),
+            "industry_enrichment_update_date": update_dates[-1] if update_dates else "",
+        }
+    )
+    return result, diagnostics
+
+
+def enrich_universe_industries(
+    rows: list[dict[str, Any]],
+    industry_map: Mapping[str, Mapping[str, str]],
+) -> tuple[list[dict[str, Any]], int]:
+    enriched: list[dict[str, Any]] = []
+    matched = 0
+    for row in rows:
+        local = dict(row)
+        industry = industry_map.get(str(local.get("code") or ""))
+        if industry and industry.get("industry"):
+            local["industry"] = industry["industry"]
+            local["industry_source"] = "baostock.query_stock_industry"
+            local["industry_update_date"] = industry.get("update_date") or ""
+            matched += 1
+        enriched.append(local)
+    return enriched, matched
 
 
 def _tencent_symbol(code: str) -> str:
@@ -537,6 +654,8 @@ def quant_screen(
                 "code": code,
                 "stock_name": item.get("stock_name"),
                 "industry": item.get("industry"),
+                "industry_source": item.get("industry_source"),
+                "industry_update_date": item.get("industry_update_date"),
                 "latest_trade_date": item.get("latest_trade_date"),
                 "latest_close": _round_price(close),
                 "price_percentile_5y": _round(percentile_5y),
@@ -748,21 +867,28 @@ def build_price_plan(row: Mapping[str, Any], history: pd.DataFrame, evidence_url
             target1 = targets[0] if targets else None
             target2 = targets[1] if len(targets) > 1 else None
             if target1 and stop < entry_high:
-                rr = (target1 - entry_high) / (entry_high - stop)
-                real_rr_values.append(rr)
-                pullback_status = "READY" if rr >= 1.8 else "REAL_RR_BELOW_1_8"
-                pullback.update(
-                    {
-                        "pullback_entry_low": _round_price(entry_low),
-                        "pullback_entry_high": _round_price(entry_high),
-                        "pullback_stop_price": _round_price(stop),
-                        "pullback_logic_invalidation_price": _round_price(logic),
-                        "pullback_target_1": _round_price(target1),
-                        "pullback_target_2": _round_price(target2 or (entry_high + 2.5 * (entry_high - stop))),
-                        "pullback_real_reward_risk": round(rr, 2),
-                        "pullback_status": pullback_status,
-                    }
-                )
+                entry_low_price = float(_round_price(entry_low))
+                entry_high_price = float(_round_price(entry_high))
+                stop_price = float(_round_price(stop))
+                target1_price = float(_round_price(target1))
+                if stop_price < entry_low_price <= entry_high_price < target1_price:
+                    rr = (target1_price - entry_high_price) / (entry_high_price - stop_price)
+                    real_rr_values.append(rr)
+                    pullback_status = "READY" if rr >= 1.8 else "REAL_RR_BELOW_1_8"
+                    pullback.update(
+                        {
+                            "pullback_entry_low": entry_low_price,
+                            "pullback_entry_high": entry_high_price,
+                            "pullback_stop_price": stop_price,
+                            "pullback_logic_invalidation_price": _round_price(logic),
+                            "pullback_target_1": target1_price,
+                            "pullback_target_2": _round_price(target2 or (entry_high + 2.5 * (entry_high - stop))),
+                            "pullback_real_reward_risk": round(rr, 2),
+                            "pullback_status": pullback_status,
+                        }
+                    )
+                else:
+                    pullback["pullback_status"] = "NO_VALID_ROUNDED_PRICE_RELATION"
             else:
                 pullback["pullback_status"] = "NO_REAL_RESISTANCE_TARGET"
     resistance_20 = float(pd.to_numeric(history.tail(20)["high"], errors="coerce").max())
@@ -775,10 +901,16 @@ def build_price_plan(row: Mapping[str, Any], history: pd.DataFrame, evidence_url
     breakout_rr = ""
     breakout_status = "NO_REAL_RESISTANCE_TARGET"
     if breakout_t1 and breakout_stop < breakout:
-        breakout_rr_float = (breakout_t1 - breakout) / (breakout - breakout_stop)
-        breakout_rr = round(breakout_rr_float, 2)
-        real_rr_values.append(breakout_rr_float)
-        breakout_status = "READY" if breakout_rr_float >= 1.8 else "REAL_RR_BELOW_1_8"
+        breakout_price = float(_round_price(breakout))
+        breakout_stop_price = float(_round_price(breakout_stop))
+        breakout_target_1_price = float(_round_price(breakout_t1))
+        if breakout_stop_price < breakout_price < breakout_target_1_price:
+            breakout_rr_float = (breakout_target_1_price - breakout_price) / (breakout_price - breakout_stop_price)
+            breakout_rr = round(breakout_rr_float, 2)
+            real_rr_values.append(breakout_rr_float)
+            breakout_status = "READY" if breakout_rr_float >= 1.8 else "REAL_RR_BELOW_1_8"
+        else:
+            breakout_status = "NO_VALID_ROUNDED_PRICE_RELATION"
     real_target_1 = breakout_t1 or (pullback.get("pullback_target_1") if pullback.get("pullback_target_1") else "")
     real_target_2 = breakout_t2 or (pullback.get("pullback_target_2") if pullback.get("pullback_target_2") else "")
     theoretical_target_1 = breakout + 1.5 * (breakout - breakout_stop)
@@ -867,7 +999,7 @@ def build_final_watchlist(
     quant_by_code: Mapping[str, Mapping[str, Any]],
     histories: Mapping[str, pd.DataFrame],
     config: ScanConfig,
-) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Counter[str]]:
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], Counter[str], list[dict[str, Any]]]:
     payload = json.loads((opportunity_report_dir / "daily_opportunity_report.json").read_text(encoding="utf-8"))
     opportunities = payload.get("all_opportunities") or []
     evidence_rows = list(csv.DictReader((opportunity_report_dir / "evidence_inventory.csv").open(encoding="utf-8"))) if (opportunity_report_dir / "evidence_inventory.csv").exists() else []
@@ -935,7 +1067,7 @@ def build_final_watchlist(
             break
     for index, item in enumerate(final_rows, 1):
         item["actionability_rank"] = index
-    return final_rows, rejection_reasons, counts
+    return final_rows, rejection_reasons, counts, candidates
 
 
 def rejection_summary(
@@ -1039,7 +1171,7 @@ def _markdown(rows: list[Mapping[str, Any]], summary: Mapping[str, Any]) -> str:
         )
     lines.append("")
     if not any(row.get("classification") == "BUY_READY" for row in rows):
-        lines.append("2026年7月8日没有达到 BUY_READY 的深市主板股票。")
+        lines.append(f"{summary.get('tomorrow')} 没有达到 BUY_READY 的深市主板股票。")
     lines.append("")
     lines.append("## 个股观察细节")
     lines.append("")
@@ -1099,6 +1231,9 @@ def run_scan(
     config.output_dir.mkdir(parents=True, exist_ok=True)
     raw = fetch_szse_listing()
     official_rows, official_counts = build_official_universe(raw, as_of=config.as_of)
+    industry_map, industry_diagnostics = fetch_baostock_industry_map()
+    official_rows, industry_enriched_count = enrich_universe_industries(official_rows, industry_map)
+    industry_diagnostics["industry_enriched_count"] = industry_enriched_count
     histories, sources, errors = fetch_histories(official_rows, config)
     universe_rows, universe_audit, history_counts = enrich_universe_with_history(official_rows, histories, errors, config)
     benchmark = fetch_unadjusted_history("399001", as_of=config.as_of)
@@ -1122,13 +1257,13 @@ def run_scan(
         exit_profile_file=exit_profile_file,
     )
     quant_by_code = {str(row["code"]): row for row in quant_rows}
-    final_rows, watch_rejections, class_counts = build_final_watchlist(
+    final_rows, watch_rejections, class_counts, deep_rows = build_final_watchlist(
         opportunity_report_dir=deep_report,
         quant_by_code=quant_by_code,
         histories=histories,
         config=config,
     )
-    top30 = sorted(final_rows + top80, key=lambda row: (_safe_float(row.get("actionability_score")) or _safe_float(row.get("quant_score")) or 0.0), reverse=True)[: config.deep_review_size]
+    top30 = deep_rows[: config.deep_review_size]
     _write_csv(config.output_dir / "top30_deep_review.csv", top30)
     _write_csv(config.output_dir / "buy_ready.csv", [row for row in final_rows if row.get("classification") == "BUY_READY"], PLAN_COLUMNS)
     _write_csv(config.output_dir / "near_ready.csv", [row for row in final_rows if row.get("classification") == "NEAR_READY"], PLAN_COLUMNS)
@@ -1142,6 +1277,7 @@ def run_scan(
     summary = {
         **official_counts,
         **history_counts,
+        **industry_diagnostics,
         "as_of_date": config.as_of.isoformat(),
         "tomorrow": config.tomorrow.isoformat(),
         "actual_scanned_count": len(quant_rows),
@@ -1260,7 +1396,7 @@ def _print_terminal_report(output_dir: Path, summary: Mapping[str, Any]) -> None
     )
     price_low = min(rows, key=lambda row: _safe_float(row.get("price_percentile_5y")) or 999.0) if rows else None
     rejection_text = "；".join(f"{row.get('reason')}={row.get('count')}" for row in rejection_rows)
-    print(f"2026年7月8日BUY_READY股票：{', '.join(buy_ready) if buy_ready else '无'}")
+    print(f"{summary.get('tomorrow')} BUY_READY股票：{', '.join(buy_ready) if buy_ready else '无'}")
     print(f"最值得等待回踩的股票：{best_pullback.get('stock_name')}({best_pullback.get('code')})" if best_pullback else "最值得等待回踩的股票：无")
     print(f"最值得等待突破的股票：{best_breakout.get('stock_name')}({best_breakout.get('code')})" if best_breakout else "最值得等待突破的股票：无")
     print(f"证据最完整的股票：{evidence_scored[0].get('stock_name')}({evidence_scored[0].get('code')})，但仍需人工复核" if evidence_scored else "证据最完整的股票：无")
@@ -1270,10 +1406,10 @@ def _print_terminal_report(output_dir: Path, summary: Mapping[str, Any]) -> None
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Run Shenzhen mainboard full-universe opportunity scan.")
-    parser.add_argument("--as-of-date", default="2026-07-07")
-    parser.add_argument("--tomorrow", default="2026-07-08")
-    parser.add_argument("--output-dir", default="reports/shenzhen_full_scan/20260708")
-    parser.add_argument("--stock-pool-output", default="stock_pools/shenzhen_mainboard_a_full_20260707.csv")
+    parser.add_argument("--as-of-date", help="Latest completed China trading session; defaults from XSHG calendar")
+    parser.add_argument("--tomorrow", help="Next China trading session; must be supplied with --as-of-date")
+    parser.add_argument("--output-dir", help="Defaults to reports/shenzhen_full_scan/<tomorrow YYYYMMDD>")
+    parser.add_argument("--stock-pool-output", help="Defaults to stock_pools/shenzhen_mainboard_a_full_<as-of YYYYMMDD>.csv")
     parser.add_argument("--max-workers", type=int, default=12)
     parser.add_argument("--evidence-queue-size", type=int, default=80)
     parser.add_argument("--deep-review-size", type=int, default=30)
@@ -1290,11 +1426,24 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
+    if bool(args.as_of_date) != bool(args.tomorrow):
+        raise SystemExit("--as-of-date and --tomorrow must be supplied together")
+    if args.as_of_date:
+        as_of = coerce_date(args.as_of_date)
+        tomorrow = coerce_date(args.tomorrow)
+    else:
+        as_of, tomorrow = resolve_scan_dates()
+    if tomorrow <= as_of:
+        raise SystemExit("--tomorrow must be later than --as-of-date")
+    output_dir = Path(args.output_dir or f"reports/shenzhen_full_scan/{tomorrow:%Y%m%d}")
+    stock_pool_output = Path(
+        args.stock_pool_output or f"stock_pools/shenzhen_mainboard_a_full_{as_of:%Y%m%d}.csv"
+    )
     config = ScanConfig(
-        as_of=coerce_date(args.as_of_date),
-        tomorrow=coerce_date(args.tomorrow),
-        output_dir=Path(args.output_dir),
-        stock_pool_output=Path(args.stock_pool_output),
+        as_of=as_of,
+        tomorrow=tomorrow,
+        output_dir=output_dir,
+        stock_pool_output=stock_pool_output,
         max_workers=args.max_workers,
         evidence_queue_size=args.evidence_queue_size,
         deep_review_size=args.deep_review_size,

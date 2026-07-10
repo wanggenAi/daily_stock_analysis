@@ -170,11 +170,19 @@ def _company_evidence_rows() -> pd.DataFrame:
 
 def test_industry_alias_resolution_supports_alias_code_priority_and_unresolved() -> None:
     alias_map = load_industry_alias_map("config/industry_alias_map.yaml")
-    resolver = IndustryAliasResolver(alias_map, _company_evidence_rows())
+    company_evidence = pd.concat(
+        [
+            _company_evidence_rows(),
+            pd.DataFrame([{"code": "600003", "industry": "UNRESOLVED"}]),
+        ],
+        ignore_index=True,
+    )
+    resolver = IndustryAliasResolver(alias_map, company_evidence)
 
     code_priority = resolver.resolve(code="000100", stock_name="TCL科技", raw_industry="银行")
     alias = resolver.resolve(code="600000", stock_name="测试", raw_industry=" tft-lcd ")
     exact = resolver.resolve(code="600001", stock_name="测试", raw_industry="猪肉")
+    structured = resolver.resolve(code="600003", stock_name="测试", raw_industry="C26化学原料和化学制品制造业")
     unresolved = resolver.resolve(code="600002", stock_name="测试", raw_industry="未知行业")
 
     assert code_priority.normalized_industry == "面板"
@@ -182,6 +190,8 @@ def test_industry_alias_resolution_supports_alias_code_priority_and_unresolved()
     assert alias.normalized_industry == "面板"
     assert alias.match_type == "ALIAS"
     assert exact.match_type == "EXACT"
+    assert structured.normalized_industry == "化工"
+    assert structured.match_type == "SUBSTRING_ALIAS"
     assert unresolved.normalized_industry == "UNRESOLVED"
     assert unresolved.match_type == "UNRESOLVED"
 
@@ -389,6 +399,7 @@ def test_current_snapshot_live_price_failure_budget_marks_remaining(monkeypatch,
     )
 
     monkeypatch.setattr(genge_cli, "_fetch_price_live_current_snapshot", failing_current_snapshot_fetch)
+    monkeypatch.setattr(genge_cli, "_get_manager", lambda: object())
     inputs, sources, errors, _ = genge_cli._load_inputs(
         codes=["000001", "000002", "000003", "000004", "000005"],
         args=args,

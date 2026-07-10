@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import csv
-from datetime import date
+from datetime import date, datetime, timezone
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import numpy as np
 import pandas as pd
@@ -19,7 +20,9 @@ from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     ScanConfig,
     build_official_universe,
     build_price_plan,
+    enrich_universe_industries,
     quant_screen,
+    resolve_scan_dates,
 )
 from src.strategies.genge_opportunity_discovery.tomorrow_watchlist import PriceContext, _plan_prices, generate_tomorrow_watchlist
 
@@ -1049,6 +1052,45 @@ def test_shenzhen_universe_uses_official_board_fields() -> None:
     assert "300001" not in by_code
 
 
+def test_shenzhen_universe_enriches_structured_industry_without_changing_scope() -> None:
+    rows = [
+        {
+            "code": "000001",
+            "stock_name": "平安银行",
+            "exchange": "SZSE",
+            "board": "主板",
+            "industry": "J 金融业",
+            "industry_source": "SZSE ShowReport 所属行业",
+            "industry_update_date": "",
+        },
+        {
+            "code": "000002",
+            "stock_name": "万科A",
+            "exchange": "SZSE",
+            "board": "主板",
+            "industry": "K 房地产",
+            "industry_source": "SZSE ShowReport 所属行业",
+            "industry_update_date": "",
+        },
+    ]
+    enriched, count = enrich_universe_industries(
+        rows,
+        {
+            "000001": {
+                "industry": "J66货币金融服务",
+                "update_date": "2026-07-06",
+            }
+        },
+    )
+
+    assert count == 1
+    assert len(enriched) == len(rows)
+    assert enriched[0]["industry"] == "J66货币金融服务"
+    assert enriched[0]["industry_source"] == "baostock.query_stock_industry"
+    assert enriched[0]["industry_update_date"] == "2026-07-06"
+    assert enriched[1]["industry"] == "K 房地产"
+
+
 def test_shenzhen_quant_screen_and_price_plan_are_actionable(tmp_path: Path) -> None:
     history = _price_frame().tail(900).copy()
     history["amount"] = history["close"] * history["volume"] * 100
@@ -1088,29 +1130,88 @@ def test_shenzhen_quant_screen_and_price_plan_are_actionable(tmp_path: Path) -> 
     assert rows[0]["code"] == "000001"
     assert float(plan["breakout_stop_price"]) < float(plan["breakout_trigger_price"])
     if plan["pullback_status"] == "READY":
-        assert float(plan["pullback_stop_price"]) < float(plan["pullback_entry_high"])
+        pullback_entry = float(plan["pullback_entry_high"])
+        pullback_stop = float(plan["pullback_stop_price"])
+        pullback_target = float(plan["pullback_target_1"])
+        assert pullback_stop < pullback_entry < pullback_target
+        assert float(plan["pullback_real_reward_risk"]) == round(
+            (pullback_target - pullback_entry) / (pullback_entry - pullback_stop),
+            2,
+        )
+    breakout_entry = float(plan["breakout_trigger_price"])
+    breakout_stop = float(plan["breakout_stop_price"])
+    breakout_target = float(plan["breakout_target_1"])
+    assert float(plan["breakout_real_reward_risk"]) == round(
+        (breakout_target - breakout_entry) / (breakout_entry - breakout_stop),
+        2,
+    )
     assert plan["theoretical_target_1"] != plan["real_resistance_target_1"]
+
+
+class _FakeChinaCalendar:
+    sessions = [date(2026, 7, 9), date(2026, 7, 10), date(2026, 7, 13)]
+
+    def is_session(self, value: date) -> bool:
+        return value in self.sessions
+
+    def date_to_session(self, value: date, direction: str = "previous") -> date:
+        assert direction == "previous"
+        return max(session for session in self.sessions if session <= value)
+
+    def previous_session(self, value: date) -> date:
+        return self.sessions[self.sessions.index(value) - 1]
+
+    def next_session(self, value: date) -> date:
+        return self.sessions[self.sessions.index(value) + 1]
+
+    def session_close(self, value: date) -> datetime:
+        return datetime(value.year, value.month, value.day, 7, 0, tzinfo=timezone.utc)
+
+
+@pytest.mark.parametrize(
+    ("reference_time", "expected_as_of", "expected_tomorrow"),
+    [
+        (datetime(2026, 7, 11, 10, tzinfo=ZoneInfo("Asia/Shanghai")), date(2026, 7, 10), date(2026, 7, 13)),
+        (datetime(2026, 7, 10, 14, tzinfo=ZoneInfo("Asia/Shanghai")), date(2026, 7, 9), date(2026, 7, 10)),
+        (datetime(2026, 7, 10, 16, tzinfo=ZoneInfo("Asia/Shanghai")), date(2026, 7, 10), date(2026, 7, 13)),
+    ],
+)
+def test_shenzhen_scan_dates_use_completed_china_sessions(
+    reference_time: datetime,
+    expected_as_of: date,
+    expected_tomorrow: date,
+) -> None:
+    assert resolve_scan_dates(reference_time, calendar=_FakeChinaCalendar()) == (expected_as_of, expected_tomorrow)
 
 
 def test_github_actions_opportunity_workflow_contract() -> None:
     workflow = Path(".github/workflows/genge-opportunity-discovery.yml").read_text(encoding="utf-8")
+    cycle_workflow = Path(".github/workflows/genge-cycle-bottom.yml").read_text(encoding="utf-8")
     requirements = Path("requirements.txt").read_text(encoding="utf-8")
     ci_requirements = Path(".github/requirements-ci.txt").read_text(encoding="utf-8")
     assert "cron:" in workflow
     assert "workflow_dispatch:" in workflow
-    assert "run_mode:" in workflow
     assert "actions/upload-artifact@v4" in workflow
     assert "actions/cache/restore@v4" in workflow
     assert "actions/cache/save@v4" in workflow
     assert "data/opportunity_snapshots" in workflow
     assert "data/cache/opportunity_evidence" in workflow
+    assert "data/cache/shenzhen_full_scan" in workflow
     assert "tests/test_genge_opportunity_discovery_*.py" in workflow
     assert "--run-mode" in workflow
     assert "--exit-profile-file" in workflow
-    assert "--forward-ledger-file" in workflow
-    assert "--evidence-cache-dir" in workflow
+    assert "src.strategies.genge_opportunity_discovery.shenzhen_full_scan" in workflow
+    assert "genge_broad_pool.txt" not in workflow
+    assert "--max-codes" not in workflow
+    assert 'summary["effective_scan_count"] > 100' in workflow
+    assert 'summary["data_fetch_failure_count"] == 0' in workflow
+    assert 'summary["industry_enrichment_status"] == "OK"' in workflow
+    assert 'summary["industry_enriched_count"] > 1000' in workflow
+    assert "genge-shenzhen-full-scan-report" in workflow
     assert "daily-opportunity-report:" in workflow
     assert "PASS_EVIDENCE_ENRICHMENT_READY" not in workflow
+    assert "timeout-minutes: 35" in cycle_workflow
+    assert "exchange-calendars" in requirements
     assert "pypdf" in requirements
     assert "beautifulsoup4" in requirements
     assert "pypdf" in ci_requirements
