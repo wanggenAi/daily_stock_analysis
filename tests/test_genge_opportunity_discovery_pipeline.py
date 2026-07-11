@@ -1246,6 +1246,10 @@ def test_shenzhen_quant_screen_and_price_plan_are_actionable(tmp_path: Path) -> 
         (breakout_target - breakout_entry) / (breakout_entry - breakout_stop),
         2,
     )
+    preferred = str(plan["preferred_plan"])
+    assert plan["real_resistance_target_1"] == plan[f"{preferred}_target_1"]
+    assert plan["real_resistance_target_2"] == plan[f"{preferred}_target_2"]
+    assert plan["real_reward_risk_ratio"] == plan[f"{preferred}_real_reward_risk"]
     assert plan["theoretical_target_1"] != plan["real_resistance_target_1"]
 
 

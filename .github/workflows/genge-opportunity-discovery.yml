@@ -245,6 +245,11 @@ jobs:
                   target = float(row["breakout_target_1"])
                   assert stop < entry < target
                   assert float(row["breakout_real_reward_risk"]) == round((target - entry) / (entry - stop), 2)
+              preferred = row["preferred_plan"]
+              assert preferred in {"pullback", "breakout"}
+              assert row["real_resistance_target_1"] == row[f"{preferred}_target_1"]
+              assert row["real_resistance_target_2"] == row[f"{preferred}_target_2"]
+              assert row["real_reward_risk_ratio"] == row[f"{preferred}_real_reward_risk"]
               if row["classification"] != "BUY_READY":
                   for key in (
                       "pullback_initial_position_pct",

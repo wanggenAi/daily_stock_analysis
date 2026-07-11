@@ -952,7 +952,6 @@ def build_price_plan(row: Mapping[str, Any], history: pd.DataFrame, evidence_url
         "pullback_real_reward_risk": "",
         "pullback_status": pullback_status,
     }
-    real_rr_values: list[float] = []
     if support:
         entry_low = max(0.01, support - 0.30 * atr14)
         entry_high = min(close, support + 0.20 * atr14)
@@ -971,7 +970,6 @@ def build_price_plan(row: Mapping[str, Any], history: pd.DataFrame, evidence_url
                 target1_price = float(_round_price(target1))
                 if stop_price < entry_low_price <= entry_high_price < target1_price:
                     rr = (target1_price - entry_high_price) / (entry_high_price - stop_price)
-                    real_rr_values.append(rr)
                     pullback_status = "READY" if rr >= 1.8 else "REAL_RR_BELOW_1_8"
                     pullback.update(
                         {
@@ -1005,15 +1003,32 @@ def build_price_plan(row: Mapping[str, Any], history: pd.DataFrame, evidence_url
         if breakout_stop_price < breakout_price < breakout_target_1_price:
             breakout_rr_float = (breakout_target_1_price - breakout_price) / (breakout_price - breakout_stop_price)
             breakout_rr = round(breakout_rr_float, 2)
-            real_rr_values.append(breakout_rr_float)
             breakout_status = "READY" if breakout_rr_float >= 1.8 else "REAL_RR_BELOW_1_8"
         else:
             breakout_status = "NO_VALID_ROUNDED_PRICE_RELATION"
-    real_target_1 = breakout_t1 or (pullback.get("pullback_target_1") if pullback.get("pullback_target_1") else "")
-    real_target_2 = breakout_t2 or (pullback.get("pullback_target_2") if pullback.get("pullback_target_2") else "")
     theoretical_target_1 = breakout + 1.5 * (breakout - breakout_stop)
     theoretical_target_2 = breakout + 2.5 * (breakout - breakout_stop)
-    best_rr = max(real_rr_values) if real_rr_values else None
+    breakout_target_1 = _round_price(breakout_t1)
+    breakout_target_2 = _round_price(breakout_t2 or theoretical_target_2)
+    pullback_rr_value = _safe_float(pullback.get("pullback_real_reward_risk"))
+    breakout_rr_value = _safe_float(breakout_rr)
+    if breakout_rr_value is not None and (
+        pullback_rr_value is None or breakout_rr_value >= pullback_rr_value
+    ):
+        preferred_plan = "breakout"
+        real_target_1 = breakout_target_1
+        real_target_2 = breakout_target_2
+        preferred_rr = breakout_rr_value
+    elif pullback_rr_value is not None:
+        preferred_plan = "pullback"
+        real_target_1 = pullback.get("pullback_target_1") or ""
+        real_target_2 = pullback.get("pullback_target_2") or ""
+        preferred_rr = pullback_rr_value
+    else:
+        preferred_plan = ""
+        real_target_1 = ""
+        real_target_2 = ""
+        preferred_rr = None
     return {
         "latest_trade_date": latest_date.isoformat(),
         "latest_close": _round_price(close),
@@ -1023,16 +1038,16 @@ def build_price_plan(row: Mapping[str, Any], history: pd.DataFrame, evidence_url
         "breakout_max_chase_price": _round_price(breakout * 1.015),
         "breakout_stop_price": _round_price(breakout_stop),
         "breakout_logic_invalidation_price": _round_price(breakout_logic),
-        "breakout_target_1": _round_price(breakout_t1),
-        "breakout_target_2": _round_price(breakout_t2 or theoretical_target_2),
+        "breakout_target_1": breakout_target_1,
+        "breakout_target_2": breakout_target_2,
         "breakout_real_reward_risk": breakout_rr,
         "breakout_status": breakout_status,
         "theoretical_target_1": _round_price(theoretical_target_1),
         "theoretical_target_2": _round_price(theoretical_target_2),
-        "real_resistance_target_1": _round_price(real_target_1),
-        "real_resistance_target_2": _round_price(real_target_2),
-        "real_reward_risk_ratio": round(best_rr, 2) if best_rr is not None else "",
-        "preferred_plan": "breakout" if (breakout_rr or 0) and (not pullback.get("pullback_real_reward_risk") or float(breakout_rr) >= float(pullback.get("pullback_real_reward_risk") or 0)) else "pullback",
+        "real_resistance_target_1": real_target_1,
+        "real_resistance_target_2": real_target_2,
+        "real_reward_risk_ratio": round(preferred_rr, 2) if preferred_rr is not None else "",
+        "preferred_plan": preferred_plan,
         "cancel_conditions": "高开超过最高追价；低开跌破对应止损；新增重大负面公告；行业或公司证据被证伪；停牌或流动性异常；价格数据不一致",
         "evidence_urls": ";".join(evidence_urls),
     }
