@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import csv
 import json
+from collections import Counter
 from datetime import date, datetime, timezone
 from pathlib import Path
 from zoneinfo import ZoneInfo
@@ -28,6 +29,7 @@ from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     build_price_plan,
     build_sector_summary,
     build_technology_sector_rows,
+    classify_candidate,
     enrich_universe_industries,
     load_recent_universe_snapshot,
     quant_screen,
@@ -1362,6 +1364,101 @@ def test_shenzhen_quant_screen_and_price_plan_are_actionable(tmp_path: Path) -> 
     assert plan["real_resistance_target_2"] == plan[f"{preferred}_target_2"]
     assert plan["real_reward_risk_ratio"] == plan[f"{preferred}_real_reward_risk"]
     assert plan["theoretical_target_1"] != plan["real_resistance_target_1"]
+
+
+def test_near_ready_uses_risk_conditions_when_industry_or_exit_history_is_missing() -> None:
+    row = {
+        "hard_blockers": "",
+        "valuation_score": 60,
+        "financial_safety_score": 45,
+        "industry_evidence_status": "MISSING",
+        "company_evidence_status": "VERIFIED",
+        "balanced_exit_historical_profile": "NOT_AVAILABLE",
+        "hard_logic_level": "WEAK",
+        "trend_confirmation_level": "WEAK",
+        "price_percentile_5y": 0.1384,
+    }
+    plan = {
+        "real_reward_risk_ratio": 1.11,
+        "pullback_status": "REAL_RR_BELOW_1_8",
+        "breakout_status": "REAL_RR_BELOW_1_8",
+    }
+
+    classification, status = classify_candidate(
+        row,
+        plan,
+        ["https://example.com/company-report.pdf"],
+        Counter(),
+    )
+
+    assert classification == "NEAR_READY"
+    assert status == "WAIT_FOR_BREAKOUT"
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("hard_blockers", "financial_risk"),
+        ("valuation_score", 39),
+        ("financial_safety_score", 39),
+        ("company_evidence_status", "MISSING"),
+        ("trend_confirmation_level", "NONE"),
+        ("price_percentile_5y", 0.51),
+    ],
+)
+def test_near_ready_does_not_relax_risk_controls(field: str, value: object) -> None:
+    row = {
+        "hard_blockers": "",
+        "valuation_score": 60,
+        "financial_safety_score": 60,
+        "industry_evidence_status": "MISSING",
+        "company_evidence_status": "VERIFIED",
+        "balanced_exit_historical_profile": "NOT_AVAILABLE",
+        "hard_logic_level": "WEAK",
+        "trend_confirmation_level": "WEAK",
+        "price_percentile_5y": 0.20,
+    }
+    row[field] = value
+    plan = {
+        "real_reward_risk_ratio": 1.20,
+        "pullback_status": "REAL_RR_BELOW_1_8",
+        "breakout_status": "REAL_RR_BELOW_1_8",
+    }
+
+    classification, _status = classify_candidate(
+        row,
+        plan,
+        ["https://example.com/company-report.pdf"],
+        Counter(),
+    )
+
+    assert classification != "NEAR_READY"
+
+
+def test_near_ready_requires_minimum_real_reward_risk_and_evidence_url() -> None:
+    row = {
+        "hard_blockers": "",
+        "valuation_score": 60,
+        "financial_safety_score": 60,
+        "industry_evidence_status": "MISSING",
+        "company_evidence_status": "VERIFIED",
+        "balanced_exit_historical_profile": "NOT_AVAILABLE",
+        "hard_logic_level": "WEAK",
+        "trend_confirmation_level": "MEDIUM",
+        "price_percentile_5y": 0.20,
+    }
+    plan = {
+        "real_reward_risk_ratio": 0.99,
+        "pullback_status": "REAL_RR_BELOW_1_8",
+        "breakout_status": "REAL_RR_BELOW_1_8",
+    }
+
+    low_rr, _ = classify_candidate(row, plan, ["https://example.com/report.pdf"], Counter())
+    plan["real_reward_risk_ratio"] = 1.20
+    no_url, _ = classify_candidate(row, plan, [], Counter())
+
+    assert low_rr != "NEAR_READY"
+    assert no_url != "NEAR_READY"
 
 
 class _FakeChinaCalendar:

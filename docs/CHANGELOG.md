@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] 深市全量扫描的 `NEAR_READY` 改为基于低位、趋势、估值、财务、公司证据和最低真实收益风险比的明确风险条件，不再因行业证据或退出画像冷启动缺失而把所有接近条件的股票隐藏；`BUY_READY` 严格门槛和非执行层零仓位保持不变。
 - [修复] GitHub `GenGe Opportunity Discovery` 定时任务改为执行深市主板A股全量扫描，不再把 `genge_broad_pool.txt --max-codes 100` 的旧流程误标为全量结果；同时增加交易日、数据失败、行业覆盖和价格计划硬验收，深交所清单接口瞬时失败时仅允许回退到 7 天内的已审计仓库快照。
 - [修复] 深市全量扫描使用中国交易日历自动选择最近完整收盘日和下一交易日，并修复报告日期写死、Top30 混入量化行、展示价格与收益风险比复算不一致的问题。
 - [改进] 深市股票池使用 BaoStock 证监会行业分类补充深交所大类行业，记录来源与更新时间；行业别名仅在唯一 canonical 命中时允许结构化长名称匹配，并忽略 `UNRESOLVED` 占位值。

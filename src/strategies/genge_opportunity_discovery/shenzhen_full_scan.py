@@ -1103,8 +1103,8 @@ def classify_candidate(row: Mapping[str, Any], plan: Mapping[str, Any], evidence
     exit_profile = str(row.get("balanced_exit_historical_profile") or "NOT_AVAILABLE")
     hard_logic = str(row.get("hard_logic_level") or "NONE")
     trend = str(row.get("trend_confirmation_level") or "NONE")
+    valuation = _status_from_score(row.get("valuation_score"))
     financial = _status_from_score(row.get("financial_safety_score"))
-    failed = [item for item in str(row.get("a_condition_failed") or "").split(";") if item]
     real_rr = _safe_float(plan.get("real_reward_risk_ratio")) or 0.0
     has_ready_plan = plan.get("pullback_status") == "READY" or plan.get("breakout_status") == "READY"
     buy_ready = (
@@ -1122,7 +1122,23 @@ def classify_candidate(row: Mapping[str, Any], plan: Mapping[str, Any], evidence
     if buy_ready and counts["BUY_READY"] < 3:
         counts["BUY_READY"] += 1
         return "BUY_READY", "BUY_READY"
-    if not hard and len(failed) <= 2 and counts["NEAR_READY"] < 5:
+    price_percentile = _safe_float(row.get("price_percentile_5y"))
+    near_ready = (
+        not hard
+        and valuation in {"PASSED", "DEGRADED"}
+        and financial in {"PASSED", "DEGRADED"}
+        and company_status in {"VERIFIED", "PARTIALLY_VERIFIED"}
+        and trend in {"WEAK", "MEDIUM", "STRONG"}
+        and price_percentile is not None
+        and price_percentile <= 0.50
+        and real_rr >= 1.0
+        and (
+            plan.get("pullback_status") in {"READY", "REAL_RR_BELOW_1_8"}
+            or plan.get("breakout_status") in {"READY", "REAL_RR_BELOW_1_8"}
+        )
+        and bool(evidence_urls)
+    )
+    if near_ready and counts["NEAR_READY"] < 5:
         counts["NEAR_READY"] += 1
         if plan.get("breakout_status") == "READY" or plan.get("breakout_status") == "REAL_RR_BELOW_1_8":
             return "NEAR_READY", "WAIT_FOR_BREAKOUT"

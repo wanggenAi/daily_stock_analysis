@@ -33,3 +33,11 @@
 - exit_profile_status: NOT_AVAILABLE
 - evidence_urls: https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/art/2026/art_fef11dfd78f644a98c67eb4df5b5469f.html;https://static.cninfo.com.cn/finalpage/2026-03-28/1225044034.PDF
 - missing_conditions: trend_medium;hard_logic_medium;valuation_not_failed;financial_passed;exit_profile_passed
+
+## 比亚迪 (002594)
+
+- industry_evidence_status: PARTIALLY_VERIFIED
+- company_evidence_status: PARTIALLY_VERIFIED
+- exit_profile_status: NOT_AVAILABLE
+- evidence_urls: https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/art/2026/art_fef11dfd78f644a98c67eb4df5b5469f.html;https://static.cninfo.com.cn/finalpage/2026-03-28/1225045351.PDF
+- missing_conditions: trend_medium;hard_logic_medium;valuation_not_failed;financial_passed;exit_profile_passed

@@ -61,6 +61,8 @@ python3 -m src.strategies.genge_opportunity_discovery.shenzhen_full_scan \
 
 深市全量扫描会生成 `shenzhen_universe.csv`、`universe_exclusion_audit.csv`、`shenzhen_quant_screen_all.csv`、`top80_evidence_queue.csv`、`top30_deep_review.csv`、`buy_ready.csv`、`near_ready.csv`、`deep_watch.csv`、`tomorrow_watchlist_top12.csv`、`buy_sell_price_plan.csv/json`、`evidence_review.md`、`rejection_summary.csv`、`run_summary.json` 和 `tomorrow_watchlist.md`。回踩和突破计划分开计算，正式买入资格只使用真实压力位下的收益风险比；非 `BUY_READY` 对象仓位始终为 0。
 
+候选分层不再按“失败条件数量”决定。`NEAR_READY` 必须没有硬风险，5 年价格分位不高于 50%，趋势至少达到 `WEAK`，估值和财务不得失败，公司改善证据至少部分核验，真实收益风险比不低于 1.0，并且存在可核验证据 URL。行业证据、退出画像或 1.8 收益风险比尚未满足时，它仍然只是等待确认对象，仓位固定为 0；只有全部严格条件满足后才可进入 `BUY_READY`。
+
 `exit_profile_file` 至少包含 `code` 和 `balanced_exit_historical_profile` 或 `exit_profile_status`。取值为 `PASSED`、`DEGRADED`、`NOT_AVAILABLE`、`FAILED`。`NOT_AVAILABLE` 和 `DEGRADED` 不会进入 A 类严格候选。
 
 `--run-mode` 支持 `quant-only`、`quant-evidence` 和 `full`，供本地或 GitHub Actions 调度区分运行意图。当前实现仍会生成完整审计文件，但报告会记录 run mode，方便后续按阶段扩展缓存和深度证据抓取。
