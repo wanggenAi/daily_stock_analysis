@@ -13,14 +13,21 @@ import pytest
 from src.strategies.genge_cycle_bottom.backtest import BacktestInput
 from src.strategies.genge_cycle_bottom.current_snapshot import load_industry_alias_map
 from src.strategies.genge_cycle_bottom.industry_evidence import load_industry_evidence_schema
+from src.strategies.genge_opportunity_discovery.evidence_collectors import company_announcements
 from src.strategies.genge_opportunity_discovery.evidence_collectors.cache import EvidenceCache
-from src.strategies.genge_opportunity_discovery.evidence_collectors.validators import extract_numeric_context, extract_text_from_response
+from src.strategies.genge_opportunity_discovery.evidence_collectors.validators import (
+    direction_from_excerpt,
+    extract_numeric_context,
+    extract_text_from_response,
+)
 from src.strategies.genge_opportunity_discovery.exit_profile import generate_exit_profile_from_reports
 from src.strategies.genge_opportunity_discovery.pipeline import _rank_opportunities, run_opportunity_discovery
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     ScanConfig,
     build_official_universe,
     build_price_plan,
+    build_sector_summary,
+    build_technology_sector_rows,
     enrich_universe_industries,
     load_recent_universe_snapshot,
     quant_screen,
@@ -251,6 +258,101 @@ def test_pdf_fixture_extracts_text_and_numeric_context() -> None:
     assert "operating revenue" in text
     assert numeric["value"] == "123.45"
     assert numeric["unit"] == ""
+
+
+def test_numeric_evidence_does_not_fall_back_to_unrelated_year() -> None:
+    assert extract_numeric_context(
+        "纳思达股份有限公司 2025 年年度报告全文",
+        keywords=["营业收入", "净利润", "现金流"],
+    ) == {}
+    assert direction_from_excerpt("营业收入（元） 2,609,136,912.38 4,403,674,123.09 -40.75%") == "NEGATIVE"
+    assert direction_from_excerpt("营业收入（元） 6,145,823,063.27 5,511,073,894.21 11.52%") == "POSITIVE"
+    assert direction_from_excerpt("营业收入（元） 92,507,796,069.94 92,495,525,118.30 0.01%") == "NEUTRAL"
+
+
+def test_cninfo_uses_official_org_id_and_prefers_full_annual_report() -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    class FakeSession:
+        posted_data: dict[str, str] = {}
+
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            assert url == company_announcements.CNINFO_STOCK_LIST_URL
+            return FakeResponse(
+                {"stockList": [{"code": "002180", "orgId": "9900003822", "zwjc": "奔图科技"}]}
+            )
+
+        def post(self, url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+            assert url == "https://www.cninfo.com.cn/new/hisAnnouncement/query"
+            self.posted_data = data
+            timestamp = int(datetime(2026, 4, 15, tzinfo=timezone.utc).timestamp() * 1000)
+            return FakeResponse(
+                {
+                    "announcements": [
+                        {
+                            "announcementTitle": "2025年<em>年度报告</em>摘要",
+                            "announcementTime": timestamp,
+                            "adjunctUrl": "finalpage/2026-04-15/summary.PDF",
+                        },
+                        {
+                            "announcementTitle": "2025年<em>年度报告</em>",
+                            "announcementTime": timestamp,
+                            "adjunctUrl": "finalpage/2026-04-15/full.PDF",
+                        },
+                    ]
+                }
+            )
+
+    session = FakeSession()
+    org_ids = company_announcements._load_cninfo_org_ids(session, timeout=5)
+    announcements = company_announcements._query_cninfo(
+        "002180",
+        org_ids["002180"],
+        date(2026, 7, 10),
+        session,
+        timeout=5,
+    )
+
+    assert session.posted_data["stock"] == "002180,9900003822"
+    assert announcements[0]["title"] == "2025年年度报告"
+    assert announcements[0]["url"] == "https://static.cninfo.com.cn/finalpage/2026-04-15/full.PDF"
+
+
+def test_technology_sector_output_separates_core_and_extended_scope() -> None:
+    quant_rows = [
+        {"quant_rank": 1, "code": "002180", "stock_name": "奔图科技", "industry": "C39计算机、通信和其他电子设备制造业", "quant_status": "PRIORITY_RESEARCH"},
+        {"quant_rank": 2, "code": "002268", "stock_name": "电科网安", "industry": "I65软件和信息技术服务业", "quant_status": "SECONDARY_RESEARCH"},
+        {"quant_rank": 3, "code": "002129", "stock_name": "TCL中环", "industry": "C38电气机械和器材制造业", "quant_status": "PRIORITY_RESEARCH"},
+        {"quant_rank": 4, "code": "000001", "stock_name": "平安银行", "industry": "J66货币金融服务", "quant_status": "LOW_PRIORITY"},
+    ]
+    deep_rows = [
+        {
+            "code": "002180",
+            "quant_screen_status": "PRIORITY_RESEARCH",
+            "industry_evidence_status": "MISSING",
+            "company_evidence_status": "VERIFIED",
+            "hard_logic_level": "WEAK",
+        }
+    ]
+
+    sector_summary = {row["industry"]: row for row in build_sector_summary(quant_rows)}
+    technology_rows = build_technology_sector_rows(quant_rows, deep_rows)
+    by_code = {row["code"]: row for row in technology_rows}
+
+    assert sector_summary["C39计算机、通信和其他电子设备制造业"]["priority_research_count"] == 1
+    assert set(by_code) == {"002180", "002268", "002129"}
+    assert by_code["002180"]["technology_scope"] == "CORE"
+    assert by_code["002129"]["technology_scope"] == "EXTENDED"
+    assert by_code["002180"]["research_status"] == "行业证据不足，仅作研究观察"
+    assert by_code["002268"]["research_status"] == "量化观察，未进入证据复核队列"
 
 
 def test_public_data_homepage_number_is_not_verified(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

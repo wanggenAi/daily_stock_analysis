@@ -105,6 +105,33 @@ QUANT_COLUMNS = [
     "rejection_reasons",
 ]
 
+TECHNOLOGY_SECTORS = (
+    ("电子与通信设备", "C39", "CORE"),
+    ("软件与信息技术服务", "I65", "CORE"),
+    ("互联网服务", "I64", "CORE"),
+    ("仪器仪表", "C40", "CORE"),
+    ("电气设备与新能源链", "C38", "EXTENDED"),
+)
+
+TECHNOLOGY_COLUMNS = [
+    "technology_sector",
+    "technology_scope",
+    *QUANT_COLUMNS,
+    "deep_reviewed",
+    "deep_quant_status",
+    "valuation_score",
+    "financial_safety_score",
+    "industry_evidence_status",
+    "company_evidence_status",
+    "company_evidence_score",
+    "company_evidence_summary",
+    "hard_logic_level",
+    "tier",
+    "top_risks",
+    "research_status",
+    "disclaimer",
+]
+
 PLAN_COLUMNS = [
     "actionability_rank",
     "quant_rank",
@@ -1249,6 +1276,149 @@ def _write_csv(path: Path, rows: list[Mapping[str, Any]], columns: list[str] | N
         writer.writerows(rows)
 
 
+def _technology_sector(industry: Any) -> tuple[str, str] | None:
+    value = str(industry or "").strip()
+    for sector, prefix, scope in TECHNOLOGY_SECTORS:
+        if value.startswith(prefix):
+            return sector, scope
+    return None
+
+
+def build_sector_summary(quant_rows: list[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    grouped: dict[str, Counter[str]] = {}
+    for row in quant_rows:
+        industry = str(row.get("industry") or "UNRESOLVED")
+        grouped.setdefault(industry, Counter())[str(row.get("quant_status") or "UNKNOWN")] += 1
+    result: list[dict[str, Any]] = []
+    for industry, counts in grouped.items():
+        result.append(
+            {
+                "industry": industry,
+                "stock_count": sum(counts.values()),
+                "priority_research_count": counts.get("PRIORITY_RESEARCH", 0),
+                "secondary_research_count": counts.get("SECONDARY_RESEARCH", 0),
+                "low_priority_count": counts.get("LOW_PRIORITY", 0),
+                "hard_reject_count": counts.get("HARD_REJECT", 0),
+            }
+        )
+    return sorted(result, key=lambda row: (-int(row["stock_count"]), str(row["industry"])))
+
+
+def build_technology_sector_rows(
+    quant_rows: list[Mapping[str, Any]],
+    deep_rows: list[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    deep_by_code = {_normalize_code(row.get("code")): row for row in deep_rows}
+    result: list[dict[str, Any]] = []
+    for quant in quant_rows:
+        classification = _technology_sector(quant.get("industry"))
+        if classification is None:
+            continue
+        sector, scope = classification
+        code = _normalize_code(quant.get("code"))
+        deep = deep_by_code.get(code, {})
+        quant_status = str(quant.get("quant_status") or "")
+        company_status = str(deep.get("company_evidence_status") or "")
+        if quant_status == "HARD_REJECT":
+            research_status = "量化硬拒绝"
+        elif not deep:
+            research_status = "量化观察，未进入证据复核队列"
+        elif company_status == "CONFLICTING":
+            research_status = "公司证据冲突或恶化，仅作风险观察"
+        elif str(deep.get("industry_evidence_status") or "") in {"", "MISSING", "STALE", "CONFLICTING"}:
+            research_status = "行业证据不足，仅作研究观察"
+        elif str(deep.get("hard_logic_level") or "") not in {"MEDIUM", "STRONG"}:
+            research_status = "硬逻辑不足，仅作研究观察"
+        else:
+            research_status = "进入证据复核"
+        result.append(
+            {
+                "technology_sector": sector,
+                "technology_scope": scope,
+                **dict(quant),
+                "deep_reviewed": bool(deep),
+                "deep_quant_status": deep.get("quant_screen_status") or "",
+                "valuation_score": deep.get("valuation_score") or "",
+                "financial_safety_score": deep.get("financial_safety_score") or "",
+                "industry_evidence_status": deep.get("industry_evidence_status") or "",
+                "company_evidence_status": company_status,
+                "company_evidence_score": deep.get("company_evidence_score") or "",
+                "company_evidence_summary": deep.get("company_evidence_summary") or "",
+                "hard_logic_level": deep.get("hard_logic_level") or "",
+                "tier": deep.get("tier") or "",
+                "top_risks": deep.get("top_risks") or "",
+                "research_status": research_status,
+                "disclaimer": DISCLAIMER,
+            }
+        )
+    return sorted(result, key=lambda row: int(row.get("quant_rank") or 10**9))
+
+
+def _technology_markdown(
+    rows: list[Mapping[str, Any]],
+    *,
+    as_of: date,
+    tomorrow: date,
+    excluded_chinext_count: int,
+) -> str:
+    sector_counts: dict[str, Counter[str]] = {}
+    for row in rows:
+        sector_counts.setdefault(str(row.get("technology_sector")), Counter())[str(row.get("quant_status"))] += 1
+    lines = [
+        "# 深市主板科技板块量化复核",
+        "",
+        DISCLAIMER,
+        "",
+        f"- 行情截止日：{as_of.isoformat()}",
+        f"- 条件观察日：{tomorrow.isoformat()}",
+        "- 当前范围：深市主板 A 股；不是全部深 A。",
+        f"- 未纳入创业板：{excluded_chinext_count} 只。创业板交易规则不同，不能直接混用当前执行风险阈值。",
+        f"- 科技核心范围：{sum(1 for row in rows if row.get('technology_scope') == 'CORE')} 只。",
+        f"- 科技扩展范围：{sum(1 for row in rows if row.get('technology_scope') == 'EXTENDED')} 只。",
+        "",
+        "## 板块分布",
+        "",
+        "| 板块 | 股票数 | 优先研究 | 次级研究 | 低优先级 | 硬拒绝 |",
+        "| --- | ---: | ---: | ---: | ---: | ---: |",
+    ]
+    for sector, counts in sector_counts.items():
+        lines.append(
+            f"| {sector} | {sum(counts.values())} | {counts.get('PRIORITY_RESEARCH', 0)} | "
+            f"{counts.get('SECONDARY_RESEARCH', 0)} | {counts.get('LOW_PRIORITY', 0)} | {counts.get('HARD_REJECT', 0)} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## 量化靠前对象",
+            "",
+            "以下仅是板块内研究排序，不是介入名单。行业和公司证据不足时不得升级。",
+            "",
+            "| 全市场排名 | 代码 | 股票 | 板块 | 5年分位 | 趋势 | 初筛状态 | 深度状态 | 行业证据 | 公司证据 | 硬逻辑 | 结论 |",
+            "| ---: | --- | --- | --- | ---: | --- | --- | --- | --- | --- | --- | --- |",
+        ]
+    )
+    visible = [row for row in rows if row.get("quant_status") in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}][:20]
+    for row in visible:
+        lines.append(
+            f"| {row.get('quant_rank')} | {row.get('code')} | {row.get('stock_name')} | {row.get('technology_sector')} | "
+            f"{row.get('price_percentile_5y')} | {row.get('trend_confirmation_level')} | {row.get('quant_status')} | "
+            f"{row.get('deep_quant_status') or '未复核'} | {row.get('industry_evidence_status') or '未复核'} | "
+            f"{row.get('company_evidence_status') or '未复核'} | "
+            f"{row.get('hard_logic_level') or '未复核'} | {row.get('research_status')} |"
+        )
+    lines.extend(
+        [
+            "",
+            "## 解释",
+            "",
+            "- 科技股数量不为零；最终名单为空与行业证据覆盖不足、估值/趋势/收益风险条件未同时满足有关。",
+            "- `PRIORITY_RESEARCH` 只代表进入进一步核验，不代表满足最终条件。",
+            "- 创业板未包含在本报告中，因此本报告不能代表整个深 A 科技板块。",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
 def _markdown(rows: list[Mapping[str, Any]], summary: Mapping[str, Any]) -> str:
     lines = [
         "# Shenzhen Mainboard Full Scan Watchlist",
@@ -1377,6 +1547,19 @@ def run_scan(
     _write_csv(config.output_dir / "shenzhen_universe.csv", universe_rows, UNIVERSE_COLUMNS)
     _write_csv(config.output_dir / "universe_exclusion_audit.csv", universe_audit)
     _write_csv(config.output_dir / "shenzhen_quant_screen_all.csv", quant_rows, QUANT_COLUMNS)
+    sector_rows = build_sector_summary(quant_rows)
+    _write_csv(
+        config.output_dir / "sector_summary.csv",
+        sector_rows,
+        [
+            "industry",
+            "stock_count",
+            "priority_research_count",
+            "secondary_research_count",
+            "low_priority_count",
+            "hard_reject_count",
+        ],
+    )
     top80 = [row for row in quant_rows if row.get("quant_status") in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}][: config.evidence_queue_size]
     _write_csv(config.output_dir / "top80_evidence_queue.csv", top80, QUANT_COLUMNS)
     deep_report, deep_summary = run_deep_opportunity_review(
@@ -1398,6 +1581,17 @@ def run_scan(
     )
     top30 = deep_rows[: config.deep_review_size]
     _write_csv(config.output_dir / "top30_deep_review.csv", top30)
+    technology_rows = build_technology_sector_rows(quant_rows, deep_rows)
+    _write_csv(config.output_dir / "technology_sector_screen.csv", technology_rows, TECHNOLOGY_COLUMNS)
+    (config.output_dir / "technology_sector_review.md").write_text(
+        _technology_markdown(
+            technology_rows,
+            as_of=config.as_of,
+            tomorrow=config.tomorrow,
+            excluded_chinext_count=int(official_counts.get("excluded_chinext_count") or 0),
+        ),
+        encoding="utf-8",
+    )
     _write_csv(config.output_dir / "buy_ready.csv", [row for row in final_rows if row.get("classification") == "BUY_READY"], PLAN_COLUMNS)
     _write_csv(config.output_dir / "near_ready.csv", [row for row in final_rows if row.get("classification") == "NEAR_READY"], PLAN_COLUMNS)
     _write_csv(config.output_dir / "deep_watch.csv", [row for row in final_rows if row.get("classification") == "DEEP_WATCH"], PLAN_COLUMNS)
@@ -1421,6 +1615,11 @@ def run_scan(
         "near_ready_count": sum(1 for row in final_rows if row.get("classification") == "NEAR_READY"),
         "deep_watch_count": sum(1 for row in final_rows if row.get("classification") == "DEEP_WATCH"),
         "watchlist_count": len(final_rows),
+        "technology_core_count": sum(1 for row in technology_rows if row.get("technology_scope") == "CORE"),
+        "technology_extended_count": sum(1 for row in technology_rows if row.get("technology_scope") == "EXTENDED"),
+        "technology_priority_research_count": sum(
+            1 for row in technology_rows if row.get("quant_status") == "PRIORITY_RESEARCH"
+        ),
         "stock_pool_output": str(config.stock_pool_output),
         "opportunity_report_dir": str(deep_report),
         "deep_review_report_dir": str(deep_report),

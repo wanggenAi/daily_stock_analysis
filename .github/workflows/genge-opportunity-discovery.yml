@@ -192,6 +192,9 @@ jobs:
               "shenzhen_universe.csv",
               "universe_exclusion_audit.csv",
               "shenzhen_quant_screen_all.csv",
+              "sector_summary.csv",
+              "technology_sector_screen.csv",
+              "technology_sector_review.md",
               "top80_evidence_queue.csv",
               "top30_deep_review.csv",
               "buy_ready.csv",
@@ -216,6 +219,8 @@ jobs:
           assert summary["listing_fallback_age_days"] <= 7
           assert summary["industry_enrichment_status"] in {"OK", "SNAPSHOT_FALLBACK"}
           assert summary["industry_enriched_count"] > 1000
+          assert summary["technology_core_count"] > 100
+          assert summary["technology_extended_count"] > 0
           assert summary["industry_evidence_file"] == "data/user_supplied/industry_cycle_evidence.csv"
           assert summary["company_evidence_file"] == "data/user_supplied/company_cycle_evidence.csv"
           assert summary["price_adjustment"] == "unadjusted/tencent_kline"

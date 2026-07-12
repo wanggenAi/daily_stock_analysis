@@ -13,6 +13,7 @@ from urllib.parse import urlparse
 NUMBER_WITH_UNIT_RE = re.compile(
     r"(?P<value>-?\d+(?:,\d{3})*(?:\.\d+)?)\s*(?P<unit>亿元|万元|元|股|万股|%|百分点|吨|万吨|台|片|GWh|MW|GW|亿|万)?"
 )
+PDF_EVIDENCE_PAGE_LIMIT = 20
 
 
 def source_domain(url: Any) -> str:
@@ -45,7 +46,7 @@ def extract_text_from_response(content: bytes, content_type: str) -> tuple[str, 
 
             reader = PdfReader(io.BytesIO(content))
             pages = []
-            for page in reader.pages[:8]:
+            for page in reader.pages[:PDF_EVIDENCE_PAGE_LIMIT]:
                 pages.append(page.extract_text() or "")
             return "\n".join(pages), "pdf_pypdf"
         except Exception as exc:
@@ -65,6 +66,8 @@ def extract_numeric_context(text: str, keywords: list[str] | None = None) -> dic
             if any(keyword in line for keyword in keyword_list) and NUMBER_WITH_UNIT_RE.search(line):
                 preferred.append(line)
                 break
+    if keyword_list and not preferred:
+        return {}
     candidates = preferred or [line for line in lines if NUMBER_WITH_UNIT_RE.search(line)]
     if not candidates:
         return {}
@@ -82,6 +85,11 @@ def direction_from_excerpt(excerpt: str) -> str:
     if any(token in text for token in ("亏损", "下降", "减少", "下滑", "降低", "decrease", "decline", "loss")):
         return "NEGATIVE"
     if any(token in text for token in ("增长", "增加", "提升", "回升", "改善", "盈利", "achieved", "increase", "growth")):
+        return "POSITIVE"
+    percentage_values = [float(value) for value in re.findall(r"([+-]?\d+(?:\.\d+)?)\s*%", text)]
+    if any(value <= -1.0 for value in percentage_values):
+        return "NEGATIVE"
+    if any(value >= 1.0 for value in percentage_values):
         return "POSITIVE"
     return "NEUTRAL"
 

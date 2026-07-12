@@ -15,6 +15,7 @@ from .validators import content_hash, direction_from_excerpt, extract_numeric_co
 REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
 }
+CNINFO_STOCK_LIST_URL = "https://www.cninfo.com.cn/new/data/szse_stock.json"
 
 
 def _normalize_code(value: Any) -> str:
@@ -26,11 +27,28 @@ def _clean_title(value: Any) -> str:
     return re.sub(r"<[^>]+>", "", str(value or "")).strip()
 
 
-def _cninfo_org_id(code: str) -> str:
-    return f"gssz{int(code):07d}"
+def _load_cninfo_org_ids(session: requests.Session, timeout: int) -> dict[str, str]:
+    response = session.get(
+        CNINFO_STOCK_LIST_URL,
+        headers={**REQUEST_HEADERS, "Referer": "https://www.cninfo.com.cn/"},
+        timeout=timeout,
+    )
+    response.raise_for_status()
+    stock_list = response.json().get("stockList") or []
+    return {
+        _normalize_code(item.get("code")): str(item.get("orgId") or "").strip()
+        for item in stock_list
+        if _normalize_code(item.get("code")) and str(item.get("orgId") or "").strip()
+    }
 
 
-def _query_cninfo(code: str, as_of: date, session: requests.Session, timeout: int) -> list[dict[str, Any]]:
+def _query_cninfo(
+    code: str,
+    org_id: str,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+) -> list[dict[str, Any]]:
     start = (as_of - timedelta(days=560)).isoformat()
     end = as_of.isoformat()
     data = {
@@ -39,7 +57,7 @@ def _query_cninfo(code: str, as_of: date, session: requests.Session, timeout: in
         "column": "szse",
         "tabName": "fulltext",
         "plate": "sz",
-        "stock": f"{code},{_cninfo_org_id(code)}",
+        "stock": f"{code},{org_id}",
         "searchkey": "年度报告",
         "secid": "",
         "category": "category_ndbg_szsh",
@@ -50,8 +68,8 @@ def _query_cninfo(code: str, as_of: date, session: requests.Session, timeout: in
         "isHLtitle": "true",
     }
     response = session.post(
-        "http://www.cninfo.com.cn/new/hisAnnouncement/query",
-        headers={**REQUEST_HEADERS, "Referer": "http://www.cninfo.com.cn/"},
+        "https://www.cninfo.com.cn/new/hisAnnouncement/query",
+        headers={**REQUEST_HEADERS, "Referer": "https://www.cninfo.com.cn/"},
         data=data,
         timeout=timeout,
     )
@@ -70,12 +88,16 @@ def _query_cninfo(code: str, as_of: date, session: requests.Session, timeout: in
             {
                 "title": title,
                 "publish_date": publish_date,
-                "url": f"http://static.cninfo.com.cn/{adjunct}",
+                "url": f"https://static.cninfo.com.cn/{adjunct}",
                 "source_type": "EXCHANGE_DISCLOSURE",
                 "source_name": "cninfo",
             }
         )
-    return result
+    return sorted(
+        result,
+        key=lambda item: (str(item.get("publish_date") or ""), "摘要" not in str(item.get("title") or "")),
+        reverse=True,
+    )
 
 
 def _query_sse(code: str, as_of: date, session: requests.Session, timeout: int) -> list[dict[str, Any]]:
@@ -120,9 +142,18 @@ def _query_sse(code: str, as_of: date, session: requests.Session, timeout: int) 
     return result
 
 
-def _announcement_candidates(code: str, as_of: date, session: requests.Session, timeout: int) -> list[dict[str, Any]]:
+def _announcement_candidates(
+    code: str,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+    cninfo_org_ids: Mapping[str, str],
+) -> list[dict[str, Any]]:
     if code.startswith(("0", "2", "3")):
-        return _query_cninfo(code, as_of, session, timeout)
+        org_id = str(cninfo_org_ids.get(code) or "").strip()
+        if not org_id:
+            raise RuntimeError(f"cninfo_org_id_missing:{code}")
+        return _query_cninfo(code, org_id, as_of, session, timeout)
     if code.startswith("6"):
         return _query_sse(code, as_of, session, timeout)
     return []
@@ -172,6 +203,13 @@ def collect_company_announcements(
     network_fetches = 0
     fetch_successes = 0
     task_count = 0
+    cninfo_org_ids: dict[str, str] = {}
+    if any(_normalize_code(row.get("code")).startswith(("0", "2", "3")) for row in rows[: max(0, int(limit))]):
+        try:
+            cninfo_org_ids = _load_cninfo_org_ids(session, timeout)
+            network_fetches += 1
+        except Exception:
+            cninfo_org_ids = {}
 
     for row in rows[: max(0, int(limit))]:
         code = _normalize_code(row.get("code"))
@@ -186,7 +224,7 @@ def collect_company_announcements(
                 "code": code,
                 "announcement_type": "annual_report",
                 "report_period": report_period,
-                "version": 2,
+                "version": 3,
             }
         )
         cached = cache.get(key)
@@ -201,7 +239,7 @@ def collect_company_announcements(
         task_evidence: list[dict[str, Any]] = []
         task_audit: list[dict[str, Any]] = []
         try:
-            announcements = _announcement_candidates(code, as_of, session, timeout)
+            announcements = _announcement_candidates(code, as_of, session, timeout, cninfo_org_ids)
             network_fetches += 1
         except Exception as exc:
             task_audit.append(
@@ -238,7 +276,7 @@ def collect_company_announcements(
         item = announcements[0]
         url = str(item.get("url") or "")
         try:
-            response = session.get(url, headers={**REQUEST_HEADERS, "Referer": "http://www.cninfo.com.cn/"}, timeout=timeout)
+            response = session.get(url, headers={**REQUEST_HEADERS, "Referer": "https://www.cninfo.com.cn/"}, timeout=timeout)
             network_fetches += 1
             response.raise_for_status()
             text, parser = extract_text_from_response(response.content, response.headers.get("content-type", ""))
