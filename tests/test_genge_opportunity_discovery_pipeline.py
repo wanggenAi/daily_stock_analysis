@@ -340,7 +340,15 @@ def test_technology_sector_output_separates_core_and_extended_scope() -> None:
             "industry_evidence_status": "MISSING",
             "company_evidence_status": "VERIFIED",
             "hard_logic_level": "WEAK",
-        }
+        },
+        {
+            "code": "002129",
+            "quant_screen_status": "HARD_REJECT",
+            "hard_reject_blockers": "execution_risk_high",
+            "industry_evidence_status": "MISSING",
+            "company_evidence_status": "VERIFIED",
+            "hard_logic_level": "WEAK",
+        },
     ]
 
     sector_summary = {row["industry"]: row for row in build_sector_summary(quant_rows)}
@@ -351,6 +359,7 @@ def test_technology_sector_output_separates_core_and_extended_scope() -> None:
     assert set(by_code) == {"002180", "002268", "002129"}
     assert by_code["002180"]["technology_scope"] == "CORE"
     assert by_code["002129"]["technology_scope"] == "EXTENDED"
+    assert by_code["002129"]["research_status"] == "深度复核硬拒绝"
     assert by_code["002180"]["research_status"] == "行业证据不足，仅作研究观察"
     assert by_code["002268"]["research_status"] == "量化观察，未进入证据复核队列"
 

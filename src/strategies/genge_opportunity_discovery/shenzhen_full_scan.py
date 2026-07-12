@@ -1318,8 +1318,12 @@ def build_technology_sector_rows(
         code = _normalize_code(quant.get("code"))
         deep = deep_by_code.get(code, {})
         quant_status = str(quant.get("quant_status") or "")
+        deep_quant_status = str(deep.get("quant_screen_status") or "")
+        deep_hard_blockers = str(deep.get("hard_blockers") or deep.get("hard_reject_blockers") or "").strip()
         company_status = str(deep.get("company_evidence_status") or "")
-        if quant_status == "HARD_REJECT":
+        if deep_quant_status == "HARD_REJECT" or deep_hard_blockers:
+            research_status = "深度复核硬拒绝"
+        elif quant_status == "HARD_REJECT":
             research_status = "量化硬拒绝"
         elif not deep:
             research_status = "量化观察，未进入证据复核队列"
@@ -1337,7 +1341,7 @@ def build_technology_sector_rows(
                 "technology_scope": scope,
                 **dict(quant),
                 "deep_reviewed": bool(deep),
-                "deep_quant_status": deep.get("quant_screen_status") or "",
+                "deep_quant_status": deep_quant_status,
                 "valuation_score": deep.get("valuation_score") or "",
                 "financial_safety_score": deep.get("financial_safety_score") or "",
                 "industry_evidence_status": deep.get("industry_evidence_status") or "",
@@ -1581,7 +1585,8 @@ def run_scan(
     )
     top30 = deep_rows[: config.deep_review_size]
     _write_csv(config.output_dir / "top30_deep_review.csv", top30)
-    technology_rows = build_technology_sector_rows(quant_rows, deep_rows)
+    deep_payload = json.loads((deep_report / "daily_opportunity_report.json").read_text(encoding="utf-8"))
+    technology_rows = build_technology_sector_rows(quant_rows, deep_payload.get("all_opportunities") or [])
     _write_csv(config.output_dir / "technology_sector_screen.csv", technology_rows, TECHNOLOGY_COLUMNS)
     (config.output_dir / "technology_sector_review.md").write_text(
         _technology_markdown(
