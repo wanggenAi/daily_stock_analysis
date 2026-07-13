@@ -126,7 +126,7 @@ jobs:
 
   daily-opportunity-report:
     name: Daily opportunity report
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -291,4 +291,126 @@ jobs:
           path: |
             reports/shenzhen_full_scan
             stock_pools/shenzhen_mainboard_a_full_*.csv
+          if-no-files-found: warn
+
+  all-a-production-report:
+    name: All-A production research report
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    needs: fixture-opportunity-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r .github/requirements-ci.txt
+
+      - name: Run full pytest
+        run: python -m pytest -q
+
+      - name: Restore all-A public-data cache and observation state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/cache/all_a_full_scan
+            data/cache/genge_fundamentals
+            data/cache/opportunity_evidence
+            data/opportunity_snapshots/all_a_state
+            data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            stock_pools/all_a_universe_*.csv
+          key: genge-all-a-state-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            genge-all-a-state-${{ runner.os }}-
+
+      - name: Run unified all-A production scan
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.all_a_full_scan \
+            --max-workers 20 \
+            --evidence-queue-size 80 \
+            --deep-review-size 30 \
+            --max-watchlist 15 \
+            --fundamental-limit 30 \
+            --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+            --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+            --industry-evidence-schema config/industry_evidence_schema.yaml \
+            --industry-alias-map config/industry_alias_map.yaml \
+            --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+
+      - name: Validate all-A report contract
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path("reports/all_a_full_scan")
+          runs = sorted(path for path in root.iterdir() if path.is_dir() and (path / "run_summary.json").exists())
+          assert runs, "no all-A production report generated"
+          latest = runs[-1]
+          summary = json.loads((latest / "run_summary.json").read_text(encoding="utf-8"))
+          required = {
+              "all_a_universe.csv", "universe_exclusion_audit.csv", "universe_source_audit.json",
+              "board_distribution.csv", "price_mapping_audit.csv", "all_a_quant_screen.csv",
+              "top80_evidence_queue.csv", "top30_deep_review.csv", "strict_review_ready.csv",
+              "condition_watch.csv", "research_watch.csv", "tomorrow_watchlist.csv",
+              "opportunity_changes.csv", "evidence_changes.csv", "candidate_upgrade_report.md",
+              "candidate_downgrade_report.md", "tomorrow_watchlist.md", "data_quality_audit.csv",
+              "run_summary.json", "report_manifest.json",
+          }
+          missing = sorted(name for name in required if not (latest / name).exists())
+          assert not missing, f"missing report files: {missing}"
+          assert summary["official_universe_count"] > 5000
+          assert summary["effective_scan_count"] > 1000
+          assert summary["fatal_data_failure_count"] == 0
+          assert summary["no_auto_trade"] is True
+          assert summary["no_broker_integration"] is True
+          assert summary["acceptance_enum"] in {
+              "PASS_ALL_A_PRODUCTION_RESEARCH_READY", "PASS_STRICT_REVIEW_CANDIDATE_GENERATED"
+          }
+          assert summary["industry_evidence_file"] == "data/user_supplied/industry_cycle_evidence.csv"
+          assert summary["company_evidence_file"] == "data/user_supplied/company_cycle_evidence.csv"
+          for filename in ("strict_review_ready.csv", "condition_watch.csv", "research_watch.csv"):
+              with (latest / filename).open(encoding="utf-8") as handle:
+                  for row in csv.DictReader(handle):
+                      if row["user_visible_level"] != "STRICT_REVIEW_READY":
+                          assert float(row.get("risk_budget_initial_position_pct") or 0) == 0
+                          assert float(row.get("risk_budget_max_position_pct") or 0) == 0
+          forbidden = ("必买", "必卖", "保证上涨", "确定买入", "自动下单")
+          for path in latest.iterdir():
+              if path.suffix in {".md", ".csv", ".json"}:
+                  text = path.read_text(encoding="utf-8")
+                  assert not any(term in text for term in forbidden), path
+          print(f"validated={latest}")
+          PY
+
+      - name: Save all-A public-data cache and observation state
+        uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: |
+            data/cache/all_a_full_scan
+            data/cache/genge_fundamentals
+            data/cache/opportunity_evidence
+            data/opportunity_snapshots/all_a_state
+            data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            stock_pools/all_a_universe_*.csv
+          key: genge-all-a-state-${{ runner.os }}-${{ github.run_id }}
+
+      - name: Upload all-A production report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-all-a-production-report
+          path: |
+            reports/all_a_full_scan
+            stock_pools/all_a_universe_*.csv
           if-no-files-found: warn

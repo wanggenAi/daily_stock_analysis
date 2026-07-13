@@ -55,6 +55,32 @@ python3 -m src.strategies.genge_opportunity_discovery.shenzhen_full_scan \
   --exit-profile-file data/opportunity_snapshots/exit_profile.csv
 ```
 
+沪深全 A 统一生产扫描（沪主板、科创板、深主板、创业板）：
+
+```bash
+python3 -m src.strategies.genge_opportunity_discovery.all_a_full_scan \
+  --max-workers 20 \
+  --evidence-queue-size 80 \
+  --deep-review-size 30 \
+  --max-watchlist 15 \
+  --fundamental-limit 30 \
+  --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+  --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+  --industry-evidence-schema config/industry_evidence_schema.yaml \
+  --industry-alias-map config/industry_alias_map.yaml \
+  --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+```
+
+统一入口从上交所、深交所公开清单的证券类型和板块元数据构建股票池，不按代码前缀猜板块。长期指标只使用截至 `as_of_date` 的前复权日线；报告价位计划只使用同一交易日的未复权价格。`price_mapping_audit.csv` 记录两套价格、映射比例、除权事件判断、数据源和日期，不允许用未复权历史静默替代复权指标。
+
+输出位于 `reports/all_a_full_scan/<下一交易日 YYYYMMDD>/`。用户层级只有 `STRICT_REVIEW_READY`、`CONDITION_WATCH`、`RESEARCH_WATCH` 和 `NOT_QUALIFIED`；后三者风险预算仓位固定为 0。严格候选仍只是公开数据下的人工复核对象，不是交易指令。
+
+板块差异化风控配置位于 `config/board_risk_rules.yaml`。每次运行还会生成股票池来源、排除原因、板块分布、双价格映射、候选升降级、证据变化、退出画像覆盖和报告哈希清单。生产验收枚举为：
+
+- `FAIL_ALL_A_PRODUCTION`
+- `PASS_ALL_A_PRODUCTION_RESEARCH_READY`
+- `PASS_STRICT_REVIEW_CANDIDATE_GENERATED`
+
 未显式传入日期时，入口使用 `exchange-calendars` 的中国交易日历选择最近已经完整收盘的交易日，并把下一交易日作为报告目标日。盘中手动运行会回退到上一完整交易日，周五收盘后或周末运行会把目标日指向下周一；也可以同时显式传入 `--as-of-date` 和 `--tomorrow` 复现历史报告。
 
 该入口优先使用深交所公开清单中的板块/证券类型字段构建股票池，不用代码前缀猜测主板范围；BaoStock 的证监会行业分类只用于补充细行业，不改变证券范围，也不作为行业硬证据。它先对完整有效股票池做低成本量化粗筛，再只对 Top80/Top30 做重点证据和机会评估。输出目录默认为 `reports/shenzhen_full_scan/<目标交易日 YYYYMMDD>/`，股票池快照默认为 `stock_pools/shenzhen_mainboard_a_full_<行情日 YYYYMMDD>.csv`。

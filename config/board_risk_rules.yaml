@@ -1,0 +1,50 @@
+version: 1
+boards:
+  SSE_MAIN:
+    daily_price_limit: 0.10
+    max_gap_open_pct: 4.0
+    max_5d_return_pct: 18.0
+    max_10d_return_pct: 28.0
+    breakout_volume_ratio: 1.20
+    max_chase_atr_multiple: 0.45
+    minimum_turnover: 20000000
+    minimum_history_rows: 800
+    valuation_mode: absolute_and_percentile
+    volatility_multiplier: 1.00
+    abnormal_move_threshold: 0.095
+  SZSE_MAIN:
+    daily_price_limit: 0.10
+    max_gap_open_pct: 4.0
+    max_5d_return_pct: 18.0
+    max_10d_return_pct: 28.0
+    breakout_volume_ratio: 1.20
+    max_chase_atr_multiple: 0.45
+    minimum_turnover: 20000000
+    minimum_history_rows: 800
+    valuation_mode: absolute_and_percentile
+    volatility_multiplier: 1.00
+    abnormal_move_threshold: 0.095
+  STAR:
+    daily_price_limit: 0.20
+    max_gap_open_pct: 6.0
+    max_5d_return_pct: 25.0
+    max_10d_return_pct: 38.0
+    breakout_volume_ratio: 1.35
+    max_chase_atr_multiple: 0.30
+    minimum_turnover: 50000000
+    minimum_history_rows: 600
+    valuation_mode: percentile_and_growth
+    volatility_multiplier: 1.25
+    abnormal_move_threshold: 0.19
+  CHINEXT:
+    daily_price_limit: 0.20
+    max_gap_open_pct: 6.0
+    max_5d_return_pct: 25.0
+    max_10d_return_pct: 38.0
+    breakout_volume_ratio: 1.35
+    max_chase_atr_multiple: 0.30
+    minimum_turnover: 50000000
+    minimum_history_rows: 600
+    valuation_mode: percentile_and_growth
+    volatility_multiplier: 1.25
+    abnormal_move_threshold: 0.19
