@@ -306,7 +306,9 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          # longbridge 0.2.74 has a Linux wheel for 3.11; on 3.12 pip falls
+          # back to a Rust source build that is incompatible with current runners.
+          python-version: "3.11"
           cache: pip
 
       - name: Install dependencies
