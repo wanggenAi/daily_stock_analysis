@@ -970,12 +970,12 @@ def test_forward_ledger_closes_downgraded_observation(tmp_path: Path, monkeypatc
 def test_exit_profile_generation_from_historical_signal_details(tmp_path: Path) -> None:
     report = tmp_path / "reports" / "sample" / "signal_details.csv"
     report.parent.mkdir(parents=True)
-    rows = ["code,stock_name,balanced_hybrid_60d_exit_exit_adjusted_net_return_60d,balanced_hybrid_60d_exit_exit_adjusted_max_drawdown_250d"]
-    rows.extend(["600123,测试周期,2.5,-8"] * 20)
-    rows.extend(["600456,测试退化,1.0,-12"] * 6)
-    rows.extend(["600456,测试退化,-2.0,-14"] * 6)
-    rows.extend(["600111,样本不足,3.0,-7"] * 8)
-    rows.extend(["600789,测试失败,-9,-25"] * 20)
+    rows = ["code,stock_name,as_of_date,balanced_hybrid_60d_exit_exit_adjusted_net_return_60d,balanced_hybrid_60d_exit_exit_adjusted_max_drawdown_250d"]
+    rows.extend(["600123,测试周期,2026-06-30,2.5,-8"] * 20)
+    rows.extend(["600456,测试退化,2026-06-30,1.0,-12"] * 6)
+    rows.extend(["600456,测试退化,2026-06-30,-2.0,-14"] * 6)
+    rows.extend(["600111,样本不足,2026-06-30,3.0,-7"] * 8)
+    rows.extend(["600789,测试失败,2026-06-30,-9,-25"] * 20)
     report.write_text("\n".join(rows) + "\n", encoding="utf-8")
     output, summary = generate_exit_profile_from_reports(output_file=tmp_path / "exit_profile.csv", source_dirs=[tmp_path / "reports"])
     rows = {row["code"]: row for row in csv.DictReader(output.open(encoding="utf-8"))}
@@ -986,6 +986,11 @@ def test_exit_profile_generation_from_historical_signal_details(tmp_path: Path) 
     assert rows["600789"]["balanced_exit_historical_profile"] == "FAILED"
     assert int(rows["600123"]["signal_count"]) == 20
     assert int(rows["600111"]["signal_count"]) == 8
+    assert rows["600123"]["profile_data_end_date"] != ""
+    assert rows["600123"]["profile_rule_version"] == "genge_opportunity_discovery_v1"
+    assert rows["600123"]["profile_data_version"].startswith("sha256:")
+    assert rows["600123"]["profile_confidence"] == "LOW"
+    assert int(rows["600123"]["recent_2y_sample_count"]) > 0
 
 
 def test_proximity_rank_excludes_hard_risk_rejects() -> None:
@@ -1513,6 +1518,13 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "tests/test_genge_opportunity_discovery_*.py" in workflow
     assert "--run-mode" in workflow
     assert "--exit-profile-file" in workflow
+    assert "data/opportunity_snapshots/exit_profile.csv" in workflow
+    assert "cp data/opportunity_snapshots/exit_profile_seed.csv" in workflow
+    assert "daily_signals.csv" in workflow
+    assert "buy_signals.csv" in workflow
+    assert "sell_signals.csv" in workflow
+    assert "GITHUB_STEP_SUMMARY" in workflow
+    assert "--prefer-binary --retries 5 --timeout 60" in workflow
     assert "src.strategies.genge_opportunity_discovery.shenzhen_full_scan" in workflow
     assert "genge_broad_pool.txt" not in workflow
     assert "--max-codes" not in workflow

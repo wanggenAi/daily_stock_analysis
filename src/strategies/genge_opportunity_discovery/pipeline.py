@@ -30,10 +30,11 @@ from src.strategies.genge_cycle_bottom.industry_evidence import CONFIDENCE_RANK,
 from src.strategies.genge_cycle_bottom.strategy import GenGeCycleBottomStrategy
 
 from .evidence_collectors import collect_auto_evidence
+from .exit_profile import PROFILE_RULE_VERSION
 from .industry_templates import DEFAULT_PUBLIC_SOURCES, expected_industries, indicator_templates_for
 
 
-RULE_VERSION = "genge_opportunity_discovery_v1"
+RULE_VERSION = PROFILE_RULE_VERSION
 DISCOVERY_DISCLAIMER = "仅用于公开数据研究观察和人工复核，不构成买入建议，不应自动交易。"
 TREND_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}
 HARD_LOGIC_RANK = {"NONE": 0, "WEAK": 1, "MEDIUM": 2, "STRONG": 3}

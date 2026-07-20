@@ -10,15 +10,20 @@ import pytest
 
 from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
     AllAScanConfig,
+    RULE_VERSION,
+    _apply_position_budget,
     _board_from_exchange_row,
     _listing_row,
     apply_universe_filters,
     audit_price_mapping,
+    build_daily_signals,
     build_price_plan,
     classify_candidate,
+    enrich_exit_profile,
     load_board_rules,
     quant_screen,
     resistance_levels,
+    strict_official_evidence_audit,
 )
 
 
@@ -149,6 +154,9 @@ def _candidate(**overrides) -> dict:
         "industry_evidence_status": "PARTIALLY_VERIFIED", "company_evidence_status": "VERIFIED",
         "hard_logic_level": "MEDIUM", "execution_risk_quality": "GOOD", "value_trap_flag": False,
         "price_mapping_status": "OK", "soft_blockers": "", "risk_flags": "",
+        "strict_official_evidence_count": 1,
+        "strict_official_evidence_domains": "static.cninfo.com.cn",
+        "strict_official_evidence_passed": True,
     }
     row.update(overrides)
     return row
@@ -163,7 +171,14 @@ def _plan(rr: float = 1.8, ready: bool = True) -> dict:
 
 
 def _profile() -> dict:
-    return {"exit_profile_status": "PASSED", "exit_profile_sample_count": 50, "exit_profile_confidence": "MEDIUM"}
+    return {
+        "exit_profile_status": "PASSED", "exit_profile_sample_count": 50,
+        "exit_profile_confidence": "MEDIUM", "profile_data_end_date": "2025-12-31",
+        "recent_2y_sample_count": 20,
+        "profile_rule_version": RULE_VERSION, "exit_profile_freshness_days": 30,
+        "exit_profile_rule_version_match": True, "exit_profile_freshness_passed": True,
+        "exit_profile_data_version": "fixture-v1", "exit_profile_data_traceable": True,
+    }
 
 
 def test_strict_review_ready_requires_every_hard_gate() -> None:
@@ -174,6 +189,73 @@ def test_strict_review_ready_requires_every_hard_gate() -> None:
     for override in ({"price_percentile_5y": .36}, {"trend_confirmation_level": "WEAK"}, {"financial_safety_score": 59}, {"hard_logic_level": "WEAK"}):
         level, _ = classify_candidate(_candidate(**override), _plan(), _profile(), ["https://example.com/report.pdf"], board_rule=rule)
         assert level != "STRICT_REVIEW_READY"
+
+
+def _evidence(**overrides) -> dict:
+    row = {
+        "scope": "company", "code": "000001", "industry": "银行",
+        "evidence_date": "2026-07-01", "source_type": "EXCHANGE_DISCLOSURE",
+        "original_url": "https://static.cninfo.com.cn/finalpage/report.pdf",
+        "evidence_status": "VERIFIED", "parse_status": "OK",
+        "normalized_summary": "正式公告已解析并核验。", "warning_flags": "",
+    }
+    row.update(overrides)
+    return row
+
+
+def test_news_url_cannot_satisfy_strict_official_evidence() -> None:
+    audit = strict_official_evidence_audit([
+        _evidence(source_type="NEWS", original_url="https://news.example.com/story")
+    ], _row(), as_of=date(2026, 7, 13))
+    assert audit["strict_official_evidence_count"] == 0
+    assert audit["strict_official_evidence_passed"] is False
+
+
+@pytest.mark.parametrize("url", [
+    "https://static.cninfo.com.cn/finalpage/report.pdf",
+    "https://www.sse.com.cn/disclosure/report.pdf",
+    "https://www.szse.cn/disclosure/report.pdf",
+    "https://www.stats.gov.cn/report.html",
+])
+def test_formal_official_domains_satisfy_strict_evidence(url: str) -> None:
+    audit = strict_official_evidence_audit(
+        [_evidence(original_url=url)], _row(), as_of=date(2026, 7, 13)
+    )
+    assert audit["strict_official_evidence_count"] == 1
+    assert audit["strict_official_evidence_passed"] is True
+
+
+def test_url_without_parsed_content_cannot_satisfy_strict_evidence() -> None:
+    audit = strict_official_evidence_audit([
+        _evidence(normalized_summary="", raw_excerpt="", content_hash="", extracted_value="")
+    ], _row(), as_of=date(2026, 7, 13))
+    assert audit["strict_official_evidence_passed"] is False
+
+
+def _raw_profile(**overrides) -> dict:
+    profile = {
+        "exit_profile_status": "PASSED", "exit_profile_sample_count": 50,
+        "exit_profile_confidence": "MEDIUM", "profile_data_end_date": "2026-07-01",
+        "recent_2y_sample_count": 20,
+        "profile_rule_version": RULE_VERSION, "exit_profile_data_version": "fixture-v1",
+    }
+    profile.update(overrides)
+    return profile
+
+
+@pytest.mark.parametrize("overrides", [
+    {"profile_data_end_date": ""},
+    {"profile_data_end_date": "2025-01-01"},
+    {"profile_rule_version": "old-rule-version"},
+])
+def test_invalid_exit_profile_metadata_cannot_be_strict(overrides: dict) -> None:
+    profile = enrich_exit_profile(_raw_profile(**overrides), as_of=date(2026, 7, 13))
+    level, missing = classify_candidate(
+        _candidate(), _plan(), profile, ["https://static.cninfo.com.cn/report.pdf"],
+        board_rule=load_board_rules("config/board_risk_rules.yaml")["SZSE_MAIN"],
+    )
+    assert level != "STRICT_REVIEW_READY"
+    assert any(name.startswith("exit_profile_") for name in missing)
 
 
 def test_condition_watch_requires_financial_passed_and_rr_1_3() -> None:
@@ -187,10 +269,81 @@ def test_condition_watch_requires_financial_passed_and_rr_1_3() -> None:
     assert bad_financial != "CONDITION_WATCH"
 
 
-def test_non_strict_levels_are_zero_position_by_policy() -> None:
-    # The production writer only calls position sizing with enabled=True for STRICT_REVIEW_READY.
-    assert "CONDITION_WATCH" != "STRICT_REVIEW_READY"
-    assert "RESEARCH_WATCH" != "STRICT_REVIEW_READY"
+def test_non_strict_actual_output_rows_have_zero_position(tmp_path: Path) -> None:
+    rows = []
+    plan = {
+        **_plan(1.3, ready=False), "preferred_plan": "pullback",
+        "pullback_entry_high": 11.0, "pullback_stop_price": 10.0,
+        "breakout_max_chase_price": 11.2,
+    }
+    for level in ("CONDITION_WATCH", "RESEARCH_WATCH", "NOT_QUALIFIED"):
+        row = {"code": level, "user_visible_level": level}
+        _apply_position_budget(row, plan, level)
+        rows.append(row)
+    output = tmp_path / "actual_output.csv"
+    pd.DataFrame(rows).to_csv(output, index=False)
+    actual = pd.read_csv(output)
+    assert set(actual["user_visible_level"]) == {"CONDITION_WATCH", "RESEARCH_WATCH", "NOT_QUALIFIED"}
+    assert (actual["risk_budget_initial_position_pct"] == 0).all()
+    assert (actual["risk_budget_max_position_pct"] == 0).all()
+
+
+def test_daily_signals_emit_only_strict_buy_and_prior_strict_exit() -> None:
+    current_strict = {
+        **_candidate(), **_plan(), "code": "000001", "stock_name": "严格候选",
+        "user_visible_level": "STRICT_REVIEW_READY", "preferred_plan": "pullback",
+        "raw_latest_close": 10.5, "latest_trade_date": "2026-07-17",
+        "pullback_entry_low": 10.1, "pullback_entry_high": 10.4,
+        "pullback_stop_price": 9.6, "pullback_logic_invalidation_price": 9.5,
+        "pullback_target_1": 11.5, "pullback_target_2": 12.0,
+        "risk_budget_initial_position_pct": 2.0, "risk_budget_max_position_pct": 5.0,
+    }
+    current_watch = {
+        **current_strict, "code": "000002", "stock_name": "观察候选",
+        "user_visible_level": "CONDITION_WATCH", "missing_conditions": "industry_evidence",
+        "risk_budget_initial_position_pct": 0.0, "risk_budget_max_position_pct": 0.0,
+    }
+    previous = {
+        "000003": {
+            **current_strict, "code": "000003", "stock_name": "昨日严格候选",
+            "user_visible_level": "STRICT_REVIEW_READY",
+        }
+    }
+    signals = build_daily_signals(
+        current_rows=[current_strict, current_watch], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )
+    by_code = {row["code"]: row for row in signals}
+    assert by_code["000001"]["signal_action"] == "BUY_IF_TRIGGERED"
+    assert by_code["000002"]["signal_action"] == "WATCH_ONLY"
+    assert by_code["000003"]["signal_action"] == "SELL_EXIT"
+    assert by_code["000003"]["risk_budget_initial_position_pct"] == 0.0
+    assert by_code["000003"]["risk_budget_max_position_pct"] == 0.0
+    assert by_code["000003"]["signal_data_status"] == "CURRENT_ROW_MISSING"
+    assert by_code["000002"]["risk_budget_initial_position_pct"] == 0.0
+
+
+def test_daily_signal_exits_when_previous_stop_is_breached() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_stop_price": 10.0,
+            "pullback_logic_invalidation_price": 9.8,
+        }
+    }
+    current = {
+        **previous["000001"], "raw_latest_close": 9.7, "latest_trade_date": "2026-07-17",
+        "missing_conditions": "", "risk_budget_initial_position_pct": 2.0,
+        "risk_budget_max_position_pct": 5.0,
+    }
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    assert signal["signal_action"] == "SELL_EXIT"
+    assert signal["risk_budget_initial_position_pct"] == 0.0
+    assert signal["risk_budget_max_position_pct"] == 0.0
+    assert signal["signal_reason"] == "previous_stop_or_invalidation_breached"
 
 
 def test_no_hardcoded_sample_stocks_in_all_a_module() -> None:

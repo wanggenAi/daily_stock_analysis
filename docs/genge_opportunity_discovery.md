@@ -75,6 +75,15 @@ python3 -m src.strategies.genge_opportunity_discovery.all_a_full_scan \
 
 输出位于 `reports/all_a_full_scan/<下一交易日 YYYYMMDD>/`。用户层级只有 `STRICT_REVIEW_READY`、`CONDITION_WATCH`、`RESEARCH_WATCH` 和 `NOT_QUALIFIED`；后三者风险预算仓位固定为 0。严格候选仍只是公开数据下的人工复核对象，不是交易指令。
 
+全 A 入口同时生成 `daily_signals.csv/json/md`、`buy_signals.csv` 和 `sell_signals.csv`。每日动作语义固定为：
+
+- `BUY_IF_TRIGGERED`：首次满足全部严格门槛，并给出下一交易日的条件区间、止损、逻辑失效价和目标价；价格未触发时不成立。
+- `HOLD_REVIEW`：上一日和本日都保持严格资格，继续按原条件人工复核。
+- `SELL_EXIT`：上一日严格资格已经丢失，或最新价格触发上一日止损/逻辑失效位；它不读取实际持仓，只表示策略退出。
+- `WATCH_ONLY`：只满足观察层条件，仓位固定为 0，不是买入信号。
+
+系统允许某天没有任何买入或卖出信号，禁止为了“每天有票”放宽门槛。退出画像必须包含可追溯数据版本、当前规则版本、最近市场数据日期、至少 30 个总样本和至少 10 个最近两年样本；过期、版本不匹配或不可追溯时自动降级。
+
 板块差异化风控配置位于 `config/board_risk_rules.yaml`。每次运行还会生成股票池来源、排除原因、板块分布、双价格映射、候选升降级、证据变化、退出画像覆盖和报告哈希清单。生产验收枚举为：
 
 - `FAIL_ALL_A_PRODUCTION`
@@ -144,10 +153,10 @@ C 类是证据不完整研究对象：量化形态有吸引力，但行业或公
 GitHub Actions 工作流位于 `.github/workflows/genge-opportunity-discovery.yml`。它支持：
 
 - 工作日北京时间 18:30 自动运行，对应 UTC 10:30。
-- `workflow_dispatch` 手动运行，可选择 `quant-only`、`quant-evidence` 或 `full`。
-- 手动指定股票池和 `max_codes`。
+- `workflow_dispatch` 支持手动运行同一套全 A 生产扫描。
 - push / PR 时只跑 fixture smoke 和测试；定时 / 手动时才跑真实日常报告。
-- 上传 fixture 和每日 opportunity report artifact。
+- 恢复并保存退出画像、证据缓存、全 A 股票池快照和前向观察状态。
+- 在 Actions Summary 直接展示 `daily_signals.md`，并上传完整全 A 报告 artifact。
 
 网络数据源失败时，流程仍会生成 `data_quality_audit.csv`、provider/fallback 分布和缺口报告，不会因为单一数据源失败直接整批报废。
 

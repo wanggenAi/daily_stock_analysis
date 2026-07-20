@@ -33,8 +33,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r .github/requirements-ci.txt
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
       - name: Run opportunity discovery tests
         run: python -m pytest tests/test_genge_opportunity_discovery_*.py
@@ -140,8 +140,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r .github/requirements-ci.txt
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
       - name: Restore opportunity state
         uses: actions/cache/restore@v4
@@ -313,8 +313,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          python -m pip install --upgrade pip
-          python -m pip install -r .github/requirements-ci.txt
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
       - name: Run full pytest
         run: python -m pytest -q
@@ -328,10 +328,19 @@ jobs:
             data/cache/opportunity_evidence
             data/opportunity_snapshots/all_a_state
             data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            data/opportunity_snapshots/exit_profile.csv
             stock_pools/all_a_universe_*.csv
           key: genge-all-a-state-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             genge-all-a-state-${{ runner.os }}-
+
+      - name: Prepare all-A research state
+        run: |
+          mkdir -p data/cache/all_a_full_scan data/cache/genge_fundamentals data/cache/opportunity_evidence
+          mkdir -p data/opportunity_snapshots/all_a_state
+          if [ ! -s data/opportunity_snapshots/exit_profile.csv ]; then
+            cp data/opportunity_snapshots/exit_profile_seed.csv data/opportunity_snapshots/exit_profile.csv
+          fi
 
       - name: Run unified all-A production scan
         run: |
@@ -364,6 +373,8 @@ jobs:
               "board_distribution.csv", "price_mapping_audit.csv", "all_a_quant_screen.csv",
               "top80_evidence_queue.csv", "top30_deep_review.csv", "strict_review_ready.csv",
               "condition_watch.csv", "research_watch.csv", "tomorrow_watchlist.csv",
+              "daily_signals.csv", "daily_signals.json", "daily_signals.md",
+              "buy_signals.csv", "sell_signals.csv",
               "opportunity_changes.csv", "evidence_changes.csv", "candidate_upgrade_report.md",
               "candidate_downgrade_report.md", "tomorrow_watchlist.md", "data_quality_audit.csv",
               "run_summary.json", "report_manifest.json",
@@ -375,6 +386,8 @@ jobs:
           assert summary["fatal_data_failure_count"] == 0
           assert summary["no_auto_trade"] is True
           assert summary["no_broker_integration"] is True
+          assert summary["buy_signal_count"] >= 0
+          assert summary["sell_signal_count"] >= 0
           assert summary["acceptance_enum"] in {
               "PASS_ALL_A_PRODUCTION_RESEARCH_READY", "PASS_STRICT_REVIEW_CANDIDATE_GENERATED"
           }
@@ -386,12 +399,45 @@ jobs:
                       if row["user_visible_level"] != "STRICT_REVIEW_READY":
                           assert float(row.get("risk_budget_initial_position_pct") or 0) == 0
                           assert float(row.get("risk_budget_max_position_pct") or 0) == 0
+          with (latest / "daily_signals.csv").open(encoding="utf-8") as handle:
+              signals = list(csv.DictReader(handle))
+          assert len({row["code"] for row in signals}) == len(signals)
+          assert sum(row["signal_action"] == "BUY_IF_TRIGGERED" for row in signals) == summary["buy_signal_count"]
+          assert sum(row["signal_action"] == "SELL_EXIT" for row in signals) == summary["sell_signal_count"]
+          for row in signals:
+              assert row["signal_action"] in {"BUY_IF_TRIGGERED", "HOLD_REVIEW", "SELL_EXIT", "WATCH_ONLY"}
+              assert row["no_auto_trade"] == "True"
+              if row["signal_action"] == "BUY_IF_TRIGGERED":
+                  assert row["current_level"] == "STRICT_REVIEW_READY"
+                  assert row["entry_low"] and row["entry_high"] and row["stop_price"]
+              if row["signal_action"] == "WATCH_ONLY":
+                  assert float(row.get("risk_budget_initial_position_pct") or 0) == 0
+                  assert float(row.get("risk_budget_max_position_pct") or 0) == 0
           forbidden = ("必买", "必卖", "保证上涨", "确定买入", "自动下单")
           for path in latest.iterdir():
               if path.suffix in {".md", ".csv", ".json"}:
                   text = path.read_text(encoding="utf-8")
                   assert not any(term in text for term in forbidden), path
           print(f"validated={latest}")
+          PY
+
+      - name: Publish daily signal summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          root = Path("reports/all_a_full_scan")
+          reports = sorted(path for path in root.iterdir() if path.is_dir() and (path / "daily_signals.md").exists()) if root.exists() else []
+          target = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          content = (
+              (reports[-1] / "daily_signals.md").read_text(encoding="utf-8")
+              if reports
+              else "# 每日买入/卖出研究信号\n\n本次运行未生成信号报告，请查看失败步骤和上传的诊断产物。\n"
+          )
+          with target.open("a", encoding="utf-8") as stream:
+              stream.write(content)
           PY
 
       - name: Save all-A public-data cache and observation state
@@ -404,6 +450,7 @@ jobs:
             data/cache/opportunity_evidence
             data/opportunity_snapshots/all_a_state
             data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            data/opportunity_snapshots/exit_profile.csv
             stock_pools/all_a_universe_*.csv
           key: genge-all-a-state-${{ runner.os }}-${{ github.run_id }}
 

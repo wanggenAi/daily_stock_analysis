@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+from urllib.parse import urlparse
 
 import pandas as pd
 import requests
@@ -30,7 +31,7 @@ from src.strategies.genge_cycle_bottom.current_snapshot import load_industry_ali
 from src.strategies.genge_cycle_bottom.features import coerce_date, prepare_price_frame
 from src.strategies.genge_cycle_bottom.fundamentals import PublicFundamentalLoader
 from src.strategies.genge_cycle_bottom.industry_evidence import load_evidence_csv, load_industry_evidence_schema
-from src.strategies.genge_opportunity_discovery.pipeline import run_opportunity_discovery
+from src.strategies.genge_opportunity_discovery.pipeline import RULE_VERSION, run_opportunity_discovery
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     _atr,
     _ma,
@@ -53,6 +54,7 @@ SZSE_LIST_URL = "https://www.szse.cn/api/report/ShowReport"
 ACCEPTANCE_FAIL = "FAIL_ALL_A_PRODUCTION"
 ACCEPTANCE_RESEARCH = "PASS_ALL_A_PRODUCTION_RESEARCH_READY"
 ACCEPTANCE_STRICT = "PASS_STRICT_REVIEW_CANDIDATE_GENERATED"
+EXIT_PROFILE_MAX_AGE_DAYS = 90
 
 USER_LEVELS = {
     "BUY_READY": "STRICT_REVIEW_READY",
@@ -80,7 +82,12 @@ PLAN_COLUMNS = [
     "ma20_slope_pct", "ma60_slope_pct", "trend_confirmation_level", "valuation_score",
     "financial_safety_score", "industry_evidence_status", "company_evidence_status",
     "hard_logic_level", "exit_profile_status", "exit_profile_sample_count",
-    "exit_profile_confidence", "pullback_entry_low", "pullback_entry_high",
+    "exit_profile_confidence", "recent_2y_sample_count", "profile_data_end_date", "profile_rule_version",
+    "exit_profile_freshness_days", "exit_profile_rule_version_match",
+    "exit_profile_freshness_passed", "exit_profile_data_version",
+    "exit_profile_data_traceable", "strict_official_evidence_count",
+    "strict_official_evidence_domains", "strict_official_evidence_passed",
+    "pullback_entry_low", "pullback_entry_high",
     "pullback_stop_price", "pullback_logic_invalidation_price", "pullback_target_1",
     "pullback_target_2", "pullback_real_reward_risk", "pullback_status",
     "breakout_trigger_price", "breakout_confirmation_high", "breakout_max_chase_price",
@@ -90,6 +97,16 @@ PLAN_COLUMNS = [
     "preferred_plan", "risk_budget_initial_position_pct", "risk_budget_max_position_pct",
     "missing_conditions", "top_risks", "upgrade_conditions", "cancel_conditions",
     "evidence_urls", "disclaimer",
+]
+
+DAILY_SIGNAL_COLUMNS = [
+    "signal_date", "valid_for_trade_date", "code", "stock_name", "signal_action",
+    "signal_label", "previous_level", "current_level", "signal_reason",
+    "signal_data_status", "latest_trade_date", "latest_price", "preferred_plan",
+    "entry_low", "entry_high", "stop_price", "logic_invalidation_price",
+    "target_1", "target_2", "risk_budget_initial_position_pct",
+    "risk_budget_max_position_pct", "evidence_urls", "rule_version",
+    "no_auto_trade", "disclaimer",
 ]
 
 
@@ -960,9 +977,14 @@ def _exit_profiles(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, int
         status = str(item.get("balanced_exit_historical_profile") or item.get("exit_profile_status") or "NOT_AVAILABLE")
         sample_count = int(_safe_float(item.get("exit_profile_sample_count") or item.get("signal_count")) or 0)
         recent_2y = int(_safe_float(item.get("recent_2y_sample_count")) or 0)
-        generated = str(item.get("profile_data_end_date") or item.get("generated_at") or "")
+        data_end_date = str(item.get("profile_data_end_date") or "").strip()
+        generated_at = str(item.get("generated_at") or "").strip()
         confidence = str(item.get("profile_confidence") or ("HIGH" if sample_count >= 100 else "MEDIUM" if sample_count >= 30 else "LOW"))
-        rule_version = str(item.get("profile_rule_version") or item.get("rule") or "legacy")
+        rule_version = str(item.get("profile_rule_version") or "").strip()
+        data_version = str(
+            item.get("profile_data_version") or item.get("data_version")
+            or item.get("source_signal_details") or ""
+        ).strip()
         profile = {
             "exit_profile_status": status, "exit_profile_sample_count": sample_count,
             "recent_2y_sample_count": recent_2y,
@@ -970,8 +992,9 @@ def _exit_profiles(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, int
             "60d_exit_win_rate": item.get("60d_exit_win_rate") or item.get("win_rate_balanced_exit_60d") or "",
             "60d_exit_outperform_rate": item.get("60d_exit_outperform_rate") or "",
             "250d_exit_drawdown": item.get("250d_exit_drawdown") or item.get("avg_balanced_exit_max_drawdown_250d") or "",
-            "exit_profile_confidence": confidence, "profile_data_end_date": generated,
-            "profile_rule_version": rule_version,
+            "exit_profile_confidence": confidence, "profile_data_end_date": data_end_date,
+            "profile_generated_at": generated_at, "profile_rule_version": rule_version,
+            "exit_profile_data_version": data_version,
         }
         result[code] = profile
         distribution[status] += 1
@@ -991,6 +1014,96 @@ def _evidence_urls(evidence_rows: Iterable[Mapping[str, Any]], row: Mapping[str,
             if url.startswith(("http://", "https://")):
                 urls.append(url)
     return list(dict.fromkeys(urls))
+
+
+def _evidence_matches_candidate(evidence: Mapping[str, Any], row: Mapping[str, Any]) -> bool:
+    code = _normalize_code(row.get("code"))
+    industry = str(row.get("normalized_industry") or row.get("industry") or "")
+    scope = str(evidence.get("scope") or "").lower()
+    evidence_code = _normalize_code(evidence.get("code")) if evidence.get("code") else ""
+    evidence_industry = str(evidence.get("industry") or "")
+    return (scope == "company" and evidence_code == code) or (scope == "industry" and evidence_industry == industry)
+
+
+def _is_strict_official_domain(domain: str, evidence: Mapping[str, Any]) -> bool:
+    normalized = domain.lower().strip(".")
+    official_suffixes = ("gov.cn", "sse.com.cn", "szse.cn", "cninfo.com.cn")
+    if any(normalized == suffix or normalized.endswith(f".{suffix}") for suffix in official_suffixes):
+        return True
+    declared = str(
+        evidence.get("company_official_domain") or evidence.get("official_company_domain") or ""
+    ).lower().strip().removeprefix("www.").strip(".")
+    comparable = normalized.removeprefix("www.")
+    return bool(declared and (comparable == declared or comparable.endswith(f".{declared}")))
+
+
+def strict_official_evidence_audit(
+    evidence_rows: Iterable[Mapping[str, Any]], row: Mapping[str, Any], *, as_of: date,
+) -> dict[str, Any]:
+    allowed_source_types = {
+        "OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE", "OFFICIAL_GOVERNMENT",
+    }
+    allowed_statuses = {"PARTIALLY_VERIFIED", "VERIFIED"}
+    domains: list[str] = []
+    for evidence in evidence_rows:
+        if not _evidence_matches_candidate(evidence, row):
+            continue
+        source_type = str(evidence.get("source_type") or "").strip().upper()
+        evidence_status = str(evidence.get("evidence_status") or "").strip().upper()
+        parse_status = str(evidence.get("parse_status") or "").strip().upper()
+        if source_type not in allowed_source_types or evidence_status not in allowed_statuses or parse_status != "OK":
+            continue
+        if evidence_status == "LEAD_ONLY" or "lead_only" in str(evidence.get("warning_flags") or "").lower():
+            continue
+        try:
+            evidence_date = coerce_date(evidence.get("evidence_date") or evidence.get("date"))
+        except Exception:
+            continue
+        if evidence_date > as_of:
+            continue
+        url = str(evidence.get("original_url") or evidence.get("source") or "").strip()
+        parsed = urlparse(url)
+        if parsed.scheme.lower() != "https" or not parsed.hostname:
+            continue
+        if not _is_strict_official_domain(parsed.hostname, evidence):
+            continue
+        verified_content = any(
+            str(evidence.get(key) or "").strip()
+            for key in ("raw_excerpt", "normalized_summary", "content_hash", "extracted_value")
+        )
+        if not verified_content:
+            continue
+        domains.append(parsed.hostname.lower())
+    unique_domains = list(dict.fromkeys(domains))
+    return {
+        "strict_official_evidence_count": len(domains),
+        "strict_official_evidence_domains": ";".join(unique_domains),
+        "strict_official_evidence_passed": bool(domains),
+    }
+
+
+def enrich_exit_profile(profile: Mapping[str, Any], *, as_of: date) -> dict[str, Any]:
+    enriched = dict(profile)
+    freshness_days: int | str = ""
+    data_end_date = str(profile.get("profile_data_end_date") or "").strip()
+    if data_end_date:
+        try:
+            freshness_days = (as_of - coerce_date(data_end_date)).days
+        except Exception:
+            freshness_days = ""
+    rule_match = str(profile.get("profile_rule_version") or "") == RULE_VERSION
+    freshness_passed = (
+        isinstance(freshness_days, int) and 0 <= freshness_days <= EXIT_PROFILE_MAX_AGE_DAYS
+    )
+    data_version = str(profile.get("exit_profile_data_version") or "").strip()
+    enriched.update({
+        "exit_profile_freshness_days": freshness_days,
+        "exit_profile_rule_version_match": rule_match,
+        "exit_profile_freshness_passed": freshness_passed,
+        "exit_profile_data_version": data_version,
+        "exit_profile_data_traceable": bool(data_version),
+    })
+    return enriched
 
 
 def actionability_score(row: Mapping[str, Any], plan: Mapping[str, Any]) -> float:
@@ -1052,10 +1165,14 @@ def classify_candidate(
         "hard_logic_medium": hard_logic in {"MEDIUM", "STRONG"},
         "exit_profile_passed": exit_status == "PASSED",
         "exit_profile_sample_count": sample_count >= 30,
+        "exit_profile_recent_2y_samples": int(_safe_float(profile.get("recent_2y_sample_count")) or 0) >= 10,
         "exit_profile_confidence": profile_confidence in {"MEDIUM", "HIGH"},
+        "exit_profile_freshness": bool(profile.get("exit_profile_freshness_passed")),
+        "exit_profile_rule_version": bool(profile.get("exit_profile_rule_version_match")),
+        "exit_profile_data_traceable": bool(profile.get("exit_profile_data_traceable")),
         "real_rr_1_8": rr >= 1.8,
         "ready_plan": ready_plan,
-        "official_url": bool(evidence_urls),
+        "strict_official_evidence": bool(row.get("strict_official_evidence_passed")),
         "execution_not_high": not execution_high,
         "value_trap_not_high": not value_trap_high,
         "price_mapping_ok": str(row.get("price_mapping_status")) == "OK",
@@ -1083,7 +1200,11 @@ def classify_candidate(
     }
     if all(condition_checks.values()):
         missing = [
-            name for name in ("industry_evidence", "hard_logic_medium", "trend_medium", "exit_profile_passed")
+            name for name in (
+                "industry_evidence", "hard_logic_medium", "trend_medium", "exit_profile_passed",
+                "exit_profile_sample_count", "exit_profile_recent_2y_samples", "exit_profile_confidence", "exit_profile_freshness",
+                "exit_profile_rule_version", "exit_profile_data_traceable", "strict_official_evidence",
+            )
             if not strict_checks.get(name, False)
         ]
         return "CONDITION_WATCH", missing
@@ -1115,15 +1236,27 @@ def _hash_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _load_previous_watchlist_state(path: Path) -> dict[str, dict[str, Any]]:
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {}
+    rows = payload.get("by_code") if isinstance(payload, Mapping) else None
+    if not isinstance(rows, Mapping):
+        return {}
+    return {
+        _normalize_code(code): dict(row)
+        for code, row in rows.items()
+        if isinstance(row, Mapping)
+    }
+
+
 def _changes(
     current: list[Mapping[str, Any]], previous_state_file: Path,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    previous: dict[str, dict[str, Any]] = {}
-    if previous_state_file.exists():
-        try:
-            previous = json.loads(previous_state_file.read_text(encoding="utf-8")).get("by_code") or {}
-        except Exception:
-            previous = {}
+    previous = _load_previous_watchlist_state(previous_state_file)
     current_by_code = {_normalize_code(row.get("code")): dict(row) for row in current}
     changes: list[dict[str, Any]] = []
     evidence_changes: list[dict[str, Any]] = []
@@ -1185,6 +1318,134 @@ def _changes(
     return changes, evidence_changes
 
 
+def _signal_plan_fields(row: Mapping[str, Any]) -> dict[str, Any]:
+    preferred = str(row.get("preferred_plan") or "")
+    if preferred == "pullback":
+        return {
+            "entry_low": row.get("pullback_entry_low"),
+            "entry_high": row.get("pullback_entry_high"),
+            "stop_price": row.get("pullback_stop_price"),
+            "logic_invalidation_price": row.get("pullback_logic_invalidation_price"),
+            "target_1": row.get("pullback_target_1"),
+            "target_2": row.get("pullback_target_2"),
+        }
+    if preferred == "breakout":
+        return {
+            "entry_low": row.get("breakout_trigger_price"),
+            "entry_high": row.get("breakout_max_chase_price"),
+            "stop_price": row.get("breakout_stop_price"),
+            "logic_invalidation_price": row.get("breakout_logic_invalidation_price"),
+            "target_1": row.get("breakout_target_1"),
+            "target_2": row.get("breakout_target_2"),
+        }
+    return {
+        "entry_low": "", "entry_high": "", "stop_price": "",
+        "logic_invalidation_price": "", "target_1": "", "target_2": "",
+    }
+
+
+def build_daily_signals(
+    *, current_rows: list[Mapping[str, Any]], previous: Mapping[str, Mapping[str, Any]],
+    as_of: date, next_trade_date: date,
+) -> list[dict[str, Any]]:
+    """Build deterministic daily research actions without account or broker state."""
+
+    current_by_code = {_normalize_code(row.get("code")): row for row in current_rows}
+    signals: list[dict[str, Any]] = []
+    for code, row in current_by_code.items():
+        before = previous.get(code, {})
+        previous_level = str(before.get("user_visible_level") or "")
+        current_level = str(row.get("user_visible_level") or "")
+        latest_price = _safe_float(row.get("raw_latest_close"))
+        before_plan = _signal_plan_fields(before)
+        previous_stop = _safe_float(before_plan.get("stop_price"))
+        previous_invalidation = _safe_float(before_plan.get("logic_invalidation_price"))
+        breached = (
+            latest_price is not None
+            and any(
+                threshold is not None and latest_price <= threshold
+                for threshold in (previous_stop, previous_invalidation)
+            )
+        )
+        if previous_level == "STRICT_REVIEW_READY" and (current_level != "STRICT_REVIEW_READY" or breached):
+            action = "SELL_EXIT"
+            label = "退出信号"
+            reason = "previous_stop_or_invalidation_breached" if breached else (
+                f"strict_signal_lost:{row.get('missing_conditions') or 'qualification_lost'}"
+            )
+        elif current_level == "STRICT_REVIEW_READY":
+            action = "HOLD_REVIEW" if previous_level == "STRICT_REVIEW_READY" else "BUY_IF_TRIGGERED"
+            label = "持有复核" if action == "HOLD_REVIEW" else "条件买入信号"
+            reason = "strict_signal_remains_valid" if action == "HOLD_REVIEW" else "all_strict_gates_passed"
+        else:
+            action = "WATCH_ONLY"
+            label = "仅观察"
+            reason = str(row.get("missing_conditions") or "strict_gates_not_passed")
+        plan = _signal_plan_fields(row)
+        risk_budget_enabled = action in {"BUY_IF_TRIGGERED", "HOLD_REVIEW"}
+        signals.append({
+            "signal_date": as_of.isoformat(), "valid_for_trade_date": next_trade_date.isoformat(),
+            "code": code, "stock_name": row.get("stock_name"), "signal_action": action,
+            "signal_label": label, "previous_level": previous_level, "current_level": current_level,
+            "signal_reason": reason, "signal_data_status": "CURRENT_DATA",
+            "latest_trade_date": row.get("latest_trade_date"), "latest_price": row.get("raw_latest_close"),
+            "preferred_plan": row.get("preferred_plan"), **plan,
+            "risk_budget_initial_position_pct": (
+                row.get("risk_budget_initial_position_pct") or 0.0
+            ) if risk_budget_enabled else 0.0,
+            "risk_budget_max_position_pct": (
+                row.get("risk_budget_max_position_pct") or 0.0
+            ) if risk_budget_enabled else 0.0,
+            "evidence_urls": row.get("evidence_urls"), "rule_version": RULE_VERSION,
+            "no_auto_trade": True, "disclaimer": DISCLAIMER,
+        })
+    for code, before in previous.items():
+        if code in current_by_code or str(before.get("user_visible_level") or "") != "STRICT_REVIEW_READY":
+            continue
+        plan = _signal_plan_fields(before)
+        signals.append({
+            "signal_date": as_of.isoformat(), "valid_for_trade_date": next_trade_date.isoformat(),
+            "code": code, "stock_name": before.get("stock_name"), "signal_action": "SELL_EXIT",
+            "signal_label": "退出信号", "previous_level": "STRICT_REVIEW_READY", "current_level": "",
+            "signal_reason": "left_current_research_watchlist", "signal_data_status": "CURRENT_ROW_MISSING",
+            "latest_trade_date": before.get("latest_trade_date"), "latest_price": before.get("raw_latest_close"),
+            "preferred_plan": before.get("preferred_plan"), **plan,
+            "risk_budget_initial_position_pct": 0.0, "risk_budget_max_position_pct": 0.0,
+            "evidence_urls": before.get("evidence_urls"), "rule_version": RULE_VERSION,
+            "no_auto_trade": True, "disclaimer": DISCLAIMER,
+        })
+    action_rank = {"SELL_EXIT": 0, "BUY_IF_TRIGGERED": 1, "HOLD_REVIEW": 2, "WATCH_ONLY": 3}
+    signals.sort(key=lambda row: (action_rank.get(str(row.get("signal_action")), 9), str(row.get("code"))))
+    return signals
+
+
+def _daily_signals_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, Any]]) -> str:
+    lines = [
+        "# 每日买入/卖出研究信号", "", DISCLAIMER, "",
+        f"- 信号日期: {summary.get('as_of_date')}",
+        f"- 适用交易日: {summary.get('next_trade_date')}",
+        f"- 条件买入: {summary.get('buy_signal_count')}",
+        f"- 持有复核: {summary.get('hold_signal_count')}",
+        f"- 退出信号: {summary.get('sell_signal_count')}",
+        f"- 仅观察: {summary.get('watch_signal_count')}", "",
+        "买入信号只有在价格进入指定区间且盘前公告/停牌/数据核对无异常时才成立；退出信号表示策略资格丢失或失效位触发，不读取实际持仓。", "",
+    ]
+    actionable = [row for row in rows if row.get("signal_action") != "WATCH_ONLY"]
+    if not actionable:
+        lines.extend(["本次没有满足严格门槛的买入、持有或退出信号。", ""])
+    for row in actionable:
+        lines.extend([
+            f"## {row.get('stock_name')} ({row.get('code')}) - {row.get('signal_action')}", "",
+            f"- 原因: {row.get('signal_reason')}",
+            f"- 最新价格: {row.get('latest_price')}（{row.get('latest_trade_date')}）",
+            f"- 条件区间: {row.get('entry_low')}-{row.get('entry_high')}",
+            f"- 止损/失效: {row.get('stop_price')} / {row.get('logic_invalidation_price')}",
+            f"- 目标: {row.get('target_1')} / {row.get('target_2')}",
+            f"- 风险预算参考: {row.get('risk_budget_initial_position_pct')}%-{row.get('risk_budget_max_position_pct')}%", "",
+        ])
+    return "\n".join(lines) + "\n"
+
+
 def _change_markdown(title: str, rows: list[Mapping[str, Any]], include_types: set[str]) -> str:
     selected = [row for row in rows if str(row.get("change_type")) in include_types]
     lines = [f"# {title}", "", DISCLAIMER, ""]
@@ -1226,10 +1487,22 @@ def _fundamentals(
     return inputs, errors
 
 
+def _apply_position_budget(row: dict[str, Any], plan: Mapping[str, Any], level: str) -> None:
+    strict = level == "STRICT_REVIEW_READY"
+    preferred = str(plan.get("preferred_plan") or "")
+    entry = _safe_float(
+        plan.get(f"{preferred}_entry_high") or plan.get("breakout_max_chase_price")
+    ) or 0.0
+    stop = _safe_float(plan.get(f"{preferred}_stop_price")) or 0.0
+    initial, maximum = _position_pct(entry, stop, enabled=strict)
+    row["risk_budget_initial_position_pct"] = initial if strict else 0.0
+    row["risk_budget_max_position_pct"] = maximum if strict else 0.0
+
+
 def _merge_deep_rows(
     *, quant_rows: list[dict[str, Any]], deep_report: Path, raw_histories: Mapping[str, pd.DataFrame],
     price_audits: Mapping[str, Mapping[str, Any]], board_rules: Mapping[str, BoardRule],
-    exit_profiles: Mapping[str, Mapping[str, Any]], max_watchlist: int,
+    exit_profiles: Mapping[str, Mapping[str, Any]], max_watchlist: int, as_of: date,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     payload = json.loads((deep_report / "daily_opportunity_report.json").read_text(encoding="utf-8"))
     evidence_rows = list(csv.DictReader((deep_report / "evidence_inventory.csv").open(encoding="utf-8")))
@@ -1246,9 +1519,10 @@ def _merge_deep_rows(
         if board not in board_rules:
             continue
         plan = build_price_plan(deep, raw, board_rules[board], urls)
-        profile = dict(exit_profiles.get(code, {}))
+        profile = enrich_exit_profile(exit_profiles.get(code, {}), as_of=as_of)
+        official_evidence = strict_official_evidence_audit(evidence_rows, deep, as_of=as_of)
         merged = {
-            **deep, **quant, **dict(price_audits.get(code, {})), **profile, **plan,
+            **deep, **quant, **dict(price_audits.get(code, {})), **profile, **official_evidence, **plan,
             "code": code, "stock_name": deep.get("stock_name") or quant.get("stock_name"),
             "exchange": quant.get("exchange"), "board": board,
             "industry": deep.get("normalized_industry") or quant.get("industry") or deep.get("raw_industry"),
@@ -1265,12 +1539,7 @@ def _merge_deep_rows(
         merged["top_risks"] = deep.get("top_risks") or ";".join(missing[:3])
         merged["upgrade_conditions"] = deep.get("upgrade_conditions") or ";".join(missing)
         merged["actionability_score"] = actionability_score(merged, plan)
-        strict = level == "STRICT_REVIEW_READY"
-        entry = _safe_float(plan.get(f"{plan.get('preferred_plan')}_entry_high") or plan.get("breakout_max_chase_price")) or 0.0
-        stop = _safe_float(plan.get(f"{plan.get('preferred_plan')}_stop_price")) or 0.0
-        initial, maximum = _position_pct(entry, stop, enabled=strict)
-        merged["risk_budget_initial_position_pct"] = initial if strict else 0.0
-        merged["risk_budget_max_position_pct"] = maximum if strict else 0.0
+        _apply_position_budget(merged, plan, level)
         all_rows.append(merged)
     all_rows.sort(key=lambda row: (_safe_float(row.get("actionability_score")) or 0.0), reverse=True)
     selected: list[dict[str, Any]] = []
@@ -1377,12 +1646,18 @@ def run_scan(
     watchlist, deep_rows = _merge_deep_rows(
         quant_rows=quant_rows, deep_report=deep_report, raw_histories=raw_histories,
         price_audits=price_audits, board_rules=board_rules, exit_profiles=profiles,
-        max_watchlist=config.max_watchlist,
+        max_watchlist=config.max_watchlist, as_of=config.as_of,
     )
     strict_rows = [row for row in watchlist if row.get("user_visible_level") == "STRICT_REVIEW_READY"]
     condition_rows = [row for row in watchlist if row.get("user_visible_level") == "CONDITION_WATCH"]
     research_rows = [row for row in watchlist if row.get("user_visible_level") == "RESEARCH_WATCH"]
-    changes, evidence_changes = _changes(watchlist, config.state_dir / "last_all_a_state.json")
+    previous_state_file = config.state_dir / "last_all_a_state.json"
+    previous_watchlist = _load_previous_watchlist_state(previous_state_file)
+    daily_signals = build_daily_signals(
+        current_rows=watchlist, previous=previous_watchlist,
+        as_of=config.as_of, next_trade_date=config.next_trade_date,
+    )
+    changes, evidence_changes = _changes(watchlist, previous_state_file)
     board_distribution = _distribution(universe_rows, "board")
     exchange_distribution = _distribution(universe_rows, "exchange")
     price_source_distribution = dict(Counter(
@@ -1406,6 +1681,10 @@ def run_scan(
         "secondary_research_count": sum(row.get("quant_status") == "SECONDARY_RESEARCH" for row in quant_rows),
         "strict_review_ready_count": len(strict_rows), "condition_watch_count": len(condition_rows),
         "research_watch_count": len(research_rows),
+        "buy_signal_count": sum(row.get("signal_action") == "BUY_IF_TRIGGERED" for row in daily_signals),
+        "hold_signal_count": sum(row.get("signal_action") == "HOLD_REVIEW" for row in daily_signals),
+        "sell_signal_count": sum(row.get("signal_action") == "SELL_EXIT" for row in daily_signals),
+        "watch_signal_count": sum(row.get("signal_action") == "WATCH_ONLY" for row in daily_signals),
         "industry_evidence_coverage": _coverage(deep_rows, lambda row: row.get("industry_evidence_status") in {"VERIFIED", "PARTIALLY_VERIFIED"}),
         "company_evidence_coverage": _coverage(deep_rows, lambda row: row.get("company_evidence_status") in {"VERIFIED", "PARTIALLY_VERIFIED"}),
         "exit_profile_coverage": _coverage(deep_rows, lambda row: row.get("exit_profile_status") in {"PASSED", "DEGRADED", "FAILED"}),
@@ -1439,6 +1718,24 @@ def run_scan(
     _write_csv(config.output_dir / "condition_watch.csv", condition_rows, PLAN_COLUMNS)
     _write_csv(config.output_dir / "research_watch.csv", research_rows, PLAN_COLUMNS)
     _write_csv(config.output_dir / "tomorrow_watchlist.csv", watchlist, PLAN_COLUMNS)
+    _write_csv(config.output_dir / "daily_signals.csv", daily_signals, DAILY_SIGNAL_COLUMNS)
+    _write_csv(
+        config.output_dir / "buy_signals.csv",
+        [row for row in daily_signals if row.get("signal_action") == "BUY_IF_TRIGGERED"],
+        DAILY_SIGNAL_COLUMNS,
+    )
+    _write_csv(
+        config.output_dir / "sell_signals.csv",
+        [row for row in daily_signals if row.get("signal_action") == "SELL_EXIT"],
+        DAILY_SIGNAL_COLUMNS,
+    )
+    (config.output_dir / "daily_signals.json").write_text(
+        json.dumps({"summary": summary, "signals": daily_signals}, ensure_ascii=False, indent=2, default=str),
+        encoding="utf-8",
+    )
+    (config.output_dir / "daily_signals.md").write_text(
+        _daily_signals_markdown(summary, daily_signals), encoding="utf-8",
+    )
     _write_csv(config.output_dir / "opportunity_changes.csv", changes)
     _write_csv(config.output_dir / "evidence_changes.csv", evidence_changes)
     (config.output_dir / "candidate_upgrade_report.md").write_text(_change_markdown("候选升级变化", changes, {"NEW_STRICT_REVIEW_READY", "NEW_CONDITION_WATCH", "UPGRADED_FROM_RESEARCH", "TREND_NONE_TO_WEAK", "TREND_WEAK_TO_MEDIUM", "REAL_RR_IMPROVED"}), encoding="utf-8")
