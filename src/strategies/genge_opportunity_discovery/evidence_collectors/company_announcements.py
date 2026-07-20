@@ -51,12 +51,13 @@ def _query_cninfo(
 ) -> list[dict[str, Any]]:
     start = (as_of - timedelta(days=560)).isoformat()
     end = as_of.isoformat()
+    is_shanghai = code.startswith(("6", "9"))
     data = {
         "pageNum": "1",
         "pageSize": "5",
-        "column": "szse",
+        "column": "sse" if is_shanghai else "szse",
         "tabName": "fulltext",
-        "plate": "sz",
+        "plate": "sh" if is_shanghai else "sz",
         "stock": f"{code},{org_id}",
         "searchkey": "年度报告",
         "secid": "",
@@ -149,10 +150,8 @@ def _announcement_candidates(
     timeout: int,
     cninfo_org_ids: Mapping[str, str],
 ) -> list[dict[str, Any]]:
-    if code.startswith(("0", "2", "3")):
-        org_id = str(cninfo_org_ids.get(code) or "").strip()
-        if not org_id:
-            raise RuntimeError(f"cninfo_org_id_missing:{code}")
+    org_id = str(cninfo_org_ids.get(code) or "").strip()
+    if org_id:
         return _query_cninfo(code, org_id, as_of, session, timeout)
     if code.startswith("6"):
         return _query_sse(code, as_of, session, timeout)
@@ -204,7 +203,7 @@ def collect_company_announcements(
     fetch_successes = 0
     task_count = 0
     cninfo_org_ids: dict[str, str] = {}
-    if any(_normalize_code(row.get("code")).startswith(("0", "2", "3")) for row in rows[: max(0, int(limit))]):
+    if rows[: max(0, int(limit))]:
         try:
             cninfo_org_ids = _load_cninfo_org_ids(session, timeout)
             network_fetches += 1
@@ -216,7 +215,11 @@ def collect_company_announcements(
         if not code:
             continue
         task_count += 1
-        collector = "cninfo_company_announcement" if code.startswith(("0", "2", "3")) else "sse_company_announcement"
+        collector = (
+            "cninfo_company_announcement"
+            if cninfo_org_ids.get(code)
+            else "sse_company_announcement"
+        )
         report_period = str(as_of.year - 1)
         key = cache.key_for(
             {
@@ -224,7 +227,7 @@ def collect_company_announcements(
                 "code": code,
                 "announcement_type": "annual_report",
                 "report_period": report_period,
-                "version": 3,
+                "version": 4,
             }
         )
         cached = cache.get(key)
@@ -275,8 +278,10 @@ def collect_company_announcements(
 
         item = announcements[0]
         url = str(item.get("url") or "")
+        source_name = str(item.get("source_name") or "")
+        referer = "https://www.sse.com.cn/" if source_name == "sse" else "https://www.cninfo.com.cn/"
         try:
-            response = session.get(url, headers={**REQUEST_HEADERS, "Referer": "https://www.cninfo.com.cn/"}, timeout=timeout)
+            response = session.get(url, headers={**REQUEST_HEADERS, "Referer": referer}, timeout=timeout)
             network_fetches += 1
             response.raise_for_status()
             text, parser = extract_text_from_response(response.content, response.headers.get("content-type", ""))

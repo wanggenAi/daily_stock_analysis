@@ -16,6 +16,7 @@ def collect_auto_evidence(
     priority_rows: list[Mapping[str, Any]],
     as_of: date,
     cache_dir: str | Path,
+    industry_alias_map: Mapping[str, Any] | None = None,
     max_companies: int = 50,
     timeout: int = 12,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
@@ -33,6 +34,7 @@ def collect_auto_evidence(
         industries=industries,
         as_of=as_of,
         cache=cache,
+        industry_alias_map=industry_alias_map,
         timeout=timeout,
     )
     audit_rows = company_audit + industry_audit

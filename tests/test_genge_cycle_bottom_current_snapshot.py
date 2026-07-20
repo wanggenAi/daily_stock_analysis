@@ -183,6 +183,8 @@ def test_industry_alias_resolution_supports_alias_code_priority_and_unresolved()
     alias = resolver.resolve(code="600000", stock_name="测试", raw_industry=" tft-lcd ")
     exact = resolver.resolve(code="600001", stock_name="测试", raw_industry="猪肉")
     structured = resolver.resolve(code="600003", stock_name="测试", raw_industry="C26化学原料和化学制品制造业")
+    ambiguous_equipment = resolver.resolve(code="600004", stock_name="测试", raw_industry="C35专用设备制造业")
+    explicit_machinery = resolver.resolve(code="600005", stock_name="测试", raw_industry="建筑工程机械制造业")
     unresolved = resolver.resolve(code="600002", stock_name="测试", raw_industry="未知行业")
 
     assert code_priority.normalized_industry == "面板"
@@ -192,6 +194,9 @@ def test_industry_alias_resolution_supports_alias_code_priority_and_unresolved()
     assert exact.match_type == "EXACT"
     assert structured.normalized_industry == "化工"
     assert structured.match_type == "SUBSTRING_ALIAS"
+    assert ambiguous_equipment.normalized_industry == "UNRESOLVED"
+    assert ambiguous_equipment.match_type == "UNRESOLVED"
+    assert explicit_machinery.normalized_industry == "工程机械"
     assert unresolved.normalized_industry == "UNRESOLVED"
     assert unresolved.match_type == "UNRESOLVED"
 

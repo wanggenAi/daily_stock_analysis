@@ -324,8 +324,76 @@ def test_cninfo_uses_official_org_id_and_prefers_full_annual_report() -> None:
     )
 
     assert session.posted_data["stock"] == "002180,9900003822"
+    assert session.posted_data["column"] == "szse"
+    assert session.posted_data["plate"] == "sz"
     assert announcements[0]["title"] == "2025年年度报告"
     assert announcements[0]["url"] == "https://static.cninfo.com.cn/finalpage/2026-04-15/full.PDF"
+
+    company_announcements._query_cninfo(
+        "600519",
+        "gssh0600519",
+        date(2026, 7, 10),
+        session,
+        timeout=5,
+    )
+    assert session.posted_data["column"] == "sse"
+    assert session.posted_data["plate"] == "sh"
+
+
+def test_company_collector_prefers_cninfo_official_pdf_for_shanghai(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, *, payload: dict | None = None, content: bytes = b"") -> None:
+            self._payload = payload
+            self.content = content
+            self.headers = {"content-type": "text/html; charset=utf-8"}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            assert self._payload is not None
+            return self._payload
+
+    class FakeSession:
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            if url == company_announcements.CNINFO_STOCK_LIST_URL:
+                return FakeResponse(
+                    payload={"stockList": [{"code": "600519", "orgId": "gssh0600519"}]},
+                )
+            assert url == "https://static.cninfo.com.cn/finalpage/2026-04-17/report.PDF"
+            return FakeResponse(content="营业收入 100亿元，同比增长 5%".encode("utf-8"))
+
+        def post(self, url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+            assert url == "https://www.cninfo.com.cn/new/hisAnnouncement/query"
+            assert data["column"] == "sse"
+            timestamp = int(datetime(2026, 4, 17, tzinfo=timezone.utc).timestamp() * 1000)
+            return FakeResponse(
+                payload={
+                    "announcements": [
+                        {
+                            "announcementTitle": "贵州茅台2025年年度报告",
+                            "announcementTime": timestamp,
+                            "adjunctUrl": "finalpage/2026-04-17/report.PDF",
+                        }
+                    ]
+                },
+            )
+
+    monkeypatch.setattr(company_announcements.requests, "Session", lambda: FakeSession())
+    evidence_rows, audit_rows, summary = company_announcements.collect_company_announcements(
+        rows=[{"code": "600519", "stock_name": "贵州茅台", "normalized_industry": "白酒"}],
+        as_of=date(2026, 7, 20),
+        cache=EvidenceCache(tmp_path / "cache"),
+        limit=1,
+    )
+
+    assert audit_rows == []
+    assert summary["company_evidence_rows"] == 1
+    assert evidence_rows[0]["source_domain"] == "static.cninfo.com.cn"
+    assert evidence_rows[0]["collector"] == "cninfo_company_announcement"
+    assert evidence_rows[0]["evidence_status"] == "VERIFIED"
 
 
 def test_technology_sector_output_separates_core_and_extended_scope() -> None:
@@ -394,6 +462,110 @@ def test_public_data_homepage_number_is_not_verified(tmp_path: Path, monkeypatch
     assert audit_rows
     assert {row["issue"] for row in audit_rows} == {"specific_article_not_found"}
     assert {row["status"] for row in audit_rows} == {"MISSING"}
+
+
+def test_public_data_uses_configured_industry_alias_for_official_article(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.strategies.genge_opportunity_discovery.evidence_collectors.public_data as public_data
+
+    class FakeResponse:
+        def __init__(self, html: str) -> None:
+            self.content = html.encode("utf-8")
+            self.headers = {"content-type": "text/html; charset=utf-8"}
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeSession:
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            if url.endswith("article.html"):
+                return FakeResponse("<html><body>2026年6月30日 医疗器械行业产量增长 12%</body></html>")
+            return FakeResponse('<html><body><a href="article.html">医疗器械行业运行数据</a></body></html>')
+
+    monkeypatch.setattr(public_data.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(
+        public_data,
+        "PUBLIC_SOURCES",
+        [("fixture_official", "https://official.example/index.html", "官方公开数据")],
+    )
+
+    evidence_rows, audit_rows, summary = public_data.collect_public_industry_data(
+        industries=["医药", "UNRESOLVED"],
+        as_of=date(2026, 7, 7),
+        cache=EvidenceCache(tmp_path / "cache"),
+        industry_alias_map={"industries": {"医药": {"aliases": ["医疗器械"]}}},
+    )
+
+    assert audit_rows == []
+    assert summary["industry_task_count"] == 1
+    assert summary["industry_evidence_rows"] == 1
+    assert evidence_rows[0]["industry"] == "医药"
+    assert evidence_rows[0]["evidence_status"] == "VERIFIED"
+    assert "匹配词：医疗器械" in evidence_rows[0]["normalized_summary"]
+
+
+def test_public_data_uses_specialized_official_json_listing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.strategies.genge_opportunity_discovery.evidence_collectors.public_data as public_data
+
+    class FakeResponse:
+        def __init__(self, *, html: str = "", payload: dict | None = None) -> None:
+            self.content = html.encode("utf-8")
+            self.headers = {"content-type": "application/json" if payload is not None else "text/html"}
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            assert self._payload is not None
+            return self._payload
+
+    class FakeSession:
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            if url.endswith("article.shtml"):
+                return FakeResponse(html="2026年7月17日 快递业务量完成1003.8亿件，同比增长5.0%")
+            return FakeResponse(
+                payload={
+                    "data": {
+                        "results": [
+                            {
+                                "title": "全市快递员工作会议召开",
+                                "url": "https://official.example/meeting.shtml",
+                            },
+                            {
+                                "title": "2026年上半年快递业务量运行情况",
+                                "url": "https://official.example/article.shtml",
+                            }
+                        ]
+                    }
+                }
+            )
+
+    monkeypatch.setattr(public_data.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(public_data, "PUBLIC_SOURCES", [])
+    monkeypatch.setattr(
+        public_data,
+        "SPECIALIZED_PUBLIC_SOURCES",
+        {"物流": [("spb_public_data", "https://official.example/search", "官方行业数据")]},
+    )
+
+    evidence_rows, audit_rows, summary = public_data.collect_public_industry_data(
+        industries=["物流"],
+        as_of=date(2026, 7, 20),
+        cache=EvidenceCache(tmp_path / "cache"),
+        industry_alias_map={"industries": {"物流": {"aliases": ["快递"]}}},
+    )
+
+    assert audit_rows == []
+    assert summary["industry_task_count"] == 1
+    assert evidence_rows[0]["industry"] == "物流"
+    assert evidence_rows[0]["publish_date"] == "2026-07-17"
+    assert evidence_rows[0]["source_domain"] == "official.example"
+    assert evidence_rows[0]["evidence_status"] == "VERIFIED"
+    assert evidence_rows[0]["title"] == "2026年上半年快递业务量运行情况"
 
 
 def test_opportunity_discovery_writes_research_outputs_and_forward_ledger(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:

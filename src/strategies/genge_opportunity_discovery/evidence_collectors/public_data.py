@@ -18,6 +18,18 @@ PUBLIC_SOURCES = [
     ("miit_public_data", "https://www.miit.gov.cn/gxsj/index.html", "工业和信息化部公开数据"),
     ("ndrc_public_data", "https://www.ndrc.gov.cn/fgsj/", "国家发展改革委公开数据"),
 ]
+SPECIALIZED_PUBLIC_SOURCES = {
+    "物流": [
+        (
+            "spb_public_data",
+            "https://www.spb.gov.cn/common/search/a630715264f14e0aafa4ab2a945fd6da"
+            "?_isAgg=true&_isJson=true&_pageSize=100&_template=index"
+            "&_rangeTimeGte=&_channelName=&page=1",
+            "国家邮政局行业要闻",
+        )
+    ],
+}
+SPB_OPERATIONAL_TITLE_TOKENS = ("行业运行情况", "行业发展情况", "业务量")
 
 
 def _extract_publish_date(text: str) -> str:
@@ -34,23 +46,69 @@ def _extract_publish_date(text: str) -> str:
     return ""
 
 
-def _article_candidates(html: str, *, base_url: str, keyword: str, limit: int = 5) -> list[tuple[str, str]]:
+def _industry_search_terms(industry: str, alias_map: Mapping[str, Any] | None) -> list[str]:
+    if industry.strip().lower() in {"", "unresolved", "unknown", "未知行业"}:
+        return []
+    config = ((alias_map or {}).get("industries") or {}).get(industry) or {}
+    values = [industry, *((config or {}).get("aliases") or [])]
+    return [
+        value
+        for value in dict.fromkeys(str(item or "").strip() for item in values)
+        if len(value) >= 2
+    ]
+
+
+def _article_candidates(
+    html: str, *, base_url: str, keywords: list[str], limit: int = 5,
+) -> list[tuple[str, str, str]]:
     soup = BeautifulSoup(html, "html.parser")
-    candidates: list[tuple[str, str]] = []
+    candidates: list[tuple[str, str, str]] = []
+    seen_urls: set[str] = set()
     for anchor in soup.find_all("a"):
         title = anchor.get_text(" ", strip=True)
         href = str(anchor.get("href") or "").strip()
         if not title or not href:
             continue
-        if keyword not in title:
+        matched_keyword = next((keyword for keyword in keywords if keyword in title), "")
+        if not matched_keyword:
             continue
         url = urljoin(base_url, href)
-        if source_domain(url) != source_domain(base_url):
+        if source_domain(url) != source_domain(base_url) or url in seen_urls:
             continue
-        candidates.append((title, url))
+        seen_urls.add(url)
+        candidates.append((title, url, matched_keyword))
         if len(candidates) >= limit:
             break
     return candidates
+
+
+def _json_article_candidates(
+    payload: Mapping[str, Any], *, base_url: str, keywords: list[str], limit: int = 5,
+) -> tuple[str, list[tuple[str, str, str]]]:
+    results = ((payload.get("data") or {}).get("results") or [])
+    titles: list[str] = []
+    candidates: list[tuple[str, str, str]] = []
+    seen_urls: set[str] = set()
+    for item in results:
+        title = str(item.get("title") or "").strip()
+        href = str(item.get("url") or "").strip()
+        if title:
+            titles.append(title)
+        matched_keyword = next((keyword for keyword in keywords if keyword in title), "")
+        operational_title = next((token for token in SPB_OPERATIONAL_TITLE_TOKENS if token in title), "")
+        if not href or not operational_title:
+            continue
+        matched_keyword = matched_keyword or operational_title
+        url = urljoin(base_url, href)
+        if url.startswith("http://www.spb.gov.cn/"):
+            url = "https://www.spb.gov.cn/" + url.split("http://www.spb.gov.cn/", 1)[1]
+        if source_domain(url) != source_domain(base_url) or url in seen_urls:
+            continue
+        seen_urls.add(url)
+        candidates.append((title, url, matched_keyword))
+        if len(candidates) >= limit:
+            break
+    return "\n".join(titles), candidates
 
 
 def _audit_row(
@@ -86,6 +144,7 @@ def collect_public_industry_data(
     industries: list[str],
     as_of: date,
     cache: EvidenceCache,
+    industry_alias_map: Mapping[str, Any] | None = None,
     timeout: int = 12,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     session = requests.Session()
@@ -96,9 +155,19 @@ def collect_public_industry_data(
     task_count = 0
 
     for industry in [item for item in dict.fromkeys(industries) if item]:
-        for collector, url, title in PUBLIC_SOURCES:
+        search_terms = _industry_search_terms(industry, industry_alias_map)
+        if not search_terms:
+            continue
+        source_specs = [*PUBLIC_SOURCES, *SPECIALIZED_PUBLIC_SOURCES.get(industry, [])]
+        for collector, url, title in source_specs:
             task_count += 1
-            key = cache.key_for({"collector": collector, "industry": industry, "source": url, "version": 2})
+            key = cache.key_for({
+                "collector": collector,
+                "industry": industry,
+                "search_terms": search_terms,
+                "source": url,
+                "version": 3,
+            })
             cached = cache.get(key)
             if cached is not None:
                 evidence_rows.extend(cached.get("evidence_rows") or [])
@@ -113,8 +182,20 @@ def collect_public_industry_data(
                 response = session.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=timeout)
                 network_fetches += 1
                 response.raise_for_status()
-                listing_text, parser = extract_text_from_response(response.content, response.headers.get("content-type", ""))
-                listing_html = response.content.decode("utf-8", errors="ignore")
+                if collector == "spb_public_data":
+                    listing_text, article_attempts = _json_article_candidates(
+                        response.json(), base_url=url, keywords=search_terms,
+                    )
+                    listing_html = ""
+                    parser = "json_search"
+                else:
+                    listing_text, parser = extract_text_from_response(
+                        response.content, response.headers.get("content-type", ""),
+                    )
+                    listing_html = response.content.decode("utf-8", errors="ignore")
+                    article_attempts = _article_candidates(
+                        listing_html, base_url=url, keywords=search_terms,
+                    )
                 if listing_text:
                     fetch_successes += 1
             except Exception as exc:
@@ -134,8 +215,7 @@ def collect_public_industry_data(
                 continue
 
             article_evidence_found = False
-            article_attempts = _article_candidates(listing_html, base_url=url, keyword=industry)
-            for article_title, article_url in article_attempts:
+            for article_title, article_url, matched_keyword in article_attempts:
                 try:
                     article_response = session.get(article_url, headers={"User-Agent": "Mozilla/5.0", "Referer": url}, timeout=timeout)
                     network_fetches += 1
@@ -183,20 +263,20 @@ def collect_public_industry_data(
                         )
                     )
                     continue
-                if industry not in article_text:
+                if not any(keyword in article_text for keyword in search_terms):
                     task_audit.append(
                         _audit_row(
                             industry=industry,
                             collector=collector,
                             status="MISSING",
                             issue="industry_keyword_not_found_in_article",
-                            detail="Concrete article was fetched, but industry keyword was not located in article text.",
+                            detail="Concrete article was fetched, but no canonical industry or configured alias was located in article text.",
                             url=article_url,
                             title=article_title,
                         )
                     )
                     continue
-                extracted = extract_numeric_context(article_text, keywords=[industry])
+                extracted = extract_numeric_context(article_text, keywords=search_terms)
                 if not extracted:
                     task_audit.append(
                         _audit_row(
@@ -233,7 +313,7 @@ def collect_public_industry_data(
                         "source_type": "OFFICIAL_REPORT",
                         "confidence": "MEDIUM",
                         "raw_excerpt": excerpt,
-                        "normalized_summary": f"{article_title}：{excerpt}",
+                        "normalized_summary": f"{article_title}（匹配词：{matched_keyword}）：{excerpt}",
                         "title": article_title,
                         "parser": article_parser,
                         "collector": collector,
@@ -249,14 +329,14 @@ def collect_public_industry_data(
 
             if article_evidence_found:
                 pass
-            elif industry not in listing_text:
+            elif not any(keyword in listing_text for keyword in search_terms):
                 task_audit.append(
                     _audit_row(
                         industry=industry,
                         collector=collector,
                         status="MISSING",
                         issue="industry_keyword_not_found",
-                        detail=f"Fetched official page with {parser}, but industry keyword was not located.",
+                        detail=f"Fetched official page with {parser}, but no canonical industry or configured alias was located.",
                         url=url,
                         title=title,
                     )

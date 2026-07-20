@@ -1720,6 +1720,7 @@ def run_opportunity_discovery(
             priority_rows=priority_queue,
             as_of=resolved_as_of,
             cache_dir=evidence_cache_dir,
+            industry_alias_map=industry_alias_map,
             max_companies=auto_evidence_limit,
         )
         auto_industry_evidence_df = pd.DataFrame(industry_auto_rows)

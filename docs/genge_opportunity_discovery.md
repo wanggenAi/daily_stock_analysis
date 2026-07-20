@@ -138,6 +138,8 @@ python3 -m src.strategies.genge_opportunity_discovery.tomorrow_watchlist \
 
 `evidence_inventory.csv` 使用以下核心字段：`evidence_date`、`collected_at`、`industry`、`code`、`stock_name`、`indicator`、`value`、`unit`、`comparison_period`、`direction`、`source`、`source_domain`、`source_type`、`confidence`、`freshness_days`、`raw_excerpt`、`normalized_summary`、`parser`、`parse_status`、`evidence_status`、`warning_flags`。新闻摘要、缺少数值支撑或只有链接的内容只会进入 `LEAD_ONLY` 或 `NEEDS_MANUAL_REVIEW`，不会作为高置信度硬证据。
 
+公司自动证据对沪深 A 股统一优先查询巨潮资讯官方组织 ID，并直接解析其官方年报 PDF；仅在官方组织 ID 不可用时才尝试交易所回退。行业自动证据同时使用 canonical 行业和 `config/industry_alias_map.yaml` 中的别名，`UNRESOLVED` 不发起无意义采集；“专用设备/机械设备”等跨行业宽泛词不得映射为工程机械，歧义分类宁可保持未解析。物流行业还会读取国家邮政局公开列表，但只接受标题明确属于行业运行、行业发展或业务量统计，且正文包含发布日期和同行数值的原始页面；会议、宣传或只有关键词的页面不会升级为已验证证据。
+
 ## 分层标准
 
 A 类要求同时满足：量化研究队列、低位/合理位置、非 falling knife、趋势至少 `MEDIUM`、行业证据和公司证据至少部分验证、硬逻辑至少 `MEDIUM`、估值未失败、财务通过、执行风险不过高、估值陷阱不过高、退出画像 `PASSED`。
