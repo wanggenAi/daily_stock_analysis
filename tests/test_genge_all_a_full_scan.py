@@ -21,6 +21,7 @@ from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
     classify_candidate,
     enrich_exit_profile,
     load_board_rules,
+    mark_listings_after_as_of,
     quant_screen,
     resistance_levels,
     strict_official_evidence_audit,
@@ -75,6 +76,29 @@ def test_listing_row_excludes_st_and_unresolved_security_type() -> None:
     unresolved = _listing_row(code="000002", name="测试", exchange="SZSE", board="未知", listing_date="2020-01-01", universe_source="fixture")
     assert st["exclusion_reason"] == "st_or_delisting_risk"
     assert unresolved["exclusion_reason"] == "security_type_unconfirmed"
+
+
+def test_listing_after_as_of_is_skipped_without_fatal_price_failure() -> None:
+    as_of = date(2026, 7, 20)
+    future = _row(board="STAR")
+    future.update({
+        "code": "688806",
+        "stock_name": "N泰诺",
+        "exchange": "SSE",
+        "listing_date": "2026-07-21",
+    })
+    rows = mark_listings_after_as_of([future], as_of=as_of)
+
+    assert rows[0]["exclusion_reason"] == "listing_after_as_of"
+    universe, audit_rows, counts = apply_universe_filters(
+        rows, {}, {}, {}, {"688806:raw": "history unavailable"},
+        as_of=as_of, board_rules=load_board_rules("config/board_risk_rules.yaml"),
+    )
+
+    assert universe[0]["exclusion_reason"] == "listing_after_as_of"
+    assert audit_rows[0]["reason"] == "listing_after_as_of"
+    assert counts["listing_after_as_of"] == 1
+    assert counts["fatal_data_failure_count"] == 0
 
 
 def test_board_rules_are_differentiated() -> None:

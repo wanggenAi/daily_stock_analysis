@@ -229,6 +229,24 @@ def _listing_row(
     }
 
 
+def mark_listings_after_as_of(
+    rows: list[dict[str, Any]], *, as_of: date,
+) -> list[dict[str, Any]]:
+    """Exclude announced listings that have no tradable history by the cutoff."""
+    result: list[dict[str, Any]] = []
+    for row in rows:
+        local = dict(row)
+        if not local.get("exclusion_reason"):
+            try:
+                listing_date = coerce_date(local.get("listing_date"))
+            except Exception:
+                listing_date = None
+            if listing_date is not None and listing_date > as_of:
+                local["exclusion_reason"] = "listing_after_as_of"
+        result.append(local)
+    return result
+
+
 def fetch_exchange_universe(as_of: date, *, timeout: int = 20) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     headers = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
@@ -1593,6 +1611,7 @@ def run_scan(
     config.output_dir.mkdir(parents=True, exist_ok=True)
     board_rules = load_board_rules(config.board_rules_file)
     universe_rows, source_audit = build_all_a_universe(as_of=config.as_of)
+    universe_rows = mark_listings_after_as_of(universe_rows, as_of=config.as_of)
     industry_map, industry_diagnostics = fetch_baostock_industry_map()
     universe_rows, industry_enriched_count = enrich_industries(universe_rows, industry_map)
     write_universe_snapshot(config.stock_pool_output, universe_rows, source_audit)
