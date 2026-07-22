@@ -308,7 +308,11 @@ def _industry_schema(schema: Mapping[str, Any] | None, industry: str | None) -> 
         merged = dict(industries[canonical] or {})
         merged.setdefault("canonical_industry", canonical)
         return merged
-    return {}
+    # Broad official classifications (for example NBS/CSRC manufacturing
+    # categories) still need a schema even when there is no hand-crafted
+    # sub-industry template.  The fallback is intentionally generic and does
+    # not pretend that broad official statistics are company-specific proof.
+    return dict(schema.get("default_industry") or {})
 
 
 def _indicator_map(schema: Mapping[str, Any] | None, industry: str | None) -> Dict[str, Dict[str, Any]]:

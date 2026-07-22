@@ -5,14 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-> For user-friendly release highlights, see the [GitHub Releases](https://github.com/ZhuLinsen/daily_stock_analysis/releases) page.
+> For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
 
+- [修复] 全 A 退出画像不再只依赖 76 只静态种子；每日 Top80 使用长历史前复权行情执行无未来数据泄漏、5 交易日去重的 balanced exit 滚动回放，并以当日结果覆盖候选旧画像，消除候选与静态合格样本无交集时严格买入永远不可达的问题。
+- [修复] 自动行业证据新增国家统计局跨行业月报解析，支持从标题不含行业名的工业增加值、利润、零售和 PPI 正文表格提取具体行业数值；新增 C15/C27/C35/C38/F52 同粒度分类映射和通用官方证据 schema。
+- [新功能] 全 A 报告新增 `strict_gate_audit.csv` 与 `strict_gate_feasibility`，逐只、逐门槛显示失败原因；系统继续允许真实的无买入信号日，不会为了生成名单放宽门槛。
 - [修复] 全 A 官方股票池包含行情截止日之后才上市的新股时，按 `listing_after_as_of` 安全跳过，不再因尚无历史行情误记为致命数据失败并导致 GitHub 每日生产作业失败。
 - [修复] 自动公司证据采集改为对沪深 A 股统一优先使用巨潮资讯官方组织 ID 和年报 PDF；上海股票不再因上交所 PDF 反爬 HTML 被误判为已解析但无数值，并提升证据缓存版本以淘汰旧失败结果。
 - [改进] 自动行业证据采集使用 canonical 行业及配置别名检索，忽略 `UNRESOLVED` 占位行业；物流行业新增国家邮政局当期运行数据源，并限制为行业运行、行业发展或业务量统计类标题，避免会议新闻形成伪证据。
-- [修复] 行业别名删除会把医疗器械等 C35 公司误归为工程机械的“专用设备/机械设备”宽泛匹配；歧义分类现在保持 `UNRESOLVED`，仅明确工程机械词汇才映射。
+- [修复] C35 专用设备不再误归为工程机械，改为保留同粒度 canonical“专用设备”；只有明确工程机械词汇才映射到工程机械。
 - [测试] 补充上海股票巨潮年报路由、行业别名、国家邮政局 JSON 列表和非统计标题拒绝回归测试，并以贵州茅台、美的集团及国家邮政局真实公开页面完成只读验证。
 - [新功能] 沪深全 A 生产扫描新增可审计的每日 `BUY_IF_TRIGGERED`、`HOLD_REVIEW`、`SELL_EXIT`、`WATCH_ONLY` 信号及独立买入/退出 CSV，只有严格候选允许条件买入，退出信号只跟踪策略资格与失效位且不读取持仓。
 - [修复] GenGe 定时任务恢复并保存 `exit_profile.csv`，缺失时使用仓库内审计种子，避免全 A 扫描的退出画像覆盖率长期为 0；依赖安装增加二进制优先、重试和超时保护。

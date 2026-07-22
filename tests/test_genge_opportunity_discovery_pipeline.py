@@ -505,6 +505,46 @@ def test_public_data_uses_configured_industry_alias_for_official_article(
     assert "匹配词：医疗器械" in evidence_rows[0]["normalized_summary"]
 
 
+def test_nbs_cross_industry_report_extracts_split_table_value(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.strategies.genge_opportunity_discovery.evidence_collectors.public_data as public_data
+
+    class FakeResponse:
+        headers = {"content-type": "text/html; charset=utf-8"}
+
+        def __init__(self, html: str) -> None:
+            self.content = html.encode("utf-8")
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeSession:
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            if url.endswith("article.html"):
+                return FakeResponse("<html><body>2026年7月15日 医药制造业<br/>…<br/>6.7<br/>…<br/>5.6</body></html>")
+            return FakeResponse('<html><body><a href="article.html">2026年6月份规模以上工业增加值增长5.3%</a></body></html>')
+
+    monkeypatch.setattr(public_data.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(
+        public_data,
+        "PUBLIC_SOURCES",
+        [("nbs_public_data", "https://www.stats.gov.cn/index.html", "国家统计局")],
+    )
+
+    evidence_rows, _audit_rows, summary = public_data.collect_public_industry_data(
+        industries=["医药"],
+        as_of=date(2026, 7, 22),
+        cache=EvidenceCache(tmp_path / "cache"),
+        industry_alias_map={"industries": {"医药": {"aliases": ["医药制造业"]}}},
+    )
+
+    assert summary["industry_evidence_rows"] == 1
+    assert evidence_rows[0]["value"] == "6.7"
+    assert evidence_rows[0]["direction"] == "POSITIVE"
+    assert evidence_rows[0]["source_type"] == "OFFICIAL_REPORT"
+
+
 def test_public_data_uses_specialized_official_json_listing(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:

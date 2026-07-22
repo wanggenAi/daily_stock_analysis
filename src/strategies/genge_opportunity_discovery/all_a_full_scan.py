@@ -32,6 +32,7 @@ from src.strategies.genge_cycle_bottom.features import coerce_date, prepare_pric
 from src.strategies.genge_cycle_bottom.fundamentals import PublicFundamentalLoader
 from src.strategies.genge_cycle_bottom.industry_evidence import load_evidence_csv, load_industry_evidence_schema
 from src.strategies.genge_opportunity_discovery.pipeline import RULE_VERSION, run_opportunity_discovery
+from src.strategies.genge_opportunity_discovery.exit_profile import fetch_extended_adjusted_histories, refresh_exit_profiles_from_price_history
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     _atr,
     _ma,
@@ -1150,54 +1151,18 @@ def classify_candidate(
     row: Mapping[str, Any], plan: Mapping[str, Any], profile: Mapping[str, Any],
     evidence_urls: list[str], *, board_rule: BoardRule,
 ) -> tuple[str, list[str]]:
-    blockers: list[str] = []
+    strict_checks = strict_candidate_checks(row, plan, profile, board_rule=board_rule)
+    if all(strict_checks.values()):
+        return "STRICT_REVIEW_READY", []
     hard = str(row.get("hard_blockers") or row.get("hard_reject_blockers") or "").strip()
     percentile = _safe_float(row.get("price_percentile_5y"))
     trend = str(row.get("trend_confirmation_level") or "NONE")
-    ma60_slope = _safe_float(row.get("ma60_slope_pct"))
     adjusted_close = _safe_float(row.get("adjusted_latest_close"))
     ma60 = _safe_float(row.get("ma60"))
     financial = _status(row.get("financial_safety_score"))
     valuation = _status(row.get("valuation_score"))
-    industry = str(row.get("industry_evidence_status") or "MISSING")
     company = str(row.get("company_evidence_status") or "MISSING")
-    hard_logic = str(row.get("hard_logic_level") or "NONE")
-    exit_status = str(profile.get("exit_profile_status") or "NOT_AVAILABLE")
-    sample_count = int(_safe_float(profile.get("exit_profile_sample_count")) or 0)
-    profile_confidence = str(profile.get("exit_profile_confidence") or "LOW")
     rr = _safe_float(plan.get("real_reward_risk_ratio")) or 0.0
-    ready_plan = plan.get("pullback_status") == "READY" or plan.get("breakout_status") == "READY"
-    execution_high = str(row.get("execution_risk_quality") or "").upper() == "HIGH" or "execution_risk_high" in str(row.get("hard_reject_blockers") or "")
-    value_trap_high = bool(row.get("value_trap_flag")) or "value_trap_high" in str(row.get("hard_reject_blockers") or "")
-    strict_checks = {
-        "no_hard_risk": not hard,
-        "price_percentile_le_35": percentile is not None and percentile <= .35,
-        "trend_medium": trend in {"MEDIUM", "STRONG"},
-        "above_ma60": adjusted_close is not None and ma60 is not None and adjusted_close >= ma60,
-        "ma60_not_down": ma60_slope is not None and ma60_slope >= -.2,
-        "not_falling_knife": "falling_knife" not in str(row.get("soft_blockers") or row.get("risk_flags") or ""),
-        "financial_passed": financial == "PASSED",
-        "valuation_not_failed": valuation in {"PASSED", "DEGRADED"},
-        "industry_evidence": industry in {"VERIFIED", "PARTIALLY_VERIFIED"},
-        "company_evidence": company in {"VERIFIED", "PARTIALLY_VERIFIED"},
-        "hard_logic_medium": hard_logic in {"MEDIUM", "STRONG"},
-        "exit_profile_passed": exit_status == "PASSED",
-        "exit_profile_sample_count": sample_count >= 30,
-        "exit_profile_recent_2y_samples": int(_safe_float(profile.get("recent_2y_sample_count")) or 0) >= 10,
-        "exit_profile_confidence": profile_confidence in {"MEDIUM", "HIGH"},
-        "exit_profile_freshness": bool(profile.get("exit_profile_freshness_passed")),
-        "exit_profile_rule_version": bool(profile.get("exit_profile_rule_version_match")),
-        "exit_profile_data_traceable": bool(profile.get("exit_profile_data_traceable")),
-        "real_rr_1_8": rr >= 1.8,
-        "ready_plan": ready_plan,
-        "strict_official_evidence": bool(row.get("strict_official_evidence_passed")),
-        "execution_not_high": not execution_high,
-        "value_trap_not_high": not value_trap_high,
-        "price_mapping_ok": str(row.get("price_mapping_status")) == "OK",
-    }
-    if all(strict_checks.values()):
-        return "STRICT_REVIEW_READY", []
-    blockers = [name for name, passed in strict_checks.items() if not passed]
     ma20_slope = _safe_float(row.get("ma20_slope_pct"))
     distance_to_ma60 = None if adjusted_close is None or ma60 in (None, 0) else abs(adjusted_close / ma60 - 1.0)
     valid_plan = plan.get("pullback_status") in {"READY", "VALID_RR_BELOW_STRICT"} or plan.get("breakout_status") in {"READY", "VALID_RR_BELOW_STRICT"}
@@ -1229,6 +1194,55 @@ def classify_candidate(
     if not hard and trend in {"WEAK", "MEDIUM", "STRONG"} and company in {"VERIFIED", "PARTIALLY_VERIFIED", "LEAD_ONLY"}:
         return "RESEARCH_WATCH", [name for name, passed in condition_checks.items() if not passed]
     return "NOT_QUALIFIED", [name for name, passed in condition_checks.items() if not passed]
+
+
+def strict_candidate_checks(
+    row: Mapping[str, Any], plan: Mapping[str, Any], profile: Mapping[str, Any], *, board_rule: BoardRule,
+) -> dict[str, bool]:
+    hard = str(row.get("hard_blockers") or row.get("hard_reject_blockers") or "").strip()
+    percentile = _safe_float(row.get("price_percentile_5y"))
+    trend = str(row.get("trend_confirmation_level") or "NONE")
+    ma60_slope = _safe_float(row.get("ma60_slope_pct"))
+    adjusted_close = _safe_float(row.get("adjusted_latest_close"))
+    ma60 = _safe_float(row.get("ma60"))
+    financial = _status(row.get("financial_safety_score"))
+    valuation = _status(row.get("valuation_score"))
+    industry = str(row.get("industry_evidence_status") or "MISSING")
+    company = str(row.get("company_evidence_status") or "MISSING")
+    hard_logic = str(row.get("hard_logic_level") or "NONE")
+    exit_status = str(profile.get("exit_profile_status") or "NOT_AVAILABLE")
+    sample_count = int(_safe_float(profile.get("exit_profile_sample_count")) or 0)
+    profile_confidence = str(profile.get("exit_profile_confidence") or "LOW")
+    rr = _safe_float(plan.get("real_reward_risk_ratio")) or 0.0
+    ready_plan = plan.get("pullback_status") == "READY" or plan.get("breakout_status") == "READY"
+    execution_high = str(row.get("execution_risk_quality") or "").upper() == "HIGH" or "execution_risk_high" in str(row.get("hard_reject_blockers") or "")
+    value_trap_high = bool(row.get("value_trap_flag")) or "value_trap_high" in str(row.get("hard_reject_blockers") or "")
+    return {
+        "no_hard_risk": not hard,
+        "price_percentile_le_35": percentile is not None and percentile <= .35,
+        "trend_medium": trend in {"MEDIUM", "STRONG"},
+        "above_ma60": adjusted_close is not None and ma60 is not None and adjusted_close >= ma60,
+        "ma60_not_down": ma60_slope is not None and ma60_slope >= -.2,
+        "not_falling_knife": "falling_knife" not in str(row.get("soft_blockers") or row.get("risk_flags") or ""),
+        "financial_passed": financial == "PASSED",
+        "valuation_not_failed": valuation in {"PASSED", "DEGRADED"},
+        "industry_evidence": industry in {"VERIFIED", "PARTIALLY_VERIFIED"},
+        "company_evidence": company in {"VERIFIED", "PARTIALLY_VERIFIED"},
+        "hard_logic_medium": hard_logic in {"MEDIUM", "STRONG"},
+        "exit_profile_passed": exit_status == "PASSED",
+        "exit_profile_sample_count": sample_count >= 30,
+        "exit_profile_recent_2y_samples": int(_safe_float(profile.get("recent_2y_sample_count")) or 0) >= 10,
+        "exit_profile_confidence": profile_confidence in {"MEDIUM", "HIGH"},
+        "exit_profile_freshness": bool(profile.get("exit_profile_freshness_passed")),
+        "exit_profile_rule_version": bool(profile.get("exit_profile_rule_version_match")),
+        "exit_profile_data_traceable": bool(profile.get("exit_profile_data_traceable")),
+        "real_rr_1_8": rr >= 1.8,
+        "ready_plan": ready_plan,
+        "strict_official_evidence": bool(row.get("strict_official_evidence_passed")),
+        "execution_not_high": not execution_high,
+        "value_trap_not_high": not value_trap_high,
+        "price_mapping_ok": str(row.get("price_mapping_status")) == "OK",
+    }
 
 
 def _write_csv(path: Path, rows: Iterable[Mapping[str, Any]], columns: list[str] | None = None) -> None:
@@ -1551,11 +1565,16 @@ def _merge_deep_rows(
             "evidence_urls": ";".join(urls), "disclaimer": DISCLAIMER,
         }
         level, missing = classify_candidate(merged, plan, profile, urls, board_rule=board_rules[board])
+        strict_checks = strict_candidate_checks(merged, plan, profile, board_rule=board_rules[board])
         merged["classification"] = level
         merged["user_visible_level"] = level
         merged["missing_conditions"] = ";".join(missing)
         merged["top_risks"] = deep.get("top_risks") or ";".join(missing[:3])
         merged["upgrade_conditions"] = deep.get("upgrade_conditions") or ";".join(missing)
+        merged["strict_gate_pass_count"] = sum(strict_checks.values())
+        merged["strict_gate_fail_count"] = sum(not passed for passed in strict_checks.values())
+        merged["strict_gate_failed"] = ";".join(name for name, passed in strict_checks.items() if not passed)
+        merged["strict_gate_checks"] = json.dumps(strict_checks, ensure_ascii=False, sort_keys=True)
         merged["actionability_score"] = actionability_score(merged, plan)
         _apply_position_budget(merged, plan, level)
         all_rows.append(merged)
@@ -1631,6 +1650,20 @@ def run_scan(
     if not quant_rows or filter_counts["effective_scan_count"] <= 100:
         raise RuntimeError("all-A effective universe is unexpectedly small")
     top80 = [row for row in quant_rows if row.get("quant_status") in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}][: config.evidence_queue_size]
+    extended_exit_histories, exit_history_fetch = fetch_extended_adjusted_histories(
+        candidates=top80,
+        as_of=config.as_of,
+    )
+    exit_histories = dict(qfq_histories)
+    for code, history in extended_exit_histories.items():
+        if len(history) > len(exit_histories.get(code, pd.DataFrame())):
+            exit_histories[code] = history
+    _exit_profile_path, exit_profile_refresh = refresh_exit_profiles_from_price_history(
+        output_file=exit_profile_file,
+        candidates=top80,
+        histories=exit_histories,
+        as_of=config.as_of,
+    )
     inputs, fundamental_errors = _fundamentals(quant_rows, qfq_histories, config)
     deep_report, deep_summary = run_opportunity_discovery(
         inputs=inputs,
@@ -1686,6 +1719,22 @@ def run_scan(
         str(audit.get("qfq_source") or "unknown") for audit in price_audits.values()
     ))
     matched_exit_distribution = dict(Counter(str(row.get("exit_profile_status") or "NOT_AVAILABLE") for row in deep_rows))
+    strict_gate_names = list(json.loads(deep_rows[0].get("strict_gate_checks") or "{}").keys()) if deep_rows else []
+    strict_gate_audit = []
+    for row in deep_rows:
+        checks = json.loads(row.get("strict_gate_checks") or "{}")
+        strict_gate_audit.append({
+            "code": row.get("code"),
+            "stock_name": row.get("stock_name"),
+            "user_visible_level": row.get("user_visible_level"),
+            **checks,
+            "passed_gate_count": sum(bool(value) for value in checks.values()),
+            "failed_gate_count": sum(not bool(value) for value in checks.values()),
+            "failed_gates": ";".join(name for name, passed in checks.items() if not passed),
+        })
+    strict_gate_failure_counts = {
+        name: sum(not bool(row.get(name)) for row in strict_gate_audit) for name in strict_gate_names
+    }
     summary = {
         "as_of_date": config.as_of.isoformat(), "next_trade_date": config.next_trade_date.isoformat(),
         "raw_security_count": len(universe_rows), "official_universe_count": len(universe_rows),
@@ -1711,6 +1760,14 @@ def run_scan(
         "valuation_coverage": _coverage(deep_rows, lambda row: _status(row.get("valuation_score")) != "UNKNOWN"),
         "input_exit_profile_distribution": input_exit_distribution,
         "matched_candidate_exit_profile_distribution": matched_exit_distribution,
+        "exit_profile_refresh": exit_profile_refresh,
+        "exit_profile_history_fetch": exit_history_fetch,
+        "strict_gate_feasibility": {
+            "audited_candidate_count": len(strict_gate_audit),
+            "all_gates_passed_count": sum(row.get("failed_gate_count") == 0 for row in strict_gate_audit),
+            "failure_counts_by_gate": strict_gate_failure_counts,
+            "note": "Each gate is reported independently; the workflow never relaxes a failed gate to force a buy list.",
+        },
         "universe_source_audit": source_audit, "industry_enriched_count": industry_enriched_count,
         "industry_enrichment_diagnostics": industry_diagnostics,
         "price_mapping_status_distribution": dict(Counter(str(row.get("price_mapping_status") or "UNKNOWN") for row in price_audits.values())),
@@ -1733,6 +1790,7 @@ def run_scan(
     _write_csv(config.output_dir / "all_a_quant_screen.csv", quant_rows)
     _write_csv(config.output_dir / "top80_evidence_queue.csv", top80)
     _write_csv(config.output_dir / "top30_deep_review.csv", deep_rows[: config.deep_review_size])
+    _write_csv(config.output_dir / "strict_gate_audit.csv", strict_gate_audit)
     _write_csv(config.output_dir / "strict_review_ready.csv", strict_rows, PLAN_COLUMNS)
     _write_csv(config.output_dir / "condition_watch.csv", condition_rows, PLAN_COLUMNS)
     _write_csv(config.output_dir / "research_watch.csv", research_rows, PLAN_COLUMNS)

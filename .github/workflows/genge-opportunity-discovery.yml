@@ -371,7 +371,7 @@ jobs:
           required = {
               "all_a_universe.csv", "universe_exclusion_audit.csv", "universe_source_audit.json",
               "board_distribution.csv", "price_mapping_audit.csv", "all_a_quant_screen.csv",
-              "top80_evidence_queue.csv", "top30_deep_review.csv", "strict_review_ready.csv",
+              "top80_evidence_queue.csv", "top30_deep_review.csv", "strict_gate_audit.csv", "strict_review_ready.csv",
               "condition_watch.csv", "research_watch.csv", "tomorrow_watchlist.csv",
               "daily_signals.csv", "daily_signals.json", "daily_signals.md",
               "buy_signals.csv", "sell_signals.csv",
@@ -386,6 +386,9 @@ jobs:
           assert summary["fatal_data_failure_count"] == 0
           assert summary["no_auto_trade"] is True
           assert summary["no_broker_integration"] is True
+          assert summary["exit_profile_refresh"]["candidate_count"] > 0
+          assert summary["exit_profile_history_fetch"]["success_count"] > 0
+          assert summary["strict_gate_feasibility"]["audited_candidate_count"] > 0
           assert summary["buy_signal_count"] >= 0
           assert summary["sell_signal_count"] >= 0
           assert summary["acceptance_enum"] in {

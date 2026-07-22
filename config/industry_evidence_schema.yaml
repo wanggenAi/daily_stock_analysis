@@ -1,7 +1,18 @@
-version: 1
+version: 2
 description: GenGe industry cycle evidence schema. Manual rows are research inputs only.
 aliases:
   养殖: 猪肉
+default_industry:
+  indicators:
+    - name: 政府或行业具体文章数据
+      description: 官方统计月报中与该行业直接对应的产量、增加值、利润、价格或需求变化
+      direction_rule: official_growth_or_recovery_is_positive
+      positive_condition: 官方数据确认行业增长、回升或盈利改善
+      negative_condition: 官方数据确认行业下降、收缩或盈利恶化
+      source_hint: 国家统计局、行业主管部门及其他政府公开报告
+      default_weight: 1.0
+      freshness_limit_days: 120
+      required_or_optional: required
 industries:
   猪肉:
     indicators:

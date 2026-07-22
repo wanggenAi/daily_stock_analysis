@@ -26,6 +26,7 @@ from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
     resistance_levels,
     strict_official_evidence_audit,
 )
+from src.strategies.genge_opportunity_discovery.exit_profile import refresh_exit_profiles_from_price_history
 
 
 def _history(*, adjusted: bool = False, corporate_action: bool = False) -> pd.DataFrame:
@@ -52,6 +53,37 @@ def _history(*, adjusted: bool = False, corporate_action: bool = False) -> pd.Da
         "volume": np.linspace(1_000_000, 2_000_000, len(dates)),
         "amount": close * np.linspace(1_000_000, 2_000_000, len(dates)),
     })
+
+
+def test_price_history_exit_refresh_replaces_stale_seed_with_traceable_result(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.strategies.genge_opportunity_discovery.exit_profile as exit_profile
+
+    output = tmp_path / "exit_profile.csv"
+    output.write_text(
+        "code,stock_name,balanced_exit_historical_profile,signal_count\n000001,旧名称,PASSED,999\n",
+        encoding="utf-8",
+    )
+    samples = [
+        {"as_of_date": date(2026, 1, 1), "return": 3.0, "drawdown": -4.0}
+        for _ in range(30)
+    ]
+    monkeypatch.setattr(exit_profile, "_price_setup_samples", lambda **_kwargs: samples)
+
+    path, summary = refresh_exit_profiles_from_price_history(
+        output_file=output,
+        candidates=[{"code": "000001", "stock_name": "新名称"}],
+        histories={"000001": _history(adjusted=True)},
+        as_of=date(2026, 7, 22),
+    )
+    row = pd.read_csv(path, dtype={"code": str}).iloc[0]
+
+    assert row["stock_name"] == "新名称"
+    assert row["signal_count"] == 30
+    assert row["balanced_exit_historical_profile"] == "PASSED"
+    assert str(row["profile_data_version"]).startswith("sha256:")
+    assert summary["strict_metadata_eligible_count"] == 1
 
 
 def _row(board: str = "SZSE_MAIN") -> dict:

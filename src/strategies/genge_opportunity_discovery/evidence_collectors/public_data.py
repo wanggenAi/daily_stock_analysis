@@ -11,10 +11,11 @@ import requests
 from bs4 import BeautifulSoup
 
 from .cache import EvidenceCache
-from .validators import content_hash, direction_from_excerpt, extract_numeric_context, extract_text_from_response, source_domain, utc_now
+from .validators import NUMBER_WITH_UNIT_RE, content_hash, direction_from_excerpt, extract_numeric_context, extract_text_from_response, source_domain, utc_now
 
 
 PUBLIC_SOURCES = [
+    ("nbs_public_data", "https://www.stats.gov.cn/sj/zxfb/", "国家统计局最新发布"),
     ("miit_public_data", "https://www.miit.gov.cn/gxsj/index.html", "工业和信息化部公开数据"),
     ("ndrc_public_data", "https://www.ndrc.gov.cn/fgsj/", "国家发展改革委公开数据"),
 ]
@@ -30,6 +31,12 @@ SPECIALIZED_PUBLIC_SOURCES = {
     ],
 }
 SPB_OPERATIONAL_TITLE_TOKENS = ("行业运行情况", "行业发展情况", "业务量")
+NBS_REPORT_TITLE_TOKENS = (
+    "规模以上工业增加值",
+    "规模以上工业企业利润",
+    "社会消费品零售总额",
+    "工业生产者出厂价格",
+)
 
 
 def _extract_publish_date(text: str) -> str:
@@ -80,6 +87,67 @@ def _article_candidates(
         if len(candidates) >= limit:
             break
     return candidates
+
+
+def _report_article_candidates(
+    html: str, *, base_url: str, title_tokens: tuple[str, ...], limit: int = 20,
+) -> list[tuple[str, str, str]]:
+    """Find cross-industry official reports whose titles do not name each industry.
+
+    National statistical releases usually put industries in tables inside the
+    article, so filtering their listing titles by an industry name made those
+    authoritative rows permanently unreachable.
+    """
+    soup = BeautifulSoup(html, "html.parser")
+    candidates: list[tuple[str, str, str]] = []
+    seen_urls: set[str] = set()
+    for anchor in soup.find_all("a"):
+        title = anchor.get_text(" ", strip=True)
+        href = str(anchor.get("href") or "").strip()
+        matched_token = next((token for token in title_tokens if token in title), "")
+        if not title or not href or not matched_token:
+            continue
+        url = urljoin(base_url, href)
+        if source_domain(url) != source_domain(base_url) or url in seen_urls:
+            continue
+        seen_urls.add(url)
+        candidates.append((title, url, matched_token))
+        if len(candidates) >= limit:
+            break
+    return candidates
+
+
+def _extract_report_numeric_context(text: str, keywords: list[str]) -> dict[str, str]:
+    """Extract table values even when HTML cells became separate text lines."""
+    for keyword in keywords:
+        start = text.find(keyword)
+        while start >= 0:
+            local = re.sub(r"\s+", " ", text[start : start + 180]).strip()
+            match = NUMBER_WITH_UNIT_RE.search(local, pos=len(keyword))
+            if match and match.start() - len(keyword) <= 80:
+                return {
+                    "value": match.group("value").replace(",", ""),
+                    "unit": match.group("unit") or "",
+                    "excerpt": local[: min(len(local), match.end() + 20)],
+                }
+            start = text.find(keyword, start + len(keyword))
+    return extract_numeric_context(text, keywords=keywords)
+
+
+def _report_direction(excerpt: str, value: str, *, collector: str, article_title: str) -> str:
+    direction = direction_from_excerpt(excerpt)
+    if direction != "NEUTRAL" or collector != "nbs_public_data":
+        return direction
+    if any(token in article_title for token in NBS_REPORT_TITLE_TOKENS):
+        try:
+            number = float(value)
+        except (TypeError, ValueError):
+            return direction
+        if number > 0:
+            return "POSITIVE"
+        if number < 0:
+            return "NEGATIVE"
+    return direction
 
 
 def _json_article_candidates(
@@ -153,6 +221,8 @@ def collect_public_industry_data(
     network_fetches = 0
     fetch_successes = 0
     task_count = 0
+    listing_cache: dict[str, tuple[str, str, str, Any]] = {}
+    article_cache: dict[str, tuple[str, str, bytes]] = {}
 
     for industry in [item for item in dict.fromkeys(industries) if item]:
         search_terms = _industry_search_terms(industry, industry_alias_map)
@@ -166,7 +236,7 @@ def collect_public_industry_data(
                 "industry": industry,
                 "search_terms": search_terms,
                 "source": url,
-                "version": 3,
+                "version": 4,
             })
             cached = cache.get(key)
             if cached is not None:
@@ -179,20 +249,36 @@ def collect_public_industry_data(
             task_evidence: list[dict[str, Any]] = []
             task_audit: list[dict[str, Any]] = []
             try:
-                response = session.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=timeout)
-                network_fetches += 1
-                response.raise_for_status()
-                if collector == "spb_public_data":
-                    listing_text, article_attempts = _json_article_candidates(
-                        response.json(), base_url=url, keywords=search_terms,
-                    )
-                    listing_html = ""
-                    parser = "json_search"
+                if url in listing_cache:
+                    listing_text, listing_html, parser, listing_payload = listing_cache[url]
                 else:
-                    listing_text, parser = extract_text_from_response(
-                        response.content, response.headers.get("content-type", ""),
+                    response = session.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=timeout)
+                    network_fetches += 1
+                    response.raise_for_status()
+                    if collector == "spb_public_data":
+                        listing_payload = response.json()
+                        listing_text = "\n".join(
+                            str(item.get("title") or "")
+                            for item in ((listing_payload.get("data") or {}).get("results") or [])
+                        )
+                        listing_html = ""
+                        parser = "json_search"
+                    else:
+                        listing_payload = None
+                        listing_text, parser = extract_text_from_response(
+                            response.content, response.headers.get("content-type", ""),
+                        )
+                        listing_html = response.content.decode("utf-8", errors="ignore")
+                    listing_cache[url] = (listing_text, listing_html, parser, listing_payload)
+                if collector == "spb_public_data":
+                    _titles, article_attempts = _json_article_candidates(
+                        listing_payload, base_url=url, keywords=search_terms,
                     )
-                    listing_html = response.content.decode("utf-8", errors="ignore")
+                elif collector == "nbs_public_data":
+                    article_attempts = _report_article_candidates(
+                        listing_html, base_url=url, title_tokens=NBS_REPORT_TITLE_TOKENS,
+                    )
+                else:
                     article_attempts = _article_candidates(
                         listing_html, base_url=url, keywords=search_terms,
                     )
@@ -217,10 +303,15 @@ def collect_public_industry_data(
             article_evidence_found = False
             for article_title, article_url, matched_keyword in article_attempts:
                 try:
-                    article_response = session.get(article_url, headers={"User-Agent": "Mozilla/5.0", "Referer": url}, timeout=timeout)
-                    network_fetches += 1
-                    article_response.raise_for_status()
-                    article_text, article_parser = extract_text_from_response(article_response.content, article_response.headers.get("content-type", ""))
+                    if article_url in article_cache:
+                        article_text, article_parser, article_content = article_cache[article_url]
+                    else:
+                        article_response = session.get(article_url, headers={"User-Agent": "Mozilla/5.0", "Referer": url}, timeout=timeout)
+                        network_fetches += 1
+                        article_response.raise_for_status()
+                        article_content = article_response.content
+                        article_text, article_parser = extract_text_from_response(article_content, article_response.headers.get("content-type", ""))
+                        article_cache[article_url] = (article_text, article_parser, article_content)
                     if article_text:
                         fetch_successes += 1
                 except Exception as exc:
@@ -263,6 +354,19 @@ def collect_public_industry_data(
                         )
                     )
                     continue
+                if (as_of - date.fromisoformat(publish_date)).days > 180:
+                    task_audit.append(
+                        _audit_row(
+                            industry=industry,
+                            collector=collector,
+                            status="MISSING",
+                            issue="stale_public_article_excluded",
+                            detail=f"publish_date={publish_date} is more than 180 days before as_of={as_of.isoformat()}",
+                            url=article_url,
+                            title=article_title,
+                        )
+                    )
+                    continue
                 if not any(keyword in article_text for keyword in search_terms):
                     task_audit.append(
                         _audit_row(
@@ -276,7 +380,11 @@ def collect_public_industry_data(
                         )
                     )
                     continue
-                extracted = extract_numeric_context(article_text, keywords=search_terms)
+                extracted = (
+                    _extract_report_numeric_context(article_text, search_terms)
+                    if collector == "nbs_public_data"
+                    else extract_numeric_context(article_text, keywords=search_terms)
+                )
                 if not extracted:
                     task_audit.append(
                         _audit_row(
@@ -291,6 +399,9 @@ def collect_public_industry_data(
                     )
                     continue
                 excerpt = extracted["excerpt"]
+                evidence_direction = _report_direction(
+                    excerpt, extracted["value"], collector=collector, article_title=article_title,
+                )
                 task_evidence.append(
                     {
                         "date": publish_date,
@@ -305,8 +416,8 @@ def collect_public_industry_data(
                         "value": extracted["value"],
                         "unit": extracted["unit"],
                         "comparison_period": publish_date,
-                        "evidence_direction": direction_from_excerpt(excerpt),
-                        "direction": direction_from_excerpt(excerpt),
+                        "evidence_direction": evidence_direction,
+                        "direction": evidence_direction,
                         "source": article_url,
                         "original_url": article_url,
                         "source_domain": source_domain(article_url),
@@ -319,7 +430,7 @@ def collect_public_industry_data(
                         "collector": collector,
                         "parse_status": "OK",
                         "evidence_status": "VERIFIED",
-                        "content_hash": content_hash(article_response.content),
+                        "content_hash": content_hash(article_content),
                         "extraction_confidence": "MEDIUM",
                         "warning_flags": "",
                     }

@@ -11,6 +11,12 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+import pandas as pd
+
+from src.strategies.genge_cycle_bottom.backtest import BALANCED_EXIT_POLICY_NAME, simulate_exit_policy
+from src.strategies.genge_cycle_bottom.features import prepare_price_frame
+from src.strategies.genge_cycle_bottom.signals import SignalType, StrategySignal
+
 
 PROFILE_RULE_VERSION = "genge_opportunity_discovery_v1"
 
@@ -99,6 +105,284 @@ def _status_for(values: list[float], drawdowns: list[float]) -> str:
     if avg_return >= -4 and win_rate >= 30 and (avg_drawdown is None or avg_drawdown >= -18):
         return "DEGRADED"
     return "FAILED"
+
+
+def _price_setup_samples(
+    *, code: str, stock_name: str, history: pd.DataFrame, as_of: date, step_days: int = 5,
+) -> list[dict[str, Any]]:
+    """Replay the current technical setup without using future rows to select it."""
+    frame = prepare_price_frame(history)
+    frame = frame[frame["date"] <= as_of].copy().reset_index(drop=True)
+    if len(frame) < 350:
+        return []
+    close = pd.to_numeric(frame["close"], errors="coerce")
+    ma20 = close.rolling(20).mean()
+    ma60 = close.rolling(60).mean()
+    ma120 = close.rolling(120).mean()
+    ma250 = close.rolling(250).mean()
+    samples: list[dict[str, Any]] = []
+    last_sample_index = -10_000
+    # Ninety complete post-entry sessions cover the balanced policy's strong-
+    # trend extension. A five-session spacing avoids counting every day in one
+    # continuous setup as an independent test.
+    for index in range(254, len(frame) - 90):
+        if index - last_sample_index < max(1, int(step_days)):
+            continue
+        current = _number(close.iloc[index])
+        current_ma20 = _number(ma20.iloc[index])
+        current_ma60 = _number(ma60.iloc[index])
+        current_ma120 = _number(ma120.iloc[index])
+        current_ma250 = _number(ma250.iloc[index])
+        prior_ma20 = _number(ma20.iloc[index - 5])
+        prior_ma60 = _number(ma60.iloc[index - 5])
+        if not all(value is not None and value > 0 for value in (current, current_ma20, current_ma60, prior_ma20, prior_ma60)):
+            continue
+        ma20_slope = (current_ma20 / prior_ma20 - 1.0) * 100.0
+        ma60_slope = (current_ma60 / prior_ma60 - 1.0) * 100.0
+        historical = close.iloc[max(0, index - 1249) : index + 1].dropna()
+        if historical.empty:
+            continue
+        percentile = float((historical <= current).sum() / len(historical))
+        falling_knife = bool(current_ma250 and current < current_ma250 * .82 and ma20_slope < 0)
+        medium = current >= current_ma60 and ma60_slope >= -.2
+        if percentile > .35 or current < current_ma20 or ma20_slope < -.2 or not medium or falling_knife:
+            continue
+        strong = bool(
+            current_ma120
+            and current >= current_ma60
+            and current_ma20 >= current_ma60 >= current_ma120
+            and ma60_slope > 0
+        )
+        entry_row = frame.iloc[index + 1]
+        entry_price = _number(entry_row.get("open")) or _number(entry_row.get("close"))
+        if entry_price is None or entry_price <= 0:
+            continue
+        recent_low = _number(pd.to_numeric(frame.iloc[max(0, index - 19) : index + 1]["low"], errors="coerce").min())
+        stop_loss = entry_price * .92
+        if recent_low is not None and recent_low > 0:
+            stop_loss = max(entry_price * .88, min(entry_price * .97, recent_low * .995))
+        signal_date = frame.iloc[index]["date"]
+        signal = StrategySignal(
+            code=code,
+            stock_name=stock_name,
+            as_of_date=signal_date.isoformat(),
+            signal_type=SignalType.CONFIRM_BUY,
+            total_score=0.0,
+            price_percentile_score=0.0,
+            valuation_score=0.0,
+            financial_safety_score=0.0,
+            trend_stabilization_score=0.0,
+            market_environment_score=0.0,
+            industry_cycle_score=0.0,
+            price_percentile_5y=percentile,
+            trend_confirmation_level="STRONG" if strong else "MEDIUM",
+            dynamic_stop_loss=round(stop_loss, 4),
+            stop_loss=round(stop_loss, 4),
+        )
+        future_rows = frame.iloc[index + 1 : index + 251].copy().reset_index(drop=True)
+        outcome_60d = simulate_exit_policy(
+            signal=signal,
+            entry_price=entry_price,
+            future_rows=future_rows.head(60),
+            horizon_days=60,
+            stop_loss=stop_loss,
+            policy_name=BALANCED_EXIT_POLICY_NAME,
+        )
+        outcome_250d = simulate_exit_policy(
+            signal=signal,
+            entry_price=entry_price,
+            future_rows=future_rows,
+            horizon_days=250,
+            stop_loss=stop_loss,
+            policy_name=BALANCED_EXIT_POLICY_NAME,
+        )
+        net_return = _number(outcome_60d.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_net_return_60d"))
+        drawdown = _number(outcome_250d.get(f"{BALANCED_EXIT_POLICY_NAME}_exit_adjusted_max_drawdown_250d"))
+        if net_return is None:
+            continue
+        samples.append({"as_of_date": signal_date, "return": net_return, "drawdown": drawdown})
+        last_sample_index = index
+    return samples
+
+
+def fetch_extended_adjusted_histories(
+    *, candidates: Iterable[Mapping[str, Any]], as_of: date,
+) -> tuple[dict[str, pd.DataFrame], dict[str, Any]]:
+    """Fetch long qfq history for exit validation, with a second provider.
+
+    The daily Tencent feed is intentionally retained for the live price scan,
+    but it currently exposes only about 640 sessions. Exit validation needs a
+    much longer window to reach its independently-spaced sample requirement.
+    """
+    import akshare as ak
+
+    candidate_rows = [dict(item) for item in candidates]
+    histories: dict[str, pd.DataFrame] = {}
+    errors: dict[str, str] = {}
+    source_counts: Counter[str] = Counter()
+    for candidate in candidate_rows:
+        code = _normalize_code(candidate.get("code"))
+        if not code:
+            continue
+        exchange = str(candidate.get("exchange") or "").upper()
+        prefix = "sh" if exchange == "SSE" or code.startswith(("5", "6", "9")) else "sz"
+        try:
+            frame = ak.stock_zh_a_daily(
+                symbol=f"{prefix}{code}",
+                start_date="20000101",
+                end_date=as_of.strftime("%Y%m%d"),
+                adjust="qfq",
+            )
+            if frame is None or frame.empty:
+                raise RuntimeError("empty_history")
+            frame = frame.reset_index(drop=True)
+            frame["date"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
+            required = ["date", "open", "high", "low", "close", "volume", "amount"]
+            for column in required[1:]:
+                frame[column] = pd.to_numeric(frame[column], errors="coerce")
+            frame = frame[required].dropna(subset=["date", "open", "high", "low", "close"]).sort_values("date").reset_index(drop=True)
+            if len(frame) < 350:
+                raise RuntimeError(f"insufficient_history:{len(frame)}")
+            histories[code] = frame
+            source_counts["akshare_sina_qfq"] += 1
+        except Exception as exc:
+            errors[code] = f"akshare_sina_qfq:{type(exc).__name__}:{exc}"
+
+    missing = [item for item in candidate_rows if _normalize_code(item.get("code")) not in histories]
+    if missing:
+        import baostock as bs
+
+        login = bs.login()
+        if str(login.error_code) != "0":
+            errors["baostock_login"] = str(login.error_msg)
+        else:
+            fields = "date,open,high,low,close,volume,amount,tradestatus"
+            for candidate in missing:
+                code = _normalize_code(candidate.get("code"))
+                exchange = str(candidate.get("exchange") or "").upper()
+                prefix = "sh" if exchange == "SSE" or code.startswith(("5", "6", "9")) else "sz"
+                try:
+                    result = bs.query_history_k_data_plus(
+                        f"{prefix}.{code}",
+                        fields,
+                        start_date="2000-01-01",
+                        end_date=as_of.isoformat(),
+                        frequency="d",
+                        adjustflag="2",
+                    )
+                    rows: list[list[str]] = []
+                    while str(result.error_code) == "0" and result.next():
+                        rows.append(result.get_row_data())
+                    if str(result.error_code) != "0":
+                        raise RuntimeError(str(result.error_msg))
+                    frame = pd.DataFrame(rows, columns=fields.split(","))
+                    frame = frame[frame["tradestatus"] == "1"].drop(columns=["tradestatus"])
+                    frame["date"] = pd.to_datetime(frame["date"], errors="coerce").dt.date
+                    for column in ("open", "high", "low", "close", "volume", "amount"):
+                        frame[column] = pd.to_numeric(frame[column], errors="coerce")
+                    frame = frame.dropna(subset=["date", "open", "high", "low", "close"]).sort_values("date").reset_index(drop=True)
+                    if len(frame) < 350:
+                        raise RuntimeError(f"insufficient_history:{len(frame)}")
+                    histories[code] = frame
+                    errors.pop(code, None)
+                    source_counts["baostock_qfq"] += 1
+                except Exception as exc:
+                    errors[code] = f"{errors.get(code, '')};baostock_qfq:{type(exc).__name__}:{exc}".strip(";")
+            bs.logout()
+    return histories, {
+        "source": "akshare_sina_qfq_with_baostock_fallback",
+        "source_counts": dict(source_counts),
+        "requested_count": len(candidate_rows),
+        "success_count": len(histories),
+        "errors": errors,
+    }
+
+
+def refresh_exit_profiles_from_price_history(
+    *,
+    output_file: str | Path,
+    candidates: Iterable[Mapping[str, Any]],
+    histories: Mapping[str, pd.DataFrame],
+    as_of: date,
+    step_days: int = 5,
+) -> tuple[Path, dict[str, Any]]:
+    """Refresh current candidates using point-in-time, setup-conditioned exits.
+
+    Existing rows for non-candidates are retained for cache continuity. Current
+    candidates are always replaced, including NOT_AVAILABLE/FAILED results, so
+    an old seed row can never silently qualify today's stock.
+    """
+    path = Path(output_file)
+    existing: dict[str, dict[str, Any]] = {}
+    if path.exists():
+        with path.open(encoding="utf-8") as file:
+            for row in csv.DictReader(file):
+                code = _normalize_code(row.get("code"))
+                if code:
+                    existing[code] = dict(row)
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    refreshed: dict[str, dict[str, Any]] = {}
+    for candidate in candidates:
+        code = _normalize_code(candidate.get("code"))
+        if not code:
+            continue
+        stock_name = str(candidate.get("stock_name") or "")
+        history = histories.get(code, pd.DataFrame())
+        samples = _price_setup_samples(
+            code=code, stock_name=stock_name, history=history, as_of=as_of, step_days=step_days,
+        )
+        values = [float(item["return"]) for item in samples]
+        drawdowns = [float(item["drawdown"]) for item in samples if item.get("drawdown") is not None]
+        recent_cutoff = as_of - timedelta(days=730)
+        status = _status_for(values, drawdowns)
+        data_digest = hashlib.sha256()
+        prepared = prepare_price_frame(history)
+        for _, price_row in prepared[prepared["date"] <= as_of].iterrows():
+            data_digest.update(
+                f"{price_row.get('date')}|{price_row.get('open')}|{price_row.get('high')}|{price_row.get('low')}|{price_row.get('close')}\n".encode()
+            )
+        refreshed[code] = {
+            "code": code,
+            "stock_name": stock_name,
+            "balanced_exit_historical_profile": status,
+            "signal_count": len(values),
+            "avg_balanced_exit_net_return_60d": round(sum(values) / len(values), 4) if values else "",
+            "win_rate_balanced_exit_60d": round(sum(value > 0 for value in values) / len(values) * 100.0, 4) if values else "",
+            "avg_balanced_exit_max_drawdown_250d": round(sum(drawdowns) / len(drawdowns), 4) if drawdowns else "",
+            "source_signal_details": "rolling_price_setup_backtest",
+            "profile_data_end_date": as_of.isoformat(),
+            "profile_rule_version": PROFILE_RULE_VERSION,
+            "profile_data_version": f"sha256:{data_digest.hexdigest()}",
+            "profile_confidence": "HIGH" if len(values) >= 100 else "MEDIUM" if len(values) >= 30 else "LOW",
+            "recent_2y_sample_count": sum(item["as_of_date"] >= recent_cutoff for item in samples),
+            "generated_at": generated_at,
+            "rule": "point-in-time technical setup (percentile<=35%, trend>=MEDIUM, no falling knife), next-open entry, 5-session sample spacing, balanced 60d exit; no future row used to select a setup",
+        }
+    existing.update(refreshed)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", newline="", encoding="utf-8") as file:
+        writer = csv.DictWriter(file, fieldnames=EXIT_PROFILE_COLUMNS)
+        writer.writeheader()
+        for code in sorted(existing):
+            writer.writerow({column: existing[code].get(column, "") for column in EXIT_PROFILE_COLUMNS})
+    distribution = Counter(
+        str(row.get("balanced_exit_historical_profile") or "NOT_AVAILABLE") for row in refreshed.values()
+    )
+    return path, {
+        "generated": True,
+        "method": "rolling_price_setup_backtest",
+        "candidate_count": len(refreshed),
+        "candidate_distribution": dict(distribution),
+        "strict_metadata_eligible_count": sum(
+            row["balanced_exit_historical_profile"] == "PASSED"
+            and int(row["signal_count"]) >= 30
+            and int(row["recent_2y_sample_count"]) >= 10
+            and row["profile_confidence"] in {"MEDIUM", "HIGH"}
+            for row in refreshed.values()
+        ),
+        "sample_spacing_sessions": step_days,
+        "profile_rule_version": PROFILE_RULE_VERSION,
+    }
 
 
 def generate_exit_profile_from_reports(
