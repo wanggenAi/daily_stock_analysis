@@ -375,6 +375,7 @@ jobs:
               "condition_watch.csv", "research_watch.csv", "tomorrow_watchlist.csv",
               "daily_signals.csv", "daily_signals.json", "daily_signals.md",
               "buy_signals.csv", "sell_signals.csv",
+              "actionable_execution_list.csv", "actionable_execution_list.json", "actionable_execution_list.md",
               "opportunity_changes.csv", "evidence_changes.csv", "candidate_upgrade_report.md",
               "candidate_downgrade_report.md", "tomorrow_watchlist.md", "data_quality_audit.csv",
               "run_summary.json", "report_manifest.json",
@@ -389,6 +390,7 @@ jobs:
           assert summary["exit_profile_refresh"]["candidate_count"] > 0
           assert summary["exit_profile_history_fetch"]["success_count"] > 0
           assert summary["strict_gate_feasibility"]["audited_candidate_count"] > 0
+          assert summary["actionable_execution_count"] == summary["strict_review_ready_count"]
           assert summary["buy_signal_count"] >= 0
           assert summary["sell_signal_count"] >= 0
           assert summary["acceptance_enum"] in {

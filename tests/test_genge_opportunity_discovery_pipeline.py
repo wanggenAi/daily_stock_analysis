@@ -21,7 +21,7 @@ from src.strategies.genge_opportunity_discovery.evidence_collectors.validators i
     extract_numeric_context,
     extract_text_from_response,
 )
-from src.strategies.genge_opportunity_discovery.exit_profile import generate_exit_profile_from_reports
+from src.strategies.genge_opportunity_discovery.exit_profile import PROFILE_RULE_VERSION, generate_exit_profile_from_reports
 from src.strategies.genge_opportunity_discovery.pipeline import _rank_opportunities, run_opportunity_discovery
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     ScanConfig,
@@ -1199,7 +1199,7 @@ def test_exit_profile_generation_from_historical_signal_details(tmp_path: Path) 
     assert int(rows["600123"]["signal_count"]) == 20
     assert int(rows["600111"]["signal_count"]) == 8
     assert rows["600123"]["profile_data_end_date"] != ""
-    assert rows["600123"]["profile_rule_version"] == "genge_opportunity_discovery_v1"
+    assert rows["600123"]["profile_rule_version"] == PROFILE_RULE_VERSION
     assert rows["600123"]["profile_data_version"].startswith("sha256:")
     assert rows["600123"]["profile_confidence"] == "LOW"
     assert int(rows["600123"]["recent_2y_sample_count"]) > 0
@@ -1734,6 +1734,7 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "cp data/opportunity_snapshots/exit_profile_seed.csv" in workflow
     assert "daily_signals.csv" in workflow
     assert "buy_signals.csv" in workflow
+    assert "actionable_execution_list.csv" in workflow
     assert "sell_signals.csv" in workflow
     assert "GITHUB_STEP_SUMMARY" in workflow
     assert "--prefer-binary --retries 5 --timeout 60" in workflow

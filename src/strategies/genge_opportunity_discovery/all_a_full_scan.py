@@ -83,7 +83,7 @@ PLAN_COLUMNS = [
     "ma20_slope_pct", "ma60_slope_pct", "trend_confirmation_level", "valuation_score",
     "financial_safety_score", "industry_evidence_status", "company_evidence_status",
     "hard_logic_level", "exit_profile_status", "exit_profile_sample_count",
-    "exit_profile_confidence", "recent_2y_sample_count", "profile_data_end_date", "profile_rule_version",
+    "exit_profile_entry_mode", "exit_profile_confidence", "recent_2y_sample_count", "profile_data_end_date", "profile_rule_version",
     "exit_profile_freshness_days", "exit_profile_rule_version_match",
     "exit_profile_freshness_passed", "exit_profile_data_version",
     "exit_profile_data_traceable", "strict_official_evidence_count",
@@ -108,6 +108,16 @@ DAILY_SIGNAL_COLUMNS = [
     "target_1", "target_2", "risk_budget_initial_position_pct",
     "risk_budget_max_position_pct", "evidence_urls", "rule_version",
     "no_auto_trade", "disclaimer",
+]
+
+EXECUTION_LIST_COLUMNS = [
+    "valid_for_trade_date", "code", "stock_name", "execution_action", "preferred_plan",
+    "trigger_condition", "entry_low", "entry_high", "max_buy_price", "required_volume",
+    "stop_price", "logic_invalidation_price", "target_1", "target_2", "real_reward_risk_ratio",
+    "risk_budget_initial_position_pct", "risk_budget_max_position_pct", "position_rule",
+    "cancel_conditions", "industry_evidence_status", "company_evidence_status",
+    "hard_logic_level", "exit_profile_status", "exit_profile_entry_mode",
+    "evidence_urls", "rule_version", "no_auto_trade", "disclaimer",
 ]
 
 
@@ -1006,6 +1016,7 @@ def _exit_profiles(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, int
         ).strip()
         profile = {
             "exit_profile_status": status, "exit_profile_sample_count": sample_count,
+            "exit_profile_entry_mode": str(item.get("exit_profile_entry_mode") or ""),
             "recent_2y_sample_count": recent_2y,
             "60d_exit_net_return": item.get("60d_exit_net_return") or item.get("avg_balanced_exit_net_return_60d") or "",
             "60d_exit_win_rate": item.get("60d_exit_win_rate") or item.get("win_rate_balanced_exit_60d") or "",
@@ -1451,6 +1462,71 @@ def build_daily_signals(
     return signals
 
 
+def build_actionable_execution_list(
+    *, strict_rows: list[Mapping[str, Any]], next_trade_date: date,
+) -> list[dict[str, Any]]:
+    """Keep every currently valid strict trigger executable, independent of prior state."""
+    result: list[dict[str, Any]] = []
+    for row in strict_rows:
+        preferred = str(row.get("preferred_plan") or "")
+        plan = _signal_plan_fields(row)
+        if preferred == "pullback":
+            trigger_condition = "价格进入回踩区间且未先跌破止损/失效位；不得在区间上沿之上追价"
+            required_volume: Any = ""
+            max_buy_price = plan.get("entry_high")
+        elif preferred == "breakout":
+            required_volume = row.get("breakout_required_volume")
+            trigger_condition = (
+                f"价格突破{row.get('breakout_trigger_price')}且当日成交量达到{required_volume}；"
+                f"成交价不得高于{row.get('breakout_max_chase_price')}"
+            )
+            max_buy_price = row.get("breakout_max_chase_price")
+        else:
+            continue
+        result.append({
+            "valid_for_trade_date": next_trade_date.isoformat(),
+            "code": _normalize_code(row.get("code")), "stock_name": row.get("stock_name"),
+            "execution_action": "BUY_IF_TRIGGERED", "preferred_plan": preferred,
+            "trigger_condition": trigger_condition, **plan,
+            "max_buy_price": max_buy_price, "required_volume": required_volume,
+            "real_reward_risk_ratio": row.get("real_reward_risk_ratio"),
+            "risk_budget_initial_position_pct": row.get("risk_budget_initial_position_pct") or 0.0,
+            "risk_budget_max_position_pct": row.get("risk_budget_max_position_pct") or 0.0,
+            "position_rule": "仅在触发后建初始仓；已有该股仓位时不得把本清单当作重复加仓指令；总仓位不得超过单股上限",
+            "cancel_conditions": row.get("cancel_conditions"),
+            "industry_evidence_status": row.get("industry_evidence_status"),
+            "company_evidence_status": row.get("company_evidence_status"),
+            "hard_logic_level": row.get("hard_logic_level"),
+            "exit_profile_status": row.get("exit_profile_status"),
+            "exit_profile_entry_mode": row.get("exit_profile_entry_mode"),
+            "evidence_urls": row.get("evidence_urls"), "rule_version": RULE_VERSION,
+            "no_auto_trade": True, "disclaimer": DISCLAIMER,
+        })
+    return result
+
+
+def _execution_list_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, Any]]) -> str:
+    lines = [
+        "# 次日可执行条件买入清单", "", DISCLAIMER, "",
+        f"- 适用交易日: {summary.get('next_trade_date')}",
+        f"- 当前有效条件买入: {len(rows)}", "",
+        "只有触发条件在适用交易日真实满足时才可人工执行；未触发、超过最高买价或出现取消条件时不买。", "",
+    ]
+    if not rows:
+        lines.extend(["当前没有通过全部严格门槛的股票，因此没有可执行买入标的。", ""])
+    for row in rows:
+        lines.extend([
+            f"## {row.get('stock_name')} ({row.get('code')})", "",
+            f"- 方案: {row.get('preferred_plan')}；触发: {row.get('trigger_condition')}",
+            f"- 买入区间: {row.get('entry_low')} - {row.get('entry_high')}；最高买价: {row.get('max_buy_price')}",
+            f"- 止损/失效: {row.get('stop_price')} / {row.get('logic_invalidation_price')}",
+            f"- 目标: {row.get('target_1')} / {row.get('target_2')}；真实盈亏比: {row.get('real_reward_risk_ratio')}",
+            f"- 初始/单股最高仓位: {row.get('risk_budget_initial_position_pct')}% / {row.get('risk_budget_max_position_pct')}%",
+            f"- 取消条件: {row.get('cancel_conditions')}", "",
+        ])
+    return "\n".join(lines) + "\n"
+
+
 def _daily_signals_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, Any]]) -> str:
     lines = [
         "# 每日买入/卖出研究信号", "", DISCLAIMER, "",
@@ -1658,11 +1734,29 @@ def run_scan(
     for code, history in extended_exit_histories.items():
         if len(history) > len(exit_histories.get(code, pd.DataFrame())):
             exit_histories[code] = history
+    entry_plan_specs: dict[str, dict[str, Any]] = {}
+    for candidate in top80:
+        code = _normalize_code(candidate.get("code"))
+        board_rule = board_rules.get(str(candidate.get("board")))
+        raw_history = raw_histories.get(code, pd.DataFrame())
+        if board_rule is None or raw_history.empty:
+            continue
+        current_plan = build_price_plan(candidate, raw_history, board_rule, [])
+        entry_plan_specs[code] = {
+            # The mode is fixed from today's live price plan before either
+            # historical mode's outcome is inspected, preventing cherry-pick.
+            "entry_mode": current_plan.get("preferred_plan") or "pullback",
+            "breakout_volume_ratio": board_rule.breakout_volume_ratio,
+            "max_chase_atr_multiple": board_rule.max_chase_atr_multiple,
+            "volatility_multiplier": board_rule.volatility_multiplier,
+            "trigger_window_days": 10,
+        }
     _exit_profile_path, exit_profile_refresh = refresh_exit_profiles_from_price_history(
         output_file=exit_profile_file,
         candidates=top80,
         histories=exit_histories,
         as_of=config.as_of,
+        entry_plan_specs=entry_plan_specs,
     )
     inputs, fundamental_errors = _fundamentals(quant_rows, qfq_histories, config)
     deep_report, deep_summary = run_opportunity_discovery(
@@ -1709,6 +1803,9 @@ def run_scan(
         current_rows=watchlist, previous=previous_watchlist,
         as_of=config.as_of, next_trade_date=config.next_trade_date,
     )
+    actionable_execution_list = build_actionable_execution_list(
+        strict_rows=strict_rows, next_trade_date=config.next_trade_date,
+    )
     changes, evidence_changes = _changes(watchlist, previous_state_file)
     board_distribution = _distribution(universe_rows, "board")
     exchange_distribution = _distribution(universe_rows, "exchange")
@@ -1749,6 +1846,7 @@ def run_scan(
         "secondary_research_count": sum(row.get("quant_status") == "SECONDARY_RESEARCH" for row in quant_rows),
         "strict_review_ready_count": len(strict_rows), "condition_watch_count": len(condition_rows),
         "research_watch_count": len(research_rows),
+        "actionable_execution_count": len(actionable_execution_list),
         "buy_signal_count": sum(row.get("signal_action") == "BUY_IF_TRIGGERED" for row in daily_signals),
         "hold_signal_count": sum(row.get("signal_action") == "HOLD_REVIEW" for row in daily_signals),
         "sell_signal_count": sum(row.get("signal_action") == "SELL_EXIT" for row in daily_signals),
@@ -1805,6 +1903,21 @@ def run_scan(
         config.output_dir / "sell_signals.csv",
         [row for row in daily_signals if row.get("signal_action") == "SELL_EXIT"],
         DAILY_SIGNAL_COLUMNS,
+    )
+    _write_csv(
+        config.output_dir / "actionable_execution_list.csv",
+        actionable_execution_list,
+        EXECUTION_LIST_COLUMNS,
+    )
+    (config.output_dir / "actionable_execution_list.json").write_text(
+        json.dumps(
+            {"valid_for_trade_date": config.next_trade_date.isoformat(), "stocks": actionable_execution_list},
+            ensure_ascii=False, indent=2, default=str,
+        ),
+        encoding="utf-8",
+    )
+    (config.output_dir / "actionable_execution_list.md").write_text(
+        _execution_list_markdown(summary, actionable_execution_list), encoding="utf-8",
     )
     (config.output_dir / "daily_signals.json").write_text(
         json.dumps({"summary": summary, "signals": daily_signals}, ensure_ascii=False, indent=2, default=str),

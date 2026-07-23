@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from collections import Counter
 from datetime import date
 from pathlib import Path
 
@@ -9,13 +8,13 @@ import pandas as pd
 import pytest
 
 from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
-    AllAScanConfig,
     RULE_VERSION,
     _apply_position_budget,
     _board_from_exchange_row,
     _listing_row,
     apply_universe_filters,
     audit_price_mapping,
+    build_actionable_execution_list,
     build_daily_signals,
     build_price_plan,
     classify_candidate,
@@ -26,7 +25,7 @@ from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
     resistance_levels,
     strict_official_evidence_audit,
 )
-from src.strategies.genge_opportunity_discovery.exit_profile import refresh_exit_profiles_from_price_history
+from src.strategies.genge_opportunity_discovery.exit_profile import _triggered_entry, refresh_exit_profiles_from_price_history
 
 
 def _history(*, adjusted: bool = False, corporate_action: bool = False) -> pd.DataFrame:
@@ -82,8 +81,59 @@ def test_price_history_exit_refresh_replaces_stale_seed_with_traceable_result(
     assert row["stock_name"] == "新名称"
     assert row["signal_count"] == 30
     assert row["balanced_exit_historical_profile"] == "PASSED"
+    assert row["exit_profile_entry_mode"] == "pullback"
+    assert row["pullback_profile_status"] == "PASSED"
+    assert row["breakout_profile_status"] == "PASSED"
     assert str(row["profile_data_version"]).startswith("sha256:")
     assert summary["strict_metadata_eligible_count"] == 1
+
+
+def test_trigger_aligned_entries_replay_pullback_and_breakout_separately() -> None:
+    dates = pd.bdate_range("2026-01-01", periods=32)
+    frame = pd.DataFrame({
+        "date": dates.date,
+        "open": [100.0] * 32,
+        "high": [101.0] * 32,
+        "low": [99.0] * 32,
+        "close": [100.0] * 32,
+        "volume": [1_000.0] * 32,
+    })
+    frame.loc[21, ["open", "high", "low", "close", "volume"]] = [100.5, 102.0, 99.2, 101.5, 1_500.0]
+
+    pullback = _triggered_entry(
+        frame=frame, setup_index=20, entry_mode="pullback",
+        breakout_volume_ratio=1.2, max_chase_atr_multiple=.35,
+        volatility_multiplier=1.0,
+    )
+    breakout = _triggered_entry(
+        frame=frame, setup_index=20, entry_mode="breakout",
+        breakout_volume_ratio=1.2, max_chase_atr_multiple=.35,
+        volatility_multiplier=1.0,
+    )
+
+    assert pullback is not None and pullback[0] == 21
+    assert breakout is not None and breakout[0] == 21
+    assert pullback[1] < breakout[1]
+
+
+def test_actionable_execution_list_keeps_every_current_strict_trigger() -> None:
+    rows = [{
+        "code": "000001", "stock_name": "测试股份", "preferred_plan": "pullback",
+        "pullback_entry_low": 9.8, "pullback_entry_high": 10.0,
+        "pullback_stop_price": 9.4, "pullback_logic_invalidation_price": 9.2,
+        "pullback_target_1": 11.2, "pullback_target_2": 12.0,
+        "real_reward_risk_ratio": 2.0, "risk_budget_initial_position_pct": 3.0,
+        "risk_budget_max_position_pct": 5.0, "cancel_conditions": "重大负面公告",
+        "industry_evidence_status": "VERIFIED", "company_evidence_status": "VERIFIED",
+        "hard_logic_level": "MEDIUM", "exit_profile_status": "PASSED",
+        "exit_profile_entry_mode": "pullback", "evidence_urls": "https://example.com",
+    }]
+
+    result = build_actionable_execution_list(strict_rows=rows, next_trade_date=date(2026, 7, 23))
+
+    assert result[0]["execution_action"] == "BUY_IF_TRIGGERED"
+    assert result[0]["max_buy_price"] == 10.0
+    assert result[0]["risk_budget_max_position_pct"] == 5.0
 
 
 def _row(board: str = "SZSE_MAIN") -> dict:
