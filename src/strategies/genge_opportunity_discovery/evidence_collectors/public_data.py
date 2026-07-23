@@ -20,6 +20,13 @@ PUBLIC_SOURCES = [
     ("ndrc_public_data", "https://www.ndrc.gov.cn/fgsj/", "国家发展改革委公开数据"),
 ]
 SPECIALIZED_PUBLIC_SOURCES = {
+    "航运": [
+        (
+            "mot_public_data",
+            "https://www.mot.gov.cn/shuju/",
+            "交通运输部行业运行数据",
+        )
+    ],
     "物流": [
         (
             "spb_public_data",
@@ -37,6 +44,23 @@ NBS_REPORT_TITLE_TOKENS = (
     "社会消费品零售总额",
     "工业生产者出厂价格",
 )
+MOT_REPORT_TITLE_TOKENS = (
+    "交通运输经济运行情况",
+    "水运经济运行",
+)
+OFFICIAL_DOMAIN_FAMILIES = ("mot.gov.cn",)
+
+
+def _same_source_family(url: str, base_url: str) -> bool:
+    domain = source_domain(url)
+    base_domain = source_domain(base_url)
+    if domain == base_domain:
+        return True
+    return any(
+        (domain == suffix or domain.endswith(f".{suffix}"))
+        and (base_domain == suffix or base_domain.endswith(f".{suffix}"))
+        for suffix in OFFICIAL_DOMAIN_FAMILIES
+    )
 
 
 def _extract_publish_date(text: str) -> str:
@@ -80,7 +104,7 @@ def _article_candidates(
         if not matched_keyword:
             continue
         url = urljoin(base_url, href)
-        if source_domain(url) != source_domain(base_url) or url in seen_urls:
+        if not _same_source_family(url, base_url) or url in seen_urls:
             continue
         seen_urls.add(url)
         candidates.append((title, url, matched_keyword))
@@ -108,7 +132,7 @@ def _report_article_candidates(
         if not title or not href or not matched_token:
             continue
         url = urljoin(base_url, href)
-        if source_domain(url) != source_domain(base_url) or url in seen_urls:
+        if not _same_source_family(url, base_url) or url in seen_urls:
             continue
         seen_urls.add(url)
         candidates.append((title, url, matched_token))
@@ -277,6 +301,10 @@ def collect_public_industry_data(
                 elif collector == "nbs_public_data":
                     article_attempts = _report_article_candidates(
                         listing_html, base_url=url, title_tokens=NBS_REPORT_TITLE_TOKENS,
+                    )
+                elif collector == "mot_public_data":
+                    article_attempts = _report_article_candidates(
+                        listing_html, base_url=url, title_tokens=MOT_REPORT_TITLE_TOKENS,
                     )
                 else:
                     article_attempts = _article_candidates(

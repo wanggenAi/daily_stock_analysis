@@ -12,7 +12,7 @@ import pandas as pd
 import pytest
 
 from src.strategies.genge_cycle_bottom.backtest import BacktestInput
-from src.strategies.genge_cycle_bottom.current_snapshot import load_industry_alias_map
+from src.strategies.genge_cycle_bottom.current_snapshot import IndustryAliasResolver, load_industry_alias_map
 from src.strategies.genge_cycle_bottom.industry_evidence import load_industry_evidence_schema
 from src.strategies.genge_opportunity_discovery.evidence_collectors import company_announcements
 from src.strategies.genge_opportunity_discovery.evidence_collectors.cache import EvidenceCache
@@ -628,6 +628,56 @@ def test_public_data_uses_specialized_official_json_listing(
     assert evidence_rows[0]["source_domain"] == "official.example"
     assert evidence_rows[0]["evidence_status"] == "VERIFIED"
     assert evidence_rows[0]["title"] == "2026年上半年快递业务量运行情况"
+
+
+def test_transport_public_data_accepts_official_mot_subdomain_article(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.strategies.genge_opportunity_discovery.evidence_collectors.public_data as public_data
+
+    class FakeResponse:
+        headers = {"content-type": "text/html; charset=utf-8"}
+
+        def __init__(self, html: str) -> None:
+            self.content = html.encode("utf-8")
+
+        def raise_for_status(self) -> None:
+            return None
+
+    class FakeSession:
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            if "xxgk.mot.gov.cn" in url:
+                return FakeResponse("2026年7月22日 上半年完成水路货运量42.3亿吨，同比增长3.9%")
+            return FakeResponse(
+                '<a href="https://xxgk.mot.gov.cn/report.html">2026年上半年交通运输经济运行情况</a>'
+            )
+
+    monkeypatch.setattr(public_data.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(public_data, "PUBLIC_SOURCES", [])
+
+    evidence_rows, audit_rows, summary = public_data.collect_public_industry_data(
+        industries=["航运"],
+        as_of=date(2026, 7, 23),
+        cache=EvidenceCache(tmp_path / "cache"),
+        industry_alias_map={"industries": {"航运": {"aliases": ["水路货运"]}}},
+    )
+
+    assert audit_rows == []
+    assert summary["industry_evidence_rows"] == 1
+    assert evidence_rows[0]["direction"] == "POSITIVE"
+    assert evidence_rows[0]["source_domain"] == "xxgk.mot.gov.cn"
+
+
+def test_production_alias_map_resolves_shipping_and_water_supply_industries() -> None:
+    resolver = IndustryAliasResolver(load_industry_alias_map("config/industry_alias_map.yaml"))
+
+    shipping = resolver.resolve(code="000088", stock_name="盐田港", raw_industry="G55水上运输业")
+    water = resolver.resolve(code="601158", stock_name="重庆水务", raw_industry="D46水的生产和供应业")
+
+    assert shipping.normalized_industry == "航运"
+    assert shipping.match_type == "SUBSTRING_ALIAS"
+    assert water.normalized_industry == "水务"
+    assert water.match_type == "SUBSTRING_ALIAS"
 
 
 def test_opportunity_discovery_writes_research_outputs_and_forward_ledger(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
