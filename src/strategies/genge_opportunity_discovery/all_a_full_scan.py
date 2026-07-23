@@ -32,7 +32,13 @@ from src.strategies.genge_cycle_bottom.features import coerce_date, prepare_pric
 from src.strategies.genge_cycle_bottom.fundamentals import PublicFundamentalLoader
 from src.strategies.genge_cycle_bottom.industry_evidence import load_evidence_csv, load_industry_evidence_schema
 from src.strategies.genge_opportunity_discovery.pipeline import RULE_VERSION, run_opportunity_discovery
-from src.strategies.genge_opportunity_discovery.exit_profile import fetch_extended_adjusted_histories, refresh_exit_profiles_from_price_history
+from src.strategies.genge_opportunity_discovery.exit_profile import (
+    HIGH_CONFIDENCE_SAMPLE_COUNT,
+    MIN_PROFILE_SAMPLE_COUNT,
+    MIN_RECENT_2Y_SAMPLE_COUNT,
+    fetch_extended_adjusted_histories,
+    refresh_exit_profiles_from_price_history,
+)
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     _atr,
     _ma,
@@ -1008,7 +1014,10 @@ def _exit_profiles(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, int
         recent_2y = int(_safe_float(item.get("recent_2y_sample_count")) or 0)
         data_end_date = str(item.get("profile_data_end_date") or "").strip()
         generated_at = str(item.get("generated_at") or "").strip()
-        confidence = str(item.get("profile_confidence") or ("HIGH" if sample_count >= 100 else "MEDIUM" if sample_count >= 30 else "LOW"))
+        confidence = str(item.get("profile_confidence") or (
+            "HIGH" if sample_count >= HIGH_CONFIDENCE_SAMPLE_COUNT
+            else "MEDIUM" if sample_count >= MIN_PROFILE_SAMPLE_COUNT else "LOW"
+        ))
         rule_version = str(item.get("profile_rule_version") or "").strip()
         data_version = str(
             item.get("profile_data_version") or item.get("data_version")
@@ -1241,8 +1250,8 @@ def strict_candidate_checks(
         "company_evidence": company in {"VERIFIED", "PARTIALLY_VERIFIED"},
         "hard_logic_medium": hard_logic in {"MEDIUM", "STRONG"},
         "exit_profile_passed": exit_status == "PASSED",
-        "exit_profile_sample_count": sample_count >= 30,
-        "exit_profile_recent_2y_samples": int(_safe_float(profile.get("recent_2y_sample_count")) or 0) >= 10,
+        "exit_profile_sample_count": sample_count >= MIN_PROFILE_SAMPLE_COUNT,
+        "exit_profile_recent_2y_samples": int(_safe_float(profile.get("recent_2y_sample_count")) or 0) >= MIN_RECENT_2Y_SAMPLE_COUNT,
         "exit_profile_confidence": profile_confidence in {"MEDIUM", "HIGH"},
         "exit_profile_freshness": bool(profile.get("exit_profile_freshness_passed")),
         "exit_profile_rule_version": bool(profile.get("exit_profile_rule_version_match")),

@@ -388,6 +388,9 @@ jobs:
           assert summary["no_auto_trade"] is True
           assert summary["no_broker_integration"] is True
           assert summary["exit_profile_refresh"]["candidate_count"] > 0
+          assert summary["exit_profile_refresh"]["sample_spacing_sessions"] == 60
+          assert summary["exit_profile_refresh"]["minimum_profile_sample_count"] == 12
+          assert summary["exit_profile_refresh"]["minimum_recent_2y_sample_count"] == 3
           assert summary["exit_profile_history_fetch"]["success_count"] > 0
           assert summary["strict_gate_feasibility"]["audited_candidate_count"] > 0
           assert summary["actionable_execution_count"] == summary["strict_review_ready_count"]

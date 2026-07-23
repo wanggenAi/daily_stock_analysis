@@ -18,7 +18,14 @@ from src.strategies.genge_cycle_bottom.features import prepare_price_frame
 from src.strategies.genge_cycle_bottom.signals import SignalType, StrategySignal
 
 
-PROFILE_RULE_VERSION = "genge_opportunity_discovery_v2_trigger_aligned"
+PROFILE_RULE_VERSION = "genge_opportunity_discovery_v3_non_overlapping"
+REPORT_AGGREGATE_RULE_VERSION = "genge_opportunity_discovery_v1_report_aggregate"
+PROFILE_RETURN_HORIZON_SESSIONS = 60
+PROFILE_SAMPLE_SPACING_SESSIONS = PROFILE_RETURN_HORIZON_SESSIONS
+MIN_PROFILE_SAMPLE_COUNT = 12
+MIN_RECENT_2Y_SAMPLE_COUNT = 3
+HIGH_CONFIDENCE_SAMPLE_COUNT = 30
+MIN_DEGRADED_SAMPLE_COUNT = 6
 
 
 EXIT_PROFILE_COLUMNS = [
@@ -108,12 +115,26 @@ def _report_data_end_date(path: Path) -> date | None:
 
 def _status_for(values: list[float], drawdowns: list[float]) -> str:
     sample_count = len(values)
-    if sample_count < 10:
+    if sample_count < MIN_DEGRADED_SAMPLE_COUNT:
         return "NOT_AVAILABLE"
     avg_return = sum(values) / len(values)
     win_rate = sum(1 for value in values if value > 0) / len(values) * 100.0
     avg_drawdown = sum(drawdowns) / len(drawdowns) if drawdowns else None
-    if sample_count >= 20 and avg_return >= 0 and win_rate >= 45 and (avg_drawdown is None or avg_drawdown >= -12):
+    if sample_count >= MIN_PROFILE_SAMPLE_COUNT and avg_return >= 0 and win_rate >= 45 and (avg_drawdown is None or avg_drawdown >= -12):
+        return "PASSED"
+    if avg_return >= -4 and win_rate >= 30 and (avg_drawdown is None or avg_drawdown >= -18):
+        return "DEGRADED"
+    return "FAILED"
+
+
+def _report_status_for(values: list[float], drawdowns: list[float]) -> str:
+    """Preserve the legacy report-aggregation policy outside strict live refresh."""
+    if len(values) < 10:
+        return "NOT_AVAILABLE"
+    avg_return = sum(values) / len(values)
+    win_rate = sum(1 for value in values if value > 0) / len(values) * 100.0
+    avg_drawdown = sum(drawdowns) / len(drawdowns) if drawdowns else None
+    if len(values) >= 20 and avg_return >= 0 and win_rate >= 45 and (avg_drawdown is None or avg_drawdown >= -12):
         return "PASSED"
     if avg_return >= -4 and win_rate >= 30 and (avg_drawdown is None or avg_drawdown >= -18):
         return "DEGRADED"
@@ -234,7 +255,7 @@ def _price_setup_samples(
     *, code: str, stock_name: str, history: pd.DataFrame, as_of: date,
     entry_mode: str = "pullback", breakout_volume_ratio: float = 1.2,
     max_chase_atr_multiple: float = .35, volatility_multiplier: float = 1.0,
-    trigger_window_days: int = 10, step_days: int = 5,
+    trigger_window_days: int = 10, step_days: int = PROFILE_SAMPLE_SPACING_SESSIONS,
 ) -> list[dict[str, Any]]:
     """Replay a setup and count only fills that satisfy its live entry plan."""
     frame = prepare_price_frame(history)
@@ -249,9 +270,11 @@ def _price_setup_samples(
     samples: list[dict[str, Any]] = []
     last_entry_index = -10_000
     # Ninety complete post-entry sessions cover the balanced policy's strong-
-    # trend extension. A five-session spacing avoids counting every day in one
-    # continuous setup as an independent test.
+    # trend extension. Sixty-session spacing prevents overlapping 60-session
+    # return windows from being counted as independent validation samples.
     for index in range(254, len(frame) - 90):
+        if index + trigger_window_days - last_entry_index < max(1, int(step_days)):
+            continue
         current = _number(close.iloc[index])
         current_ma20 = _number(ma20.iloc[index])
         current_ma60 = _number(ma60.iloc[index])
@@ -437,7 +460,7 @@ def refresh_exit_profiles_from_price_history(
     histories: Mapping[str, pd.DataFrame],
     as_of: date,
     entry_plan_specs: Mapping[str, Mapping[str, Any]] | None = None,
-    step_days: int = 5,
+    step_days: int = PROFILE_SAMPLE_SPACING_SESSIONS,
 ) -> tuple[Path, dict[str, Any]]:
     """Refresh current candidates using point-in-time, setup-conditioned exits.
 
@@ -518,11 +541,11 @@ def refresh_exit_profiles_from_price_history(
             "profile_data_end_date": as_of.isoformat(),
             "profile_rule_version": PROFILE_RULE_VERSION,
             "profile_data_version": f"sha256:{data_digest.hexdigest()}",
-            "profile_confidence": "HIGH" if len(values) >= 100 else "MEDIUM" if len(values) >= 30 else "LOW",
+            "profile_confidence": "HIGH" if len(values) >= HIGH_CONFIDENCE_SAMPLE_COUNT else "MEDIUM" if len(values) >= MIN_PROFILE_SAMPLE_COUNT else "LOW",
             "recent_2y_sample_count": sum(item["as_of_date"] >= recent_cutoff for item in samples),
             **mode_stats,
             "generated_at": generated_at,
-            "rule": "point-in-time technical setup (percentile<=35%, trend>=MEDIUM, no falling knife); separately replay pullback-band and volume-confirmed breakout fills within 10 sessions; select today's predeclared entry mode; 5-session filled-entry spacing; balanced 60d exit; no future row selects setup or mode",
+            "rule": "point-in-time technical setup (percentile<=35%, trend>=MEDIUM, no falling knife); separately replay pullback-band and volume-confirmed breakout fills within 10 sessions; select today's predeclared entry mode; non-overlapping 60-session filled-entry spacing; balanced 60d exit; no future row selects setup or mode",
         }
     existing.update(refreshed)
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -545,12 +568,15 @@ def refresh_exit_profiles_from_price_history(
         "breakout_distribution": dict(Counter(str(row.get("breakout_profile_status")) for row in refreshed.values())),
         "strict_metadata_eligible_count": sum(
             row["balanced_exit_historical_profile"] == "PASSED"
-            and int(row["signal_count"]) >= 30
-            and int(row["recent_2y_sample_count"]) >= 10
+            and int(row["signal_count"]) >= MIN_PROFILE_SAMPLE_COUNT
+            and int(row["recent_2y_sample_count"]) >= MIN_RECENT_2Y_SAMPLE_COUNT
             and row["profile_confidence"] in {"MEDIUM", "HIGH"}
             for row in refreshed.values()
         ),
         "sample_spacing_sessions": step_days,
+        "minimum_profile_sample_count": MIN_PROFILE_SAMPLE_COUNT,
+        "minimum_recent_2y_sample_count": MIN_RECENT_2Y_SAMPLE_COUNT,
+        "primary_return_horizon_sessions": PROFILE_RETURN_HORIZON_SESSIONS,
         "trigger_window_sessions": 10,
         "profile_rule_version": PROFILE_RULE_VERSION,
     }
@@ -622,7 +648,7 @@ def generate_exit_profile_from_reports(
             sum(1 for item in samples if item.get("as_of_date") and item["as_of_date"] >= recent_cutoff)
             if recent_cutoff else 0
         )
-        status = _status_for(values, drawdowns)
+        status = _report_status_for(values, drawdowns)
         profile_confidence = "HIGH" if len(values) >= 100 else "MEDIUM" if len(values) >= 30 else "LOW"
         rows.append(
             {
@@ -635,12 +661,12 @@ def generate_exit_profile_from_reports(
                 "avg_balanced_exit_max_drawdown_250d": round(sum(drawdowns) / len(drawdowns), 4) if drawdowns else "",
                 "source_signal_details": source_by_code.get(code, ""),
                 "profile_data_end_date": profile_data_end_date.isoformat() if profile_data_end_date else "",
-                "profile_rule_version": PROFILE_RULE_VERSION,
+                "profile_rule_version": REPORT_AGGREGATE_RULE_VERSION,
                 "profile_data_version": data_version_by_code.get(code, ""),
                 "profile_confidence": profile_confidence,
                 "recent_2y_sample_count": recent_2y_sample_count,
                 "generated_at": generated_at,
-                "rule": "signals<10 => NOT_AVAILABLE; signals 10-19 max DEGRADED; signals>=20 and avg_return>=0/win_rate>=45/drawdown>=-12 => PASSED; avg_return>=-4/win_rate>=30/drawdown>=-18 => DEGRADED; else FAILED",
+                "rule": "report aggregate only (not trigger-aligned strict metadata): signals<10 => NOT_AVAILABLE; signals>=20 and avg_return>=0/win_rate>=45/drawdown>=-12 => PASSED; avg_return>=-4/win_rate>=30/drawdown>=-18 => DEGRADED; else FAILED",
             }
         )
 
@@ -656,7 +682,7 @@ def generate_exit_profile_from_reports(
             "seed_file": str(seed_file),
             "generated": False,
             "seed_used": True,
-            "profile_rule_version": PROFILE_RULE_VERSION,
+            "profile_rule_version": REPORT_AGGREGATE_RULE_VERSION,
             "row_count": row_count,
             "distribution": load_exit_profile_distribution(path),
         }
@@ -671,7 +697,7 @@ def generate_exit_profile_from_reports(
         "exit_profile_file": str(path),
         "source_signal_detail_files": [str(path) for path in files],
         "generated": True,
-        "profile_rule_version": PROFILE_RULE_VERSION,
+        "profile_rule_version": REPORT_AGGREGATE_RULE_VERSION,
         "row_count": len(rows),
         "distribution": dict(distribution),
     }

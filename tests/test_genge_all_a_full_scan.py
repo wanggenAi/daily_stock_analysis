@@ -23,9 +23,18 @@ from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
     mark_listings_after_as_of,
     quant_screen,
     resistance_levels,
+    strict_candidate_checks,
     strict_official_evidence_audit,
 )
-from src.strategies.genge_opportunity_discovery.exit_profile import _triggered_entry, refresh_exit_profiles_from_price_history
+from src.strategies.genge_opportunity_discovery.exit_profile import (
+    MIN_PROFILE_SAMPLE_COUNT,
+    MIN_RECENT_2Y_SAMPLE_COUNT,
+    PROFILE_SAMPLE_SPACING_SESSIONS,
+    _price_setup_samples,
+    _status_for,
+    _triggered_entry,
+    refresh_exit_profiles_from_price_history,
+)
 
 
 def _history(*, adjusted: bool = False, corporate_action: bool = False) -> pd.DataFrame:
@@ -86,6 +95,28 @@ def test_price_history_exit_refresh_replaces_stale_seed_with_traceable_result(
     assert row["breakout_profile_status"] == "PASSED"
     assert str(row["profile_data_version"]).startswith("sha256:")
     assert summary["strict_metadata_eligible_count"] == 1
+    assert summary["sample_spacing_sessions"] == PROFILE_SAMPLE_SPACING_SESSIONS
+    assert summary["minimum_profile_sample_count"] == MIN_PROFILE_SAMPLE_COUNT
+    assert summary["minimum_recent_2y_sample_count"] == MIN_RECENT_2Y_SAMPLE_COUNT
+
+
+def test_exit_profile_uses_independent_sample_thresholds() -> None:
+    assert _status_for([2.0] * MIN_PROFILE_SAMPLE_COUNT, [-5.0] * MIN_PROFILE_SAMPLE_COUNT) == "PASSED"
+    assert _status_for([2.0] * 5, [-5.0] * 5) == "NOT_AVAILABLE"
+
+
+def test_price_exit_samples_do_not_overlap_primary_return_windows() -> None:
+    history = _history(adjusted=True)
+    samples = _price_setup_samples(
+        code="000001", stock_name="测试股份", history=history,
+        as_of=date(2026, 7, 22), entry_mode="pullback",
+    )
+    positions = {trade_date: index for index, trade_date in enumerate(history["date"])}
+    assert len(samples) >= 2
+    assert all(
+        positions[current["as_of_date"]] - positions[previous["as_of_date"]] >= PROFILE_SAMPLE_SPACING_SESSIONS
+        for previous, current in zip(samples, samples[1:])
+    )
 
 
 def test_trigger_aligned_entries_replay_pullback_and_breakout_separately() -> None:
@@ -295,6 +326,22 @@ def test_strict_review_ready_requires_every_hard_gate() -> None:
     for override in ({"price_percentile_5y": .36}, {"trend_confirmation_level": "WEAK"}, {"financial_safety_score": 59}, {"hard_logic_level": "WEAK"}):
         level, _ = classify_candidate(_candidate(**override), _plan(), _profile(), ["https://example.com/report.pdf"], board_rule=rule)
         assert level != "STRICT_REVIEW_READY"
+
+
+def test_strict_exit_metadata_thresholds_match_non_overlapping_samples() -> None:
+    rule = load_board_rules("config/board_risk_rules.yaml")["SZSE_MAIN"]
+    profile = _profile()
+    profile["exit_profile_sample_count"] = MIN_PROFILE_SAMPLE_COUNT
+    profile["recent_2y_sample_count"] = MIN_RECENT_2Y_SAMPLE_COUNT
+    checks = strict_candidate_checks(_candidate(), _plan(), profile, board_rule=rule)
+    assert checks["exit_profile_sample_count"] is True
+    assert checks["exit_profile_recent_2y_samples"] is True
+
+    profile["exit_profile_sample_count"] = MIN_PROFILE_SAMPLE_COUNT - 1
+    profile["recent_2y_sample_count"] = MIN_RECENT_2Y_SAMPLE_COUNT - 1
+    checks = strict_candidate_checks(_candidate(), _plan(), profile, board_rule=rule)
+    assert checks["exit_profile_sample_count"] is False
+    assert checks["exit_profile_recent_2y_samples"] is False
 
 
 def _evidence(**overrides) -> dict:
