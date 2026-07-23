@@ -2,16 +2,20 @@ from __future__ import annotations
 
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 
 import numpy as np
 import pandas as pd
 import pytest
 
 from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
+    AllAScanConfig,
     RULE_VERSION,
     _apply_position_budget,
     _board_from_exchange_row,
+    _current_passed_profile_codes,
     _listing_row,
+    _fundamentals,
     apply_universe_filters,
     audit_price_mapping,
     build_actionable_execution_list,
@@ -98,6 +102,58 @@ def test_price_history_exit_refresh_replaces_stale_seed_with_traceable_result(
     assert summary["sample_spacing_sessions"] == PROFILE_SAMPLE_SPACING_SESSIONS
     assert summary["minimum_profile_sample_count"] == MIN_PROFILE_SAMPLE_COUNT
     assert summary["minimum_recent_2y_sample_count"] == MIN_RECENT_2Y_SAMPLE_COUNT
+
+
+def test_fundamental_fetch_prioritizes_exit_profile_passed_codes(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import src.strategies.genge_opportunity_discovery.all_a_full_scan as all_a
+
+    calls: list[str] = []
+
+    class FakeLoader:
+        def __init__(self, _cache_dir: Path) -> None:
+            pass
+
+        def load(self, code: str, **_kwargs):
+            calls.append(code)
+            return SimpleNamespace(
+                valuation_df=pd.DataFrame({"date": ["2026-07-23"], "pe": [10.0]}),
+                financial_df=pd.DataFrame({"date": ["2026-07-23"], "roe": [12.0]}),
+                provider_errors={},
+            )
+
+    monkeypatch.setattr(all_a, "PublicFundamentalLoader", FakeLoader)
+    rows = [
+        {"code": "000001", "stock_name": "高排名", "industry": "银行", "quant_rank": 1, "quant_status": "PRIORITY_RESEARCH"},
+        {"code": "000088", "stock_name": "退出通过", "industry": "港口", "quant_rank": 50, "quant_status": "SECONDARY_RESEARCH"},
+    ]
+    histories = {code: _history(adjusted=True) for code in ("000001", "000088")}
+    config = AllAScanConfig(
+        as_of=date(2026, 7, 23), next_trade_date=date(2026, 7, 24),
+        output_dir=tmp_path / "out", stock_pool_output=tmp_path / "pool.csv",
+        fundamental_cache_dir=tmp_path / "fundamentals", evidence_queue_size=2,
+        fundamental_limit=1,
+    )
+
+    inputs, errors = _fundamentals(rows, histories, config, priority_codes=["000088"])
+
+    by_code = {item.code: item for item in inputs}
+    assert calls == ["000088"]
+    assert by_code["000088"].financial_df is not None
+    assert by_code["000001"].financial_df is None
+    assert not errors
+
+
+def test_exit_profile_priority_excludes_stale_candidates_outside_current_queue() -> None:
+    candidates = [{"code": "000001"}, {"code": "000002"}, {"code": "000001"}]
+    profiles = {
+        "000001": {"exit_profile_status": "PASSED"},
+        "000002": {"exit_profile_status": "FAILED"},
+        "000088": {"exit_profile_status": "PASSED"},
+    }
+
+    assert _current_passed_profile_codes(candidates, profiles) == ["000001"]
 
 
 def test_exit_profile_uses_independent_sample_thresholds() -> None:

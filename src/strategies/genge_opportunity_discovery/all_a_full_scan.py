@@ -1040,6 +1040,22 @@ def _exit_profiles(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, int
     return result, dict(distribution)
 
 
+def _current_passed_profile_codes(
+    candidates: Iterable[Mapping[str, Any]], profiles: Mapping[str, Mapping[str, Any]],
+) -> list[str]:
+    """Return PASSED profile codes that are still in the current research queue."""
+    result: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        code = _normalize_code(candidate.get("code"))
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        if str(profiles.get(code, {}).get("exit_profile_status")) == "PASSED":
+            result.append(code)
+    return result
+
+
 def _evidence_urls(evidence_rows: Iterable[Mapping[str, Any]], row: Mapping[str, Any]) -> list[str]:
     code = _normalize_code(row.get("code"))
     industry = str(row.get("normalized_industry") or row.get("industry") or "")
@@ -1575,7 +1591,7 @@ def _change_markdown(title: str, rows: list[Mapping[str, Any]], include_types: s
 
 def _fundamentals(
     quant_rows: list[dict[str, Any]], qfq_histories: Mapping[str, pd.DataFrame],
-    config: AllAScanConfig,
+    config: AllAScanConfig, *, priority_codes: Iterable[str] = (),
 ) -> tuple[list[BacktestInput], dict[str, str]]:
     selected = [
         row for row in quant_rows if row.get("quant_status") in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}
@@ -1583,19 +1599,31 @@ def _fundamentals(
     loader = PublicFundamentalLoader(config.fundamental_cache_dir)
     inputs: list[BacktestInput] = []
     errors: dict[str, str] = {}
-    for index, row in enumerate(selected):
+    priority = {_normalize_code(code) for code in priority_codes}
+    fetch_order = sorted(
+        selected,
+        key=lambda row: (
+            _normalize_code(row.get("code")) not in priority,
+            int(row.get("quant_rank") or 10**9),
+        ),
+    )
+    fetched_by_code: dict[str, tuple[pd.DataFrame | None, pd.DataFrame | None]] = {}
+    for row in fetch_order[: config.fundamental_limit]:
         code = str(row["code"])
         valuation_df = None
         financial_df = None
-        if index < config.fundamental_limit:
-            try:
-                fetched = loader.load(code, years=5, fetch_valuation=True, fetch_financial=True)
-                valuation_df = fetched.valuation_df
-                financial_df = fetched.financial_df
-                if fetched.provider_errors:
-                    errors[code] = json.dumps(fetched.provider_errors, ensure_ascii=False, sort_keys=True)
-            except Exception as exc:
-                errors[code] = f"{type(exc).__name__}: {exc}"
+        try:
+            fetched = loader.load(code, years=5, fetch_valuation=True, fetch_financial=True)
+            valuation_df = fetched.valuation_df
+            financial_df = fetched.financial_df
+            if fetched.provider_errors:
+                errors[code] = json.dumps(fetched.provider_errors, ensure_ascii=False, sort_keys=True)
+        except Exception as exc:
+            errors[code] = f"{type(exc).__name__}: {exc}"
+        fetched_by_code[code] = (valuation_df, financial_df)
+    for row in selected:
+        code = str(row["code"])
+        valuation_df, financial_df = fetched_by_code.get(code, (None, None))
         inputs.append(BacktestInput(
             code=code, stock_name=str(row.get("stock_name") or code),
             industry=str(row.get("industry") or ""), price_df=qfq_histories[code],
@@ -1767,7 +1795,11 @@ def run_scan(
         as_of=config.as_of,
         entry_plan_specs=entry_plan_specs,
     )
-    inputs, fundamental_errors = _fundamentals(quant_rows, qfq_histories, config)
+    refreshed_profiles, _refreshed_profile_distribution = _exit_profiles(Path(exit_profile_file))
+    exit_profile_priority_codes = _current_passed_profile_codes(top80, refreshed_profiles)
+    inputs, fundamental_errors = _fundamentals(
+        quant_rows, qfq_histories, config, priority_codes=exit_profile_priority_codes,
+    )
     deep_report, deep_summary = run_opportunity_discovery(
         inputs=inputs,
         requested_codes=[item.code for item in inputs],
@@ -1786,6 +1818,7 @@ def run_scan(
             "industry_evidence_file": industry_evidence_file,
             "company_evidence_file": company_evidence_file,
             "exit_profile_file": exit_profile_file,
+            "exit_profile_priority_codes": exit_profile_priority_codes,
             "no_auto_trade": True, "no_broker_integration": True,
         },
         priority_queue_size=config.evidence_queue_size,
@@ -1880,6 +1913,7 @@ def run_scan(
         "price_mapping_status_distribution": dict(Counter(str(row.get("price_mapping_status") or "UNKNOWN") for row in price_audits.values())),
         "corporate_action_detected_count": sum(bool(row.get("corporate_action_detected")) for row in price_audits.values()),
         "fundamental_fetch_warning_count": len(fundamental_errors),
+        "exit_profile_priority_candidate_count": len(exit_profile_priority_codes),
         "deep_pipeline_acceptance": deep_summary.get("acceptance_enum"),
         "industry_evidence_file": str(industry_evidence_file),
         "company_evidence_file": str(company_evidence_file),

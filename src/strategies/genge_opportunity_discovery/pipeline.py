@@ -734,14 +734,29 @@ def _research_queues(
     rows: List[Dict[str, Any]],
     priority_queue_size: int,
     secondary_queue_size: int,
+    priority_codes: Iterable[str] = (),
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+    priority_code_set = {_normalize_code(code) for code in priority_codes}
+    primary_rows = [row for row in rows if row.get("quant_screen_status") == "PRIORITY_RESEARCH"]
+    promoted_rows = [
+        row for row in rows
+        if row.get("quant_screen_status") == "SECONDARY_RESEARCH"
+        and _normalize_code(row.get("code")) in priority_code_set
+    ]
     priority_queue = sorted(
-        [row for row in rows if row.get("quant_screen_status") == "PRIORITY_RESEARCH"],
-        key=lambda item: _finite_float(item.get("quant_score")) or 0.0,
+        [*primary_rows, *promoted_rows],
+        key=lambda item: (
+            _normalize_code(item.get("code")) in priority_code_set,
+            _finite_float(item.get("quant_score")) or 0.0,
+        ),
         reverse=True,
     )[: max(0, int(priority_queue_size))]
     secondary_queue = sorted(
-        [row for row in rows if row.get("quant_screen_status") == "SECONDARY_RESEARCH"],
+        [
+            row for row in rows
+            if row.get("quant_screen_status") == "SECONDARY_RESEARCH"
+            and _normalize_code(row.get("code")) not in priority_code_set
+        ],
         key=lambda item: _finite_float(item.get("quant_score")) or 0.0,
         reverse=True,
     )[: max(0, int(secondary_queue_size))]
@@ -1696,7 +1711,10 @@ def run_opportunity_discovery(
         resolved_as_of=resolved_as_of,
         diagnostics=dict(diagnostics or {}),
     )
-    priority_queue, secondary_queue = _research_queues(rows, priority_queue_size, secondary_queue_size)
+    evidence_priority_codes = list((diagnostics or {}).get("exit_profile_priority_codes") or [])
+    priority_queue, secondary_queue = _research_queues(
+        rows, priority_queue_size, secondary_queue_size, evidence_priority_codes,
+    )
     auto_industry_evidence_df = pd.DataFrame()
     auto_company_evidence_df = pd.DataFrame()
     auto_evidence_audit_rows: List[Dict[str, Any]] = []
@@ -1743,7 +1761,9 @@ def run_opportunity_discovery(
         )
         industry_evidence_df = merged_industry_evidence_df
         company_evidence_df = merged_company_evidence_df
-        priority_queue, secondary_queue = _research_queues(rows, priority_queue_size, secondary_queue_size)
+        priority_queue, secondary_queue = _research_queues(
+            rows, priority_queue_size, secondary_queue_size, evidence_priority_codes,
+        )
 
     valid_rows = [row for row in rows if str(row.get("quant_screen_status")) != "HARD_REJECT" or row.get("close") not in (None, "")]
 

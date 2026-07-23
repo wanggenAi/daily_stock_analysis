@@ -25,7 +25,11 @@ from src.strategies.genge_opportunity_discovery.exit_profile import (
     REPORT_AGGREGATE_RULE_VERSION,
     generate_exit_profile_from_reports,
 )
-from src.strategies.genge_opportunity_discovery.pipeline import _rank_opportunities, run_opportunity_discovery
+from src.strategies.genge_opportunity_discovery.pipeline import (
+    _rank_opportunities,
+    _research_queues,
+    run_opportunity_discovery,
+)
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     ScanConfig,
     build_official_universe,
@@ -65,6 +69,21 @@ def _price_frame() -> pd.DataFrame:
             for index, (day, close) in enumerate(zip(dates, closes))
         ]
     )
+
+
+def test_research_queue_promotes_exit_profile_priority_from_secondary() -> None:
+    rows = [
+        {"code": "000001", "quant_screen_status": "PRIORITY_RESEARCH", "quant_score": 90.0},
+        {"code": "000088", "quant_screen_status": "SECONDARY_RESEARCH", "quant_score": 50.0},
+        {"code": "000002", "quant_screen_status": "SECONDARY_RESEARCH", "quant_score": 60.0},
+    ]
+
+    priority, secondary = _research_queues(
+        rows, priority_queue_size=3, secondary_queue_size=3, priority_codes=["000088"],
+    )
+
+    assert [row["code"] for row in priority][:2] == ["000088", "000001"]
+    assert [row["code"] for row in secondary] == ["000002"]
 
 
 def _valuation_frame() -> pd.DataFrame:
@@ -1738,6 +1757,12 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "daily_signals.csv" in workflow
     assert "buy_signals.csv" in workflow
     assert "actionable_execution_list.csv" in workflow
+    assert "all-A scan heartbeat" in workflow
+    assert "timeout --signal=TERM 100m" in workflow
+    assert "--max-workers 12" in workflow
+    assert "Run production strategy tests" in workflow
+    assert "tests/test_genge_all_a_full_scan.py" in workflow
+    assert "Run full pytest" not in workflow
     assert "sell_signals.csv" in workflow
     assert "GITHUB_STEP_SUMMARY" in workflow
     assert "--prefer-binary --retries 5 --timeout 60" in workflow
