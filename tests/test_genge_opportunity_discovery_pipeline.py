@@ -1760,6 +1760,9 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "all-A scan heartbeat" in workflow
     assert "timeout --signal=TERM 100m" in workflow
     assert "--max-workers 12" in workflow
+    assert "Run production strategy tests" in workflow
+    assert "tests/test_genge_all_a_full_scan.py" in workflow
+    assert "Run full pytest" not in workflow
     assert "sell_signals.csv" in workflow
     assert "GITHUB_STEP_SUMMARY" in workflow
     assert "--prefer-binary --retries 5 --timeout 60" in workflow
