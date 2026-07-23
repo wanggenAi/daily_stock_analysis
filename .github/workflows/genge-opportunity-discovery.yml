@@ -344,8 +344,9 @@ jobs:
 
       - name: Run unified all-A production scan
         run: |
+          PYTHONUNBUFFERED=1 timeout --signal=TERM 100m \
           python -m src.strategies.genge_opportunity_discovery.all_a_full_scan \
-            --max-workers 20 \
+            --max-workers 12 \
             --evidence-queue-size 80 \
             --deep-review-size 30 \
             --max-watchlist 15 \
@@ -354,7 +355,13 @@ jobs:
             --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
             --industry-evidence-schema config/industry_evidence_schema.yaml \
             --industry-alias-map config/industry_alias_map.yaml \
-            --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+            --exit-profile-file data/opportunity_snapshots/exit_profile.csv &
+          scan_pid=$!
+          while kill -0 "$scan_pid" 2>/dev/null; do
+            echo "all-A scan heartbeat $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            sleep 60
+          done
+          wait "$scan_pid"
 
       - name: Validate all-A report contract
         run: |
