@@ -13,6 +13,7 @@ from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
     RULE_VERSION,
     _apply_position_budget,
     _board_from_exchange_row,
+    _current_passed_profile_codes,
     _listing_row,
     _fundamentals,
     apply_universe_filters,
@@ -142,6 +143,17 @@ def test_fundamental_fetch_prioritizes_exit_profile_passed_codes(
     assert by_code["000088"].financial_df is not None
     assert by_code["000001"].financial_df is None
     assert not errors
+
+
+def test_exit_profile_priority_excludes_stale_candidates_outside_current_queue() -> None:
+    candidates = [{"code": "000001"}, {"code": "000002"}, {"code": "000001"}]
+    profiles = {
+        "000001": {"exit_profile_status": "PASSED"},
+        "000002": {"exit_profile_status": "FAILED"},
+        "000088": {"exit_profile_status": "PASSED"},
+    }
+
+    assert _current_passed_profile_codes(candidates, profiles) == ["000001"]
 
 
 def test_exit_profile_uses_independent_sample_thresholds() -> None:

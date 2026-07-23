@@ -1040,6 +1040,22 @@ def _exit_profiles(path: Path) -> tuple[dict[str, dict[str, Any]], dict[str, int
     return result, dict(distribution)
 
 
+def _current_passed_profile_codes(
+    candidates: Iterable[Mapping[str, Any]], profiles: Mapping[str, Mapping[str, Any]],
+) -> list[str]:
+    """Return PASSED profile codes that are still in the current research queue."""
+    result: list[str] = []
+    seen: set[str] = set()
+    for candidate in candidates:
+        code = _normalize_code(candidate.get("code"))
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        if str(profiles.get(code, {}).get("exit_profile_status")) == "PASSED":
+            result.append(code)
+    return result
+
+
 def _evidence_urls(evidence_rows: Iterable[Mapping[str, Any]], row: Mapping[str, Any]) -> list[str]:
     code = _normalize_code(row.get("code"))
     industry = str(row.get("normalized_industry") or row.get("industry") or "")
@@ -1780,10 +1796,7 @@ def run_scan(
         entry_plan_specs=entry_plan_specs,
     )
     refreshed_profiles, _refreshed_profile_distribution = _exit_profiles(Path(exit_profile_file))
-    exit_profile_priority_codes = [
-        code for code, profile in refreshed_profiles.items()
-        if str(profile.get("exit_profile_status")) == "PASSED"
-    ]
+    exit_profile_priority_codes = _current_passed_profile_codes(top80, refreshed_profiles)
     inputs, fundamental_errors = _fundamentals(
         quant_rows, qfq_histories, config, priority_codes=exit_profile_priority_codes,
     )
