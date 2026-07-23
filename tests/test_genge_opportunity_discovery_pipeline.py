@@ -1757,6 +1757,9 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "daily_signals.csv" in workflow
     assert "buy_signals.csv" in workflow
     assert "actionable_execution_list.csv" in workflow
+    assert "all-A scan heartbeat" in workflow
+    assert "timeout --signal=TERM 100m" in workflow
+    assert "--max-workers 12" in workflow
     assert "sell_signals.csv" in workflow
     assert "GITHUB_STEP_SUMMARY" in workflow
     assert "--prefer-binary --retries 5 --timeout 60" in workflow
