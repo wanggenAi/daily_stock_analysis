@@ -25,7 +25,11 @@ from src.strategies.genge_opportunity_discovery.exit_profile import (
     REPORT_AGGREGATE_RULE_VERSION,
     generate_exit_profile_from_reports,
 )
-from src.strategies.genge_opportunity_discovery.pipeline import _rank_opportunities, run_opportunity_discovery
+from src.strategies.genge_opportunity_discovery.pipeline import (
+    _rank_opportunities,
+    _research_queues,
+    run_opportunity_discovery,
+)
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     ScanConfig,
     build_official_universe,
@@ -65,6 +69,21 @@ def _price_frame() -> pd.DataFrame:
             for index, (day, close) in enumerate(zip(dates, closes))
         ]
     )
+
+
+def test_research_queue_promotes_exit_profile_priority_from_secondary() -> None:
+    rows = [
+        {"code": "000001", "quant_screen_status": "PRIORITY_RESEARCH", "quant_score": 90.0},
+        {"code": "000088", "quant_screen_status": "SECONDARY_RESEARCH", "quant_score": 50.0},
+        {"code": "000002", "quant_screen_status": "SECONDARY_RESEARCH", "quant_score": 60.0},
+    ]
+
+    priority, secondary = _research_queues(
+        rows, priority_queue_size=3, secondary_queue_size=3, priority_codes=["000088"],
+    )
+
+    assert [row["code"] for row in priority][:2] == ["000088", "000001"]
+    assert [row["code"] for row in secondary] == ["000002"]
 
 
 def _valuation_frame() -> pd.DataFrame:
