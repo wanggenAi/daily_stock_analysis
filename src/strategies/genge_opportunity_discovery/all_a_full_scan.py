@@ -21,6 +21,7 @@ from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 from urllib.parse import urlparse
+from zoneinfo import ZoneInfo
 
 import pandas as pd
 import requests
@@ -38,6 +39,13 @@ from src.strategies.genge_opportunity_discovery.exit_profile import (
     MIN_RECENT_2Y_SAMPLE_COUNT,
     fetch_extended_adjusted_histories,
     refresh_exit_profiles_from_price_history,
+)
+from src.strategies.genge_opportunity_discovery.real_world_signals import (
+    build_industry_regimes,
+    build_market_regime,
+    enrich_real_world_signals,
+    history_snapshot,
+    price_volume_state,
 )
 from src.strategies.genge_opportunity_discovery.shenzhen_full_scan import (
     _atr,
@@ -63,6 +71,18 @@ ACCEPTANCE_RESEARCH = "PASS_ALL_A_PRODUCTION_RESEARCH_READY"
 ACCEPTANCE_STRICT = "PASS_STRICT_REVIEW_CANDIDATE_GENERATED"
 EXIT_PROFILE_MAX_AGE_DAYS = 90
 
+MARKET_INDEX_RECORDS = {
+    "上证指数": {"code": "000001", "exchange": "SSE"},
+    "深证成指": {"code": "399001", "exchange": "SZSE"},
+    "创业板指": {"code": "399006", "exchange": "SZSE"},
+    "科创50": {"code": "000688", "exchange": "SSE"},
+}
+EXTERNAL_MARKET_SYMBOLS = {
+    "纳斯达克综合": ("usIXIC", 1),
+    "道琼斯工业": ("usDJI", 1),
+    "恒生指数": ("hkHSI", 0),
+}
+
 USER_LEVELS = {
     "BUY_READY": "STRICT_REVIEW_READY",
     "NEAR_READY": "CONDITION_WATCH",
@@ -82,7 +102,7 @@ PRICE_AUDIT_COLUMNS = [
 ]
 
 PLAN_COLUMNS = [
-    "actionability_rank", "code", "stock_name", "exchange", "board", "industry",
+    "actionability_rank", "actionability_score", "code", "stock_name", "exchange", "board", "industry",
     "classification", "user_visible_level", "latest_trade_date", "raw_latest_close",
     "adjusted_latest_close", "adjustment_ratio", "price_mapping_status",
     "price_adjustment_warning", "price_percentile_5y", "ma20", "ma60", "ma120", "ma250",
@@ -94,6 +114,12 @@ PLAN_COLUMNS = [
     "exit_profile_freshness_passed", "exit_profile_data_version",
     "exit_profile_data_traceable", "strict_official_evidence_count",
     "strict_official_evidence_domains", "strict_official_evidence_passed",
+    "market_regime_status", "market_regime_score", "market_position_multiplier",
+    "external_risk_level", "industry_regime_status", "industry_regime_score",
+    "industry_regime_sample_count", "price_volume_state", "price_volume_score",
+    "price_volume_reasons", "event_risk_level", "event_scan_status", "event_negative_evidence_count",
+    "event_critical_evidence_count", "event_conflict_count", "event_risk_reasons",
+    "real_world_score", "real_world_gate_passed", "real_world_risk_flags",
     "pullback_entry_low", "pullback_entry_high",
     "pullback_stop_price", "pullback_logic_invalidation_price", "pullback_target_1",
     "pullback_target_2", "pullback_real_reward_risk", "pullback_status",
@@ -109,10 +135,18 @@ PLAN_COLUMNS = [
 DAILY_SIGNAL_COLUMNS = [
     "signal_date", "valid_for_trade_date", "code", "stock_name", "signal_action",
     "signal_label", "previous_level", "current_level", "signal_reason",
-    "signal_data_status", "latest_trade_date", "latest_price", "preferred_plan",
+    "signal_data_status", "previous_lifecycle_state", "current_lifecycle_state",
+    "trigger_observed_today", "position_confirmation_required",
+    "actionability_rank", "latest_trade_date", "latest_price", "threshold_observation_price",
+    "preferred_plan",
     "entry_low", "entry_high", "stop_price", "logic_invalidation_price",
     "target_1", "target_2", "risk_budget_initial_position_pct",
-    "risk_budget_max_position_pct", "evidence_urls", "rule_version",
+    "risk_budget_max_position_pct", "market_regime_status", "market_regime_score",
+    "market_position_multiplier", "industry_regime_status", "industry_regime_score",
+    "industry_regime_sample_count",
+    "external_risk_level", "price_volume_state", "event_risk_level", "event_scan_status",
+    "real_world_score", "real_world_gate_passed", "real_world_risk_flags",
+    "evidence_urls", "rule_version",
     "no_auto_trade", "disclaimer",
 ]
 
@@ -123,8 +157,33 @@ EXECUTION_LIST_COLUMNS = [
     "risk_budget_initial_position_pct", "risk_budget_max_position_pct", "position_rule",
     "cancel_conditions", "industry_evidence_status", "company_evidence_status",
     "hard_logic_level", "exit_profile_status", "exit_profile_entry_mode",
+    "market_regime_status", "market_regime_score", "market_position_multiplier",
+    "external_risk_level", "industry_regime_status", "industry_regime_score",
+    "industry_regime_sample_count",
+    "price_volume_state", "event_risk_level", "event_scan_status", "real_world_score",
+    "real_world_gate_passed", "real_world_risk_flags",
     "evidence_urls", "rule_version", "no_auto_trade", "disclaimer",
 ]
+
+TOP5_COLUMNS = [
+    "candidate_rank", "candidate_action", "candidate_reason", "formal_buy_eligible", *PLAN_COLUMNS,
+]
+
+INDUSTRY_REGIME_COLUMNS = [
+    "industry", "status", "score", "sample_count", "advance_ratio",
+    "median_return_1d_pct", "above_ma20_ratio", "distribution_ratio",
+]
+
+MONITORED_SIGNAL_LIFECYCLES = {"ENTRY_TRIGGER_OBSERVED", "POSITION_REVIEW"}
+FROZEN_SIGNAL_PLAN_FIELDS = (
+    "preferred_plan", "real_reward_risk_ratio", "cancel_conditions",
+    "pullback_entry_low", "pullback_entry_high", "pullback_stop_price",
+    "pullback_logic_invalidation_price", "pullback_target_1", "pullback_target_2",
+    "pullback_real_reward_risk", "pullback_status",
+    "breakout_trigger_price", "breakout_confirmation_high", "breakout_max_chase_price",
+    "breakout_required_volume", "breakout_stop_price", "breakout_logic_invalidation_price",
+    "breakout_target_1", "breakout_target_2", "breakout_real_reward_risk", "breakout_status",
+)
 
 
 @dataclass(frozen=True)
@@ -148,6 +207,7 @@ class AllAScanConfig:
     next_trade_date: date
     output_dir: Path
     stock_pool_output: Path
+    external_context_date: date | None = None
     board_rules_file: Path = Path("config/board_risk_rules.yaml")
     cache_dir: Path = Path("data/cache/all_a_full_scan")
     fundamental_cache_dir: Path = Path("data/cache/genge_fundamentals")
@@ -402,6 +462,27 @@ def fetch_tencent_history(
     response.raise_for_status()
     item = ((response.json().get("data") or {}).get(symbol) or {})
     return _parse_tencent_rows(item.get(key) or [])
+
+
+def fetch_tencent_symbol_history(
+    symbol: str, *, as_of: date, timeout: int = 15,
+) -> pd.DataFrame:
+    """Fetch an index proxy while tolerating Tencent response-key aliases."""
+
+    url = "https://web.ifzq.gtimg.cn/appstock/app/kline/kline"
+    response = _get_with_retry(
+        url,
+        params={"param": f"{symbol},day,,{as_of:%Y-%m-%d},120"},
+        headers={"User-Agent": "Mozilla/5.0", "Accept": "application/json,text/plain,*/*"},
+        timeout=timeout,
+    )
+    payload = response.json().get("data") or {}
+    if not isinstance(payload, Mapping) or not payload:
+        return pd.DataFrame()
+    item = payload.get(symbol)
+    if not isinstance(item, Mapping):
+        item = next((value for value in payload.values() if isinstance(value, Mapping)), {})
+    return _parse_tencent_rows(item.get("day") or [])
 
 
 def fetch_akshare_qfq_history(
@@ -725,6 +806,8 @@ def apply_universe_filters(
     result: list[dict[str, Any]] = []
     audit_rows: list[dict[str, Any]] = []
     counts: Counter[str] = Counter()
+    price_candidate_count = 0
+    price_failure_codes: set[str] = set()
     for row in rows:
         local = dict(row)
         code = _normalize_code(local.get("code"))
@@ -735,9 +818,11 @@ def apply_universe_filters(
         rule = board_rules.get(str(local.get("board")))
         if not reason and rule is None:
             reason = "security_type_unconfirmed"
+        if not reason:
+            price_candidate_count += 1
         if not reason and any(key.startswith(f"{code}:") for key in errors):
             reason = "price_fetch_failed"
-            counts["fatal_data_failure_count"] += 1
+            price_failure_codes.add(code)
         if not raw.empty:
             local["latest_trade_date"] = raw.iloc[-1]["date"].isoformat()
             local["liquidity"] = round(float(pd.to_numeric(raw.tail(20)["amount"], errors="coerce").mean()), 2)
@@ -746,7 +831,7 @@ def apply_universe_filters(
             local["is_suspended"] = True
         if not reason and price_audit.get("price_mapping_status") != "OK":
             reason = "price_mapping_failed"
-            counts["fatal_data_failure_count"] += 1
+            price_failure_codes.add(code)
         if not reason and len(qfq) < int(rule.minimum_history_rows):
             reason = "insufficient_adjusted_history"
         if not reason and len(raw) < min(120, int(rule.minimum_history_rows)):
@@ -762,6 +847,16 @@ def apply_universe_filters(
                 "detail": ";".join(value for key, value in errors.items() if key.startswith(f"{code}:")),
             })
         result.append(local)
+    recoverable_count = len(price_failure_codes)
+    systemic_failure_threshold = max(50, math.floor(max(1, price_candidate_count) * .05))
+    counts["recoverable_price_failure_count"] = recoverable_count
+    counts["price_data_candidate_count"] = price_candidate_count
+    counts["price_data_coverage_ratio"] = round(
+        1.0 - recoverable_count / max(1, price_candidate_count), 6,
+    )
+    counts["fatal_data_failure_count"] = (
+        recoverable_count if recoverable_count > systemic_failure_threshold else 0
+    )
     return result, audit_rows, counts
 
 
@@ -795,6 +890,8 @@ def quant_screen(
         percentile_5y = _percentile(five_year["close"], adjusted_close)
         ma20, ma60, ma120, ma250 = (_ma(adjusted, days) for days in (20, 60, 120, 250))
         ma20_slope, ma60_slope = _slope(adjusted, 20), _slope(adjusted, 60)
+        adjusted_daily = history_snapshot(adjusted, as_of=as_of)
+        raw_daily = history_snapshot(raw, as_of=as_of)
         rs20 = _relative_strength(adjusted, benchmark_qfq, 20)
         rs60 = _relative_strength(adjusted, benchmark_qfq, 60)
         return_5d = (adjusted_close / float(adjusted.iloc[-6]["close"]) - 1) * 100 if len(adjusted) > 5 else None
@@ -828,11 +925,15 @@ def quant_screen(
         relative_score = 50.0 if not relatives else max(0.0, min(100.0, 50.0 + sum(relatives) / len(relatives) * 2.0))
         quant_score = round(price_score * .35 + trend_score * .35 + liquidity_score * .20 + relative_score * .10, 4)
         status = "HARD_REJECT" if hard else "PRIORITY_RESEARCH" if quant_score >= 58 and "falling_knife" not in soft else "SECONDARY_RESEARCH" if quant_score >= 45 else "LOW_PRIORITY"
-        rows.append({
+        quant_row = {
             "code": code, "stock_name": item.get("stock_name"), "exchange": item.get("exchange"),
             "board": item.get("board"), "security_type": item.get("security_type"),
             "industry": item.get("industry"), "industry_source": item.get("industry_source"),
             "latest_trade_date": raw.iloc[-1]["date"].isoformat(), "raw_latest_close": _round_price(raw_close),
+            "raw_latest_open": _round_price(_safe_float(raw.iloc[-1].get("open"))),
+            "raw_latest_high": _round_price(_safe_float(raw.iloc[-1].get("high"))),
+            "raw_latest_low": _round_price(_safe_float(raw.iloc[-1].get("low"))),
+            "raw_latest_volume": _round(_safe_float(raw.iloc[-1].get("volume"))),
             "adjusted_latest_close": _round_price(adjusted_close),
             **dict(price_audits.get(code, {})),
             "price_percentile_5y": _round(percentile_5y), "price_percentile_1y": _round(percentile_1y),
@@ -841,9 +942,20 @@ def quant_screen(
             "trend_confirmation_level": trend, "relative_strength_20d": _round(rs20),
             "relative_strength_60d": _round(rs60), "return_5d_pct": _round(return_5d),
             "return_10d_pct": _round(return_10d), "liquidity": round(liquidity, 2),
+            # Returns and gaps use qfq data so corporate actions cannot look like
+            # panic selling. Activity and intraday location use observable raw data.
+            "return_1d_pct": adjusted_daily.get("return_1d_pct"),
+            "gap_open_pct": adjusted_daily.get("gap_open_pct"),
+            "volume_ratio_20": raw_daily.get("volume_ratio_20"),
+            "amount_ratio_20": raw_daily.get("amount_ratio_20"),
+            "close_location": raw_daily.get("close_location"),
+            "above_ma20": adjusted_daily.get("above_ma20"),
+            "above_ma60": adjusted_daily.get("above_ma60"),
             "quant_score": quant_score, "quant_status": status, "hard_blockers": ";".join(hard),
             "soft_blockers": ";".join(sorted(set(soft))), "rejection_reasons": ";".join(sorted(set(hard + soft))),
-        })
+        }
+        quant_row.update(price_volume_state(quant_row))
+        rows.append(quant_row)
     rows.sort(key=lambda row: (_safe_float(row.get("quant_score")) or 0.0), reverse=True)
     for index, row in enumerate(rows, 1):
         row["quant_rank"] = index
@@ -1172,9 +1284,13 @@ def actionability_score(row: Mapping[str, Any], plan: Mapping[str, Any]) -> floa
     execution = max(0.0, 100.0 - (_safe_float(row.get("execution_risk_score")) or 0.0))
     rr = _safe_float(plan.get("real_reward_risk_ratio")) or 0.0
     rr_score = max(0.0, min(100.0, rr / 2.5 * 100.0))
+    real_world = _safe_float(row.get("real_world_score"))
+    if real_world is None:
+        real_world = 50.0
     return round(
-        quant * .20 + trend * .15 + industry * .15 + company * .15 + financial * .15
-        + valuation * .08 + exit_score * .05 + execution * .03 + rr_score * .04,
+        quant * .16 + trend * .13 + industry * .12 + company * .12 + financial * .13
+        + valuation * .07 + exit_score * .05 + execution * .03 + rr_score * .07
+        + real_world * .12,
         4,
     )
 
@@ -1223,6 +1339,10 @@ def classify_candidate(
                 "industry_evidence", "hard_logic_medium", "trend_medium", "exit_profile_passed",
                 "exit_profile_sample_count", "exit_profile_recent_2y_samples", "exit_profile_confidence", "exit_profile_freshness",
                 "exit_profile_rule_version", "exit_profile_data_traceable", "strict_official_evidence",
+                "quant_research_queue",
+                "market_regime_not_red", "industry_regime_available", "industry_regime_not_crisis",
+                "event_risk_known", "event_risk_not_high",
+                "price_volume_not_distribution",
             )
             if not strict_checks.get(name, False)
         ]
@@ -1254,6 +1374,9 @@ def strict_candidate_checks(
     execution_high = str(row.get("execution_risk_quality") or "").upper() == "HIGH" or "execution_risk_high" in str(row.get("hard_reject_blockers") or "")
     value_trap_high = bool(row.get("value_trap_flag")) or "value_trap_high" in str(row.get("hard_reject_blockers") or "")
     return {
+        "quant_research_queue": str(row.get("quant_status") or "") in {
+            "PRIORITY_RESEARCH", "SECONDARY_RESEARCH",
+        },
         "no_hard_risk": not hard,
         "price_percentile_le_35": percentile is not None and percentile <= .35,
         "trend_medium": trend in {"MEDIUM", "STRONG"},
@@ -1275,6 +1398,17 @@ def strict_candidate_checks(
         "real_rr_1_8": rr >= 1.8,
         "ready_plan": ready_plan,
         "strict_official_evidence": bool(row.get("strict_official_evidence_passed")),
+        "market_regime_not_red": str(row.get("market_regime_status") or "UNKNOWN") in {"GREEN", "YELLOW"},
+        "industry_regime_available": (
+            str(row.get("industry_regime_status") or "UNKNOWN") != "UNKNOWN"
+            and int(_safe_float(row.get("industry_regime_sample_count")) or 0) >= 5
+        ),
+        "industry_regime_not_crisis": str(row.get("industry_regime_status") or "UNKNOWN") != "CRISIS",
+        "event_risk_known": str(row.get("event_scan_status") or "UNKNOWN") == "OK",
+        "event_risk_not_high": str(row.get("event_risk_level") or "LOW") != "HIGH",
+        "price_volume_not_distribution": str(row.get("price_volume_state") or "NEUTRAL") not in {
+            "DISTRIBUTION", "CAPITULATION_RISK",
+        },
         "execution_not_high": not execution_high,
         "value_trap_not_high": not value_trap_high,
         "price_mapping_ok": str(row.get("price_mapping_status")) == "OK",
@@ -1322,10 +1456,16 @@ def _load_previous_watchlist_state(path: Path) -> dict[str, dict[str, Any]]:
 
 
 def _changes(
-    current: list[Mapping[str, Any]], previous_state_file: Path,
+    current: list[Mapping[str, Any]], previous_state_file: Path, *,
+    state_rows: list[Mapping[str, Any]] | None = None,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     previous = _load_previous_watchlist_state(previous_state_file)
     current_by_code = {_normalize_code(row.get("code")): dict(row) for row in current}
+    state_by_code = {
+        _normalize_code(row.get("code")): dict(row)
+        for row in (state_rows if state_rows is not None else current)
+        if _normalize_code(row.get("code"))
+    }
     changes: list[dict[str, Any]] = []
     evidence_changes: list[dict[str, Any]] = []
     level_rank = {"NOT_QUALIFIED": 0, "RESEARCH_WATCH": 1, "CONDITION_WATCH": 2, "STRICT_REVIEW_READY": 3}
@@ -1382,7 +1522,13 @@ def _changes(
                 "change_type": "REMOVED", "detail": "left_current_research_watchlist",
             })
     previous_state_file.parent.mkdir(parents=True, exist_ok=True)
-    previous_state_file.write_text(json.dumps({"saved_at": datetime.now(timezone.utc).isoformat(), "by_code": current_by_code}, ensure_ascii=False, indent=2, default=str), encoding="utf-8")
+    previous_state_file.write_text(
+        json.dumps(
+            {"saved_at": datetime.now(timezone.utc).isoformat(), "by_code": state_by_code},
+            ensure_ascii=False, indent=2, default=str,
+        ),
+        encoding="utf-8",
+    )
     return changes, evidence_changes
 
 
@@ -1412,79 +1558,386 @@ def _signal_plan_fields(row: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _signal_context_fields(row: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "market_regime_status": row.get("market_regime_status"),
+        "market_regime_score": row.get("market_regime_score"),
+        "market_position_multiplier": row.get("market_position_multiplier"),
+        "industry_regime_status": row.get("industry_regime_status"),
+        "industry_regime_score": row.get("industry_regime_score"),
+        "industry_regime_sample_count": row.get("industry_regime_sample_count"),
+        "external_risk_level": row.get("external_risk_level"),
+        "price_volume_state": row.get("price_volume_state"),
+        "event_risk_level": row.get("event_risk_level"),
+        "event_scan_status": row.get("event_scan_status"),
+        "real_world_score": row.get("real_world_score"),
+        "real_world_gate_passed": row.get("real_world_gate_passed"),
+        "real_world_risk_flags": row.get("real_world_risk_flags"),
+    }
+
+
+def _previous_threshold_breached(
+    before: Mapping[str, Any], latest_price: float | None, *, intraday_low: float | None = None,
+) -> bool:
+    plan = _signal_plan_fields(before)
+    stop_price = _safe_float(plan.get("stop_price"))
+    invalidation_price = _safe_float(plan.get("logic_invalidation_price"))
+    stop_observation = intraday_low if intraday_low is not None else latest_price
+    return bool(
+        (stop_observation is not None and stop_price is not None and stop_observation <= stop_price)
+        or (
+            latest_price is not None
+            and invalidation_price is not None
+            and latest_price <= invalidation_price
+        )
+    )
+
+
+def _run_gap_detected(before: Mapping[str, Any], *, as_of: date) -> bool:
+    """Return true when at least one completed A-share session was not processed."""
+
+    observed_value = before.get("signal_observed_through_date") or before.get("latest_trade_date")
+    try:
+        observed = coerce_date(observed_value)
+    except Exception:
+        return False
+    if observed is None or pd.isna(observed):
+        return False
+    if observed >= as_of:
+        return False
+    try:
+        import exchange_calendars as xcals
+
+        calendar = xcals.get_calendar("XSHG")
+        sessions = calendar.sessions_in_range(observed, as_of)
+        elapsed = sum(session.date() > observed for session in sessions)
+    except Exception:
+        # Fallback is deliberately conservative. It may request manual review
+        # around an exchange holiday, but it cannot silently invent continuity.
+        elapsed = len(pd.bdate_range(observed + timedelta(days=1), as_of))
+    return elapsed > 1
+
+
+def _new_market_bar_available(
+    before: Mapping[str, Any], market_row: Mapping[str, Any], *, as_of: date,
+) -> bool:
+    """Do not replay the bar that was already used to create the saved plan."""
+
+    previous_value = before.get("latest_trade_date") or before.get("signal_observed_through_date")
+    current_value = market_row.get("latest_trade_date") or as_of
+    try:
+        current_date = coerce_date(current_value)
+        previous_date = coerce_date(previous_value)
+        if (
+            current_date is None or previous_date is None
+            or pd.isna(current_date) or pd.isna(previous_date)
+        ):
+            return True
+        return current_date > previous_date
+    except Exception:
+        # Legacy state may not have an observation date. Preserve its prior
+        # behaviour for one migration run instead of silently disabling exits.
+        return True
+
+
+def _entry_trigger_observed(before: Mapping[str, Any], market_row: Mapping[str, Any]) -> bool:
+    """Detect an observable trigger; this never claims that the user executed it."""
+
+    preferred = str(before.get("preferred_plan") or "")
+    latest = _safe_float(market_row.get("raw_latest_close"))
+    low = _safe_float(market_row.get("raw_latest_low"))
+    high = _safe_float(market_row.get("raw_latest_high"))
+    if low is None:
+        low = latest
+    if high is None:
+        high = latest
+    if low is None or high is None:
+        return False
+    if preferred == "pullback":
+        entry_low = _safe_float(before.get("pullback_entry_low"))
+        entry_high = _safe_float(before.get("pullback_entry_high"))
+        return bool(
+            entry_low is not None and entry_high is not None
+            and low <= entry_high and high >= entry_low
+        )
+    if preferred == "breakout":
+        trigger = _safe_float(before.get("breakout_trigger_price"))
+        max_buy = _safe_float(before.get("breakout_max_chase_price"))
+        required_volume = _safe_float(before.get("breakout_required_volume"))
+        actual_volume = _safe_float(market_row.get("raw_latest_volume"))
+        return bool(
+            trigger is not None and max_buy is not None and required_volume is not None
+            and actual_volume is not None and high >= trigger and low <= max_buy
+            and actual_volume >= required_volume
+        )
+    return False
+
+
 def build_daily_signals(
     *, current_rows: list[Mapping[str, Any]], previous: Mapping[str, Mapping[str, Any]],
     as_of: date, next_trade_date: date,
+    current_market_rows: list[Mapping[str, Any]] = (),
 ) -> list[dict[str, Any]]:
-    """Build deterministic daily research actions without account or broker state."""
+    """Build research actions while keeping trigger observation separate from holdings."""
 
     current_by_code = {_normalize_code(row.get("code")): row for row in current_rows}
+    market_by_code = {
+        _normalize_code(row.get("code")): row for row in (*current_market_rows, *current_rows)
+    }
     signals: list[dict[str, Any]] = []
     for code, row in current_by_code.items():
         before = previous.get(code, {})
+        market_row = market_by_code.get(code, row)
         previous_level = str(before.get("user_visible_level") or "")
         current_level = str(row.get("user_visible_level") or "")
-        latest_price = _safe_float(row.get("raw_latest_close"))
+        latest_price = _safe_float(market_row.get("raw_latest_close"))
+        intraday_low = _safe_float(market_row.get("raw_latest_low"))
         before_plan = _signal_plan_fields(before)
-        previous_stop = _safe_float(before_plan.get("stop_price"))
-        previous_invalidation = _safe_float(before_plan.get("logic_invalidation_price"))
-        breached = (
-            latest_price is not None
-            and any(
-                threshold is not None and latest_price <= threshold
-                for threshold in (previous_stop, previous_invalidation)
-            )
+        previous_lifecycle = str(before.get("signal_lifecycle_state") or "")
+        monitored = previous_lifecycle in MONITORED_SIGNAL_LIFECYCLES
+        pending = previous_level == "STRICT_REVIEW_READY" and not monitored
+        run_gap = bool(before) and _run_gap_detected(before, as_of=as_of)
+        new_market_bar = bool(before) and _new_market_bar_available(
+            before, market_row, as_of=as_of,
         )
-        if previous_level == "STRICT_REVIEW_READY" and (current_level != "STRICT_REVIEW_READY" or breached):
-            action = "SELL_EXIT"
-            label = "退出信号"
-            reason = "previous_stop_or_invalidation_breached" if breached else (
-                f"strict_signal_lost:{row.get('missing_conditions') or 'qualification_lost'}"
+        breached = not run_gap and new_market_bar and _previous_threshold_breached(
+            before, latest_price, intraday_low=intraday_low,
+        )
+        trigger_observed = (
+            pending and not run_gap and new_market_bar
+            and _entry_trigger_observed(before, market_row)
+        )
+        previous_thresholds = (
+            _safe_float(before_plan.get("stop_price")),
+            _safe_float(before_plan.get("logic_invalidation_price")),
+        )
+        same_day_ambiguous = trigger_observed and intraday_low is not None and any(
+            threshold is not None and intraday_low <= threshold for threshold in previous_thresholds
+        )
+
+        if run_gap:
+            action = "CANCEL_BUY_REVIEW"
+            label = "运行断档/人工复核"
+            reason = (
+                "run_gap_position_state_requires_manual_review"
+                if monitored else "run_gap_entry_state_unreplayable"
             )
+            lifecycle = "POSITION_REVIEW" if monitored else "ENTRY_CANCELLED"
+        elif monitored and breached:
+            action = "SELL_EXIT"
+            label = "若已持仓：退出阈值触发"
+            reason = "previous_stop_or_invalidation_breached"
+            lifecycle = "EXIT_THRESHOLD_BREACHED"
+        elif monitored and current_level == "STRICT_REVIEW_READY":
+            action = "HOLD_REVIEW"
+            label = "触发后持仓复核（需确认已成交）"
+            reason = "strict_signal_remains_valid_after_observed_trigger"
+            lifecycle = "ENTRY_TRIGGER_OBSERVED"
+        elif monitored:
+            action = "CANCEL_BUY_REVIEW"
+            label = "取消新买入/持仓复核"
+            reason = f"strict_signal_lost:{row.get('missing_conditions') or 'qualification_lost'}"
+            lifecycle = "POSITION_REVIEW"
+        elif pending and (breached or same_day_ambiguous):
+            action = "CANCEL_BUY_REVIEW"
+            label = "入场失效/人工复核"
+            reason = "entry_and_stop_order_ambiguous" if same_day_ambiguous else "entry_invalidated_before_position_confirmation"
+            lifecycle = "ENTRY_INVALIDATED"
+        elif pending and trigger_observed and current_level == "STRICT_REVIEW_READY":
+            action = "HOLD_REVIEW"
+            label = "入场触发已出现（需确认是否成交）"
+            reason = "entry_trigger_observed_confirm_execution_manually"
+            lifecycle = "ENTRY_TRIGGER_OBSERVED"
+        elif pending and trigger_observed:
+            action = "CANCEL_BUY_REVIEW"
+            label = "触发后资格丢失/人工复核"
+            reason = "entry_trigger_observed_but_strict_signal_lost"
+            lifecycle = "POSITION_REVIEW"
+        elif pending and current_level == "STRICT_REVIEW_READY":
+            action = "BUY_IF_TRIGGERED"
+            label = "条件买入信号"
+            reason = "entry_trigger_still_pending"
+            lifecycle = "ENTRY_PENDING"
+        elif pending:
+            action = "CANCEL_BUY_REVIEW"
+            label = "取消新买入/持仓复核"
+            reason = f"strict_signal_lost:{row.get('missing_conditions') or 'qualification_lost'}"
+            lifecycle = "ENTRY_CANCELLED"
         elif current_level == "STRICT_REVIEW_READY":
-            action = "HOLD_REVIEW" if previous_level == "STRICT_REVIEW_READY" else "BUY_IF_TRIGGERED"
-            label = "持有复核" if action == "HOLD_REVIEW" else "条件买入信号"
-            reason = "strict_signal_remains_valid" if action == "HOLD_REVIEW" else "all_strict_gates_passed"
+            action = "BUY_IF_TRIGGERED"
+            label = "条件买入信号"
+            reason = "all_strict_gates_passed"
+            lifecycle = "ENTRY_PENDING"
         else:
             action = "WATCH_ONLY"
             label = "仅观察"
             reason = str(row.get("missing_conditions") or "strict_gates_not_passed")
-        plan = _signal_plan_fields(row)
+            lifecycle = "NO_POSITION_SIGNAL"
+        freeze_previous_plan = bool(before) and (
+            monitored or trigger_observed or breached or run_gap
+        )
+        plan_source = before if freeze_previous_plan else row
+        plan = _signal_plan_fields(plan_source)
         risk_budget_enabled = action in {"BUY_IF_TRIGGERED", "HOLD_REVIEW"}
         signals.append({
             "signal_date": as_of.isoformat(), "valid_for_trade_date": next_trade_date.isoformat(),
             "code": code, "stock_name": row.get("stock_name"), "signal_action": action,
             "signal_label": label, "previous_level": previous_level, "current_level": current_level,
-            "signal_reason": reason, "signal_data_status": "CURRENT_DATA",
-            "latest_trade_date": row.get("latest_trade_date"), "latest_price": row.get("raw_latest_close"),
-            "preferred_plan": row.get("preferred_plan"), **plan,
+            "signal_reason": reason,
+            "signal_data_status": "RUN_GAP_REQUIRES_REVIEW" if run_gap else "CURRENT_DATA",
+            "previous_lifecycle_state": previous_lifecycle or "NONE",
+            "current_lifecycle_state": lifecycle,
+            "trigger_observed_today": trigger_observed,
+            "position_confirmation_required": action in {"HOLD_REVIEW", "SELL_EXIT"} or lifecycle == "POSITION_REVIEW",
+            "actionability_rank": row.get("actionability_rank"),
+            "latest_trade_date": market_row.get("latest_trade_date"), "latest_price": market_row.get("raw_latest_close"),
+            "threshold_observation_price": (
+                market_row.get("raw_latest_low")
+                if market_row.get("raw_latest_low") not in {None, ""}
+                else market_row.get("raw_latest_close")
+            ),
+            "preferred_plan": plan_source.get("preferred_plan"), **plan,
             "risk_budget_initial_position_pct": (
                 row.get("risk_budget_initial_position_pct") or 0.0
             ) if risk_budget_enabled else 0.0,
             "risk_budget_max_position_pct": (
                 row.get("risk_budget_max_position_pct") or 0.0
             ) if risk_budget_enabled else 0.0,
+            **_signal_context_fields(row),
             "evidence_urls": row.get("evidence_urls"), "rule_version": RULE_VERSION,
             "no_auto_trade": True, "disclaimer": DISCLAIMER,
         })
     for code, before in previous.items():
-        if code in current_by_code or str(before.get("user_visible_level") or "") != "STRICT_REVIEW_READY":
+        previous_lifecycle = str(before.get("signal_lifecycle_state") or "")
+        monitored = previous_lifecycle in MONITORED_SIGNAL_LIFECYCLES
+        if code in current_by_code or (
+            str(before.get("user_visible_level") or "") != "STRICT_REVIEW_READY" and not monitored
+        ):
             continue
+        market_row = market_by_code.get(code, {})
+        latest_price = _safe_float(market_row.get("raw_latest_close"))
+        intraday_low = _safe_float(market_row.get("raw_latest_low"))
+        run_gap = _run_gap_detected(before, as_of=as_of)
+        new_market_bar = _new_market_bar_available(before, market_row, as_of=as_of)
+        breached = monitored and not run_gap and new_market_bar and _previous_threshold_breached(
+            before, latest_price, intraday_low=intraday_low,
+        )
         plan = _signal_plan_fields(before)
+        action = "SELL_EXIT" if breached else "CANCEL_BUY_REVIEW"
+        lifecycle = (
+            "EXIT_THRESHOLD_BREACHED" if breached
+            else "POSITION_REVIEW" if monitored else "ENTRY_CANCELLED"
+        )
+        reason = (
+            "run_gap_position_state_requires_manual_review" if run_gap and monitored
+            else "run_gap_entry_state_unreplayable" if run_gap
+            else "previous_stop_or_invalidation_breached" if breached
+            else "left_current_research_watchlist"
+        )
         signals.append({
             "signal_date": as_of.isoformat(), "valid_for_trade_date": next_trade_date.isoformat(),
-            "code": code, "stock_name": before.get("stock_name"), "signal_action": "SELL_EXIT",
-            "signal_label": "退出信号", "previous_level": "STRICT_REVIEW_READY", "current_level": "",
-            "signal_reason": "left_current_research_watchlist", "signal_data_status": "CURRENT_ROW_MISSING",
-            "latest_trade_date": before.get("latest_trade_date"), "latest_price": before.get("raw_latest_close"),
+            "code": code, "stock_name": before.get("stock_name"), "signal_action": action,
+            "signal_label": "若已持仓：退出阈值触发" if breached else "取消新买入/持仓复核",
+            "previous_level": before.get("user_visible_level") or "", "current_level": "",
+            "signal_reason": reason,
+            "signal_data_status": (
+                "RUN_GAP_REQUIRES_REVIEW" if run_gap
+                else "CURRENT_MARKET_DATA" if market_row else "CURRENT_ROW_MISSING"
+            ),
+            "previous_lifecycle_state": previous_lifecycle or "NONE",
+            "current_lifecycle_state": lifecycle,
+            "trigger_observed_today": False,
+            "position_confirmation_required": monitored,
+            "actionability_rank": before.get("actionability_rank"),
+            "latest_trade_date": market_row.get("latest_trade_date") or before.get("latest_trade_date"),
+            "latest_price": market_row.get("raw_latest_close") or before.get("raw_latest_close"),
+            "threshold_observation_price": (
+                market_row.get("raw_latest_low")
+                if market_row.get("raw_latest_low") not in {None, ""}
+                else market_row.get("raw_latest_close") or before.get("raw_latest_close")
+            ),
             "preferred_plan": before.get("preferred_plan"), **plan,
             "risk_budget_initial_position_pct": 0.0, "risk_budget_max_position_pct": 0.0,
+            **_signal_context_fields(before),
             "evidence_urls": before.get("evidence_urls"), "rule_version": RULE_VERSION,
             "no_auto_trade": True, "disclaimer": DISCLAIMER,
         })
-    action_rank = {"SELL_EXIT": 0, "BUY_IF_TRIGGERED": 1, "HOLD_REVIEW": 2, "WATCH_ONLY": 3}
-    signals.sort(key=lambda row: (action_rank.get(str(row.get("signal_action")), 9), str(row.get("code"))))
+    action_rank = {
+        "SELL_EXIT": 0, "CANCEL_BUY_REVIEW": 1, "BUY_IF_TRIGGERED": 2,
+        "HOLD_REVIEW": 3, "WATCH_ONLY": 4,
+    }
+    signals.sort(key=lambda row: (
+        action_rank.get(str(row.get("signal_action")), 9),
+        int(_safe_float(row.get("actionability_rank")) or 9999),
+        str(row.get("code")),
+    ))
     return signals
+
+
+def _build_signal_state_rows(
+    *, current_rows: list[Mapping[str, Any]], previous: Mapping[str, Mapping[str, Any]],
+    daily_signals: list[Mapping[str, Any]], current_market_rows: list[Mapping[str, Any]],
+    as_of: date,
+) -> list[dict[str, Any]]:
+    """Persist active lifecycle state separately from the bounded research watchlist."""
+
+    current_by_code = {
+        _normalize_code(row.get("code")): dict(row) for row in current_rows
+        if _normalize_code(row.get("code"))
+    }
+    market_by_code = {
+        _normalize_code(row.get("code")): row for row in current_market_rows
+        if _normalize_code(row.get("code"))
+    }
+    signal_by_code = {
+        _normalize_code(row.get("code")): row for row in daily_signals
+        if _normalize_code(row.get("code"))
+    }
+    state_by_code: dict[str, dict[str, Any]] = {}
+    for code, row in current_by_code.items():
+        signal = signal_by_code.get(code, {})
+        before = previous.get(code, {})
+        lifecycle = str(signal.get("current_lifecycle_state") or "NO_POSITION_SIGNAL")
+        state = dict(row)
+        state["signal_lifecycle_state"] = lifecycle
+        state["signal_observed_through_date"] = as_of.isoformat()
+        state["last_signal_action"] = signal.get("signal_action") or "WATCH_ONLY"
+        state["last_signal_reason"] = signal.get("signal_reason") or ""
+        if before and lifecycle in MONITORED_SIGNAL_LIFECYCLES | {"EXIT_THRESHOLD_BREACHED"}:
+            for field in FROZEN_SIGNAL_PLAN_FIELDS:
+                if field in before:
+                    state[field] = before.get(field)
+            state["signal_plan_origin_trade_date"] = (
+                before.get("signal_plan_origin_trade_date")
+                or before.get("latest_trade_date")
+                or before.get("signal_observed_through_date")
+            )
+        elif lifecycle == "ENTRY_PENDING":
+            state["signal_plan_origin_trade_date"] = row.get("latest_trade_date") or as_of.isoformat()
+        state_by_code[code] = state
+
+    for code, signal in signal_by_code.items():
+        if code in state_by_code:
+            continue
+        lifecycle = str(signal.get("current_lifecycle_state") or "")
+        if lifecycle not in MONITORED_SIGNAL_LIFECYCLES:
+            continue
+        before = previous.get(code)
+        if not before:
+            continue
+        state = dict(before)
+        market = market_by_code.get(code, {})
+        state["signal_lifecycle_state"] = lifecycle
+        state["signal_observed_through_date"] = as_of.isoformat()
+        state["last_signal_action"] = signal.get("signal_action") or "CANCEL_BUY_REVIEW"
+        state["last_signal_reason"] = signal.get("signal_reason") or ""
+        if market:
+            state["latest_trade_date"] = market.get("latest_trade_date") or state.get("latest_trade_date")
+            for field in ("raw_latest_open", "raw_latest_high", "raw_latest_low", "raw_latest_close", "raw_latest_volume"):
+                if market.get(field) not in {None, ""}:
+                    state[field] = market.get(field)
+        state_by_code[code] = state
+    return list(state_by_code.values())
 
 
 def build_actionable_execution_list(
@@ -1493,6 +1946,16 @@ def build_actionable_execution_list(
     """Keep every currently valid strict trigger executable, independent of prior state."""
     result: list[dict[str, Any]] = []
     for row in strict_rows:
+        if (
+            str(row.get("market_regime_status") or "UNKNOWN") not in {"GREEN", "YELLOW"}
+            or str(row.get("industry_regime_status") or "UNKNOWN") in {"UNKNOWN", "CRISIS"}
+            or int(_safe_float(row.get("industry_regime_sample_count")) or 0) < 5
+            or str(row.get("event_scan_status") or "UNKNOWN") != "OK"
+            or str(row.get("event_risk_level") or "LOW") == "HIGH"
+            or str(row.get("price_volume_state") or "NEUTRAL") in {"DISTRIBUTION", "CAPITULATION_RISK"}
+            or row.get("real_world_gate_passed") is not True
+        ):
+            continue
         preferred = str(row.get("preferred_plan") or "")
         plan = _signal_plan_fields(row)
         if preferred == "pullback":
@@ -1524,9 +1987,73 @@ def build_actionable_execution_list(
             "hard_logic_level": row.get("hard_logic_level"),
             "exit_profile_status": row.get("exit_profile_status"),
             "exit_profile_entry_mode": row.get("exit_profile_entry_mode"),
+            "market_regime_status": row.get("market_regime_status"),
+            "market_regime_score": row.get("market_regime_score"),
+            "market_position_multiplier": row.get("market_position_multiplier"),
+            "external_risk_level": row.get("external_risk_level"),
+            "industry_regime_status": row.get("industry_regime_status"),
+            "industry_regime_score": row.get("industry_regime_score"),
+            "industry_regime_sample_count": row.get("industry_regime_sample_count"),
+            "price_volume_state": row.get("price_volume_state"),
+            "event_risk_level": row.get("event_risk_level"),
+            "event_scan_status": row.get("event_scan_status"),
+            "real_world_score": row.get("real_world_score"),
+            "real_world_gate_passed": row.get("real_world_gate_passed"),
+            "real_world_risk_flags": row.get("real_world_risk_flags"),
             "evidence_urls": row.get("evidence_urls"), "rule_version": RULE_VERSION,
             "no_auto_trade": True, "disclaimer": DISCLAIMER,
         })
+    return result
+
+
+def build_daily_candidate_top5(
+    *, deep_rows: list[Mapping[str, Any]], daily_signals: list[Mapping[str, Any]],
+    fallback_rows: list[Mapping[str, Any]] = (), limit: int = 5,
+) -> list[dict[str, Any]]:
+    """Return stable, unique research candidates without weakening buy gates."""
+
+    result: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    signals_by_code = {
+        _normalize_code(row.get("code")): row for row in daily_signals
+    }
+    ordered_deep = sorted(
+        deep_rows,
+        key=lambda row: (
+            0 if str(signals_by_code.get(_normalize_code(row.get("code")), {}).get("signal_action")) == "BUY_IF_TRIGGERED" else 1,
+            int(_safe_float(row.get("actionability_rank")) or 10**9),
+        ),
+    )
+    ordered_fallback = sorted(
+        (
+            row for row in fallback_rows
+            if str(row.get("quant_status") or "") != "HARD_REJECT"
+            and not str(row.get("hard_blockers") or "").strip()
+        ),
+        key=lambda row: int(_safe_float(row.get("quant_rank")) or 10**9),
+    )
+    for source in (*ordered_deep, *ordered_fallback):
+        code = _normalize_code(source.get("code"))
+        if not code or code in seen:
+            continue
+        seen.add(code)
+        row = dict(source)
+        signal = signals_by_code.get(code, {})
+        action = str(signal.get("signal_action") or "WATCH_ONLY")
+        formal = action == "BUY_IF_TRIGGERED"
+        row["candidate_rank"] = len(result) + 1
+        row["candidate_action"] = action
+        row["candidate_reason"] = signal.get("signal_reason") or "deep_review_not_available"
+        row["formal_buy_eligible"] = formal
+        if not formal:
+            row["risk_budget_initial_position_pct"] = 0.0
+            row["risk_budget_max_position_pct"] = 0.0
+        if not row.get("user_visible_level"):
+            row["user_visible_level"] = "RESEARCH_PENDING"
+            row["missing_conditions"] = "deep_review_not_available"
+        result.append(row)
+        if len(result) >= limit:
+            break
     return result
 
 
@@ -1547,12 +2074,16 @@ def _execution_list_markdown(summary: Mapping[str, Any], rows: list[Mapping[str,
             f"- 止损/失效: {row.get('stop_price')} / {row.get('logic_invalidation_price')}",
             f"- 目标: {row.get('target_1')} / {row.get('target_2')}；真实盈亏比: {row.get('real_reward_risk_ratio')}",
             f"- 初始/单股最高仓位: {row.get('risk_budget_initial_position_pct')}% / {row.get('risk_budget_max_position_pct')}%",
+            f"- 现实风险: 市场 {row.get('market_regime_status')} / 行业 {row.get('industry_regime_status')} / 量价 {row.get('price_volume_state')} / 事件 {row.get('event_risk_level')}",
             f"- 取消条件: {row.get('cancel_conditions')}", "",
         ])
     return "\n".join(lines) + "\n"
 
 
-def _daily_signals_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, Any]]) -> str:
+def _daily_signals_markdown(
+    summary: Mapping[str, Any], rows: list[Mapping[str, Any]],
+    candidate_top5: list[Mapping[str, Any]] | None = None,
+) -> str:
     lines = [
         "# 每日买入/卖出研究信号", "", DISCLAIMER, "",
         f"- 信号日期: {summary.get('as_of_date')}",
@@ -1560,8 +2091,11 @@ def _daily_signals_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, 
         f"- 条件买入: {summary.get('buy_signal_count')}",
         f"- 持有复核: {summary.get('hold_signal_count')}",
         f"- 退出信号: {summary.get('sell_signal_count')}",
+        f"- 取消新买入/持仓复核: {summary.get('cancel_buy_review_count')}",
         f"- 仅观察: {summary.get('watch_signal_count')}", "",
-        "买入信号只有在价格进入指定区间且盘前公告/停牌/数据核对无异常时才成立；退出信号表示策略资格丢失或失效位触发，不读取实际持仓。", "",
+        f"- 市场状态: {summary.get('market_regime_status')}（{summary.get('market_regime_score')}）",
+        f"- 外围风险: {summary.get('external_risk_level')}", "",
+        "买入信号只有在价格进入指定区间且盘前公告、停牌与数据核对无异常时才成立；只有既定止损或逻辑失效位实际触发才输出退出信号。资格丢失但未触发退出价时只取消新买入并提示持仓复核。", "",
     ]
     actionable = [row for row in rows if row.get("signal_action") != "WATCH_ONLY"]
     if not actionable:
@@ -1574,8 +2108,23 @@ def _daily_signals_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, 
             f"- 条件区间: {row.get('entry_low')}-{row.get('entry_high')}",
             f"- 止损/失效: {row.get('stop_price')} / {row.get('logic_invalidation_price')}",
             f"- 目标: {row.get('target_1')} / {row.get('target_2')}",
-            f"- 风险预算参考: {row.get('risk_budget_initial_position_pct')}%-{row.get('risk_budget_max_position_pct')}%", "",
+            f"- 风险预算参考: {row.get('risk_budget_initial_position_pct')}%-{row.get('risk_budget_max_position_pct')}%",
+            f"- 现实风险: 市场 {row.get('market_regime_status')} / 行业 {row.get('industry_regime_status')} / 量价 {row.get('price_volume_state')} / 事件 {row.get('event_risk_level')}",
+            f"- 现实信号分: {row.get('real_world_score')}；风险标记: {row.get('real_world_risk_flags') or 'none'}", "",
         ])
+    lines.extend([
+        "## 今日五只优先候选", "",
+        "这五只是策略排序后的次日研究候选，不等于五只都可以买。只有标为 BUY_IF_TRIGGERED 且盘中真实满足触发条件的股票，才会同时进入正式可执行清单。", "",
+    ])
+    for candidate in candidate_top5 or []:
+        lines.append(
+            f"- #{candidate.get('candidate_rank')} {candidate.get('stock_name')}({candidate.get('code')}): "
+            f"{candidate.get('candidate_action')}；层级 {candidate.get('user_visible_level')}；"
+            f"市场/行业/量价/事件={candidate.get('market_regime_status')}/"
+            f"{candidate.get('industry_regime_status')}/{candidate.get('price_volume_state')}/"
+            f"{candidate.get('event_risk_level')}；尚缺 {candidate.get('missing_conditions') or 'none'}"
+        )
+    lines.append("")
     return "\n".join(lines) + "\n"
 
 
@@ -1589,13 +2138,36 @@ def _change_markdown(title: str, rows: list[Mapping[str, Any]], include_types: s
     return "\n".join(lines) + "\n"
 
 
+def _research_queue(
+    quant_rows: list[Mapping[str, Any]], *, limit: int,
+) -> list[dict[str, Any]]:
+    """Keep the normal queue first and use safe LOW_PRIORITY rows only for research coverage."""
+
+    selected = [
+        dict(row) for row in quant_rows
+        if row.get("quant_status") in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}
+    ][:limit]
+    seen = {_normalize_code(row.get("code")) for row in selected}
+    for row in quant_rows:
+        if len(selected) >= limit:
+            break
+        code = _normalize_code(row.get("code"))
+        if (
+            row.get("quant_status") != "LOW_PRIORITY"
+            or str(row.get("hard_blockers") or "").strip()
+            or not code or code in seen
+        ):
+            continue
+        selected.append(dict(row))
+        seen.add(code)
+    return selected
+
+
 def _fundamentals(
     quant_rows: list[dict[str, Any]], qfq_histories: Mapping[str, pd.DataFrame],
     config: AllAScanConfig, *, priority_codes: Iterable[str] = (),
 ) -> tuple[list[BacktestInput], dict[str, str]]:
-    selected = [
-        row for row in quant_rows if row.get("quant_status") in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}
-    ][: config.evidence_queue_size]
+    selected = _research_queue(quant_rows, limit=config.evidence_queue_size)
     loader = PublicFundamentalLoader(config.fundamental_cache_dir)
     inputs: list[BacktestInput] = []
     errors: dict[str, str] = {}
@@ -1640,17 +2212,37 @@ def _apply_position_budget(row: dict[str, Any], plan: Mapping[str, Any], level: 
     ) or 0.0
     stop = _safe_float(plan.get(f"{preferred}_stop_price")) or 0.0
     initial, maximum = _position_pct(entry, stop, enabled=strict)
-    row["risk_budget_initial_position_pct"] = initial if strict else 0.0
-    row["risk_budget_max_position_pct"] = maximum if strict else 0.0
+    market_multiplier = _safe_float(row.get("market_position_multiplier"))
+    if market_multiplier is None:
+        market_multiplier = 1.0
+    industry_multiplier = 0.75 if str(row.get("industry_regime_status")) == "WEAK" else 1.0
+    event_multiplier = 0.75 if str(row.get("event_risk_level")) == "MEDIUM" else 1.0
+    price_volume_multiplier = 0.8 if str(row.get("price_volume_state")) == "WEAK_DEMAND" else 1.0
+    multiplier = max(
+        0.0,
+        min(
+            1.0,
+            market_multiplier * industry_multiplier * event_multiplier * price_volume_multiplier,
+        ),
+    )
+    row["risk_budget_initial_position_pct"] = round(initial * multiplier, 2) if strict else 0.0
+    row["risk_budget_max_position_pct"] = round(maximum * multiplier, 2) if strict else 0.0
 
 
 def _merge_deep_rows(
     *, quant_rows: list[dict[str, Any]], deep_report: Path, raw_histories: Mapping[str, pd.DataFrame],
     price_audits: Mapping[str, Mapping[str, Any]], board_rules: Mapping[str, BoardRule],
     exit_profiles: Mapping[str, Mapping[str, Any]], max_watchlist: int, as_of: date,
+    market_regime: Mapping[str, Any], industry_regimes: Mapping[str, Mapping[str, Any]],
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     payload = json.loads((deep_report / "daily_opportunity_report.json").read_text(encoding="utf-8"))
     evidence_rows = list(csv.DictReader((deep_report / "evidence_inventory.csv").open(encoding="utf-8")))
+    evidence_audit_path = deep_report / "auto_evidence_audit.csv"
+    event_scan_rows = (
+        list(csv.DictReader(evidence_audit_path.open(encoding="utf-8")))
+        if evidence_audit_path.exists()
+        else []
+    )
     quant_by_code = {str(row["code"]): row for row in quant_rows}
     all_rows: list[dict[str, Any]] = []
     for deep in payload.get("all_opportunities") or []:
@@ -1671,12 +2263,21 @@ def _merge_deep_rows(
             "code": code, "stock_name": deep.get("stock_name") or quant.get("stock_name"),
             "exchange": quant.get("exchange"), "board": board,
             "industry": deep.get("normalized_industry") or quant.get("industry") or deep.get("raw_industry"),
+            "industry_regime_key": quant.get("industry") or deep.get("normalized_industry") or deep.get("raw_industry"),
             "industry_evidence_status": deep.get("industry_evidence_status") or "MISSING",
             "company_evidence_status": deep.get("company_evidence_status") or "MISSING",
             "hard_logic_level": deep.get("hard_logic_level") or "NONE",
             "exit_profile_status": profile.get("exit_profile_status") or "NOT_AVAILABLE",
             "evidence_urls": ";".join(urls), "disclaimer": DISCLAIMER,
         }
+        merged.update(enrich_real_world_signals(
+            merged,
+            market_regime=market_regime,
+            industry_regimes=industry_regimes,
+            evidence_rows=evidence_rows,
+            event_scan_rows=event_scan_rows,
+            as_of=as_of,
+        ))
         level, missing = classify_candidate(merged, plan, profile, urls, board_rule=board_rules[board])
         strict_checks = strict_candidate_checks(merged, plan, profile, board_rule=board_rules[board])
         merged["classification"] = level
@@ -1692,19 +2293,23 @@ def _merge_deep_rows(
         _apply_position_budget(merged, plan, level)
         all_rows.append(merged)
     all_rows.sort(key=lambda row: (_safe_float(row.get("actionability_score")) or 0.0), reverse=True)
-    selected: list[dict[str, Any]] = []
-    level_limits = {"STRICT_REVIEW_READY": 3, "CONDITION_WATCH": 5, "RESEARCH_WATCH": 10}
-    counts: Counter[str] = Counter()
-    for row in all_rows:
-        level = str(row.get("user_visible_level"))
-        if level not in level_limits or counts[level] >= level_limits[level]:
-            continue
-        counts[level] += 1
-        selected.append(row)
-        if len(selected) >= max_watchlist:
-            break
-    for index, row in enumerate(selected, 1):
+    for index, row in enumerate(all_rows, 1):
         row["actionability_rank"] = index
+    selected: list[dict[str, Any]] = []
+    level_limits = {
+        "STRICT_REVIEW_READY": max_watchlist,
+        "CONDITION_WATCH": 5,
+        "RESEARCH_WATCH": 10,
+    }
+    for desired_level in ("STRICT_REVIEW_READY", "CONDITION_WATCH", "RESEARCH_WATCH"):
+        added = 0
+        for row in all_rows:
+            if str(row.get("user_visible_level")) != desired_level or added >= level_limits[desired_level]:
+                continue
+            selected.append(row)
+            added += 1
+            if len(selected) >= max_watchlist:
+                return selected, all_rows
     return selected, all_rows
 
 
@@ -1717,6 +2322,9 @@ def _watchlist_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, Any]
         f"- STRICT_REVIEW_READY: {summary.get('strict_review_ready_count')}",
         f"- CONDITION_WATCH: {summary.get('condition_watch_count')}",
         f"- RESEARCH_WATCH: {summary.get('research_watch_count')}", "",
+        f"- 市场状态: {summary.get('market_regime_status')}（{summary.get('market_regime_score')}）",
+        f"- 外围风险: {summary.get('external_risk_level')}",
+        f"- 市场风险原因: {';'.join(summary.get('market_regime_risk_reasons') or []) or 'none'}", "",
         "只有 STRICT_REVIEW_READY 才显示非零风险预算参考仓位；它仍不是交易指令，必须盘前公告复核、券商客户端价格核对和当日条件确认。", "",
     ]
     for row in rows:
@@ -1729,8 +2337,29 @@ def _watchlist_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, Any]
             f"- pullback: {row.get('pullback_status')} {row.get('pullback_entry_low')}-{row.get('pullback_entry_high')} stop {row.get('pullback_stop_price')} target {row.get('pullback_target_1')}/{row.get('pullback_target_2')} RR {row.get('pullback_real_reward_risk')}",
             f"- breakout: {row.get('breakout_status')} trigger {row.get('breakout_trigger_price')}-{row.get('breakout_confirmation_high')} max chase {row.get('breakout_max_chase_price')} stop {row.get('breakout_stop_price')} target {row.get('breakout_target_1')}/{row.get('breakout_target_2')} RR {row.get('breakout_real_reward_risk')}",
             f"- risk budget reference: {row.get('risk_budget_initial_position_pct')}%-{row.get('risk_budget_max_position_pct')}%",
+            f"- real-world: market {row.get('market_regime_status')} / industry {row.get('industry_regime_status')} / price-volume {row.get('price_volume_state')} / event {row.get('event_risk_level')} / score {row.get('real_world_score')}",
+            f"- real-world risk flags: {row.get('real_world_risk_flags') or 'none'}",
             f"- missing conditions: {row.get('missing_conditions') or 'none'}",
             f"- evidence: {row.get('evidence_urls') or 'none'}", "",
+        ])
+    return "\n".join(lines) + "\n"
+
+
+def _candidate_top5_markdown(summary: Mapping[str, Any], rows: list[Mapping[str, Any]]) -> str:
+    lines = [
+        "# 每日五只优先候选", "", DISCLAIMER, "",
+        f"- 信号日期: {summary.get('as_of_date')}",
+        f"- 适用交易日: {summary.get('next_trade_date')}",
+        f"- 市场状态: {summary.get('market_regime_status')}（{summary.get('market_regime_score')}）", "",
+        "本表固定展示策略最优先复核的五只股票，不等于强行给出五只正式买入。只有 BUY_IF_TRIGGERED 同时出现在 actionable_execution_list 时，才具备条件执行资格。", "",
+    ]
+    for row in rows:
+        lines.extend([
+            f"## #{row.get('candidate_rank')} {row.get('stock_name')} ({row.get('code')}) - {row.get('candidate_action')}", "",
+            f"- 层级/得分: {row.get('user_visible_level')} / {row.get('actionability_score')}",
+            f"- 现实风险: 市场 {row.get('market_regime_status')} / 行业 {row.get('industry_regime_status')} / 量价 {row.get('price_volume_state')} / 事件 {row.get('event_risk_level')}",
+            f"- 尚缺条件: {row.get('missing_conditions') or 'none'}",
+            f"- 计划: {row.get('preferred_plan')}；仓位参考: {row.get('risk_budget_initial_position_pct')}%-{row.get('risk_budget_max_position_pct')}%", "",
         ])
     return "\n".join(lines) + "\n"
 
@@ -1762,7 +2391,36 @@ def run_scan(
     )
     if not quant_rows or filter_counts["effective_scan_count"] <= 100:
         raise RuntimeError("all-A effective universe is unexpectedly small")
-    top80 = [row for row in quant_rows if row.get("quant_status") in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}][: config.evidence_queue_size]
+    market_data_errors: dict[str, str] = {}
+    index_histories: dict[str, pd.DataFrame] = {}
+    for index_name, record in MARKET_INDEX_RECORDS.items():
+        try:
+            frame = fetch_tencent_history(record, as_of=config.as_of, adjusted=False)
+            if frame.empty:
+                raise RuntimeError("empty_index_history")
+            index_histories[index_name] = frame
+        except Exception as exc:
+            market_data_errors[f"index:{index_name}"] = f"{type(exc).__name__}: {exc}"
+    external_context_date = config.external_context_date or config.as_of
+    external_histories: dict[str, pd.DataFrame] = {}
+    for market_name, (symbol, lag_days) in EXTERNAL_MARKET_SYMBOLS.items():
+        cutoff = external_context_date - timedelta(days=lag_days)
+        try:
+            frame = fetch_tencent_symbol_history(symbol, as_of=cutoff)
+            if frame.empty:
+                raise RuntimeError("empty_external_history")
+            external_histories[market_name] = frame
+        except Exception as exc:
+            market_data_errors[f"external:{market_name}"] = f"{type(exc).__name__}: {exc}"
+    market_regime = build_market_regime(
+        quant_rows,
+        index_histories=index_histories,
+        external_histories=external_histories,
+        as_of=config.as_of,
+        external_as_of=external_context_date,
+    )
+    industry_regimes = build_industry_regimes(quant_rows)
+    top80 = _research_queue(quant_rows, limit=config.evidence_queue_size)
     extended_exit_histories, exit_history_fetch = fetch_extended_adjusted_histories(
         candidates=top80,
         as_of=config.as_of,
@@ -1835,6 +2493,7 @@ def run_scan(
         quant_rows=quant_rows, deep_report=deep_report, raw_histories=raw_histories,
         price_audits=price_audits, board_rules=board_rules, exit_profiles=profiles,
         max_watchlist=config.max_watchlist, as_of=config.as_of,
+        market_regime=market_regime, industry_regimes=industry_regimes,
     )
     strict_rows = [row for row in watchlist if row.get("user_visible_level") == "STRICT_REVIEW_READY"]
     condition_rows = [row for row in watchlist if row.get("user_visible_level") == "CONDITION_WATCH"]
@@ -1844,11 +2503,36 @@ def run_scan(
     daily_signals = build_daily_signals(
         current_rows=watchlist, previous=previous_watchlist,
         as_of=config.as_of, next_trade_date=config.next_trade_date,
+        current_market_rows=quant_rows,
     )
+    signals_by_code = {_normalize_code(row.get("code")): row for row in daily_signals}
+    for row in watchlist:
+        signal = signals_by_code.get(_normalize_code(row.get("code")), {})
+        row["signal_lifecycle_state"] = signal.get("current_lifecycle_state") or "NO_POSITION_SIGNAL"
+    signal_state_rows = _build_signal_state_rows(
+        current_rows=watchlist,
+        previous=previous_watchlist,
+        daily_signals=daily_signals,
+        current_market_rows=quant_rows,
+        as_of=config.as_of,
+    )
+    execution_codes = {
+        code for code, signal in signals_by_code.items()
+        if signal.get("signal_action") == "BUY_IF_TRIGGERED"
+    }
+    execution_strict_rows = [
+        row for row in strict_rows if _normalize_code(row.get("code")) in execution_codes
+    ]
     actionable_execution_list = build_actionable_execution_list(
-        strict_rows=strict_rows, next_trade_date=config.next_trade_date,
+        strict_rows=execution_strict_rows, next_trade_date=config.next_trade_date,
     )
-    changes, evidence_changes = _changes(watchlist, previous_state_file)
+    daily_candidate_top5 = build_daily_candidate_top5(
+        deep_rows=deep_rows, daily_signals=daily_signals,
+        fallback_rows=quant_rows, limit=5,
+    )
+    changes, evidence_changes = _changes(
+        watchlist, previous_state_file, state_rows=signal_state_rows,
+    )
     board_distribution = _distribution(universe_rows, "board")
     exchange_distribution = _distribution(universe_rows, "exchange")
     price_source_distribution = dict(Counter(
@@ -1879,6 +2563,8 @@ def run_scan(
         "raw_security_count": len(universe_rows), "official_universe_count": len(universe_rows),
         "valid_stock_count": filter_counts["effective_scan_count"],
         "fatal_data_failure_count": filter_counts["fatal_data_failure_count"],
+        "recoverable_price_failure_count": filter_counts["recoverable_price_failure_count"],
+        "price_data_coverage_ratio": filter_counts["price_data_coverage_ratio"],
         "skipped_stock_count": len(universe_rows) - filter_counts["effective_scan_count"],
         "exchange_distribution": exchange_distribution, "board_distribution": board_distribution,
         "price_source_distribution": price_source_distribution,
@@ -1886,12 +2572,31 @@ def run_scan(
         "effective_scan_count": len(quant_rows),
         "priority_research_count": sum(row.get("quant_status") == "PRIORITY_RESEARCH" for row in quant_rows),
         "secondary_research_count": sum(row.get("quant_status") == "SECONDARY_RESEARCH" for row in quant_rows),
+        "evidence_queue_count": len(top80),
+        "deep_review_count": len(deep_rows),
         "strict_review_ready_count": len(strict_rows), "condition_watch_count": len(condition_rows),
         "research_watch_count": len(research_rows),
         "actionable_execution_count": len(actionable_execution_list),
+        "execution_suppressed_count": len(strict_rows) - len(actionable_execution_list),
+        "market_regime_status": market_regime.get("status"),
+        "market_regime_score": market_regime.get("score"),
+        "market_regime_risk_reasons": market_regime.get("risk_reasons"),
+        "market_position_multiplier": market_regime.get("position_multiplier"),
+        "external_risk_level": market_regime.get("external_risk_level"),
+        "external_context_date": market_regime.get("external_context_date"),
+        "external_market_available_count": market_regime.get("external_available_count"),
+        "external_market_data_quality": market_regime.get("external_data_quality"),
+        "market_signal_data_quality": market_regime.get("data_quality"),
+        "industry_regime_count": len(industry_regimes),
+        "industry_regime_data_quality": "OK" if industry_regimes else "PARTIAL",
+        "event_scan_ok_count": sum(row.get("event_scan_status") == "OK" for row in deep_rows),
+        "real_world_gate_pass_count": sum(bool(row.get("real_world_gate_passed")) for row in deep_rows),
+        "market_data_warning_count": len(market_data_errors),
+        "daily_candidate_top5_count": len(daily_candidate_top5),
         "buy_signal_count": sum(row.get("signal_action") == "BUY_IF_TRIGGERED" for row in daily_signals),
         "hold_signal_count": sum(row.get("signal_action") == "HOLD_REVIEW" for row in daily_signals),
         "sell_signal_count": sum(row.get("signal_action") == "SELL_EXIT" for row in daily_signals),
+        "cancel_buy_review_count": sum(row.get("signal_action") == "CANCEL_BUY_REVIEW" for row in daily_signals),
         "watch_signal_count": sum(row.get("signal_action") == "WATCH_ONLY" for row in daily_signals),
         "industry_evidence_coverage": _coverage(deep_rows, lambda row: row.get("industry_evidence_status") in {"VERIFIED", "PARTIALLY_VERIFIED"}),
         "company_evidence_coverage": _coverage(deep_rows, lambda row: row.get("company_evidence_status") in {"VERIFIED", "PARTIALLY_VERIFIED"}),
@@ -1929,6 +2634,15 @@ def run_scan(
     _write_csv(config.output_dir / "board_distribution.csv", [{"board": key, "count": value} for key, value in board_distribution.items()], ["board", "count"])
     _write_csv(config.output_dir / "price_mapping_audit.csv", [{"code": code, **audit} for code, audit in price_audits.items()], ["code", *PRICE_AUDIT_COLUMNS[1:]])
     _write_csv(config.output_dir / "all_a_quant_screen.csv", quant_rows)
+    (config.output_dir / "market_regime.json").write_text(
+        json.dumps(market_regime, ensure_ascii=False, indent=2, default=str), encoding="utf-8",
+    )
+    _write_csv(
+        config.output_dir / "industry_regimes.csv",
+        industry_regimes.values(),
+        INDUSTRY_REGIME_COLUMNS,
+    )
+    _write_csv(config.output_dir / "real_world_signal_audit.csv", deep_rows)
     _write_csv(config.output_dir / "top80_evidence_queue.csv", top80)
     _write_csv(config.output_dir / "top30_deep_review.csv", deep_rows[: config.deep_review_size])
     _write_csv(config.output_dir / "strict_gate_audit.csv", strict_gate_audit)
@@ -1936,6 +2650,10 @@ def run_scan(
     _write_csv(config.output_dir / "condition_watch.csv", condition_rows, PLAN_COLUMNS)
     _write_csv(config.output_dir / "research_watch.csv", research_rows, PLAN_COLUMNS)
     _write_csv(config.output_dir / "tomorrow_watchlist.csv", watchlist, PLAN_COLUMNS)
+    _write_csv(config.output_dir / "daily_candidate_top5.csv", daily_candidate_top5, TOP5_COLUMNS)
+    (config.output_dir / "daily_candidate_top5.md").write_text(
+        _candidate_top5_markdown(summary, daily_candidate_top5), encoding="utf-8",
+    )
     _write_csv(config.output_dir / "daily_signals.csv", daily_signals, DAILY_SIGNAL_COLUMNS)
     _write_csv(
         config.output_dir / "buy_signals.csv",
@@ -1967,7 +2685,7 @@ def run_scan(
         encoding="utf-8",
     )
     (config.output_dir / "daily_signals.md").write_text(
-        _daily_signals_markdown(summary, daily_signals), encoding="utf-8",
+        _daily_signals_markdown(summary, daily_signals, daily_candidate_top5), encoding="utf-8",
     )
     _write_csv(config.output_dir / "opportunity_changes.csv", changes)
     _write_csv(config.output_dir / "evidence_changes.csv", evidence_changes)
@@ -1985,6 +2703,9 @@ def run_scan(
     ] + [
         {"stage": "fundamental", "code": code, "status": "WARNING", "issue": "provider_warning", "detail": value}
         for code, value in fundamental_errors.items()
+    ] + [
+        {"stage": "market_signal", "code": "", "status": "WARNING", "issue": key, "detail": value}
+        for key, value in market_data_errors.items()
     ] + universe_audit
     _write_csv(config.output_dir / "data_quality_audit.csv", quality_rows)
     manifest = {path.name: _hash_file(path) for path in sorted(config.output_dir.iterdir()) if path.is_file()}
@@ -2019,15 +2740,18 @@ def main(argv: list[str] | None = None) -> int:
     if args.as_of_date:
         as_of = coerce_date(args.as_of_date)
         next_trade_date = coerce_date(args.next_trade_date)
+        external_context_date = as_of
     else:
         as_of, next_trade_date = resolve_scan_dates()
+        external_context_date = datetime.now(ZoneInfo("Asia/Shanghai")).date()
     if next_trade_date <= as_of:
         raise SystemExit("--next-trade-date must be later than --as-of-date")
     output_dir = Path(args.output_dir or f"reports/all_a_full_scan/{next_trade_date:%Y%m%d}")
     stock_pool_output = Path(args.stock_pool_output or f"stock_pools/all_a_universe_{as_of:%Y%m%d}.csv")
     config = AllAScanConfig(
         as_of=as_of, next_trade_date=next_trade_date, output_dir=output_dir,
-        stock_pool_output=stock_pool_output, board_rules_file=Path(args.board_rules),
+        stock_pool_output=stock_pool_output, external_context_date=external_context_date,
+        board_rules_file=Path(args.board_rules),
         max_workers=args.max_workers, evidence_queue_size=args.evidence_queue_size,
         deep_review_size=args.deep_review_size, max_watchlist=args.max_watchlist,
         fundamental_limit=args.fundamental_limit,

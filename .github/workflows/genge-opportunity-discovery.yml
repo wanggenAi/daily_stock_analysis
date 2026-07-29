@@ -5,6 +5,12 @@ on:
     # 18:30 Beijing time on weekdays (10:30 UTC). Public data may still lag; reports audit gaps.
     - cron: "30 10 * * 1-5"
   workflow_dispatch:
+    inputs:
+      run_legacy_report:
+        description: "Also run the legacy opportunity report"
+        required: false
+        type: boolean
+        default: false
   pull_request:
     branches: [main]
   push:
@@ -37,7 +43,11 @@ jobs:
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
       - name: Run opportunity discovery tests
-        run: python -m pytest tests/test_genge_opportunity_discovery_*.py
+        run: |
+          python -m pytest \
+            tests/test_genge_opportunity_discovery_*.py \
+            tests/test_genge_all_a_full_scan.py \
+            tests/test_genge_real_world_signals.py
 
       - name: Run fixture opportunity CLI smoke
         run: |
@@ -126,7 +136,7 @@ jobs:
 
   daily-opportunity-report:
     name: Daily opportunity report
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' && inputs.run_legacy_report
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
@@ -151,8 +161,10 @@ jobs:
             data/cache/opportunity_evidence
             data/cache/shenzhen_full_scan
             data/cache/genge_fundamentals
-          key: genge-opportunity-state-${{ runner.os }}-${{ github.run_id }}
+          key: genge-opportunity-state-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
+            genge-opportunity-state-${{ runner.os }}-${{ github.ref_name }}-
+            genge-opportunity-state-${{ runner.os }}-main-
             genge-opportunity-state-${{ runner.os }}-
 
       - name: Prepare opportunity state directories
@@ -281,7 +293,7 @@ jobs:
             data/cache/opportunity_evidence
             data/cache/shenzhen_full_scan
             data/cache/genge_fundamentals
-          key: genge-opportunity-state-${{ runner.os }}-${{ github.run_id }}
+          key: genge-opportunity-state-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Upload Shenzhen full scan report
         uses: actions/upload-artifact@v4
@@ -323,7 +335,8 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_genge_opportunity_discovery_*.py \
-            tests/test_genge_all_a_full_scan.py
+            tests/test_genge_all_a_full_scan.py \
+            tests/test_genge_real_world_signals.py
 
       - name: Restore all-A public-data cache and observation state
         uses: actions/cache/restore@v4
@@ -336,8 +349,10 @@ jobs:
             data/opportunity_snapshots/all_a_forward_observation_ledger.csv
             data/opportunity_snapshots/exit_profile.csv
             stock_pools/all_a_universe_*.csv
-          key: genge-all-a-state-${{ runner.os }}-${{ github.run_id }}
+          key: genge-all-a-state-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
           restore-keys: |
+            genge-all-a-state-${{ runner.os }}-${{ github.ref_name }}-
+            genge-all-a-state-${{ runner.os }}-main-
             genge-all-a-state-${{ runner.os }}-
 
       - name: Prepare all-A research state
@@ -384,8 +399,10 @@ jobs:
           required = {
               "all_a_universe.csv", "universe_exclusion_audit.csv", "universe_source_audit.json",
               "board_distribution.csv", "price_mapping_audit.csv", "all_a_quant_screen.csv",
+              "market_regime.json", "industry_regimes.csv", "real_world_signal_audit.csv",
               "top80_evidence_queue.csv", "top30_deep_review.csv", "strict_gate_audit.csv", "strict_review_ready.csv",
               "condition_watch.csv", "research_watch.csv", "tomorrow_watchlist.csv",
+              "daily_candidate_top5.csv", "daily_candidate_top5.md",
               "daily_signals.csv", "daily_signals.json", "daily_signals.md",
               "buy_signals.csv", "sell_signals.csv",
               "actionable_execution_list.csv", "actionable_execution_list.json", "actionable_execution_list.md",
@@ -395,21 +412,60 @@ jobs:
           }
           missing = sorted(name for name in required if not (latest / name).exists())
           assert not missing, f"missing report files: {missing}"
+          deep_root = latest / "_deep_review"
+          deep_runs = sorted(
+              path for path in deep_root.iterdir()
+              if path.is_dir() and (path / "daily_opportunity_report.json").exists()
+          ) if deep_root.exists() else []
+          assert deep_runs, "no timestamped deep-review report generated"
+          deep_latest = deep_runs[-1]
+          for name in ("auto_evidence_audit.csv", "evidence_inventory.csv"):
+              assert (deep_latest / name).exists(), f"missing deep-review file: {name}"
           assert summary["official_universe_count"] > 5000
           assert summary["effective_scan_count"] > 1000
           assert summary["fatal_data_failure_count"] == 0
+          assert summary["recoverable_price_failure_count"] >= 0
+          assert 0.95 <= float(summary["price_data_coverage_ratio"]) <= 1.0
           assert summary["no_auto_trade"] is True
           assert summary["no_broker_integration"] is True
-          assert summary["exit_profile_refresh"]["candidate_count"] > 0
+          assert 0 <= summary["evidence_queue_count"] <= 80
+          assert 0 <= summary["deep_review_count"] <= summary["evidence_queue_count"]
+          assert summary["exit_profile_refresh"]["candidate_count"] == summary["evidence_queue_count"]
           assert summary["exit_profile_refresh"]["sample_spacing_sessions"] == 60
           assert summary["exit_profile_refresh"]["minimum_profile_sample_count"] == 12
           assert summary["exit_profile_refresh"]["minimum_recent_2y_sample_count"] == 3
           assert summary["exit_profile_priority_candidate_count"] == summary["exit_profile_refresh"]["candidate_distribution"].get("PASSED", 0)
-          assert summary["exit_profile_history_fetch"]["success_count"] > 0
-          assert summary["strict_gate_feasibility"]["audited_candidate_count"] > 0
-          assert summary["actionable_execution_count"] == summary["strict_review_ready_count"]
+          assert summary["exit_profile_history_fetch"]["requested_count"] == summary["evidence_queue_count"]
+          assert summary["exit_profile_history_fetch"]["success_count"] >= 0
+          assert summary["strict_gate_feasibility"]["audited_candidate_count"] == summary["deep_review_count"]
+          if summary["evidence_queue_count"] == 0:
+              assert summary["deep_review_count"] == 0
+              assert summary["strict_review_ready_count"] == 0
+              assert summary["buy_signal_count"] == 0
+          assert summary["actionable_execution_count"] == summary["buy_signal_count"]
+          assert summary["actionable_execution_count"] <= summary["strict_review_ready_count"]
+          assert summary["execution_suppressed_count"] == (
+              summary["strict_review_ready_count"] - summary["actionable_execution_count"]
+          )
+          assert summary["market_regime_status"] in {"GREEN", "YELLOW", "RED"}
+          assert 0 <= float(summary["market_regime_score"]) <= 100
+          assert float(summary["market_position_multiplier"]) in {0.0, 0.5, 1.0}
+          assert summary["external_risk_level"] in {"LOW", "MEDIUM", "HIGH", "UNKNOWN"}
+          assert summary["external_context_date"] >= summary["as_of_date"]
+          assert summary["external_market_available_count"] >= 0
+          assert summary["external_market_data_quality"] in {"OK", "PARTIAL"}
+          assert summary["market_signal_data_quality"] in {"OK", "PARTIAL"}
+          assert summary["industry_regime_data_quality"] in {"OK", "PARTIAL"}
+          assert summary["industry_regime_count"] >= 0
+          assert summary["event_scan_ok_count"] >= 0
+          assert summary["daily_candidate_top5_count"] == 5
           assert summary["buy_signal_count"] >= 0
           assert summary["sell_signal_count"] >= 0
+          assert summary["cancel_buy_review_count"] >= 0
+          if summary["market_regime_status"] == "RED":
+              assert summary["strict_review_ready_count"] == 0
+              assert summary["actionable_execution_count"] == 0
+              assert summary["buy_signal_count"] == 0
           assert summary["acceptance_enum"] in {
               "PASS_ALL_A_PRODUCTION_RESEARCH_READY", "PASS_STRICT_REVIEW_CANDIDATE_GENERATED"
           }
@@ -425,14 +481,104 @@ jobs:
               signals = list(csv.DictReader(handle))
           assert len({row["code"] for row in signals}) == len(signals)
           assert sum(row["signal_action"] == "BUY_IF_TRIGGERED" for row in signals) == summary["buy_signal_count"]
+          assert sum(row["signal_action"] == "HOLD_REVIEW" for row in signals) == summary["hold_signal_count"]
           assert sum(row["signal_action"] == "SELL_EXIT" for row in signals) == summary["sell_signal_count"]
+          assert sum(row["signal_action"] == "CANCEL_BUY_REVIEW" for row in signals) == summary["cancel_buy_review_count"]
+          assert sum(row["signal_action"] == "WATCH_ONLY" for row in signals) == summary["watch_signal_count"]
           for row in signals:
-              assert row["signal_action"] in {"BUY_IF_TRIGGERED", "HOLD_REVIEW", "SELL_EXIT", "WATCH_ONLY"}
+              assert row["signal_action"] in {"BUY_IF_TRIGGERED", "HOLD_REVIEW", "SELL_EXIT", "CANCEL_BUY_REVIEW", "WATCH_ONLY"}
               assert row["no_auto_trade"] == "True"
               if row["signal_action"] == "BUY_IF_TRIGGERED":
                   assert row["current_level"] == "STRICT_REVIEW_READY"
                   assert row["entry_low"] and row["entry_high"] and row["stop_price"]
-              if row["signal_action"] == "WATCH_ONLY":
+                  assert row["current_lifecycle_state"] == "ENTRY_PENDING"
+                  assert row["market_regime_status"] in {"GREEN", "YELLOW"}
+                  assert row["industry_regime_status"] not in {"UNKNOWN", "CRISIS"}
+                  assert int(row["industry_regime_sample_count"]) >= 5
+                  assert row["event_scan_status"] == "OK"
+                  assert row["event_risk_level"] != "HIGH"
+                  assert row["price_volume_state"] not in {"DISTRIBUTION", "CAPITULATION_RISK"}
+                  assert row["real_world_gate_passed"] == "True"
+              if row["signal_action"] == "SELL_EXIT":
+                  assert row["signal_reason"] == "previous_stop_or_invalidation_breached"
+                  assert row["previous_lifecycle_state"] in {"ENTRY_TRIGGER_OBSERVED", "POSITION_REVIEW"}
+                  assert row["position_confirmation_required"] == "True"
+                  latest_price = float(row["latest_price"])
+                  observation_price = float(row["threshold_observation_price"])
+                  stop_price = float(row["stop_price"]) if row.get("stop_price") else None
+                  invalidation_price = (
+                      float(row["logic_invalidation_price"])
+                      if row.get("logic_invalidation_price") else None
+                  )
+                  assert (
+                      (stop_price is not None and observation_price <= stop_price)
+                      or (invalidation_price is not None and latest_price <= invalidation_price)
+                  )
+              if row["signal_action"] in {"WATCH_ONLY", "SELL_EXIT", "CANCEL_BUY_REVIEW"}:
+                  assert float(row.get("risk_budget_initial_position_pct") or 0) == 0
+                  assert float(row.get("risk_budget_max_position_pct") or 0) == 0
+          with (latest / "buy_signals.csv").open(encoding="utf-8") as handle:
+              buy_signals = list(csv.DictReader(handle))
+          with (latest / "sell_signals.csv").open(encoding="utf-8") as handle:
+              sell_signals = list(csv.DictReader(handle))
+          assert all(row["signal_action"] == "BUY_IF_TRIGGERED" for row in buy_signals)
+          assert all(row["signal_action"] == "SELL_EXIT" for row in sell_signals)
+          assert len(buy_signals) == summary["buy_signal_count"]
+          assert len(sell_signals) == summary["sell_signal_count"]
+          with (latest / "actionable_execution_list.csv").open(encoding="utf-8") as handle:
+              execution_rows = list(csv.DictReader(handle))
+          buy_codes = {row["code"] for row in signals if row["signal_action"] == "BUY_IF_TRIGGERED"}
+          exit_codes = {
+              row["code"] for row in signals
+              if row["signal_action"] in {"SELL_EXIT", "CANCEL_BUY_REVIEW"}
+          }
+          execution_codes = {row["code"] for row in execution_rows}
+          assert len(execution_rows) == summary["actionable_execution_count"]
+          assert execution_codes == buy_codes
+          assert execution_codes.isdisjoint(exit_codes)
+          for row in execution_rows:
+              assert row["execution_action"] == "BUY_IF_TRIGGERED"
+              assert row["market_regime_status"] in {"GREEN", "YELLOW"}
+              assert row["industry_regime_status"] not in {"UNKNOWN", "CRISIS"}
+              assert int(row["industry_regime_sample_count"]) >= 5
+              assert row["event_scan_status"] == "OK"
+              assert row["event_risk_level"] != "HIGH"
+              assert row["real_world_gate_passed"] == "True"
+
+          market = json.loads((latest / "market_regime.json").read_text(encoding="utf-8"))
+          assert market["status"] == summary["market_regime_status"]
+          assert float(market["score"]) == float(summary["market_regime_score"])
+          with (latest / "industry_regimes.csv").open(encoding="utf-8") as handle:
+              industries = list(csv.DictReader(handle))
+          assert all(row["status"] in {"CRISIS", "WEAK", "NEUTRAL", "STRONG"} for row in industries)
+          assert all(0 <= float(row["score"]) <= 100 for row in industries)
+          assert len(industries) == summary["industry_regime_count"]
+          if not industries:
+              assert summary["industry_regime_data_quality"] == "PARTIAL"
+              assert summary["strict_review_ready_count"] == 0
+              assert summary["buy_signal_count"] == 0
+          with (latest / "real_world_signal_audit.csv").open(encoding="utf-8") as handle:
+              real_world_rows = list(csv.DictReader(handle))
+          assert len(real_world_rows) == summary["strict_gate_feasibility"]["audited_candidate_count"]
+          assert all(row["market_regime_status"] and row["industry_regime_status"] for row in real_world_rows)
+          assert sum(row["event_scan_status"] == "OK" for row in real_world_rows) == summary["event_scan_ok_count"]
+          if summary["event_scan_ok_count"] == 0:
+              assert summary["buy_signal_count"] == 0
+
+          with (latest / "daily_candidate_top5.csv").open(encoding="utf-8") as handle:
+              top5 = list(csv.DictReader(handle))
+          assert len(top5) == 5
+          assert len({row["code"] for row in top5}) == 5
+          assert [int(row["candidate_rank"]) for row in top5] == [1, 2, 3, 4, 5]
+          for row in top5:
+              assert row["candidate_action"] in {
+                  "BUY_IF_TRIGGERED", "HOLD_REVIEW", "SELL_EXIT", "CANCEL_BUY_REVIEW", "WATCH_ONLY"
+              }
+              if row["candidate_action"] == "BUY_IF_TRIGGERED":
+                  assert row["formal_buy_eligible"] == "True"
+                  assert row["user_visible_level"] == "STRICT_REVIEW_READY"
+              else:
+                  assert row["formal_buy_eligible"] == "False"
                   assert float(row.get("risk_budget_initial_position_pct") or 0) == 0
                   assert float(row.get("risk_budget_max_position_pct") or 0) == 0
           forbidden = ("必买", "必卖", "保证上涨", "确定买入", "自动下单")
@@ -464,7 +610,7 @@ jobs:
 
       - name: Save all-A public-data cache and observation state
         uses: actions/cache/save@v4
-        if: always()
+        if: success()
         with:
           path: |
             data/cache/all_a_full_scan
@@ -474,7 +620,7 @@ jobs:
             data/opportunity_snapshots/all_a_forward_observation_ledger.csv
             data/opportunity_snapshots/exit_profile.csv
             stock_pools/all_a_universe_*.csv
-          key: genge-all-a-state-${{ runner.os }}-${{ github.run_id }}
+          key: genge-all-a-state-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
 
       - name: Upload all-A production report
         uses: actions/upload-artifact@v4

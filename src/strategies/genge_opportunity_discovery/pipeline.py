@@ -159,6 +159,12 @@ EVIDENCE_INVENTORY_COLUMNS = [
     "code",
     "stock_name",
     "indicator",
+    "evidence_kind",
+    "event_type",
+    "event_severity",
+    "event_status",
+    "event_resolution_scope",
+    "risk_valid_until",
     "value",
     "extracted_value",
     "unit",
@@ -335,6 +341,16 @@ def _sanitize_user_evidence_for_strategy(df: Optional[pd.DataFrame]) -> Optional
     return local
 
 
+def _company_evidence_for_strategy(df: Optional[pd.DataFrame]) -> Optional[pd.DataFrame]:
+    """Keep risk-event filings out of positive company-logic qualification."""
+
+    local = _sanitize_user_evidence_for_strategy(df)
+    if local is None or local.empty or "evidence_kind" not in local.columns:
+        return local
+    kinds = local["evidence_kind"].fillna("").astype(str).str.lower()
+    return local[kinds != "material_event"].copy()
+
+
 def _evidence_date_value(row: Mapping[str, Any]) -> Optional[date]:
     for column in ("evidence_date", "date", "publish_date", "disclosure_date", "ann_date", "announcement_date", "report_date"):
         if column in row and row.get(column) not in (None, ""):
@@ -372,10 +388,19 @@ def _inventory_status(
         warning_flags.append("future_dated_evidence_excluded")
         return "PARSE_FAILED"
     freshness_days = (as_of - evidence_date).days
-    if freshness_days > 180:
+    is_material_event = str(raw.get("evidence_kind") or "").lower() == "material_event"
+    max_age_days = 730 if is_material_event else 180
+    if freshness_days > max_age_days:
         warning_flags.append("stale_evidence")
         return "STALE"
     source_kind = str(source_type or "").upper()
+    if is_material_event and source_kind in {
+        "OFFICIAL_REPORT", "COMPANY_ANNOUNCEMENT", "EXCHANGE_DISCLOSURE",
+    }:
+        if _is_auto_verified_row(raw):
+            return "VERIFIED"
+        warning_flags.append("material_event_needs_original_verification")
+        return "PARTIALLY_VERIFIED"
     has_number = any(char.isdigit() for char in str(value or ""))
     if source_kind == "NEWS_SUMMARY" or not has_number:
         warning_flags.append("lead_only_needs_manual_review")
@@ -433,6 +458,12 @@ def _build_evidence_inventory(
                     "code": _normalize_code(raw.get("code")) if raw.get("code") not in (None, "") else "",
                     "stock_name": raw.get("stock_name") or "",
                     "indicator": indicator,
+                    "evidence_kind": raw.get("evidence_kind") or "",
+                    "event_type": raw.get("event_type") or "",
+                    "event_severity": raw.get("event_severity") or "",
+                    "event_status": raw.get("event_status") or "",
+                    "event_resolution_scope": raw.get("event_resolution_scope") or "",
+                    "risk_valid_until": raw.get("risk_valid_until") or "",
                     "value": value,
                     "extracted_value": raw.get("extracted_value") or raw.get("value") or value,
                     "unit": raw.get("unit") or "",
@@ -787,7 +818,7 @@ def _build_quant_rows(
         if isinstance(record, Mapping)
     }
     safe_industry_evidence_df = _sanitize_user_evidence_for_strategy(industry_evidence_df)
-    safe_company_evidence_df = _sanitize_user_evidence_for_strategy(company_evidence_df)
+    safe_company_evidence_df = _company_evidence_for_strategy(company_evidence_df)
     resolver = IndustryAliasResolver(industry_alias_map, safe_company_evidence_df)
 
     for code in [_normalize_code(value) for value in requested_codes]:

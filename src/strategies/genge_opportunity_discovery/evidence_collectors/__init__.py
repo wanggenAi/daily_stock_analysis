@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .cache import EvidenceCache
-from .company_announcements import collect_company_announcements
+from .company_announcements import collect_company_announcements, collect_company_material_events
 from .public_data import collect_public_industry_data
 
 
@@ -29,6 +29,15 @@ def collect_auto_evidence(
         limit=max_companies,
         timeout=timeout,
     )
+    event_evidence, event_audit, event_summary = collect_company_material_events(
+        rows=targets,
+        as_of=as_of,
+        cache=cache,
+        limit=max_companies,
+        timeout=timeout,
+    )
+    company_evidence.extend(event_evidence)
+    company_audit.extend(event_audit)
     industries = [str(row.get("normalized_industry") or row.get("industry") or "") for row in targets]
     industry_evidence, industry_audit, industry_summary = collect_public_industry_data(
         industries=industries,
@@ -43,9 +52,21 @@ def collect_auto_evidence(
     partial = sum(1 for row in evidence_rows if str(row.get("evidence_status")).upper() == "PARTIALLY_VERIFIED")
     failed = sum(1 for row in audit_rows if str(row.get("status")) == "FAILED")
     missing = sum(1 for row in audit_rows if str(row.get("status")) == "MISSING")
-    task_count = int(company_summary.get("company_task_count") or 0) + int(industry_summary.get("industry_task_count") or 0)
-    actual_fetch_count = int(company_summary.get("company_actual_fetch_count") or 0) + int(industry_summary.get("industry_actual_fetch_count") or 0)
-    fetch_success_count = int(company_summary.get("company_fetch_success_count") or 0) + int(industry_summary.get("industry_fetch_success_count") or 0)
+    task_count = (
+        int(company_summary.get("company_task_count") or 0)
+        + int(event_summary.get("company_event_task_count") or 0)
+        + int(industry_summary.get("industry_task_count") or 0)
+    )
+    actual_fetch_count = (
+        int(company_summary.get("company_actual_fetch_count") or 0)
+        + int(event_summary.get("company_event_actual_fetch_count") or 0)
+        + int(industry_summary.get("industry_actual_fetch_count") or 0)
+    )
+    fetch_success_count = (
+        int(company_summary.get("company_fetch_success_count") or 0)
+        + int(event_summary.get("company_event_document_fetch_success_count") or 0)
+        + int(industry_summary.get("industry_fetch_success_count") or 0)
+    )
     summary = {
         "enabled": True,
         "executed": True,
@@ -61,6 +82,7 @@ def collect_auto_evidence(
         "audit_count": len(audit_rows),
         "cache_dir": str(cache.cache_dir),
         **company_summary,
+        **event_summary,
         **industry_summary,
     }
     return industry_evidence, company_evidence, audit_rows, summary

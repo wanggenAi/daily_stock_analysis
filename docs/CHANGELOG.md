@@ -9,7 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
-- [修复] 全 A 退出画像不再只依赖 76 只静态种子；每日 Top80 使用长历史前复权行情执行无未来数据泄漏、5 交易日去重的 balanced exit 滚动回放，并以当日结果覆盖候选旧画像，消除候选与静态合格样本无交集时严格买入永远不可达的问题。
+- [新功能] 全 A 生产扫描新增大盘、行业、个股量价和近 730 日官方重大事件风险层；巨潮/上交所公告支持多事件识别、活动/全部解除/部分解除/过期生命周期，扫描不完整时按未知风险阻断正式条件买入。
+- [新功能] 全 A 每日优先输出五只 `daily_candidate_top5` 研究候选（全池均为硬拒绝时允许少于五只）；Top5 保留买入、持仓复核、退出、取消或观察的真实动作，零仓位观察项与正式 `BUY_IF_TRIGGERED` 可执行清单严格分离。
+- [修复] 买卖信号新增入场生命周期：未观察到入场触发时不再误报 `SELL_EXIT`，卖出沿用原计划阈值并要求确认真实持仓；同一股票不会同时进入退出与可买清单。
+- [修复] 严格资格丢失但未触发既定止损或逻辑失效位时改为 `CANCEL_BUY_REVIEW`；当日可执行清单只包含当前 `BUY_IF_TRIGGERED`，并与卖出/取消动作互斥。
+- [改进] 严格候选仓位预算按大盘、行业、事件和量价状态动态缩减：黄灯乘 0.5，弱行业和中等事件风险各乘 0.75，弱需求量价再乘 0.8；红灯、行业危机或高事件风险禁止新增买入。
+- [修复] 信号生命周期冻结原始价格计划，同日重跑保持幂等；交易日运行断档不再臆造历史触发，而是安全转为 `CANCEL_BUY_REVIEW` 人工复核。
+- [修复] 单股行情失败改为可恢复并写入审计，整体有效覆盖率不低于 95% 时继续出报告；只有系统性缺失才使生产任务失败。
+- [修复] 重大事件扫描适配巨潮真实的每页 30 条分页并完整翻页；年度例行资金占用专项说明不再仅凭关键词误判为实际高风险事件。
+- [改进] GitHub 手动运行默认只执行沪深全 A 扫描，旧深市报告改为显式可选，避免重复长任务造成超时。
+- [测试] GitHub 每日生产验收新增现实风险门槛、市场/行业审计产物、五只候选、动作枚举和仓位缩减校验，并在 PR 与定时任务中运行对应回归测试。
+- [修复] 全 A 退出画像不再只依赖 76 只静态种子；每日 Top80 使用长历史前复权行情执行无未来数据泄漏、主要样本至少间隔 60 个交易日的 balanced exit 滚动回放，并以当日结果覆盖候选旧画像，消除候选与静态合格样本无交集时严格买入永远不可达的问题。
 - [修复] 自动行业证据新增国家统计局跨行业月报解析，支持从标题不含行业名的工业增加值、利润、零售和 PPI 正文表格提取具体行业数值；新增 C15/C27/C35/C38/F52 同粒度分类映射和通用官方证据 schema。
 - [新功能] 全 A 报告新增 `strict_gate_audit.csv` 与 `strict_gate_feasibility`，逐只、逐门槛显示失败原因；系统继续允许真实的无买入信号日，不会为了生成名单放宽门槛。
 - [修复] 全 A 官方股票池包含行情截止日之后才上市的新股时，按 `listing_after_as_of` 安全跳过，不再因尚无历史行情误记为致命数据失败并导致 GitHub 每日生产作业失败。
@@ -17,9 +27,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [改进] 自动行业证据采集使用 canonical 行业及配置别名检索，忽略 `UNRESOLVED` 占位行业；物流行业新增国家邮政局当期运行数据源，并限制为行业运行、行业发展或业务量统计类标题，避免会议新闻形成伪证据。
 - [修复] C35 专用设备不再误归为工程机械，改为保留同粒度 canonical“专用设备”；只有明确工程机械词汇才映射到工程机械。
 - [测试] 补充上海股票巨潮年报路由、行业别名、国家邮政局 JSON 列表和非统计标题拒绝回归测试，并以贵州茅台、美的集团及国家邮政局真实公开页面完成只读验证。
-- [新功能] 沪深全 A 生产扫描新增可审计的每日 `BUY_IF_TRIGGERED`、`HOLD_REVIEW`、`SELL_EXIT`、`WATCH_ONLY` 信号及独立买入/退出 CSV，只有严格候选允许条件买入，退出信号只跟踪策略资格与失效位且不读取持仓。
+- [新功能] 沪深全 A 生产扫描新增可审计的每日 `BUY_IF_TRIGGERED`、`HOLD_REVIEW`、`SELL_EXIT`、`CANCEL_BUY_REVIEW`、`WATCH_ONLY` 信号及独立买入/退出 CSV，只有严格候选允许条件买入，退出信号只跟踪止损/逻辑失效位且不读取持仓。
 - [修复] GenGe 定时任务恢复并保存 `exit_profile.csv`，缺失时使用仓库内审计种子，避免全 A 扫描的退出画像覆盖率长期为 0；依赖安装增加二进制优先、重试和超时保护。
-- [改进] 退出画像补充市场数据截止日、规则版本、数据哈希、置信度和最近两年样本数；严格候选要求画像新鲜、版本一致、数据可追溯且最近两年至少 10 个样本。
+- [改进] 退出画像补充市场数据截止日、规则版本、数据哈希、置信度和最近两年样本数；严格候选要求画像新鲜、版本一致、数据可追溯且最近两年至少 3 个独立样本。
 - [改进] GenGe Actions 页面直接发布每日信号摘要，完整报告继续作为 artifact 上传；允许无信号日，不为生成股票名单放宽风险门槛。
 - [测试] 补充每日买入/观察/退出动作、止损触发、退出画像元数据和 GitHub workflow 状态闭环回归测试。
 - [改进] 深市全量扫描的 `NEAR_READY` 改为基于低位、趋势、估值、财务、公司证据和最低真实收益风险比的明确风险条件，不再因行业证据或退出画像冷启动缺失而把所有接近条件的股票隐藏；`BUY_READY` 严格门槛和非执行层零仓位保持不变。
@@ -1912,65 +1922,65 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ---
 
-[Unreleased]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.22.0...HEAD
-[3.22.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.21.1...v3.22.0
-[3.21.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.21.0...v3.21.1
-[3.21.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.20.0...v3.21.0
-[3.20.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.19.0...v3.20.0
-[3.19.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.18.0...v3.19.0
-[3.18.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.17.1...v3.18.0
-[3.17.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.17.0...v3.17.1
-[3.17.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.16.0...v3.17.0
-[3.16.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.15.0...v3.16.0
-[3.15.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.14.2...v3.15.0
-[3.14.2]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.14.1...v3.14.2
-[3.14.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.14.0...v3.14.1
-[3.14.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.13.0...v3.14.0
-[3.13.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.12.0...v3.13.0
-[3.12.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.11.0...v3.12.0
-[3.11.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.10.1...v3.11.0
-[3.10.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.10.0...v3.10.1
-[3.10.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.9.0...v3.10.0
-[3.9.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.8.0...v3.9.0
-[3.8.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.7.0...v3.8.0
-[3.7.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.6.0...v3.7.0
-[3.6.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.5.0...v3.6.0
-[3.5.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.10...v3.5.0
-[3.4.10]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.9...v3.4.10
-[3.4.9]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.8...v3.4.9
-[3.4.8]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.7...v3.4.8
-[3.4.7]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.4.0...v3.4.7
-[3.4.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.3.22...v3.4.0
-[3.3.22]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.3.12...v3.3.22
-[3.3.12]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.2.11...v3.3.12
-[3.2.11]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v3.2.10...v3.2.11
-[2.3.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.5...v2.3.0
-[2.2.5]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.4...v2.2.5
-[2.2.4]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.3...v2.2.4
-[2.2.3]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.2...v2.2.3
-[2.2.2]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.1...v2.2.2
-[2.2.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.2.0...v2.2.1
-[2.2.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.14...v2.2.0
-[2.1.14]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.13...v2.1.14
-[2.1.13]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.12...v2.1.13
-[2.1.12]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.11...v2.1.12
-[2.1.11]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.10...v2.1.11
-[2.1.10]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.9...v2.1.10
-[2.1.9]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.8...v2.1.9
-[2.1.8]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.7...v2.1.8
-[2.1.7]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.6...v2.1.7
-[2.1.6]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.5...v2.1.6
-[2.1.5]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.4...v2.1.5
-[2.1.4]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.3...v2.1.4
-[2.1.3]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.2...v2.1.3
-[2.1.2]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.1...v2.1.2
-[2.1.1]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.1.0...v2.1.1
-[2.1.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v2.0.0...v2.1.0
-[2.0.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.6.0...v2.0.0
-[1.6.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.5.0...v1.6.0
-[1.5.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.4.0...v1.5.0
-[1.4.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.3.0...v1.4.0
-[1.3.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.2.0...v1.3.0
-[1.2.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.1.0...v1.2.0
-[1.1.0]: https://github.com/ZhuLinsen/daily_stock_analysis/compare/v1.0.0...v1.1.0
-[1.0.0]: https://github.com/ZhuLinsen/daily_stock_analysis/releases/tag/v1.0.0
+[Unreleased]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.22.0...HEAD
+[3.22.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.21.1...v3.22.0
+[3.21.1]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.21.0...v3.21.1
+[3.21.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.20.0...v3.21.0
+[3.20.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.19.0...v3.20.0
+[3.19.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.18.0...v3.19.0
+[3.18.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.17.1...v3.18.0
+[3.17.1]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.17.0...v3.17.1
+[3.17.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.16.0...v3.17.0
+[3.16.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.15.0...v3.16.0
+[3.15.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.14.2...v3.15.0
+[3.14.2]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.14.1...v3.14.2
+[3.14.1]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.14.0...v3.14.1
+[3.14.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.13.0...v3.14.0
+[3.13.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.12.0...v3.13.0
+[3.12.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.11.0...v3.12.0
+[3.11.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.10.1...v3.11.0
+[3.10.1]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.10.0...v3.10.1
+[3.10.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.9.0...v3.10.0
+[3.9.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.8.0...v3.9.0
+[3.8.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.7.0...v3.8.0
+[3.7.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.6.0...v3.7.0
+[3.6.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.5.0...v3.6.0
+[3.5.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.4.10...v3.5.0
+[3.4.10]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.4.9...v3.4.10
+[3.4.9]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.4.8...v3.4.9
+[3.4.8]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.4.7...v3.4.8
+[3.4.7]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.4.0...v3.4.7
+[3.4.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.3.22...v3.4.0
+[3.3.22]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.3.12...v3.3.22
+[3.3.12]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.2.11...v3.3.12
+[3.2.11]: https://github.com/wanggenAi/daily_stock_analysis/compare/v3.2.10...v3.2.11
+[2.3.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.2.5...v2.3.0
+[2.2.5]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.2.4...v2.2.5
+[2.2.4]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.2.3...v2.2.4
+[2.2.3]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.2.2...v2.2.3
+[2.2.2]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.2.1...v2.2.2
+[2.2.1]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.2.0...v2.2.1
+[2.2.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.14...v2.2.0
+[2.1.14]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.13...v2.1.14
+[2.1.13]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.12...v2.1.13
+[2.1.12]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.11...v2.1.12
+[2.1.11]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.10...v2.1.11
+[2.1.10]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.9...v2.1.10
+[2.1.9]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.8...v2.1.9
+[2.1.8]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.7...v2.1.8
+[2.1.7]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.6...v2.1.7
+[2.1.6]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.5...v2.1.6
+[2.1.5]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.4...v2.1.5
+[2.1.4]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.3...v2.1.4
+[2.1.3]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.2...v2.1.3
+[2.1.2]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.1...v2.1.2
+[2.1.1]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.1.0...v2.1.1
+[2.1.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v2.0.0...v2.1.0
+[2.0.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.6.0...v2.0.0
+[1.6.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.5.0...v1.6.0
+[1.5.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.4.0...v1.5.0
+[1.4.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.3.0...v1.4.0
+[1.3.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.2.0...v1.3.0
+[1.2.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/wanggenAi/daily_stock_analysis/releases/tag/v1.0.0
