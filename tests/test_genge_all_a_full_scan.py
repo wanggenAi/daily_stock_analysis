@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import date
 from pathlib import Path
 from types import SimpleNamespace
@@ -13,12 +14,16 @@ from src.strategies.genge_opportunity_discovery.all_a_full_scan import (
     RULE_VERSION,
     _apply_position_budget,
     _board_from_exchange_row,
+    _build_signal_state_rows,
+    _changes,
     _current_passed_profile_codes,
     _listing_row,
     _fundamentals,
+    _research_queue,
     apply_universe_filters,
     audit_price_mapping,
     build_actionable_execution_list,
+    build_daily_candidate_top5,
     build_daily_signals,
     build_price_plan,
     classify_candidate,
@@ -145,6 +150,20 @@ def test_fundamental_fetch_prioritizes_exit_profile_passed_codes(
     assert not errors
 
 
+def test_research_queue_uses_non_rejected_low_priority_fallback_without_reordering_primary() -> None:
+    rows = [
+        {"code": "000001", "quant_rank": 1, "quant_status": "SECONDARY_RESEARCH", "hard_blockers": ""},
+        {"code": "000002", "quant_rank": 2, "quant_status": "LOW_PRIORITY", "hard_blockers": ""},
+        {"code": "000003", "quant_rank": 3, "quant_status": "HARD_REJECT", "hard_blockers": "limit"},
+        {"code": "000004", "quant_rank": 4, "quant_status": "LOW_PRIORITY", "hard_blockers": ""},
+    ]
+
+    queue = _research_queue(rows, limit=3)
+
+    assert [row["code"] for row in queue] == ["000001", "000002", "000004"]
+    assert all(row["quant_status"] != "HARD_REJECT" for row in queue)
+
+
 def test_exit_profile_priority_excludes_stale_candidates_outside_current_queue() -> None:
     candidates = [{"code": "000001"}, {"code": "000002"}, {"code": "000001"}]
     profiles = {
@@ -214,6 +233,10 @@ def test_actionable_execution_list_keeps_every_current_strict_trigger() -> None:
         "industry_evidence_status": "VERIFIED", "company_evidence_status": "VERIFIED",
         "hard_logic_level": "MEDIUM", "exit_profile_status": "PASSED",
         "exit_profile_entry_mode": "pullback", "evidence_urls": "https://example.com",
+        "market_regime_status": "GREEN", "industry_regime_status": "NEUTRAL",
+        "industry_regime_sample_count": 20, "event_scan_status": "OK",
+        "event_risk_level": "LOW", "price_volume_state": "NEUTRAL",
+        "real_world_gate_passed": True,
     }]
 
     result = build_actionable_execution_list(strict_rows=rows, next_trade_date=date(2026, 7, 23))
@@ -221,6 +244,36 @@ def test_actionable_execution_list_keeps_every_current_strict_trigger() -> None:
     assert result[0]["execution_action"] == "BUY_IF_TRIGGERED"
     assert result[0]["max_buy_price"] == 10.0
     assert result[0]["risk_budget_max_position_pct"] == 5.0
+
+
+@pytest.mark.parametrize("risk_override", [
+    {"market_regime_status": "RED"},
+    {"market_regime_status": "UNKNOWN"},
+    {"industry_regime_status": "CRISIS"},
+    {"industry_regime_status": "UNKNOWN"},
+    {"industry_regime_sample_count": 4},
+    {"event_scan_status": "PARTIAL"},
+    {"event_risk_level": "HIGH"},
+    {"price_volume_state": "DISTRIBUTION"},
+    {"real_world_gate_passed": False},
+])
+def test_actionable_execution_list_defensively_rejects_real_world_risk(
+    risk_override: dict,
+) -> None:
+    row = {
+        "code": "000001", "stock_name": "测试股份", "preferred_plan": "pullback",
+        "pullback_entry_low": 9.8, "pullback_entry_high": 10.0,
+        "pullback_stop_price": 9.4, "pullback_logic_invalidation_price": 9.2,
+        "pullback_target_1": 11.2, "pullback_target_2": 12.0,
+        "market_regime_status": "GREEN", "industry_regime_status": "NEUTRAL",
+        "industry_regime_sample_count": 20, "event_scan_status": "OK",
+        "event_risk_level": "LOW", "price_volume_state": "NEUTRAL",
+        "real_world_gate_passed": True,
+    }
+    row.update(risk_override)
+    assert build_actionable_execution_list(
+        strict_rows=[row], next_trade_date=date(2026, 7, 23),
+    ) == []
 
 
 def _row(board: str = "SZSE_MAIN") -> dict:
@@ -302,6 +355,43 @@ def test_same_stale_trade_date_is_suspension_not_mapping_failure() -> None:
     assert counts["fatal_data_failure_count"] == 0
 
 
+def test_single_price_fetch_failure_is_recoverable_and_audited() -> None:
+    as_of = date(2026, 7, 20)
+    rules = load_board_rules("config/board_risk_rules.yaml")
+
+    universe, audit_rows, counts = apply_universe_filters(
+        [_row()], {}, {}, {}, {"000001:raw": "provider unavailable"},
+        as_of=as_of, board_rules=rules,
+    )
+
+    assert universe[0]["exclusion_reason"] == "price_fetch_failed"
+    assert audit_rows[0]["reason"] == "price_fetch_failed"
+    assert counts["recoverable_price_failure_count"] == 1
+    assert counts["fatal_data_failure_count"] == 0
+    assert counts["price_data_coverage_ratio"] == 0.0
+
+
+def test_systemic_price_failures_are_fatal_only_after_threshold() -> None:
+    as_of = date(2026, 7, 20)
+    rules = load_board_rules("config/board_risk_rules.yaml")
+    rows = []
+    errors = {}
+    for index in range(51):
+        code = f"{index + 1:06d}"
+        row = _row()
+        row["code"] = code
+        rows.append(row)
+        errors[f"{code}:raw"] = "provider unavailable"
+
+    _, _, counts = apply_universe_filters(
+        rows, {}, {}, {}, errors, as_of=as_of, board_rules=rules,
+    )
+
+    assert counts["recoverable_price_failure_count"] == 51
+    assert counts["fatal_data_failure_count"] == 51
+    assert counts["price_data_coverage_ratio"] == 0.0
+
+
 def test_quant_indicators_use_qfq_not_raw_corporate_action_history() -> None:
     qfq = _history(adjusted=True)
     raw = _history(corporate_action=True)
@@ -316,6 +406,8 @@ def test_quant_indicators_use_qfq_not_raw_corporate_action_history() -> None:
     assert result[0]["raw_latest_close"] == pytest.approx(float(raw.iloc[-1].close), abs=.01)
     expected_percentile = float((qfq.close <= qfq.iloc[-1].close).mean())
     assert result[0]["price_percentile_5y"] == pytest.approx(expected_percentile, abs=.0001)
+    assert result[0]["return_1d_pct"] == pytest.approx((qfq.iloc[-1].close / qfq.iloc[-2].close - 1) * 100, abs=.0001)
+    assert result[0]["price_volume_state"] in {"NEUTRAL", "WEAK_DEMAND", "ACCUMULATION", "DISTRIBUTION", "CAPITULATION_RISK"}
 
 
 def test_price_plan_uses_raw_prices_and_enforces_geometry() -> None:
@@ -341,6 +433,7 @@ def test_resistance_requires_two_touches_and_minimum_distance() -> None:
 
 def _candidate(**overrides) -> dict:
     row = {
+        "quant_status": "PRIORITY_RESEARCH",
         "hard_blockers": "", "price_percentile_5y": .25, "trend_confirmation_level": "MEDIUM",
         "adjusted_latest_close": 11.8, "ma60": 11.5, "ma20_slope_pct": .2, "ma60_slope_pct": .1,
         "financial_safety_score": 78, "valuation_score": 70,
@@ -350,6 +443,13 @@ def _candidate(**overrides) -> dict:
         "strict_official_evidence_count": 1,
         "strict_official_evidence_domains": "static.cninfo.com.cn",
         "strict_official_evidence_passed": True,
+        "market_regime_status": "GREEN", "market_regime_score": 70,
+        "market_position_multiplier": 1.0, "external_risk_level": "LOW",
+        "industry_regime_status": "NEUTRAL", "industry_regime_score": 55,
+        "industry_regime_sample_count": 20,
+        "price_volume_state": "NEUTRAL", "price_volume_score": 55,
+        "event_risk_level": "LOW", "event_scan_status": "OK",
+        "real_world_gate_passed": True, "real_world_risk_flags": "",
     }
     row.update(overrides)
     return row
@@ -379,9 +479,36 @@ def test_strict_review_ready_requires_every_hard_gate() -> None:
     level, missing = classify_candidate(_candidate(), _plan(), _profile(), ["https://example.com/report.pdf"], board_rule=rule)
     assert level == "STRICT_REVIEW_READY"
     assert not missing
-    for override in ({"price_percentile_5y": .36}, {"trend_confirmation_level": "WEAK"}, {"financial_safety_score": 59}, {"hard_logic_level": "WEAK"}):
+    for override in (
+        {"price_percentile_5y": .36}, {"trend_confirmation_level": "WEAK"},
+        {"financial_safety_score": 59}, {"hard_logic_level": "WEAK"},
+        {"quant_status": "LOW_PRIORITY"},
+    ):
         level, _ = classify_candidate(_candidate(**override), _plan(), _profile(), ["https://example.com/report.pdf"], board_rule=rule)
         assert level != "STRICT_REVIEW_READY"
+
+
+@pytest.mark.parametrize(("override", "failed_gate"), [
+    ({"market_regime_status": "RED"}, "market_regime_not_red"),
+    ({"market_regime_status": "UNKNOWN"}, "market_regime_not_red"),
+    ({"industry_regime_status": "CRISIS"}, "industry_regime_not_crisis"),
+    ({"industry_regime_status": "UNKNOWN"}, "industry_regime_available"),
+    ({"industry_regime_sample_count": 4}, "industry_regime_available"),
+    ({"event_risk_level": "HIGH"}, "event_risk_not_high"),
+    ({"event_scan_status": "UNKNOWN"}, "event_risk_known"),
+    ({"price_volume_state": "DISTRIBUTION"}, "price_volume_not_distribution"),
+    ({"price_volume_state": "CAPITULATION_RISK"}, "price_volume_not_distribution"),
+])
+def test_real_world_risk_cannot_pass_strict_gate(override: dict, failed_gate: str) -> None:
+    rule = load_board_rules("config/board_risk_rules.yaml")["SZSE_MAIN"]
+    row = _candidate(**override)
+    checks = strict_candidate_checks(row, _plan(), _profile(), board_rule=rule)
+    level, missing = classify_candidate(
+        row, _plan(), _profile(), ["https://example.com/report.pdf"], board_rule=rule,
+    )
+    assert checks[failed_gate] is False
+    assert level != "STRICT_REVIEW_READY"
+    assert failed_gate in missing
 
 
 def test_strict_exit_metadata_thresholds_match_non_overlapping_samples() -> None:
@@ -497,7 +624,118 @@ def test_non_strict_actual_output_rows_have_zero_position(tmp_path: Path) -> Non
     assert (actual["risk_budget_max_position_pct"] == 0).all()
 
 
-def test_daily_signals_emit_only_strict_buy_and_prior_strict_exit() -> None:
+def test_market_and_industry_regimes_reduce_strict_position_budget() -> None:
+    plan = {
+        **_plan(), "preferred_plan": "pullback",
+        "pullback_entry_high": 11.0, "pullback_stop_price": 10.0,
+        "breakout_max_chase_price": 11.2,
+    }
+    green: dict = {"market_position_multiplier": 1.0, "industry_regime_status": "STRONG"}
+    yellow: dict = {"market_position_multiplier": 0.5, "industry_regime_status": "STRONG"}
+    yellow_weak: dict = {"market_position_multiplier": 0.5, "industry_regime_status": "WEAK"}
+    medium_event_weak_demand: dict = {
+        "market_position_multiplier": 1.0,
+        "industry_regime_status": "STRONG",
+        "event_risk_level": "MEDIUM",
+        "price_volume_state": "WEAK_DEMAND",
+    }
+    for row in (green, yellow, yellow_weak, medium_event_weak_demand):
+        _apply_position_budget(row, plan, "STRICT_REVIEW_READY")
+    assert yellow["risk_budget_initial_position_pct"] == pytest.approx(green["risk_budget_initial_position_pct"] * 0.5, abs=.01)
+    assert yellow_weak["risk_budget_initial_position_pct"] == pytest.approx(yellow["risk_budget_initial_position_pct"] * 0.75, abs=.01)
+    assert medium_event_weak_demand["risk_budget_initial_position_pct"] == pytest.approx(
+        green["risk_budget_initial_position_pct"] * 0.75 * 0.8, abs=.01,
+    )
+
+
+def test_daily_candidate_top5_is_unique_ranked_and_keeps_buy_gate_semantics() -> None:
+    strict = {
+        "code": "000001", "stock_name": "严格", "user_visible_level": "STRICT_REVIEW_READY",
+        "actionability_rank": 1, "risk_budget_initial_position_pct": 2.0,
+        "risk_budget_max_position_pct": 5.0,
+    }
+    watch = [
+        {
+            "code": f"00000{index}", "stock_name": f"观察{index}",
+            "user_visible_level": "CONDITION_WATCH", "actionability_rank": index,
+            "risk_budget_initial_position_pct": 9.0, "risk_budget_max_position_pct": 9.0,
+        }
+        for index in range(2, 6)
+    ]
+    signals = [{
+        "code": strict["code"], "signal_action": "BUY_IF_TRIGGERED",
+        "signal_reason": "all_strict_gates_passed",
+    }, *[
+        {"code": row["code"], "signal_action": "WATCH_ONLY", "signal_reason": "missing"}
+        for row in watch
+    ]]
+    result = build_daily_candidate_top5(
+        deep_rows=[strict, *watch], daily_signals=signals, limit=5,
+    )
+    assert [row["candidate_rank"] for row in result] == [1, 2, 3, 4, 5]
+    assert len({row["code"] for row in result}) == 5
+    assert result[0]["candidate_action"] == "BUY_IF_TRIGGERED"
+    assert result[0]["formal_buy_eligible"] is True
+    assert all(row["candidate_action"] == "WATCH_ONLY" for row in result[1:])
+    assert all(row["risk_budget_max_position_pct"] == 0.0 for row in result[1:])
+
+
+def test_daily_candidate_top5_safely_fills_from_quant_rows() -> None:
+    deep = [{
+        "code": "000001", "stock_name": "深度候选", "actionability_rank": 1,
+        "user_visible_level": "CONDITION_WATCH",
+    }]
+    fallback = [
+        {"code": f"00000{index}", "stock_name": f"量化{index}", "quant_rank": index}
+        for index in range(1, 7)
+    ]
+    result = build_daily_candidate_top5(
+        deep_rows=deep, daily_signals=[], fallback_rows=fallback, limit=5,
+    )
+    assert len(result) == 5
+    assert len({row["code"] for row in result}) == 5
+    assert result[-1]["user_visible_level"] == "RESEARCH_PENDING"
+    assert all(row["formal_buy_eligible"] is False for row in result)
+
+
+def test_daily_candidate_top5_never_fills_with_hard_rejects() -> None:
+    result = build_daily_candidate_top5(
+        deep_rows=[], daily_signals=[],
+        fallback_rows=[{
+            "code": f"00000{index}", "quant_rank": index,
+            "quant_status": "HARD_REJECT", "hard_blockers": "price_limit_risk",
+        } for index in range(1, 7)],
+        limit=5,
+    )
+
+    assert result == []
+
+
+def test_daily_candidate_top5_prioritizes_formal_buy_even_when_ranked_sixth() -> None:
+    deep_rows = [
+        {"code": f"00000{index}", "actionability_rank": index, "user_visible_level": "CONDITION_WATCH"}
+        for index in range(1, 6)
+    ] + [{
+        "code": "000006", "actionability_rank": 6,
+        "user_visible_level": "STRICT_REVIEW_READY",
+        "risk_budget_initial_position_pct": 2.0,
+        "risk_budget_max_position_pct": 5.0,
+    }]
+    signals = [
+        {"code": f"00000{index}", "signal_action": "WATCH_ONLY"}
+        for index in range(1, 6)
+    ] + [{"code": "000006", "signal_action": "BUY_IF_TRIGGERED"}]
+
+    result = build_daily_candidate_top5(
+        deep_rows=deep_rows, daily_signals=signals, limit=5,
+    )
+
+    assert result[0]["code"] == "000006"
+    assert result[0]["formal_buy_eligible"] is True
+    assert len(result) == 5
+
+
+def test_daily_signals_emit_strict_buy_and_cancel_when_previous_row_disappears() -> None:
     current_strict = {
         **_candidate(), **_plan(), "code": "000001", "stock_name": "严格候选",
         "user_visible_level": "STRICT_REVIEW_READY", "preferred_plan": "pullback",
@@ -525,11 +763,34 @@ def test_daily_signals_emit_only_strict_buy_and_prior_strict_exit() -> None:
     by_code = {row["code"]: row for row in signals}
     assert by_code["000001"]["signal_action"] == "BUY_IF_TRIGGERED"
     assert by_code["000002"]["signal_action"] == "WATCH_ONLY"
-    assert by_code["000003"]["signal_action"] == "SELL_EXIT"
+    assert by_code["000003"]["signal_action"] == "CANCEL_BUY_REVIEW"
     assert by_code["000003"]["risk_budget_initial_position_pct"] == 0.0
     assert by_code["000003"]["risk_budget_max_position_pct"] == 0.0
     assert by_code["000003"]["signal_data_status"] == "CURRENT_ROW_MISSING"
     assert by_code["000002"]["risk_budget_initial_position_pct"] == 0.0
+
+
+def test_daily_signal_cancels_buy_review_when_strict_qualification_is_lost() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_stop_price": 10.0,
+            "pullback_logic_invalidation_price": 9.8,
+        }
+    }
+    current = {
+        **previous["000001"], "user_visible_level": "CONDITION_WATCH",
+        "raw_latest_close": 10.5, "latest_trade_date": "2026-07-17",
+        "missing_conditions": "market_regime_not_red",
+        "risk_budget_initial_position_pct": 0.0, "risk_budget_max_position_pct": 0.0,
+    }
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    assert signal["signal_action"] == "CANCEL_BUY_REVIEW"
+    assert signal["signal_reason"] == "strict_signal_lost:market_regime_not_red"
+    assert signal["risk_budget_max_position_pct"] == 0.0
 
 
 def test_daily_signal_exits_when_previous_stop_is_breached() -> None:
@@ -538,6 +799,7 @@ def test_daily_signal_exits_when_previous_stop_is_breached() -> None:
             "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
             "preferred_plan": "pullback", "pullback_stop_price": 10.0,
             "pullback_logic_invalidation_price": 9.8,
+            "signal_lifecycle_state": "ENTRY_TRIGGER_OBSERVED",
         }
     }
     current = {
@@ -553,6 +815,235 @@ def test_daily_signal_exits_when_previous_stop_is_breached() -> None:
     assert signal["risk_budget_initial_position_pct"] == 0.0
     assert signal["risk_budget_max_position_pct"] == 0.0
     assert signal["signal_reason"] == "previous_stop_or_invalidation_breached"
+    assert signal["stop_price"] == 10.0
+    assert signal["position_confirmation_required"] is True
+
+
+def test_daily_signal_detects_intraday_stop_even_if_close_recovers() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_stop_price": 10.0,
+            "pullback_logic_invalidation_price": 9.8,
+            "signal_lifecycle_state": "ENTRY_TRIGGER_OBSERVED",
+        }
+    }
+    current = {
+        **previous["000001"], "raw_latest_close": 10.2, "raw_latest_low": 9.9,
+        "latest_trade_date": "2026-07-17",
+        "risk_budget_initial_position_pct": 2.0, "risk_budget_max_position_pct": 5.0,
+    }
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    assert signal["signal_action"] == "SELL_EXIT"
+    assert signal["latest_price"] == 10.2
+    assert signal["threshold_observation_price"] == 9.9
+
+
+def test_pending_entry_breach_cancels_instead_of_emitting_sell() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_stop_price": 10.0,
+            "pullback_logic_invalidation_price": 9.8,
+            "signal_lifecycle_state": "ENTRY_PENDING",
+        }
+    }
+    current = {
+        **previous["000001"], "raw_latest_close": 9.7, "latest_trade_date": "2026-07-17",
+        "risk_budget_initial_position_pct": 2.0, "risk_budget_max_position_pct": 5.0,
+    }
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    assert signal["signal_action"] == "CANCEL_BUY_REVIEW"
+    assert signal["signal_reason"] == "entry_invalidated_before_position_confirmation"
+    assert signal["current_lifecycle_state"] == "ENTRY_INVALIDATED"
+
+
+def test_observed_entry_trigger_moves_pending_signal_to_manual_hold_review() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_entry_low": 10.0,
+            "pullback_entry_high": 10.4, "pullback_stop_price": 9.5,
+            "pullback_logic_invalidation_price": 9.3,
+            "signal_lifecycle_state": "ENTRY_PENDING",
+        }
+    }
+    current = {
+        **previous["000001"], "raw_latest_close": 10.2, "raw_latest_low": 10.1,
+        "raw_latest_high": 10.5, "latest_trade_date": "2026-07-17",
+        "risk_budget_initial_position_pct": 2.0, "risk_budget_max_position_pct": 5.0,
+    }
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    assert signal["signal_action"] == "HOLD_REVIEW"
+    assert signal["trigger_observed_today"] is True
+    assert signal["current_lifecycle_state"] == "ENTRY_TRIGGER_OBSERVED"
+    assert signal["position_confirmation_required"] is True
+
+
+def test_missing_watchlist_row_uses_current_market_price_for_active_exit() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_stop_price": 10.0,
+            "pullback_logic_invalidation_price": 9.8,
+            "signal_lifecycle_state": "ENTRY_TRIGGER_OBSERVED",
+        }
+    }
+    signal = build_daily_signals(
+        current_rows=[], previous=previous,
+        current_market_rows=[{
+            "code": "000001", "raw_latest_close": 9.7,
+            "latest_trade_date": "2026-07-17",
+        }],
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    assert signal["signal_action"] == "SELL_EXIT"
+    assert signal["signal_data_status"] == "CURRENT_MARKET_DATA"
+    assert signal["latest_price"] == 9.7
+
+
+def test_triggered_plan_is_frozen_when_current_recalculation_moves_stop() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_entry_low": 10.0,
+            "pullback_entry_high": 10.4, "pullback_stop_price": 10.0,
+            "pullback_logic_invalidation_price": 9.8, "pullback_target_1": 11.5,
+            "signal_lifecycle_state": "ENTRY_TRIGGER_OBSERVED",
+            "latest_trade_date": "2026-07-16",
+            "signal_observed_through_date": "2026-07-16",
+        }
+    }
+    current = {
+        **previous["000001"], "latest_trade_date": "2026-07-17",
+        "raw_latest_close": 10.5, "raw_latest_low": 10.2, "raw_latest_high": 10.7,
+        "pullback_entry_low": 8.8, "pullback_entry_high": 9.2,
+        "pullback_stop_price": 8.0, "pullback_logic_invalidation_price": 7.8,
+        "pullback_target_1": 10.8, "risk_budget_initial_position_pct": 2.0,
+        "risk_budget_max_position_pct": 5.0,
+    }
+
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    state = _build_signal_state_rows(
+        current_rows=[current], previous=previous, daily_signals=[signal],
+        current_market_rows=[current], as_of=date(2026, 7, 17),
+    )[0]
+
+    assert signal["signal_action"] == "HOLD_REVIEW"
+    assert signal["stop_price"] == 10.0
+    assert state["pullback_stop_price"] == 10.0
+    assert state["signal_plan_origin_trade_date"] == "2026-07-16"
+
+
+def test_monitored_orphan_is_persisted_and_can_exit_on_later_run(tmp_path: Path) -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_stop_price": 10.0,
+            "pullback_logic_invalidation_price": 9.8,
+            "signal_lifecycle_state": "POSITION_REVIEW",
+            "latest_trade_date": "2026-07-16",
+            "signal_observed_through_date": "2026-07-16",
+        }
+    }
+    friday_market = [{
+        "code": "000001", "latest_trade_date": "2026-07-17",
+        "raw_latest_close": 10.5, "raw_latest_low": 10.2,
+    }]
+    friday_signal = build_daily_signals(
+        current_rows=[], previous=previous, current_market_rows=friday_market,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+    state_rows = _build_signal_state_rows(
+        current_rows=[], previous=previous, daily_signals=[friday_signal],
+        current_market_rows=friday_market, as_of=date(2026, 7, 17),
+    )
+    state_file = tmp_path / "last_all_a_state.json"
+    _changes([], state_file, state_rows=state_rows)
+    persisted = json.loads(state_file.read_text(encoding="utf-8"))["by_code"]
+
+    assert persisted["000001"]["signal_lifecycle_state"] == "POSITION_REVIEW"
+    monday_signal = build_daily_signals(
+        current_rows=[], previous=persisted,
+        current_market_rows=[{
+            "code": "000001", "latest_trade_date": "2026-07-20",
+            "raw_latest_close": 9.9, "raw_latest_low": 9.7,
+        }],
+        as_of=date(2026, 7, 20), next_trade_date=date(2026, 7, 21),
+    )[0]
+    assert monday_signal["signal_action"] == "SELL_EXIT"
+    assert monday_signal["stop_price"] == 10.0
+
+
+@pytest.mark.parametrize("lifecycle", ["ENTRY_PENDING", "ENTRY_TRIGGER_OBSERVED"])
+def test_run_gap_fails_safe_without_buy_or_sell(lifecycle: str) -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_entry_low": 10.0,
+            "pullback_entry_high": 10.4, "pullback_stop_price": 9.5,
+            "pullback_logic_invalidation_price": 9.3,
+            "signal_lifecycle_state": lifecycle,
+            "latest_trade_date": "2026-07-23",
+            "signal_observed_through_date": "2026-07-23",
+        }
+    }
+    current = {
+        **previous["000001"], "latest_trade_date": "2026-07-27",
+        "raw_latest_close": 9.0, "raw_latest_low": 8.8, "raw_latest_high": 10.5,
+        "risk_budget_initial_position_pct": 2.0, "risk_budget_max_position_pct": 5.0,
+    }
+
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 27), next_trade_date=date(2026, 7, 28),
+    )[0]
+
+    assert signal["signal_action"] == "CANCEL_BUY_REVIEW"
+    assert signal["signal_data_status"] == "RUN_GAP_REQUIRES_REVIEW"
+    assert signal["current_lifecycle_state"] == (
+        "POSITION_REVIEW" if lifecycle == "ENTRY_TRIGGER_OBSERVED" else "ENTRY_CANCELLED"
+    )
+
+
+def test_same_as_of_rerun_does_not_replay_plan_creation_bar_as_entry_trigger() -> None:
+    previous = {
+        "000001": {
+            "code": "000001", "stock_name": "测试", "user_visible_level": "STRICT_REVIEW_READY",
+            "preferred_plan": "pullback", "pullback_entry_low": 10.0,
+            "pullback_entry_high": 10.4, "pullback_stop_price": 9.5,
+            "pullback_logic_invalidation_price": 9.3,
+            "signal_lifecycle_state": "ENTRY_PENDING",
+            "latest_trade_date": "2026-07-17",
+            "signal_observed_through_date": "2026-07-17",
+        }
+    }
+    current = {
+        **previous["000001"], "raw_latest_close": 10.2,
+        "raw_latest_low": 10.1, "raw_latest_high": 10.5,
+        "risk_budget_initial_position_pct": 2.0, "risk_budget_max_position_pct": 5.0,
+    }
+
+    signal = build_daily_signals(
+        current_rows=[current], previous=previous,
+        as_of=date(2026, 7, 17), next_trade_date=date(2026, 7, 20),
+    )[0]
+
+    assert signal["signal_action"] == "BUY_IF_TRIGGERED"
+    assert signal["current_lifecycle_state"] == "ENTRY_PENDING"
+    assert signal["trigger_observed_today"] is False
 
 
 def test_no_hardcoded_sample_stocks_in_all_a_module() -> None:

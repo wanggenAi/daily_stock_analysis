@@ -14,6 +14,7 @@ import pytest
 from src.strategies.genge_cycle_bottom.backtest import BacktestInput
 from src.strategies.genge_cycle_bottom.current_snapshot import IndustryAliasResolver, load_industry_alias_map
 from src.strategies.genge_cycle_bottom.industry_evidence import load_industry_evidence_schema
+from src.strategies.genge_opportunity_discovery import evidence_collectors
 from src.strategies.genge_opportunity_discovery.evidence_collectors import company_announcements
 from src.strategies.genge_opportunity_discovery.evidence_collectors.cache import EvidenceCache
 from src.strategies.genge_opportunity_discovery.evidence_collectors.validators import (
@@ -26,6 +27,8 @@ from src.strategies.genge_opportunity_discovery.exit_profile import (
     generate_exit_profile_from_reports,
 )
 from src.strategies.genge_opportunity_discovery.pipeline import (
+    _build_evidence_inventory,
+    _company_evidence_for_strategy,
     _rank_opportunities,
     _research_queues,
     run_opportunity_discovery,
@@ -416,6 +419,502 @@ def test_company_collector_prefers_cninfo_official_pdf_for_shanghai(
     assert evidence_rows[0]["source_domain"] == "static.cninfo.com.cn"
     assert evidence_rows[0]["collector"] == "cninfo_company_announcement"
     assert evidence_rows[0]["evidence_status"] == "VERIFIED"
+
+
+def test_material_event_collector_preserves_status_timezone_and_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, *, payload: dict | None = None, content: bytes = b"") -> None:
+            self._payload = payload
+            self.content = content
+            self.headers = {"content-type": "text/plain; charset=utf-8"}
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            assert self._payload is not None
+            return self._payload
+
+    class FakeSession:
+        post_count = 0
+
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            if url == company_announcements.CNINFO_STOCK_LIST_URL:
+                return FakeResponse(payload={"stockList": [{"code": "000088", "orgId": "gssz0000088"}]})
+            if url.endswith("active.PDF"):
+                return FakeResponse(content="控股股东部分股份被司法冻结，冻结事项仍在执行。".encode())
+            if url.endswith("resolved.PDF"):
+                return FakeResponse(content="控股股东全部冻结股份已全部解除。".encode())
+            raise AssertionError(url)
+
+        def post(self, url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+            assert url == "https://www.cninfo.com.cn/new/hisAnnouncement/query"
+            assert data["searchkey"] == ""
+            assert data["category"] == ""
+            assert data["pageNum"] == "1"
+            FakeSession.post_count += 1
+            active_timestamp = int(
+                datetime(2026, 7, 20, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
+            )
+            resolved_timestamp = int(
+                datetime(2026, 7, 21, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
+            )
+            future_timestamp = int(
+                datetime(2026, 7, 30, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
+            )
+            return FakeResponse(payload={
+                "totalAnnouncement": 3,
+                "announcements": [
+                    {
+                        "announcementTitle": "关于控股股东部分股份被司法冻结的公告",
+                        "announcementTime": active_timestamp,
+                        "adjunctUrl": "finalpage/2026-07-20/active.PDF",
+                    },
+                    {
+                        "announcementTitle": "关于控股股东全部股份解除冻结的公告",
+                        "announcementTime": resolved_timestamp,
+                        "adjunctUrl": "finalpage/2026-07-21/resolved.PDF",
+                    },
+                    {
+                        "announcementTitle": "关于收到监管立案通知的公告",
+                        "announcementTime": future_timestamp,
+                        "adjunctUrl": "finalpage/2026-07-30/future.PDF",
+                    },
+                ],
+            })
+
+    monkeypatch.setattr(company_announcements.requests, "Session", FakeSession)
+    cache = EvidenceCache(tmp_path / "cache")
+    inputs = [{"code": "000088", "stock_name": "盐田港", "normalized_industry": "港口"}]
+    evidence_rows, audit_rows, summary = company_announcements.collect_company_material_events(
+        rows=inputs, as_of=date(2026, 7, 28), cache=cache, limit=1,
+    )
+
+    assert len(evidence_rows) == 1
+    resolved = evidence_rows[0]
+    assert resolved["event_status"] == "RESOLVED"
+    assert resolved["event_resolution_scope"] == "FULL"
+    assert resolved["direction"] == "NEUTRAL"
+    assert resolved["date"] == "2026-07-21"
+    assert audit_rows[0]["status"] == "OK"
+    assert audit_rows[0]["issue"] == "material_event_scan_complete"
+    assert summary["company_event_active_count"] == 0
+    assert summary["company_event_resolved_count"] == 1
+
+    inventory = _build_evidence_inventory(
+        industry_evidence_df=None,
+        company_evidence_df=pd.DataFrame(evidence_rows),
+        as_of=date(2026, 7, 28),
+    )
+    inventory_row = inventory[0]
+    assert inventory_row["evidence_status"] == "VERIFIED"
+    assert inventory_row["evidence_kind"] == "material_event"
+    assert inventory_row["event_type"] == "SHARE_FREEZE"
+    assert inventory_row["event_severity"] == "MEDIUM"
+    assert inventory_row["event_resolution_scope"] == "FULL"
+    assert inventory_row["risk_valid_until"]
+    assert _company_evidence_for_strategy(pd.DataFrame(evidence_rows)).empty
+
+    company_announcements.collect_company_material_events(
+        rows=inputs, as_of=date(2026, 7, 28), cache=cache, limit=1,
+    )
+    assert FakeSession.post_count == 1
+    company_announcements.collect_company_material_events(
+        rows=inputs, as_of=date(2026, 7, 29), cache=cache, limit=1,
+    )
+    assert FakeSession.post_count == 2
+
+
+def test_material_event_classifier_does_not_treat_lawsuit_filing_as_regulatory_case() -> None:
+    assert company_announcements._classify_material_event(
+        "关于公司诉讼案件立案的公告",
+        publish_date=date(2026, 7, 20),
+        as_of=date(2026, 7, 28),
+    ) is None
+
+
+def test_unrelated_unfreeze_does_not_resolve_regulatory_investigation() -> None:
+    classified = company_announcements._classify_material_event(
+        "关于解除部分股份冻结暨收到证监会立案告知书的公告",
+        publish_date=date(2026, 7, 20),
+        as_of=date(2026, 7, 28),
+    )
+    assert classified is not None
+    assert classified["event_type"] == "REGULATORY_INVESTIGATION"
+    assert classified["event_status"] == "ACTIVE"
+    assert classified["event_severity"] == "HIGH"
+
+
+def test_material_event_classifier_returns_every_event_in_combined_notice() -> None:
+    classified = company_announcements._classify_material_events(
+        "关于撤销退市风险警示暨收到证监会立案告知书的公告",
+        publish_date=date(2026, 7, 20),
+        as_of=date(2026, 7, 28),
+    )
+    by_type = {row["event_type"]: row for row in classified}
+    assert by_type["DELISTING_RISK"]["event_status"] == "RESOLVED"
+    assert by_type["REGULATORY_INVESTIGATION"]["event_status"] == "ACTIVE"
+
+
+@pytest.mark.parametrize(
+    ("title", "event_type"),
+    [
+        ("关于公司被债权人申请破产重整的公告", "BANKRUPTCY_RESTRUCTURING"),
+        ("关于公司实施其他风险警示的公告", "OTHER_RISK_WARNING"),
+        ("关于控股股东非经营性资金占用的公告", "FUNDS_OCCUPATION"),
+        ("关于累计诉讼、仲裁事项的公告", "MAJOR_LITIGATION_ARBITRATION"),
+    ],
+)
+def test_material_event_classifier_covers_common_risk_families(title: str, event_type: str) -> None:
+    classified = company_announcements._classify_material_events(
+        title, publish_date=date(2026, 7, 20), as_of=date(2026, 7, 28),
+    )
+    assert event_type in {row["event_type"] for row in classified}
+
+
+@pytest.mark.parametrize("title", [
+    "非经营性资金占用及其他关联资金往来情况专项说明-容诚专字[2026]518Z0772号_报告",
+    "年度关联方资金占用专项审计报告",
+])
+def test_routine_funds_occupation_review_title_is_not_an_active_event(title: str) -> None:
+    classified = company_announcements._classify_material_events(
+        title,
+        publish_date=date(2026, 4, 20), as_of=date(2026, 7, 28),
+    )
+    assert "FUNDS_OCCUPATION" not in {row["event_type"] for row in classified}
+
+
+def test_actual_controlling_shareholder_funds_occupation_is_high_and_active() -> None:
+    classified = company_announcements._classify_material_events(
+        "关于控股股东非经营性资金占用及整改进展的公告",
+        publish_date=date(2026, 7, 20), as_of=date(2026, 7, 28),
+    )
+    event = next(row for row in classified if row["event_type"] == "FUNDS_OCCUPATION")
+    assert event["event_status"] == "ACTIVE"
+    assert event["event_severity"] == "HIGH"
+
+
+def test_partial_share_unfreeze_remains_active() -> None:
+    classified = company_announcements._classify_material_event(
+        "关于控股股东部分股份解除冻结的公告",
+        publish_date=date(2026, 7, 20), as_of=date(2026, 7, 28),
+    )
+    assert classified is not None
+    assert classified["event_type"] == "SHARE_FREEZE"
+    assert classified["event_status"] == "ACTIVE"
+    assert classified["event_resolution_scope"] == "PARTIAL"
+
+
+def test_material_event_representatives_collapse_progress_by_type() -> None:
+    representatives = company_announcements._effective_material_event_representatives([
+        {
+            "event_type": "SHARE_FREEZE", "event_status": "ACTIVE",
+            "event_severity": "MEDIUM", "publish_date": f"2026-07-{day:02d}",
+            "url": f"https://example.test/freeze-{day}.pdf",
+        }
+        for day in range(1, 21)
+    ])
+    assert len(representatives) == 1
+    assert representatives[0]["publish_date"] == "2026-07-20"
+
+
+def test_cninfo_material_event_query_rejects_missing_response_schema() -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {}
+
+    class FakeSession:
+        def post(self, *_args, **_kwargs) -> FakeResponse:
+            return FakeResponse()
+
+    with pytest.raises(ValueError, match="response_schema_missing"):
+        company_announcements._query_cninfo_material_events(
+            "000088", "gssz0000088", date(2026, 7, 28), FakeSession(), timeout=5,
+        )
+
+
+def test_sse_material_event_query_rejects_missing_response_schema() -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {}
+
+    class FakeSession:
+        def get(self, *_args, **_kwargs) -> FakeResponse:
+            return FakeResponse()
+
+    with pytest.raises(ValueError, match="response_schema_missing"):
+        company_announcements._query_sse_material_events(
+            "600519", date(2026, 7, 28), FakeSession(), timeout=5,
+        )
+
+
+def test_material_event_query_caps_pagination_at_configured_limit() -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    class FakeSession:
+        pages: list[int] = []
+
+        def post(self, _url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+            page = int(data["pageNum"])
+            self.pages.append(page)
+            timestamp = int(
+                datetime(2026, 7, 20, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
+            )
+            return FakeResponse({
+                "totalAnnouncement": company_announcements.MATERIAL_EVENT_PAGE_SIZE * (
+                    company_announcements.MATERIAL_EVENT_MAX_PAGES + 1
+                ),
+                "announcements": [
+                    {
+                        "announcementTitle": f"普通公告{page}-{index}",
+                        "announcementTime": timestamp,
+                        "adjunctUrl": f"finalpage/{page}-{index}.PDF",
+                    }
+                    for index in range(company_announcements.MATERIAL_EVENT_PAGE_SIZE)
+                ],
+            })
+
+    session = FakeSession()
+    rows, meta = company_announcements._query_cninfo_material_events(
+        "000088", "gssz0000088", date(2026, 7, 28), session, timeout=5,
+    )
+    assert session.pages == list(range(1, company_announcements.MATERIAL_EVENT_MAX_PAGES + 1))
+    assert len(rows) == (
+        company_announcements.MATERIAL_EVENT_PAGE_SIZE
+        * company_announcements.MATERIAL_EVENT_MAX_PAGES
+    )
+    assert meta["truncated"] is True
+
+
+def test_cninfo_material_event_query_follows_provider_thirty_row_pages() -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    class FakeSession:
+        pages: list[int] = []
+
+        def post(self, _url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+            page = int(data["pageNum"])
+            self.pages.append(page)
+            assert data["pageSize"] == "30"
+            count = 30 if page == 1 else 15
+            timestamp = int(
+                datetime(2026, 7, 20, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
+            )
+            return FakeResponse({
+                "totalAnnouncement": 45,
+                "announcements": [
+                    {
+                        "announcementTitle": f"普通公告{page}-{index}",
+                        "announcementTime": timestamp,
+                        "adjunctUrl": f"finalpage/{page}-{index}.PDF",
+                    }
+                    for index in range(count)
+                ],
+            })
+
+    session = FakeSession()
+    rows, meta = company_announcements._query_cninfo_material_events(
+        "000088", "gssz0000088", date(2026, 7, 28), session, timeout=5,
+    )
+    assert session.pages == [1, 2]
+    assert len(rows) == 45
+    assert meta["pages_fetched"] == 2
+    assert meta["reported_total"] == 45
+    assert meta["truncated"] is False
+
+
+def test_material_event_query_keeps_completed_pages_on_later_failure() -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            timestamp = int(
+                datetime(2026, 7, 20, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
+            )
+            return {
+                "totalAnnouncement": company_announcements.MATERIAL_EVENT_PAGE_SIZE * 2,
+                "announcements": [
+                    {
+                        "announcementTitle": f"普通公告{index}",
+                        "announcementTime": timestamp,
+                        "adjunctUrl": f"finalpage/{index}.PDF",
+                    }
+                    for index in range(company_announcements.MATERIAL_EVENT_PAGE_SIZE)
+                ],
+            }
+
+    class FakeSession:
+        def post(self, _url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+            if data["pageNum"] == "2":
+                raise RuntimeError("page two unavailable")
+            return FakeResponse()
+
+    rows, meta = company_announcements._query_cninfo_material_events(
+        "000088", "gssz0000088", date(2026, 7, 28), FakeSession(), timeout=5,
+    )
+    assert len(rows) == company_announcements.MATERIAL_EVENT_PAGE_SIZE
+    assert meta["pages_fetched"] == 1
+    assert meta["truncated"] is True
+    assert "page two unavailable" in meta["query_error"]
+
+
+def test_partial_material_event_scan_is_not_cached(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def __init__(self, payload: dict) -> None:
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return self._payload
+
+    class FakeSession:
+        post_count = 0
+
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            assert url == company_announcements.CNINFO_STOCK_LIST_URL
+            return FakeResponse({"stockList": [{"code": "000088", "orgId": "gssz0000088"}]})
+
+        def post(self, _url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+            FakeSession.post_count += 1
+            if data["pageNum"] == "2":
+                raise RuntimeError("transient page failure")
+            timestamp = int(
+                datetime(2026, 7, 20, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
+            )
+            return FakeResponse({
+                "totalAnnouncement": company_announcements.MATERIAL_EVENT_PAGE_SIZE * 2,
+                "announcements": [
+                    {
+                        "announcementTitle": f"普通公告{index}",
+                        "announcementTime": timestamp,
+                        "adjunctUrl": f"finalpage/{index}.PDF",
+                    }
+                    for index in range(company_announcements.MATERIAL_EVENT_PAGE_SIZE)
+                ],
+            })
+
+    monkeypatch.setattr(company_announcements.requests, "Session", FakeSession)
+    cache = EvidenceCache(tmp_path / "cache")
+    kwargs = {
+        "rows": [{"code": "000088", "stock_name": "盐田港"}],
+        "as_of": date(2026, 7, 28), "cache": cache, "limit": 1,
+    }
+    first = company_announcements.collect_company_material_events(**kwargs)
+    second = company_announcements.collect_company_material_events(**kwargs)
+    assert first[1][0]["status"] == "PARTIAL"
+    assert second[1][0]["status"] == "PARTIAL"
+    assert FakeSession.post_count == 4
+
+
+def test_failed_material_event_scan_is_not_cached(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    class FakeResponse:
+        def raise_for_status(self) -> None:
+            return None
+
+        def json(self) -> dict:
+            return {"stockList": [{"code": "000088", "orgId": "gssz0000088"}]}
+
+    class FakeSession:
+        post_count = 0
+
+        def get(self, url: str, **_kwargs) -> FakeResponse:
+            assert url == company_announcements.CNINFO_STOCK_LIST_URL
+            return FakeResponse()
+
+        def post(self, *_args, **_kwargs) -> FakeResponse:
+            FakeSession.post_count += 1
+            raise RuntimeError("transient endpoint failure")
+
+    monkeypatch.setattr(company_announcements.requests, "Session", FakeSession)
+    cache = EvidenceCache(tmp_path / "cache")
+    kwargs = {
+        "rows": [{"code": "000088", "stock_name": "盐田港"}],
+        "as_of": date(2026, 7, 28), "cache": cache, "limit": 1,
+    }
+    first = company_announcements.collect_company_material_events(**kwargs)
+    second = company_announcements.collect_company_material_events(**kwargs)
+    assert first[1][0]["status"] == "FAILED"
+    assert second[1][0]["status"] == "FAILED"
+    assert FakeSession.post_count == 2
+
+
+def test_auto_evidence_summary_includes_material_event_work(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        evidence_collectors,
+        "collect_company_announcements",
+        lambda **_kwargs: ([], [], {
+            "company_task_count": 1,
+            "company_actual_fetch_count": 2,
+            "company_fetch_success_count": 1,
+        }),
+    )
+    monkeypatch.setattr(
+        evidence_collectors,
+        "collect_company_material_events",
+        lambda **_kwargs: ([{
+            "evidence_status": "VERIFIED", "event_status": "ACTIVE",
+        }], [{"status": "OK"}], {
+            "company_event_task_count": 1,
+            "company_event_actual_fetch_count": 3,
+            "company_event_document_fetch_success_count": 1,
+            "company_event_evidence_rows": 1,
+        }),
+    )
+    monkeypatch.setattr(
+        evidence_collectors,
+        "collect_public_industry_data",
+        lambda **_kwargs: ([], [], {
+            "industry_task_count": 1,
+            "industry_actual_fetch_count": 4,
+            "industry_fetch_success_count": 1,
+        }),
+    )
+
+    _industry, company, audits, summary = evidence_collectors.collect_auto_evidence(
+        priority_rows=[{"code": "000088", "normalized_industry": "港口"}],
+        as_of=date(2026, 7, 28),
+        cache_dir=tmp_path / "cache",
+        max_companies=1,
+    )
+    assert company[0]["event_status"] == "ACTIVE"
+    assert audits == [{"status": "OK"}]
+    assert summary["task_count"] == 3
+    assert summary["actual_fetch_count"] == 9
+    assert summary["fetch_success_count"] == 3
+    assert summary["company_event_evidence_rows"] == 1
 
 
 def test_technology_sector_output_separates_core_and_extended_scope() -> None:
@@ -1812,8 +2311,15 @@ def test_github_actions_opportunity_workflow_contract() -> None:
     assert "--max-workers 12" in workflow
     assert "Run production strategy tests" in workflow
     assert "tests/test_genge_all_a_full_scan.py" in workflow
+    assert "tests/test_genge_real_world_signals.py" in workflow
     assert "Run full pytest" not in workflow
     assert "sell_signals.csv" in workflow
+    assert "market_regime.json" in workflow
+    assert "industry_regimes.csv" in workflow
+    assert "real_world_signal_audit.csv" in workflow
+    assert "daily_candidate_top5.csv" in workflow
+    assert "daily_candidate_top5_count" in workflow
+    assert "CANCEL_BUY_REVIEW" in workflow
     assert "GITHUB_STEP_SUMMARY" in workflow
     assert "--prefer-binary --retries 5 --timeout 60" in workflow
     assert "src.strategies.genge_opportunity_discovery.shenzhen_full_scan" in workflow
