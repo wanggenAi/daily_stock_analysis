@@ -336,6 +336,7 @@ jobs:
           python -m pytest -q \
             tests/test_genge_opportunity_discovery_*.py \
             tests/test_genge_all_a_full_scan.py \
+            tests/test_genge_live_exit_policy.py \
             tests/test_genge_real_world_signals.py
 
       - name: Restore all-A public-data cache and observation state
@@ -400,9 +401,12 @@ jobs:
               "all_a_universe.csv", "universe_exclusion_audit.csv", "universe_source_audit.json",
               "board_distribution.csv", "price_mapping_audit.csv", "all_a_quant_screen.csv",
               "market_regime.json", "industry_regimes.csv", "real_world_signal_audit.csv",
-              "top80_evidence_queue.csv", "top30_deep_review.csv", "strict_gate_audit.csv", "strict_review_ready.csv",
+              "top80_evidence_queue.csv", "active_signal_review_queue.csv",
+              "exit_profile_exploration_queue.csv",
+              "top30_deep_review.csv", "strict_gate_audit.csv", "strict_review_ready.csv",
               "condition_watch.csv", "research_watch.csv", "tomorrow_watchlist.csv",
               "daily_candidate_top5.csv", "daily_candidate_top5.md",
+              "exit_profile_validation_reference.csv",
               "daily_signals.csv", "daily_signals.json", "daily_signals.md",
               "buy_signals.csv", "sell_signals.csv",
               "actionable_execution_list.csv", "actionable_execution_list.json", "actionable_execution_list.md",
@@ -429,14 +433,99 @@ jobs:
           assert summary["no_auto_trade"] is True
           assert summary["no_broker_integration"] is True
           assert 0 <= summary["evidence_queue_count"] <= 80
-          assert 0 <= summary["deep_review_count"] <= summary["evidence_queue_count"]
-          assert summary["exit_profile_refresh"]["candidate_count"] == summary["evidence_queue_count"]
-          assert summary["exit_profile_refresh"]["sample_spacing_sessions"] == 60
+          assert 0 <= summary["exit_profile_exploration_count"] <= 40
+          assert summary["analysis_candidate_count_including_active_review"] >= (
+              summary["evidence_queue_count"]
+              + summary["exit_profile_exploration_count"]
+          )
+          assert 0 <= summary["deep_review_count"] <= summary["analysis_candidate_count_including_active_review"]
+          assert summary["active_signal_review_refreshed_count"] <= summary["active_signal_review_count"]
+          assert summary["exit_profile_exploration_selection_version"] == "weekly_industry_rotation_v1"
+          with (latest / "top80_evidence_queue.csv").open(encoding="utf-8") as handle:
+              top80_codes = {row["code"] for row in csv.DictReader(handle)}
+          with (latest / "active_signal_review_queue.csv").open(encoding="utf-8") as handle:
+              active_review_codes = {row["code"] for row in csv.DictReader(handle)}
+          with (latest / "exit_profile_exploration_queue.csv").open(encoding="utf-8") as handle:
+              exploration_rows = list(csv.DictReader(handle))
+          exploration_codes = {row["code"] for row in exploration_rows}
+          assert len(exploration_rows) == summary["exit_profile_exploration_count"]
+          assert len(exploration_codes) == len(exploration_rows)
+          assert exploration_codes.isdisjoint(top80_codes)
+          assert exploration_codes.isdisjoint(active_review_codes)
+          assert all(
+              row["quant_status"] in {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"}
+              for row in exploration_rows
+          )
+          assert all(
+              row["exit_profile_exploration_reason"] in {
+                  "PRIOR_VALIDATED_PROFILE_REFRESH",
+                  "WEEKLY_INDUSTRY_ROTATION",
+                  "WEEKLY_ROTATION_FILL",
+              }
+              for row in exploration_rows
+          )
+          assert sum(
+              row["exit_profile_exploration_reason"]
+              == "PRIOR_VALIDATED_PROFILE_REFRESH"
+              for row in exploration_rows
+          ) == summary["exit_profile_exploration_prior_validated_count"]
+          assert len({
+              row.get("industry") or "UNRESOLVED" for row in exploration_rows
+          }) == summary["exit_profile_exploration_industry_count"]
+          if exploration_rows:
+              assert {
+                  row["exit_profile_exploration_rotation_bucket"]
+                  for row in exploration_rows
+              } == {summary["exit_profile_exploration_rotation_bucket"]}
+              assert {
+                  row["exit_profile_exploration_selection_version"]
+                  for row in exploration_rows
+              } == {summary["exit_profile_exploration_selection_version"]}
+          assert summary["signal_state_continuity_status"] in {
+              "VALID", "MISSING_INITIALIZED_SAFE", "CORRUPT_REINITIALIZED_SAFE"
+          }
+          if summary["signal_state_continuity_status"] != "VALID":
+              assert summary["buy_signal_count"] == 0
+          assert summary["exit_profile_refresh"]["candidate_count"] == summary["analysis_candidate_count_including_active_review"]
+          assert summary["exit_profile_refresh"]["sample_spacing_sessions"] == 61
+          assert summary["exit_profile_refresh"]["exit_execution_lag_sessions"] == 1
+          assert summary["exit_profile_refresh"]["exit_execution_timing"] == "NEXT_TRADE_SESSION_OPEN"
           assert summary["exit_profile_refresh"]["minimum_profile_sample_count"] == 12
           assert summary["exit_profile_refresh"]["minimum_recent_2y_sample_count"] == 3
+          assert summary["exit_profile_refresh"]["minimum_cohort_codes_per_period"] == 3
+          assert summary["exit_profile_refresh"]["validation_reference_count"] == summary["exit_profile_validation_reference_count"]
+          assert sum(summary["exit_profile_refresh"]["validation_scope_distribution"].values()) == summary["analysis_candidate_count_including_active_review"]
           assert summary["exit_profile_priority_candidate_count"] == summary["exit_profile_refresh"]["candidate_distribution"].get("PASSED", 0)
-          assert summary["exit_profile_history_fetch"]["requested_count"] == summary["evidence_queue_count"]
-          assert summary["exit_profile_history_fetch"]["success_count"] >= 0
+          assert len(summary["exit_profile_priority_codes"]) == summary["exit_profile_priority_candidate_count"]
+          assert len(set(summary["exit_profile_priority_codes"])) == len(summary["exit_profile_priority_codes"])
+          assert summary["deep_priority_queue_size"] >= summary["exit_profile_priority_candidate_count"]
+          assert summary["exit_profile_priority_deep_reviewed_count"] == summary["exit_profile_priority_candidate_count"]
+          exit_health = summary["exit_profile_strategy_health"]
+          assert exit_health["status"] in {
+              "CANDIDATE_VALIDATED_EDGE_AVAILABLE",
+              "REFERENCE_COHORT_VALIDATED_EDGE_AVAILABLE",
+              "NO_VALIDATED_EXIT_EDGE",
+          }
+          assert exit_health["candidate_passed_count"] == summary["exit_profile_priority_candidate_count"]
+          assert exit_health["cohort_count"] == len(summary["exit_profile_refresh"]["cohort_validations"])
+          assert sum(exit_health["cohort_status_distribution"].values()) == exit_health["cohort_count"]
+          if exit_health["status"] == "NO_VALIDATED_EXIT_EDGE":
+              assert exit_health["candidate_passed_count"] == 0
+              assert exit_health["cohort_passed_count"] == 0
+              assert summary["strict_review_ready_count"] == 0
+              assert summary["buy_signal_count"] == 0
+          assert summary["exit_profile_history_fetch"]["requested_count"] == summary["exit_profile_history_fetch"]["unique_history_request_count"]
+          assert summary["exit_profile_history_fetch"]["exploration_candidate_requested_count"] == summary["exit_profile_exploration_count"]
+          assert summary["exit_profile_history_fetch"]["requested_count"] <= (
+              summary["analysis_candidate_count_including_active_review"]
+              + summary["exit_profile_validation_reference_count"]
+          )
+          assert 0 <= summary["exit_profile_history_fetch"]["success_count"] <= summary["exit_profile_history_fetch"]["requested_count"]
+          assert summary["exit_profile_history_data_quality"] in {"OK", "DEGRADED"}
+          assert 0 <= float(summary["exit_profile_candidate_history_coverage_ratio"]) <= 1
+          assert 0 <= float(summary["exit_profile_reference_history_coverage_ratio"]) <= 1
+          if summary["exit_profile_history_data_quality"] == "DEGRADED":
+              assert summary["buy_signal_count"] == 0
           assert summary["strict_gate_feasibility"]["audited_candidate_count"] == summary["deep_review_count"]
           if summary["evidence_queue_count"] == 0:
               assert summary["deep_review_count"] == 0
@@ -491,7 +580,18 @@ jobs:
               if row["signal_action"] == "BUY_IF_TRIGGERED":
                   assert row["current_level"] == "STRICT_REVIEW_READY"
                   assert row["entry_low"] and row["entry_high"] and row["stop_price"]
-                  assert row["current_lifecycle_state"] == "ENTRY_PENDING"
+                  assert row["current_lifecycle_state"] in {
+                      "ENTRY_PENDING", "BREAKOUT_CONFIRMED_ENTRY_PENDING"
+                  }
+                  assert row["plan_id"].startswith("plan:")
+                  assert row["plan_rule_version"]
+                  assert row["real_reward_risk_ratio"]
+                  if row["current_lifecycle_state"] == "BREAKOUT_CONFIRMED_ENTRY_PENDING":
+                      assert row["preferred_plan"] == "breakout"
+                      assert row["signal_reason"] == "breakout_close_confirmed_next_open_pending"
+                      assert row["breakout_confirmation_observed_today"] == "True"
+                  else:
+                      assert row["preferred_plan"] == "pullback"
                   assert row["market_regime_status"] in {"GREEN", "YELLOW"}
                   assert row["industry_regime_status"] not in {"UNKNOWN", "CRISIS"}
                   assert int(row["industry_regime_sample_count"]) >= 5
@@ -500,8 +600,35 @@ jobs:
                   assert row["price_volume_state"] not in {"DISTRIBUTION", "CAPITULATION_RISK"}
                   assert row["real_world_gate_passed"] == "True"
               if row["signal_action"] == "SELL_EXIT":
-                  assert row["signal_reason"] == "previous_stop_or_invalidation_breached"
-                  assert row["previous_lifecycle_state"] in {"ENTRY_TRIGGER_OBSERVED", "POSITION_REVIEW"}
+                  sell_reason = row["signal_reason"]
+                  balanced_prefix = "balanced_exit_triggered:"
+                  balanced_exit_reason = (
+                      sell_reason.removeprefix(balanced_prefix)
+                      if sell_reason.startswith(balanced_prefix) else ""
+                  )
+                  same_day_prefix = "entry_and_exit_same_day_t1:"
+                  same_day_exit_reason = (
+                      sell_reason.removeprefix(same_day_prefix)
+                      if sell_reason.startswith(same_day_prefix) else ""
+                  )
+                  assert sell_reason in {
+                      "previous_stop_or_invalidation_breached",
+                      "previous_stop_or_invalidation_breached_with_run_gap",
+                      "previous_logic_invalidation_breached",
+                      "frozen_protective_stop_breached_live_state_unavailable",
+                      "balanced_or_frozen_hard_exit_with_run_gap",
+                      "run_gap_possible_entry_and_frozen_threshold_breached",
+                      "exit_confirmation_required_after_threshold_breach",
+                  } or balanced_exit_reason in {
+                      "STOP_LOSS", "TREND_BREAK_CONFIRMED", "TAKE_PROFIT_TRAIL",
+                      "NO_REPAIR_40D", "TIME_EXIT_60D", "LOGIC_INVALIDATION",
+                  } or same_day_exit_reason in {
+                      "STOP_LOSS", "LOGIC_INVALIDATION",
+                  }
+                  assert row["previous_lifecycle_state"] in {
+                      "ENTRY_PENDING", "BREAKOUT_CONFIRMED_ENTRY_PENDING",
+                      "ENTRY_TRIGGER_OBSERVED", "POSITION_REVIEW", "EXIT_THRESHOLD_BREACHED"
+                  }
                   assert row["position_confirmation_required"] == "True"
                   latest_price = float(row["latest_price"])
                   observation_price = float(row["threshold_observation_price"])
@@ -510,10 +637,37 @@ jobs:
                       float(row["logic_invalidation_price"])
                       if row.get("logic_invalidation_price") else None
                   )
-                  assert (
-                      (stop_price is not None and observation_price <= stop_price)
-                      or (invalidation_price is not None and latest_price <= invalidation_price)
+                  effective_stop = (
+                      float(row["live_exit_effective_stop_price"])
+                      if row.get("live_exit_effective_stop_price") else None
                   )
+                  if sell_reason == "previous_logic_invalidation_breached":
+                      assert invalidation_price is not None and latest_price <= invalidation_price
+                  elif sell_reason == "frozen_protective_stop_breached_live_state_unavailable":
+                      assert stop_price is not None and observation_price <= stop_price
+                  elif sell_reason in {
+                      "balanced_or_frozen_hard_exit_with_run_gap",
+                      "run_gap_possible_entry_and_frozen_threshold_breached",
+                  }:
+                      assert "RUN_GAP" in row["signal_data_status"]
+                      assert (
+                          (stop_price is not None and observation_price <= stop_price)
+                          or (effective_stop is not None and observation_price <= effective_stop)
+                          or (invalidation_price is not None and latest_price <= invalidation_price)
+                      )
+                  elif sell_reason.startswith(balanced_prefix):
+                      assert row["live_exit_policy_status"] == "EXIT_TRIGGERED"
+                      assert row["live_exit_policy_reason"] == balanced_exit_reason
+                      if balanced_exit_reason == "STOP_LOSS":
+                          assert effective_stop is not None and observation_price <= effective_stop
+                  elif sell_reason.startswith(same_day_prefix):
+                      assert row["live_exit_policy_status"] == "EXIT_TRIGGERED"
+                      assert row["live_exit_policy_reason"] == same_day_exit_reason
+                  elif sell_reason != "exit_confirmation_required_after_threshold_breach":
+                      assert (
+                          (stop_price is not None and observation_price <= stop_price)
+                          or (invalidation_price is not None and latest_price <= invalidation_price)
+                      )
               if row["signal_action"] in {"WATCH_ONLY", "SELL_EXIT", "CANCEL_BUY_REVIEW"}:
                   assert float(row.get("risk_budget_initial_position_pct") or 0) == 0
                   assert float(row.get("risk_budget_max_position_pct") or 0) == 0
@@ -544,6 +698,12 @@ jobs:
               assert row["event_scan_status"] == "OK"
               assert row["event_risk_level"] != "HIGH"
               assert row["real_world_gate_passed"] == "True"
+              assert row["exit_profile_entry_mode"] == row["preferred_plan"]
+              assert row["profile_validation_scope"] in {
+                  "STOCK_SPECIFIC", "ENTRY_MODE_COHORT_INDEPENDENT_REFERENCE"
+              }
+              if row["profile_validation_scope"] == "ENTRY_MODE_COHORT_INDEPENDENT_REFERENCE":
+                  assert 0 < float(row["profile_position_multiplier"]) <= 0.5
 
           market = json.loads((latest / "market_regime.json").read_text(encoding="utf-8"))
           assert market["status"] == summary["market_regime_status"]
@@ -560,6 +720,9 @@ jobs:
           with (latest / "real_world_signal_audit.csv").open(encoding="utf-8") as handle:
               real_world_rows = list(csv.DictReader(handle))
           assert len(real_world_rows) == summary["strict_gate_feasibility"]["audited_candidate_count"]
+          assert set(summary["exit_profile_priority_codes"]).issubset({
+              row["code"] for row in real_world_rows
+          })
           assert all(row["market_regime_status"] and row["industry_regime_status"] for row in real_world_rows)
           assert sum(row["event_scan_status"] == "OK" for row in real_world_rows) == summary["event_scan_ok_count"]
           if summary["event_scan_ok_count"] == 0:
@@ -581,6 +744,8 @@ jobs:
                   assert row["formal_buy_eligible"] == "False"
                   assert float(row.get("risk_budget_initial_position_pct") or 0) == 0
                   assert float(row.get("risk_budget_max_position_pct") or 0) == 0
+                  if row.get("strict_gate_failed"):
+                      assert row["missing_conditions"] == row["strict_gate_failed"]
           forbidden = ("必买", "必卖", "保证上涨", "确定买入", "自动下单")
           for path in latest.iterdir():
               if path.suffix in {".md", ".csv", ".json"}:
