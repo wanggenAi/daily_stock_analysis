@@ -771,7 +771,7 @@ def _research_queues(
     primary_rows = [row for row in rows if row.get("quant_screen_status") == "PRIORITY_RESEARCH"]
     promoted_rows = [
         row for row in rows
-        if row.get("quant_screen_status") == "SECONDARY_RESEARCH"
+        if row.get("quant_screen_status") != "PRIORITY_RESEARCH"
         and _normalize_code(row.get("code")) in priority_code_set
     ]
     priority_queue = sorted(
@@ -1842,7 +1842,7 @@ def run_opportunity_discovery(
         previous_state = _load_previous_state(output_path, report_dir, state_dir)
         opportunity_changes, evidence_changes = _changes(tier_rows, previous_state)
         target_ledger = Path(ledger_path) if ledger_path else Path("data/opportunity_snapshots/forward_observation_ledger.csv")
-        ledger_rows, forward_summary = _update_forward_ledger(
+        _ledger_rows, forward_summary = _update_forward_ledger(
             ledger_path=target_ledger,
             report_dir=report_dir,
             rows=tier_rows,
@@ -1854,7 +1854,6 @@ def run_opportunity_discovery(
     else:
         previous_state = {}
         opportunity_changes, evidence_changes = [], []
-        ledger_rows = []
         forward_summary = {
             "ledger_path": str(ledger_path or "data/opportunity_snapshots/forward_observation_ledger.csv"),
             "report_ledger_path": "",

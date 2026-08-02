@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import csv
 import json
+import sys
 from collections import Counter
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
+from types import SimpleNamespace
 from zoneinfo import ZoneInfo
 
 import numpy as np
@@ -24,7 +26,11 @@ from src.strategies.genge_opportunity_discovery.evidence_collectors.validators i
 )
 from src.strategies.genge_opportunity_discovery.exit_profile import (
     REPORT_AGGREGATE_RULE_VERSION,
+    _cohort_period_samples,
+    _cohort_validation,
+    fetch_extended_adjusted_histories,
     generate_exit_profile_from_reports,
+    refresh_exit_profiles_from_price_history,
 )
 from src.strategies.genge_opportunity_discovery.pipeline import (
     _build_evidence_inventory,
@@ -87,6 +93,33 @@ def test_research_queue_promotes_exit_profile_priority_from_secondary() -> None:
 
     assert [row["code"] for row in priority][:2] == ["000088", "000001"]
     assert [row["code"] for row in secondary] == ["000002"]
+
+
+def test_research_queue_capacity_retains_every_passed_profile_priority() -> None:
+    normal = [
+        {
+            "code": f"{index:06d}", "quant_screen_status": "PRIORITY_RESEARCH",
+            "quant_score": 100.0 - index / 100,
+        }
+        for index in range(1, 81)
+    ]
+    promoted = [
+        {
+            "code": f"9{index:05d}", "quant_screen_status": "SECONDARY_RESEARCH",
+            "quant_score": 50.0 - index / 100,
+        }
+        for index in range(1, 91)
+    ]
+    promoted_codes = [row["code"] for row in promoted]
+
+    priority, _secondary = _research_queues(
+        [*normal, *promoted],
+        priority_queue_size=max(80, len(promoted_codes)),
+        secondary_queue_size=80,
+        priority_codes=promoted_codes,
+    )
+
+    assert set(promoted_codes).issubset({row["code"] for row in priority})
 
 
 def _valuation_frame() -> pd.DataFrame:
@@ -1754,11 +1787,13 @@ def test_exit_profile_generation_from_historical_signal_details(tmp_path: Path) 
     report = tmp_path / "reports" / "sample" / "signal_details.csv"
     report.parent.mkdir(parents=True)
     rows = ["code,stock_name,as_of_date,balanced_hybrid_60d_exit_exit_adjusted_net_return_60d,balanced_hybrid_60d_exit_exit_adjusted_max_drawdown_250d"]
-    rows.extend(["600123,测试周期,2026-06-30,2.5,-8"] * 20)
-    rows.extend(["600456,测试退化,2026-06-30,1.0,-12"] * 6)
-    rows.extend(["600456,测试退化,2026-06-30,-2.0,-14"] * 6)
-    rows.extend(["600111,样本不足,2026-06-30,3.0,-7"] * 8)
-    rows.extend(["600789,测试失败,2026-06-30,-9,-25"] * 20)
+    dates = [item.date().isoformat() for item in pd.bdate_range(end="2026-06-30", periods=20)]
+    rows.extend([f"600123,测试周期,{trade_date},2.5,-8" for trade_date in dates])
+    rows.append(f"600123,测试周期,{dates[-1]},2.5,-8")  # copied duplicate must not inflate n
+    rows.extend([f"600456,测试退化,{trade_date},1.0,-12" for trade_date in dates[:6]])
+    rows.extend([f"600456,测试退化,{trade_date},-2.0,-14" for trade_date in dates[6:12]])
+    rows.extend([f"600111,样本不足,{trade_date},3.0,-7" for trade_date in dates[:8]])
+    rows.extend([f"600789,测试失败,{trade_date},-9,-25" for trade_date in dates])
     report.write_text("\n".join(rows) + "\n", encoding="utf-8")
     output, summary = generate_exit_profile_from_reports(output_file=tmp_path / "exit_profile.csv", source_dirs=[tmp_path / "reports"])
     rows = {row["code"]: row for row in csv.DictReader(output.open(encoding="utf-8"))}
@@ -2283,6 +2318,273 @@ def test_shenzhen_scan_dates_use_completed_china_sessions(
     expected_tomorrow: date,
 ) -> None:
     assert resolve_scan_dates(reference_time, calendar=_FakeChinaCalendar()) == (expected_as_of, expected_tomorrow)
+
+
+def _diversified_cohort_samples(
+    *, member_returns: tuple[float, float, float] = (2.0, 2.0, 2.0),
+) -> list[dict[str, object]]:
+    samples: list[dict[str, object]] = []
+    start = date(2023, 1, 2)
+    for period_index in range(12):
+        entry_date = start + timedelta(days=period_index * 100)
+        for member_index, net_return in enumerate(member_returns):
+            samples.append(
+                {
+                    "code": str(100000 + period_index * 3 + member_index),
+                    "as_of_date": entry_date,
+                    "outcome_end_date": entry_date + timedelta(days=80),
+                    "entry_mode": "pullback",
+                    "return": net_return,
+                    "drawdown": -5.0,
+                }
+            )
+    return samples
+
+
+def test_extended_history_fetch_can_fall_back_to_recent_validated_cache(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    dates = pd.bdate_range(end="2026-07-30", periods=400)
+    provider_frame = pd.DataFrame(
+        {
+            "date": dates,
+            "open": np.linspace(9.0, 10.0, len(dates)),
+            "high": np.linspace(9.2, 10.2, len(dates)),
+            "low": np.linspace(8.8, 9.8, len(dates)),
+            "close": np.linspace(9.1, 10.1, len(dates)),
+            "volume": np.linspace(1_000_000, 1_500_000, len(dates)),
+            "amount": np.linspace(10_000_000, 15_000_000, len(dates)),
+        }
+    )
+
+    class FakeAkshare:
+        should_fail = False
+
+        def stock_zh_a_daily(self, **kwargs: object) -> pd.DataFrame:
+            if self.should_fail:
+                raise ConnectionError("temporary provider outage")
+            if kwargs.get("adjust") == "qfq-factor":
+                return pd.DataFrame({
+                    "date": [provider_frame.iloc[0]["date"]],
+                    "qfq_factor": [1.0],
+                })
+            return provider_frame.copy()
+
+    fake_akshare = FakeAkshare()
+    monkeypatch.setitem(sys.modules, "akshare", fake_akshare)
+    candidate = {"code": "600001", "stock_name": "缓存测试", "exchange": "SSE"}
+    cache_dir = tmp_path / "history-cache"
+
+    fresh_histories, fresh_summary = fetch_extended_adjusted_histories(
+        candidates=[candidate],
+        as_of=date(2026, 7, 30),
+        cache_dir=cache_dir,
+    )
+
+    assert len(fresh_histories["600001"]) == 400
+    assert fresh_summary["fresh_fetch_count"] == 1
+    assert fresh_summary["cache_write_count"] == 1
+    assert (cache_dir / "600001.metadata.json").is_file()
+
+    fake_akshare.should_fail = True
+    monkeypatch.setitem(
+        sys.modules,
+        "baostock",
+        SimpleNamespace(
+            login=lambda: SimpleNamespace(error_code="1", error_msg="temporary provider outage"),
+        ),
+    )
+    cached_histories, cached_summary = fetch_extended_adjusted_histories(
+        candidates=[candidate],
+        as_of=date(2026, 7, 30),
+        cache_dir=cache_dir,
+    )
+
+    assert len(cached_histories["600001"]) == 400
+    assert cached_summary["fresh_fetch_count"] == 0
+    assert cached_summary["cache_fallback_count"] == 1
+    assert cached_summary["source_counts"] == {
+        "validated_cache_qfq_with_raw_mapping": 1,
+    }
+    assert "600001" not in cached_summary["errors"]
+
+    stale_histories, stale_summary = fetch_extended_adjusted_histories(
+        candidates=[candidate],
+        as_of=date(2026, 7, 31),
+        cache_dir=cache_dir,
+    )
+    assert "600001" not in stale_histories
+    assert "requested_as_of_mismatch" in stale_summary["cache_read_errors"]["600001"]
+
+
+def test_cohort_independence_uses_observed_outcome_end_across_suspension() -> None:
+    samples: list[dict[str, object]] = []
+    for group_index, (entry_date, outcome_end_date) in enumerate(
+        (
+            (date(2024, 1, 2), date(2024, 4, 15)),
+            # More than 60 weekdays after the first entry, but the first
+            # outcome is still open because its stock history was suspended.
+            (date(2024, 4, 1), date(2024, 7, 1)),
+            (date(2024, 4, 16), date(2024, 7, 15)),
+        )
+    ):
+        for member_index in range(3):
+            samples.append(
+                {
+                    "code": str(200000 + group_index * 3 + member_index),
+                    "as_of_date": entry_date,
+                    "outcome_end_date": outcome_end_date,
+                    "return": 2.0,
+                    "drawdown": -5.0,
+                }
+            )
+
+    periods = _cohort_period_samples(samples, as_of=date(2024, 12, 31))
+
+    assert [period["as_of_date"] for period in periods] == [
+        date(2024, 1, 2),
+        date(2024, 4, 16),
+    ]
+
+
+def test_cohort_basket_median_cannot_hide_member_return_tail() -> None:
+    result = _cohort_validation(
+        _diversified_cohort_samples(member_returns=(-20.0, 2.0, 24.0)),
+        as_of=date(2026, 7, 30),
+        cohort_key="MAIN|pullback",
+        data_end_by_code={},
+    )
+
+    assert result["period_count"] == 12
+    assert result["avg_return"] == pytest.approx(2.0)
+    assert result["performance_passed"] is True
+    assert result["member_tail_return"] == pytest.approx(-20.0)
+    assert result["member_performance_passed"] is False
+    assert result["status"] != "PASSED"
+
+
+def test_cohort_rejects_single_code_period_concentration() -> None:
+    samples: list[dict[str, object]] = []
+    start = date(2023, 1, 2)
+    for period_index in range(12):
+        entry_date = start + timedelta(days=period_index * 100)
+        for code in (
+            "600001",
+            str(300000 + period_index * 2),
+            str(300001 + period_index * 2),
+        ):
+            samples.append(
+                {
+                    "code": code,
+                    "as_of_date": entry_date,
+                    "outcome_end_date": entry_date + timedelta(days=80),
+                    "return": 2.0,
+                    "drawdown": -5.0,
+                }
+            )
+
+    result = _cohort_validation(
+        samples,
+        as_of=date(2026, 7, 30),
+        cohort_key="MAIN|pullback",
+        data_end_by_code={},
+    )
+
+    assert result["period_count"] == 12
+    assert result["unique_code_count"] >= 8
+    assert result["performance_passed"] is True
+    assert result["member_performance_passed"] is True
+    assert result["max_code_period_share"] == pytest.approx(1.0)
+    assert result["code_concentration_passed"] is False
+    assert result["status"] != "PASSED"
+
+
+def test_cohort_missing_outcome_end_fails_closed() -> None:
+    samples = _diversified_cohort_samples()
+    samples[0] = {key: value for key, value in samples[0].items() if key != "outcome_end_date"}
+
+    result = _cohort_validation(
+        samples,
+        as_of=date(2026, 7, 30),
+        cohort_key="MAIN|pullback",
+        data_end_by_code={},
+    )
+
+    assert result["invalid_outcome_end_count"] == 1
+    assert result["outcome_end_complete"] is False
+    assert result["independence_passed"] is False
+    assert result["status"] != "PASSED"
+
+
+def test_candidate_reference_overlap_uses_target_code_leave_one_out(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    target_code = "600001"
+    samples_by_code: dict[str, list[dict[str, object]]] = {}
+    references: list[dict[str, str]] = []
+    start = date(2023, 1, 2)
+    for period_index in range(12):
+        entry_date = start + timedelta(days=period_index * 100)
+        codes = (
+            [target_code, str(400000 + period_index * 2), str(400001 + period_index * 2)]
+            if period_index < 6
+            else [str(500000 + period_index * 3 + offset) for offset in range(3)]
+        )
+        for code in codes:
+            if code not in samples_by_code:
+                samples_by_code[code] = []
+                references.append({"code": code, "stock_name": code, "board": "SSE_MAIN"})
+            samples_by_code[code].append(
+                {
+                    "code": code,
+                    "as_of_date": entry_date,
+                    "outcome_end_date": entry_date + timedelta(days=80),
+                    "entry_mode": "pullback",
+                    "return": 2.0,
+                    "drawdown": -5.0,
+                }
+            )
+
+    def fake_price_setup_samples(**kwargs: object) -> list[dict[str, object]]:
+        if kwargs["entry_mode"] != "pullback":
+            return []
+        return list(samples_by_code.get(str(kwargs["code"]), []))
+
+    monkeypatch.setattr(
+        "src.strategies.genge_opportunity_discovery.exit_profile._price_setup_samples",
+        fake_price_setup_samples,
+    )
+    history = pd.DataFrame(
+        {
+            "date": ["2026-07-28", "2026-07-29"],
+            "open": [10.0, 10.1],
+            "high": [10.2, 10.3],
+            "low": [9.8, 9.9],
+            "close": [10.1, 10.2],
+            "volume": [1_000_000, 1_100_000],
+            "amount": [10_000_000, 11_000_000],
+        }
+    )
+    histories = {code: history for code in samples_by_code}
+
+    output, summary = refresh_exit_profiles_from_price_history(
+        output_file=tmp_path / "exit_profile.csv",
+        candidates=[{"code": target_code, "stock_name": "目标股", "board": "SSE_MAIN"}],
+        validation_candidates=references,
+        histories=histories,
+        as_of=date(2026, 7, 30),
+    )
+    with output.open(encoding="utf-8") as file:
+        row = next(csv.DictReader(file))
+
+    assert summary["cohort_validations"]["MAIN|pullback"]["status"] == "PASSED"
+    assert summary["cohort_leave_one_out_candidate_count"] == 1
+    assert row["cohort_excluded_target_code"] == target_code
+    assert int(row["cohort_period_count"]) == 6
+    assert row["cohort_profile_status"] != "PASSED"
+    assert row["balanced_exit_historical_profile"] != "PASSED"
 
 
 def test_github_actions_opportunity_workflow_contract() -> None:
