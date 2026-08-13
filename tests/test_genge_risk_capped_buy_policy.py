@@ -165,6 +165,121 @@ def test_position_budget_injects_cap_before_existing_sizer(monkeypatch):
     assert row["exit_profile_blocker_detail"].startswith("risk_capped_multiplier=0.25;")
 
 
+def test_fresh_risk_capped_promotion_rebuilds_current_signal_plan(monkeypatch):
+    row = {
+        "code": "603883",
+        "stock_name": "老百姓",
+        "user_visible_level": "STRICT_REVIEW_READY",
+        "strict_gate_failed": ";".join([
+            "exit_profile_passed",
+            "exit_profile_sample_count",
+            "exit_profile_recent_2y_samples",
+            "exit_profile_confidence",
+        ]),
+        "exit_profile_status": "NOT_AVAILABLE",
+        "stock_negative_veto_clear": True,
+        "stock_hard_veto_outcome_count": 0,
+        "preferred_plan": "pullback",
+        "real_reward_risk_ratio": 1.93,
+        "risk_budget_initial_position_pct": 0.62,
+        "risk_budget_max_position_pct": 1.0,
+        "profile_validation_scope": "RISK_CAPPED_NOT_AVAILABLE_EXIT_HISTORY",
+        "profile_position_multiplier": 0.25,
+    }
+    previous = {
+        "603883": {
+            "user_visible_level": "RESEARCH_WATCH",
+            "signal_lifecycle_state": "NO_POSITION_SIGNAL",
+            "preferred_plan": "breakout",
+            "risk_budget_initial_position_pct": 0.0,
+            "risk_budget_max_position_pct": 0.0,
+        },
+    }
+    calls = []
+
+    def fake_builder(**kwargs):
+        calls.append(dict(kwargs.get("previous") or {}))
+        if kwargs.get("previous"):
+            return [{
+                "code": "603883",
+                "signal_action": "BUY_IF_TRIGGERED",
+                "signal_label": "条件买入信号",
+                "signal_reason": "all_strict_gates_passed",
+                "preferred_plan": "breakout",
+                "real_reward_risk_ratio": 0.77,
+                "risk_budget_initial_position_pct": 0.0,
+                "risk_budget_max_position_pct": 0.0,
+                "profile_validation_scope": "STOCK_SPECIFIC_INSUFFICIENT",
+                "profile_position_multiplier": 0.0,
+            }]
+        current = kwargs["current_rows"][0]
+        return [{
+            "code": "603883",
+            "signal_action": "BUY_IF_TRIGGERED",
+            "signal_label": "条件买入信号",
+            "signal_reason": "all_strict_gates_passed",
+            "preferred_plan": current["preferred_plan"],
+            "real_reward_risk_ratio": current["real_reward_risk_ratio"],
+            "risk_budget_initial_position_pct": current["risk_budget_initial_position_pct"],
+            "risk_budget_max_position_pct": current["risk_budget_max_position_pct"],
+            "profile_validation_scope": current["profile_validation_scope"],
+            "profile_position_multiplier": current["profile_position_multiplier"],
+            "previous_level": "",
+            "previous_lifecycle_state": "NONE",
+        }]
+
+    monkeypatch.setattr(policy, "_ORIGINAL_BUILD_DAILY_SIGNALS", fake_builder)
+    signals = policy.build_daily_signals(
+        current_rows=[row], previous=previous, as_of=None, next_trade_date=None,
+    )
+
+    assert len(calls) == 2
+    assert signals[0]["preferred_plan"] == "pullback"
+    assert signals[0]["real_reward_risk_ratio"] == 1.93
+    assert signals[0]["risk_budget_initial_position_pct"] == 0.62
+    assert signals[0]["risk_budget_max_position_pct"] == 1.0
+    assert signals[0]["profile_validation_scope"] == "RISK_CAPPED_NOT_AVAILABLE_EXIT_HISTORY"
+    assert signals[0]["profile_position_multiplier"] == 0.25
+    assert signals[0]["previous_level"] == "RESEARCH_WATCH"
+    assert signals[0]["previous_lifecycle_state"] == "NO_POSITION_SIGNAL"
+    assert signals[0]["signal_reason"] == "risk_capped_exit_uncertainty_formal_entry"
+
+
+def test_active_risk_capped_plan_is_not_rebuilt(monkeypatch):
+    row = {
+        "code": "603883",
+        "user_visible_level": "STRICT_REVIEW_READY",
+        "strict_gate_failed": "exit_profile_passed",
+        "exit_profile_status": "NOT_AVAILABLE",
+        "stock_negative_veto_clear": True,
+        "stock_hard_veto_outcome_count": 0,
+    }
+    previous = {
+        "603883": {
+            "user_visible_level": "RESEARCH_WATCH",
+            "signal_lifecycle_state": "ENTRY_PENDING",
+        },
+    }
+    calls = []
+
+    def fake_builder(**kwargs):
+        calls.append(dict(kwargs.get("previous") or {}))
+        return [{
+            "code": "603883",
+            "signal_action": "BUY_IF_TRIGGERED",
+            "preferred_plan": "breakout",
+            "risk_budget_initial_position_pct": 0.5,
+        }]
+
+    monkeypatch.setattr(policy, "_ORIGINAL_BUILD_DAILY_SIGNALS", fake_builder)
+    signals = policy.build_daily_signals(
+        current_rows=[row], previous=previous, as_of=None, next_trade_date=None,
+    )
+
+    assert len(calls) == 1
+    assert signals[0]["preferred_plan"] == "breakout"
+
+
 def test_no_validated_exit_edge_health_matches_risk_capped_policy(monkeypatch):
     monkeypatch.setattr(
         policy,
