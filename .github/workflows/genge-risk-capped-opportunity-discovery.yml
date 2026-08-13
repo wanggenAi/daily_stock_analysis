@@ -39,6 +39,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_genge_risk_capped_buy_policy.py \
+            tests/test_genge_complete_material_event_pagination.py \
             tests/test_genge_real_world_signals.py \
             tests/test_genge_live_exit_policy.py
 
@@ -90,7 +91,7 @@ jobs:
       - name: Run risk-capped all-A production scan
         run: |
           PYTHONUNBUFFERED=1 timeout --signal=TERM 100m \
-          python -m src.strategies.genge_opportunity_discovery.risk_capped_all_a_full_scan \
+          python -m src.strategies.genge_opportunity_discovery.risk_capped_complete_event_scan \
             --max-workers 12 \
             --evidence-queue-size 80 \
             --deep-review-size 30 \
