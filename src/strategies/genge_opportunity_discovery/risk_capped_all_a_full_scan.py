@@ -41,6 +41,7 @@ RISK_CAPPED_PROFILE_MULTIPLIERS = {
 
 _ORIGINAL_CLASSIFY_CANDIDATE = core.classify_candidate
 _ORIGINAL_APPLY_POSITION_BUDGET = core._apply_position_budget
+_ORIGINAL_BUILD_DAILY_SIGNALS = core.build_daily_signals
 _ORIGINAL_EXIT_PROFILE_STRATEGY_HEALTH = core._exit_profile_strategy_health
 
 
@@ -161,6 +162,92 @@ def apply_position_budget(
     _ORIGINAL_APPLY_POSITION_BUDGET(row, plan, level)
 
 
+def _fresh_risk_capped_promotion(
+    row: Mapping[str, Any], before: Mapping[str, Any],
+) -> bool:
+    """Return true only for a fresh no-position promotion into risk-capped strict review.
+
+    A stale research WATCH row may contain an older frozen entry plan and a zero
+    risk budget. That prior observation must not contaminate a newly promoted
+    formal signal. Active, pending, terminal or exit-review lifecycles are never
+    rebuilt because their frozen-plan continuity is safety-critical.
+    """
+
+    if str(row.get("user_visible_level") or "") != "STRICT_REVIEW_READY":
+        return False
+    if not _row_is_risk_capped(row):
+        return False
+    if str(before.get("user_visible_level") or "") == "STRICT_REVIEW_READY":
+        return False
+
+    lifecycle = str(before.get("signal_lifecycle_state") or "")
+    frozen_lifecycles = (
+        set(core.ACTIVE_SIGNAL_LIFECYCLES)
+        | set(core.TERMINAL_ENTRY_LIFECYCLES)
+        | set(core.EXIT_CONFIRMATION_LIFECYCLES)
+        | {"ENTRY_PENDING", "BREAKOUT_CONFIRMED_ENTRY_PENDING"}
+    )
+    return lifecycle not in frozen_lifecycles
+
+
+def build_daily_signals(**kwargs: Any) -> list[dict[str, Any]]:
+    """Rebuild only fresh risk-capped promotions from the current strict plan.
+
+    The core lifecycle engine remains authoritative. We first let it build all
+    signals normally, then rerun a fresh promotion with an empty prior state so
+    stale WATCH-only plan fields cannot leak into the new formal BUY. Existing
+    pending/active/terminal plans keep the original frozen-state behavior.
+    """
+
+    signals = _ORIGINAL_BUILD_DAILY_SIGNALS(**kwargs)
+    current_rows = list(kwargs.get("current_rows") or [])
+    previous = kwargs.get("previous") or {}
+    if not current_rows or not isinstance(previous, Mapping):
+        return signals
+
+    replacements: dict[str, dict[str, Any]] = {}
+    for row in current_rows:
+        code = core._normalize_code(row.get("code"))
+        before = previous.get(code, {}) if code else {}
+        if not isinstance(before, Mapping):
+            before = {}
+        if not _fresh_risk_capped_promotion(row, before):
+            continue
+
+        rebuild_kwargs = dict(kwargs)
+        rebuild_kwargs["current_rows"] = [row]
+        rebuild_kwargs["previous"] = {}
+        rebuilt = _ORIGINAL_BUILD_DAILY_SIGNALS(**rebuild_kwargs)
+        rebuilt_signal = next(
+            (
+                dict(item) for item in rebuilt
+                if core._normalize_code(item.get("code")) == code
+            ),
+            None,
+        )
+        if rebuilt_signal is None:
+            continue
+
+        # Preserve the real audit trail while taking the executable plan and
+        # position budget exclusively from the newly qualified current row.
+        rebuilt_signal["previous_level"] = str(before.get("user_visible_level") or "")
+        rebuilt_signal["previous_lifecycle_state"] = str(
+            before.get("signal_lifecycle_state") or "NONE"
+        )
+        if rebuilt_signal.get("signal_action") == "BUY_IF_TRIGGERED":
+            rebuilt_signal["signal_label"] = "风险封顶条件买入信号"
+            rebuilt_signal["signal_reason"] = "risk_capped_exit_uncertainty_formal_entry"
+        replacements[code] = rebuilt_signal
+
+    if not replacements:
+        return signals
+
+    return [
+        replacements.get(core._normalize_code(signal.get("code")), signal)
+        for signal in signals
+    ]
+
+
 def exit_profile_strategy_health(
     exit_profile_refresh: Mapping[str, Any],
 ) -> dict[str, Any]:
@@ -189,6 +276,7 @@ def install_policy() -> None:
 
     core.classify_candidate = classify_candidate
     core._apply_position_budget = apply_position_budget
+    core.build_daily_signals = build_daily_signals
     core._exit_profile_strategy_health = exit_profile_strategy_health
 
 
