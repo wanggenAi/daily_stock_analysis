@@ -128,6 +128,9 @@ def test_degraded_profile_requires_negative_veto_clear():
     profile["stock_negative_veto_clear"] = False
     assert policy.risk_capped_profile_multiplier(profile) == 0.0
 
+    profile["stock_negative_veto_clear"] = "False"
+    assert policy.risk_capped_profile_multiplier(profile) == 0.0
+
 
 def test_position_budget_injects_cap_before_existing_sizer(monkeypatch):
     captured = {}
@@ -160,3 +163,27 @@ def test_position_budget_injects_cap_before_existing_sizer(monkeypatch):
     assert captured["multiplier"] == 0.25
     assert captured["scope"] == "RISK_CAPPED_NOT_AVAILABLE_EXIT_HISTORY"
     assert row["exit_profile_blocker_detail"].startswith("risk_capped_multiplier=0.25;")
+
+
+def test_no_validated_exit_edge_health_matches_risk_capped_policy(monkeypatch):
+    monkeypatch.setattr(
+        policy,
+        "_ORIGINAL_EXIT_PROFILE_STRATEGY_HEALTH",
+        lambda refresh: {
+            "status": "NO_VALIDATED_EXIT_EDGE",
+            "candidate_passed_count": 0,
+            "cohort_passed_count": 0,
+            "note": "new formal buys must remain disabled",
+        },
+    )
+
+    health = policy.exit_profile_strategy_health({})
+
+    assert health["status"] == "NO_VALIDATED_EXIT_EDGE"
+    assert health["formal_buy_policy"] == "RISK_CAPPED_EXIT_UNCERTAINTY"
+    assert health["risk_capped_profile_multipliers"] == {
+        "NOT_AVAILABLE": 0.25,
+        "DEGRADED": 0.15,
+    }
+    assert "globally suppressing formal buys" in health["note"]
+    assert "Explicit FAILED profiles" in health["note"]
