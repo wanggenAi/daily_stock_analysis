@@ -1,12 +1,12 @@
 """Risk-capped production entry policy for the unified all-A scan.
 
-The strict research path is intentionally kept intact as a control.  This
+The strict research path is intentionally kept intact as a control. This
 module changes only one production decision: an exit profile that is missing
 because the historical sample is insufficient is treated as uncertainty that
 reduces position size, not as proof that the entry is unsafe.
 
 Hard market, event, trend, execution, valuation, evidence, price-plan and
-price-mapping gates still have to pass.  An explicitly FAILED exit profile is
+price-mapping gates still have to pass. An explicitly FAILED exit profile is
 never relaxed.
 """
 
@@ -18,7 +18,7 @@ from src.strategies.genge_opportunity_discovery import all_a_full_scan as core
 
 
 # Only these strict gates are allowed to be uncertain on a risk-capped formal
-# entry.  Every non-exit strict gate must still pass.
+# entry. Every non-exit strict gate must still pass.
 RELAXABLE_EXIT_GATES = frozenset({
     "exit_profile_passed",
     "exit_profile_sample_count",
@@ -31,7 +31,7 @@ RELAXABLE_EXIT_GATES = frozenset({
     "exit_profile_validation_scope",
 })
 
-# Missing history is uncertainty, not negative evidence.  Degraded history is
+# Missing history is uncertainty, not negative evidence. Degraded history is
 # allowed only when the profile explicitly says its negative-veto checks are
 # clear, and therefore receives a smaller cap.
 RISK_CAPPED_PROFILE_MULTIPLIERS = {
@@ -41,6 +41,7 @@ RISK_CAPPED_PROFILE_MULTIPLIERS = {
 
 _ORIGINAL_CLASSIFY_CANDIDATE = core.classify_candidate
 _ORIGINAL_APPLY_POSITION_BUDGET = core._apply_position_budget
+_ORIGINAL_EXIT_PROFILE_STRATEGY_HEALTH = core._exit_profile_strategy_health
 
 
 def failed_strict_gates(
@@ -63,12 +64,12 @@ def risk_capped_profile_multiplier(profile: Mapping[str, Any]) -> float:
         return 0.0
 
     # A historical hard veto is negative evidence and must never be converted
-    # into a smaller position.  FAILED is also excluded by the lookup above.
+    # into a smaller position. FAILED is also excluded by the lookup above.
     hard_veto_count = int(core._safe_float(profile.get("stock_hard_veto_outcome_count")) or 0)
     if hard_veto_count > 0:
         return 0.0
 
-    if status == "DEGRADED" and not bool(profile.get("stock_negative_veto_clear")):
+    if status == "DEGRADED" and not core._bool_value(profile.get("stock_negative_veto_clear")):
         return 0.0
 
     return multiplier
@@ -81,7 +82,7 @@ def risk_capped_eligible(
     *,
     board_rule: core.BoardRule,
 ) -> bool:
-    """Allow a formal entry only when *all* failures are exit-history uncertainty."""
+    """Allow a formal entry only when all failures are exit-history uncertainty."""
 
     failed = failed_strict_gates(row, plan, profile, board_rule=board_rule)
     if not failed or not failed.issubset(RELAXABLE_EXIT_GATES):
@@ -145,7 +146,11 @@ def apply_position_budget(
             "stock_negative_veto_clear": row.get("stock_negative_veto_clear"),
         })
         existing = core._safe_float(row.get("profile_position_multiplier"))
-        effective = fallback_multiplier if existing is None or existing <= 0 else min(existing, fallback_multiplier)
+        effective = (
+            fallback_multiplier
+            if existing is None or existing <= 0
+            else min(existing, fallback_multiplier)
+        )
         row["profile_position_multiplier"] = effective
         row["profile_validation_scope"] = f"RISK_CAPPED_{status}_EXIT_HISTORY"
         blocker = str(row.get("exit_profile_blocker_detail") or "")
@@ -156,11 +161,35 @@ def apply_position_budget(
     _ORIGINAL_APPLY_POSITION_BUDGET(row, plan, level)
 
 
+def exit_profile_strategy_health(
+    exit_profile_refresh: Mapping[str, Any],
+) -> dict[str, Any]:
+    """Keep the diagnostic status while reporting the production sizing policy."""
+
+    health = dict(_ORIGINAL_EXIT_PROFILE_STRATEGY_HEALTH(exit_profile_refresh))
+    if health.get("status") == "NO_VALIDATED_EXIT_EDGE":
+        health.update({
+            "formal_buy_policy": "RISK_CAPPED_EXIT_UNCERTAINTY",
+            "risk_capped_profile_multipliers": dict(RISK_CAPPED_PROFILE_MULTIPLIERS),
+            "note": (
+                "NO_VALIDATED_EXIT_EDGE means no fully validated historical exit edge is "
+                "available. In the risk-capped production path, insufficient or eligible "
+                "degraded exit history reduces position size instead of globally suppressing "
+                "formal buys. Explicit FAILED profiles, historical hard vetoes, or any "
+                "non-exit strict-gate failure still prohibit a new formal buy."
+            ),
+        })
+    else:
+        health["formal_buy_policy"] = "VALIDATED_EXIT_EDGE"
+    return health
+
+
 def install_policy() -> None:
     """Install the production policy into the already-tested all-A engine."""
 
     core.classify_candidate = classify_candidate
     core._apply_position_budget = apply_position_budget
+    core._exit_profile_strategy_health = exit_profile_strategy_health
 
 
 def main(argv: list[str] | None = None) -> int:
