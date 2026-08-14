@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from src.strategies.genge_opportunity_discovery import opportunity_engine_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
 
@@ -11,6 +12,11 @@ def main(argv: list[str] | None = None) -> int:
     # collector still returns PARTIAL/UNKNOWN whenever a leaf window cannot be
     # proven complete; only provider page-cap truncation is resolved by splitting.
     complete_material_event_pagination.install()
+
+    # Replace only the legacy universal low-price gate with explicit opportunity
+    # engine admission.  All existing strict safety/risk gates remain in force;
+    # the risk-capped wrapper may still relax exit-history *uncertainty* only.
+    opportunity_engine_policy.install()
     return risk_capped.main(argv)
 
 
