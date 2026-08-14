@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
+from src.strategies.genge_opportunity_discovery import risk_capped_complete_event_scan
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination as pagination
 
 
@@ -97,11 +98,34 @@ def test_install_replaces_only_provider_pagination():
         assert base._query_sse_material_events is pagination.query_sse_material_events_complete
         assert callable(base.collect_company_material_events)
     finally:
-        # Do not register the restoration with pytest's monkeypatch undo stack.
-        # If we did, fixture teardown would restore the *installed* functions
-        # captured by monkeypatch.setattr and leak them into later tests.
+        # Restore directly. Registering this cleanup with pytest monkeypatch after
+        # installation would make fixture teardown restore the installed hooks.
         base._query_cninfo_material_events = old_cninfo
         base._query_sse_material_events = old_sse
 
+    assert base._query_cninfo_material_events is old_cninfo
+    assert base._query_sse_material_events is old_sse
+
+
+def test_production_entrypoint_scopes_and_restores_provider_pagination(monkeypatch):
+    base = pagination.base
+    old_cninfo = base._query_cninfo_material_events
+    old_sse = base._query_sse_material_events
+    observed = {}
+
+    def fake_scan(argv):
+        observed["argv"] = argv
+        observed["cninfo"] = base._query_cninfo_material_events
+        observed["sse"] = base._query_sse_material_events
+        return 0
+
+    monkeypatch.setattr(risk_capped_complete_event_scan.risk_capped, "main", fake_scan)
+
+    result = risk_capped_complete_event_scan.main(["--fixture-mode"])
+
+    assert result == 0
+    assert observed["argv"] == ["--fixture-mode"]
+    assert observed["cninfo"] is pagination.query_cninfo_material_events_complete
+    assert observed["sse"] is pagination.query_sse_material_events_complete
     assert base._query_cninfo_material_events is old_cninfo
     assert base._query_sse_material_events is old_sse
