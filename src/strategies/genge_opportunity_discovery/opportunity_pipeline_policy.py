@@ -2,11 +2,10 @@
 
 The production strict gate cannot discover a strong-trend or earnings-inflection
 candidate if an earlier research stage discarded it solely because its five-year
-price percentile was not low.  This module removes that hidden coupling while
+price percentile was not low. This module removes that hidden coupling while
 preserving every non-price hard blocker.
 
-The upstream policy is intentionally permissive only in *research admission*.
-It does not create a formal signal.  Final eligibility is still decided by
+Upstream admission is research-only. Final eligibility is still decided by
 ``opportunity_engine_policy`` plus the complete legacy strict gate set and the
 risk-capped exit-history policy.
 """
@@ -26,6 +25,15 @@ _ORIGINAL_BUILD_QUANT_ROWS = pipeline._build_quant_rows
 _ORIGINAL_SCREEN_BLOCKERS = pipeline._screen_blockers
 _ORIGINAL_SCREEN_STATUS = pipeline._screen_status
 _ORIGINAL_TIER_ROW = pipeline._tier_row
+
+DIAGNOSTIC_COLUMNS = (
+    "preliminary_opportunity_engine",
+    "net_profit_yoy",
+    "previous_net_profit_yoy",
+    "earnings_inflection_confirmed",
+    "earnings_inflection_reason",
+    "earnings_inflection_report_date",
+)
 
 
 def _finite_float(value: Any) -> float | None:
@@ -57,26 +65,17 @@ def _same_fiscal_period_prior_year(report_date: date) -> date:
     try:
         return report_date.replace(year=report_date.year - 1)
     except ValueError:
-        # Defensive handling for leap-day providers.
         return report_date.replace(year=report_date.year - 1, day=28)
 
 
 def _profit_growth(current: float, prior: float) -> float | None:
-    # Standard percentage growth is not meaningful around a zero/negative base.
-    # A loss-to-profit turnaround is handled explicitly by the caller.
     if prior <= 0:
         return None
     return (current / prior - 1.0) * 100.0
 
 
 def financial_inflection_metrics(financial_df: Any, *, as_of: date) -> dict[str, Any]:
-    """Derive auditable earnings-inflection fields from disclosed net profit.
-
-    We compare like-for-like fiscal periods one year apart.  A confirmed
-    inflection is either a real loss-to-profit turnaround, or positive YoY
-    growth following non-positive YoY growth with at least 10 percentage points
-    of acceleration.  Missing history stays unconfirmed.
-    """
+    """Derive auditable earnings-inflection fields from published net profit."""
 
     empty = {
         "net_profit_yoy": None,
@@ -97,9 +96,6 @@ def financial_inflection_metrics(financial_df: Any, *, as_of: date) -> dict[str,
     local = local[local["report_date"] <= as_of]
     if "disclosure_date" in local.columns:
         disclosure = pd.to_datetime(local["disclosure_date"], errors="coerce").dt.date
-        # A populated future disclosure date is never usable.  Missing disclosure
-        # dates are retained because the live provider only returns published
-        # financial-analysis rows; final evidence gates still independently apply.
         local = local[disclosure.isna() | (disclosure <= as_of)]
     if local.empty:
         return empty
@@ -119,10 +115,9 @@ def financial_inflection_metrics(financial_df: Any, *, as_of: date) -> dict[str,
 
     current_period = report_dates[-1]
     current_yoy, turnaround = yoy_for(current_period)
-
     previous_yoy = None
     for period in reversed(report_dates[:-1]):
-        candidate_yoy, _candidate_turnaround = yoy_for(period)
+        candidate_yoy, _ = yoy_for(period)
         if candidate_yoy is not None:
             previous_yoy = candidate_yoy
             break
@@ -152,10 +147,7 @@ def financial_inflection_metrics(financial_df: Any, *, as_of: date) -> dict[str,
 
 def _screen_blockers(row: Mapping[str, Any]) -> tuple[list[str], list[str]]:
     hard, soft = _ORIGINAL_SCREEN_BLOCKERS(row)
-    engine = _preliminary_engine(row)
-    if engine in {"STRONG_TREND_RESEARCH", "EARNINGS_INFLECTION"}:
-        # These two flags encoded the legacy assumption that every opportunity
-        # must be historically cheap.  No other blocker is relaxed.
+    if _preliminary_engine(row) in {"STRONG_TREND_RESEARCH", "EARNINGS_INFLECTION"}:
         hard = [item for item in hard if item != "price_position_overheated"]
         soft = [item for item in soft if item != "price_not_low_enough"]
     return sorted(set(hard)), sorted(set(soft))
@@ -165,33 +157,25 @@ def _screen_status(row: Mapping[str, Any], hard: list[str], soft: list[str]) -> 
     status = _ORIGINAL_SCREEN_STATUS(row, hard, soft)
     if hard:
         return status
-    if _preliminary_engine(row) in {"STRONG_TREND_RESEARCH", "EARNINGS_INFLECTION"}:
-        # Admission only.  Do not inflate these to priority merely because a new
-        # engine exists; evidence collection and final strict gates still decide.
-        if status == "LOW_PRIORITY":
-            return "SECONDARY_RESEARCH"
+    if (
+        _preliminary_engine(row) in {"STRONG_TREND_RESEARCH", "EARNINGS_INFLECTION"}
+        and status == "LOW_PRIORITY"
+    ):
+        return "SECONDARY_RESEARCH"
     return status
 
 
 def _build_quant_rows(**kwargs: Any) -> list[dict[str, Any]]:
     rows = _ORIGINAL_BUILD_QUANT_ROWS(**kwargs)
-    input_by_code = {
-        str(item.code).zfill(6): item
-        for item in kwargs.get("inputs", [])
-    }
+    input_by_code = {str(item.code).zfill(6): item for item in kwargs.get("inputs", [])}
     as_of = kwargs.get("resolved_as_of")
     if not isinstance(as_of, date):
         return rows
 
     for row in rows:
-        code = str(row.get("code") or "").zfill(6)
-        item = input_by_code.get(code)
+        item = input_by_code.get(str(row.get("code") or "").zfill(6))
         if item is not None:
             row.update(financial_inflection_metrics(item.financial_df, as_of=as_of))
-
-        # Re-evaluate only the research funnel after real earnings fields exist.
-        # The original builder does not discard rows on its old classification,
-        # so this cannot resurrect a signal-generation failure.
         hard, soft = _screen_blockers(row)
         row["hard_reject_blockers"] = ";".join(hard)
         row["soft_blockers"] = ";".join(soft)
@@ -201,22 +185,30 @@ def _build_quant_rows(**kwargs: Any) -> list[dict[str, Any]]:
 
 
 def _tier_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Remove only the duplicated Tier-A price condition for new engines."""
+
+    result = _ORIGINAL_TIER_ROW(row)
     engine = _preliminary_engine(row)
+    result["preliminary_opportunity_engine"] = engine
     if engine not in {"STRONG_TREND_RESEARCH", "EARNINGS_INFLECTION"}:
-        result = _ORIGINAL_TIER_ROW(row)
-        result["preliminary_opportunity_engine"] = engine
         return result
 
-    # The legacy Tier-A implementation contains one duplicated universal
-    # ``price <= 35%`` condition.  Feed it a shadow value solely for that
-    # condition, then restore the real percentile in the emitted research row.
-    # All other conditions and hard blockers execute unchanged.
-    original_percentile = row.get("price_percentile_5y")
-    shadow = dict(row)
-    shadow["price_percentile_5y"] = 0.35
-    result = _ORIGINAL_TIER_ROW(shadow)
-    result["price_percentile_5y"] = original_percentile
-    result["preliminary_opportunity_engine"] = engine
+    failed = [token for token in str(result.get("a_condition_failed") or "").split(";") if token]
+    if "price_low_or_reasonable" not in failed:
+        return result
+
+    remaining = [token for token in failed if token != "price_low_or_reasonable"]
+    result["a_condition_failed"] = ";".join(remaining)
+    result["a_condition_fail_count"] = len(remaining)
+    result["a_condition_pass_count"] = int(result.get("a_condition_pass_count") or 0) + 1
+
+    # Promote to Tier A only when price was literally the last failed A condition.
+    # Any hard blocker or other failed condition remains authoritative.
+    hard = str(result.get("hard_blockers") or "").strip()
+    if not remaining and not hard and str(row.get("quant_screen_status") or "") in pipeline.RESEARCH_STATUSES:
+        result["tier"] = "TIER_A"
+        result["research_label"] = pipeline._research_label("TIER_A")
+        result["upgrade_conditions"] = pipeline._upgrade_conditions([], str(result.get("industry_evidence_status") or ""), str(result.get("company_evidence_status") or ""))
     return result
 
 
@@ -229,3 +221,7 @@ def install() -> None:
     pipeline._screen_status = _screen_status
     pipeline._build_quant_rows = _build_quant_rows
     pipeline._tier_row = _tier_row
+    for columns in (pipeline.QUANT_COLUMNS, pipeline.OPPORTUNITY_COLUMNS):
+        for column in DIAGNOSTIC_COLUMNS:
+            if column not in columns:
+                columns.append(column)
