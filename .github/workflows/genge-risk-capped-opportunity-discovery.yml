@@ -35,11 +35,15 @@ jobs:
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
-      - name: Run risk-capped and signal lifecycle tests
+      - name: Run risk-capped, engine, and signal lifecycle tests
         run: |
           python -m pytest -q \
             tests/test_genge_risk_capped_buy_policy.py \
             tests/test_genge_complete_material_event_pagination.py \
+            tests/test_genge_opportunity_engine_policy.py \
+            tests/test_genge_opportunity_pipeline_policy.py \
+            tests/test_genge_opportunity_queue_policy.py \
+            tests/test_genge_opportunity_report_policy.py \
             tests/test_genge_real_world_signals.py \
             tests/test_genge_live_exit_policy.py
 
@@ -140,7 +144,7 @@ jobs:
               "exit_profile_validation_scope",
           }
           hard_gate_columns = {
-              "quant_research_queue", "no_hard_risk", "price_percentile_le_35",
+              "quant_research_queue", "no_hard_risk", "opportunity_engine_eligible",
               "trend_medium", "above_ma60", "ma60_not_down", "not_falling_knife",
               "financial_passed", "valuation_not_failed", "industry_evidence",
               "company_evidence", "hard_logic_medium", "real_rr_1_8", "ready_plan",
@@ -149,6 +153,9 @@ jobs:
               "event_risk_known", "event_risk_not_high",
               "price_volume_not_distribution", "execution_not_high",
               "value_trap_not_high", "price_mapping_ok",
+          }
+          valid_engines = {
+              "VALLEY_REPAIR", "STRONG_TREND_PULLBACK", "EARNINGS_INFLECTION",
           }
 
           assert summary["actionable_execution_count"] == summary["buy_signal_count"]
@@ -169,6 +176,10 @@ jobs:
               assert float(buy["risk_budget_max_position_pct"] or 0) > 0
 
               row = strict_rows[code]
+              assert row["opportunity_engine"] in valid_engines, (code, row["opportunity_engine"])
+              assert row["opportunity_engine_eligible"] == "True", code
+              assert row["opportunity_engine_reason"], code
+              assert row["factor_validity_status"] in {"VALID", "NEUTRAL", "UNKNOWN"}, code
               failed = {
                   name for name in str(row.get("strict_gate_failed") or "").split(";") if name
               }
