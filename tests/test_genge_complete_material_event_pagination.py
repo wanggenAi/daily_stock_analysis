@@ -87,7 +87,7 @@ def test_query_error_stays_incomplete_and_is_not_split():
     assert "query_error" in meta["query_error"]
 
 
-def test_install_replaces_only_provider_pagination(monkeypatch):
+def test_install_replaces_only_provider_pagination():
     base = pagination.base
     old_cninfo = base._query_cninfo_material_events
     old_sse = base._query_sse_material_events
@@ -97,5 +97,11 @@ def test_install_replaces_only_provider_pagination(monkeypatch):
         assert base._query_sse_material_events is pagination.query_sse_material_events_complete
         assert callable(base.collect_company_material_events)
     finally:
-        monkeypatch.setattr(base, "_query_cninfo_material_events", old_cninfo)
-        monkeypatch.setattr(base, "_query_sse_material_events", old_sse)
+        # Do not register the restoration with pytest's monkeypatch undo stack.
+        # If we did, fixture teardown would restore the *installed* functions
+        # captured by monkeypatch.setattr and leak them into later tests.
+        base._query_cninfo_material_events = old_cninfo
+        base._query_sse_material_events = old_sse
+
+    assert base._query_cninfo_material_events is old_cninfo
+    assert base._query_sse_material_events is old_sse
