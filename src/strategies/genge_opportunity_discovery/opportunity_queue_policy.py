@@ -5,8 +5,9 @@ positioning. That remains appropriate for VALLEY_REPAIR, but using the same
 score to truncate strong-trend and earnings-inflection research queues would
 reintroduce the old low-price bias before final strict evaluation.
 
-This module changes research prioritization only. It does not create formal
-signals, reserve per-engine quotas, or relax any hard gate.
+This module changes research prioritization and report observability only. It
+does not create formal signals, reserve per-engine quotas, or relax any hard
+gate.
 """
 
 from __future__ import annotations
@@ -14,12 +15,21 @@ from __future__ import annotations
 from collections.abc import Iterable, Mapping, MutableMapping
 from typing import Any
 
+from src.strategies.genge_opportunity_discovery import all_a_full_scan as core
 from src.strategies.genge_opportunity_discovery import pipeline
 
 
 NON_PRICE_LEGACY_WEIGHT = 0.74
 ENGINE_RESEARCH_SCORE_COLUMN = "engine_research_score"
 ENGINE_RANKED_RESEARCH = frozenset({"STRONG_TREND_RESEARCH", "EARNINGS_INFLECTION"})
+ENGINE_REPORT_COLUMNS = (
+    "opportunity_engine",
+    "opportunity_engine_eligible",
+    "opportunity_engine_reason",
+    "factor_validity_status",
+    "earnings_inflection_confirmed",
+    ENGINE_RESEARCH_SCORE_COLUMN,
+)
 
 _ORIGINAL_RESEARCH_QUEUES = pipeline._research_queues
 
@@ -137,12 +147,18 @@ def research_queues(
     return priority_queue, secondary_queue
 
 
-def install() -> None:
-    """Install price-neutral ranking for non-valley research engines."""
+def _append_once(columns: list[str], names: Iterable[str]) -> None:
+    for name in names:
+        if name not in columns:
+            columns.append(name)
 
-    if pipeline._research_queues is research_queues:
-        return
-    pipeline._research_queues = research_queues
-    for columns in (pipeline.QUANT_COLUMNS, pipeline.OPPORTUNITY_COLUMNS):
-        if ENGINE_RESEARCH_SCORE_COLUMN not in columns:
-            columns.append(ENGINE_RESEARCH_SCORE_COLUMN)
+
+def install() -> None:
+    """Install price-neutral ranking and expose engine diagnostics in reports."""
+
+    if pipeline._research_queues is not research_queues:
+        pipeline._research_queues = research_queues
+    _append_once(pipeline.QUANT_COLUMNS, (ENGINE_RESEARCH_SCORE_COLUMN,))
+    _append_once(pipeline.OPPORTUNITY_COLUMNS, (ENGINE_RESEARCH_SCORE_COLUMN,))
+    _append_once(core.PLAN_COLUMNS, ENGINE_REPORT_COLUMNS)
+    _append_once(core.TOP5_COLUMNS, ENGINE_REPORT_COLUMNS)
