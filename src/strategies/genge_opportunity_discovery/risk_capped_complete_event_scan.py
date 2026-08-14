@@ -5,6 +5,7 @@ from __future__ import annotations
 from src.strategies.genge_opportunity_discovery import opportunity_engine_policy
 from src.strategies.genge_opportunity_discovery import opportunity_pipeline_policy
 from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
+from src.strategies.genge_opportunity_discovery import opportunity_report_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
 
@@ -35,6 +36,10 @@ def main(argv: list[str] | None = None) -> int:
         # admission. All existing strict safety/risk gates remain in force; the
         # risk-capped wrapper may still relax exit-history uncertainty only.
         opportunity_engine_policy.install()
+
+        # Persist the engine decision and evidence diagnostics in the fixed-column
+        # candidate reports. This changes report schema only, never eligibility.
+        opportunity_report_policy.install()
         return risk_capped.main(argv)
     finally:
         event_base._query_cninfo_material_events = original_cninfo
