@@ -9,6 +9,7 @@ from pathlib import Path
 
 from src.strategies.genge_opportunity_discovery import candidate_recovery_report
 from src.strategies.genge_opportunity_discovery import execution_lot_feasibility
+from src.strategies.genge_opportunity_discovery import factor_ic_monitor
 from src.strategies.genge_opportunity_discovery import opportunity_engine_policy
 from src.strategies.genge_opportunity_discovery import opportunity_pipeline_policy
 from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
@@ -92,6 +93,9 @@ def main(argv: list[str] | None = None) -> int:
 
     complete_material_event_pagination.install()
     opportunity_pipeline_policy.install()
+    # Factor IC must wrap the engine-aware quant builder so earnings fields are
+    # already normalized before point-in-time observations are persisted.
+    factor_ic_monitor.install()
     opportunity_queue_policy.install()
     opportunity_engine_policy.install()
     opportunity_report_policy.install()
@@ -107,6 +111,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_dir,
                 portfolio_capital=_portfolio_capital(),
             )
+            factor_ic_monitor.write_report(output_dir)
         return result
     finally:
         base._query_cninfo_material_events = original_cninfo
