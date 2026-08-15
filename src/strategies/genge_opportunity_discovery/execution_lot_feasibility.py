@@ -7,7 +7,9 @@ eligibility remains owned by the existing strict/risk-capped policy.
 
 from __future__ import annotations
 
+import csv
 import math
+from pathlib import Path
 from typing import Any, Mapping
 
 
@@ -17,6 +19,15 @@ BOARD_BUY_RULES = {
     "CHINEXT": {"minimum": 100, "increment": 100},
     "STAR": {"minimum": 200, "increment": 1},
 }
+AUDIT_COLUMNS = [
+    "code", "stock_name", "board", "execution_action", "preferred_plan",
+    "entry_low", "entry_high", "max_buy_price", "risk_budget_initial_position_pct",
+    "risk_budget_max_position_pct", "lot_feasibility_status", "minimum_buy_quantity",
+    "buy_quantity_increment", "minimum_order_notional_entry_low",
+    "minimum_order_notional_max_price", "required_capital_for_initial_min_order",
+    "required_capital_for_max_min_order", "initial_budget_legal_quantity",
+    "max_budget_legal_quantity",
+]
 
 
 def _safe_float(value: Any) -> float | None:
@@ -54,14 +65,10 @@ def audit_execution_row(
     if rule is None:
         result.update({
             "lot_feasibility_status": "UNKNOWN_BOARD",
-            "minimum_buy_quantity": "",
-            "buy_quantity_increment": "",
-            "minimum_order_notional_entry_low": "",
-            "minimum_order_notional_max_price": "",
-            "required_capital_for_initial_min_order": "",
-            "required_capital_for_max_min_order": "",
-            "initial_budget_legal_quantity": "",
-            "max_budget_legal_quantity": "",
+            "minimum_buy_quantity": "", "buy_quantity_increment": "",
+            "minimum_order_notional_entry_low": "", "minimum_order_notional_max_price": "",
+            "required_capital_for_initial_min_order": "", "required_capital_for_max_min_order": "",
+            "initial_budget_legal_quantity": "", "max_budget_legal_quantity": "",
         })
         return result
 
@@ -97,12 +104,8 @@ def audit_execution_row(
         capital = max(0.0, float(portfolio_capital))
         initial_budget = capital * max(0.0, initial_pct or 0.0) / 100.0
         max_budget = capital * max(0.0, max_pct or 0.0) / 100.0
-        initial_qty = _max_legal_quantity(
-            initial_budget, max_price, minimum=minimum, increment=increment,
-        )
-        max_qty = _max_legal_quantity(
-            max_budget, max_price, minimum=minimum, increment=increment,
-        )
+        initial_qty = _max_legal_quantity(initial_budget, max_price, minimum=minimum, increment=increment)
+        max_qty = _max_legal_quantity(max_budget, max_price, minimum=minimum, increment=increment)
         if max_qty <= 0:
             status = "NO_LOT_FEASIBLE_WITHIN_MAX_POSITION_CAP"
         elif initial_qty <= 0:
@@ -128,3 +131,28 @@ def audit_execution_rows(
     rows: list[Mapping[str, Any]], *, portfolio_capital: float | None = None,
 ) -> list[dict[str, Any]]:
     return [audit_execution_row(row, portfolio_capital=portfolio_capital) for row in rows]
+
+
+def _read_csv(path: Path) -> list[dict[str, Any]]:
+    if not path.exists():
+        return []
+    with path.open(encoding="utf-8") as stream:
+        return list(csv.DictReader(stream))
+
+
+def write_report(report_dir: Path, *, portfolio_capital: float | None = None) -> list[dict[str, Any]]:
+    executions = _read_csv(report_dir / "actionable_execution_list.csv")
+    strict_rows = {
+        str(row.get("code") or "").zfill(6): row
+        for row in _read_csv(report_dir / "strict_review_ready.csv")
+    }
+    joined = []
+    for execution in executions:
+        code = str(execution.get("code") or "").zfill(6)
+        joined.append({**strict_rows.get(code, {}), **execution, "code": code})
+    audited = audit_execution_rows(joined, portfolio_capital=portfolio_capital)
+    with (report_dir / "execution_lot_feasibility.csv").open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=AUDIT_COLUMNS)
+        writer.writeheader()
+        writer.writerows({key: row.get(key, "") for key in AUDIT_COLUMNS} for row in audited)
+    return audited
