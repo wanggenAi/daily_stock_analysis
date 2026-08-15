@@ -16,6 +16,7 @@ from src.strategies.genge_opportunity_discovery import opportunity_pipeline_poli
 from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
 from src.strategies.genge_opportunity_discovery import opportunity_report_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
+from src.strategies.genge_opportunity_discovery import universe_resilience_policy
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
 
 
@@ -83,6 +84,7 @@ def main(argv: list[str] | None = None) -> int:
     original_exit_profile_health = core._exit_profile_strategy_health
     original_strict_checks = core.strict_candidate_checks
     original_build_industry_regimes = core.build_industry_regimes
+    original_build_all_a_universe = core.build_all_a_universe
     original_build_quant_rows = pipeline._build_quant_rows
     original_screen_blockers = pipeline._screen_blockers
     original_screen_status = pipeline._screen_status
@@ -95,6 +97,7 @@ def main(argv: list[str] | None = None) -> int:
     opportunity_columns = list(pipeline.OPPORTUNITY_COLUMNS)
 
     complete_material_event_pagination.install()
+    universe_resilience_policy.install()
     industry_regime_policy.install()
     opportunity_pipeline_policy.install()
     # Factor IC must wrap the engine-aware quant builder so earnings fields are
@@ -126,6 +129,7 @@ def main(argv: list[str] | None = None) -> int:
         core._exit_profile_strategy_health = original_exit_profile_health
         core.strict_candidate_checks = original_strict_checks
         core.build_industry_regimes = original_build_industry_regimes
+        core.build_all_a_universe = original_build_all_a_universe
         pipeline._build_quant_rows = original_build_quant_rows
         pipeline._screen_blockers = original_screen_blockers
         pipeline._screen_status = original_screen_status
