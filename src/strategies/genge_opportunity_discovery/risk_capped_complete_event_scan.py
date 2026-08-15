@@ -2,12 +2,26 @@
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+from src.strategies.genge_opportunity_discovery import candidate_recovery_report
+from src.strategies.genge_opportunity_discovery import execution_lot_feasibility
 from src.strategies.genge_opportunity_discovery import opportunity_engine_policy
 from src.strategies.genge_opportunity_discovery import opportunity_pipeline_policy
 from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
 from src.strategies.genge_opportunity_discovery import opportunity_report_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
+
+
+def _explicit_output_dir(argv: list[str]) -> Path | None:
+    for index, value in enumerate(argv):
+        if value == "--output-dir" and index + 1 < len(argv):
+            return Path(argv[index + 1])
+        if value.startswith("--output-dir="):
+            return Path(value.split("=", 1)[1])
+    return None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -34,7 +48,15 @@ def main(argv: list[str] | None = None) -> int:
     opportunity_engine_policy.install()
     opportunity_report_policy.install()
     try:
-        return risk_capped.main(argv)
+        result = risk_capped.main(argv)
+        if result != 0:
+            return result
+        effective_argv = list(sys.argv[1:] if argv is None else argv)
+        output_dir = _explicit_output_dir(effective_argv)
+        if output_dir is not None:
+            candidate_recovery_report.write_report(output_dir)
+            execution_lot_feasibility.write_report(output_dir)
+        return result
     finally:
         base._query_cninfo_material_events = original_cninfo
         base._query_sse_material_events = original_sse
