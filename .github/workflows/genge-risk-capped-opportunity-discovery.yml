@@ -35,12 +35,14 @@ jobs:
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
-      - name: Run risk-capped, factor, engine, and signal lifecycle tests
+      - name: Run risk-capped, factor, engine, sector, universe, and signal lifecycle tests
         run: |
           python -m pytest -q \
             tests/test_genge_risk_capped_buy_policy.py \
             tests/test_genge_complete_material_event_pagination.py \
             tests/test_genge_factor_ic_monitor.py \
+            tests/test_genge_industry_regime_policy.py \
+            tests/test_genge_universe_resilience_policy.py \
             tests/test_genge_opportunity_engine_policy.py \
             tests/test_genge_opportunity_pipeline_policy.py \
             tests/test_genge_opportunity_queue_policy.py \
@@ -133,6 +135,8 @@ jobs:
               buys = list(csv.DictReader(handle))
           with (latest / "actionable_execution_list.csv").open(encoding="utf-8") as handle:
               executions = list(csv.DictReader(handle))
+          with (latest / "industry_regime.csv").open(encoding="utf-8") as handle:
+              industries = list(csv.DictReader(handle))
 
           assert (latest / "factor_effectiveness.csv").exists()
           assert (latest / "factor_effectiveness.json").exists()
@@ -143,6 +147,14 @@ jobs:
           assert set(factor_summary["factor_summaries"]) == {
               "VALUE", "QUALITY", "REVERSAL", "MOMENTUM", "EARNINGS",
           }
+          assert industries, "empty industry regime"
+          assert all("median_relative_strength_20d" in row for row in industries)
+          assert all("median_relative_strength_60d" in row for row in industries)
+          assert all("above_ma60_ratio" in row for row in industries)
+          assert all(
+              row.get("rule_version") == "industry_regime_v2_multihorizon_rs"
+              for row in industries
+          )
 
           relaxable = {
               "exit_profile_passed",
