@@ -82,6 +82,25 @@ def _normalize_factor_status(value: Any) -> str | None:
     return _FACTOR_STATUS_ALIASES.get(text)
 
 
+def _has_engine_specific_factor_evidence(row: Mapping[str, Any]) -> bool:
+    """Return whether the row carries per-engine factor diagnostics.
+
+    A legacy caller may deliberately set a single generic INVALID status to mean
+    "all factor-driven opportunity admission is vetoed".  Once the rolling IC
+    monitor supplies per-engine fields, those more specific fields take
+    precedence and are isolated from one another.
+    """
+
+    for prefix in _ENGINE_FACTOR_PREFIX.values():
+        if row.get(f"{prefix}_factor_validity_status") not in {None, ""}:
+            return True
+        if row.get(f"{prefix}_factor_ic") not in {None, ""}:
+            return True
+        if row.get(f"{prefix}_factor_ic_sample_count") not in {None, "", 0, "0"}:
+            return True
+    return False
+
+
 def factor_validity_status(row: Mapping[str, Any]) -> str:
     """Return generic VALID/NEUTRAL/INVALID/UNKNOWN without inventing evidence.
 
@@ -214,6 +233,23 @@ def _shape_flags(
 
 def evaluate_engine(row: Mapping[str, Any], plan: Mapping[str, Any]) -> EngineEvaluation:
     valley, trend_pullback, earnings_shape, earnings = _shape_flags(row, plan)
+
+    # Preserve legacy semantics for callers that intentionally provide only one
+    # blanket factor verdict.  The rolling monitor always supplies per-engine
+    # diagnostics, so its valley/trend/earnings evidence remains isolated.
+    generic_factor = _normalize_factor_status(
+        row.get("factor_validity_status")
+        or row.get("factor_effectiveness_status")
+    )
+    if generic_factor == "INVALID" and not _has_engine_specific_factor_evidence(row):
+        return EngineEvaluation(
+            False,
+            "NONE",
+            "explicit_factor_evidence_adverse",
+            "INVALID",
+            earnings,
+        )
+
     rejected_by_factor: list[str] = []
 
     if valley:
