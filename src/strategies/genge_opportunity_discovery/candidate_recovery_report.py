@@ -56,7 +56,13 @@ def _failed_gates(row: Mapping[str, Any]) -> set[str]:
 
 
 def _profile_is_recoverable(row: Mapping[str, Any]) -> bool:
-    status = str(row.get("exit_profile_status") or "NOT_AVAILABLE").upper()
+    # Exit-history uncertainty may reduce position size, but missing profile
+    # detail must never be silently reinterpreted as NOT_AVAILABLE. Recovery is
+    # a prioritization report, so fail closed until an explicit profile state is
+    # present in the full audit source.
+    status = str(row.get("exit_profile_status") or "").strip().upper()
+    if status not in {"PASSED", "NOT_AVAILABLE", "DEGRADED", "FAILED"}:
+        return False
     hard_veto = int(_float_value(row.get("stock_hard_veto_outcome_count")))
     if status == "FAILED" or hard_veto > 0:
         return False
@@ -105,17 +111,19 @@ def classify_recovery_candidate(row: Mapping[str, Any]) -> tuple[str, set[str]] 
 
 
 def build_recovery_rows(
-    audit_rows: Iterable[Mapping[str, Any]], deep_rows: Iterable[Mapping[str, Any]],
+    audit_rows: Iterable[Mapping[str, Any]], detail_rows: Iterable[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    deep_by_code = {
+    detail_by_code = {
         str(row.get("code") or "").zfill(6): dict(row)
-        for row in deep_rows if str(row.get("code") or "").strip()
+        for row in detail_rows if str(row.get("code") or "").strip()
     }
     class_priority = {"DATA_RECOVERY_NOW": 0, "MARKET_TRIGGER_WATCH": 1, "RESEARCH_OR_TRIGGER_WATCH": 2}
     result: list[dict[str, Any]] = []
     for audit in audit_rows:
         code = str(audit.get("code") or "").zfill(6)
-        source = {**deep_by_code.get(code, {}), **dict(audit), "code": code}
+        # Strict-gate audit remains authoritative for failed-gate columns; the
+        # complete real-world audit supplies profile, engine and score detail.
+        source = {**detail_by_code.get(code, {}), **dict(audit), "code": code}
         classified = classify_recovery_candidate(source)
         if classified is None:
             continue
@@ -154,10 +162,20 @@ def _read_csv(path: Path) -> list[dict[str, Any]]:
         return list(csv.DictReader(stream))
 
 
+def _recovery_detail_rows(report_dir: Path) -> list[dict[str, Any]]:
+    # real_world_signal_audit covers the complete deep-review/audit population;
+    # top30_deep_review is only a presentation slice and may omit profile state.
+    complete = report_dir / "real_world_signal_audit.csv"
+    if complete.exists():
+        return _read_csv(complete)
+    fallback = report_dir / "top30_deep_review.csv"
+    return _read_csv(fallback) if fallback.exists() else []
+
+
 def write_report(report_dir: Path) -> list[dict[str, Any]]:
     rows = build_recovery_rows(
         _read_csv(report_dir / "strict_gate_audit.csv"),
-        _read_csv(report_dir / "top30_deep_review.csv"),
+        _recovery_detail_rows(report_dir),
     )
     csv_path = report_dir / "candidate_recovery_queue.csv"
     with csv_path.open("w", encoding="utf-8", newline="") as stream:
