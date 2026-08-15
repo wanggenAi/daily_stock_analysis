@@ -7,11 +7,20 @@ from src.strategies.genge_opportunity_discovery.evidence_collectors import compl
 
 
 def main(argv: list[str] | None = None) -> int:
-    # Data completeness is a prerequisite, not a relaxed gate.  The installed
-    # collector still returns PARTIAL/UNKNOWN whenever a leaf window cannot be
-    # proven complete; only provider page-cap truncation is resolved by splitting.
+    # Data completeness is a prerequisite, not a relaxed gate. The production
+    # collector hook is process-global, so keep it scoped to this scan invocation
+    # and restore the caller's provider functions afterwards. This prevents test
+    # suites and long-lived processes from inheriting the adaptive hook merely
+    # because they invoked this entrypoint once.
+    base = complete_material_event_pagination.base
+    original_cninfo = base._query_cninfo_material_events
+    original_sse = base._query_sse_material_events
     complete_material_event_pagination.install()
-    return risk_capped.main(argv)
+    try:
+        return risk_capped.main(argv)
+    finally:
+        base._query_cninfo_material_events = original_cninfo
+        base._query_sse_material_events = original_sse
 
 
 if __name__ == "__main__":
