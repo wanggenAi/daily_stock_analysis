@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import os
 import sys
 from pathlib import Path
@@ -14,6 +15,9 @@ from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
 from src.strategies.genge_opportunity_discovery import opportunity_report_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
+
+
+EXECUTION_PORTFOLIO_CONFIG = Path("config/execution_portfolio.json")
 
 
 def _explicit_output_dir(argv: list[str]) -> Path | None:
@@ -39,17 +43,27 @@ def _resolved_report_dir(argv: list[str]) -> Path | None:
     return candidates[-1] if candidates else None
 
 
-def _portfolio_capital_from_env() -> float | None:
-    """Return optional reporting capital without changing any position policy."""
+def _positive_float(value: object) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number > 0 else None
 
-    raw = os.environ.get("GENGE_PORTFOLIO_CAPITAL", "").strip()
-    if not raw:
+
+def _portfolio_capital() -> float | None:
+    """Read optional reporting capital; environment overrides repository config."""
+
+    env_value = _positive_float(os.environ.get("GENGE_PORTFOLIO_CAPITAL", "").strip())
+    if env_value is not None:
+        return env_value
+    if not EXECUTION_PORTFOLIO_CONFIG.exists():
         return None
     try:
-        value = float(raw)
-    except ValueError:
+        payload = json.loads(EXECUTION_PORTFOLIO_CONFIG.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
         return None
-    return value if value > 0 else None
+    return _positive_float(payload.get("portfolio_capital"))
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -91,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
             candidate_recovery_report.write_report(output_dir)
             execution_lot_feasibility.write_report(
                 output_dir,
-                portfolio_capital=_portfolio_capital_from_env(),
+                portfolio_capital=_portfolio_capital(),
             )
         return result
     finally:
