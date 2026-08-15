@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 
@@ -36,6 +37,19 @@ def _resolved_report_dir(argv: list[str]) -> Path | None:
         if path.is_dir() and (path / "run_summary.json").exists()
     )
     return candidates[-1] if candidates else None
+
+
+def _portfolio_capital_from_env() -> float | None:
+    """Return optional reporting capital without changing any position policy."""
+
+    raw = os.environ.get("GENGE_PORTFOLIO_CAPITAL", "").strip()
+    if not raw:
+        return None
+    try:
+        value = float(raw)
+    except ValueError:
+        return None
+    return value if value > 0 else None
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -75,7 +89,10 @@ def main(argv: list[str] | None = None) -> int:
         output_dir = _resolved_report_dir(effective_argv)
         if output_dir is not None:
             candidate_recovery_report.write_report(output_dir)
-            execution_lot_feasibility.write_report(output_dir)
+            execution_lot_feasibility.write_report(
+                output_dir,
+                portfolio_capital=_portfolio_capital_from_env(),
+            )
         return result
     finally:
         base._query_cninfo_material_events = original_cninfo
