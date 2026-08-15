@@ -10,6 +10,7 @@ from pathlib import Path
 from src.strategies.genge_opportunity_discovery import candidate_recovery_report
 from src.strategies.genge_opportunity_discovery import execution_lot_feasibility
 from src.strategies.genge_opportunity_discovery import factor_ic_monitor
+from src.strategies.genge_opportunity_discovery import industry_regime_policy
 from src.strategies.genge_opportunity_discovery import opportunity_engine_policy
 from src.strategies.genge_opportunity_discovery import opportunity_pipeline_policy
 from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
@@ -81,6 +82,7 @@ def main(argv: list[str] | None = None) -> int:
     original_build_daily_signals = core.build_daily_signals
     original_exit_profile_health = core._exit_profile_strategy_health
     original_strict_checks = core.strict_candidate_checks
+    original_build_industry_regimes = core.build_industry_regimes
     original_build_quant_rows = pipeline._build_quant_rows
     original_screen_blockers = pipeline._screen_blockers
     original_screen_status = pipeline._screen_status
@@ -88,10 +90,12 @@ def main(argv: list[str] | None = None) -> int:
     original_research_queues = pipeline._research_queues
     plan_columns = list(core.PLAN_COLUMNS)
     top5_columns = list(core.TOP5_COLUMNS)
+    industry_regime_columns = list(core.INDUSTRY_REGIME_COLUMNS)
     quant_columns = list(pipeline.QUANT_COLUMNS)
     opportunity_columns = list(pipeline.OPPORTUNITY_COLUMNS)
 
     complete_material_event_pagination.install()
+    industry_regime_policy.install()
     opportunity_pipeline_policy.install()
     # Factor IC must wrap the engine-aware quant builder so earnings fields are
     # already normalized before point-in-time observations are persisted.
@@ -121,6 +125,7 @@ def main(argv: list[str] | None = None) -> int:
         core.build_daily_signals = original_build_daily_signals
         core._exit_profile_strategy_health = original_exit_profile_health
         core.strict_candidate_checks = original_strict_checks
+        core.build_industry_regimes = original_build_industry_regimes
         pipeline._build_quant_rows = original_build_quant_rows
         pipeline._screen_blockers = original_screen_blockers
         pipeline._screen_status = original_screen_status
@@ -128,6 +133,7 @@ def main(argv: list[str] | None = None) -> int:
         pipeline._research_queues = original_research_queues
         core.PLAN_COLUMNS[:] = plan_columns
         core.TOP5_COLUMNS[:] = top5_columns
+        core.INDUSTRY_REGIME_COLUMNS[:] = industry_regime_columns
         pipeline.QUANT_COLUMNS[:] = quant_columns
         pipeline.OPPORTUNITY_COLUMNS[:] = opportunity_columns
 
