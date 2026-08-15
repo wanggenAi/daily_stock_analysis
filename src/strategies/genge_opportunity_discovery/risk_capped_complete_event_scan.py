@@ -24,6 +24,20 @@ def _explicit_output_dir(argv: list[str]) -> Path | None:
     return None
 
 
+def _resolved_report_dir(argv: list[str]) -> Path | None:
+    explicit = _explicit_output_dir(argv)
+    if explicit is not None:
+        return explicit
+    root = Path("reports/all_a_full_scan")
+    if not root.exists():
+        return None
+    candidates = sorted(
+        path for path in root.iterdir()
+        if path.is_dir() and (path / "run_summary.json").exists()
+    )
+    return candidates[-1] if candidates else None
+
+
 def main(argv: list[str] | None = None) -> int:
     # Data completeness is a prerequisite, not a relaxed gate. The production
     # collector hook is process-global, so keep it scoped to this scan invocation
@@ -52,7 +66,7 @@ def main(argv: list[str] | None = None) -> int:
         if result != 0:
             return result
         effective_argv = list(sys.argv[1:] if argv is None else argv)
-        output_dir = _explicit_output_dir(effective_argv)
+        output_dir = _resolved_report_dir(effective_argv)
         if output_dir is not None:
             candidate_recovery_report.write_report(output_dir)
             execution_lot_feasibility.write_report(output_dir)
