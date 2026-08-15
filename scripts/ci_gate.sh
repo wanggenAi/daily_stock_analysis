@@ -23,7 +23,31 @@ deterministic_checks() {
 
 offline_test_suite() {
   echo "==> backend-gate: offline test suite"
-  python -m pytest -m "not network"
+  local log_file
+  log_file="$(mktemp)"
+
+  set +e
+  python -m pytest -m "not network" 2>&1 | tee "$log_file"
+  local pytest_status=${PIPESTATUS[0]}
+  set -e
+
+  if [[ "$pytest_status" -ne 0 ]]; then
+    echo "==> backend-gate: structured pytest failure summary"
+    local annotated=0
+    while IFS= read -r line; do
+      [[ -z "$line" ]] && continue
+      echo "::error title=Offline pytest failure::${line}"
+      annotated=1
+    done < <(grep -E '^(FAILED|ERROR) ' "$log_file" || true)
+
+    if [[ "$annotated" -eq 0 ]]; then
+      echo "::error title=Offline pytest failure::pytest exited with status ${pytest_status}; inspect the offline-test step output"
+    fi
+    rm -f "$log_file"
+    return "$pytest_status"
+  fi
+
+  rm -f "$log_file"
 }
 
 run_all() {
