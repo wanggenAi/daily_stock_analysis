@@ -1,9 +1,9 @@
 """Probability-adjusted biotech rNPV and cash-runway primitives.
 
 Pre-profit / pipeline-driven biotech companies are deliberately routed away
-from generic P/E valuation.  A shrinking accounting loss, or even one quarter
-of headline profitability, does not make a P/E model economically applicable
-when normalized recurring earnings remain negative and value is concentrated in
+from generic P/E valuation. A shrinking accounting loss, or even one quarter of
+headline profitability, does not make a P/E model economically applicable when
+normalized recurring earnings remain negative and value is concentrated in
 approved products plus clinical/regulatory pipeline assets.
 
 This module implements only auditable primitives:
@@ -12,14 +12,14 @@ This module implements only auditable primitives:
 * probability-adjusted asset cash-flow present value;
 * separate treatment of success-contingent commercial cash flows and explicitly
   supplied development / committed cash flows;
-* cash-runway analysis based on normalized annual burn, never Q1 extrapolation;
+* horizon-matched cash-runway analysis based on normalized annual burn;
 * catalyst-horizon / financing-risk comparison;
 * an equity bridge that adds unique asset rNPVs to verified liquid resources
   and subtracts debt / corporate-overhead PV.
 
 The engine intentionally contains **no default clinical-success probabilities,
 no stage lookup table, no default discount rate, no default peak-sales multiple,
-no default dilution rate and no default catalyst buffer**.  Those assumptions
+no default dilution rate and no default catalyst buffer**. Those assumptions
 must come from point-in-time evidence or explicit research scenarios.
 
 Nothing here creates a Formal BUY or bypasses existing execution/risk gates.
@@ -29,7 +29,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import math
-from typing import Any, Dict, Iterable, Mapping, Optional, Sequence
+from typing import Any, Dict, Mapping, Optional, Sequence
 
 
 @dataclass(frozen=True)
@@ -61,7 +61,9 @@ class BiotechAssetRNPVResult:
 
 @dataclass(frozen=True)
 class CashRunwayResult:
-    net_liquid_resources: Optional[float]
+    available_liquid_resources: Optional[float]
+    committed_cash_outflows_within_horizon: Optional[float]
+    net_runway_resources: Optional[float]
     normalized_annual_cash_burn: Optional[float]
     runway_years: Optional[float]
     runway_months: Optional[float]
@@ -185,20 +187,18 @@ def value_probability_adjusted_asset(
 ) -> BiotechAssetRNPVResult:
     """Present-value one biotech asset with explicit probability and ownership.
 
-    ``success_contingent_cash_flows`` should contain the future *unrisked* cash
-    flows that would accrue if the asset/indication succeeds.  They are first
-    discounted and then multiplied by the explicitly supplied probability of
-    success and economic ownership.
+    ``success_contingent_cash_flows`` contains future *unrisked* cash flows that
+    accrue if the asset/indication succeeds. They are discounted and then
+    multiplied by explicit probability of success and economic ownership.
 
-    ``explicit_development_cash_flows`` are separately supplied expected/committed
-    development cash flows and are **not** multiplied by success probability.
-    This avoids the common mistake of multiplying already-expected R&D spending
-    by the same terminal approval probability.  They may be negative or positive
-    (for example, milestone receipts) and are still scaled by economic ownership.
+    ``explicit_development_cash_flows`` are separately supplied expected or
+    committed development cash flows and are **not** multiplied by terminal
+    success probability. They may be negative or positive (for example,
+    milestone receipts) and are still scaled by economic ownership.
 
-    If a more detailed phase-by-phase probability tree is available, callers
-    should prepare probability-weighted development cash flows upstream rather
-    than expecting this primitive to invent stage-transition probabilities.
+    A detailed phase-by-phase model should prepare probability-weighted
+    development cash flows upstream; this primitive never invents transition
+    probabilities.
     """
 
     clean_id = str(asset_id or "").strip()
@@ -265,37 +265,75 @@ def value_probability_adjusted_asset(
 
 def compute_cash_runway(
     *,
-    liquid_resources: Any,
-    debt_or_restricted_resources: Any,
+    available_liquid_resources: Any,
+    committed_cash_outflows_within_horizon: Any,
     normalized_annual_cash_burn: Any,
 ) -> CashRunwayResult:
-    """Compute runway from normalized annual burn; never infer infinity from Q1."""
+    """Compute horizon-matched runway without netting all long-term debt.
 
-    liquid = _finite(liquid_resources)
-    debt = _finite(debt_or_restricted_resources)
+    ``available_liquid_resources`` should contain unrestricted cash and verified
+    liquid investments usable by the company.
+
+    ``committed_cash_outflows_within_horizon`` must be prepared for the same
+    analysis/catalyst window and can include principal maturities, committed
+    capex or other cash obligations that are *not already included* in the
+    normalized operating burn. Long-dated project debt outside the window must
+    not be mechanically subtracted from runway cash merely because it appears on
+    the balance sheet.
+
+    ``normalized_annual_cash_burn`` must be a separately prepared annual burn
+    estimate. One cash-positive quarter never creates infinite runway.
+    """
+
+    liquid = _finite(available_liquid_resources)
+    committed = _finite(committed_cash_outflows_within_horizon)
     burn = _finite(normalized_annual_cash_burn)
 
-    if liquid is None or liquid < 0:
-        return CashRunwayResult(None, burn, None, None, "LIQUID_RESOURCES_UNAVAILABLE")
-    if debt is None or debt < 0:
-        return CashRunwayResult(None, burn, None, None, "DEBT_OR_RESTRICTED_RESOURCES_UNAVAILABLE")
+    common = dict(
+        available_liquid_resources=liquid,
+        committed_cash_outflows_within_horizon=committed,
+        normalized_annual_cash_burn=burn,
+    )
 
-    net_liquid = liquid - debt
-    if net_liquid <= 0:
-        return CashRunwayResult(net_liquid, burn, 0.0, 0.0, "NO_POSITIVE_NET_LIQUID_RESOURCES")
-    if burn is None or burn <= 0:
+    if liquid is None or liquid < 0:
         return CashRunwayResult(
-            net_liquid,
-            burn,
-            None,
-            None,
-            "NORMALIZED_ANNUAL_BURN_NOT_POSITIVE_OR_UNAVAILABLE",
+            **common,
+            net_runway_resources=None,
+            runway_years=None,
+            runway_months=None,
+            status="AVAILABLE_LIQUID_RESOURCES_UNAVAILABLE",
+        )
+    if committed is None or committed < 0:
+        return CashRunwayResult(
+            **common,
+            net_runway_resources=None,
+            runway_years=None,
+            runway_months=None,
+            status="HORIZON_COMMITTED_OUTFLOWS_UNAVAILABLE",
         )
 
-    runway_years = net_liquid / burn
+    net_resources = liquid - committed
+    if net_resources <= 0:
+        return CashRunwayResult(
+            **common,
+            net_runway_resources=net_resources,
+            runway_years=0.0,
+            runway_months=0.0,
+            status="NO_POSITIVE_RUNWAY_RESOURCES",
+        )
+    if burn is None or burn <= 0:
+        return CashRunwayResult(
+            **common,
+            net_runway_resources=net_resources,
+            runway_years=None,
+            runway_months=None,
+            status="NORMALIZED_ANNUAL_BURN_NOT_POSITIVE_OR_UNAVAILABLE",
+        )
+
+    runway_years = net_resources / burn
     return CashRunwayResult(
-        net_liquid_resources=net_liquid,
-        normalized_annual_cash_burn=burn,
+        **common,
+        net_runway_resources=net_resources,
         runway_years=runway_years,
         runway_months=runway_years * 12.0,
         status="OK",
@@ -360,14 +398,17 @@ def bridge_biotech_equity_value(
 ) -> BiotechEquityValueResult:
     """Bridge unique asset rNPVs and verified balance-sheet resources to equity.
 
-    ``corporate_overhead_pv`` should be a non-negative present value of future
-    corporate costs that are not already included in asset-level cash flows.
-    It is subtracted exactly once.
+    Unlike the liquidity-runway calculation, the equity-value bridge subtracts
+    verified debt irrespective of maturity because debt remains a claim senior
+    to common equity.
+
+    ``corporate_overhead_pv`` is a non-negative present value of future costs
+    not already included in asset-level cash flows and is subtracted once.
 
     Duplicate ``asset_id`` values are rejected to catch obvious double counting.
     Different indications of one molecule may legitimately be separate assets,
-    but their scopes must be explicitly non-overlapping upstream; this generic
-    layer cannot infer biological/commercial overlap from names alone.
+    but scopes must be explicitly non-overlapping upstream; this generic layer
+    cannot infer biological/commercial overlap from names alone.
     """
 
     liquid = _finite(liquid_resources)
@@ -409,6 +450,7 @@ def bridge_biotech_equity_value(
             status=status,
         )
 
+    assert liquid is not None and debt_value is not None and overhead is not None
     total_assets = sum(float(result.risk_adjusted_asset_value) for result in asset_results)
     fair_equity = total_assets + liquid - debt_value - overhead + (adjustment or 0.0)
     fair_price = fair_equity / shares if shares is not None and shares > 0 else None
