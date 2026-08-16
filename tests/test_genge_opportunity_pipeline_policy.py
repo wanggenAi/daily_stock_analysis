@@ -38,6 +38,26 @@ def test_profit_metrics_exclude_future_disclosure():
     assert result["earnings_inflection_report_date"] == "2026-03-31"
 
 
+def test_profit_metrics_accept_datetime64_second_provider_dtype():
+    financial = pd.DataFrame(
+        {
+            "report_date": pd.Series(
+                ["2025-06-30", "2026-03-31", "2026-06-30"],
+                dtype="datetime64[s]",
+            ),
+            "disclosure_date": pd.Series(
+                ["2025-08-01", "2026-04-25", "2026-08-30"],
+                dtype="datetime64[s]",
+            ),
+            "net_profit": [-5.0, 2.0, 8.0],
+        }
+    )
+
+    result = policy.financial_inflection_metrics(financial, as_of=date(2026, 8, 14))
+
+    assert result["earnings_inflection_report_date"] == "2026-03-31"
+
+
 def test_strong_trend_removes_only_legacy_price_blockers(monkeypatch):
     monkeypatch.setattr(
         policy,
