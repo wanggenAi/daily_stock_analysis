@@ -141,6 +141,18 @@ latest completed repository production snapshot
 
 Never use an older searchable quote merely because it is easier to retrieve when a newer validated production snapshot exists.
 
+## 2026-08-16 — Security-master/canonical-name integrity
+
+### Triggering live case
+
+The 2026-08-14 production artifact labelled code `300223` as `君正股份`, while current company disclosures identify `300223` as `北京君正`. By contrast, `601567 三星电气` is correct because the company formally changed its short name from `三星医疗` in April 2026.
+
+### Data-governance rule
+
+Security code is the primary identity key. Display names must be resolved from a current canonical security master or an explicitly versioned override, not inferred from fuzzy/static aliases.
+
+A stale/wrong display name can contaminate LLM industry classification even if price data for the code itself is correct. This defect should be fixed in the security-master/name-resolution layer separately from valuation logic.
+
 ## 2026-08-16 — Financial-asset-income double-count guard
 
 ### Triggering live case
