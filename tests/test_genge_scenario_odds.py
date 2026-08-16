@@ -1,4 +1,4 @@
-from strategies.genge_opportunity_discovery.scenario_odds import compute_scenario_odds
+from src.strategies.genge_opportunity_discovery.scenario_odds import compute_scenario_odds
 
 
 def test_scenario_odds_reports_raw_asymmetry_without_probabilities():
