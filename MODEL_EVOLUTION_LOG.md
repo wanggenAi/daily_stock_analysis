@@ -287,6 +287,75 @@ Safety behavior:
 - financing dilution stays separate from zero/low-proceeds incentive dilution;
 - no assumed reinvestment return is embedded automatically.
 
+## 2026-08-16 — Segment-aware cycle normalization
+
+### Triggering live case
+
+- `603986 兆易创新`: memory represented roughly 71% of 2025 product revenue and about 76% of disclosed product gross profit, while MCU, sensors and analog products had materially different earnings durability. A single company-level `is_cyclical` flag would either over-haircut the stable platform segments or under-haircut peak memory earnings.
+
+### Model gap identified
+
+Mixed business models require segment-level cycle treatment:
+
+```text
+segment_forward_profit
+segment_is_cyclical
+segment_through_cycle_profit OR segment_through_cycle_ratio
+aggregate_forward_profit
+aggregate_through_cycle_normalized_profit
+cycle_exposure_ratio
+```
+
+The primitive must not infer segment net profit from revenue or gross profit automatically.
+
+### Code change
+
+PR #25 was extended with:
+
+```text
+src/strategies/genge_opportunity_discovery/segment_cycle_blend.py
+tests/test_genge_segment_cycle_blend.py
+```
+
+Safety behavior:
+
+- cyclical segments require explicit through-cycle assumptions;
+- non-cyclical segments can retain forward profit by default;
+- any unnormalized cyclical segment makes aggregate normalized profit unavailable;
+- no company-wide arbitrary cycle haircut is substituted for missing segment evidence.
+
+## 2026-08-16 — Multi-share-class market-cap bridge
+
+### Triggering live case
+
+- `603986 / 03986 兆易创新/GigaDevice`: after the H-share listing, the company had both A and H shares outstanding. Multiplying the A-share quote by total A+H shares would incorrectly label an A-price-implied equity value as actual consolidated market cap.
+
+### Model gap identified
+
+For dual/multi-listed share classes:
+
+```text
+actual consolidated market cap = Σ(class shares × class price × explicit FX)
+```
+
+A reference-class quote may still be useful to calculate a separately labelled price-implied total equity value, but it is not actual market cap.
+
+### Code change
+
+PR #25 was extended with:
+
+```text
+src/strategies/genge_opportunity_discovery/share_class_market_cap.py
+tests/test_genge_share_class_market_cap.py
+```
+
+Safety behavior:
+
+- each class requires explicit shares, quote and FX conversion;
+- missing class quote/FX returns `INCOMPLETE_SHARE_CLASS_PRICING`;
+- the reference-class implied total equity value remains separately visible;
+- no A/H premium or discount is guessed.
+
 ## Resume rule
 
 A new session working on market/model research should read:
