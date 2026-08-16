@@ -80,7 +80,7 @@ def test_development_cash_flows_are_not_multiplied_by_terminal_success_probabili
     assert low_probability.probability_adjusted_commercial_value < high_probability.probability_adjusted_commercial_value
 
 
-def test_approved_commercial_asset_can_use_probability_one_without_special_hidden_rule():
+def test_approved_commercial_asset_can_use_probability_one_without_hidden_rule():
     result = value_probability_adjusted_asset(
         asset_id="approved-product-base-market",
         success_contingent_cash_flows={1: 50.0, 2: 45.0},
@@ -128,23 +128,47 @@ def test_missing_or_invalid_success_probability_fails_closed():
     assert invalid.status == "INVALID_OR_MISSING_SUCCESS_PROBABILITY"
 
 
-def test_cash_runway_uses_normalized_annual_burn():
+def test_cash_runway_uses_only_horizon_matched_committed_outflows():
     result = compute_cash_runway(
-        liquid_resources=32.0,
-        debt_or_restricted_resources=8.0,
+        available_liquid_resources=32.0,
+        committed_cash_outflows_within_horizon=8.0,
         normalized_annual_cash_burn=6.0,
     )
 
-    assert result.net_liquid_resources == pytest.approx(24.0)
+    assert result.available_liquid_resources == pytest.approx(32.0)
+    assert result.committed_cash_outflows_within_horizon == pytest.approx(8.0)
+    assert result.net_runway_resources == pytest.approx(24.0)
     assert result.runway_years == pytest.approx(4.0)
     assert result.runway_months == pytest.approx(48.0)
     assert result.status == "OK"
 
 
+def test_cash_runway_api_does_not_invite_subtracting_all_long_term_debt():
+    signature = inspect.signature(compute_cash_runway)
+
+    assert "debt" not in signature.parameters
+    assert "total_debt" not in signature.parameters
+    assert "available_liquid_resources" in signature.parameters
+    assert "committed_cash_outflows_within_horizon" in signature.parameters
+
+
+def test_cash_runway_requires_explicit_horizon_commitments_even_when_zero():
+    signature = inspect.signature(compute_cash_runway)
+
+    assert signature.parameters["committed_cash_outflows_within_horizon"].default is inspect._empty
+
+    result = compute_cash_runway(
+        available_liquid_resources=24.0,
+        committed_cash_outflows_within_horizon=0.0,
+        normalized_annual_cash_burn=6.0,
+    )
+    assert result.runway_years == pytest.approx(4.0)
+
+
 def test_one_profitable_or_cash_positive_quarter_does_not_create_infinite_runway():
     result = compute_cash_runway(
-        liquid_resources=32.0,
-        debt_or_restricted_resources=8.0,
+        available_liquid_resources=32.0,
+        committed_cash_outflows_within_horizon=8.0,
         normalized_annual_cash_burn=0.0,
     )
 
@@ -230,6 +254,20 @@ def test_equity_bridge_rejects_incomplete_asset_value():
 
     assert result.valuation_model_applicable is False
     assert result.status == "ASSET_VALUATION_INCOMPLETE"
+
+
+def test_equity_bridge_still_subtracts_all_verified_debt_from_common_equity_value():
+    result = bridge_biotech_equity_value(
+        asset_results=[_asset("asset-a")],
+        liquid_resources=30.0,
+        debt=40.0,
+        corporate_overhead_pv=0.0,
+    )
+
+    assert result.valuation_model_applicable is True
+    assert result.fair_equity_value == pytest.approx(
+        _asset("asset-a").risk_adjusted_asset_value + 30.0 - 40.0
+    )
 
 
 def test_biotech_quality_evidence_preserves_raw_fields_without_magic_score():
