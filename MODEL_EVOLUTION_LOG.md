@@ -213,6 +213,80 @@ Never use an older searchable quote merely because it is easier to retrieve when
 
 This is a research-handoff/data-governance rule. Production data-provider changes remain subject to separate code review and testing.
 
+## 2026-08-16 — Financial-asset-income double-count guard
+
+### Triggering live case
+
+- `688019 安集科技`: the company has a meaningful cash/financial-asset balance, while recurring/扣非 net profit still includes recurring interest/financial income effects. A valuation that multiplies that equity-profit number by a PE-like multiple **and then adds net cash again** can count the same cash economics twice.
+
+### Model gap identified
+
+The model must distinguish two valid but different approaches:
+
+```text
+plain equity PE on recurring/equity net profit
+```
+
+versus:
+
+```text
+core operating / asset-bridge profit × multiple
++ verified non-operating financial assets / net cash
+```
+
+The second approach requires stripping explicitly verified after-tax financial income from the profit base and adding back explicitly verified after-tax financing cost before separately bridging net cash/assets.
+
+### Code change
+
+PR #25 was extended with:
+
+```text
+src/strategies/genge_opportunity_discovery/financial_asset_bridge.py
+tests/test_genge_financial_asset_bridge.py
+```
+
+Safety behavior:
+
+- no tax rate is guessed;
+- no financial-asset yield is guessed;
+- only explicit interest income, interest expense and recurring investment income are adjusted;
+- incomplete finance-line detail is flagged rather than silently claimed complete;
+- plain equity-PE valuation does not require this adjustment if net cash is not separately added.
+
+## 2026-08-16 — Primary financing dilution must include proceeds
+
+### Triggering live case
+
+- `688019 安集科技`: the company's H-share plan creates a potential future share-count increase, but unlike equity incentive dilution, a primary H-share issuance also brings capital into the company. Treating all potential financing shares as denominator-only dilution would mechanically undervalue post-financing per-share equity value.
+
+### Model gap identified
+
+Primary financing requires an explicit two-sided bridge:
+
+```text
+post_financing_equity_value = pre_financing_equity_value + verified_net_proceeds
+post_financing_shares = current_shares + financing_shares
+post_financing_fair_price = post_financing_equity_value / post_financing_shares
+```
+
+No future ROIC on the proceeds should be assumed unless separately modeled.
+
+### Code change
+
+PR #25 was extended with:
+
+```text
+src/strategies/genge_opportunity_discovery/financing_dilution.py
+tests/test_genge_financing_dilution.py
+```
+
+Safety behavior:
+
+- announced financing shares without an issue price or verified net proceeds do not generate a fake post-financing fair price;
+- verified net proceeds take priority over a gross issue-price approximation;
+- financing dilution stays separate from zero/low-proceeds incentive dilution;
+- no assumed reinvestment return is embedded automatically.
+
 ## Resume rule
 
 A new session working on market/model research should read:
