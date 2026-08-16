@@ -1,3 +1,5 @@
+import pytest
+
 from src.strategies.genge_opportunity_discovery.scenario_odds import compute_scenario_odds
 
 
@@ -10,12 +12,12 @@ def test_scenario_odds_reports_raw_asymmetry_without_probabilities():
     )
 
     assert result.status == "OK"
-    assert result.bear_return == -0.2
-    assert result.base_margin_of_safety == 0.2
-    assert result.bull_return == 0.6
-    assert result.downside_risk == 0.2
-    assert result.upside_potential == 0.6
-    assert result.upside_downside_ratio == 3.0
+    assert result.bear_return == pytest.approx(-0.2)
+    assert result.base_margin_of_safety == pytest.approx(0.2)
+    assert result.bull_return == pytest.approx(0.6)
+    assert result.downside_risk == pytest.approx(0.2)
+    assert result.upside_potential == pytest.approx(0.6)
+    assert result.upside_downside_ratio == pytest.approx(3.0)
 
 
 def test_scenario_odds_does_not_return_infinity_when_bear_has_no_downside():
@@ -27,7 +29,7 @@ def test_scenario_odds_does_not_return_infinity_when_bear_has_no_downside():
     )
 
     assert result.status == "NO_BEAR_DOWNSIDE_RATIO_UNDEFINED"
-    assert result.downside_risk == 0.0
+    assert result.downside_risk == pytest.approx(0.0)
     assert result.upside_downside_ratio is None
 
 
