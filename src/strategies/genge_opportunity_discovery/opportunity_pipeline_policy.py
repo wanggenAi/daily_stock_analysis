@@ -109,18 +109,22 @@ def financial_inflection_metrics(financial_df: Any, *, as_of: date) -> dict[str,
         return empty
 
     local = financial_df.copy()
-    local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce").dt.date
+    as_of_ts = pd.Timestamp(as_of)
+    local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce")
     local["net_profit"] = pd.to_numeric(local["net_profit"], errors="coerce")
     local = local.dropna(subset=["report_date", "net_profit"])
-    local = local[local["report_date"] <= as_of]
+    local = local[local["report_date"] <= as_of_ts]
     if "disclosure_date" in local.columns:
-        disclosure = pd.to_datetime(local["disclosure_date"], errors="coerce").dt.date
-        local = local[disclosure.isna() | (disclosure <= as_of)]
+        disclosure = pd.to_datetime(local["disclosure_date"], errors="coerce")
+        local = local[disclosure.isna() | (disclosure <= as_of_ts)]
     if local.empty:
         return empty
 
     local = local.sort_values("report_date").drop_duplicates("report_date", keep="last")
-    values = {row.report_date: float(row.net_profit) for row in local.itertuples(index=False)}
+    values = {
+        pd.Timestamp(row.report_date).date(): float(row.net_profit)
+        for row in local.itertuples(index=False)
+    }
     report_dates = list(values)
 
     def yoy_for(period: date) -> tuple[float | None, bool]:
