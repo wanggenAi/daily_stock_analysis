@@ -44,12 +44,12 @@ Purpose: compare scarce resources, grid/power infrastructure, semiconductor equi
 
 | Order | Code | Name | Theme | Status | Main research question |
 |---:|---|---|---|---|---|
-| 1 | 002378 | 章源钨业 | Tungsten | IN_PROGRESS | How much of H1 tungsten windfall is sustainable through-cycle? |
-| 2 | 000682 | 东方电子 | Grid / distribution automation | QUEUED | Is valuation materially cheaper than premium grid leaders while earnings quality stays high? |
-| 3 | 600406 | 国电南瑞 | Grid / power automation | QUEUED | Quality anchor: what premium multiple is justified and what growth is already priced? |
-| 4 | 000400 | 许继电气 | Grid / UHV | QUEUED | UHV/order cycle versus current expectation. |
+| 1 | 002378 | 章源钨业 | Tungsten | DONE / RECHECK_ON_EVENT | H1 tungsten windfall is real but current price requires Bull-like through-cycle profit. |
+| 2 | 000682 | 东方电子 | Grid / distribution automation | DONE / RECHECK_ON_EVENT | Raw valuation asymmetry attractive; H1 must confirm recurring-profit path. |
+| 3 | 600406 | 国电南瑞 | Grid / power automation | DONE / RECHECK_ON_EVENT | Current valuation is fair-to-slight-discount with highest quality/confidence in Batch 7. |
+| 4 | 000400 | 许继电气 | Grid / UHV | IN_PROGRESS | UHV/order cycle versus current expectation. |
 | 5 | 600312 | 平高电气 | UHV / high-voltage equipment | QUEUED | Order conversion, margin expansion, overseas optionality. |
-| 6 | 601567 | 三星医疗 | Distribution / smart metering / overseas | QUEUED | Overseas growth quality versus valuation. |
+| 6 | 601567 | 三星电气 | Distribution / smart metering / overseas | QUEUED | Overseas growth quality versus valuation. |
 | 7 | 601020 | 华钰矿业 | Antimony / precious metals | QUEUED | Scarcity and commodity-cycle normalization. |
 | 8 | 600497 | 驰宏锌锗 | Zinc / germanium | QUEUED | Germanium scarcity versus zinc-cycle dilution. |
 | 9 | 002428 | 云南锗业 | Germanium | QUEUED | Strategic scarcity versus actual sustainable profit. |
@@ -101,7 +101,7 @@ Primary question:
 ## P1 — Strategic-resource breadth queue
 
 ```text
-002378 章源钨业       (active above)
+002378 章源钨业       DONE / recheck after H1 + fresh tungsten price
 600549 厦门钨业       DONE / recheck with fresh tungsten price
 000657 中钨高新       DONE / recheck after H1
 601020 华钰矿业       queued above
@@ -139,11 +139,12 @@ MARKET_RESEARCH_LOG_2026-08-16_BATCH3.md
 MARKET_RESEARCH_LOG_2026-08-16_BATCH4.md
 MARKET_RESEARCH_LOG_2026-08-16_BATCH5.md
 MARKET_RESEARCH_LOG_2026-08-16_BATCH6.md
+MARKET_RESEARCH_LOG_2026-08-16_BATCH7.md
 ```
 
 ## Current model / code work
 
-- PR #25 `feat: add fundamental reverse valuation core` — Draft; continue adding only evidence-backed primitives/regressions.
+- PR #25 `feat: add fundamental reverse valuation core` — Draft; continue adding only evidence-backed primitives/regressions. Cross-sector Batch 7 added a raw `scenario_odds` diagnostic (Bear downside, Base margin, Bull upside, upside/downside ratio) without invented scenario probabilities.
 - PR #23 `Add rolling factor IC and multi-horizon sector regime` — separate market-adaptation layer; avoid conflicting wrappers.
 - Temporary validation PRs are not production features and should not be treated as the code source of truth.
 
