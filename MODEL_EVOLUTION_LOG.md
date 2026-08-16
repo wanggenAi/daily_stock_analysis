@@ -103,6 +103,116 @@ After the valuation core passes validation:
 5. keep Formal BUY gates unchanged until separately tested;
 6. account for the open Factor-IC / sector-regime work (PR #23) and avoid duplicated/conflicting pipeline wrappers.
 
+## 2026-08-16 — Forward share-count / dilution awareness
+
+### Triggering live case
+
+- `688120 华海清科`: multi-year fair-value work exposed that 2027/2028 per-share valuation can be wrong when today's share count is reused despite known equity incentives / financing issuance. Third-party consensus EPS may also use a different share-count denominator around capital changes.
+
+### Model gap identified
+
+A multi-year equity valuation needs to distinguish:
+
+```text
+current_shares
+known_or_explicit_potential_shares
+valuation_shares
+current_share_fair_price
+diluted_fair_price
+```
+
+Forecast net profit plus an explicit share-count bridge is safer than blindly trusting third-party EPS after bonus issues, equity incentives, private placements or other capital changes.
+
+### Code change
+
+PR #25 was extended with dilution-aware share-count primitives and tests.
+
+Safety behavior:
+
+- no arbitrary future dilution rate is invented;
+- only explicit/verified potential-share inputs are used;
+- current-share and diluted per-share fair values remain separately visible;
+- missing future share-count information lowers confidence rather than silently assuming zero dilution.
+
+## 2026-08-16 — R&D capitalization earnings-quality diagnostic
+
+### Triggering live case
+
+- `300604 长川科技`: 2025 annual report disclosed total R&D investment of about 12.68 亿 RMB, R&D expense of about 9.36 亿 RMB and capitalized R&D of about 3.32 亿 RMB. The capitalization rate rose to 26.18% from 5.63% in 2024. The company explicitly stated that the decline in R&D expense was related to increased capitalization from newly capitalized semiconductor-equipment R&D projects.
+
+### Model gap identified
+
+A sharp change in R&D capitalization policy can make reported profit growth look stronger than an economic comparison made under a constant capitalization policy, even when headline and recurring profit are otherwise clean.
+
+This is **not** evidence of improper accounting by itself. The model needs a diagnostic, not an automatic rejection/restatement.
+
+Required concepts:
+
+```text
+r_and_d_capitalization_rate
+baseline_capitalization_rate
+capitalization_rate_change
+capitalized_r_and_d_to_net_profit
+excess_capitalized_r_and_d_vs_baseline
+after_tax_profit_adjustment
+normalized_net_profit
+earnings_quality_penalty
+warning_flags
+```
+
+### Code change
+
+PR #25 was extended with:
+
+```text
+src/strategies/genge_opportunity_discovery/rnd_capitalization.py
+tests/test_genge_rnd_capitalization.py
+```
+
+Safety behavior:
+
+- capitalization is not automatically treated as aggressive or improper;
+- no baseline capitalization rate is inferred automatically;
+- no normalized net-profit adjustment is produced without an explicit baseline capitalization rate **and** effective tax rate;
+- the output is an earnings-quality sensitivity test, not an accounting restatement;
+- a material R&D reconciliation gap lowers confidence.
+
+### Live stress-test interpretation
+
+Using 2024's 5.63% capitalization rate purely as a comparison baseline, 2025 additional capitalized R&D versus that baseline is about 2.61 亿 RMB. With an explicit 15% tax-rate stress assumption, adjusted attributable profit would be about 2.22 亿 RMB lower than reported, roughly a 16.6% sensitivity. This is a research stress scenario only and must never replace reported financial statements.
+
+## 2026-08-16 — Fresh price-source priority refined
+
+### Triggering live case
+
+Public web search indexes failed to return reliable 2026-08-14 closes for several A-shares even though fresh fundamental data was available.
+
+The repository's own completed full-A production artifact for 2026-08-14 provided:
+
+```text
+price_data_coverage_ratio: 1.0
+raw price source: tencent_raw
+qfq source: akshare_sina_qfq
+explicit latest_trade_date per security
+```
+
+For `300604 长川科技`, the artifact verified a 2026-08-14 close of 283.05 RMB.
+
+### Research data-source priority
+
+For ongoing ChatGPT/Codex research on this repository, prefer:
+
+```text
+latest completed repository production snapshot
+  -> authoritative exchange/company filing data for fundamentals/events
+  -> direct stable market-data provider / secondary public source
+  -> web-search indexed quote page as fallback
+```
+
+Never use an older searchable quote merely because it is easier to retrieve when a newer validated production snapshot exists.
+
+This is a research-handoff/data-governance rule. Production data-provider changes remain subject to separate code review and testing.
+
 ## Resume rule
 
 A new session working on market/model research should read:
