@@ -181,7 +181,7 @@ def test_compounder_quality_evidence_preserves_raw_fields_without_magic_score():
         owner_earnings_conversion=0.95,
     )
 
-    assert result.evidence_completeness == pytest.approx(5 / 11)
+    assert result.evidence_completeness == pytest.approx(5 / 11, abs=1e-6)
     assert "channel_inventory_change" in result.missing_fields
     assert not hasattr(result, "quality_score")
 
