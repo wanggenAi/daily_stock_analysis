@@ -87,6 +87,10 @@ class ResourceAssetEvidence:
     normalized_unit_cash_operating_cost: Optional[float]
     sustaining_capex_per_unit: Optional[float]
     economic_ownership: Optional[float]
+    royalty_rate_on_revenue: Optional[float]
+    cash_tax_rate_on_positive_pretax_cash_flow: Optional[float]
+    required_return: Optional[float]
+    closure_and_reclamation_cash_outflow_100pct: Optional[float]
     evidence_completeness: float
     missing_fields: tuple[str, ...]
 
@@ -165,7 +169,7 @@ def value_finite_life_resource_asset(
         status = "INVALID_OR_MISSING_ROYALTY_RATE"
     elif tax_rate is None or not 0.0 <= tax_rate <= 1.0:
         status = "INVALID_OR_MISSING_CASH_TAX_RATE"
-    elif discount_rate is None or discount_rate <= -1.0:
+    elif discount_rate is None or discount_rate < 0.0:
         status = "INVALID_OR_MISSING_REQUIRED_RETURN"
     elif closure is None or closure < 0:
         status = "INVALID_OR_MISSING_CLOSURE_OUTFLOW"
@@ -325,7 +329,7 @@ def bridge_resource_equity_nav(
     fair_per_share = None if shares is None else equity_nav / shares
     margin_of_safety = (
         None
-        if market_cap is None or equity_nav == 0
+        if market_cap is None or equity_nav <= 0
         else (equity_nav - market_cap) / equity_nav
     )
 
@@ -360,8 +364,12 @@ def build_resource_asset_evidence(
     normalized_unit_cash_operating_cost: Any = None,
     sustaining_capex_per_unit: Any = None,
     economic_ownership: Any = None,
+    royalty_rate_on_revenue: Any = None,
+    cash_tax_rate_on_positive_pretax_cash_flow: Any = None,
+    required_return: Any = None,
+    closure_and_reclamation_cash_outflow_100pct: Any = None,
 ) -> ResourceAssetEvidence:
-    """Build auditable evidence completeness without inventing missing values."""
+    """Build auditable valuation-readiness evidence without imputing values."""
 
     raw = {
         "reported_resource_units": _finite(reported_resource_units),
@@ -375,6 +383,14 @@ def build_resource_asset_evidence(
         "normalized_unit_cash_operating_cost": _finite(normalized_unit_cash_operating_cost),
         "sustaining_capex_per_unit": _finite(sustaining_capex_per_unit),
         "economic_ownership": _finite(economic_ownership),
+        "royalty_rate_on_revenue": _finite(royalty_rate_on_revenue),
+        "cash_tax_rate_on_positive_pretax_cash_flow": _finite(
+            cash_tax_rate_on_positive_pretax_cash_flow
+        ),
+        "required_return": _finite(required_return),
+        "closure_and_reclamation_cash_outflow_100pct": _finite(
+            closure_and_reclamation_cash_outflow_100pct
+        ),
     }
     required = (
         "recoverable_units_used_in_model",
@@ -383,6 +399,10 @@ def build_resource_asset_evidence(
         "normalized_unit_cash_operating_cost",
         "sustaining_capex_per_unit",
         "economic_ownership",
+        "royalty_rate_on_revenue",
+        "cash_tax_rate_on_positive_pretax_cash_flow",
+        "required_return",
+        "closure_and_reclamation_cash_outflow_100pct",
     )
     missing = tuple(field for field in required if raw[field] is None)
     completeness = (len(required) - len(missing)) / len(required)
