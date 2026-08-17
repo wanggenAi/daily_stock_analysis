@@ -4,6 +4,10 @@ The original reverse-valuation implementation is reused for PE diagnostics,
 point-in-time financial selection and earnings-quality normalization. Research
 recall and deep-financial budgeting are industry-protected so global Top-N
 competition cannot erase an otherwise eligible industry before valuation work.
+
+This is deliberately a sidecar over the completed All-A quant screen. It does
+not change the execution-oriented All-A queue, exit-profile refresh, Formal BUY,
+position sizing, stops, or trading lifecycle.
 """
 
 from __future__ import annotations
@@ -18,15 +22,13 @@ from src.strategies.genge_opportunity_discovery import valuation_research_report
 from src.strategies.genge_opportunity_discovery.industry_balanced_recall import (
     IndustryRecallPolicy,
     coverage_audit,
+    industry_leaders,
     select_industry_balanced_rows,
 )
 
 DEFAULT_TOTAL_RECALL = 260
 DEFAULT_GLOBAL_SEED = 80
-DEFAULT_PER_INDUSTRY_TARGET = 2
-
-_ORIGINAL_SELECT = base.select_wide_recall_rows
-_ORIGINAL_BUILD_ROWS = base.build_valuation_research_rows
+DEFAULT_PER_INDUSTRY_TARGET = 3
 
 
 def _normalize_code(value: Any) -> str:
@@ -46,6 +48,8 @@ def _industry(row: Mapping[str, Any]) -> str:
 def _annotated_candidates(
     source_rows: Iterable[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
+    """Apply the existing wide-recall safety policy before industry balancing."""
+
     result: list[dict[str, Any]] = []
     seen: set[str] = set()
     for raw in source_rows:
@@ -72,6 +76,14 @@ def _balanced_select(
     research_limit: int = base.DEFAULT_RESEARCH_LIMIT,
     relaxed_reserve: int = base.DEFAULT_RELAXED_RESERVE,
 ) -> list[dict[str, Any]]:
+    """Union global leaders with protected per-industry candidates.
+
+    ``relaxed_reserve`` remains accepted for CLI/backward compatibility, but it
+    is no longer allowed to erase an entire industry from *research*. The base
+    `_wide_recall_reason` still decides which technical hard blockers are safe
+    to recover for research and which true hard risks remain excluded.
+    """
+
     del relaxed_reserve
     candidates = _annotated_candidates(source_rows)
     return select_industry_balanced_rows(
@@ -237,9 +249,7 @@ def _postprocess(
 ) -> dict[str, Any]:
     source_rows = _read_csv(source_report_dir / "all_a_quant_screen.csv")
     if not source_rows:
-        source_rows = _read_csv(
-            source_report_dir / "industry_balanced_research_queue.csv"
-        )
+        source_rows = _read_csv(source_report_dir / "quant_screen_all.csv")
     selected_rows = _read_csv(output_run_dir / "valuation_research_queue.csv")
     annotated = _annotated_candidates(source_rows)
     audit = coverage_audit(annotated, selected_rows, eligibility=lambda row: True)
@@ -283,7 +293,20 @@ def _postprocess(
                 ),
             }
         )
+
+    leaders = industry_leaders(
+        annotated,
+        per_industry=1,
+        eligibility=lambda row: True,
+    )
+    top3 = industry_leaders(
+        annotated,
+        per_industry=DEFAULT_PER_INDUSTRY_TARGET,
+        eligibility=lambda row: True,
+    )
     _write_csv(output_run_dir / "valuation_research_industry_balanced.csv", enriched)
+    _write_csv(output_run_dir / "industry_leaders.csv", leaders)
+    _write_csv(output_run_dir / "industry_candidate_pool_top3.csv", top3)
     (output_run_dir / "valuation_industry_coverage_audit.json").write_text(
         json.dumps(audit, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -294,6 +317,8 @@ def _postprocess(
     summary["canonical_research_queue_file"] = (
         "valuation_research_industry_balanced.csv"
     )
+    summary["industry_leader_count"] = len(leaders)
+    summary["industry_candidate_pool_top3_count"] = len(top3)
     summary["financial_review_semantics"] = (
         "global financial-review budget plus one PE-usable representative per industry"
     )
