@@ -204,14 +204,12 @@ def select_wide_recall_rows(
 
     normal_budget = max(0, limit - reserve)
     selected = normal[:normal_budget] + relaxed[:reserve]
-    used = {_normalize_code(row.get("code")) for row in selected}
-    leftovers = [
-        row
-        for row in (*normal[normal_budget:], *relaxed[reserve:])
-        if _normalize_code(row.get("code")) not in used
-    ]
-    leftovers.sort(key=_quant_order_key)
-    selected.extend(leftovers[: max(0, limit - len(selected))])
+    # ``relaxed_reserve`` is a hard cap, not merely a minimum reservation.
+    # If the normal queue has spare rows, they may fill unused capacity; the
+    # technical-recovery slice can never exceed the explicit reserve.
+    selected.extend(
+        normal[normal_budget : normal_budget + max(0, limit - len(selected))]
+    )
     return selected[:limit]
 
 
