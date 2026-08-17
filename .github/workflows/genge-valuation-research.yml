@@ -110,7 +110,7 @@ jobs:
 
           summary = json.loads((latest / "valuation_research_summary.json").read_text(encoding="utf-8"))
           assert summary["selected_count"] <= 80
-          assert summary["relaxed_recovery_count"] <= 20
+          assert summary["relaxed_reserve"] == 20
           assert summary["financial_review_count"] <= 30
           assert summary["formal_signal_eligible"] is False
           assert summary["automatic_promotion_allowed"] is False
