@@ -29,3 +29,27 @@ def test_aerospace_manufacturing_does_not_route_as_airline():
 
     assert decision.strategy_ids == ("general_reverse_earnings",)
     assert decision.status == "GENERIC_FALLBACK"
+
+
+def test_real_estate_developer_routes_to_project_nav():
+    decision = route_valuation_strategies(industry="房地产开发")
+
+    assert decision.strategy_ids == ("real_estate_nav",)
+    assert decision.primary_strategy_id == "real_estate_nav"
+
+
+def test_broad_real_estate_service_label_does_not_force_developer_nav():
+    decision = route_valuation_strategies(industry="房地产服务")
+
+    assert decision.strategy_ids == ("general_reverse_earnings",)
+    assert decision.status == "GENERIC_FALLBACK"
+
+
+def test_business_tag_can_upgrade_broad_real_estate_label_to_developer_nav():
+    decision = route_valuation_strategies(
+        industry="房地产",
+        business_tags="住宅开发",
+    )
+
+    assert decision.strategy_ids == ("real_estate_nav",)
+    assert decision.primary_strategy_id == "real_estate_nav"
