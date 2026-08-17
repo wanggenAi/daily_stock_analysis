@@ -128,6 +128,26 @@ class ValuationResearchProductionTest(unittest.TestCase):
         self.assertEqual(result.reference_end, "2026-08-14")
         self.assertAlmostEqual(result.required_profit_growth, 100.0 / 15.0 - 1.0)
 
+    def test_latest_non_positive_pe_makes_model_not_applicable(self):
+        valuation = pd.DataFrame(
+            {
+                "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                "pe": [10.0, 20.0, -5.0],
+            }
+        )
+
+        result = build_pe_reference_diagnostic(
+            valuation,
+            as_of=date(2026, 8, 15),
+            minimum_history_samples=2,
+        )
+
+        self.assertEqual(result.current_pe, -5.0)
+        self.assertEqual(result.status, "PE_MODEL_NOT_APPLICABLE")
+        self.assertEqual(result.sample_count, 2)
+        self.assertIsNone(result.reference_median_pe)
+        self.assertIsNone(result.required_profit_growth)
+
     def test_future_disclosure_fails_closed_and_never_promotes_signal(self):
         source_rows = [
             {
@@ -230,6 +250,52 @@ class ValuationResearchProductionTest(unittest.TestCase):
 
         self.assertEqual(rows[0]["headline_net_profit"], 80.0)
         self.assertEqual(rows[0]["financial_report_date"], date(2026, 3, 31))
+        self.assertEqual(rows[0]["earnings_point_in_time_method"], "DISCLOSURE_DATE_PIT")
+
+    def test_newest_report_period_beats_later_disclosure_of_older_period(self):
+        source_rows = [
+            {
+                "code": "600549",
+                "stock_name": "厦门钨业",
+                "quant_status": "SECONDARY_RESEARCH",
+                "quant_rank": 1,
+                "quant_score": 60,
+                "hard_blockers": "",
+            }
+        ]
+        valuation = pd.DataFrame(
+            {
+                "date": pd.date_range("2026-06-01", periods=21, freq="D").date,
+                "pe": [10.0] * 20 + [12.0],
+            }
+        )
+        financial = pd.DataFrame(
+            {
+                "report_date": ["2026-03-31", "2026-06-30"],
+                "disclosure_date": ["2026-08-10", "2026-07-20"],
+                "net_profit": [50.0, 100.0],
+                "operating_cash_flow": [40.0, 90.0],
+            }
+        )
+        loader = _FakeLoader(
+            {
+                "600549": FundamentalFetchResult(
+                    valuation_df=valuation,
+                    financial_df=financial,
+                )
+            }
+        )
+
+        rows = build_valuation_research_rows(
+            source_rows,
+            as_of=date(2026, 8, 17),
+            loader=loader,
+            minimum_pe_samples=20,
+        )
+
+        self.assertEqual(rows[0]["headline_net_profit"], 100.0)
+        self.assertEqual(rows[0]["financial_report_date"], date(2026, 6, 30))
+        self.assertEqual(rows[0]["financial_disclosure_date"], date(2026, 7, 20))
         self.assertEqual(rows[0]["earnings_point_in_time_method"], "DISCLOSURE_DATE_PIT")
 
 
