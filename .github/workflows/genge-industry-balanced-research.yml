@@ -129,7 +129,7 @@ jobs:
             --fundamental-cache-dir data/cache/valuation_research_fundamentals \
             --research-limit 260 \
             --relaxed-reserve 20 \
-            --financial-review-limit 260 \
+            --financial-review-limit 30 \
             --years 5 \
             --minimum-pe-samples 20 \
             --max-workers 6
@@ -172,6 +172,7 @@ jobs:
           assert summary["formal_signal_eligible"] is False
           assert summary["automatic_promotion_allowed"] is False
           assert summary["no_auto_trade"] is True
+          assert summary["financial_review_limit"] == 30
 
           with (latest / "valuation_research_queue.csv").open(encoding="utf-8") as stream:
               rows = list(csv.DictReader(stream))
