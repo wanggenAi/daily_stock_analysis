@@ -1,9 +1,9 @@
 """Industry-balanced launcher for reverse-valuation research.
 
 The original reverse-valuation implementation is reused for PE diagnostics,
-point-in-time financial selection and earnings-quality normalization. Only the
-research recall policy is replaced so every eligible industry reaches valuation
-research before global ranking is allowed to dominate.
+point-in-time financial selection and earnings-quality normalization. Research
+recall and deep-financial budgeting are industry-protected so global Top-N
+competition cannot erase an otherwise eligible industry before valuation work.
 """
 
 from __future__ import annotations
@@ -26,11 +26,21 @@ DEFAULT_GLOBAL_SEED = 80
 DEFAULT_PER_INDUSTRY_TARGET = 2
 
 _ORIGINAL_SELECT = base.select_wide_recall_rows
+_ORIGINAL_BUILD_ROWS = base.build_valuation_research_rows
 
 
 def _normalize_code(value: Any) -> str:
     text = str(value or "").strip()
     return text.zfill(6) if text.isdigit() else text
+
+
+def _industry(row: Mapping[str, Any]) -> str:
+    return str(
+        row.get("industry")
+        or row.get("normalized_industry")
+        or row.get("raw_industry")
+        or "UNRESOLVED"
+    ).strip() or "UNRESOLVED"
 
 
 def _annotated_candidates(
@@ -75,8 +85,110 @@ def _balanced_select(
     )
 
 
+def _financial_review_codes(
+    provisional_rows: Iterable[Mapping[str, Any]], *, global_limit: int,
+) -> list[str]:
+    """Keep the global deep-financial budget and add one PE-usable row per industry."""
+
+    applicable = [
+        dict(row) for row in provisional_rows
+        if row.get("valuation_diagnostic_status") == "OK"
+    ]
+    applicable.sort(key=base._rank_key)
+    global_codes = [
+        base._normalize_code(row.get("code"))
+        for row in applicable[: max(0, int(global_limit))]
+    ]
+    industry_codes: list[str] = []
+    seen_industries: set[str] = set()
+    for row in applicable:
+        industry = _industry(row)
+        if industry in seen_industries:
+            continue
+        seen_industries.add(industry)
+        industry_codes.append(base._normalize_code(row.get("code")))
+    return list(dict.fromkeys([*global_codes, *industry_codes]))
+
+
+def _balanced_build_valuation_research_rows(
+    source_rows: Iterable[Mapping[str, Any]],
+    *,
+    as_of,
+    loader,
+    research_limit: int = base.DEFAULT_RESEARCH_LIMIT,
+    relaxed_reserve: int = base.DEFAULT_RELAXED_RESERVE,
+    financial_review_limit: int = base.DEFAULT_FINANCIAL_REVIEW_LIMIT,
+    minimum_pe_samples: int = 1,
+    years: int = 5,
+    max_workers: int = 1,
+) -> list[dict[str, Any]]:
+    selected = _balanced_select(
+        source_rows,
+        research_limit=research_limit,
+        relaxed_reserve=relaxed_reserve,
+    )
+    valuation_results = base._load_many(
+        loader,
+        [row.get("code") for row in selected],
+        years=years,
+        fetch_valuation=True,
+        fetch_financial=False,
+        max_workers=max_workers,
+    )
+    provisional: list[dict[str, Any]] = []
+    for source in selected:
+        code = base._normalize_code(source.get("code"))
+        fetched = valuation_results.get(code)
+        valuation_frame = (
+            None
+            if isinstance(fetched, Exception) or fetched is None
+            else fetched.valuation_df
+        )
+        pe_diag = base.build_pe_reference_diagnostic(
+            valuation_frame,
+            as_of=as_of,
+            minimum_history_samples=minimum_pe_samples,
+        )
+        provisional.append(base._base_row(source, pe_diag))
+
+    provisional.sort(key=base._rank_key)
+    financial_codes = _financial_review_codes(
+        provisional,
+        global_limit=financial_review_limit,
+    )
+    financial_results = base._load_many(
+        loader,
+        financial_codes,
+        years=years,
+        fetch_valuation=False,
+        fetch_financial=True,
+        max_workers=max_workers,
+    )
+
+    reviewed: list[dict[str, Any]] = []
+    financial_code_set = set(financial_codes)
+    for row in provisional:
+        code = base._normalize_code(row.get("code"))
+        if code not in financial_code_set:
+            reviewed.append(dict(row))
+            continue
+        fetched = financial_results.get(code)
+        financial_frame = (
+            None
+            if isinstance(fetched, Exception) or fetched is None
+            else fetched.financial_df
+        )
+        reviewed.append(base._add_financial_review(row, financial_frame, as_of=as_of))
+
+    reviewed.sort(key=base._rank_key)
+    for rank, row in enumerate(reviewed, 1):
+        row["valuation_research_rank"] = rank
+    return reviewed
+
+
 def install_industry_balanced_policy() -> None:
     base.select_wide_recall_rows = _balanced_select
+    base.build_valuation_research_rows = _balanced_build_valuation_research_rows
 
 
 def _read_csv(path: Path) -> list[dict[str, Any]]:
@@ -111,7 +223,9 @@ def _find_output_run(output_root: Path, report_dir: Path) -> Path:
         if candidates:
             return max(
                 candidates,
-                key=lambda path: (path / "valuation_research_summary.json").stat().st_mtime,
+                key=lambda path: (
+                    path / "valuation_research_summary.json"
+                ).stat().st_mtime,
             )
     if (report_dir / "valuation_research_summary.json").exists():
         return report_dir
@@ -123,7 +237,9 @@ def _postprocess(
 ) -> dict[str, Any]:
     source_rows = _read_csv(source_report_dir / "all_a_quant_screen.csv")
     if not source_rows:
-        source_rows = _read_csv(source_report_dir / "industry_balanced_research_queue.csv")
+        source_rows = _read_csv(
+            source_report_dir / "industry_balanced_research_queue.csv"
+        )
     selected_rows = _read_csv(output_run_dir / "valuation_research_queue.csv")
     annotated = _annotated_candidates(source_rows)
     audit = coverage_audit(annotated, selected_rows, eligibility=lambda row: True)
@@ -175,7 +291,12 @@ def _postprocess(
     summary_path = output_run_dir / "valuation_research_summary.json"
     summary = json.loads(summary_path.read_text(encoding="utf-8"))
     summary["industry_balanced_recall"] = audit
-    summary["canonical_research_queue_file"] = "valuation_research_industry_balanced.csv"
+    summary["canonical_research_queue_file"] = (
+        "valuation_research_industry_balanced.csv"
+    )
+    summary["financial_review_semantics"] = (
+        "global financial-review budget plus one PE-usable representative per industry"
+    )
     summary_path.write_text(
         json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
     )
@@ -202,9 +323,8 @@ def _ensure_min_numeric_arg(argv: list[str], flag: str, minimum: int) -> list[st
 
 def main(argv: list[str] | None = None) -> int:
     effective = list(sys.argv[1:] if argv is None else argv)
-    effective = _ensure_min_numeric_arg(effective, "--research-limit", DEFAULT_TOTAL_RECALL)
     effective = _ensure_min_numeric_arg(
-        effective, "--financial-review-limit", DEFAULT_TOTAL_RECALL
+        effective, "--research-limit", DEFAULT_TOTAL_RECALL
     )
     report_root: Path | None = None
     report_dir: Path | None = None
