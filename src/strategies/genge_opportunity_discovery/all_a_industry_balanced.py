@@ -58,32 +58,40 @@ def _balanced_fundamentals(
     priority_codes: Iterable[str] = (),
     required_codes: Iterable[str] = (),
 ):
-    """Guarantee one fully fetched company per eligible industry."""
+    """Guarantee one fully fetched company per eligible industry.
+
+    Existing lifecycle/profile priority codes keep their original priority and
+    every industry champion is added to the mandatory fetch set.  The fetch
+    budget covers the complete priority union *plus* the original generic
+    budget, so one protected class cannot silently crowd out another.
+    """
 
     leaders = industry_leaders(
         quant_rows,
         per_industry=DEFAULT_FULL_FUNDAMENTAL_LEADERS_PER_INDUSTRY,
     )
     leader_codes = [_normalize_code(row.get("code")) for row in leaders]
-    existing_required = {
+    normalized_priority = [
+        _normalize_code(code) for code in priority_codes if _normalize_code(code)
+    ]
+    existing_required = [
         _normalize_code(code) for code in required_codes if _normalize_code(code)
-    }
+    ]
     mandatory = list(dict.fromkeys([*existing_required, *leader_codes]))
+    protected_priority = list(
+        dict.fromkeys([*normalized_priority, *mandatory])
+    )
     original_limit = max(0, int(config.fundamental_limit))
-    config.fundamental_limit = max(original_limit, len(mandatory) + original_limit)
+    config.fundamental_limit = max(
+        original_limit,
+        len(protected_priority) + original_limit,
+    )
     try:
         return _ORIGINAL_FUNDAMENTALS(
             quant_rows,
             qfq_histories,
             config,
-            priority_codes=list(
-                dict.fromkeys(
-                    [
-                        *[_normalize_code(code) for code in priority_codes],
-                        *leader_codes,
-                    ]
-                )
-            ),
+            priority_codes=protected_priority,
             required_codes=mandatory,
         )
     finally:
