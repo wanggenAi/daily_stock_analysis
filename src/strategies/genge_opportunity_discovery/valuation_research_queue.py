@@ -1,11 +1,18 @@
-"""Independent reverse-valuation research queue for the All-A production scan.
+"""Research-only reverse-valuation queue for the All-A production scan.
 
-This sidecar is intentionally research-only. It consumes the completed All-A
-quant screen, broadens fundamental review without changing any production
-eligibility gate, and ranks candidates by the profit level implied by their
-current PE relative to their own point-in-time historical PE distribution.
+The sidecar broadens *research recall* without changing Formal BUY eligibility,
+position sizing, entry/exit gates, or execution.  It asks a narrow question:
+relative to a stock's own prior positive-PE history, what profit growth would
+be required for today's price to be supported if the multiple reverted to that
+historical reference?
 
-It never creates a Formal BUY, position size, order, stop, or exit instruction.
+Point-in-time rules are deliberately strict:
+
+* today's/current PE observation is never included in its own reference sample;
+* known disclosure dates override report dates for financial availability;
+* when disclosure timing is partially available, undated financial rows are not
+  treated as historically known;
+* the queue never promotes a candidate into a formal signal or trade.
 """
 
 from __future__ import annotations
@@ -30,7 +37,9 @@ RELAXABLE_TECHNICAL_BLOCKERS = frozenset(
     {"price_too_high", "board_5d_abnormal_move", "board_10d_abnormal_move"}
 )
 NORMAL_RESEARCH_STATUSES = frozenset({"PRIORITY_RESEARCH", "SECONDARY_RESEARCH"})
-WIDE_RECALL_STATUSES = frozenset({"PRIORITY_RESEARCH", "SECONDARY_RESEARCH", "LOW_PRIORITY", "HARD_REJECT"})
+WIDE_RECALL_STATUSES = frozenset(
+    {"PRIORITY_RESEARCH", "SECONDARY_RESEARCH", "LOW_PRIORITY", "HARD_REJECT"}
+)
 
 OUTPUT_COLUMNS = [
     "valuation_research_rank",
@@ -43,8 +52,11 @@ OUTPUT_COLUMNS = [
     "quant_score",
     "source_hard_blockers",
     "current_pe",
+    "current_pe_date",
     "historical_median_pe",
     "historical_pe_sample_count",
+    "historical_pe_reference_start",
+    "historical_pe_reference_end",
     "historical_pe_percentile",
     "implied_profit_multiple_of_current",
     "required_profit_growth",
@@ -54,10 +66,14 @@ OUTPUT_COLUMNS = [
     "earnings_quality_score",
     "earnings_quality_confidence",
     "earnings_normalization_method",
+    "financial_report_date",
+    "financial_disclosure_date",
+    "earnings_point_in_time_method",
     "valuation_diagnostic_status",
     "financial_review_status",
     "formal_buy_eligible",
     "automatic_promotion_allowed",
+    "no_auto_trade",
     "disclaimer",
 ]
 
@@ -107,12 +123,7 @@ def select_wide_recall_rows(
     max_candidates: int = 80,
     relaxed_reserve: int = 20,
 ) -> list[dict[str, Any]]:
-    """Reserve research capacity for rows rejected only by soft/technical shape.
-
-    Safety exclusions happen before ``all_a_quant_screen.csv`` is generated.
-    Within that already-filtered universe, only the explicitly listed technical
-    blockers may be recovered here. The result cannot promote a formal signal.
-    """
+    """Reserve bounded research capacity for safe soft/technical recoveries."""
 
     limit = max(0, int(max_candidates))
     reserve = max(0, min(limit, int(relaxed_reserve)))
@@ -125,20 +136,16 @@ def select_wide_recall_rows(
             continue
         row = dict(source)
         row["wide_recall_reason"] = reason
-        if reason == "NORMAL_RESEARCH_QUEUE":
-            normal.append(row)
-        else:
-            relaxed.append(row)
+        (normal if reason == "NORMAL_RESEARCH_QUEUE" else relaxed).append(row)
 
     normal.sort(key=_quant_key)
     relaxed.sort(key=_quant_key)
-
     normal_budget = max(0, limit - reserve)
     selected = normal[:normal_budget] + relaxed[:reserve]
     used = {normalize_code(row.get("code")) for row in selected}
-
     leftovers = [
-        row for row in (*normal[normal_budget:], *relaxed[reserve:])
+        row
+        for row in (*normal[normal_budget:], *relaxed[reserve:])
         if normalize_code(row.get("code")) not in used
     ]
     leftovers.sort(key=_quant_key)
@@ -147,32 +154,54 @@ def select_wide_recall_rows(
 
 
 def _asof_valuation_frame(frame: pd.DataFrame | None, *, as_of: date) -> pd.DataFrame:
-    if frame is None or frame.empty or "date" not in frame.columns:
-        return pd.DataFrame()
-    local = frame.copy()
+    if frame is None or frame.empty or "date" not in frame.columns or "pe" not in frame.columns:
+        return pd.DataFrame(columns=["date", "pe"])
+    local = frame[["date", "pe"]].copy()
     local["date"] = pd.to_datetime(local["date"], errors="coerce").dt.date
-    local["pe"] = pd.to_numeric(local.get("pe"), errors="coerce")
+    local["pe"] = pd.to_numeric(local["pe"], errors="coerce")
     local = local.dropna(subset=["date", "pe"])
     local = local[(local["date"] <= as_of) & (local["pe"] > 0)].copy()
-    return local.sort_values("date").reset_index(drop=True)
+    return (
+        local.sort_values("date")
+        .drop_duplicates(subset=["date"], keep="last")
+        .reset_index(drop=True)
+    )
 
 
-def _asof_financial_frame(frame: pd.DataFrame | None, *, as_of: date) -> pd.DataFrame:
+def _asof_financial_frame(
+    frame: pd.DataFrame | None,
+    *,
+    as_of: date,
+) -> tuple[pd.DataFrame, str]:
     if frame is None or frame.empty or "report_date" not in frame.columns:
-        return pd.DataFrame()
+        return pd.DataFrame(), "FINANCIAL_DATA_UNAVAILABLE"
+
     local = frame.copy()
     local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce").dt.date
+    report_eligible = local["report_date"].notna() & (local["report_date"] <= as_of)
+
     if "disclosure_date" in local.columns:
-        disclosure = pd.to_datetime(local["disclosure_date"], errors="coerce").dt.date
-        local["disclosure_date"] = disclosure
-        local = local[
-            local["report_date"].notna()
-            & (local["report_date"] <= as_of)
-            & (local["disclosure_date"].isna() | (local["disclosure_date"] <= as_of))
-        ].copy()
-    else:
-        local = local[local["report_date"].notna() & (local["report_date"] <= as_of)].copy()
-    return local.sort_values("report_date").reset_index(drop=True)
+        local["disclosure_date"] = pd.to_datetime(
+            local["disclosure_date"], errors="coerce"
+        ).dt.date
+        known_disclosure = local["disclosure_date"].notna()
+        if known_disclosure.any():
+            eligible = local[
+                report_eligible
+                & known_disclosure
+                & (local["disclosure_date"] <= as_of)
+            ].copy()
+            if eligible.empty:
+                return pd.DataFrame(), "DISCLOSURE_DATE_NOT_YET_AVAILABLE"
+            return (
+                eligible.sort_values(["disclosure_date", "report_date"]).reset_index(drop=True),
+                "DISCLOSURE_DATE_PIT",
+            )
+
+    fallback = local[report_eligible].copy()
+    if fallback.empty:
+        return pd.DataFrame(), "FINANCIAL_DATA_UNAVAILABLE"
+    return fallback.sort_values("report_date").reset_index(drop=True), "REPORT_DATE_FALLBACK"
 
 
 def build_relative_pe_diagnostic(
@@ -182,24 +211,41 @@ def build_relative_pe_diagnostic(
     as_of: date,
     minimum_pe_samples: int = 20,
 ) -> dict[str, Any]:
-    """Reverse-solve required profit growth using only same-unit PE ratios."""
+    """Reverse-solve profit growth against a strictly prior PE reference."""
 
     row = dict(source)
     row["code"] = normalize_code(row.get("code"))
     row["source_hard_blockers"] = row.get("hard_blockers") or ""
     row["formal_buy_eligible"] = False
     row["automatic_promotion_allowed"] = False
+    row["no_auto_trade"] = True
     row["disclaimer"] = DISCLAIMER
 
     valuation = _asof_valuation_frame(valuation_df, as_of=as_of)
-    sample_count = len(valuation)
+    if valuation.empty:
+        row.update(
+            {
+                "historical_pe_sample_count": 0,
+                "valuation_diagnostic_status": "PE_MODEL_NOT_APPLICABLE",
+            }
+        )
+        return row
+
+    current = valuation.iloc[-1]
+    current_pe = _finite(current.get("pe"))
+    current_date = current.get("date")
+    history = valuation[valuation["date"] < current_date].copy()
+    sample_count = len(history)
     row["historical_pe_sample_count"] = sample_count
+    row["current_pe"] = current_pe if current_pe is not None else ""
+    row["current_pe_date"] = current_date.isoformat() if current_date else ""
 
     if sample_count < max(1, int(minimum_pe_samples)):
         row.update(
             {
-                "current_pe": "",
                 "historical_median_pe": "",
+                "historical_pe_reference_start": "",
+                "historical_pe_reference_end": "",
                 "historical_pe_percentile": "",
                 "implied_profit_multiple_of_current": "",
                 "required_profit_growth": "",
@@ -209,21 +255,21 @@ def build_relative_pe_diagnostic(
         )
         return row
 
-    current_pe = _finite(valuation.iloc[-1].get("pe"))
-    median_pe = _finite(pd.to_numeric(valuation["pe"], errors="coerce").dropna().median())
+    pe_values = pd.to_numeric(history["pe"], errors="coerce").dropna()
+    median_pe = _finite(pe_values.median())
     if current_pe is None or current_pe <= 0 or median_pe is None or median_pe <= 0:
         row["valuation_diagnostic_status"] = "PE_MODEL_NOT_APPLICABLE"
         return row
 
-    pe_values = pd.to_numeric(valuation["pe"], errors="coerce").dropna()
     percentile = float((pe_values <= current_pe).sum() / len(pe_values))
     implied_profit_multiple = current_pe / median_pe
     required_growth = implied_profit_multiple - 1.0
-
     row.update(
         {
             "current_pe": round(current_pe, 4),
             "historical_median_pe": round(median_pe, 4),
+            "historical_pe_reference_start": history.iloc[0]["date"].isoformat(),
+            "historical_pe_reference_end": history.iloc[-1]["date"].isoformat(),
             "historical_pe_percentile": round(percentile, 6),
             "implied_profit_multiple_of_current": round(implied_profit_multiple, 6),
             "required_profit_growth": round(required_growth, 6),
@@ -241,9 +287,10 @@ def add_financial_quality(
     as_of: date,
 ) -> dict[str, Any]:
     result = dict(row)
-    financial = _asof_financial_frame(financial_df, as_of=as_of)
+    financial, pit_method = _asof_financial_frame(financial_df, as_of=as_of)
+    result["earnings_point_in_time_method"] = pit_method
     if financial.empty:
-        result["financial_review_status"] = "FINANCIAL_DATA_UNAVAILABLE"
+        result["financial_review_status"] = pit_method
         return result
 
     latest = financial.iloc[-1]
@@ -251,16 +298,26 @@ def add_financial_quality(
     operating_cash_flow = _finite(latest.get("operating_cash_flow"))
     earnings = normalize_core_earnings(
         net_profit=net_profit,
+        recurring_profit=_finite(latest.get("recurring_profit")),
+        investment_income=_finite(latest.get("investment_income")),
+        fair_value_change_gain=_finite(latest.get("fair_value_change_gain")),
         operating_cash_flow=operating_cash_flow,
     )
-
+    report_date = latest.get("report_date")
+    disclosure_date = latest.get("disclosure_date")
     result.update(
         {
             "latest_net_profit": net_profit if net_profit is not None else "",
-            "latest_operating_cash_flow": operating_cash_flow if operating_cash_flow is not None else "",
+            "latest_operating_cash_flow": (
+                operating_cash_flow if operating_cash_flow is not None else ""
+            ),
             "earnings_quality_score": earnings.earnings_quality_score,
             "earnings_quality_confidence": earnings.earnings_quality_confidence,
             "earnings_normalization_method": earnings.normalization_method,
+            "financial_report_date": report_date.isoformat() if report_date else "",
+            "financial_disclosure_date": (
+                disclosure_date.isoformat() if disclosure_date else ""
+            ),
             "financial_review_status": "OK",
         }
     )
@@ -272,16 +329,22 @@ def add_financial_quality(
     return result
 
 
-def rank_valuation_research_rows(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+def rank_valuation_research_rows(
+    rows: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
     def key(row: Mapping[str, Any]) -> tuple[int, float, float, float, str]:
-        status = str(row.get("valuation_diagnostic_status") or "")
-        applicable = 0 if status == "OK_RELATIVE_PE_EXPECTATION" else 1
+        applicable = (
+            0
+            if str(row.get("valuation_diagnostic_status") or "")
+            == "OK_RELATIVE_PE_EXPECTATION"
+            else 1
+        )
         growth = _finite(row.get("required_profit_growth"))
         quality = _finite(row.get("earnings_quality_score"))
         quant = _finite(row.get("quant_score"))
         return (
             applicable,
-            growth if growth is not None else float("inf"),
+            growth if growth is not None else math.inf,
             -(quality if quality is not None else -1.0),
             -(quant if quant is not None else -1.0),
             normalize_code(row.get("code")),
@@ -303,7 +366,8 @@ def _find_latest_all_a_report(report_root: Path) -> Path:
     if (report_root / "all_a_quant_screen.csv").exists():
         return report_root
     candidates = sorted(
-        path for path in report_root.glob("**/all_a_quant_screen.csv")
+        path
+        for path in report_root.glob("**/all_a_quant_screen.csv")
         if path.is_file()
     )
     if not candidates:
@@ -316,7 +380,7 @@ def _load_as_of(report_dir: Path) -> date:
     if not summary_path.exists():
         raise FileNotFoundError(f"missing run_summary.json in {report_dir}")
     payload = json.loads(summary_path.read_text(encoding="utf-8"))
-    value = payload.get("as_of_date")
+    value = payload.get("as_of_date") or payload.get("resolved_as_of_date")
     if not value:
         raise ValueError("run_summary.json missing as_of_date")
     return date.fromisoformat(str(value))
@@ -348,7 +412,11 @@ def _parallel_fetch(
     fetch_financial: bool,
     max_workers: int,
 ) -> dict[str, Any]:
-    normalized = list(dict.fromkeys(normalize_code(code) for code in codes if normalize_code(code)))
+    normalized = list(
+        dict.fromkeys(
+            normalize_code(code) for code in codes if normalize_code(code)
+        )
+    )
     results: dict[str, Any] = {}
     with ThreadPoolExecutor(max_workers=max(1, int(max_workers))) as executor:
         futures = {
@@ -366,7 +434,7 @@ def _parallel_fetch(
             code = futures[future]
             try:
                 results[code] = future.result()
-            except Exception as exc:  # fail-open research diagnostic
+            except Exception as exc:  # research diagnostics fail open, never trade
                 results[code] = exc
     return results
 
@@ -379,8 +447,9 @@ def _write_outputs(
     summary: Mapping[str, Any],
 ) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
-    csv_path = output_dir / "valuation_research_queue.csv"
-    with csv_path.open("w", encoding="utf-8", newline="") as stream:
+    with (output_dir / "valuation_research_queue.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as stream:
         writer = csv.DictWriter(stream, fieldnames=OUTPUT_COLUMNS)
         writer.writeheader()
         for row in rows:
@@ -394,7 +463,10 @@ def _write_outputs(
         f"- as_of_date: {as_of.isoformat()}",
         f"- selected_count: {summary.get('selected_count')}",
         f"- valid_reverse_pe_count: {summary.get('valid_reverse_pe_count')}",
+        "- historical PE reference excludes the current observation",
         "- formal_buy_eligible: False for every row",
+        "- automatic_promotion_allowed: False for every row",
+        "- no_auto_trade: True for every row",
         "",
         "## Priority research",
         "",
@@ -419,7 +491,9 @@ def _write_outputs(
         )
     if not rows:
         lines.append("- No research candidates with usable inputs.")
-    (output_dir / "valuation_research_queue.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (output_dir / "valuation_research_queue.md").write_text(
+        "\n".join(lines) + "\n", encoding="utf-8"
+    )
     (output_dir / "valuation_research_summary.json").write_text(
         json.dumps(dict(summary), ensure_ascii=False, indent=2),
         encoding="utf-8",
@@ -514,10 +588,12 @@ def run_sidecar(
         "source_report_dir": str(report_dir),
         "selected_count": len(selected),
         "normal_research_count": sum(
-            row.get("wide_recall_reason") == "NORMAL_RESEARCH_QUEUE" for row in selected
+            row.get("wide_recall_reason") == "NORMAL_RESEARCH_QUEUE"
+            for row in selected
         ),
         "relaxed_recovery_count": sum(
-            row.get("wide_recall_reason") != "NORMAL_RESEARCH_QUEUE" for row in selected
+            row.get("wide_recall_reason") != "NORMAL_RESEARCH_QUEUE"
+            for row in selected
         ),
         "valid_reverse_pe_count": sum(
             row.get("valuation_diagnostic_status") == "OK_RELATIVE_PE_EXPECTATION"
@@ -534,12 +610,13 @@ def run_sidecar(
         "relaxed_reserve": int(relaxed_reserve),
         "financial_review_limit": int(financial_review_limit),
         "historical_pe_years": int(years),
-        "minimum_pe_samples": int(minimum_pe_samples),
+        "minimum_prior_pe_samples": int(minimum_pe_samples),
+        "current_observation_excluded_from_reference": True,
         "formal_buy_eligible": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
         "ranking_semantics": (
-            "valid relative-PE diagnostics first; lower implied required profit growth first; "
+            "valid prior-relative-PE diagnostics first; lower implied required profit growth first; "
             "then higher earnings quality and existing quant score"
         ),
         "disclaimer": DISCLAIMER,
@@ -551,8 +628,14 @@ def run_sidecar(
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--report-root", type=Path, required=True)
-    parser.add_argument("--output-root", type=Path, default=Path("reports/valuation_research_queue"))
-    parser.add_argument("--cache-dir", type=Path, default=Path("data/cache/valuation_research_fundamentals"))
+    parser.add_argument(
+        "--output-root", type=Path, default=Path("reports/valuation_research_queue")
+    )
+    parser.add_argument(
+        "--cache-dir",
+        type=Path,
+        default=Path("data/cache/valuation_research_fundamentals"),
+    )
     parser.add_argument("--max-candidates", type=int, default=80)
     parser.add_argument("--relaxed-reserve", type=int, default=20)
     parser.add_argument("--financial-review-limit", type=int, default=30)
