@@ -71,6 +71,43 @@ class ValuationResearchProductionTest(unittest.TestCase):
         )
         self.assertNotIn("999999", {row["code"] for row in selected})
 
+    def test_relaxed_recovery_never_backfills_beyond_hard_cap(self):
+        rows = [
+            {
+                "code": f"00{index + 1:04d}",
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_rank": index + 1,
+                "quant_score": 90 - index,
+                "hard_blockers": "",
+            }
+            for index in range(10)
+        ]
+        rows.extend(
+            {
+                "code": f"30{index:04d}",
+                "quant_status": "HARD_REJECT",
+                "quant_rank": 100 + index,
+                "quant_score": 60 - index / 10,
+                "hard_blockers": "price_too_high",
+            }
+            for index in range(50)
+        )
+
+        selected = select_wide_recall_rows(rows, research_limit=80, relaxed_reserve=20)
+
+        self.assertEqual(len(selected), 30)
+        self.assertEqual(
+            sum(row["wide_recall_reason"] == "NORMAL_RESEARCH_QUEUE" for row in selected),
+            10,
+        )
+        self.assertEqual(
+            sum(
+                row["wide_recall_reason"] == "RELAXABLE_TECHNICAL_RECOVERY"
+                for row in selected
+            ),
+            20,
+        )
+
     def test_current_pe_is_excluded_from_its_own_historical_reference(self):
         valuation = pd.DataFrame(
             {
