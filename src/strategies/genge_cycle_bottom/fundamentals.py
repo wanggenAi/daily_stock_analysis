@@ -22,6 +22,7 @@ FINANCIAL_COLUMNS = (
     "disclosure_date",
     "debt_ratio",
     "net_profit",
+    "recurring_profit",
     "operating_cash_flow",
     "roe",
     "gross_margin",
@@ -287,7 +288,12 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
     net_profit_col = _first_column(
         local.columns,
         ("净利润", "归母净利润", "PARENT_NETPROFIT", "NETPROFIT"),
-        ("率", "同比", "增长率", "每股"),
+        ("率", "同比", "增长率", "每股", "扣除非经常性", "扣非"),
+    )
+    recurring_profit_col = _first_column(
+        local.columns,
+        ("扣除非经常性损益后的净利润", "扣非净利润", "recurring_profit"),
+        ("同比", "增长率", "增长", "增速", "每股"),
     )
     operating_cash_col = _first_column(
         local.columns,
@@ -304,6 +310,7 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
         result["disclosure_date"] = None
     result["debt_ratio"] = local[debt_col].map(_safe_float) if debt_col else None
     result["net_profit"] = local[net_profit_col].map(_safe_float) if net_profit_col else None
+    result["recurring_profit"] = local[recurring_profit_col].map(_safe_float) if recurring_profit_col else None
     result["operating_cash_flow"] = local[operating_cash_col].map(_safe_float) if operating_cash_col else None
     result["roe"] = local[roe_col].map(_safe_float) if roe_col else None
     result["gross_margin"] = local[gross_margin_col].map(_safe_float) if gross_margin_col else None
