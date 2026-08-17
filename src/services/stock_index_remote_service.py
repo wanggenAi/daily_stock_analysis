@@ -18,10 +18,7 @@ import requests
 logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-DEFAULT_STOCK_INDEX_REMOTE_URL = (
-    "https://raw.githubusercontent.com/ZhuLinsen/daily_stock_analysis/"
-    "main/apps/dsa-web/public/stocks.index.json"
-)
+DEFAULT_STOCK_INDEX_REMOTE_URL = ""
 DEFAULT_STOCK_INDEX_CACHE_PATH = REPO_ROOT / "data" / "cache" / "stocks.index.json"
 DEFAULT_STOCK_INDEX_REMOTE_TTL_HOURS = 48
 DEFAULT_STOCK_INDEX_REMOTE_TIMEOUT_SECONDS = 10
@@ -38,7 +35,7 @@ _REMOTE_SUPPRESS_UNTIL = 0.0
 class RemoteStockIndexSettings:
     """Runtime settings for remote stock-index refresh."""
 
-    enabled: bool = True
+    enabled: bool = False
     url: str = DEFAULT_STOCK_INDEX_REMOTE_URL
     ttl_hours: int = DEFAULT_STOCK_INDEX_REMOTE_TTL_HOURS
     timeout_seconds: int = DEFAULT_STOCK_INDEX_REMOTE_TIMEOUT_SECONDS
@@ -56,10 +53,16 @@ class RemoteStockIndexResult:
 
 
 def settings_from_config(config: Any) -> RemoteStockIndexSettings:
-    """Build remote stock-index settings from the application config object."""
+    """Build remote stock-index settings from explicit application configuration."""
+    configured_url = str(
+        getattr(config, "stock_index_remote_url", "")
+        or os.getenv("DSA_STOCK_INDEX_URL", "")
+        or ""
+    ).strip()
+    enabled = bool(getattr(config, "stock_index_remote_update_enabled", bool(configured_url)))
     return RemoteStockIndexSettings(
-        enabled=bool(getattr(config, "stock_index_remote_update_enabled", True)),
-        url=DEFAULT_STOCK_INDEX_REMOTE_URL,
+        enabled=enabled and bool(configured_url),
+        url=configured_url,
         ttl_hours=DEFAULT_STOCK_INDEX_REMOTE_TTL_HOURS,
         timeout_seconds=DEFAULT_STOCK_INDEX_REMOTE_TIMEOUT_SECONDS,
     )
@@ -99,6 +102,7 @@ def validate_stock_index_payload(
     if len(payload) < min_items:
         raise ValueError(f"stock index payload is unexpectedly small: {len(payload)}")
 
+    canonical_names: dict[str, str] = {}
     for index, item in enumerate(payload):
         if not isinstance(item, list) or len(item) < 10:
             raise ValueError(f"stock index item {index} is not a compressed tuple")
@@ -132,6 +136,16 @@ def validate_stock_index_payload(
         ):
             raise ValueError(f"stock index item {index} popularity must be a finite number")
 
+        canonical_key = canonical_code.strip().upper()
+        normalized_name = name.strip()
+        previous_name = canonical_names.get(canonical_key)
+        if previous_name is not None and previous_name != normalized_name:
+            raise ValueError(
+                f"stock index code/name conflict for {canonical_code!r}: "
+                f"{previous_name!r} != {normalized_name!r}"
+            )
+        canonical_names[canonical_key] = normalized_name
+
     return payload
 
 
@@ -149,7 +163,11 @@ def is_valid_remote_stock_index_file(cache_path: Path = DEFAULT_STOCK_INDEX_CACH
 
 
 def _download_remote_stock_index(settings: RemoteStockIndexSettings) -> bytes:
-    response = requests.get(settings.url, timeout=settings.timeout_seconds)
+    url = settings.url.strip()
+    if not url:
+        raise ValueError("remote stock-index URL is not configured")
+
+    response = requests.get(url, timeout=settings.timeout_seconds)
     response.raise_for_status()
 
     content = response.content
@@ -211,7 +229,7 @@ def _record_remote_failure(now: float, ttl_hours: int) -> int:
 def refresh_remote_stock_index_cache(settings: RemoteStockIndexSettings) -> RemoteStockIndexResult:
     """Refresh the remote stock index cache without breaking callers on failure."""
     cache_path = settings.cache_path
-    if not settings.enabled:
+    if not settings.enabled or not settings.url.strip():
         return RemoteStockIndexResult(cache_path=cache_path if cache_path.is_file() else None, skipped=True)
 
     current_time = time.time()
