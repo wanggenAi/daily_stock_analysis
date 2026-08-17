@@ -314,7 +314,7 @@ def _write_stock_index(path: Path, name: str = "平安银行", size: int = 1) ->
     )
 
 
-def test_stock_index_route_serves_newer_remote_cache(tmp_path: Path) -> None:
+def test_stock_index_route_prefers_static_index_over_newer_remote_cache(tmp_path: Path) -> None:
     from api import app as app_module
     from api.app import create_app
 
@@ -338,11 +338,11 @@ def test_stock_index_route_serves_newer_remote_cache(tmp_path: Path) -> None:
     assert response.status_code == 200
     assert response.headers["content-type"].startswith("application/json")
     assert response.headers["cache-control"] == "no-cache"
-    assert response.json()[0][2] == "远程缓存"
+    assert response.json()[0][2] == "内置静态"
     schedule.assert_any_call(ANY, "serve-stock-index")
 
 
-def test_stock_index_route_prefers_newer_static_index_over_older_remote_cache(tmp_path: Path) -> None:
+def test_stock_index_route_prefers_static_index_over_older_remote_cache(tmp_path: Path) -> None:
     from api import app as app_module
     from api.app import create_app
 
@@ -388,6 +388,26 @@ def test_stock_index_route_falls_back_to_static_index(tmp_path: Path) -> None:
 
     assert response.status_code == 200
     assert response.json()[0][2] == "内置静态"
+
+
+def test_stock_index_route_uses_remote_cache_when_local_indexes_missing(tmp_path: Path) -> None:
+    from api import app as app_module
+    from api.app import create_app
+
+    static_dir = tmp_path / "static"
+    cache_path = tmp_path / "cache" / "stocks.index.json"
+    bundled_path = tmp_path / "bundled" / "missing.json"
+    _write_stock_index(cache_path, "远程兜底", size=100)
+
+    client = TestClient(create_app(static_dir=static_dir))
+
+    with patch.object(app_module, "get_remote_stock_index_cache_path", return_value=cache_path), \
+         patch.object(app_module, "_bundled_stock_index_path", return_value=bundled_path), \
+         patch.object(app_module, "_schedule_stock_index_background_refresh"):
+        response = client.get("/stocks.index.json")
+
+    assert response.status_code == 200
+    assert response.json()[0][2] == "远程兜底"
 
 
 def test_stock_index_route_does_not_parse_bundled_candidates_on_hot_path(tmp_path: Path) -> None:
