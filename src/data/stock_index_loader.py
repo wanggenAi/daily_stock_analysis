@@ -179,13 +179,17 @@ def _get_fresh_stock_index_candidates(
     candidate_paths: Iterable[Path],
     remote_cache_path: Path,
 ) -> tuple[Path, ...]:
-    """Return existing candidates while preserving caller-defined precedence."""
-    del remote_cache_path  # Kept for compatibility with existing callers/tests.
-    return tuple(
-        candidate_path
-        for candidate_path in candidate_paths
-        if _get_stock_index_signature(candidate_path) is not None
-    )
+    """Return existing local candidates first, with remote cache only as fallback."""
+    local_candidates: list[Path] = []
+    remote_candidates: list[Path] = []
+    for candidate_path in candidate_paths:
+        if _get_stock_index_signature(candidate_path) is None:
+            continue
+        if _same_path(candidate_path, remote_cache_path):
+            remote_candidates.append(candidate_path)
+        else:
+            local_candidates.append(candidate_path)
+    return tuple(local_candidates + remote_candidates)
 
 
 def _is_remote_stock_index_cache_usable(
