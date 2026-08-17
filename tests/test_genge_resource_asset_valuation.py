@@ -84,9 +84,7 @@ def test_cash_tax_applies_only_to_positive_asset_pretax_cash_flow():
         closure_and_reclamation_cash_outflow_100pct=0.0,
     )
 
-    # Positive: 100 * 4 pre-tax * 75% = 300, then discounted one year.
     assert math.isclose(positive.pv_100pct_resource_cash_flows, 300.0 / 1.1)
-    # Negative loss is not multiplied by (1-tax), because no tax shield is invented.
     assert math.isclose(negative.pv_100pct_resource_cash_flows, -100.0 / 1.1)
 
 
@@ -102,10 +100,19 @@ def test_resource_asset_rejects_invalid_ownership_and_rates():
     ownership = _asset(economic_ownership=1.2)
     royalty = _asset(royalty_rate_on_revenue=-0.01)
     tax = _asset(cash_tax_rate_on_positive_pretax_cash_flow=1.01)
+    negative_discount = _asset(required_return=-0.01)
 
     assert ownership.status == "INVALID_OR_MISSING_ECONOMIC_OWNERSHIP"
     assert royalty.status == "INVALID_OR_MISSING_ROYALTY_RATE"
     assert tax.status == "INVALID_OR_MISSING_CASH_TAX_RATE"
+    assert negative_discount.status == "INVALID_OR_MISSING_REQUIRED_RETURN"
+
+
+def test_zero_required_return_is_allowed_when_explicitly_researched():
+    result = _asset(required_return=0.0)
+
+    assert result.status == "OK"
+    assert result.valuation_model_applicable is True
 
 
 def test_corporate_bridge_combines_resource_nav_with_non_overlapping_downstream_value():
@@ -168,7 +175,29 @@ def test_corporate_bridge_requires_explicit_non_resource_segment_value():
     assert result.fair_equity_nav is None
 
 
-def test_resource_evidence_reports_missing_model_inputs_without_imputation():
+def test_non_positive_equity_nav_does_not_report_margin_of_safety():
+    mine = _asset(
+        normalized_realized_unit_price=1.0,
+        unit_cash_operating_cost=4.0,
+        sustaining_capex_per_unit=1.0,
+        royalty_rate_on_revenue=0.0,
+        cash_tax_rate_on_positive_pretax_cash_flow=0.25,
+        closure_and_reclamation_cash_outflow_100pct=0.0,
+    )
+    result = bridge_resource_equity_nav(
+        resource_asset_results=[mine],
+        non_resource_segment_value=0.0,
+        unrestricted_cash=0.0,
+        interest_bearing_debt_not_in_resource_cash_flows=0.0,
+        other_corporate_liability_pv_not_in_resource_cash_flows=0.0,
+        current_market_cap=100.0,
+    )
+
+    assert result.fair_equity_nav < 0
+    assert result.margin_of_safety is None
+
+
+def test_resource_evidence_reports_all_valuation_critical_missing_inputs():
     evidence = build_resource_asset_evidence(
         reported_resource_units=1000.0,
         recoverable_units_used_in_model=700.0,
@@ -177,10 +206,32 @@ def test_resource_evidence_reports_missing_model_inputs_without_imputation():
         economic_ownership=0.8,
     )
 
-    assert evidence.evidence_completeness == 4 / 6
+    assert evidence.evidence_completeness == 4 / 10
     assert evidence.missing_fields == (
         "normalized_unit_cash_operating_cost",
         "sustaining_capex_per_unit",
+        "royalty_rate_on_revenue",
+        "cash_tax_rate_on_positive_pretax_cash_flow",
+        "required_return",
+        "closure_and_reclamation_cash_outflow_100pct",
     )
     assert evidence.reported_resource_units == 1000.0
     assert evidence.reported_reserve_units is None
+
+
+def test_resource_evidence_is_complete_only_when_full_nav_deck_is_present():
+    evidence = build_resource_asset_evidence(
+        recoverable_units_used_in_model=700.0,
+        normalized_annual_production_units=70.0,
+        normalized_realized_unit_price=10.0,
+        normalized_unit_cash_operating_cost=4.0,
+        sustaining_capex_per_unit=1.0,
+        economic_ownership=0.8,
+        royalty_rate_on_revenue=0.08,
+        cash_tax_rate_on_positive_pretax_cash_flow=0.25,
+        required_return=0.10,
+        closure_and_reclamation_cash_outflow_100pct=30.0,
+    )
+
+    assert evidence.evidence_completeness == 1.0
+    assert evidence.missing_fields == ()
