@@ -1,23 +1,19 @@
 """Deterministic company-archetype routing for valuation research.
 
-This module is an orchestration layer, not a valuation model.  It organizes the
-specialized models that already exist in ``genge_opportunity_discovery`` behind
-an immutable registry and a conservative router.
+This is an orchestration layer, not a valuation model.  It organizes the
+specialized model modules already present in ``genge_opportunity_discovery``
+behind an immutable registry and conservative, table-driven routing rules.
 
-Design goals:
+The design intentionally uses a small subset of GoF ideas where they solve a
+real problem:
 
-* Strategy/Registry: valuation families are discoverable without a growing
-  ``if/elif`` tree in the report pipeline.
-* Adapter-ready descriptors: existing pure model modules remain unchanged and
-  can be wrapped/executed by later adapters.
-* Composite routing: one company may require a normalizer plus a valuation
-  model (for example capacity-cycle normalization followed by the generic
-  reverse-earnings bridge).
-* Fail-safe routing: industry labels only select models when the mapping is
-  economically explicit.  Ambiguous industries fall back to the generic
-  research model; generic ``医药`` never implies biotech rNPV by itself.
-* Auditability: every decision carries the selected strategies, confidence and
-  human-readable reasons.
+* Strategy/Registry: model families are discoverable without a growing
+  production ``if/elif`` tree.
+* Adapter-ready descriptors: existing pure model modules remain unchanged.
+* Composite routing: a company may need a normalizer followed by a valuation
+  model (capacity-cycle normalization + reverse earnings, for example).
+* Open/Closed routing table: a new archetype/rule can be added without changing
+  the report pipeline.
 
 Routing metadata is research-only.  It cannot create a Formal BUY, change
 position sizing, bypass hard risk gates, or trigger automatic trading.
@@ -25,9 +21,9 @@ position sizing, bypass hard risk gates, or trigger automatic trading.
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, Sequence
 
 
 class CompanyArchetype(str, Enum):
@@ -93,7 +89,7 @@ class ValuationRouteDecision:
 
     @property
     def strategy_ids(self) -> tuple[str, ...]:
-        return tuple(selection.strategy_id for selection in self.selections)
+        return tuple(item.strategy_id for item in self.selections)
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -115,10 +111,7 @@ class ValuationStrategyRegistry:
 
     def __init__(self, strategies: Iterable[StrategyDescriptor]):
         ordered = tuple(
-            sorted(
-                strategies,
-                key=lambda item: (item.execution_order, item.strategy_id),
-            )
+            sorted(strategies, key=lambda item: (item.execution_order, item.strategy_id))
         )
         ids = [item.strategy_id for item in ordered]
         if len(ids) != len(set(ids)):
@@ -150,112 +143,112 @@ class ValuationStrategyRegistry:
 
 DEFAULT_STRATEGIES = (
     StrategyDescriptor(
-        strategy_id="biological_cycle_normalizer",
-        archetype=CompanyArchetype.BIOLOGICAL_CYCLE,
-        role=StrategyRole.NORMALIZER,
-        module_path="src.strategies.genge_opportunity_discovery.biological_cycle_normalization",
-        execution_order=10,
-        pe_based=False,
-        description="Normalize biological/animal-production cycle earnings before valuation.",
+        "biological_cycle_normalizer",
+        CompanyArchetype.BIOLOGICAL_CYCLE,
+        StrategyRole.NORMALIZER,
+        "src.strategies.genge_opportunity_discovery.biological_cycle_normalization",
+        10,
+        False,
+        "Normalize biological/animal-production cycle earnings before valuation.",
     ),
     StrategyDescriptor(
-        strategy_id="capacity_cycle_normalizer",
-        archetype=CompanyArchetype.CAPACITY_CYCLE,
-        role=StrategyRole.NORMALIZER,
-        module_path="src.strategies.genge_opportunity_discovery.capacity_cycle_normalization",
-        execution_order=10,
-        pe_based=False,
-        description="Normalize commodity/capacity-cycle economics before valuation.",
+        "capacity_cycle_normalizer",
+        CompanyArchetype.CAPACITY_CYCLE,
+        StrategyRole.NORMALIZER,
+        "src.strategies.genge_opportunity_discovery.capacity_cycle_normalization",
+        10,
+        False,
+        "Normalize commodity/capacity-cycle economics before valuation.",
     ),
     StrategyDescriptor(
-        strategy_id="product_cycle_normalizer",
-        archetype=CompanyArchetype.PRODUCT_CYCLE,
-        role=StrategyRole.NORMALIZER,
-        module_path="src.strategies.genge_opportunity_discovery.product_cycle_normalization",
-        execution_order=10,
-        pe_based=False,
-        description="Normalize product/technology cycle earnings before valuation.",
+        "product_cycle_normalizer",
+        CompanyArchetype.PRODUCT_CYCLE,
+        StrategyRole.NORMALIZER,
+        "src.strategies.genge_opportunity_discovery.product_cycle_normalization",
+        10,
+        False,
+        "Normalize product/technology-cycle earnings before valuation.",
     ),
     StrategyDescriptor(
-        strategy_id="bank_residual_income",
-        archetype=CompanyArchetype.BANK,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.bank_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Common-equity P/B and sustainable-ROE residual-income bridge for banks.",
+        "bank_residual_income",
+        CompanyArchetype.BANK,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.bank_valuation",
+        100,
+        False,
+        "Common-equity P/B and sustainable-ROE residual-income bridge for banks.",
     ),
     StrategyDescriptor(
-        strategy_id="insurance_embedded_value",
-        archetype=CompanyArchetype.INSURANCE,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.insurance_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Insurance-specific valuation bridge rather than industrial P/E.",
+        "insurance_embedded_value",
+        CompanyArchetype.INSURANCE,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.insurance_valuation",
+        100,
+        False,
+        "Embedded-value/new-business-value appraisal bridge for insurers.",
     ),
     StrategyDescriptor(
-        strategy_id="capital_markets_cycle",
-        archetype=CompanyArchetype.CAPITAL_MARKETS,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.capital_markets_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Cycle-aware valuation for brokers and capital-markets businesses.",
+        "capital_markets_cycle",
+        CompanyArchetype.CAPITAL_MARKETS,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.capital_markets_valuation",
+        100,
+        False,
+        "Cycle-aware valuation for brokers and capital-markets businesses.",
     ),
     StrategyDescriptor(
-        strategy_id="real_estate_nav",
-        archetype=CompanyArchetype.REAL_ESTATE_NAV,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.real_estate_nav_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Asset/NAV-oriented valuation for property developers and operators.",
+        "real_estate_nav",
+        CompanyArchetype.REAL_ESTATE_NAV,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.real_estate_nav_valuation",
+        100,
+        False,
+        "Project-NAV valuation for property developers.",
     ),
     StrategyDescriptor(
-        strategy_id="biotech_rnpv",
-        archetype=CompanyArchetype.BIOTECH_RNPV,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.biotech_rnpv_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Probability-adjusted pipeline rNPV and financing-runway valuation.",
+        "biotech_rnpv",
+        CompanyArchetype.BIOTECH_RNPV,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.biotech_rnpv_valuation",
+        100,
+        False,
+        "Probability-adjusted pipeline rNPV and financing-runway valuation.",
     ),
     StrategyDescriptor(
-        strategy_id="consumer_compounder_dcf",
-        archetype=CompanyArchetype.CONSUMER_COMPOUNDER,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.consumer_compounder_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Owner-earnings DCF with explicit growth duration for durable compounders.",
+        "consumer_compounder_dcf",
+        CompanyArchetype.CONSUMER_COMPOUNDER,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.consumer_compounder_valuation",
+        100,
+        False,
+        "Owner-earnings DCF with explicit growth duration for durable compounders.",
     ),
     StrategyDescriptor(
-        strategy_id="transport_cycle",
-        archetype=CompanyArchetype.TRANSPORT_CYCLE,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.transport_cycle_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Transport/shipping cycle-specific valuation.",
+        "transport_cycle",
+        CompanyArchetype.TRANSPORT_CYCLE,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.transport_cycle_valuation",
+        100,
+        False,
+        "Through-cycle EV bridge for shipping/airline-style transport businesses.",
     ),
     StrategyDescriptor(
-        strategy_id="yield_asset",
-        archetype=CompanyArchetype.YIELD_ASSET,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.yield_asset_valuation",
-        execution_order=100,
-        pe_based=False,
-        description="Cash-yield/asset valuation for mature regulated or yield-like assets.",
+        "yield_asset",
+        CompanyArchetype.YIELD_ASSET,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.yield_asset_valuation",
+        100,
+        False,
+        "FCFE/yield valuation for mature regulated or long-lived yield assets.",
     ),
     StrategyDescriptor(
-        strategy_id="general_reverse_earnings",
-        archetype=CompanyArchetype.GENERAL_EARNINGS,
-        role=StrategyRole.PRIMARY_VALUATION,
-        module_path="src.strategies.genge_opportunity_discovery.fundamental_valuation",
-        execution_order=110,
-        pe_based=True,
-        description="Generic normalized-earnings reverse valuation and expectation-gap bridge.",
+        "general_reverse_earnings",
+        CompanyArchetype.GENERAL_EARNINGS,
+        StrategyRole.PRIMARY_VALUATION,
+        "src.strategies.genge_opportunity_discovery.fundamental_valuation",
+        110,
+        True,
+        "Generic normalized-earnings reverse valuation and expectation-gap bridge.",
     ),
 )
 
@@ -263,12 +256,94 @@ DEFAULT_VALUATION_STRATEGY_REGISTRY = ValuationStrategyRegistry(DEFAULT_STRATEGI
 
 
 @dataclass(frozen=True)
-class _RouteSpec:
+class RouteRule:
+    rule_id: str
+    industry_tokens: tuple[str, ...]
     archetypes: tuple[CompanyArchetype, ...]
     confidence: float
     status: str
-    include_general: bool
-    reason: str
+    include_general: bool = False
+
+
+# Ordered from narrow/specialized to broader cycle families.  Airport/port are
+# yield assets, not transport-cycle EV names: transport_cycle_valuation itself
+# explicitly reserves that bridge for businesses such as shipping and airlines.
+INDUSTRY_ROUTE_RULES = (
+    RouteRule(
+        "insurance_industry",
+        ("保险",),
+        (CompanyArchetype.INSURANCE,),
+        0.95,
+        "SPECIALIZED_EXCLUSIVE",
+    ),
+    RouteRule(
+        "capital_markets_industry",
+        ("证券", "券商", "资本市场"),
+        (CompanyArchetype.CAPITAL_MARKETS,),
+        0.95,
+        "SPECIALIZED_EXCLUSIVE",
+    ),
+    RouteRule(
+        "bank_industry",
+        ("银行",),
+        (CompanyArchetype.BANK,),
+        0.95,
+        "SPECIALIZED_EXCLUSIVE",
+    ),
+    RouteRule(
+        "real_estate_industry",
+        ("房地产", "地产"),
+        (CompanyArchetype.REAL_ESTATE_NAV,),
+        0.90,
+        "SPECIALIZED_EXCLUSIVE",
+    ),
+    RouteRule(
+        "transport_cycle_industry",
+        ("航运", "航空"),
+        (CompanyArchetype.TRANSPORT_CYCLE,),
+        0.88,
+        "SPECIALIZED_PRIMARY",
+    ),
+    RouteRule(
+        "yield_asset_industry",
+        ("机场", "港口", "公用事业", "水务", "燃气", "电力运营", "高速公路"),
+        (CompanyArchetype.YIELD_ASSET,),
+        0.84,
+        "SPECIALIZED_PRIMARY",
+    ),
+    RouteRule(
+        "biological_cycle_industry",
+        ("猪肉", "生猪", "养殖", "畜牧"),
+        (CompanyArchetype.BIOLOGICAL_CYCLE,),
+        0.90,
+        "NORMALIZED_GENERIC",
+        True,
+    ),
+    RouteRule(
+        "capacity_or_commodity_cycle_industry",
+        ("稀土", "稀有金属", "有色", "贵金属", "化工", "钢铁", "煤炭", "玻璃", "水泥", "造纸"),
+        (CompanyArchetype.CAPACITY_CYCLE,),
+        0.85,
+        "NORMALIZED_GENERIC",
+        True,
+    ),
+    RouteRule(
+        "technology_capacity_cycle_industry",
+        ("面板", "光伏", "锂电"),
+        (CompanyArchetype.CAPACITY_CYCLE,),
+        0.82,
+        "NORMALIZED_GENERIC",
+        True,
+    ),
+    RouteRule(
+        "product_cycle_industry",
+        ("半导体", "消费电子", "电子元件", "显示器件"),
+        (CompanyArchetype.PRODUCT_CYCLE,),
+        0.80,
+        "NORMALIZED_GENERIC",
+        True,
+    ),
+)
 
 
 _EXPLICIT_ALIASES = {
@@ -308,13 +383,14 @@ def _tokens(value: object) -> tuple[str, ...]:
         return ()
     if isinstance(value, str):
         raw = value.replace("；", ";").replace("，", ",").replace("|", ",")
-        pieces: list[str] = []
-        for semi in raw.split(";"):
-            pieces.extend(semi.split(","))
-        return tuple(item.strip().lower() for item in pieces if item.strip())
-    if isinstance(value, Sequence):
+        parts: list[str] = []
+        for segment in raw.split(";"):
+            parts.extend(segment.split(","))
+        return tuple(item.strip().lower() for item in parts if item.strip())
+    if isinstance(value, Sequence) and not isinstance(value, (bytes, bytearray)):
         return tuple(str(item).strip().lower() for item in value if str(item).strip())
-    return (str(value).strip().lower(),) if str(value).strip() else ()
+    text = str(value).strip().lower()
+    return (text,) if text else ()
 
 
 def _contains_any(text: str, tokens: Iterable[str]) -> bool:
@@ -335,50 +411,52 @@ def _explicit_archetypes(hints: object) -> tuple[CompanyArchetype, ...]:
     return tuple(result)
 
 
-def _spec_from_industry_and_tags(industry: object, business_tags: object) -> _RouteSpec:
-    industry_text = str(industry or "").strip().lower()
-    tag_text = " ".join(_tokens(business_tags))
-    combined = f"{industry_text} {tag_text}".strip()
+def _industry_rule(industry: object) -> RouteRule | None:
+    text = str(industry or "").strip().lower()
+    for rule in INDUSTRY_ROUTE_RULES:
+        if _contains_any(text, rule.industry_tokens):
+            return rule
+    return None
 
-    # Pipeline-driven biotech is intentionally tag/hint driven. Generic 医药 is
-    # too broad and must not be silently converted into an rNPV company.
-    if _contains_any(tag_text, ("创新药", "创新生物药", "biotech", "pipeline-driven", "临床管线", "研发管线")):
-        return _RouteSpec(
-            (CompanyArchetype.BIOTECH_RNPV,),
+
+def _inferred_route(
+    industry: object,
+    business_tags: object,
+) -> tuple[list[CompanyArchetype], float, str, str]:
+    tag_text = " ".join(_tokens(business_tags))
+
+    # Generic 医药 is deliberately insufficient evidence for pipeline rNPV.
+    if _contains_any(
+        tag_text,
+        ("创新药", "创新生物药", "biotech", "pipeline-driven", "临床管线", "研发管线"),
+    ):
+        return (
+            [CompanyArchetype.BIOTECH_RNPV],
             0.95,
             "SPECIALIZED_EXCLUSIVE",
-            False,
             "business_tag_indicates_pipeline_driven_biotech",
         )
 
-    if _contains_any(industry_text, ("保险",)):
-        return _RouteSpec((CompanyArchetype.INSURANCE,), 0.95, "SPECIALIZED_EXCLUSIVE", False, "insurance_industry")
-    if _contains_any(industry_text, ("证券", "券商", "资本市场")):
-        return _RouteSpec((CompanyArchetype.CAPITAL_MARKETS,), 0.95, "SPECIALIZED_EXCLUSIVE", False, "capital_markets_industry")
-    if _contains_any(industry_text, ("银行",)):
-        return _RouteSpec((CompanyArchetype.BANK,), 0.95, "SPECIALIZED_EXCLUSIVE", False, "bank_industry")
-    if _contains_any(industry_text, ("房地产", "地产")):
-        return _RouteSpec((CompanyArchetype.REAL_ESTATE_NAV,), 0.9, "SPECIALIZED_EXCLUSIVE", False, "real_estate_industry")
-    if _contains_any(industry_text, ("航运", "航空", "机场", "港口")):
-        return _RouteSpec((CompanyArchetype.TRANSPORT_CYCLE,), 0.88, "SPECIALIZED_PRIMARY", False, "transport_cycle_industry")
-    if _contains_any(industry_text, ("公用事业", "水务", "燃气", "电力运营", "高速公路")):
-        return _RouteSpec((CompanyArchetype.YIELD_ASSET,), 0.82, "SPECIALIZED_PRIMARY", False, "yield_asset_industry")
-    if _contains_any(industry_text, ("猪肉", "生猪", "养殖", "畜牧")):
-        return _RouteSpec((CompanyArchetype.BIOLOGICAL_CYCLE,), 0.9, "NORMALIZED_GENERIC", True, "biological_cycle_industry")
-    if _contains_any(industry_text, ("稀土", "稀有金属", "有色", "贵金属", "化工", "钢铁", "煤炭", "玻璃", "水泥", "造纸")):
-        return _RouteSpec((CompanyArchetype.CAPACITY_CYCLE,), 0.85, "NORMALIZED_GENERIC", True, "capacity_or_commodity_cycle_industry")
-    if _contains_any(industry_text, ("面板", "光伏", "锂电")):
-        return _RouteSpec((CompanyArchetype.CAPACITY_CYCLE,), 0.82, "NORMALIZED_GENERIC", True, "technology_capacity_cycle_industry")
-    if _contains_any(industry_text, ("半导体", "消费电子", "电子元件", "显示器件")):
-        return _RouteSpec((CompanyArchetype.PRODUCT_CYCLE,), 0.8, "NORMALIZED_GENERIC", True, "product_cycle_industry")
-    if _contains_any(combined, ("品牌消费", "消费龙头", "稳定复利", "consumer compounder")):
-        return _RouteSpec((CompanyArchetype.CONSUMER_COMPOUNDER,), 0.78, "SPECIALIZED_WITH_GENERIC_ALTERNATIVE", True, "compounder_business_tag")
+    if _contains_any(tag_text, ("品牌消费", "消费龙头", "稳定复利", "consumer compounder")):
+        return (
+            [CompanyArchetype.CONSUMER_COMPOUNDER, CompanyArchetype.GENERAL_EARNINGS],
+            0.78,
+            "SPECIALIZED_WITH_GENERIC_ALTERNATIVE",
+            "compounder_business_tag",
+        )
 
-    return _RouteSpec(
-        (CompanyArchetype.GENERAL_EARNINGS,),
-        0.5 if industry_text else 0.35,
+    rule = _industry_rule(industry)
+    if rule is not None:
+        archetypes = list(rule.archetypes)
+        if rule.include_general:
+            archetypes.append(CompanyArchetype.GENERAL_EARNINGS)
+        return archetypes, rule.confidence, rule.status, rule.rule_id
+
+    confidence = 0.50 if str(industry or "").strip() else 0.35
+    return (
+        [CompanyArchetype.GENERAL_EARNINGS],
+        confidence,
         "GENERIC_FALLBACK",
-        False,
         "no_safe_specialized_archetype_match",
     )
 
@@ -392,31 +470,24 @@ def route_valuation_strategies(
 ) -> ValuationRouteDecision:
     """Select a deterministic research model pipeline for one company.
 
-    Explicit archetype hints are highest-confidence research metadata.  They do
-    not bypass model input validation: the eventual model adapter must still
-    fail closed when its required evidence is missing.
+    Explicit hints have highest confidence, but they still cannot bypass model
+    input validation.  A hinted normalizer automatically receives the generic
+    valuation bridge unless another valuation family was also explicitly
+    selected.
     """
 
     explicit = _explicit_archetypes(archetype_hints)
     if explicit:
         archetypes = list(explicit)
-        # Normalizers require a downstream valuation bridge. Add the generic
-        # bridge unless the caller explicitly supplied another valuation family.
         descriptors = registry.for_archetypes(archetypes)
         has_valuation = any(item.role != StrategyRole.NORMALIZER for item in descriptors)
         if not has_valuation and CompanyArchetype.GENERAL_EARNINGS not in archetypes:
             archetypes.append(CompanyArchetype.GENERAL_EARNINGS)
         confidence = 1.0
         status = "EXPLICIT_ARCHETYPE_ROUTE"
-        base_reason = "explicit_archetype_hint"
+        reason = "explicit_archetype_hint"
     else:
-        spec = _spec_from_industry_and_tags(industry, business_tags)
-        archetypes = list(spec.archetypes)
-        if spec.include_general and CompanyArchetype.GENERAL_EARNINGS not in archetypes:
-            archetypes.append(CompanyArchetype.GENERAL_EARNINGS)
-        confidence = spec.confidence
-        status = spec.status
-        base_reason = spec.reason
+        archetypes, confidence, status, reason = _inferred_route(industry, business_tags)
 
     descriptors = registry.for_archetypes(archetypes)
     selections = tuple(
@@ -426,7 +497,7 @@ def route_valuation_strategies(
             role=item.role,
             module_path=item.module_path,
             confidence=confidence,
-            reason=base_reason,
+            reason=reason,
         )
         for item in descriptors
     )
@@ -434,7 +505,10 @@ def route_valuation_strategies(
         (
             item.strategy_id
             for item in selections
-            if item.role in {StrategyRole.PRIMARY_VALUATION, StrategyRole.ALTERNATIVE_VALUATION}
+            if item.role in {
+                StrategyRole.PRIMARY_VALUATION,
+                StrategyRole.ALTERNATIVE_VALUATION,
+            }
         ),
         "",
     )
@@ -452,5 +526,5 @@ def route_valuation_strategies(
         primary_strategy_id=primary,
         routing_confidence=confidence,
         status=status,
-        reasons=(base_reason,),
+        reasons=(reason,),
     )
