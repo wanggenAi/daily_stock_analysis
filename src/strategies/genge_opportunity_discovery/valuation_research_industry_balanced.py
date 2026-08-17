@@ -81,7 +81,9 @@ def _balanced_select(
     ``relaxed_reserve`` remains accepted for CLI/backward compatibility, but it
     is no longer allowed to erase an entire industry from *research*. The base
     `_wide_recall_reason` still decides which technical hard blockers are safe
-    to recover for research and which true hard risks remain excluded.
+    to recover for research and which true hard risks remain excluded. Once a
+    row passes that boundary, industry recall ranks it by original quant merit
+    rather than by its former screening-status label.
     """
 
     del relaxed_reserve
@@ -94,6 +96,7 @@ def _balanced_select(
             per_industry_target=DEFAULT_PER_INDUSTRY_TARGET,
         ),
         eligibility=lambda row: True,
+        order_key=base._quant_order_key,
     )
 
 
@@ -252,7 +255,12 @@ def _postprocess(
         source_rows = _read_csv(source_report_dir / "quant_screen_all.csv")
     selected_rows = _read_csv(output_run_dir / "valuation_research_queue.csv")
     annotated = _annotated_candidates(source_rows)
-    audit = coverage_audit(annotated, selected_rows, eligibility=lambda row: True)
+    audit = coverage_audit(
+        annotated,
+        selected_rows,
+        eligibility=lambda row: True,
+        order_key=base._quant_order_key,
+    )
     audit.update(
         {
             "policy_version": "industry_balanced_valuation_recall_v1",
@@ -298,11 +306,13 @@ def _postprocess(
         annotated,
         per_industry=1,
         eligibility=lambda row: True,
+        order_key=base._quant_order_key,
     )
     top3 = industry_leaders(
         annotated,
         per_industry=DEFAULT_PER_INDUSTRY_TARGET,
         eligibility=lambda row: True,
+        order_key=base._quant_order_key,
     )
     _write_csv(output_run_dir / "valuation_research_industry_balanced.csv", enriched)
     _write_csv(output_run_dir / "industry_leaders.csv", leaders)
@@ -319,6 +329,9 @@ def _postprocess(
     )
     summary["industry_leader_count"] = len(leaders)
     summary["industry_candidate_pool_top3_count"] = len(top3)
+    summary["industry_recall_ordering"] = (
+        "wide-recall safety first; then original quant_rank/quant_score within research"
+    )
     summary["financial_review_semantics"] = (
         "global financial-review budget plus one PE-usable representative per industry"
     )
