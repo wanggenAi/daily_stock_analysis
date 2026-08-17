@@ -3,14 +3,15 @@ name: GenGe Opportunity Premarket Dispatch
 on:
   schedule:
     # 06:00 Beijing time Monday-Friday = 22:00 UTC Sunday-Thursday.
-    # Industry-balanced All-A + valuation research is long-horizon and can run
-    # well before the 09:30 open; this leaves buffer for public-data delays.
+    # The full All-A run has historically taken about an hour and GitHub cron
+    # can start late, so this leaves substantial buffer before the 09:30 open.
     - cron: "0 22 * * 0-4"
   workflow_dispatch:
   push:
     branches: [main]
     paths:
-      # A change to this dispatcher performs one production rehearsal after merge.
+      # The initial merge of this dispatcher performs one production rehearsal.
+      # Later ordinary code pushes do not trigger this workflow.
       - ".github/workflows/genge-opportunity-premarket.yml"
 
 permissions:
@@ -23,15 +24,15 @@ concurrency:
 
 jobs:
   dispatch:
-    name: Dispatch premarket industry-balanced research
+    name: Dispatch premarket All-A opportunity scan
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Dispatch GenGe Industry-Balanced Research on main
+      - name: Dispatch GenGe Opportunity Discovery on main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run genge-industry-balanced-research.yml \
+          gh workflow run genge-opportunity-discovery.yml \
             --repo "${GITHUB_REPOSITORY}" \
             --ref main
 
@@ -40,9 +41,8 @@ jobs:
           {
             echo "# GenGe Premarket Dispatch"
             echo
-            echo "- target workflow: GenGe Industry-Balanced Research"
+            echo "- target workflow: GenGe Opportunity Discovery"
             echo "- target ref: main"
             echo "- intended Beijing run time: 06:00 Monday-Friday"
-            echo "- pipeline: All-A -> industry-protected recall -> fundamentals -> reverse valuation -> Strategy Router"
-            echo "- invariant: every industry with at least one eligible candidate must remain represented"
+            echo "- downstream: GenGe Valuation Research Queue via workflow_run"
           } >> "$GITHUB_STEP_SUMMARY"
