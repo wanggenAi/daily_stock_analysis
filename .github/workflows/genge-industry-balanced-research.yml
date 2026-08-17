@@ -1,0 +1,210 @@
+name: GenGe Industry-Balanced Research
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: genge-industry-balanced-research-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  industry-balanced-research:
+    name: Industry-balanced All-A and valuation research
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Run industry-balanced recall tests
+        run: |
+          python -m pytest -q \
+            tests/test_genge_opportunity_discovery_industry_balanced_recall.py \
+            tests/test_genge_all_a_full_scan.py \
+            tests/test_genge_valuation_research_report.py \
+            tests/test_genge_valuation_research_production.py \
+            tests/test_genge_valuation_model_routing.py
+
+      - name: Restore research caches and observation state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/cache/all_a_full_scan
+            data/cache/genge_fundamentals
+            data/cache/opportunity_evidence
+            data/cache/valuation_research_fundamentals
+            data/opportunity_snapshots/all_a_state
+            data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            data/opportunity_snapshots/exit_profile.csv
+            stock_pools/all_a_universe_*.csv
+          key: genge-industry-balanced-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            genge-industry-balanced-${{ runner.os }}-${{ github.ref_name }}-
+            genge-all-a-state-${{ runner.os }}-main-
+            genge-all-a-state-${{ runner.os }}-
+
+      - name: Prepare research state
+        run: |
+          mkdir -p data/cache/all_a_full_scan data/cache/genge_fundamentals
+          mkdir -p data/cache/opportunity_evidence data/cache/valuation_research_fundamentals
+          mkdir -p data/opportunity_snapshots/all_a_state
+          if [ ! -s data/opportunity_snapshots/exit_profile.csv ]; then
+            cp data/opportunity_snapshots/exit_profile_seed.csv data/opportunity_snapshots/exit_profile.csv
+          fi
+
+      - name: Run industry-balanced All-A production scan
+        run: |
+          PYTHONUNBUFFERED=1 timeout --signal=TERM 125m \
+          python -m src.strategies.genge_opportunity_discovery.all_a_industry_balanced \
+            --output-dir reports/all_a_full_scan/industry_balanced \
+            --max-workers 12 \
+            --evidence-queue-size 260 \
+            --deep-review-size 30 \
+            --max-watchlist 15 \
+            --fundamental-limit 30 \
+            --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+            --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+            --industry-evidence-schema config/industry_evidence_schema.yaml \
+            --industry-alias-map config/industry_alias_map.yaml \
+            --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+
+      - name: Validate industry recall invariant
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path("reports/all_a_full_scan/industry_balanced")
+          required = {
+              "all_a_quant_screen.csv",
+              "industry_balanced_research_queue.csv",
+              "industry_candidate_pool_top3.csv",
+              "industry_leaders.csv",
+              "industry_coverage_audit.json",
+              "run_summary.json",
+          }
+          missing = sorted(name for name in required if not (root / name).exists())
+          assert not missing, f"missing balanced All-A outputs: {missing}"
+
+          audit = json.loads((root / "industry_coverage_audit.json").read_text(encoding="utf-8"))
+          summary = json.loads((root / "run_summary.json").read_text(encoding="utf-8"))
+          assert audit["all_eligible_industries_covered"] is True
+          assert audit["missing_eligible_industries"] == []
+          assert audit["eligible_industry_count"] == audit["covered_industry_count"]
+          assert audit["hard_reject_revival_allowed"] is False
+          assert summary["industry_balanced_recall"]["all_eligible_industries_covered"] is True
+          assert summary["no_auto_trade"] is True
+          assert summary["no_broker_integration"] is True
+
+          with (root / "industry_balanced_research_queue.csv").open(encoding="utf-8") as stream:
+              rows = list(csv.DictReader(stream))
+          assert rows
+          assert all(row.get("quant_status") != "HARD_REJECT" for row in rows)
+          assert all(not str(row.get("hard_blockers") or "").strip() for row in rows)
+          assert len({row["industry"] for row in rows}) == audit["covered_industry_count"]
+          print(json.dumps(audit, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Build industry-balanced reverse valuation queue
+        run: |
+          PYTHONUNBUFFERED=1 timeout --signal=TERM 45m \
+          python -m src.strategies.genge_opportunity_discovery.valuation_research_industry_balanced \
+            --report-dir reports/all_a_full_scan/industry_balanced \
+            --output-dir reports/valuation_research_queue \
+            --fundamental-cache-dir data/cache/valuation_research_fundamentals \
+            --research-limit 260 \
+            --relaxed-reserve 20 \
+            --financial-review-limit 260 \
+            --years 5 \
+            --minimum-pe-samples 20 \
+            --max-workers 6
+
+      - name: Route valuation models
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_model_routing \
+            --report-root reports/valuation_research_queue \
+            --profile-config config/valuation_company_profiles.yaml
+
+      - name: Validate valuation industry coverage and routing
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path("reports/valuation_research_queue")
+          runs = sorted(path for path in root.iterdir() if path.is_dir())
+          assert runs, "no valuation research report generated"
+          latest = runs[-1]
+          required = {
+              "valuation_research_queue.csv",
+              "valuation_research_industry_balanced.csv",
+              "valuation_industry_coverage_audit.json",
+              "valuation_research_summary.json",
+              "valuation_research_routed.csv",
+              "valuation_routing_summary.json",
+          }
+          missing = sorted(name for name in required if not (latest / name).exists())
+          assert not missing, f"missing balanced valuation outputs: {missing}"
+
+          audit = json.loads((latest / "valuation_industry_coverage_audit.json").read_text(encoding="utf-8"))
+          summary = json.loads((latest / "valuation_research_summary.json").read_text(encoding="utf-8"))
+          routing = json.loads((latest / "valuation_routing_summary.json").read_text(encoding="utf-8"))
+          assert audit["all_eligible_industries_covered"] is True
+          assert audit["missing_eligible_industries"] == []
+          assert audit["eligible_industry_count"] == audit["covered_industry_count"]
+          assert summary["industry_balanced_recall"]["all_eligible_industries_covered"] is True
+          assert summary["formal_signal_eligible"] is False
+          assert summary["automatic_promotion_allowed"] is False
+          assert summary["no_auto_trade"] is True
+
+          with (latest / "valuation_research_queue.csv").open(encoding="utf-8") as stream:
+              rows = list(csv.DictReader(stream))
+          with (latest / "valuation_research_routed.csv").open(encoding="utf-8") as stream:
+              routed = list(csv.DictReader(stream))
+          assert len(rows) == routing["routed_count"] == len(routed)
+          assert all(row["formal_signal_eligible"] == "False" for row in routed)
+          assert all(row["automatic_promotion_allowed"] == "False" for row in routed)
+          assert all(row["no_auto_trade"] == "True" for row in routed)
+          print(json.dumps({"valuation": audit, "routing": routing}, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Save research caches and state
+        uses: actions/cache/save@v4
+        if: success()
+        with:
+          path: |
+            data/cache/all_a_full_scan
+            data/cache/genge_fundamentals
+            data/cache/opportunity_evidence
+            data/cache/valuation_research_fundamentals
+            data/opportunity_snapshots/all_a_state
+            data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            data/opportunity_snapshots/exit_profile.csv
+            stock_pools/all_a_universe_*.csv
+          key: genge-industry-balanced-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Upload industry-balanced research artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-industry-balanced-research
+          path: |
+            reports/all_a_full_scan/industry_balanced
+            reports/valuation_research_queue
+          if-no-files-found: warn
