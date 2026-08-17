@@ -21,13 +21,13 @@ concurrency:
 
 jobs:
   valuation-research:
-    name: Reverse valuation research queue
+    name: Industry-balanced reverse valuation research queue
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (github.event.workflow_run.conclusion == 'success' &&
        (github.event.workflow_run.event == 'schedule' || github.event.workflow_run.event == 'workflow_dispatch'))
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 75
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -77,15 +77,16 @@ jobs:
             tests/test_genge_valuation_research_production.py \
             tests/test_genge_valuation_company_profiles.py \
             tests/test_genge_valuation_model_routing.py \
-            tests/test_genge_resource_asset_valuation.py
+            tests/test_genge_resource_asset_valuation.py \
+            tests/test_genge_opportunity_discovery_industry_balanced_recall.py
 
-      - name: Build reverse-valuation research queue
+      - name: Build industry-balanced reverse-valuation research queue
         run: |
-          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_report \
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_industry_balanced \
             --report-root upstream/reports/all_a_full_scan \
             --output-dir reports/valuation_research_queue \
             --fundamental-cache-dir data/cache/valuation_research_fundamentals \
-            --research-limit 80 \
+            --research-limit 260 \
             --relaxed-reserve 20 \
             --financial-review-limit 30 \
             --years 5 \
@@ -98,7 +99,7 @@ jobs:
             --report-root reports/valuation_research_queue \
             --profile-config config/valuation_company_profiles.yaml
 
-      - name: Validate research-only contract
+      - name: Validate research-only and industry-coverage contract
         run: |
           python - <<'PY'
           import csv
@@ -113,6 +114,10 @@ jobs:
               "valuation_research_queue.csv",
               "valuation_research_queue.md",
               "valuation_research_summary.json",
+              "valuation_research_industry_balanced.csv",
+              "valuation_industry_coverage_audit.json",
+              "industry_leaders.csv",
+              "industry_candidate_pool_top3.csv",
               "valuation_research_routed.csv",
               "valuation_research_routed.md",
               "valuation_routing_summary.json",
@@ -121,21 +126,42 @@ jobs:
           assert not missing, f"missing valuation research outputs: {missing}"
 
           summary = json.loads((latest / "valuation_research_summary.json").read_text(encoding="utf-8"))
+          audit = json.loads((latest / "valuation_industry_coverage_audit.json").read_text(encoding="utf-8"))
           routing = json.loads((latest / "valuation_routing_summary.json").read_text(encoding="utf-8"))
-          assert summary["selected_count"] <= 80
-          assert summary["relaxed_reserve"] == 20
-          assert summary["relaxed_recovery_count"] <= summary["relaxed_reserve"]
-          assert summary["financial_review_count"] <= 30
+          assert summary["research_limit"] == 260
+          assert summary["financial_review_limit"] == 30
           assert summary["formal_signal_eligible"] is False
           assert summary["automatic_promotion_allowed"] is False
           assert summary["no_auto_trade"] is True
+          assert audit["all_eligible_industries_covered"] is True
+          assert audit["missing_eligible_industries"] == []
+          assert audit["eligible_industry_count"] == audit["covered_industry_count"]
+          assert audit["selected_candidate_count"] == summary["selected_count"]
+          assert summary["selected_count"] >= min(260, audit["eligible_candidate_count"])
+          assert summary["selected_count"] <= audit["eligible_candidate_count"]
+          for industry, source_count in audit["industry_source_candidate_counts"].items():
+              selected_count = audit["industry_selected_candidate_counts"].get(industry, 0)
+              assert selected_count >= min(3, source_count), (
+                  industry, source_count, selected_count
+              )
+          assert summary["industry_balanced_recall"]["all_eligible_industries_covered"] is True
 
           with (latest / "valuation_research_queue.csv").open(encoding="utf-8") as stream:
               rows = list(csv.DictReader(stream))
           with (latest / "valuation_research_routed.csv").open(encoding="utf-8") as stream:
               routed_rows = list(csv.DictReader(stream))
+          with (latest / "industry_leaders.csv").open(encoding="utf-8") as stream:
+              leaders = list(csv.DictReader(stream))
+          with (latest / "industry_candidate_pool_top3.csv").open(encoding="utf-8") as stream:
+              top3 = list(csv.DictReader(stream))
+
           assert len(rows) == summary["selected_count"]
           assert len(routed_rows) == len(rows) == routing["routed_count"]
+          assert len(leaders) == audit["eligible_industry_count"]
+          assert len(top3) == sum(
+              min(3, count)
+              for count in audit["industry_source_candidate_counts"].values()
+          )
           assert routing["ranking_changed"] is False
           assert routing["formal_signal_eligible"] is False
           assert routing["automatic_promotion_allowed"] is False
@@ -152,7 +178,20 @@ jobs:
               or row["valuation_model_execution_state"] == "ROUTING_BLOCKED"
               for row in routed_rows
           )
-          print(json.dumps({"valuation": summary, "routing": routing}, ensure_ascii=False, indent=2))
+          allowed_research_recovery = {
+              "",
+              "price_too_high",
+              "board_5d_abnormal_move",
+              "board_10d_abnormal_move",
+          }
+          for row in rows:
+              blockers = {
+                  item.strip()
+                  for item in str(row.get("source_hard_blockers") or "").split(";")
+                  if item.strip()
+              }
+              assert blockers <= allowed_research_recovery, (row["code"], blockers)
+          print(json.dumps({"valuation": summary, "coverage": audit, "routing": routing}, ensure_ascii=False, indent=2))
           PY
 
       - name: Publish routed valuation summary
