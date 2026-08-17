@@ -198,6 +198,15 @@ def test_future_evidence_date_is_rejected(tmp_path):
         load_company_valuation_profile_repository(path)
 
 
+def test_missing_review_after_is_rejected(tmp_path):
+    payload = _profile()
+    payload.pop("review_after")
+    path = _write_profiles(tmp_path, [payload])
+
+    with pytest.raises(ValueError, match="review_after is required"):
+        load_company_valuation_profile_repository(path)
+
+
 def test_unknown_archetype_is_rejected(tmp_path):
     path = _write_profiles(tmp_path, [_profile(archetype_hints=["MAGIC_MODEL"])])
 
