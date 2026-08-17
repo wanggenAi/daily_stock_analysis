@@ -15,6 +15,11 @@ real problem:
 * Open/Closed routing table: a new archetype/rule can be added without changing
   the report pipeline.
 
+A descriptor only says whether a strategy normalizes evidence or performs a
+valuation. Whether a valuation is primary or an alternative is route-specific;
+``ValuationRouteDecision.primary_strategy_id`` owns that decision. This avoids
+encoding a context-dependent role in a globally shared strategy descriptor.
+
 Routing metadata is research-only. It cannot create a Formal BUY, change
 position sizing, bypass hard risk gates, or trigger automatic trading.
 """
@@ -43,8 +48,7 @@ class CompanyArchetype(str, Enum):
 
 class StrategyRole(str, Enum):
     NORMALIZER = "NORMALIZER"
-    PRIMARY_VALUATION = "PRIMARY_VALUATION"
-    ALTERNATIVE_VALUATION = "ALTERNATIVE_VALUATION"
+    VALUATION = "VALUATION"
 
 
 @dataclass(frozen=True)
@@ -91,11 +95,27 @@ class ValuationRouteDecision:
     def strategy_ids(self) -> tuple[str, ...]:
         return tuple(item.strategy_id for item in self.selections)
 
+    @property
+    def valuation_strategy_ids(self) -> tuple[str, ...]:
+        return tuple(
+            item.strategy_id
+            for item in self.selections
+            if item.role == StrategyRole.VALUATION
+        )
+
+    @property
+    def alternative_strategy_ids(self) -> tuple[str, ...]:
+        return tuple(
+            item for item in self.valuation_strategy_ids if item != self.primary_strategy_id
+        )
+
     def to_dict(self) -> dict[str, object]:
         return {
             "archetypes": [item.value for item in self.archetypes],
             "strategy_ids": list(self.strategy_ids),
+            "valuation_strategy_ids": list(self.valuation_strategy_ids),
             "primary_strategy_id": self.primary_strategy_id,
+            "alternative_strategy_ids": list(self.alternative_strategy_ids),
             "routing_confidence": self.routing_confidence,
             "status": self.status,
             "reasons": list(self.reasons),
@@ -172,7 +192,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "bank_residual_income",
         CompanyArchetype.BANK,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.bank_valuation",
         100,
         False,
@@ -181,7 +201,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "insurance_embedded_value",
         CompanyArchetype.INSURANCE,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.insurance_valuation",
         100,
         False,
@@ -190,7 +210,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "capital_markets_cycle",
         CompanyArchetype.CAPITAL_MARKETS,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.capital_markets_valuation",
         100,
         False,
@@ -199,7 +219,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "real_estate_nav",
         CompanyArchetype.REAL_ESTATE_NAV,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.real_estate_nav_valuation",
         100,
         False,
@@ -208,7 +228,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "biotech_rnpv",
         CompanyArchetype.BIOTECH_RNPV,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.biotech_rnpv_valuation",
         100,
         False,
@@ -217,7 +237,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "consumer_compounder_dcf",
         CompanyArchetype.CONSUMER_COMPOUNDER,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.consumer_compounder_valuation",
         100,
         False,
@@ -226,7 +246,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "transport_cycle",
         CompanyArchetype.TRANSPORT_CYCLE,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.transport_cycle_valuation",
         100,
         False,
@@ -235,7 +255,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "yield_asset",
         CompanyArchetype.YIELD_ASSET,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.yield_asset_valuation",
         100,
         False,
@@ -244,7 +264,7 @@ DEFAULT_STRATEGIES = (
     StrategyDescriptor(
         "general_reverse_earnings",
         CompanyArchetype.GENERAL_EARNINGS,
-        StrategyRole.PRIMARY_VALUATION,
+        StrategyRole.VALUATION,
         "src.strategies.genge_opportunity_discovery.fundamental_valuation",
         110,
         True,
@@ -487,7 +507,7 @@ def route_valuation_strategies(
     if explicit:
         archetypes = list(explicit)
         descriptors = registry.for_archetypes(archetypes)
-        has_valuation = any(item.role != StrategyRole.NORMALIZER for item in descriptors)
+        has_valuation = any(item.role == StrategyRole.VALUATION for item in descriptors)
         if not has_valuation and CompanyArchetype.GENERAL_EARNINGS not in archetypes:
             archetypes.append(CompanyArchetype.GENERAL_EARNINGS)
         confidence = 1.0
@@ -509,14 +529,7 @@ def route_valuation_strategies(
         for item in descriptors
     )
     primary = next(
-        (
-            item.strategy_id
-            for item in selections
-            if item.role in {
-                StrategyRole.PRIMARY_VALUATION,
-                StrategyRole.ALTERNATIVE_VALUATION,
-            }
-        ),
+        (item.strategy_id for item in selections if item.role == StrategyRole.VALUATION),
         "",
     )
     if not primary:
