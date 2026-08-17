@@ -1,17 +1,14 @@
 """Build a broad-recall reverse-valuation research queue.
 
-This module is intentionally a sidecar. It reads an existing All-A/opportunity
-research report, refreshes public fundamentals for a bounded research population,
-and writes valuation diagnostics without changing any Formal BUY, position-size,
-entry, exit, stop, or invalidation gate.
+This module is intentionally a research-only sidecar. It reads an existing
+All-A/opportunity report, refreshes a bounded amount of public fundamental data,
+and writes valuation diagnostics without changing Formal BUY, sizing, entry,
+exit, stop, or invalidation gates.
 
-The first production diagnostic is deliberately unit-safe: it compares the
-current positive PE with the stock's own point-in-time historical positive-PE
-median. The current observation is excluded from that median. The ratio answers
-one narrow question: if the multiple reverted to that historical reference, how
-much earnings would today's price require relative to the current earnings base?
-
-The historical median is a REFERENCE multiple, not an asserted fair PE.
+The PE diagnostic compares the latest observed PE with a strictly-prior
+positive-PE history. The latest observation is never dropped merely because it
+is non-positive: a current PE <= 0 means the PE model is not applicable.
+Historical median PE is a reference multiple, not an asserted fair PE.
 """
 
 from __future__ import annotations
@@ -147,8 +144,7 @@ def _wide_recall_reason(source: Mapping[str, Any]) -> str | None:
         return None
 
     hard = _blockers(source.get("hard_blockers") or source.get("hard_reject_blockers"))
-    non_relaxable = hard - RELAXABLE_TECHNICAL_BLOCKERS
-    if non_relaxable:
+    if hard - RELAXABLE_TECHNICAL_BLOCKERS:
         return None
     if status in NORMAL_RESEARCH_STATUSES:
         return "NORMAL_RESEARCH_QUEUE"
@@ -165,14 +161,7 @@ def select_wide_recall_rows(
     research_limit: int = DEFAULT_RESEARCH_LIMIT,
     relaxed_reserve: int = DEFAULT_RELAXED_RESERVE,
 ) -> list[dict[str, Any]]:
-    """Build a bounded broad-recall pool without changing formal eligibility.
-
-    ``all_a_quant_screen.csv`` is already downstream of the universe safety
-    filters. Inside that screened universe, this sidecar may recover only the
-    explicitly listed technical blockers. Missing price data, unknown mappings,
-    financial safety failures, ST/delisting exclusions, and other hard risks are
-    never recovered here.
-    """
+    """Build a bounded research pool with a hard cap on relaxed recoveries."""
 
     limit = max(0, int(research_limit))
     reserve = max(0, min(limit, int(relaxed_reserve)))
@@ -201,26 +190,26 @@ def select_wide_recall_rows(
 
     normal.sort(key=_quant_order_key)
     relaxed.sort(key=_quant_order_key)
-
     normal_budget = max(0, limit - reserve)
     selected = normal[:normal_budget] + relaxed[:reserve]
-    # ``relaxed_reserve`` is a hard cap, not merely a minimum reservation.
-    # If the normal queue has spare rows, they may fill unused capacity; the
-    # technical-recovery slice can never exceed the explicit reserve.
+    # Relaxed rows never backfill beyond the explicit cap. Any spare capacity
+    # can only be filled by additional normal research rows.
     selected.extend(
         normal[normal_budget : normal_budget + max(0, limit - len(selected))]
     )
     return selected[:limit]
 
 
-def _positive_pe_frame(frame: pd.DataFrame | None, *, as_of: date) -> pd.DataFrame:
+def _pe_frame(frame: pd.DataFrame | None, *, as_of: date) -> pd.DataFrame:
+    """Return all finite PE observations through ``as_of``, including <= 0 PE."""
+
     if frame is None or frame.empty or "date" not in frame.columns or "pe" not in frame.columns:
         return pd.DataFrame(columns=["date", "pe"])
     local = frame[["date", "pe"]].copy()
     local["date"] = pd.to_datetime(local["date"], errors="coerce").dt.date
     local["pe"] = pd.to_numeric(local["pe"], errors="coerce")
     local = local.dropna(subset=["date", "pe"])
-    local = local[(local["date"] <= as_of) & (local["pe"] > 0)]
+    local = local[local["date"] <= as_of]
     return (
         local.sort_values("date")
         .drop_duplicates("date", keep="last")
@@ -234,49 +223,68 @@ def build_pe_reference_diagnostic(
     as_of: date,
     minimum_history_samples: int = 1,
 ) -> PeReferenceDiagnostic:
-    """Reverse-solve earnings growth using the stock's own historical PE median.
+    """Reverse-solve profit growth from latest PE against strictly-prior PE.
 
-    The current observation is excluded from the reference sample so today's PE
-    cannot mechanically pull its own benchmark toward itself.
+    The latest finite PE observation through ``as_of`` is the current state. If
+    that latest PE is non-positive, the model is immediately non-applicable; an
+    older positive PE must never be substituted as the current observation.
+    Only strictly-prior positive PE values may enter the historical reference.
     """
 
-    local = _positive_pe_frame(frame, as_of=as_of)
+    local = _pe_frame(frame, as_of=as_of)
     if local.empty:
         return PeReferenceDiagnostic(
             None, None, 0, "", "", None, None, None, "PE_MODEL_NOT_APPLICABLE"
         )
 
-    current = float(local.iloc[-1]["pe"])
-    current_date = local.iloc[-1]["date"]
-    history = local[local["date"] < current_date].copy()
+    current_row = local.iloc[-1]
+    current = float(current_row["pe"])
+    current_date = current_row["date"]
+    history = local[(local["date"] < current_date) & (local["pe"] > 0)].copy()
+    history_start = history.iloc[0]["date"].isoformat() if not history.empty else ""
+    history_end = history.iloc[-1]["date"].isoformat() if not history.empty else ""
+
+    if current <= 0:
+        return PeReferenceDiagnostic(
+            current,
+            None,
+            len(history),
+            history_start,
+            history_end,
+            None,
+            None,
+            None,
+            "PE_MODEL_NOT_APPLICABLE",
+        )
+
     if len(history) < max(1, int(minimum_history_samples)):
         return PeReferenceDiagnostic(
             current,
             None,
             len(history),
-            history.iloc[0]["date"].isoformat() if not history.empty else "",
-            history.iloc[-1]["date"].isoformat() if not history.empty else "",
+            history_start,
+            history_end,
             None,
             None,
             None,
             "PE_REFERENCE_INSUFFICIENT",
         )
 
-    reference = float(history["pe"].median())
-    if not math.isfinite(reference) or reference <= 0:
+    pe_values = pd.to_numeric(history["pe"], errors="coerce").dropna()
+    reference = _finite(pe_values.median())
+    if reference is None or reference <= 0:
         return PeReferenceDiagnostic(
             current,
             None,
             len(history),
-            "",
-            "",
+            history_start,
+            history_end,
             None,
             None,
             None,
             "PE_REFERENCE_UNAVAILABLE",
         )
 
-    pe_values = pd.to_numeric(history["pe"], errors="coerce").dropna()
     percentile = float((pe_values <= current).sum() / len(pe_values))
     implied_profit_multiple = current / reference
     required_growth = implied_profit_multiple - 1.0
@@ -284,8 +292,8 @@ def build_pe_reference_diagnostic(
         current_pe=current,
         reference_median_pe=reference,
         sample_count=len(history),
-        reference_start=history.iloc[0]["date"].isoformat(),
-        reference_end=history.iloc[-1]["date"].isoformat(),
+        reference_start=history_start,
+        reference_end=history_end,
         percentile=percentile,
         implied_profit_multiple=implied_profit_multiple,
         required_profit_growth=required_growth,
@@ -298,27 +306,35 @@ def _financial_pit_row(
     *,
     as_of: date,
 ) -> tuple[Mapping[str, Any], str]:
+    """Select the latest report period that was actually public by ``as_of``."""
+
     if frame is None or frame.empty or "report_date" not in frame.columns:
         return {}, "FINANCIAL_DATA_UNAVAILABLE"
+
     local = frame.copy()
     local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce").dt.date
+    report_eligible = local["report_date"].notna() & (local["report_date"] <= as_of)
+
     if "disclosure_date" in local.columns:
         local["disclosure_date"] = pd.to_datetime(
             local["disclosure_date"], errors="coerce"
         ).dt.date
         known_disclosures = local[local["disclosure_date"].notna()].copy()
-        disclosed = known_disclosures[
-            known_disclosures["disclosure_date"] <= as_of
-        ].copy()
-        if not disclosed.empty:
-            disclosed = disclosed.sort_values(["disclosure_date", "report_date"])
-            return disclosed.iloc[-1].to_dict(), "DISCLOSURE_DATE_PIT"
         if not known_disclosures.empty:
-            return {}, "DISCLOSURE_DATE_NOT_YET_AVAILABLE"
+            disclosed = known_disclosures[
+                known_disclosures["report_date"].notna()
+                & (known_disclosures["report_date"] <= as_of)
+                & (known_disclosures["disclosure_date"] <= as_of)
+            ].copy()
+            if disclosed.empty:
+                return {}, "DISCLOSURE_DATE_NOT_YET_AVAILABLE"
+            # Choose the newest financial period known by as_of. Disclosure date
+            # is only a tie-breaker; a late amendment to an older period must not
+            # replace a newer already-disclosed report period.
+            disclosed = disclosed.sort_values(["report_date", "disclosure_date"])
+            return disclosed.iloc[-1].to_dict(), "DISCLOSURE_DATE_PIT"
 
-    fallback = local[
-        local["report_date"].notna() & (local["report_date"] <= as_of)
-    ].copy()
+    fallback = local[report_eligible].copy()
     if fallback.empty:
         return {}, "FINANCIAL_DATA_UNAVAILABLE"
     fallback = fallback.sort_values("report_date")
@@ -548,7 +564,9 @@ def build_valuation_research_rows(
     for source in selected:
         code = _normalize_code(source.get("code"))
         fetched = valuation_results.get(code)
-        valuation_frame = None if isinstance(fetched, Exception) or fetched is None else fetched.valuation_df
+        valuation_frame = (
+            None if isinstance(fetched, Exception) or fetched is None else fetched.valuation_df
+        )
         pe_diag = build_pe_reference_diagnostic(
             valuation_frame,
             as_of=as_of,
@@ -579,7 +597,9 @@ def build_valuation_research_rows(
             reviewed.append(dict(row))
             continue
         fetched = financial_results.get(code)
-        financial_frame = None if isinstance(fetched, Exception) or fetched is None else fetched.financial_df
+        financial_frame = (
+            None if isinstance(fetched, Exception) or fetched is None else fetched.financial_df
+        )
         reviewed.append(_add_financial_review(row, financial_frame, as_of=as_of))
 
     reviewed.sort(key=_rank_key)
@@ -596,9 +616,13 @@ def _read_csv(path: Path) -> list[dict[str, Any]]:
 
 
 def _source_rows(report_dir: Path) -> list[dict[str, Any]]:
-    # Prefer the full quant screen so the sidecar can recover technical-only
-    # rejects. The top80 queue is already narrowed and would defeat broad recall.
-    for filename in ("all_a_quant_screen.csv", "quant_screen_all.csv", "top80_evidence_queue.csv"):
+    # Prefer the complete quant screen. top80 is already narrowed and would
+    # defeat the purpose of a broad-recall research sidecar.
+    for filename in (
+        "all_a_quant_screen.csv",
+        "quant_screen_all.csv",
+        "top80_evidence_queue.csv",
+    ):
         rows = _read_csv(report_dir / filename)
         if rows:
             return rows
@@ -622,15 +646,17 @@ def _summary_as_of(report_dir: Path) -> date | None:
 
 
 def find_latest_report(report_root: Path) -> Path:
-    if any(
-        (report_root / name).exists()
-        for name in ("all_a_quant_screen.csv", "quant_screen_all.csv", "top80_evidence_queue.csv")
-    ):
+    source_names = (
+        "all_a_quant_screen.csv",
+        "quant_screen_all.csv",
+        "top80_evidence_queue.csv",
+    )
+    if any((report_root / name).exists() for name in source_names):
         return report_root
     candidates = sorted(
         {
             path.parent
-            for pattern in ("**/all_a_quant_screen.csv", "**/quant_screen_all.csv", "**/top80_evidence_queue.csv")
+            for pattern in (f"**/{name}" for name in source_names)
             for path in report_root.glob(pattern)
             if path.is_file()
         },
@@ -672,8 +698,9 @@ def write_report(
 
     target = output_dir or report_dir
     target.mkdir(parents=True, exist_ok=True)
-    csv_path = target / "valuation_research_queue.csv"
-    with csv_path.open("w", encoding="utf-8", newline="") as stream:
+    with (target / "valuation_research_queue.csv").open(
+        "w", encoding="utf-8", newline=""
+    ) as stream:
         writer = csv.DictWriter(stream, fieldnames=OUTPUT_COLUMNS)
         writer.writeheader()
         writer.writerows({key: row.get(key, "") for key in OUTPUT_COLUMNS} for row in rows)
@@ -710,7 +737,9 @@ def write_report(
         )
     if not rows:
         lines.append("No eligible broad-recall research candidates with available source rows.")
-    (target / "valuation_research_queue.md").write_text("\n".join(lines), encoding="utf-8")
+    (target / "valuation_research_queue.md").write_text(
+        "\n".join(lines), encoding="utf-8"
+    )
 
     summary = {
         "as_of_date": as_of.isoformat(),
