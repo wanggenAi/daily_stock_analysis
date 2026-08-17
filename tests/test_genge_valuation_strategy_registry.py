@@ -15,6 +15,7 @@ def test_bank_routes_away_from_generic_pe_model():
 
     assert decision.primary_strategy_id == "bank_residual_income"
     assert decision.strategy_ids == ("bank_residual_income",)
+    assert decision.valuation_strategy_ids == ("bank_residual_income",)
     assert CompanyArchetype.GENERAL_EARNINGS not in decision.archetypes
     assert decision.status == "SPECIALIZED_EXCLUSIVE"
 
@@ -27,6 +28,8 @@ def test_rare_metals_get_capacity_normalization_before_generic_reverse_earnings(
         "general_reverse_earnings",
     )
     assert decision.primary_strategy_id == "general_reverse_earnings"
+    assert decision.valuation_strategy_ids == ("general_reverse_earnings",)
+    assert decision.alternative_strategy_ids == ()
     assert decision.archetypes == (
         CompanyArchetype.CAPACITY_CYCLE,
         CompanyArchetype.GENERAL_EARNINGS,
@@ -76,11 +79,29 @@ def test_explicit_normalizer_hint_adds_generic_valuation_bridge():
     assert decision.routing_confidence == 1.0
 
 
+def test_primary_and_alternative_are_route_specific_not_descriptor_roles():
+    decision = route_valuation_strategies(
+        industry="食品饮料",
+        business_tags="品牌消费;稳定复利",
+    )
+
+    assert decision.valuation_strategy_ids == (
+        "consumer_compounder_dcf",
+        "general_reverse_earnings",
+    )
+    assert decision.primary_strategy_id == "consumer_compounder_dcf"
+    assert decision.alternative_strategy_ids == ("general_reverse_earnings",)
+    assert all(
+        selection.role == StrategyRole.VALUATION
+        for selection in decision.selections
+    )
+
+
 def test_default_registry_is_immutable_when_extended():
     custom = StrategyDescriptor(
         strategy_id="future_specialized_model",
         archetype=CompanyArchetype.GENERAL_EARNINGS,
-        role=StrategyRole.ALTERNATIVE_VALUATION,
+        role=StrategyRole.VALUATION,
         module_path="example.future_model",
         execution_order=120,
         pe_based=False,
@@ -99,7 +120,7 @@ def test_registry_rejects_duplicate_strategy_ids():
     strategy = StrategyDescriptor(
         strategy_id="duplicate",
         archetype=CompanyArchetype.GENERAL_EARNINGS,
-        role=StrategyRole.PRIMARY_VALUATION,
+        role=StrategyRole.VALUATION,
         module_path="example.one",
         execution_order=100,
         pe_based=True,
