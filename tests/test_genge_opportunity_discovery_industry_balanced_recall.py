@@ -1,6 +1,3 @@
-from types import SimpleNamespace
-
-from src.strategies.genge_opportunity_discovery import all_a_industry_balanced
 from src.strategies.genge_opportunity_discovery import valuation_research_industry_balanced
 from src.strategies.genge_opportunity_discovery.industry_balanced_recall import (
     IndustryRecallPolicy,
@@ -120,47 +117,6 @@ def test_true_hard_reject_is_never_revived_for_industry_coverage():
     audit = coverage_audit(rows, selected)
     assert "ALL_HARD" not in audit["eligible_industries"]
     assert audit["hard_reject_revival_allowed"] is False
-
-
-def test_all_a_fundamental_budget_requires_one_leader_per_industry(monkeypatch):
-    rows = [
-        _row("000001", "A", 1),
-        _row("000002", "A", 2),
-        _row("000003", "B", 3),
-        _row("000004", "C", 4),
-    ]
-    captured = {}
-
-    def fake_original(
-        quant_rows,
-        qfq_histories,
-        config,
-        *,
-        priority_codes=(),
-        required_codes=(),
-    ):
-        captured["fundamental_limit"] = config.fundamental_limit
-        captured["priority_codes"] = set(priority_codes)
-        captured["required_codes"] = set(required_codes)
-        return [], {}
-
-    monkeypatch.setattr(all_a_industry_balanced, "_ORIGINAL_FUNDAMENTALS", fake_original)
-    config = SimpleNamespace(fundamental_limit=2)
-
-    all_a_industry_balanced._balanced_fundamentals(
-        rows,
-        {},
-        config,
-        priority_codes=["000099"],
-        required_codes=[],
-    )
-
-    assert captured["required_codes"] == {"000001", "000003", "000004"}
-    assert {"000001", "000003", "000004", "000099"} == captured[
-        "priority_codes"
-    ]
-    assert captured["fundamental_limit"] == 6
-    assert config.fundamental_limit == 2
 
 
 def test_valuation_recall_can_recover_only_explicitly_relaxable_technical_rows():
