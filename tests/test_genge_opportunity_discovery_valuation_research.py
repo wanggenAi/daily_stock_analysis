@@ -61,7 +61,10 @@ class TestValuationResearchQueue(unittest.TestCase):
             60,
         )
         self.assertEqual(
-            sum(row["wide_recall_reason"] == "RELAXABLE_TECHNICAL_RECOVERY" for row in selected),
+            sum(
+                row["wide_recall_reason"] == "RELAXABLE_TECHNICAL_RECOVERY"
+                for row in selected
+            ),
             20,
         )
         self.assertNotIn("999999", {row["code"] for row in selected})
@@ -85,16 +88,38 @@ class TestValuationResearchQueue(unittest.TestCase):
             },
             valuation,
             as_of=start + timedelta(days=4),
-            minimum_pe_samples=5,
+            minimum_pe_samples=4,
         )
 
         self.assertEqual(row["current_pe"], 20.0)
         self.assertEqual(row["historical_median_pe"], 10.0)
+        self.assertEqual(row["historical_pe_sample_count"], 4)
         self.assertEqual(row["required_profit_growth"], 1.0)
         self.assertEqual(row["required_profit_growth_pct"], 100.0)
         self.assertEqual(row["valuation_diagnostic_status"], "OK_RELATIVE_PE_EXPECTATION")
         self.assertFalse(row["formal_buy_eligible"])
         self.assertFalse(row["automatic_promotion_allowed"])
+        self.assertTrue(row["no_auto_trade"])
+
+    def test_current_pe_never_contaminates_its_own_reference(self) -> None:
+        valuation = pd.DataFrame(
+            {
+                "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                "pe": [10.0, 20.0, 100.0],
+            }
+        )
+        row = build_relative_pe_diagnostic(
+            {"code": "600549", "quant_status": "SECONDARY_RESEARCH"},
+            valuation,
+            as_of=date(2026, 8, 15),
+            minimum_pe_samples=2,
+        )
+
+        self.assertEqual(row["current_pe"], 100.0)
+        self.assertEqual(row["historical_median_pe"], 15.0)
+        self.assertEqual(row["historical_pe_sample_count"], 2)
+        self.assertEqual(row["historical_pe_reference_end"], "2026-08-14")
+        self.assertAlmostEqual(row["required_profit_growth"], 100.0 / 15.0 - 1.0, places=6)
 
     def test_non_positive_latest_profit_marks_pe_model_not_applicable(self) -> None:
         row = {
@@ -115,7 +140,57 @@ class TestValuationResearchQueue(unittest.TestCase):
 
         self.assertEqual(result["valuation_diagnostic_status"], "PE_MODEL_NOT_APPLICABLE")
         self.assertEqual(result["financial_review_status"], "OK")
+        self.assertEqual(result["earnings_point_in_time_method"], "DISCLOSURE_DATE_PIT")
         self.assertLessEqual(float(result["earnings_quality_score"]), 25.0)
+
+    def test_future_disclosure_fails_closed_instead_of_using_report_date(self) -> None:
+        row = {
+            "code": "600549",
+            "valuation_diagnostic_status": "OK_RELATIVE_PE_EXPECTATION",
+            "required_profit_growth": 0.1,
+        }
+        financial = pd.DataFrame(
+            {
+                "report_date": ["2026-06-30"],
+                "disclosure_date": ["2026-08-20"],
+                "net_profit": [999.0],
+                "operating_cash_flow": [999.0],
+            }
+        )
+
+        result = add_financial_quality(row, financial, as_of=date(2026, 8, 17))
+
+        self.assertEqual(
+            result["financial_review_status"],
+            "DISCLOSURE_DATE_NOT_YET_AVAILABLE",
+        )
+        self.assertEqual(
+            result["earnings_point_in_time_method"],
+            "DISCLOSURE_DATE_NOT_YET_AVAILABLE",
+        )
+        self.assertNotIn("latest_net_profit", result)
+
+    def test_partial_disclosure_dates_do_not_treat_undated_row_as_known(self) -> None:
+        row = {
+            "code": "600549",
+            "valuation_diagnostic_status": "OK_RELATIVE_PE_EXPECTATION",
+            "required_profit_growth": 0.1,
+        }
+        financial = pd.DataFrame(
+            {
+                "report_date": ["2026-03-31", "2026-06-30"],
+                "disclosure_date": ["2026-04-25", None],
+                "net_profit": [80.0, 999.0],
+                "operating_cash_flow": [70.0, 999.0],
+            }
+        )
+
+        result = add_financial_quality(row, financial, as_of=date(2026, 8, 17))
+
+        self.assertEqual(result["latest_net_profit"], 80.0)
+        self.assertEqual(result["financial_report_date"], "2026-03-31")
+        self.assertEqual(result["financial_disclosure_date"], "2026-04-25")
+        self.assertEqual(result["earnings_point_in_time_method"], "DISCLOSURE_DATE_PIT")
 
     def test_rank_prefers_lower_required_profit_growth(self) -> None:
         rows = rank_valuation_research_rows(
@@ -230,6 +305,10 @@ class TestValuationResearchQueue(unittest.TestCase):
 
             self.assertEqual(summary["selected_count"], 2)
             self.assertEqual(summary["relaxed_recovery_count"], 1)
+            self.assertTrue(summary["current_observation_excluded_from_reference"])
+            self.assertFalse(summary["formal_buy_eligible"])
+            self.assertFalse(summary["automatic_promotion_allowed"])
+            self.assertTrue(summary["no_auto_trade"])
             self.assertTrue((output_dir / "valuation_research_queue.csv").exists())
             self.assertTrue((output_dir / "valuation_research_queue.md").exists())
             with (output_dir / "valuation_research_queue.csv").open(encoding="utf-8") as stream:
@@ -239,6 +318,7 @@ class TestValuationResearchQueue(unittest.TestCase):
             self.assertTrue(
                 all(row["automatic_promotion_allowed"] == "False" for row in output_rows)
             )
+            self.assertTrue(all(row["no_auto_trade"] == "True" for row in output_rows))
 
 
 if __name__ == "__main__":
