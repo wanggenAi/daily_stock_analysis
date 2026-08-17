@@ -130,7 +130,6 @@ jobs:
           routing = json.loads((latest / "valuation_routing_summary.json").read_text(encoding="utf-8"))
           assert summary["research_limit"] == 260
           assert summary["financial_review_limit"] == 30
-          assert summary["selected_count"] <= 260
           assert summary["formal_signal_eligible"] is False
           assert summary["automatic_promotion_allowed"] is False
           assert summary["no_auto_trade"] is True
@@ -138,6 +137,13 @@ jobs:
           assert audit["missing_eligible_industries"] == []
           assert audit["eligible_industry_count"] == audit["covered_industry_count"]
           assert audit["selected_candidate_count"] == summary["selected_count"]
+          assert summary["selected_count"] >= min(260, audit["eligible_candidate_count"])
+          assert summary["selected_count"] <= audit["eligible_candidate_count"]
+          for industry, source_count in audit["industry_source_candidate_counts"].items():
+              selected_count = audit["industry_selected_candidate_counts"].get(industry, 0)
+              assert selected_count >= min(3, source_count), (
+                  industry, source_count, selected_count
+              )
           assert summary["industry_balanced_recall"]["all_eligible_industries_covered"] is True
 
           with (latest / "valuation_research_queue.csv").open(encoding="utf-8") as stream:
@@ -152,7 +158,10 @@ jobs:
           assert len(rows) == summary["selected_count"]
           assert len(routed_rows) == len(rows) == routing["routed_count"]
           assert len(leaders) == audit["eligible_industry_count"]
-          assert len(top3) >= len(leaders)
+          assert len(top3) == sum(
+              min(3, count)
+              for count in audit["industry_source_candidate_counts"].values()
+          )
           assert routing["ranking_changed"] is False
           assert routing["formal_signal_eligible"] is False
           assert routing["automatic_promotion_allowed"] is False
