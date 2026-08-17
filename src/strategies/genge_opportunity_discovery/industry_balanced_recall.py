@@ -9,6 +9,7 @@ Invariant:
 - the strongest global candidates are preserved as a separate seed;
 - ``total_limit`` is only a minimum capacity target and may not truncate the
   union of protected industry representatives plus the global seed;
+- callers may supply the ranking policy appropriate to their research layer;
 - global ranking may order candidates later, but may not erase an industry
   before fundamental/valuation research has had a chance to inspect it.
 
@@ -30,6 +31,7 @@ _STATUS_PRIORITY = {
     "SECONDARY_RESEARCH": 1,
     "LOW_PRIORITY": 2,
 }
+OrderKey = Callable[[Mapping[str, Any]], tuple]
 
 
 @dataclass(frozen=True)
@@ -105,6 +107,7 @@ def prepare_candidates(
     rows: Iterable[Mapping[str, Any]],
     *,
     eligibility: Callable[[Mapping[str, Any]], bool] = default_research_eligibility,
+    order_key: OrderKey = _order_key,
 ) -> list[dict[str, Any]]:
     """Normalize, deduplicate and deterministically order eligible research rows."""
 
@@ -119,9 +122,9 @@ def prepare_candidates(
         candidate["code"] = code
         candidate["industry"] = _industry(candidate)
         previous = by_code.get(code)
-        if previous is None or _order_key(candidate) < _order_key(previous):
+        if previous is None or order_key(candidate) < order_key(previous):
             by_code[code] = candidate
-    return sorted(by_code.values(), key=_order_key)
+    return sorted(by_code.values(), key=order_key)
 
 
 def industry_leaders(
@@ -129,11 +132,16 @@ def industry_leaders(
     *,
     per_industry: int = 1,
     eligibility: Callable[[Mapping[str, Any]], bool] = default_research_eligibility,
+    order_key: OrderKey = _order_key,
 ) -> list[dict[str, Any]]:
     """Return the best eligible rows within every industry."""
 
     target = max(1, int(per_industry))
-    prepared = prepare_candidates(rows, eligibility=eligibility)
+    prepared = prepare_candidates(
+        rows,
+        eligibility=eligibility,
+        order_key=order_key,
+    )
     grouped: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in prepared:
         grouped[_industry(row)].append(row)
@@ -152,6 +160,7 @@ def select_industry_balanced_rows(
     *,
     policy: IndustryRecallPolicy,
     eligibility: Callable[[Mapping[str, Any]], bool] = default_research_eligibility,
+    order_key: OrderKey = _order_key,
 ) -> list[dict[str, Any]]:
     """Build the mandatory union of global leaders and industry-protected recall.
 
@@ -163,7 +172,11 @@ def select_industry_balanced_rows(
     """
 
     policy = policy.normalized()
-    prepared = prepare_candidates(rows, eligibility=eligibility)
+    prepared = prepare_candidates(
+        rows,
+        eligibility=eligibility,
+        order_key=order_key,
+    )
     if not prepared:
         return []
 
@@ -207,7 +220,7 @@ def select_industry_balanced_rows(
         sources[code].add("GLOBAL_FILL")
 
     result = list(chosen.values())
-    result.sort(key=_order_key)
+    result.sort(key=order_key)
     for item in result:
         code = _normalize_code(item.get("code"))
         item["research_recall_sources"] = ";".join(sorted(sources[code]))
@@ -222,9 +235,18 @@ def coverage_audit(
     selected_rows: Iterable[Mapping[str, Any]],
     *,
     eligibility: Callable[[Mapping[str, Any]], bool] = default_research_eligibility,
+    order_key: OrderKey = _order_key,
 ) -> dict[str, Any]:
-    prepared = prepare_candidates(source_rows, eligibility=eligibility)
-    selected = prepare_candidates(selected_rows, eligibility=lambda row: True)
+    prepared = prepare_candidates(
+        source_rows,
+        eligibility=eligibility,
+        order_key=order_key,
+    )
+    selected = prepare_candidates(
+        selected_rows,
+        eligibility=lambda row: True,
+        order_key=order_key,
+    )
     eligible_industries = sorted({_industry(row) for row in prepared})
     covered_industries = sorted({_industry(row) for row in selected})
     missing = sorted(set(eligible_industries) - set(covered_industries))
