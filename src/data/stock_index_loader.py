@@ -25,12 +25,12 @@ _STOCK_INDEX_CACHE_LOCK = RLock()
 
 
 def get_stock_index_candidate_paths() -> tuple[Path, ...]:
-    """Return the supported locations for the generated stock index."""
+    """Return stock-index locations in authoritative precedence order."""
     repo_root = Path(__file__).resolve().parents[2]
     return (
-        get_remote_stock_index_cache_path(),
         repo_root / "apps" / "dsa-web" / "public" / _STOCK_INDEX_FILENAME,
         repo_root / "static" / _STOCK_INDEX_FILENAME,
+        get_remote_stock_index_cache_path(),
     )
 
 
@@ -179,19 +179,17 @@ def _get_fresh_stock_index_candidates(
     candidate_paths: Iterable[Path],
     remote_cache_path: Path,
 ) -> tuple[Path, ...]:
-    paths = tuple(candidate_paths)
-    candidates: list[tuple[tuple[float, int], Path]] = []
-
-    for position, candidate_path in enumerate(paths):
-        signature = _get_stock_index_signature(candidate_path)
-        if signature is None:
+    """Return existing local candidates first, with remote cache only as fallback."""
+    local_candidates: list[Path] = []
+    remote_candidates: list[Path] = []
+    for candidate_path in candidate_paths:
+        if _get_stock_index_signature(candidate_path) is None:
             continue
-
-        mtime, _size = signature
-        tie_breaker = 0 if _same_path(candidate_path, remote_cache_path) else len(paths) - position
-        candidates.append(((mtime, tie_breaker), candidate_path))
-
-    return tuple(path for _sort_key, path in sorted(candidates, reverse=True))
+        if _same_path(candidate_path, remote_cache_path):
+            remote_candidates.append(candidate_path)
+        else:
+            local_candidates.append(candidate_path)
+    return tuple(local_candidates + remote_candidates)
 
 
 def _is_remote_stock_index_cache_usable(
@@ -219,7 +217,7 @@ def find_existing_stock_index_path(
     *,
     remote_cache_path: Optional[Path] = None,
 ) -> Path | None:
-    """Return the newest usable stock index across remote and bundled candidates."""
+    """Return the highest-priority usable stock index candidate."""
     paths = tuple(candidate_paths) if candidate_paths is not None else get_stock_index_candidate_paths()
     remote_path = remote_cache_path or get_remote_stock_index_cache_path()
 
@@ -229,7 +227,6 @@ def find_existing_stock_index_path(
             continue
         if not _is_remote_stock_index_cache_usable(candidate_path, remote_path, signature):
             continue
-
         return candidate_path
 
     return None
@@ -277,7 +274,6 @@ def get_index_stock_name(stock_code: str) -> str | None:
         name = stock_name_map.get(key)
         if is_meaningful_stock_name(name, code):
             return name
-
     return None
 
 
@@ -291,7 +287,6 @@ def resolve_index_stock_code(query: str) -> str | None:
     code = str(query or "").strip().upper()
     if not code:
         return None
-
     return get_stock_code_index_map().get(code)
 
 
@@ -306,19 +301,18 @@ def get_stock_code_index_map() -> Dict[str, str]:
         if _STOCK_CODE_LOOKUP_CACHE is not None:
             return _STOCK_CODE_LOOKUP_CACHE
 
-        merged_lookup: Dict[str, str] = {}
         remote_path = get_remote_stock_index_cache_path()
         for index_path in _get_fresh_stock_index_candidates(get_stock_index_candidate_paths(), remote_path):
             try:
                 raw_items = _load_stock_index_payload(index_path)
                 if _same_path(index_path, remote_path):
                     validate_stock_index_payload(raw_items)
-                for key, value in _build_stock_code_lookup(raw_items).items():
-                    merged_lookup.setdefault(key, value)
+                _STOCK_CODE_LOOKUP_CACHE = _build_stock_code_lookup(raw_items)
+                return _STOCK_CODE_LOOKUP_CACHE
             except (OSError, TypeError, ValueError) as exc:
-                logger.debug("[鑲＄エ绱㈠紩] 瑙ｆ瀽浠ｇ爜绱㈠紩澶辫触 %s: %s", index_path, exc)
+                logger.debug("[股票索引] 解析代码索引失败 %s: %s", index_path, exc)
 
-        _STOCK_CODE_LOOKUP_CACHE = merged_lookup
+        _STOCK_CODE_LOOKUP_CACHE = {}
         return _STOCK_CODE_LOOKUP_CACHE
 
 
@@ -333,12 +327,9 @@ def _resolve_index_stock_code_uncached(query: str) -> str | None:
             raw_items = _load_stock_index_payload(index_path)
             if _same_path(index_path, remote_path):
                 validate_stock_index_payload(raw_items)
-            resolved = _build_stock_code_lookup(raw_items).get(code)
-            if resolved:
-                return resolved
+            return _build_stock_code_lookup(raw_items).get(code)
         except (OSError, TypeError, ValueError) as exc:
             logger.debug("[股票索引] 解析代码索引失败 %s: %s", index_path, exc)
-
     return None
 
 
