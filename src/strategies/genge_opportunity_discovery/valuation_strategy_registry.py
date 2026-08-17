@@ -269,7 +269,8 @@ class RouteRule:
 # yield assets, not transport-cycle EV names: transport_cycle_valuation itself
 # explicitly reserves that bridge for businesses such as shipping and airlines.
 # ``航空`` alone is intentionally absent because it would also match aerospace
-# manufacturing labels such as 航空装备/航空航天.
+# manufacturing labels such as 航空装备/航空航天. Real-estate NAV similarly
+# requires explicit developer semantics rather than any label containing 地产.
 INDUSTRY_ROUTE_RULES = (
     RouteRule(
         "insurance_industry",
@@ -293,10 +294,10 @@ INDUSTRY_ROUTE_RULES = (
         "SPECIALIZED_EXCLUSIVE",
     ),
     RouteRule(
-        "real_estate_industry",
-        ("房地产", "地产"),
+        "real_estate_developer",
+        ("房地产开发", "地产开发", "住宅开发", "房屋开发"),
         (CompanyArchetype.REAL_ESTATE_NAV,),
-        0.90,
+        0.95,
         "SPECIALIZED_EXCLUSIVE",
     ),
     RouteRule(
@@ -413,8 +414,12 @@ def _explicit_archetypes(hints: object) -> tuple[CompanyArchetype, ...]:
     return tuple(result)
 
 
-def _industry_rule(industry: object) -> RouteRule | None:
-    text = str(industry or "").strip().lower()
+def _industry_rule(industry: object, business_tags: object = None) -> RouteRule | None:
+    text = " ".join(
+        item
+        for item in (str(industry or "").strip().lower(), " ".join(_tokens(business_tags)))
+        if item
+    )
     for rule in INDUSTRY_ROUTE_RULES:
         if _contains_any(text, rule.industry_tokens):
             return rule
@@ -447,7 +452,7 @@ def _inferred_route(
             "compounder_business_tag",
         )
 
-    rule = _industry_rule(industry)
+    rule = _industry_rule(industry, business_tags)
     if rule is not None:
         archetypes = list(rule.archetypes)
         if rule.include_general:
