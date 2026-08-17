@@ -3,12 +3,14 @@
 The policy separates *recall* from *final ranking*.
 
 Invariant:
-- true hard rejects never re-enter research;
-- every industry with at least one research-eligible stock keeps at least one representative;
-- up to ``per_industry_target`` candidates per industry are retained when capacity allows;
+- true hard rejects never re-enter research unless the caller's explicit
+  research eligibility policy already classified them as recoverable;
+- every industry keeps up to ``per_industry_target`` eligible representatives;
 - the strongest global candidates are preserved as a separate seed;
-- global ranking may order candidates later, but may not erase an industry before
-  fundamental/valuation research has had a chance to inspect it.
+- ``total_limit`` is only a minimum capacity target and may not truncate the
+  union of protected industry representatives plus the global seed;
+- global ranking may order candidates later, but may not erase an industry
+  before fundamental/valuation research has had a chance to inspect it.
 
 This module is research-only and never grants Formal BUY eligibility.
 """
@@ -151,12 +153,13 @@ def select_industry_balanced_rows(
     policy: IndustryRecallPolicy,
     eligibility: Callable[[Mapping[str, Any]], bool] = default_research_eligibility,
 ) -> list[dict[str, Any]]:
-    """Build the union of global leaders and industry-protected recall.
+    """Build the mandatory union of global leaders and industry-protected recall.
 
-    ``total_limit`` is a capacity target, not permission to delete an entire
-    eligible industry. If one-per-industry plus the global seed exceeds the
-    configured target, the function deliberately exceeds the target rather than
-    violate industry coverage.
+    ``total_limit`` is a minimum capacity target, not permission to delete an
+    eligible industry representative. The complete union of the global seed and
+    up to ``per_industry_target`` rows from every eligible industry is mandatory.
+    If that union exceeds ``total_limit``, the function deliberately exceeds the
+    target rather than weaken research recall.
     """
 
     policy = policy.normalized()
@@ -179,11 +182,14 @@ def select_industry_balanced_rows(
     industry_rank: dict[str, int] = {}
 
     for industry in sorted(grouped):
-        row = grouped[industry][0]
-        code = _normalize_code(row.get("code"))
-        chosen[code] = dict(row)
-        sources[code].add("INDUSTRY_PROTECTED")
-        industry_rank[code] = 1
+        for rank, row in enumerate(
+            grouped[industry][: policy.per_industry_target],
+            1,
+        ):
+            code = _normalize_code(row.get("code"))
+            chosen.setdefault(code, dict(row))
+            sources[code].add("INDUSTRY_PROTECTED")
+            industry_rank[code] = min(industry_rank.get(code, rank), rank)
 
     for row in global_rows:
         code = _normalize_code(row.get("code"))
@@ -191,26 +197,6 @@ def select_industry_balanced_rows(
         sources[code].add("GLOBAL_SEED")
 
     effective_limit = max(policy.total_limit, len(chosen))
-
-    for rank in range(2, policy.per_industry_target + 1):
-        for industry in sorted(grouped):
-            if len(chosen) >= effective_limit:
-                break
-            candidates = grouped[industry]
-            if len(candidates) < rank:
-                continue
-            row = candidates[rank - 1]
-            code = _normalize_code(row.get("code"))
-            if code in chosen:
-                sources[code].add("INDUSTRY_PROTECTED")
-                industry_rank[code] = min(industry_rank.get(code, rank), rank)
-                continue
-            chosen[code] = dict(row)
-            sources[code].add("INDUSTRY_PROTECTED")
-            industry_rank[code] = rank
-        if len(chosen) >= effective_limit:
-            break
-
     for row in prepared:
         if len(chosen) >= effective_limit:
             break
