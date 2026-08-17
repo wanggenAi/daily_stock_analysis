@@ -72,15 +72,17 @@ jobs:
 
       - name: Run focused reverse-valuation tests
         run: |
-          python -m pytest -q tests/test_genge_opportunity_discovery_valuation_research.py
+          python -m pytest -q \
+            tests/test_genge_valuation_research_report.py \
+            tests/test_genge_valuation_research_production.py
 
       - name: Build reverse-valuation research queue
         run: |
-          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_queue \
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_report \
             --report-root upstream/reports/all_a_full_scan \
-            --output-root reports/valuation_research_queue \
-            --cache-dir data/cache/valuation_research_fundamentals \
-            --max-candidates 80 \
+            --output-dir reports/valuation_research_queue \
+            --fundamental-cache-dir data/cache/valuation_research_fundamentals \
+            --research-limit 80 \
             --relaxed-reserve 20 \
             --financial-review-limit 30 \
             --years 5 \
@@ -108,16 +110,18 @@ jobs:
 
           summary = json.loads((latest / "valuation_research_summary.json").read_text(encoding="utf-8"))
           assert summary["selected_count"] <= 80
+          assert summary["relaxed_recovery_count"] <= 20
           assert summary["financial_review_count"] <= 30
-          assert summary["formal_buy_eligible"] is False
+          assert summary["formal_signal_eligible"] is False
           assert summary["automatic_promotion_allowed"] is False
           assert summary["no_auto_trade"] is True
 
           with (latest / "valuation_research_queue.csv").open(encoding="utf-8") as stream:
               rows = list(csv.DictReader(stream))
           assert len(rows) == summary["selected_count"]
-          assert all(row["formal_buy_eligible"] == "False" for row in rows)
+          assert all(row["formal_signal_eligible"] == "False" for row in rows)
           assert all(row["automatic_promotion_allowed"] == "False" for row in rows)
+          assert all(row["no_auto_trade"] == "True" for row in rows)
           assert all(row["code"] for row in rows)
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
