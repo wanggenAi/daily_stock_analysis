@@ -132,6 +132,10 @@ def value_finite_life_resource_asset(
     utilization outside the asset scope. A separately researched closure /
     reclamation outflow is charged in the final modeled year.
 
+    The constant normalized price/cost deck permits a closed-form present-value
+    calculation. Runtime therefore does not grow with modeled mine life; a unit
+    mismatch cannot turn valuation into a million-iteration loop.
+
     All physical and cash-flow inputs are 100%-asset values. Economic ownership
     is applied only after discounting, which keeps the scope auditable.
     """
@@ -203,25 +207,39 @@ def value_finite_life_resource_asset(
     assert royalty is not None and tax_rate is not None and discount_rate is not None
     assert closure is not None
 
-    remaining = recoverable
-    year = 0
-    pv = 0.0
-    while remaining > 0:
-        year += 1
-        produced = min(annual_production, remaining)
-        revenue = produced * price
-        pretax_cash_flow = (
-            revenue
-            - produced * cash_cost
-            - produced * sustaining_capex
-            - revenue * royalty
+    pretax_cash_flow_per_unit = (
+        price - cash_cost - sustaining_capex - price * royalty
+    )
+    after_tax_cash_flow_per_unit = pretax_cash_flow_per_unit - (
+        max(pretax_cash_flow_per_unit, 0.0) * tax_rate
+    )
+
+    full_years = int(math.floor(recoverable / annual_production))
+    remainder = recoverable - full_years * annual_production
+    tolerance = max(recoverable, annual_production) * 1e-12
+    if remainder <= tolerance:
+        remainder = 0.0
+    modeled_years = full_years + (1 if remainder > 0.0 else 0)
+
+    full_year_cash_flow = annual_production * after_tax_cash_flow_per_unit
+    if full_years <= 0:
+        full_year_pv = 0.0
+    elif discount_rate == 0.0:
+        full_year_pv = full_year_cash_flow * full_years
+    else:
+        annuity_factor = (1.0 - (1.0 + discount_rate) ** (-full_years)) / discount_rate
+        full_year_pv = full_year_cash_flow * annuity_factor
+
+    partial_year_pv = 0.0
+    if remainder > 0.0:
+        partial_year_pv = (
+            remainder
+            * after_tax_cash_flow_per_unit
+            * (1.0 + discount_rate) ** (-modeled_years)
         )
-        cash_tax = max(pretax_cash_flow, 0.0) * tax_rate
-        after_tax_cash_flow = pretax_cash_flow - cash_tax
-        remaining -= produced
-        if remaining <= 0:
-            after_tax_cash_flow -= closure
-        pv += after_tax_cash_flow / ((1.0 + discount_rate) ** year)
+
+    closure_pv = closure * (1.0 + discount_rate) ** (-modeled_years)
+    pv = full_year_pv + partial_year_pv - closure_pv
 
     return ResourceAssetNAVResult(
         asset_id=asset,
@@ -236,7 +254,7 @@ def value_finite_life_resource_asset(
         cash_tax_rate_on_positive_pretax_cash_flow=tax_rate,
         required_return=discount_rate,
         closure_and_reclamation_cash_outflow_100pct=closure,
-        modeled_years=year,
+        modeled_years=modeled_years,
         pv_100pct_resource_cash_flows=pv,
         attributable_resource_nav=pv * ownership,
         valuation_model_applicable=True,
