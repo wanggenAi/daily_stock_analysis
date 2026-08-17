@@ -81,6 +81,31 @@ def test_capacity_target_cannot_delete_an_eligible_industry():
     assert {row["industry"] for row in selected} == {"A", "B", "C", "D"}
 
 
+def test_per_industry_target_union_can_exceed_capacity_floor():
+    rows = [
+        _row("000001", "A", 1),
+        _row("000002", "A", 2),
+        _row("000003", "A", 3),
+        _row("000004", "B", 4),
+        _row("000005", "B", 5),
+        _row("000006", "B", 6),
+    ]
+
+    selected = select_industry_balanced_rows(
+        rows,
+        policy=IndustryRecallPolicy(
+            total_limit=2,
+            global_seed=1,
+            per_industry_target=3,
+        ),
+    )
+
+    assert len(selected) == 6
+    assert {row["code"] for row in selected} == {
+        "000001", "000002", "000003", "000004", "000005", "000006"
+    }
+
+
 def test_true_hard_reject_is_never_revived_for_industry_coverage():
     rows = [
         _row("000001", "SAFE", 1),
