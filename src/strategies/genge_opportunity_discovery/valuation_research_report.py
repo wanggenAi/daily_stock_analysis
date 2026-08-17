@@ -155,10 +155,16 @@ def _financial_pit_row(frame: pd.DataFrame | None, *, as_of: date) -> tuple[Mapp
     local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce").dt.date
     if "disclosure_date" in local.columns:
         local["disclosure_date"] = pd.to_datetime(local["disclosure_date"], errors="coerce").dt.date
-        disclosed = local[local["disclosure_date"].notna() & (local["disclosure_date"] <= as_of)].copy()
+        known_disclosures = local[local["disclosure_date"].notna()].copy()
+        disclosed = known_disclosures[known_disclosures["disclosure_date"] <= as_of].copy()
         if not disclosed.empty:
             disclosed = disclosed.sort_values(["disclosure_date", "report_date"])
             return disclosed.iloc[-1].to_dict(), "DISCLOSURE_DATE_PIT"
+        if not known_disclosures.empty:
+            # Disclosure timing is available, but every known disclosure is in
+            # the future relative to as_of. Falling back to report_date here
+            # would leak information that was not public at the research date.
+            return {}, "DISCLOSURE_DATE_NOT_YET_AVAILABLE"
     fallback = local[local["report_date"].notna() & (local["report_date"] <= as_of)].copy()
     if fallback.empty:
         return {}, "FINANCIAL_DATA_UNAVAILABLE"
@@ -191,7 +197,7 @@ def _next_research_action(expectation_state: str, earnings_confidence: str) -> s
     return ";".join(actions)
 
 
-def _rank_key(row: Mapping[str, Any]) -> tuple[int, float, float, str]:
+def _rank_key(row: Mapping[str, Any]) -> tuple[int, float, float, float, str]:
     growth = _finite(row.get("required_profit_growth_vs_reference"))
     quality = _finite(row.get("earnings_quality_score")) or 0.0
     quant = _finite(row.get("quant_score")) or 0.0
