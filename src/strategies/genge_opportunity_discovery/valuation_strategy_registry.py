@@ -1,6 +1,6 @@
 """Deterministic company-archetype routing for valuation research.
 
-This is an orchestration layer, not a valuation model.  It organizes the
+This is an orchestration layer, not a valuation model. It organizes the
 specialized model modules already present in ``genge_opportunity_discovery``
 behind an immutable registry and conservative, table-driven routing rules.
 
@@ -15,7 +15,7 @@ real problem:
 * Open/Closed routing table: a new archetype/rule can be added without changing
   the report pipeline.
 
-Routing metadata is research-only.  It cannot create a Formal BUY, change
+Routing metadata is research-only. It cannot create a Formal BUY, change
 position sizing, bypass hard risk gates, or trigger automatic trading.
 """
 
@@ -265,9 +265,11 @@ class RouteRule:
     include_general: bool = False
 
 
-# Ordered from narrow/specialized to broader cycle families.  Airport/port are
+# Ordered from narrow/specialized to broader cycle families. Airport/port are
 # yield assets, not transport-cycle EV names: transport_cycle_valuation itself
 # explicitly reserves that bridge for businesses such as shipping and airlines.
+# ``航空`` alone is intentionally absent because it would also match aerospace
+# manufacturing labels such as 航空装备/航空航天.
 INDUSTRY_ROUTE_RULES = (
     RouteRule(
         "insurance_industry",
@@ -299,7 +301,7 @@ INDUSTRY_ROUTE_RULES = (
     ),
     RouteRule(
         "transport_cycle_industry",
-        ("航运", "航空"),
+        ("航运", "航空运输", "航空公司", "航空客运", "航空货运"),
         (CompanyArchetype.TRANSPORT_CYCLE,),
         0.88,
         "SPECIALIZED_PRIMARY",
@@ -471,7 +473,7 @@ def route_valuation_strategies(
     """Select a deterministic research model pipeline for one company.
 
     Explicit hints have highest confidence, but they still cannot bypass model
-    input validation.  A hinted normalizer automatically receives the generic
+    input validation. A hinted normalizer automatically receives the generic
     valuation bridge unless another valuation family was also explicitly
     selected.
     """
