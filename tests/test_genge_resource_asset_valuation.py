@@ -53,6 +53,18 @@ def test_partial_final_year_does_not_round_reserves_up_to_full_year_production()
     assert math.isclose(result.pv_100pct_resource_cash_flows, expected)
 
 
+def test_very_long_modeled_life_uses_closed_form_not_year_by_year_loop():
+    result = _asset(
+        recoverable_units_100pct=1_000_000.0,
+        annual_production_units_100pct=1.0,
+        closure_and_reclamation_cash_outflow_100pct=0.0,
+    )
+
+    assert result.status == "OK"
+    assert result.modeled_years == 1_000_000
+    assert math.isfinite(result.pv_100pct_resource_cash_flows)
+
+
 def test_negative_resource_economics_are_not_silently_floored_to_zero():
     result = _asset(
         normalized_realized_unit_price=4.0,
