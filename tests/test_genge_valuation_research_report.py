@@ -137,6 +137,38 @@ class ValuationResearchReportTest(unittest.TestCase):
         self.assertEqual(rows[0]["financial_report_date"], date(2026, 3, 31))
         self.assertEqual(rows[0]["earnings_point_in_time_method"], "DISCLOSURE_DATE_PIT")
 
+    def test_all_known_disclosures_after_as_of_fail_closed(self):
+        source_rows = [
+            {"code": "600549", "stock_name": "厦门钨业", "quant_status": "SECONDARY_RESEARCH", "quant_score": 60}
+        ]
+        loader = _FakeLoader(
+            {
+                "600549": FundamentalFetchResult(
+                    valuation_df=pd.DataFrame(
+                        {"date": ["2026-08-13", "2026-08-14", "2026-08-15"], "pe": [20.0, 20.0, 20.0]}
+                    ),
+                    financial_df=pd.DataFrame(
+                        {
+                            "report_date": ["2026-06-30"],
+                            "disclosure_date": ["2026-08-20"],
+                            "net_profit": [999.0],
+                            "operating_cash_flow": [999.0],
+                        }
+                    ),
+                )
+            }
+        )
+
+        rows = build_valuation_research_rows(
+            source_rows,
+            as_of=date(2026, 8, 15),
+            loader=loader,
+        )
+        self.assertEqual(rows[0]["earnings_point_in_time_method"], "DISCLOSURE_DATE_NOT_YET_AVAILABLE")
+        self.assertEqual(rows[0]["financial_report_date"], "")
+        self.assertEqual(rows[0]["financial_disclosure_date"], "")
+        self.assertNotEqual(rows[0]["headline_net_profit"], 999.0)
+
     def test_write_report_creates_sidecar_without_formal_promotion(self):
         with tempfile.TemporaryDirectory() as tmp:
             report_dir = Path(tmp)
