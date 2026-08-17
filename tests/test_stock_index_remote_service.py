@@ -16,6 +16,9 @@ import pytest
 from src.services import stock_index_remote_service as service
 
 
+TEST_REMOTE_URL = "https://example.invalid/stocks.index.json"
+
+
 @pytest.fixture(autouse=True)
 def reset_remote_stock_index_state() -> None:
     service._reset_remote_stock_index_state_for_tests()
@@ -58,9 +61,18 @@ def _response(payload: object) -> Mock:
     return response
 
 
+def _enabled_settings(cache_path: Path, **kwargs: object) -> service.RemoteStockIndexSettings:
+    return service.RemoteStockIndexSettings(
+        enabled=True,
+        url=TEST_REMOTE_URL,
+        cache_path=cache_path,
+        **kwargs,
+    )
+
+
 def test_refresh_remote_stock_index_cache_writes_valid_payload(tmp_path: Path) -> None:
     cache_path = tmp_path / "stocks.index.json"
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path)
+    settings = _enabled_settings(cache_path)
 
     with patch.object(service.requests, "get", return_value=_response(_stock_index_payload())) as get:
         result = service.refresh_remote_stock_index_cache(settings)
@@ -68,12 +80,12 @@ def test_refresh_remote_stock_index_cache_writes_valid_payload(tmp_path: Path) -
     assert result.refreshed is True
     assert result.cache_path == cache_path
     assert json.loads(cache_path.read_text(encoding="utf-8"))[0][2] == "平安银行"
-    get.assert_called_once_with(service.DEFAULT_STOCK_INDEX_REMOTE_URL, timeout=10)
+    get.assert_called_once_with(TEST_REMOTE_URL, timeout=10)
 
 
 def test_refresh_remote_stock_index_cache_decodes_remote_payload_as_utf8(tmp_path: Path) -> None:
     cache_path = tmp_path / "stocks.index.json"
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path)
+    settings = _enabled_settings(cache_path)
     response = _response(_stock_index_payload())
     response.encoding = "ascii"
 
@@ -86,7 +98,7 @@ def test_refresh_remote_stock_index_cache_decodes_remote_payload_as_utf8(tmp_pat
 
 def test_refresh_remote_stock_index_cache_clears_backend_loader_cache(tmp_path: Path) -> None:
     cache_path = tmp_path / "stocks.index.json"
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path)
+    settings = _enabled_settings(cache_path)
 
     with patch.object(service.requests, "get", return_value=_response(_stock_index_payload())), \
          patch("src.data.stock_index_loader.clear_stock_index_cache") as clear_cache:
@@ -99,7 +111,7 @@ def test_refresh_remote_stock_index_cache_clears_backend_loader_cache(tmp_path: 
 def test_refresh_remote_stock_index_cache_skips_fresh_cache(tmp_path: Path) -> None:
     cache_path = tmp_path / "stocks.index.json"
     cache_path.write_text(json.dumps(_stock_index_payload(), ensure_ascii=False), encoding="utf-8")
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path, ttl_hours=48)
+    settings = _enabled_settings(cache_path, ttl_hours=48)
 
     with patch.object(service.requests, "get") as get:
         result = service.refresh_remote_stock_index_cache(settings)
@@ -114,7 +126,7 @@ def test_refresh_remote_stock_index_cache_keeps_old_cache_on_download_failure(tm
     cache_path.write_text(json.dumps(_stock_index_payload(name="旧缓存"), ensure_ascii=False), encoding="utf-8")
     old_mtime = time.time() - 100 * 3600
     os.utime(cache_path, (old_mtime, old_mtime))
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path, ttl_hours=48)
+    settings = _enabled_settings(cache_path, ttl_hours=48)
 
     with patch.object(service.requests, "get", side_effect=TimeoutError("timeout")):
         result = service.refresh_remote_stock_index_cache(settings)
@@ -126,7 +138,7 @@ def test_refresh_remote_stock_index_cache_keeps_old_cache_on_download_failure(tm
 
 def test_refresh_remote_stock_index_cache_suppresses_after_repeated_failures(tmp_path: Path) -> None:
     cache_path = tmp_path / "stocks.index.json"
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path, ttl_hours=48)
+    settings = _enabled_settings(cache_path, ttl_hours=48)
 
     with patch.object(service.requests, "get", side_effect=TimeoutError("timeout")) as get:
         results = [service.refresh_remote_stock_index_cache(settings) for _ in range(6)]
@@ -138,7 +150,7 @@ def test_refresh_remote_stock_index_cache_suppresses_after_repeated_failures(tmp
 
 def test_refresh_remote_stock_index_cache_retries_after_failure_window(tmp_path: Path) -> None:
     cache_path = tmp_path / "stocks.index.json"
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path, ttl_hours=1)
+    settings = _enabled_settings(cache_path, ttl_hours=1)
 
     with patch.object(service.time, "time", return_value=1_000.0), \
          patch.object(service.requests, "get", side_effect=TimeoutError("timeout")):
@@ -156,7 +168,7 @@ def test_refresh_remote_stock_index_cache_retries_after_failure_window(tmp_path:
 def test_refresh_remote_stock_index_cache_rejects_invalid_remote_payload(tmp_path: Path) -> None:
     cache_path = tmp_path / "stocks.index.json"
     cache_path.write_text(json.dumps(_stock_index_payload(name="旧缓存"), ensure_ascii=False), encoding="utf-8")
-    settings = service.RemoteStockIndexSettings(cache_path=cache_path, ttl_hours=0)
+    settings = _enabled_settings(cache_path, ttl_hours=0)
 
     with patch.object(service.requests, "get", return_value=_response([["000001.SZ"]])):
         result = service.refresh_remote_stock_index_cache(settings)
@@ -210,7 +222,7 @@ def test_missing_remote_stock_index_cache_is_silent(tmp_path: Path, caplog: pyte
     assert not any("cached remote index is invalid" in record.getMessage() for record in caplog.records)
 
 
-def test_settings_from_config_uses_internal_remote_url_only() -> None:
+def test_settings_from_config_respects_explicit_url_and_disabled_flag() -> None:
     config = SimpleNamespace(
         stock_index_remote_update_enabled=False,
         stock_index_remote_url="https://example.invalid/override.json",
@@ -219,7 +231,7 @@ def test_settings_from_config_uses_internal_remote_url_only() -> None:
     settings = service.settings_from_config(config)
 
     assert settings.enabled is False
-    assert settings.url == service.DEFAULT_STOCK_INDEX_REMOTE_URL
+    assert settings.url == "https://example.invalid/override.json"
     assert settings.ttl_hours == service.DEFAULT_STOCK_INDEX_REMOTE_TTL_HOURS
     assert settings.timeout_seconds == service.DEFAULT_STOCK_INDEX_REMOTE_TIMEOUT_SECONDS
 
