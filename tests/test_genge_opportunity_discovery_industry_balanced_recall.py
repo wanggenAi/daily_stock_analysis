@@ -156,8 +156,10 @@ def test_all_a_fundamental_budget_requires_one_leader_per_industry(monkeypatch):
     )
 
     assert captured["required_codes"] == {"000001", "000003", "000004"}
-    assert {"000001", "000003", "000004"} <= captured["priority_codes"]
-    assert captured["fundamental_limit"] == 5
+    assert {"000001", "000003", "000004", "000099"} == captured[
+        "priority_codes"
+    ]
+    assert captured["fundamental_limit"] == 6
     assert config.fundamental_limit == 2
 
 
