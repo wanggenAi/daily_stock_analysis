@@ -13,6 +13,7 @@ from src.strategies.genge_cycle_bottom.fundamentals import FundamentalFetchResul
 from src.strategies.genge_opportunity_discovery.valuation_research_report import (
     build_pe_reference_diagnostic,
     build_valuation_research_rows,
+    select_wide_recall_rows,
     write_report,
 )
 
@@ -54,17 +55,90 @@ class ValuationResearchReportTest(unittest.TestCase):
         self.assertEqual(result.status, "PE_MODEL_NOT_APPLICABLE")
         self.assertIsNone(result.required_profit_growth)
 
+    def test_wide_recall_reserves_relaxable_technical_recovery(self):
+        source_rows = []
+        for index in range(70):
+            source_rows.append(
+                {
+                    "code": f"{index + 1:06d}",
+                    "quant_status": "PRIORITY_RESEARCH",
+                    "quant_rank": index + 1,
+                    "quant_score": 90 - index / 10,
+                    "hard_blockers": "",
+                }
+            )
+        for index in range(20):
+            source_rows.append(
+                {
+                    "code": f"30{index:04d}",
+                    "quant_status": "HARD_REJECT",
+                    "quant_rank": 100 + index,
+                    "quant_score": 50 - index / 10,
+                    "hard_blockers": "price_too_high",
+                }
+            )
+        source_rows.append(
+            {
+                "code": "999999",
+                "quant_status": "HARD_REJECT",
+                "quant_rank": 1,
+                "quant_score": 100,
+                "hard_blockers": "adjusted_percentile_missing",
+            }
+        )
+
+        rows = select_wide_recall_rows(
+            source_rows,
+            research_limit=80,
+            relaxed_reserve=20,
+        )
+
+        self.assertEqual(len(rows), 80)
+        self.assertEqual(
+            sum(row["wide_recall_reason"] == "NORMAL_RESEARCH_QUEUE" for row in rows),
+            60,
+        )
+        self.assertEqual(
+            sum(
+                row["wide_recall_reason"] == "RELAXABLE_TECHNICAL_RECOVERY"
+                for row in rows
+            ),
+            20,
+        )
+        self.assertNotIn("999999", {row["code"] for row in rows})
+
     def test_queue_ranks_low_implied_expectation_before_high_expectation(self):
         source_rows = [
-            {"code": "600549", "stock_name": "厦门钨业", "industry": "稀有金属", "quant_status": "SECONDARY_RESEARCH", "quant_score": 60},
-            {"code": "601020", "stock_name": "华钰矿业", "industry": "贵金属", "quant_status": "SECONDARY_RESEARCH", "quant_score": 70},
-            {"code": "000001", "stock_name": "硬拒绝", "industry": "银行", "quant_status": "HARD_REJECT", "quant_score": 99},
+            {
+                "code": "600549",
+                "stock_name": "厦门钨业",
+                "industry": "稀有金属",
+                "quant_status": "SECONDARY_RESEARCH",
+                "quant_score": 60,
+            },
+            {
+                "code": "601020",
+                "stock_name": "华钰矿业",
+                "industry": "贵金属",
+                "quant_status": "SECONDARY_RESEARCH",
+                "quant_score": 70,
+            },
+            {
+                "code": "000001",
+                "stock_name": "硬拒绝",
+                "industry": "银行",
+                "quant_status": "HARD_REJECT",
+                "quant_score": 99,
+            },
         ]
         loader = _FakeLoader(
             {
                 "600549": FundamentalFetchResult(
                     valuation_df=pd.DataFrame(
-                        {"date": ["2026-08-13", "2026-08-14", "2026-08-15"], "pe": [20.0, 20.0, 22.0]}
+                        {
+                            "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                            "pe": [20.0, 20.0, 22.0],
+                        }
                     ),
                     financial_df=pd.DataFrame(
                         {
@@ -77,7 +151,10 @@ class ValuationResearchReportTest(unittest.TestCase):
                 ),
                 "601020": FundamentalFetchResult(
                     valuation_df=pd.DataFrame(
-                        {"date": ["2026-08-13", "2026-08-14", "2026-08-15"], "pe": [10.0, 10.0, 25.0]}
+                        {
+                            "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                            "pe": [10.0, 10.0, 25.0],
+                        }
                     ),
                     financial_df=pd.DataFrame(
                         {
@@ -106,15 +183,63 @@ class ValuationResearchReportTest(unittest.TestCase):
         self.assertTrue(all(row["no_auto_trade"] is True for row in rows))
         self.assertEqual({call[0] for call in loader.calls}, {"600549", "601020"})
 
-    def test_disclosure_date_guard_prevents_future_financial_leakage(self):
+    def test_negative_normalized_profit_forces_pe_model_not_applicable(self):
         source_rows = [
-            {"code": "600549", "stock_name": "厦门钨业", "quant_status": "SECONDARY_RESEARCH", "quant_score": 60}
+            {
+                "code": "600549",
+                "stock_name": "厦门钨业",
+                "quant_status": "SECONDARY_RESEARCH",
+                "quant_score": 60,
+            }
         ]
         loader = _FakeLoader(
             {
                 "600549": FundamentalFetchResult(
                     valuation_df=pd.DataFrame(
-                        {"date": ["2026-08-13", "2026-08-14", "2026-08-15"], "pe": [20.0, 20.0, 20.0]}
+                        {
+                            "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                            "pe": [20.0, 20.0, 22.0],
+                        }
+                    ),
+                    financial_df=pd.DataFrame(
+                        {
+                            "report_date": ["2026-06-30"],
+                            "disclosure_date": ["2026-08-10"],
+                            "net_profit": [-10.0],
+                            "operating_cash_flow": [5.0],
+                        }
+                    ),
+                )
+            }
+        )
+
+        rows = build_valuation_research_rows(
+            source_rows,
+            as_of=date(2026, 8, 15),
+            loader=loader,
+        )
+
+        self.assertEqual(rows[0]["valuation_diagnostic_status"], "PE_MODEL_NOT_APPLICABLE")
+        self.assertEqual(rows[0]["expectation_state"], "PE_MODEL_NOT_APPLICABLE")
+        self.assertLessEqual(float(rows[0]["earnings_quality_score"]), 25.0)
+
+    def test_disclosure_date_guard_prevents_future_financial_leakage(self):
+        source_rows = [
+            {
+                "code": "600549",
+                "stock_name": "厦门钨业",
+                "quant_status": "SECONDARY_RESEARCH",
+                "quant_score": 60,
+            }
+        ]
+        loader = _FakeLoader(
+            {
+                "600549": FundamentalFetchResult(
+                    valuation_df=pd.DataFrame(
+                        {
+                            "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                            "pe": [20.0, 20.0, 20.0],
+                        }
                     ),
                     financial_df=pd.DataFrame(
                         {
@@ -139,13 +264,21 @@ class ValuationResearchReportTest(unittest.TestCase):
 
     def test_all_known_disclosures_after_as_of_fail_closed(self):
         source_rows = [
-            {"code": "600549", "stock_name": "厦门钨业", "quant_status": "SECONDARY_RESEARCH", "quant_score": 60}
+            {
+                "code": "600549",
+                "stock_name": "厦门钨业",
+                "quant_status": "SECONDARY_RESEARCH",
+                "quant_score": 60,
+            }
         ]
         loader = _FakeLoader(
             {
                 "600549": FundamentalFetchResult(
                     valuation_df=pd.DataFrame(
-                        {"date": ["2026-08-13", "2026-08-14", "2026-08-15"], "pe": [20.0, 20.0, 20.0]}
+                        {
+                            "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                            "pe": [20.0, 20.0, 20.0],
+                        }
                     ),
                     financial_df=pd.DataFrame(
                         {
@@ -164,7 +297,10 @@ class ValuationResearchReportTest(unittest.TestCase):
             as_of=date(2026, 8, 15),
             loader=loader,
         )
-        self.assertEqual(rows[0]["earnings_point_in_time_method"], "DISCLOSURE_DATE_NOT_YET_AVAILABLE")
+        self.assertEqual(
+            rows[0]["earnings_point_in_time_method"],
+            "DISCLOSURE_DATE_NOT_YET_AVAILABLE",
+        )
         self.assertEqual(rows[0]["financial_report_date"], "")
         self.assertEqual(rows[0]["financial_disclosure_date"], "")
         self.assertNotEqual(rows[0]["headline_net_profit"], 999.0)
@@ -173,12 +309,22 @@ class ValuationResearchReportTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             report_dir = Path(tmp)
             (report_dir / "run_summary.json").write_text(
-                json.dumps({"as_of_date": "2026-08-15"}), encoding="utf-8"
+                json.dumps({"as_of_date": "2026-08-15"}),
+                encoding="utf-8",
             )
-            with (report_dir / "top80_evidence_queue.csv").open("w", encoding="utf-8", newline="") as stream:
+            with (report_dir / "top80_evidence_queue.csv").open(
+                "w", encoding="utf-8", newline=""
+            ) as stream:
                 writer = csv.DictWriter(
                     stream,
-                    fieldnames=["code", "stock_name", "industry", "quant_status", "quant_score", "hard_blockers"],
+                    fieldnames=[
+                        "code",
+                        "stock_name",
+                        "industry",
+                        "quant_status",
+                        "quant_score",
+                        "hard_blockers",
+                    ],
                 )
                 writer.writeheader()
                 writer.writerow(
@@ -196,7 +342,10 @@ class ValuationResearchReportTest(unittest.TestCase):
                 {
                     "600549": FundamentalFetchResult(
                         valuation_df=pd.DataFrame(
-                            {"date": ["2026-08-13", "2026-08-14", "2026-08-15"], "pe": [20.0, 20.0, 22.0]}
+                            {
+                                "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                                "pe": [20.0, 20.0, 22.0],
+                            }
                         ),
                         financial_df=pd.DataFrame(
                             {
@@ -216,11 +365,17 @@ class ValuationResearchReportTest(unittest.TestCase):
                 "src.strategies.genge_opportunity_discovery.valuation_research_report.PublicFundamentalLoader",
                 return_value=fake,
             ):
-                rows = write_report(report_dir, research_limit=80)
+                rows = write_report(
+                    report_dir,
+                    research_limit=80,
+                    minimum_pe_samples=1,
+                    max_workers=1,
+                )
 
             self.assertEqual(len(rows), 1)
             self.assertTrue((report_dir / "valuation_research_queue.csv").exists())
             self.assertTrue((report_dir / "valuation_research_queue.md").exists())
+            self.assertTrue((report_dir / "valuation_research_summary.json").exists())
             text = (report_dir / "valuation_research_queue.md").read_text(encoding="utf-8")
             self.assertIn("formal signal eligible: False", text)
 
