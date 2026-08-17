@@ -8,9 +8,9 @@ archetype.
 
 Profiles are append-only, versioned research metadata. Resolution is strictly
 point-in-time: a profile can influence routing only when ``known_at <= as_of``.
-Stale or low-confidence profiles remain visible for audit but their routing
-inputs are suppressed. This module never creates a Formal BUY or an automatic
-trade signal.
+Every profile also has a mandatory ``review_after`` date: stale or low-confidence
+profiles remain visible for audit but their routing inputs are suppressed. This
+module never creates a Formal BUY or an automatic trade signal.
 """
 
 from __future__ import annotations
@@ -67,12 +67,6 @@ def _date_value(value: Any, *, field_name: str) -> date:
         ) from exc
 
 
-def _optional_date_value(value: Any, *, field_name: str) -> date | None:
-    if value in (None, ""):
-        return None
-    return _date_value(value, field_name=field_name)
-
-
 def _string_tuple(value: Any, *, field_name: str) -> tuple[str, ...]:
     if value is None:
         return ()
@@ -96,7 +90,7 @@ class CompanyValuationProfile:
     stock_name: str
     known_at: date
     evidence_as_of: date
-    review_after: date | None
+    review_after: date
     confidence: str
     business_tags: tuple[str, ...]
     archetype_hints: tuple[CompanyArchetype, ...]
@@ -111,7 +105,7 @@ class CompanyValuationProfile:
             "stock_name": self.stock_name,
             "known_at": self.known_at.isoformat(),
             "evidence_as_of": self.evidence_as_of.isoformat(),
-            "review_after": self.review_after.isoformat() if self.review_after else "",
+            "review_after": self.review_after.isoformat(),
             "confidence": self.confidence,
             "business_tags": list(self.business_tags),
             "archetype_hints": [item.value for item in self.archetype_hints],
@@ -239,7 +233,7 @@ class CompanyValuationProfileRepository:
             )
 
         profile = known[-1]
-        if profile.review_after is not None and as_of > profile.review_after:
+        if as_of > profile.review_after:
             return CompanyValuationProfileResolution(
                 normalized,
                 as_of,
@@ -283,15 +277,13 @@ def _parse_profile(
     evidence_as_of = _date_value(
         raw.get("evidence_as_of"), field_name="evidence_as_of"
     )
-    review_after = _optional_date_value(
-        raw.get("review_after"), field_name="review_after"
-    )
+    review_after = _date_value(raw.get("review_after"), field_name="review_after")
     if evidence_as_of > known_at:
         raise ValueError(
             "valuation profile evidence_as_of cannot be after known_at: "
             f"{profile_id}"
         )
-    if review_after is not None and review_after < known_at:
+    if review_after < known_at:
         raise ValueError(
             "valuation profile review_after cannot be before known_at: "
             f"{profile_id}"
