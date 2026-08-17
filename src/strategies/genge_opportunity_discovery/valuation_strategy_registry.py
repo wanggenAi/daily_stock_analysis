@@ -20,6 +20,12 @@ valuation. Whether a valuation is primary or an alternative is route-specific;
 ``ValuationRouteDecision.primary_strategy_id`` owns that decision. This avoids
 encoding a context-dependent role in a globally shared strategy descriptor.
 
+Industry labels are priors, not proof of a business model. In particular the
+repository's canonical ``航运`` industry can contain ports as well as shipping
+companies, so that broad label alone is deliberately insufficient to select the
+transport-cycle EV strategy. More specific raw labels, business tags or an
+explicit archetype hint can upgrade the route.
+
 Routing metadata is research-only. It cannot create a Formal BUY, change
 position sizing, bypass hard risk gates, or trigger automatic trading.
 """
@@ -291,6 +297,8 @@ class RouteRule:
 # ``航空`` alone is intentionally absent because it would also match aerospace
 # manufacturing labels such as 航空装备/航空航天. Real-estate NAV similarly
 # requires explicit developer semantics rather than any label containing 地产.
+# The canonical ``航运`` label is also absent: industry_alias_map.yaml folds
+# ports and shipping into that same bucket, so it is not safe model evidence.
 INDUSTRY_ROUTE_RULES = (
     RouteRule(
         "insurance_industry",
@@ -321,10 +329,10 @@ INDUSTRY_ROUTE_RULES = (
         "SPECIALIZED_EXCLUSIVE",
     ),
     RouteRule(
-        "transport_cycle_industry",
-        ("航运", "航空运输", "航空公司", "航空客运", "航空货运"),
+        "transport_cycle_business",
+        ("海运", "集运", "水上运输", "航空运输", "航空公司", "航空客运", "航空货运"),
         (CompanyArchetype.TRANSPORT_CYCLE,),
-        0.88,
+        0.90,
         "SPECIALIZED_PRIMARY",
     ),
     RouteRule(
