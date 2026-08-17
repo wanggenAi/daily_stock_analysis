@@ -195,3 +195,39 @@ def test_valuation_recall_can_recover_only_explicitly_relaxable_technical_rows()
     technical = next(row for row in selected if row["code"] == "000002")
     assert technical["wide_recall_reason"] == "RELAXABLE_TECHNICAL_RECOVERY"
     assert technical["industry_recall_guaranteed"] is True
+
+
+def test_valuation_financial_review_keeps_global_budget_plus_industry_leaders():
+    rows = [
+        {
+            **_row("000001", "A", 1),
+            "valuation_diagnostic_status": "OK",
+            "required_profit_growth_vs_reference": 0.1,
+        },
+        {
+            **_row("000002", "A", 2),
+            "valuation_diagnostic_status": "OK",
+            "required_profit_growth_vs_reference": 0.2,
+        },
+        {
+            **_row("000003", "B", 3),
+            "valuation_diagnostic_status": "OK",
+            "required_profit_growth_vs_reference": 0.3,
+        },
+        {
+            **_row("000004", "C", 4),
+            "valuation_diagnostic_status": "OK",
+            "required_profit_growth_vs_reference": 0.4,
+        },
+        {
+            **_row("000005", "D", 5),
+            "valuation_diagnostic_status": "PE_MODEL_NOT_APPLICABLE",
+        },
+    ]
+
+    codes = valuation_research_industry_balanced._financial_review_codes(
+        rows,
+        global_limit=1,
+    )
+
+    assert codes == ["000001", "000003", "000004"]
