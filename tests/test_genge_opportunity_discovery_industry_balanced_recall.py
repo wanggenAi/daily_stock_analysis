@@ -178,6 +178,36 @@ def test_valuation_recall_can_recover_only_explicitly_relaxable_technical_rows()
     assert technical["industry_recall_guaranteed"] is True
 
 
+def test_valuation_protected_top3_ranks_recovered_technical_row_by_quant_merit():
+    rows = [
+        _row(
+            "000001",
+            "SAME_INDUSTRY",
+            1,
+            status="HARD_REJECT",
+            hard="price_too_high",
+        ),
+        _row("000002", "SAME_INDUSTRY", 2),
+        _row("000003", "SAME_INDUSTRY", 3),
+        _row("000004", "SAME_INDUSTRY", 4),
+    ]
+
+    selected = valuation_research_industry_balanced._balanced_select(
+        rows,
+        research_limit=4,
+        relaxed_reserve=1,
+    )
+    by_code = {row["code"]: row for row in selected}
+
+    assert by_code["000001"]["wide_recall_reason"] == (
+        "RELAXABLE_TECHNICAL_RECOVERY"
+    )
+    assert by_code["000001"]["industry_recall_rank"] == 1
+    assert by_code["000002"]["industry_recall_rank"] == 2
+    assert by_code["000003"]["industry_recall_rank"] == 3
+    assert by_code["000004"]["industry_recall_rank"] == ""
+
+
 def test_valuation_financial_review_keeps_global_budget_plus_industry_leaders():
     rows = [
         {
