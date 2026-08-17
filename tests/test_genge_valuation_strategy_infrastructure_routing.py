@@ -10,8 +10,18 @@ def test_airport_routes_to_yield_asset_not_transport_cycle():
     assert decision.primary_strategy_id == "yield_asset"
 
 
-def test_shipping_stays_on_transport_cycle_model():
+def test_broad_canonical_shipping_label_is_not_enough_for_transport_cycle():
     decision = route_valuation_strategies(industry="航运")
+
+    assert decision.strategy_ids == ("general_reverse_earnings",)
+    assert decision.status == "GENERIC_FALLBACK"
+
+
+def test_specific_shipping_business_tag_upgrades_to_transport_cycle():
+    decision = route_valuation_strategies(
+        industry="航运",
+        business_tags="海运;集运",
+    )
 
     assert decision.strategy_ids == ("transport_cycle",)
     assert decision.primary_strategy_id == "transport_cycle"
