@@ -1,11 +1,14 @@
 name: GenGe Production Progress Migration
 
-# trigger_revision: 2
 on:
   push:
     branches: [main]
     paths:
       - ".github/workflows/genge-production-progress-migration.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "docs/GENGE_POSTSCAN_PR_TRIGGER.md"
   workflow_dispatch:
 
 permissions:
