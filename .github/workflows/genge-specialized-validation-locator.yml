@@ -19,7 +19,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          sleep 8
+          sleep 10
           gh run list \
             --repo "${{ github.repository }}" \
             --workflow genge-specialized-validation.yml \
@@ -42,5 +42,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/GENGE_SPECIALIZED_VALIDATION_LOCATOR.json docs/GENGE_SPECIALIZED_REPLAY_LOCATOR.json docs/GENGE_SPECIALIZED_POSTSCAN_LOCATOR.json
-          git commit -m "chore: record cache-isolation validation run" || exit 0
+          git commit -m "chore: record final cache-isolated postscan run" || exit 0
           git push origin HEAD:main
