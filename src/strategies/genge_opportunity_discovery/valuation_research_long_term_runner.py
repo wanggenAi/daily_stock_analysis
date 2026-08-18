@@ -11,6 +11,8 @@ from __future__ import annotations
 from datetime import date
 from typing import Any, Iterable, Mapping
 
+import pandas as pd
+
 from src.strategies.genge_opportunity_discovery import valuation_research_report as base
 from src.strategies.genge_opportunity_discovery.fundamental_valuation import ValuationPolicy
 
@@ -51,17 +53,67 @@ def _cash_quality_contribution(ratio: float) -> float:
     return -8.0
 
 
-def _add_financial_review(row, financial_frame, *, as_of: date):
-    """Prefer provider cash-conversion evidence over incompatible raw units.
+def _statutory_latest_disclosure_date(report_date: Any) -> date | None:
+    """Conservative latest lawful publication date for standard A-share periods.
 
-    Base scoring can still use a real total operating-cash-flow amount when one
-    exists. When the financial provider supplies its direct OCF/net-profit ratio,
-    however, that dimensionless ratio is the stronger unit-safe evidence. We
-    recompute the cashless quality base, then apply the same policy thresholds to
-    the provider ratio directly. No synthetic total cash flow is constructed.
+    This is used only when the provider has no actual disclosure timestamp. It
+    intentionally does not assume that a period-end row was public immediately.
+    Under the current SSE timetable, annual reports are due within four months,
+    half-year reports within two months, and Q1/Q3 reports within one month.
     """
-    reviewed = _ORIGINAL_ADD_FINANCIAL_REVIEW(row, financial_frame, as_of=as_of)
-    financial_row, _ = base._financial_pit_row(financial_frame, as_of=as_of)
+    rd = base._coerce_date(report_date)
+    if rd is None:
+        return None
+    if (rd.month, rd.day) == (12, 31):
+        return date(rd.year + 1, 4, 30)
+    if (rd.month, rd.day) == (3, 31):
+        return date(rd.year, 4, 30)
+    if (rd.month, rd.day) == (6, 30):
+        return date(rd.year, 8, 31)
+    if (rd.month, rd.day) == (9, 30):
+        return date(rd.year, 10, 31)
+    return None
+
+
+def _pit_safe_financial_frame(financial_frame, *, as_of: date):
+    """Remove undated report periods not yet guaranteed public by ``as_of``.
+
+    If real disclosure dates exist, leave the frame intact and let the base PIT
+    selector use them. If all disclosure dates are missing, only periods whose
+    statutory latest disclosure date has passed are eligible. This is deliberately
+    fail-closed: an early half-year filing without a captured disclosure timestamp
+    is not used until publication can be proven by another source or the deadline.
+    """
+    if financial_frame is None or financial_frame.empty:
+        return financial_frame, False
+    if "disclosure_date" in financial_frame.columns:
+        known = pd.to_datetime(financial_frame["disclosure_date"], errors="coerce").notna()
+        if bool(known.any()):
+            return financial_frame, False
+    if "report_date" not in financial_frame.columns:
+        return financial_frame, False
+
+    local = financial_frame.copy()
+    local["_statutory_latest_disclosure_date"] = local["report_date"].map(
+        _statutory_latest_disclosure_date
+    )
+    eligible = local["_statutory_latest_disclosure_date"].map(
+        lambda value: value is not None and value <= as_of
+    )
+    local = local[eligible].drop(columns=["_statutory_latest_disclosure_date"])
+    return local, True
+
+
+def _add_financial_review(row, financial_frame, *, as_of: date):
+    """Use unit-safe cash evidence and point-in-time-safe financial periods."""
+    safe_frame, statutory_filter_used = _pit_safe_financial_frame(
+        financial_frame, as_of=as_of
+    )
+    reviewed = _ORIGINAL_ADD_FINANCIAL_REVIEW(row, safe_frame, as_of=as_of)
+    financial_row, pit_method = base._financial_pit_row(safe_frame, as_of=as_of)
+    if statutory_filter_used and financial_row and pit_method == "REPORT_DATE_FALLBACK":
+        reviewed["earnings_point_in_time_method"] = "STATUTORY_DEADLINE_FALLBACK"
+
     direct_ratio = base._finite(financial_row.get("cash_conversion_ratio"))
     if direct_ratio is None:
         return reviewed
