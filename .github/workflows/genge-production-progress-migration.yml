@@ -1,26 +1,24 @@
-name: GenGe Production Progress Migration
+name: GenGe Normal Production Dispatch Bridge
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - ".github/workflows/genge-production-progress-migration.yml"
-  pull_request:
-    branches: [main]
-    paths:
-      - "docs/GENGE_POSTSCAN_PR_TRIGGER.md"
-  workflow_dispatch:
+  workflow_run:
+    workflows: ["GenGe Cycle Bottom"]
+    types: [completed]
 
 permissions:
   contents: write
   actions: write
 
 concurrency:
-  group: genge-production-progress-migration
+  group: genge-normal-production-dispatch-bridge
   cancel-in-progress: false
 
 jobs:
-  migrate-and-dispatch:
+  dispatch-normal-production:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_branch == 'verify/genge-postscan-pr-20260818'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -28,45 +26,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
-
-      - name: Switch normal All-A production to progress runner
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          path = Path('.github/workflows/genge-opportunity-discovery.yml')
-          text = path.read_text(encoding='utf-8')
-
-          old_name = '      - name: Run unified all-A production scan\n'
-          new_name = '      - name: Run unified all-A production scan with progress\n'
-          old_module = '          python -m src.strategies.genge_opportunity_discovery.all_a_full_scan \\\n'
-          new_module = '          python -m src.strategies.genge_opportunity_discovery.all_a_progress_runner \\\n'
-          old_tail = '''            --exit-profile-file data/opportunity_snapshots/exit_profile.csv &
-          scan_pid=$!
-          while kill -0 "$scan_pid" 2>/dev/null; do
-            echo "all-A scan heartbeat $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            sleep 60
-          done
-          wait "$scan_pid"
-'''
-          new_tail = '            --exit-profile-file data/opportunity_snapshots/exit_profile.csv\n'
-
-          assert text.count(old_name) == 1, f'expected exactly one production step name, got {text.count(old_name)}'
-          assert text.count(old_module) == 1, f'expected exactly one all_a_full_scan command, got {text.count(old_module)}'
-          assert text.count(old_tail) == 1, f'expected exactly one legacy heartbeat tail, got {text.count(old_tail)}'
-
-          text = text.replace(old_name, new_name, 1)
-          text = text.replace(old_module, new_module, 1)
-          text = text.replace(old_tail, new_tail, 1)
-          path.write_text(text, encoding='utf-8')
-          PY
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add .github/workflows/genge-opportunity-discovery.yml
-          git diff --cached --check
-          git commit -m "ci: use progress runner for normal All-A production"
-          git push origin HEAD:main
 
       - name: Dispatch normal production workflow
         env:
@@ -112,7 +71,7 @@ jobs:
           url: ${NORMAL_URL}
           expected_runner: src.strategies.genge_opportunity_discovery.all_a_progress_runner
 
-          This run must prove the normal production workflow remains green before temporary Fresh/PR validation workflows are removed.
+          This run proves the normal production workflow after commit c9dee76e switched its All-A command to the validated progress runner.
           EOF
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
