@@ -22,10 +22,12 @@ concurrency:
 jobs:
   valuation-research:
     name: Reverse valuation research queue
+    # workflow_run already names the exact upstream workflow. Do not couple
+    # execution to the upstream trigger type: that made valid completed runs
+    # silently become skipped as the production trigger evolved.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.workflow_run.conclusion == 'success' &&
-       (github.event.workflow_run.event == 'schedule' || github.event.workflow_run.event == 'workflow_dispatch'))
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
