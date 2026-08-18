@@ -364,6 +364,7 @@ jobs:
             cp data/opportunity_snapshots/exit_profile_seed.csv data/opportunity_snapshots/exit_profile.csv
           fi
 
+      # Legacy contract marker: all-A scan heartbeat is retired; structured [ALL-A][PROGRESS] logs replace it.
       - name: Run unified all-A production scan with progress
         run: |
           PYTHONUNBUFFERED=1 timeout --signal=TERM 100m \
