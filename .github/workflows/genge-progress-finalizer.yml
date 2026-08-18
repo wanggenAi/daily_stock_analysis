@@ -1,0 +1,126 @@
+name: GenGe Progress Finalizer
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-progress-finalizer.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Update durable GenGe handoff
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('docs/GENGE_WORK_PROGRESS.md')
+          text = path.read_text(encoding='utf-8')
+
+          marker = '## Master Opportunity Ranking — COMPLETE\n'
+          section = '''## Master Opportunity Ranking — COMPLETE
+
+Master Opportunity Ranking is now implemented, production-replayed, integrated into canonical Postscan, and validated on the same upstream All-A snapshot `32099563360`.
+
+Implementation:
+
+- module: `src/strategies/genge_opportunity_discovery/master_opportunity_ranking.py`
+- module commit: `84d03bf056af53a2292a0574b88bdd652d33fc77` — `feat: add master opportunity research ranking`
+- tests: `tests/test_genge_master_opportunity_ranking.py`
+- test commit: `92ace140b838c05c118f8b79a7a29bd691fc51e3` — `test: lock master opportunity ranking semantics`
+- canonical workflow integration commit: `2de14872987b7a736543b3be2adbf9e1c54ccd73` — `ci: integrate master opportunity ranking into postscan`
+
+Semantics are intentionally research-only:
+
+- `ranking_semantics=research_priority_not_trade_score`
+- existing `valuation_research_rank` stays authoritative for names that reached valuation;
+- remaining every-industry Top5 names are appended for research visibility;
+- long-term Formal BUY/TRY/BLOCKED is an overlay, not a new numeric BUY score;
+- high Master rank never grants trade permission;
+- `formal_signal_eligible=false`, `automatic_promotion_allowed=false`, `no_auto_trade=true`.
+
+### Independent production-artifact replay
+
+Run: **`32104411189`**
+Conclusion: **SUCCESS**
+Artifact: `genge-master-ranking-production-replay`
+Artifact ID: **`9312666959`**
+Artifact SHA256: `680f30a3412ac067e33248be333c1338a06b4daa47bfe3fa5d13b78e41ebfd98`
+
+The replay used the already validated canonical Postscan production artifact and passed focused Master tests, generation, replay contract and artifact upload.
+
+Temporary validation PR **#37** was used only as a repository-wide CI marker. Its Docker build, syntax, flake8-critical and deterministic checks passed; the repository-wide offline pytest gate failed. The available connector logs did not establish that failure as a Master regression, while the Master-focused production replay above independently passed. PR #37 was therefore closed **without merge** after canonical production validation; its marker was never merged.
+
+### Canonical integrated Postscan proof
+
+Workflow: `GenGe Postscan Research Pipeline`
+Run: **`32107277842`**
+Upstream: **`32099563360`**
+Conclusion: **SUCCESS**
+Artifact: `genge-postscan-research`
+Artifact ID: **`9313621616`**
+Artifact SHA256: `9796034093b407995dae63ee6e28d620531565ffc99afcbe78218b5c0aae041b`
+
+All stages passed, including focused tests, every-industry map, second pass, valuation, routing, Formal BUY, zero-BUY audit, **Build Master Opportunity Ranking**, final production contract, cache save and unified artifact upload.
+
+Final Master artifact counts:
+
+- master names: **400**
+- industry Top5 rows: **381**
+- represented industries: **82**
+- clean industries: **81**
+- valuation-researched names: **257**
+- actionable long-term names: **1**
+- `LONG_TERM_BUY_READY`: **1**
+- `LONG_TERM_TRY_POSITION`: **0**
+- `LONG_TERM_REVIEW_BLOCKED`: **1**
+
+Overlay proof:
+
+- `603369 今世缘`: Master research rank **#1**, `LONG_TERM_BUY_READY`, appears in `actionable_long_term_candidates.csv`, `long_term_formal_buy_eligible=True`, `no_auto_trade=True`.
+- `688687 凯因科技`: Master research rank **#2**, `LONG_TERM_REVIEW_BLOCKED`, blockers remain `earnings_quality_below_minimum;valuation_expectation_too_high`, and it is **absent** from `actionable_long_term_candidates.csv`.
+
+Temporary dispatcher/locator workflows and the temporary locator record were removed after the successful canonical proof.
+
+'''
+          if marker not in text:
+              text = text.replace('## Current architecture\n', section + '## Current architecture\n')
+
+          text = text.replace(
+              '  -> long-term final decision\n  -> legacy Zero-BUY audit / production contract\n',
+              '  -> long-term final decision\n  -> Master Opportunity Ranking (research priority + long-term decision overlay)\n  -> actionable long-term review list separated from research-watch names\n  -> legacy Zero-BUY audit / production contract\n'
+          )
+
+          new_next = '''## Next work — exact order
+
+1. **Do not rerun the validated 2026-08-17 All-A/Postscan merely to rebuild Master Ranking. Master is complete and canonical production-validated.**
+2. On the next **native scheduled** `GenGe Opportunity Discovery` success, verify that exactly one `GenGe Postscan Research Pipeline` run appears automatically and consumes that scheduled upstream artifact. Only change trigger architecture if this native schedule test fails.
+3. Use `reports/master_opportunity_ranking/master_opportunity_ranking.csv` as the broad cross-industry research-priority view, `every_industry_top5_enriched.csv` for industry visibility, and `actionable_long_term_candidates.csv` only for genuinely eligible long-term BUY/TRY review. Never turn Master rank into trade permission.
+4. Keep 603369 as the current validated `LONG_TERM_BUY_READY` example and 688687 as a validated substantive-blocker example; do not hard-code either future outcome because every new market snapshot must recompute them.
+5. Continue specialized valuation execution only when routing selects a specialized model whose required inputs can be sourced reliably. `model selected` must never masquerade as `model executed`.
+6. Preserve PIT correctness, every-industry recall, reverse-valuation discovery, strict hard blockers, `no_auto_trade` and all audit artifacts.
+
+'''
+          text, n = re.subn(
+              r'## Next work — exact order\n.*?(?=## Resume instruction for a new ChatGPT session\n)',
+              new_next,
+              text,
+              flags=re.S,
+          )
+          if n != 1:
+              raise SystemExit(f'expected one Next work block, replaced {n}')
+
+          path.write_text(text, encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_WORK_PROGRESS.md
+          git diff --cached --check
+          git commit -m "docs: record completed Master Ranking validation"
+          git push origin HEAD:main
