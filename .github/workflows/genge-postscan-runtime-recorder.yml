@@ -1,0 +1,71 @@
+name: GenGe Postscan Runtime Recorder
+
+on:
+  workflow_run:
+    workflows: ["GenGe Postscan Research Pipeline"]
+    types: [requested, completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-postscan-runtime-recorder
+  cancel-in-progress: false
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Write runtime status
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_STATUS: ${{ github.event.workflow_run.status }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_EVENT: ${{ github.event.workflow_run.event }}
+          RUN_CREATED: ${{ github.event.workflow_run.created_at }}
+          RUN_UPDATED: ${{ github.event.workflow_run.updated_at }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          set -euo pipefail
+          artifact_lines=""
+          if [ "$ACTION" = "completed" ]; then
+            artifact_lines=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/artifacts" --jq '.artifacts[] | "- artifact: \(.name) | id=\(.id) | size=\(.size_in_bytes)"' || true)
+          fi
+          cat > docs/GENGE_POSTSCAN_RUNTIME_STATUS.md <<EOF
+          # GenGe Postscan Runtime Status
+
+          recorder_action: ${ACTION}
+          postscan_run_id: ${RUN_ID}
+          status: ${RUN_STATUS}
+          conclusion: ${RUN_CONCLUSION}
+          event: ${RUN_EVENT}
+          created_at_utc: ${RUN_CREATED}
+          updated_at_utc: ${RUN_UPDATED}
+          head_sha: ${HEAD_SHA}
+          url: ${RUN_URL}
+          expected_upstream_run_id: 32090231706
+          canonical_workflow: .github/workflows/genge-postscan-research.yml
+
+          ## Artifacts
+          ${artifact_lines:-No artifacts yet.}
+
+          Required terminal outputs: industry coverage, long-term second pass, long-term-priority financial review, valuation_research_routed.csv, long_term_formal_buy_candidates.csv, and zero_buy_audit.json.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_POSTSCAN_RUNTIME_STATUS.md
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: record Postscan ${ACTION} run ${RUN_ID} [skip ci]"
+            git push origin HEAD:main
+          fi
