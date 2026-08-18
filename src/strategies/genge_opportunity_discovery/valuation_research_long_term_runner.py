@@ -12,10 +12,13 @@ from datetime import date
 from typing import Any, Iterable, Mapping
 
 from src.strategies.genge_opportunity_discovery import valuation_research_report as base
+from src.strategies.genge_opportunity_discovery.fundamental_valuation import ValuationPolicy
 
 
 _ORIGINAL_BASE_ROW = base._base_row
 _ORIGINAL_RANK_KEY = base._rank_key
+_ORIGINAL_ADD_FINANCIAL_REVIEW = base._add_financial_review
+_CASH_POLICY = ValuationPolicy()
 
 
 def _source_priority(row: Mapping[str, Any]) -> int:
@@ -30,11 +33,67 @@ def _base_row(source, pe_diag):
     row["medium_horizon_exit_profile_limitation"] = source.get(
         "medium_horizon_exit_profile_limitation"
     ) or False
+    row["cash_conversion_ratio_basis"] = ""
     return row
 
 
 def _rank_key(row: Mapping[str, Any]):
     return (_source_priority(row),) + tuple(_ORIGINAL_RANK_KEY(row))
+
+
+def _cash_quality_contribution(ratio: float) -> float:
+    if ratio >= _CASH_POLICY.high_cash_conversion:
+        return 15.0
+    if ratio >= _CASH_POLICY.medium_cash_conversion:
+        return 7.0
+    if ratio < 0:
+        return -20.0
+    return -8.0
+
+
+def _add_financial_review(row, financial_frame, *, as_of: date):
+    """Prefer provider cash-conversion evidence over incompatible raw units.
+
+    Base scoring can still use a real total operating-cash-flow amount when one
+    exists. When the financial provider supplies its direct OCF/net-profit ratio,
+    however, that dimensionless ratio is the stronger unit-safe evidence. We
+    recompute the cashless quality base, then apply the same policy thresholds to
+    the provider ratio directly. No synthetic total cash flow is constructed.
+    """
+    reviewed = _ORIGINAL_ADD_FINANCIAL_REVIEW(row, financial_frame, as_of=as_of)
+    financial_row, _ = base._financial_pit_row(financial_frame, as_of=as_of)
+    direct_ratio = base._finite(financial_row.get("cash_conversion_ratio"))
+    if direct_ratio is None:
+        return reviewed
+
+    cashless = base.normalize_core_earnings(
+        net_profit=financial_row.get("net_profit"),
+        recurring_profit=financial_row.get("recurring_profit"),
+        investment_income=financial_row.get("investment_income"),
+        fair_value_change_gain=financial_row.get("fair_value_change_gain"),
+        operating_cash_flow=None,
+    )
+    score = max(
+        0.0,
+        min(100.0, cashless.earnings_quality_score + _cash_quality_contribution(direct_ratio)),
+    )
+
+    reviewed["cash_conversion_ratio"] = direct_ratio
+    reviewed["cash_conversion_ratio_basis"] = (
+        financial_row.get("cash_conversion_ratio_basis")
+        or "PROVIDER_OCF_TO_NET_PROFIT_RATIO"
+    )
+    reviewed["earnings_quality_score"] = round(score, 2)
+    # normalize_core_earnings lowers HIGH -> MEDIUM only because raw total OCF
+    # is absent. A verified provider ratio supplies the missing cash evidence.
+    if (
+        cashless.normalization_method == "REPORTED_RECURRING_PROFIT"
+        and cashless.normalized_core_operating_profit is not None
+    ):
+        reviewed["earnings_quality_confidence"] = "HIGH"
+    else:
+        reviewed["earnings_quality_confidence"] = cashless.earnings_quality_confidence
+    return reviewed
 
 
 def _build_valuation_research_rows(
@@ -120,7 +179,7 @@ def _build_valuation_research_rows(
         financial_frame = (
             None if isinstance(fetched, Exception) or fetched is None else fetched.financial_df
         )
-        reviewed.append(base._add_financial_review(row, financial_frame, as_of=as_of))
+        reviewed.append(_add_financial_review(row, financial_frame, as_of=as_of))
 
     reviewed.sort(key=_rank_key)
     for rank, row in enumerate(reviewed, 1):
@@ -131,11 +190,13 @@ def _build_valuation_research_rows(
 def install_long_term_priority() -> None:
     base._base_row = _base_row
     base._rank_key = _rank_key
+    base._add_financial_review = _add_financial_review
     base.build_valuation_research_rows = _build_valuation_research_rows
     for field in (
         "valuation_source_channel",
         "long_term_second_pass_status",
         "medium_horizon_exit_profile_limitation",
+        "cash_conversion_ratio_basis",
     ):
         if field not in base.OUTPUT_COLUMNS:
             insert_at = base.OUTPUT_COLUMNS.index("wide_recall_reason") + 1
