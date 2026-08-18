@@ -1,0 +1,78 @@
+name: GenGe Specialized Production Replay
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-specialized-production-replay.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  production-replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Download validated canonical Postscan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-postscan-research
+          path: upstream
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: 32107277842
+      - name: Execute specialized valuation sidecar
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.specialized_valuation_execution \
+            --report-root upstream/valuation_research_queue \
+            --cache-dir data/cache/valuation_research_fundamentals \
+            --years 7 \
+            --minimum-annual-roe-samples 3 \
+            --maximum-annual-roe-samples 5
+      - name: Validate production replay contract
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+
+          root = Path('upstream/valuation_research_queue/20260817')
+          summary = json.loads((root/'specialized_valuation_summary.json').read_text(encoding='utf-8'))
+          rows = list(csv.DictReader((root/'valuation_research_specialized.csv').open(encoding='utf-8')))
+          assert summary['row_count'] == 257
+          assert summary['specialized_selected_count'] == 15
+          assert summary['capital_markets_selected_count'] == 3
+          assert summary['ranking_changed'] is False
+          assert summary['formal_buy_consumes_specialized_sidecar'] is False
+          assert summary['formal_signal_eligible'] is False
+          assert summary['automatic_promotion_allowed'] is False
+          assert summary['no_auto_trade'] is True
+          by_code = {row['code']: row for row in rows}
+          for code in ('600109', '600155', '000712'):
+              assert by_code[code]['valuation_primary_strategy_id'] == 'capital_markets_cycle'
+              assert by_code[code]['specialized_model_formal_buy_eligible'] == 'False'
+              assert by_code[code]['no_auto_trade'] == 'True'
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          for code in ('600109', '600155', '000712'):
+              row = by_code[code]
+              print(code, row['stock_name'], row['specialized_model_execution_state'], row['specialized_model_status'], row['specialized_current_pb'], row['specialized_normalized_mid_cycle_roe'], row['specialized_fair_pb'], row['specialized_implied_mid_cycle_roe'], row['specialized_margin_of_safety'])
+          PY
+      - name: Upload specialized replay
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-specialized-production-replay
+          path: |
+            upstream/valuation_research_queue/20260817/valuation_research_specialized.csv
+            upstream/valuation_research_queue/20260817/valuation_research_specialized.md
+            upstream/valuation_research_queue/20260817/specialized_valuation_summary.json
+          if-no-files-found: error
