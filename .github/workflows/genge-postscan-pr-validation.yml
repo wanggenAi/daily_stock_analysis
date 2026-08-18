@@ -25,17 +25,18 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
           UPSTREAM_RUN_ID: "32099563360"
-          CUTOFF: "2026-08-18T05:06:00Z"
+          WINDOW_START: "2026-08-18T05:06:00Z"
+          WINDOW_END: "2026-08-18T05:10:00Z"
         run: |
           set -euo pipefail
-          run_line=$(gh api "repos/${REPO}/actions/workflows/genge-postscan-research.yml/runs?per_page=20" \
-            --jq '.workflow_runs[] | select(.created_at >= env.CUTOFF) | [.id,.event,.status,(.conclusion // ""),.created_at,.head_sha,.html_url] | @tsv' \
+          run_line=$(gh api "repos/${REPO}/actions/workflows/genge-postscan-research.yml/runs?per_page=30" \
+            --jq '.workflow_runs[] | select(.event == "workflow_run" and .created_at >= env.WINDOW_START and .created_at < env.WINDOW_END) | [.id,.event,.status,(.conclusion // ""),.created_at,.head_sha,.html_url] | @tsv' \
             | head -1 || true)
           if [ -n "$run_line" ]; then
-            printf 'CANONICAL_POSTSCAN=%s\n' "$run_line"
+            printf 'PRODUCTION_WINDOW_POSTSCAN=%s\n' "$run_line"
             exit 0
           fi
-          echo "No automatic canonical Postscan found after ${CUTOFF}; dispatching with upstream ${UPSTREAM_RUN_ID}."
+          echo "No workflow_run Postscan found in production completion window; dispatching canonical Postscan with upstream ${UPSTREAM_RUN_ID}."
           dispatch_output=$(gh workflow run genge-postscan-research.yml --repo "$REPO" --ref main -f upstream_run_id="$UPSTREAM_RUN_ID" 2>&1)
           printf '%s\n' "$dispatch_output"
           run_id=$(printf '%s\n' "$dispatch_output" | sed -n 's#.*actions/runs/\([0-9][0-9]*\).*#\1#p' | tail -1)
