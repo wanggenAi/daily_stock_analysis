@@ -33,23 +33,24 @@ jobs:
 
           path = Path('.github/workflows/genge-opportunity-discovery.yml')
           text = path.read_text(encoding='utf-8')
+
           trigger_block = '''  pull_request:\n    branches: [main]\n  push:\n    branches: [main]\n'''
           if trigger_block in text:
               text = text.replace(
                   trigger_block,
                   '  # PR/push checks live in CI/Fresh validation workflows.\n'
-                  '  # Keeping production to schedule/workflow_dispatch prevents artifact-less downstream workflow_run events.\n',
+                  '  # Production stays on schedule/workflow_dispatch so downstream never consumes artifact-less runs.\n',
                   1,
               )
           elif '  push:\n    branches: [main]\n' in text or '  pull_request:\n    branches: [main]\n' in text:
               raise SystemExit('unexpected Opportunity Discovery trigger layout; refusing unsafe patch')
 
-          old = 'python -m src.strategies.genge_opportunity_discovery.all_a_full_scan \\\\n'
-          new = 'python -m src.strategies.genge_opportunity_discovery.all_a_progress_runner \\\\n'
-          if old in text:
-              text = text.replace(old, new, 1)
-          elif 'all_a_progress_runner' not in text:
-              raise SystemExit('could not locate All-A production command')
+          old_module = 'src.strategies.genge_opportunity_discovery.all_a_full_scan'
+          new_module = 'src.strategies.genge_opportunity_discovery.all_a_progress_runner'
+          if old_module in text:
+              text = text.replace(old_module, new_module, 1)
+          elif new_module not in text:
+              raise SystemExit('could not locate All-A production module')
           path.write_text(text, encoding='utf-8')
 
           obsolete = [
@@ -80,23 +81,27 @@ jobs:
           assert '  pull_request:\n' not in on_block
           assert 'workflow_dispatch:' in on_block
           assert 'schedule:' in on_block
-          assert 'python -m src.strategies.genge_opportunity_discovery.all_a_progress_runner' in text
-          assert 'python -m src.strategies.genge_opportunity_discovery.all_a_full_scan \\\\n' not in text
+          assert 'src.strategies.genge_opportunity_discovery.all_a_progress_runner' in text
+          assert 'src.strategies.genge_opportunity_discovery.all_a_full_scan' not in text
           for name in (
               'genge-valuation-research.yml', 'genge-industry-coverage.yml',
               'genge-long-term-second-pass.yml', 'genge-zero-buy-audit.yml',
           ):
               assert not (Path('.github/workflows') / name).exists(), name
+          assert Path('.github/workflows/genge-postscan-research.yml').exists()
           print('maintenance_patch=validated')
           PY
 
       - name: Commit production-chain cleanup
         run: |
+          set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           if ! git diff --cached --quiet; then
             git commit -m "fix: canonicalize GenGe production trigger chain [skip ci]"
+            git fetch origin main
+            git rebase origin/main
             git push origin HEAD:main
           fi
 
@@ -125,33 +130,6 @@ jobs:
           echo "POSTSCAN_RUN_ID=$run_id" >> "$GITHUB_ENV"
           echo "canonical_postscan_run_id=$run_id"
 
-      - name: Persist Postscan started status
-        env:
-          REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          run_json=$(gh run view "$POSTSCAN_RUN_ID" --repo "$REPO" --json status,conclusion,event,createdAt,url,headSha)
-          python - "$run_json" <<'PY'
-          import json, sys
-          from pathlib import Path
-          d = json.loads(sys.argv[1])
-          Path('docs/GENGE_POSTSCAN_RUNTIME_STATUS.md').write_text(
-              '# GenGe Postscan Runtime Status\n\n'
-              f"upstream_run_id: 32090231706\npostscan_run_id: {d.get('databaseId','')}\n"
-              f"status: {d.get('status','')}\nconclusion: {d.get('conclusion','')}\n"
-              f"event: {d.get('event','')}\ncreated_at_utc: {d.get('createdAt','')}\n"
-              f"head_sha: {d.get('headSha','')}\nurl: {d.get('url','')}\n"
-              'canonical_workflow: .github/workflows/genge-postscan-research.yml\n\n'
-              'Fresh All-A upstream run 32090231706 succeeded with artifact 9308603602. '
-              'This canonical Postscan must produce industry coverage, long-term second pass, '
-              'valuation_research_routed.csv, long-term final decision and Zero-BUY audit.\n',
-              encoding='utf-8')
-          PY
-          sed -i "s/postscan_run_id: $/postscan_run_id: ${POSTSCAN_RUN_ID}/" docs/GENGE_POSTSCAN_RUNTIME_STATUS.md
-          git add docs/GENGE_POSTSCAN_RUNTIME_STATUS.md
-          git commit -m "docs: record canonical Postscan run ${POSTSCAN_RUN_ID} [skip ci]" || true
-          git push origin HEAD:main
-
       - name: Wait for canonical Postscan terminal state
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -159,43 +137,11 @@ jobs:
         run: |
           set +e
           gh run watch "$POSTSCAN_RUN_ID" --repo "$REPO" --exit-status --interval 15
-          echo "POSTSCAN_WATCH_RC=$?" >> "$GITHUB_ENV"
-          exit 0
-
-      - name: Persist Postscan terminal status
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-        run: |
+          watch_rc=$?
+          set -e
           status=$(gh run view "$POSTSCAN_RUN_ID" --repo "$REPO" --json status --jq '.status')
           conclusion=$(gh run view "$POSTSCAN_RUN_ID" --repo "$REPO" --json conclusion --jq '.conclusion // ""')
-          event=$(gh run view "$POSTSCAN_RUN_ID" --repo "$REPO" --json event --jq '.event')
-          created=$(gh run view "$POSTSCAN_RUN_ID" --repo "$REPO" --json createdAt --jq '.createdAt')
-          url=$(gh run view "$POSTSCAN_RUN_ID" --repo "$REPO" --json url --jq '.url')
-          head=$(gh run view "$POSTSCAN_RUN_ID" --repo "$REPO" --json headSha --jq '.headSha')
-          artifacts=$(gh api "repos/${REPO}/actions/runs/${POSTSCAN_RUN_ID}/artifacts" --jq '.artifacts[] | "- artifact: \(.name) | id=\(.id) | size=\(.size_in_bytes)"' || true)
-          cat > docs/GENGE_POSTSCAN_RUNTIME_STATUS.md <<EOF
-          # GenGe Postscan Runtime Status
-
-          upstream_run_id: 32090231706
-          postscan_run_id: ${POSTSCAN_RUN_ID}
-          status: ${status}
-          conclusion: ${conclusion}
-          event: ${event}
-          created_at_utc: ${created}
-          head_sha: ${head}
-          url: ${url}
-          canonical_workflow: .github/workflows/genge-postscan-research.yml
-
-          ## Artifacts
-          ${artifacts:-No artifacts produced.}
-
-          Fresh upstream artifact: genge-all-a-production-report / id 9308603602.
-          Required terminal outputs: industry coverage, long-term second pass, valuation_research_routed.csv, long-term final decision and Zero-BUY audit.
-          EOF
-          git add docs/GENGE_POSTSCAN_RUNTIME_STATUS.md
-          git commit -m "docs: persist canonical Postscan ${conclusion} run ${POSTSCAN_RUN_ID} [skip ci]" || true
-          git push origin HEAD:main
+          echo "canonical_postscan_terminal run_id=$POSTSCAN_RUN_ID status=$status conclusion=$conclusion watch_rc=$watch_rc"
           if [ "$conclusion" != "success" ]; then
             exit 1
           fi
