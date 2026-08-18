@@ -1,6 +1,6 @@
 # GenGe Postscan PR Trigger
 
-retry: 14
+retry: 15
 upstream_run_id: 32090231706
 fresh_artifact_id: 9308603602
-purpose: final normal-production dispatch after duplicate helpers were removed; main is now stable and PR #35 is the sole dispatch entry.
+purpose: clear stale main Opportunity runs, then dispatch exactly one normal production proof with the validated progress runner.
