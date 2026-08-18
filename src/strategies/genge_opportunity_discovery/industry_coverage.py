@@ -110,6 +110,27 @@ def _read_source(report_dir: Path) -> list[dict[str, Any]]:
     raise FileNotFoundError(f"no All-A quant source under {report_dir}")
 
 
+def _find_report_by_source_priority(root: Path, names: tuple[str, ...]) -> Path | None:
+    """Find an All-A report without letting nested deep-review files win.
+
+    The production artifact contains both the canonical top-level
+    ``all_a_quant_screen.csv`` and nested ``_deep_review/.../quant_screen_all.csv``.
+    Search source names in priority order and prefer a directory carrying the
+    canonical ``run_summary.json``.  Lexicographic path depth must never decide
+    which semantic report is the production All-A root.
+    """
+    for name in names:
+        candidates = sorted(
+            {p.parent for p in root.glob(f"**/{name}") if p.is_file()},
+            key=str,
+        )
+        if not candidates:
+            continue
+        canonical = [candidate for candidate in candidates if (candidate / "run_summary.json").exists()]
+        return (canonical or candidates)[-1]
+    return None
+
+
 def _flattened_artifact_fallback(root: Path, names: tuple[str, ...]) -> Path | None:
     """Resolve GitHub artifact extraction that strips the uploaded parent path.
 
@@ -125,13 +146,9 @@ def _flattened_artifact_fallback(root: Path, names: tuple[str, ...]) -> Path | N
     ancestor = next((parent for parent in root.parents if parent.exists()), None)
     if ancestor is None:
         return None
-    candidates = sorted(
-        {p.parent for name in names for p in ancestor.glob(f"**/{name}") if p.is_file()},
-        key=str,
-    )
-    if not candidates:
+    report = _find_report_by_source_priority(ancestor, names)
+    if report is None:
         return None
-    report = candidates[-1]
     try:
         root.parent.mkdir(parents=True, exist_ok=True)
         root.symlink_to(report.resolve(), target_is_directory=True)
@@ -147,13 +164,13 @@ def find_latest_report(root: Path) -> Path:
     names = ("all_a_quant_screen.csv", "quant_screen_all.csv", "top80_evidence_queue.csv")
     if any((root / name).exists() for name in names):
         return root
-    candidates = sorted({p.parent for name in names for p in root.glob(f"**/{name}") if p.is_file()}, key=str)
-    if not candidates:
-        fallback = _flattened_artifact_fallback(root, names)
-        if fallback is not None:
-            return fallback
-        raise FileNotFoundError(f"no All-A report under {root}")
-    return candidates[-1]
+    report = _find_report_by_source_priority(root, names)
+    if report is not None:
+        return report
+    fallback = _flattened_artifact_fallback(root, names)
+    if fallback is not None:
+        return fallback
+    raise FileNotFoundError(f"no All-A report under {root}")
 
 
 def write_industry_coverage(report_dir: Path, output_dir: Path, *, per_industry: int = DEFAULT_PER_INDUSTRY) -> list[dict[str, Any]]:
