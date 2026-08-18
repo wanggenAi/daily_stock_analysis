@@ -1,0 +1,37 @@
+version: 1
+description: >-
+  Reviewed point-in-time annual embedded-value inputs for insurance reverse
+  appraisal research. Values are CNY million. Scope must be compatible with the
+  listed issuer; ambiguous group/SOTP scope remains intentionally absent.
+inputs:
+  - input_id: 601628-2025-annual-ev-nbv
+    code: "601628"
+    stock_name: 中国人寿
+    known_at: "2026-03-26"
+    evidence_as_of: "2025-12-31"
+    report_year: 2025
+    currency: CNY
+    unit: million
+    embedded_value: 1467876
+    normalized_annual_nbv: 45752
+    embedded_value_scope: listed_company
+    nbv_scope: listed_company
+    confidence: HIGH
+    evidence_refs:
+      - china-life-2025-annual-report-2026-03-26
+
+  - input_id: 601601-2025-annual-ev-nbv
+    code: "601601"
+    stock_name: 中国太保
+    known_at: "2026-03-27"
+    evidence_as_of: "2025-12-31"
+    report_year: 2025
+    currency: CNY
+    unit: million
+    embedded_value: 613365
+    normalized_annual_nbv: 18609
+    embedded_value_scope: insurance_group
+    nbv_scope: life_new_business
+    confidence: HIGH
+    evidence_refs:
+      - cpics-2025-annual-report-2026-03-27
