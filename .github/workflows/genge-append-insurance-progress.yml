@@ -1,0 +1,130 @@
+name: GenGe Append Insurance Progress
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-append-insurance-progress.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  append:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Append durable milestone
+        run: |
+          cat >> docs/GENGE_WORK_PROGRESS.md <<'EOF'
+
+## 2026-08-18 final update — city-gas split + insurance reverse appraisal COMPLETE
+
+### City-gas company-level routing split
+
+The broad `燃气 -> yield_asset` prior remains a prior, not a company fact. Company-level PIT profiles now separate the three reviewed gas names:
+- `603393 新天然气`: resource/cycle profile; `yield_asset` disabled; routes through `capacity_cycle_normalizer;general_reverse_earnings`.
+- `600903 贵州燃气`: reviewed city-gas operator; remains `YIELD_ASSET`.
+- `600681 百川能源`: reviewed city-gas operator; remains `YIELD_ASSET`.
+
+The 600903/600681 profiles are explicit so the 603393 correction cannot contaminate ordinary city-gas names. Focused validation run **`32147146982`** succeeded.
+
+`yield_asset` remains intentionally **INPUTS_REQUIRED** for 600903/600681. Its contract requires auditable normalized FCFE plus an explicit maintenance-capex / growth-capex separation. Do **not** substitute `CFO - total capex` merely to make the model execute.
+
+### Insurance embedded-value reverse appraisal — permanent implementation
+
+Permanent files:
+- `config/insurance_embedded_value_inputs.yaml` — commit **`8d7a159a1f59f0a98e70d1f9e673375612ac3206`**;
+- `src/strategies/genge_opportunity_discovery/insurance_embedded_value_inputs.py` — commit **`94b7c156005a52ffeda060fe45b2211d86962edc`**;
+- `src/strategies/genge_opportunity_discovery/insurance_valuation_execution.py` — commit **`3003da91dcdfa292d38a700b0a85c487d5bafb6b`**;
+- `tests/test_genge_insurance_embedded_value_inputs.py` — commit **`de23e334501a6a2b5133a4f84b5de7da2f84925e`**;
+- `tests/test_genge_insurance_valuation_execution.py` — commit **`147bf1331e8de4a2361a1fef6e16f62e5a443590`**.
+
+PIT disclosure registry deliberately contains only scope-compatible, HIGH-confidence annual inputs:
+- `601628 中国人寿`: 2025 EV **1,467,876 CNY million**, annual NBV **45,752 CNY million**, known at **2026-03-26**;
+- `601601 中国太保`: 2025 EV **613,365 CNY million**, annual NBV **18,609 CNY million**, known at **2026-03-27**;
+- `601319 中国人保`: intentionally absent because available life/health segment EV/NBV cannot safely be treated as listed-group EV/NBV without a scope-consistent group/SOTP bridge.
+
+Market-cap unit probe established the public Baidu historical `总市值` series used by the loader is in **CNY 100m** for this execution contract. The insurance executor therefore records the explicit conversion basis:
+`AKSHARE_BAIDU_TOTAL_MARKET_CAP_CNY_100M_X100_TO_CNY_MILLION`.
+
+The insurance sidecar performs only observable reverse appraisal:
+- current P/EV;
+- market-implied NBV franchise multiple.
+
+It does **not** invent a subjective franchise multiple and does **not** publish a synthetic fair value. Negative implied multiples are preserved instead of clipped.
+
+Focused insurance CI:
+- run **`32148721002`** — SUCCESS.
+
+Independent production-artifact replay:
+- run **`32149017516`** — SUCCESS;
+- insurance selected **3**, executed **2**, input/scope required **1**;
+- `601628` implied NBV franchise multiple **-8.854760447630705x**;
+- `601601` implied NBV franchise multiple **-17.373958837121823x**;
+- `601319` -> `INSURANCE_GROUP_EV_NBV_SCOPE_REQUIRED`;
+- `ranking_changed=false`;
+- `formal_buy_consumes_insurance_sidecar=false`;
+- `no_auto_trade=true`.
+
+### Canonical Postscan integration — CURRENT BEST FULL PIPELINE SNAPSHOT
+
+Canonical workflow integration commit:
+- **`d223f417a07894b7f0e6cb0a613741bc1d472c4e`** — insurance tests, execution step, final production contract and step summary added to `.github/workflows/genge-postscan-research.yml`.
+
+Final canonical validation reused the already-validated All-A run **`32099563360`**; All-A was **not rerun**.
+
+Workflow: `GenGe Postscan Research Pipeline`
+Run: **`32151478376`**
+Conclusion: **SUCCESS**
+Artifact: `genge-postscan-research`
+Artifact ID: **`9329983021`**
+Artifact SHA256: **`e560711044929f9fd3845cf0cdc42f58c123c86f9e5b028e1b7fa8f00f372423`**
+Market/as-of date: **2026-08-17**
+
+Canonical proof:
+- focused postscan suite: **122 passed**;
+- industry Top5 rows: **381**;
+- represented industries: **82**;
+- clean industries: **81**;
+- valuation-researched rows: **257**;
+- specialized selected: **14** = brokers 3 + insurance 3 + transport 6 + yield assets 2;
+- brokers selected/executed: **3/3**;
+- insurance selected/executed/input-required: **3 / 2 / 1**;
+- Master names: **400**;
+- actionable long-term: **1**;
+- BUY_READY: **1**;
+- TRY_POSITION: **0**;
+- REVIEW_BLOCKED: **1**;
+- `603369 今世缘` remains `LONG_TERM_BUY_READY` and is the sole actionable long-term name;
+- `688687 凯因科技` remains `LONG_TERM_REVIEW_BLOCKED` for substantive earnings-quality / valuation-expectation reasons;
+- `ranking_semantics=research_priority_not_trade_score`;
+- `formal_signal_eligible=false`;
+- `automatic_promotion_allowed=false`;
+- `no_auto_trade=true`.
+
+The legacy zero-BUY audit still reports zero legacy Formal BUY in a GREEN regime and therefore requires the second pass; that is expected. The long-term overlay separately produces the one valid `603369` BUY-ready candidate without weakening legacy hard gates.
+
+### Temporary tooling notes and cleanup
+
+Two attempted one-off workflow patchers, runs **`32149375210`** and **`32151072493`**, had zero jobs because the temporary workflow definitions failed parsing. They never modified the canonical workflow. Canonical integration was instead performed directly through the GitHub Contents API.
+
+Dispatcher run **`32151376321`** successfully launched canonical run `32151478376`; the dispatcher itself ended failure only because its final locator JSON push lost a non-fast-forward race. The target canonical run completed successfully.
+
+All temporary insurance validation, production replay, patcher, dispatcher, locator and record files were removed after validation. Permanent state is limited to the reviewed config/modules/tests and canonical Postscan integration.
+
+### Next work — revised exact order
+
+1. **Do not rerun the validated 2026-08-17 All-A or rebuild Master Ranking / insurance execution.** Current best full downstream proof is canonical Postscan run **`32151478376`**, artifact **`9329983021`**.
+2. Observe the next **native scheduled** `GenGe Opportunity Discovery` success and verify it creates exactly one automatic `workflow_run` Postscan. Synthetic `GITHUB_TOKEN` dispatch behavior is not evidence about native schedule behavior.
+3. Continue specialized-model execution only where real PIT/auditable inputs exist. The most likely next family is `transport_cycle`, subject to a defensible through-cycle EBITDA and lease-consistent net-debt contract.
+4. Keep `yield_asset` as `INPUTS_REQUIRED` until normalized FCFE and maintenance/growth capex can be sourced without fabrication.
+5. Consider bank/other specialized families only after their model-specific evidence contracts are explicit and testable.
+6. Specialized sidecars remain research-only and are not consumed by Formal BUY unless a separately tested design explicitly changes that contract.
+7. Preserve wide recall, strict hard gates, PIT correctness, reverse valuation, Master research-priority semantics and `no_auto_trade=true`.
+EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_WORK_PROGRESS.md
+          git commit -m "docs: record insurance postscan milestone"
+          git push origin HEAD:main
