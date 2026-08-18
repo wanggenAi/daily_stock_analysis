@@ -24,13 +24,16 @@ FINANCIAL_COLUMNS = (
     "net_profit",
     "recurring_profit",
     "operating_cash_flow",
+    "operating_cash_flow_per_share",
+    "cash_conversion_ratio",
+    "cash_conversion_ratio_basis",
     "roe",
     "gross_margin",
 )
-# v1 financial cache could contain AkShare's per-share operating cash flow in
-# the total-cash-flow field. Never reuse that unit-ambiguous cache for reverse
-# valuation after the units fix.
-FINANCIAL_CACHE_KIND = "financial_v2_cashflow_units"
+# Earlier financial caches could contain AkShare's per-share operating cash
+# flow in the total-cash-flow field or omit the provider's dimensionless cash
+# conversion ratio. Never reuse those unit-ambiguous/incomplete cache schemas.
+FINANCIAL_CACHE_KIND = "financial_v3_cashflow_units_ratio"
 
 
 @dataclass
@@ -299,24 +302,45 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
         ("扣除非经常性损益后的净利润", "扣非净利润", "recurring_profit"),
         ("同比", "增长率", "增长", "增速", "每股"),
     )
-    # Cash conversion is meaningful only when numerator and profit denominator
-    # use compatible total-currency units. AkShare's `每股经营性现金流` is
-    # yuan/share and must never be divided directly by total recurring profit.
-    # If a provider exposes only the per-share field, leave total OCF missing;
-    # missing data lowers confidence rather than fabricating a microscopic ratio.
+
+    # Unit contract: only a true total cash-flow amount may populate
+    # operating_cash_flow. AkShare's 每股经营性现金流 is yuan/share and is kept
+    # separately for audit; it must never be divided by a total RMB profit.
     operating_cash_col = _first_column(
         local.columns,
         (
             "经营活动产生的现金流量净额",
             "经营活动现金流量净额",
-            "经营性现金流",
-            "经营现金流",
             "NETCASH_OPERATE",
             "total_operating_cash_flow",
             "operating_cash_flow",
         ),
-        ("每股", "PER_SHARE", "per_share"),
+        ("每股", "PER_SHARE", "per_share", "比率", "比例", "率", "%"),
     )
+    operating_cash_per_share_col = _first_column(
+        local.columns,
+        ("每股经营性现金流", "operating_cash_flow_per_share"),
+        ("比率", "比例"),
+    )
+
+    # Cached normalized rows already store a decimal ratio. Raw AkShare rows
+    # expose 经营现金净流量与净利润的比率(%) and therefore need exactly one /100.
+    normalized_cash_ratio_col = (
+        "cash_conversion_ratio" if "cash_conversion_ratio" in local.columns else None
+    )
+    provider_cash_ratio_col = None
+    if normalized_cash_ratio_col is None:
+        provider_cash_ratio_col = _first_column(
+            local.columns,
+            (
+                "经营现金净流量与净利润的比率",
+                "经营现金流量净额与净利润的比率",
+                "经营活动现金流量净额与净利润的比率",
+                "operating_cash_flow_to_net_profit",
+            ),
+            ("同比", "增长"),
+        )
+
     roe_col = _first_column(local.columns, ("净资产收益率", "加权净资产收益率", "ROE"), ("同比",))
     gross_margin_col = _first_column(local.columns, ("销售毛利率", "毛利率", "GROSSPROFIT_MARGIN"), ("同比",))
 
@@ -330,6 +354,27 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
     result["net_profit"] = local[net_profit_col].map(_safe_float) if net_profit_col else None
     result["recurring_profit"] = local[recurring_profit_col].map(_safe_float) if recurring_profit_col else None
     result["operating_cash_flow"] = local[operating_cash_col].map(_safe_float) if operating_cash_col else None
+    result["operating_cash_flow_per_share"] = (
+        local[operating_cash_per_share_col].map(_safe_float)
+        if operating_cash_per_share_col
+        else None
+    )
+    if normalized_cash_ratio_col is not None:
+        result["cash_conversion_ratio"] = local[normalized_cash_ratio_col].map(_safe_float)
+        if "cash_conversion_ratio_basis" in local.columns:
+            result["cash_conversion_ratio_basis"] = local["cash_conversion_ratio_basis"].fillna("")
+        else:
+            result["cash_conversion_ratio_basis"] = "NORMALIZED_CACHED_RATIO"
+    elif provider_cash_ratio_col is not None:
+        def _provider_ratio(value: Any) -> Optional[float]:
+            number = _safe_float(value)
+            return number / 100.0 if number is not None else None
+
+        result["cash_conversion_ratio"] = local[provider_cash_ratio_col].map(_provider_ratio)
+        result["cash_conversion_ratio_basis"] = "PROVIDER_OCF_TO_NET_PROFIT_RATIO"
+    else:
+        result["cash_conversion_ratio"] = None
+        result["cash_conversion_ratio_basis"] = ""
     result["roe"] = local[roe_col].map(_safe_float) if roe_col else None
     result["gross_margin"] = local[gross_margin_col].map(_safe_float) if gross_margin_col else None
     result = result.dropna(subset=["report_date"]).sort_values("report_date").drop_duplicates("report_date", keep="last")
