@@ -1,12 +1,12 @@
 # GenGe Postscan Runtime Status
 
-recorder_action: requested
+recorder_action: completed
 postscan_run_id: 32092900359
-status: queued
-conclusion: 
+status: completed
+conclusion: failure
 event: workflow_run
 created_at_utc: 2026-08-18T02:43:58Z
-updated_at_utc: 2026-08-18T02:43:58Z
+updated_at_utc: 2026-08-18T02:45:11Z
 head_sha: 7d567ed81ce98f87179b54679efcea0cc12b10a2
 url: https://github.com/wanggenAi/daily_stock_analysis/actions/runs/32092900359
 expected_upstream_run_id: 32090231706
