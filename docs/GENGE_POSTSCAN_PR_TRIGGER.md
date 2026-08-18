@@ -1,6 +1,6 @@
 # GenGe Postscan PR Trigger
 
-retry: 13
+retry: 14
 upstream_run_id: 32090231706
 fresh_artifact_id: 9308603602
-purpose: dispatch normal production after main has stabilized; no further main commits should occur before the workflow_dispatch run starts.
+purpose: final normal-production dispatch after duplicate helpers were removed; main is now stable and PR #35 is the sole dispatch entry.
