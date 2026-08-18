@@ -21,9 +21,19 @@ concurrency:
 
 jobs:
   postscan-research:
+    # Only real production Opportunity Discovery runs are valid automatic
+    # upstreams. Ordinary push/PR runs execute fixture checks but do not create
+    # genge-all-a-production-report, so consuming them creates false red runs.
+    # workflow_dispatch remains available for an explicitly validated Fresh run.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          github.event.workflow_run.event == 'schedule' ||
+          github.event.workflow_run.event == 'workflow_dispatch'
+        )
+      )
     runs-on: ubuntu-latest
     timeout-minutes: 120
     steps:
@@ -207,7 +217,6 @@ jobs:
           missing_lt = sorted({r['code'] for r in lt_rows} - valuation_codes)
           assert not missing_lt, f'long-term candidates dropped before valuation: {missing_lt}'
 
-          # Long-term recall must retain an auditable source tag through valuation.
           tagged = {
               r['code'] for r in valuation_rows
               if 'LONG_TERM_SECOND_PASS' in r.get('valuation_source_channel','')
@@ -215,7 +224,6 @@ jobs:
           missing_tags = sorted({r['code'] for r in lt_rows} - tagged)
           assert not missing_tags, f'long-term valuation source tags lost: {missing_tags}'
 
-          # Long-term names must get first claim on the bounded financial-review budget.
           reviewed_lt = {
               r['code'] for r in valuation_rows
               if r['code'] in {x['code'] for x in lt_rows}
@@ -246,9 +254,6 @@ jobs:
           zero = json.loads(Path('reports/zero_buy_audit/zero_buy_audit.json').read_text(encoding='utf-8'))
           lt_summary = json.loads(Path('reports/long_term_second_pass/long_term_second_pass_summary.json').read_text(encoding='utf-8'))
 
-          # Non-defensive zero is allowed only after the second pass is fully researched.
-          # Missing valuation/model execution/financial review is a production gap, not proof
-          # that the market contains no long-term opportunity.
           if zero['requires_second_pass'] and formal_summary['long_term_formal_buy_count'] == 0:
               unresolved_tokens = {
                   'valuation_missing',
@@ -267,8 +272,6 @@ jobs:
                   'non-defensive zero still has unresolved research/model gaps; '
                   f'cannot publish as no-opportunity: {unresolved}'
               )
-              # If no long-term names passed non-exit gates at all, zero can be explained.
-              # Otherwise every blocked row must carry at least one substantive investment blocker.
               if lt_summary['candidate_count'] > 0:
                   assert formal_rows, 'long-term candidates vanished before final decision'
                   assert all(str(r.get('long_term_blockers') or '').strip() for r in formal_rows)
