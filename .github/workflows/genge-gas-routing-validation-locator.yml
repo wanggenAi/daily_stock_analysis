@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Record final replay contract run
+      - name: Refresh final replay contract run
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -25,5 +25,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add docs/GENGE_GAS_ROUTING_VALIDATION_LOCATOR.json docs/GENGE_GAS_ROUTING_REPLAY_LOCATOR.json
-          git commit -m "chore: record final gas routing replay" || exit 0
+          git commit -m "chore: refresh final gas routing replay" || exit 0
           git push origin HEAD:main
