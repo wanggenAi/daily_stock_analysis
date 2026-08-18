@@ -195,7 +195,7 @@ Independent real-production replay before integration:
 - SHA256 `9b13585e05ba3313e9c7dcf393bcd285ea14b15cc7869cf09361b7f3569e5d06`;
 - capital-markets specialized execution: **3/3**.
 
-### Final canonical Postscan proof — CURRENT BEST SNAPSHOT
+### Final canonical Postscan proof — CURRENT BEST FULL PIPELINE SNAPSHOT
 
 Workflow: `GenGe Postscan Research Pipeline`
 Run: **`32109532494`**
@@ -206,35 +206,16 @@ Artifact ID: **`9314388591`**
 Artifact SHA256: **`be199bcf99397242b18d49ab8a07ec057bf224384419f227e0e6d5fd704f48af`**
 Head SHA at dispatch: `25f4923c0b4de580399dd4d47a0892cfd7779738`
 
-Every canonical stage passed, including:
-- focused tests;
-- industry Top5 / recall;
-- long-term second pass;
-- reverse valuation and financial review;
-- model routing;
-- **Execute specialized valuation models**;
-- long-term Formal BUY;
-- zero-BUY audit;
-- Master Ranking;
-- final contract;
-- cache save;
-- artifact upload.
+Every canonical stage passed, including focused tests, industry recall, long-term second pass, reverse valuation, routing, specialized execution, Formal BUY, zero-BUY audit, Master Ranking, final contract, cache and artifact upload.
 
-Final specialized summary:
+Final specialized summary before the 603393 routing correction below:
 - total valuation rows: **257**;
 - specialized selected: **15**;
-- selected by strategy:
-  - `capital_markets_cycle`: **3**;
-  - `insurance_embedded_value`: **3**;
-  - `transport_cycle`: **6**;
-  - `yield_asset`: **3**;
-- execution states:
-  - `SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY`: **1**;
-  - `SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED`: **2**;
-  - `SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED`: **12**;
-- capital-markets selected: **3**;
-- capital-markets executed: **3**;
-- capital-markets input-required: **0**;
+- `capital_markets_cycle`: **3**;
+- `insurance_embedded_value`: **3**;
+- `transport_cycle`: **6**;
+- `yield_asset`: **3**;
+- capital-markets selected/executed: **3/3**;
 - `ranking_changed=false`;
 - `formal_buy_consumes_specialized_sidecar=false`;
 - `formal_signal_eligible=false`;
@@ -242,41 +223,59 @@ Final specialized summary:
 - `no_auto_trade=true`.
 
 Broker proof:
+1. `600109 国金证券` #28 — research-only OK; PB **0.89**, normalized mid-cycle ROE **5.28%**, fair PB **0.285**, implied ROE **10.12%**, MOS about **-67.98%**.
+2. `600155 华创云信` #102 — fail-closed `NON_POSITIVE_RESIDUAL_INCOME_VALUE`; PB **0.65**, normalized ROE **1.94%**, implied ROE **8.20%**.
+3. `000712 锦龙股份` #150 — fail-closed `NON_POSITIVE_RESIDUAL_INCOME_VALUE`; PB **3.04**, normalized ROE **-3.99%**, implied ROE **27.32%**.
 
-1. `600109 国金证券`, valuation research rank **#28**
-   - execution: `SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY` / `OK`;
-   - annual ROE years: `2021;2022;2023;2024;2025`;
-   - current PB: **0.89**;
-   - normalized mid-cycle ROE: **5.28%**;
-   - fair PB: **0.285**;
-   - market-implied mid-cycle ROE: **10.12%**;
-   - normalized-minus-implied ROE gap: **-4.84pp**;
-   - P/B-space MOS: about **-67.98%**.
-   - Interpretation: model executes successfully, but current PB requires a materially stronger sustainable ROE than the PIT historical normalization supports.
+The same canonical artifact proves long-term decisions were unchanged by the sidecar:
+- `603369 今世缘`: still `LONG_TERM_BUY_READY`;
+- `688687 凯因科技`: still `LONG_TERM_REVIEW_BLOCKED`.
 
-2. `600155 华创云信`, valuation research rank **#102**
-   - execution: `SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED`;
-   - status: `NON_POSITIVE_RESIDUAL_INCOME_VALUE`;
-   - current PB: **0.65**;
-   - normalized mid-cycle ROE: **1.94%**;
-   - market-implied mid-cycle ROE: **8.20%**.
+Master counts remain **400 / 381 / 82 / 81 / 257 / actionable 1**.
 
-3. `000712 锦龙股份`, valuation research rank **#150**
-   - execution: `SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED`;
-   - status: `NON_POSITIVE_RESIDUAL_INCOME_VALUE`;
-   - current PB: **3.04**;
-   - normalized mid-cycle ROE: **-3.99%**;
-   - market-implied mid-cycle ROE: **27.32%**.
+## Mixed gas/resource routing correction — 603393 COMPLETE
 
-This is desired behavior: completing a model does not create a BUY. It converts unknown model state into an auditable valuation conclusion.
+The broad industry prior intentionally still maps generic `燃气` companies to `yield_asset`, but company-specific evidence showed that **603393 新天然气 is not a pure stable yield asset**. Its business combines city gas with upstream coalbed-methane / unconventional natural gas, conventional oil/gas and coal-resource development, and the company evaluates upstream blocks using reserve/production/price/investment/opex cash-flow economics. Therefore a pure normalized-FCFE yield-asset route would be unsafe unless maintenance/growth capex is genuinely separated.
 
-The same final canonical artifact proves the existing long-term decisions were unchanged by the new sidecar:
-- `603369 今世缘`: still `LONG_TERM_BUY_READY`, eligible, R/R **7.05**, entry **29.53–29.63**, invalidation **29.01**, targets **34.00 / 34.54**;
-- `688687 凯因科技`: still `LONG_TERM_REVIEW_BLOCKED`, blockers `earnings_quality_below_minimum;valuation_expectation_too_high`, not eligible.
+Permanent PIT company profile:
+- file: `config/valuation_company_profiles.yaml`;
+- profile: `603393-resource-cycle-v1`;
+- `known_at=2026-07-28`, `evidence_as_of=2026-07-28`, `review_after=2027-04-30`, confidence HIGH;
+- business tags include city gas, coalbed-methane E&P, conventional oil/gas E&P, coal resources, upstream resource development;
+- archetype hints: `CAPACITY_CYCLE`, `GENERAL_EARNINGS`;
+- disabled strategy: `yield_asset`;
+- commit **`c028b023c527174d4ae941bad266bc364e4a3f09`**.
 
-Master counts also remain **400 / 381 / 82 / 81 / 257 / actionable 1**, exactly preserving Master semantics.
+Routing regression tests:
+- commit **`429afcf8ed71b4b22ee898473e25d6cca8b5bf1`** — proves generic `燃气` still routes to `yield_asset` without a profile, while 603393 with its profile routes to `capacity_cycle_normalizer;general_reverse_earnings`, primary `general_reverse_earnings`, with `yield_asset` disabled;
+- commit **`ffb2f4ab8c17c395c4ce97b467f9ab6aae19fda7`** — updates checked-in registry test to validate the real PIT boundary instead of incorrectly requiring an empty registry.
 
-All temporary specialized validation/replay/dispatcher/locator workflows and locator JSON records were removed after proof. Permanent canonical workflow remains `.github/workflows/genge-postscan-research.yml`.
+Focused CI proof:
+- run **`32137816106`** — SUCCESS;
+- relevant company-profile / routing / strategy-registry suite: **32/32 passed**.
+
+Production-artifact routing replay:
+- source artifact: canonical Postscan run **`32109532494`**, artifact **`9314388591`**;
+- final replay run: **`32138436236`** — SUCCESS;
+- rerouting and specialized sidecar both succeeded;
+- final contract succeeded.
+
+Validated replay semantics:
+- `603393` profile status `FOUND`, profile used for routing;
+- `valuation_disabled_strategy_ids=yield_asset`;
+- `valuation_strategy_ids=capacity_cycle_normalizer;general_reverse_earnings`;
+- primary strategy `general_reverse_earnings`;
+- execution state `NORMALIZATION_REQUIRED_BEFORE_GENERIC_VALUATION`;
+- specialized sidecar state for 603393 becomes `NOT_SPECIALIZED_ROUTE`;
+- specialized selected total changes **15 → 14**;
+- `yield_asset` selected count changes **3 → 2**;
+- the three broker names remain selected/executed **3/3**;
+- `formal_buy_consumes_specialized_sidecar=false`;
+- `no_auto_trade=true`.
+
+This was a routing-only correction, so no All-A or full Postscan rerun was needed after the production-artifact replay. The broad `燃气` prior remains unchanged for `600903 贵州燃气` and `600681 百川能源` unless separate company evidence justifies their own PIT profiles.
+
+All temporary gas-routing validation/replay workflows and locator JSON files were removed after proof. Permanent changes are only the PIT company profile and regression tests.
 
 ## Automatic Postscan trigger note
 
@@ -298,6 +297,7 @@ All-A universe
   -> reverse valuation
   -> prioritized PIT financial review
   -> valuation model routing
+       -> company-level PIT profiles can override unsafe broad industry priors
   -> specialized valuation execution sidecar where auditable inputs exist
        (currently capital-markets/broker family; audit-only, not consumed by Formal BUY)
   -> long-term final decision
@@ -309,13 +309,14 @@ Valuation research capacity remains up to 500 names with financial deep review u
 
 ## Next work — exact order
 
-1. **Do not rerun the validated 2026-08-17 All-A/Postscan again.** Current best canonical downstream proof is run `32109532494` / artifact `9314388591`.
+1. **Do not rerun the validated 2026-08-17 All-A or full Postscan for routing-only validation.** Current best full canonical downstream proof remains run `32109532494` / artifact `9314388591`; the newer route-only proof for 603393 is run `32138436236`.
 2. On the next **native scheduled** `GenGe Opportunity Discovery` success, verify exactly one automatic `GenGe Postscan Research Pipeline` run consumes that scheduled upstream artifact. Change trigger architecture only if this native test fails.
-3. Continue specialized-model execution **family by family**, only where required inputs can be sourced reliably and PIT-safely. The current unfinished selected pool is: transport **6**, insurance **3**, yield assets **3**. Do not mark any as executed until the actual model-specific inputs are present.
-4. Prefer the next family based on input feasibility and production coverage, not on a desire to create more BUYs. Transport has the largest current selected count but requires lease-consistent net debt and through-cycle EBITDA; insurance requires disclosed EV/NBV; yield assets require defensible normalized FCFE and maintenance/growth capex separation.
-5. Keep specialized execution sidecars research-only until a separately tested design explicitly integrates their completed outputs into long-term final-decision semantics. Do not silently switch Formal BUY to consume them.
-6. Use `master_opportunity_ranking.csv` for broad research priority, `every_industry_top5_enriched.csv` for industry visibility, and `actionable_long_term_candidates.csv` only for genuinely eligible long-term BUY/TRY review.
-7. Preserve PIT correctness, industry recall, reverse-valuation discovery, strict hard blockers, cache versioning, `no_auto_trade` and audit artifacts.
+3. Inspect the two remaining broad `yield_asset` gas names, `600903 贵州燃气` and `600681 百川能源`, against company-specific PIT evidence. Add profiles only if their actual economics justify overriding the broad `燃气` prior; do not generalize from 603393.
+4. Continue specialized-model execution family by family only where required inputs can be sourced reliably and PIT-safely. After the 603393 correction, current specialized selection on the replay is: transport **6**, insurance **3**, yield assets **2**, brokers **3 executed**.
+5. Prefer the next executable family based on real input feasibility, not on a desire to create more BUYs. Transport still requires through-cycle EBITDA + lease-consistent net debt; insurance requires disclosed EV/NBV; yield assets require normalized FCFE with defensible maintenance/growth capex separation.
+6. Keep specialized execution sidecars research-only until a separately tested design explicitly integrates completed outputs into long-term final-decision semantics. Do not silently switch Formal BUY to consume them.
+7. Use `master_opportunity_ranking.csv` for broad research priority, `every_industry_top5_enriched.csv` for industry visibility, and `actionable_long_term_candidates.csv` only for genuinely eligible long-term BUY/TRY review.
+8. Preserve PIT correctness, industry recall, reverse-valuation discovery, strict hard blockers, cache versioning, `no_auto_trade` and audit artifacts.
 
 ## Resume instruction for a new ChatGPT session
 
