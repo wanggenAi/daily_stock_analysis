@@ -110,12 +110,48 @@ def _read_source(report_dir: Path) -> list[dict[str, Any]]:
     raise FileNotFoundError(f"no All-A quant source under {report_dir}")
 
 
+def _flattened_artifact_fallback(root: Path, names: tuple[str, ...]) -> Path | None:
+    """Resolve GitHub artifact extraction that strips the uploaded parent path.
+
+    `actions/upload-artifact` stores files relative to the least-common uploaded
+    root.  A later download can therefore yield `upstream/YYYYMMDD/...` even
+    though callers historically expect `upstream/reports/all_a_full_scan/...`.
+    When that happens, search only the nearest existing ancestor (`upstream` in
+    production), then materialize the legacy requested path as a directory
+    symlink.  Subsequent Postscan modules can keep using the same stable path.
+    """
+    if root.exists():
+        return None
+    ancestor = next((parent for parent in root.parents if parent.exists()), None)
+    if ancestor is None:
+        return None
+    candidates = sorted(
+        {p.parent for name in names for p in ancestor.glob(f"**/{name}") if p.is_file()},
+        key=str,
+    )
+    if not candidates:
+        return None
+    report = candidates[-1]
+    try:
+        root.parent.mkdir(parents=True, exist_ok=True)
+        root.symlink_to(report.resolve(), target_is_directory=True)
+        print(f"all_a_artifact_alias={root}->{report.resolve()}")
+    except OSError as exc:
+        # Returning the discovered report still lets this module proceed; the
+        # message makes an alias failure diagnosable instead of silent.
+        print(f"all_a_artifact_alias_warning={type(exc).__name__}:{exc}")
+    return report
+
+
 def find_latest_report(root: Path) -> Path:
     names = ("all_a_quant_screen.csv", "quant_screen_all.csv", "top80_evidence_queue.csv")
     if any((root / name).exists() for name in names):
         return root
     candidates = sorted({p.parent for name in names for p in root.glob(f"**/{name}") if p.is_file()}, key=str)
     if not candidates:
+        fallback = _flattened_artifact_fallback(root, names)
+        if fallback is not None:
+            return fallback
         raise FileNotFoundError(f"no All-A report under {root}")
     return candidates[-1]
 
