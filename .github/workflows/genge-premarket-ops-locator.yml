@@ -1,0 +1,30 @@
+name: GenGe Premarket Ops Locator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-premarket-ops-locator.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  locate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record latest production runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          mkdir -p docs
+          gh run list --repo "${{ github.repository }}" --workflow genge-opportunity-premarket.yml --limit 5 --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url > docs/GENGE_PREMARKET_LATEST.json
+          gh run list --repo "${{ github.repository }}" --workflow genge-opportunity-discovery.yml --limit 8 --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url > docs/GENGE_DISCOVERY_LATEST.json
+          gh run list --repo "${{ github.repository }}" --workflow genge-postscan-research.yml --limit 8 --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url > docs/GENGE_POSTSCAN_LATEST.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_PREMARKET_LATEST.json docs/GENGE_DISCOVERY_LATEST.json docs/GENGE_POSTSCAN_LATEST.json
+          git commit -m "chore: record current premarket production runs" || exit 0
+          git push origin HEAD:main
