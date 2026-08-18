@@ -7,8 +7,8 @@ on:
       - "docs/GENGE_POSTSCAN_PR_TRIGGER.md"
 
 permissions:
-  contents: read
-  actions: read
+  contents: write
+  actions: write
 
 concurrency:
   group: genge-postscan-pr-${{ github.event.pull_request.number }}
@@ -179,3 +179,95 @@ jobs:
             reports/long_term_formal_buy
             reports/zero_buy_audit
           if-no-files-found: error
+
+  migrate-normal-production:
+    if: github.event.pull_request.number == 35
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Switch normal All-A production to progress runner
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/genge-opportunity-discovery.yml')
+          text = path.read_text(encoding='utf-8')
+          old_name = '      - name: Run unified all-A production scan\n'
+          new_name = '      - name: Run unified all-A production scan with progress\n'
+          old_module = '          python -m src.strategies.genge_opportunity_discovery.all_a_full_scan \\\n'
+          new_module = '          python -m src.strategies.genge_opportunity_discovery.all_a_progress_runner \\\n'
+          old_tail = '''            --exit-profile-file data/opportunity_snapshots/exit_profile.csv &
+          scan_pid=$!
+          while kill -0 "$scan_pid" 2>/dev/null; do
+            echo "all-A scan heartbeat $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            sleep 60
+          done
+          wait "$scan_pid"
+'''
+          new_tail = '            --exit-profile-file data/opportunity_snapshots/exit_profile.csv\n'
+          assert text.count(old_name) == 1
+          assert text.count(old_module) == 1
+          assert text.count(old_tail) == 1
+          text = text.replace(old_name, new_name, 1)
+          text = text.replace(old_module, new_module, 1)
+          text = text.replace(old_tail, new_tail, 1)
+          path.write_text(text, encoding='utf-8')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/genge-opportunity-discovery.yml
+          git diff --cached --check
+          git commit -m "ci: use progress runner for normal All-A production"
+          git push origin HEAD:main
+
+      - name: Dispatch normal production workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          dispatched_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          gh workflow run genge-opportunity-discovery.yml --repo "$REPO" --ref main
+          run_line=""
+          for _ in $(seq 1 15); do
+            sleep 4
+            run_line=$(gh api "repos/${REPO}/actions/workflows/genge-opportunity-discovery.yml/runs?event=workflow_dispatch&per_page=10" \
+              --jq --arg cutoff "$dispatched_at" '[.workflow_runs[] | select(.created_at >= $cutoff)] | sort_by(.created_at) | reverse | .[0] // empty | [.id,.status,(.conclusion // ""),.created_at,.head_sha,.html_url] | @tsv' || true)
+            [ -n "$run_line" ] && break
+          done
+          [ -n "$run_line" ] || { echo "Normal production dispatch was not located" >&2; exit 1; }
+          IFS=$'\t' read -r run_id status conclusion created head_sha url <<< "$run_line"
+          echo "NORMAL_RUN_ID=$run_id" >> "$GITHUB_ENV"
+          echo "NORMAL_STATUS=$status" >> "$GITHUB_ENV"
+          echo "NORMAL_CONCLUSION=$conclusion" >> "$GITHUB_ENV"
+          echo "NORMAL_CREATED=$created" >> "$GITHUB_ENV"
+          echo "NORMAL_HEAD_SHA=$head_sha" >> "$GITHUB_ENV"
+          echo "NORMAL_URL=$url" >> "$GITHUB_ENV"
+
+      - name: Persist normal production runtime locator
+        run: |
+          git pull --rebase
+          cat > docs/GENGE_NORMAL_PRODUCTION_RUNTIME.md <<EOF
+          # GenGe Normal Production Runtime
+
+          validation_stage: NORMAL_PRODUCTION_AFTER_PROGRESS_RUNNER_MIGRATION
+          workflow: GenGe Opportunity Discovery
+          event: workflow_dispatch
+          run_id: ${NORMAL_RUN_ID}
+          status: ${NORMAL_STATUS}
+          conclusion: ${NORMAL_CONCLUSION}
+          created_at_utc: ${NORMAL_CREATED}
+          head_sha: ${NORMAL_HEAD_SHA}
+          url: ${NORMAL_URL}
+          expected_runner: src.strategies.genge_opportunity_discovery.all_a_progress_runner
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_NORMAL_PRODUCTION_RUNTIME.md
+          git commit -m "docs: record normal production validation run [skip ci]"
+          git push origin HEAD:main
