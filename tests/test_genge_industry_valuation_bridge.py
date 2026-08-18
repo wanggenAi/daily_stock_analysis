@@ -75,6 +75,38 @@ class IndustryValuationBridgeTest(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         self.assertEqual(rows[0]["valuation_source_channel"], "BOTH")
 
+    def test_duplicate_global_row_backfills_missing_industry_provenance(self):
+        all_a = [
+            {
+                "code": "603369",
+                "industry": "",
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_rank": 1,
+                "quant_score": 82.9,
+                "hard_blockers": "",
+            }
+        ]
+        industry = [
+            {
+                "code": "603369",
+                "industry": "C15酒、饮料和精制茶制造业",
+                "industry_research_rank": 2,
+                "industry_candidate_state": "RESEARCH_CANDIDATE",
+                "industry_status": "RESEARCH_CANDIDATES_AVAILABLE",
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_score": 82.9,
+                "hard_blockers": "",
+            }
+        ]
+
+        rows = merge_sources(all_a, industry, global_limit=1, relaxed_reserve=0, per_industry=3)
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["valuation_source_channel"], "BOTH")
+        self.assertEqual(rows[0]["industry"], "C15酒、饮料和精制茶制造业")
+        self.assertEqual(rows[0]["industry_research_rank"], 2)
+        self.assertEqual(rows[0]["industry_candidate_state"], "RESEARCH_CANDIDATE")
+
     def test_hard_blocked_industry_name_is_not_forced_into_valuation(self):
         all_a = []
         industry = [
