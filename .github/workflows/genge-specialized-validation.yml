@@ -28,7 +28,7 @@ jobs:
           python -m py_compile \
             src/strategies/genge_opportunity_discovery/specialized_valuation_execution.py \
             tests/test_genge_specialized_valuation_execution.py
-      - name: Focused tests
+      - name: Focused tests after cache isolation
         run: |
           python -m pytest -q \
             tests/test_genge_specialized_valuation_execution.py \
