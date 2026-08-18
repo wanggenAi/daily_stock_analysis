@@ -94,6 +94,9 @@ jobs:
             tests/test_genge_valuation_model_routing.py \
             tests/test_genge_capital_markets_valuation.py \
             tests/test_genge_specialized_valuation_execution.py \
+            tests/test_genge_insurance_embedded_value_inputs.py \
+            tests/test_genge_insurance_valuation_execution.py \
+            tests/test_genge_insurance_valuation.py \
             tests/test_genge_resource_asset_valuation.py \
             tests/test_genge_master_opportunity_ranking.py
 
@@ -189,6 +192,14 @@ jobs:
             --minimum-annual-roe-samples 3 \
             --maximum-annual-roe-samples 5
 
+      - name: Execute insurance reverse appraisal research
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.insurance_valuation_execution \
+            --report-root reports/valuation_research_queue \
+            --input-config config/insurance_embedded_value_inputs.yaml \
+            --cache-dir data/cache/valuation_research_fundamentals \
+            --years 3
+
       - name: Build long-term Formal BUY review
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.long_term_formal_buy \
@@ -228,6 +239,8 @@ jobs:
               'valuation_research_routed.md', 'valuation_routing_summary.json',
               'valuation_research_specialized.csv', 'valuation_research_specialized.md',
               'specialized_valuation_summary.json',
+              'insurance_valuation_execution.csv', 'insurance_valuation_execution.md',
+              'insurance_valuation_execution_summary.json',
           }
           missing = sorted(name for name in required if not (latest/name).exists())
           assert not missing, f'missing valuation outputs: {missing}'
@@ -276,6 +289,26 @@ jobs:
           assert specialized['formal_signal_eligible'] is False
           assert specialized['automatic_promotion_allowed'] is False
           assert specialized['no_auto_trade'] is True
+
+          insurance_rows = list(csv.DictReader((latest/'insurance_valuation_execution.csv').open(encoding='utf-8')))
+          insurance = json.loads((latest/'insurance_valuation_execution_summary.json').read_text(encoding='utf-8'))
+          expected_insurance = sum(
+              (r.get('valuation_primary_strategy_id') or '') == 'insurance_embedded_value'
+              for r in routed_rows
+          )
+          assert len(insurance_rows) == len(routed_rows) == insurance['row_count']
+          assert insurance['insurance_selected_count'] == expected_insurance
+          assert 0 <= insurance['insurance_executed_count'] <= expected_insurance
+          assert 0 <= insurance['insurance_input_required_count'] <= expected_insurance
+          assert insurance['insurance_executed_count'] + insurance['insurance_input_required_count'] == expected_insurance
+          assert insurance['ranking_changed'] is False
+          assert insurance['formal_buy_consumes_insurance_sidecar'] is False
+          assert insurance['formal_signal_eligible'] is False
+          assert insurance['automatic_promotion_allowed'] is False
+          assert insurance['no_auto_trade'] is True
+          assert all(r.get('formal_signal_eligible') == 'False' for r in insurance_rows)
+          assert all(r.get('automatic_promotion_allowed') == 'False' for r in insurance_rows)
+          assert all(r.get('no_auto_trade') == 'True' for r in insurance_rows)
 
           formal_path = Path('reports/long_term_formal_buy/long_term_formal_buy_candidates.csv')
           formal_rows = list(csv.DictReader(formal_path.open(encoding='utf-8')))
@@ -340,6 +373,7 @@ jobs:
               'long_term_formal_buy': formal_summary,
               'routing': routing,
               'specialized_valuation': specialized,
+              'insurance_reverse_appraisal': insurance,
               'master_opportunity_ranking': master_summary,
           }, ensure_ascii=False, indent=2))
           PY
@@ -362,7 +396,7 @@ jobs:
           runs = sorted(p for p in root.iterdir() if p.is_dir()) if root.exists() else []
           if runs:
               with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as f:
-                  for name in ('valuation_research_routed.md', 'valuation_research_specialized.md'):
+                  for name in ('valuation_research_routed.md', 'valuation_research_specialized.md', 'insurance_valuation_execution.md'):
                       path = runs[-1]/name
                       if path.exists():
                           f.write(path.read_text(encoding='utf-8'))
