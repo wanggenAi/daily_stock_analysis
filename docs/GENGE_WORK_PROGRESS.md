@@ -6,35 +6,29 @@ Branch: `main`
 
 ## Product invariants
 
-1. Research Pool must be wide; Formal BUY must remain strict.
-2. Every represented industry must retain research visibility, target 3–5 names where available. A bad industry may have zero investable names, but it must not silently disappear.
-3. Formal BUY must not collapse to zero because of soft/mechanical gates. Zero is acceptable only for a genuinely defensive market or when no candidate survives true hard investment logic plus completed valuation/fundamental review.
-4. Never fabricate BUYs to meet a quota. Hard blockers, financial integrity, PIT data freshness, valuation/MOS, real R/R and major risk events remain binding.
-5. 60-day/medium-horizon exit-profile sample shortage is not a long-term investment veto. Candidates passing all non-exit-profile hard gates must be forced through valuation/fundamental review.
-6. Reverse valuation is a parallel discovery channel so scarce-resource/cyclical/growth opportunities are not lost merely because technical quant ranking is lower.
-7. Model selection is not model execution. Missing specialized-model execution, missing financial review or missing valuation inputs are production/research gaps, not proof that no opportunity exists.
-8. No auto-trading. Research/routing/final-decision reports remain auditable and manual-review only.
-9. Production observability is required: processed/total, %, throughput, ETA, current code, cache/failure counts.
-10. Master Opportunity Ranking is a research-priority view, not a new BUY score. High Master rank never grants trade permission.
+1. Research Pool stays wide; Formal BUY stays strict.
+2. Every represented industry retains research visibility, target Top3–5 where available. Bad industries may have zero investable names, but must not silently disappear.
+3. Do not manufacture BUYs. Hard blockers, financial integrity, PIT freshness, valuation/MOS, real R/R and major event risk remain binding.
+4. Medium-horizon / exit-profile sample shortage is not a long-term investment veto. Names passing non-exit-profile hard logic must still reach valuation/fundamental review.
+5. Reverse valuation is a parallel discovery channel so scarce-resource/cyclical/growth names are not lost merely because technical quant rank is lower.
+6. Model selection is not model execution. Missing model execution or inputs are research gaps, not evidence of no opportunity.
+7. Master Opportunity Ranking is research priority, never a new BUY score.
+8. No auto-trading. `formal_signal_eligible=false`, `automatic_promotion_allowed=false`, `no_auto_trade=true` remain locked for research sidecars.
+9. Production must remain observable and auditable.
 
-## Current production state — VALIDATED
+## Current validated production snapshot
 
-### Normal All-A production
+### All-A production — DO NOT RERUN FOR DOWNSTREAM VALIDATION
 
 Workflow: `GenGe Opportunity Discovery`
 Run: **`32099563360`**
-Event: `workflow_dispatch`
 Conclusion: **SUCCESS**
-Production artifact: `genge-all-a-production-report`
+Artifact: `genge-all-a-production-report`
 Artifact ID: **`9311716238`**
-Artifact SHA256: `26813b6cee3a001287683f7dffe430c6597f12f90db09cff2389832ff7a55716`
-Resolved market date: **`2026-08-17`**
+SHA256: `26813b6cee3a001287683f7dffe430c6597f12f90db09cff2389832ff7a55716`
+Market date: **2026-08-17**
 
 Validated facts:
-
-- normal production uses `all_a_progress_runner`;
-- production strategy tests: **247 passed**;
-- structured live progress reached 5005/5005 and 5209/5209 with processed/total, %, throughput, ETA and current code;
 - raw/official universe: **5209**;
 - effective scan: **4510**;
 - price coverage: **100%**;
@@ -44,246 +38,284 @@ Validated facts:
 - secondary research: **1081**;
 - evidence queue: **80**;
 - deep review: **80**;
-- runtime about **1804.71 s**;
+- runtime about **1804.71s**;
+- production tests: **247 passed**;
+- normal production uses `all_a_progress_runner` with processed/total, %, throughput, ETA and current code;
 - `acceptance_enum=PASS_ALL_A_PRODUCTION_RESEARCH_READY`;
-- `no_auto_trade=true`;
-- `no_broker_integration=true`.
+- `no_auto_trade=true`, no broker integration.
 
-**Do not rerun this All-A snapshot merely to validate downstream changes.**
+## Core correctness fixes already complete
 
-### Canonical Postscan baseline before Master integration
-
-Workflow: `GenGe Postscan Research Pipeline`
-Run: **`32102437218`**
-Upstream: **`32099563360`**
-Head SHA: `e569a498cf8ae41a6255aa97001589252dd9e61d`
-Conclusion: **SUCCESS**
-Artifact: `genge-postscan-research`
-Artifact ID: **`9312056410`**
-Artifact SHA256: `f2e5314819ea96236eadd0b7df37d27f1a359029db3a76c3c05424ef4026b22c`
-
-All stages passed: upstream artifact resolution/download, focused tests, every-industry map, long-term second pass, industry-aware valuation source, long-term merge, recall contract, reverse valuation, long-term-priority financial review, model routing, Formal BUY, zero-BUY audit, final production contract, cache and artifact upload.
-
-Industry recall after provenance repair: **81/81 clean industries represented before valuation**.
-
-## Key production correctness fixes already completed
-
-### All-A artifact/report-root resolver
-
-Production artifacts can flatten to `upstream/YYYYMMDD/...`. The resolver now prefers the canonical top-level `all_a_quant_screen.csv + run_summary.json` and rejects nested deep-review decoys as the production root.
-
-Relevant commits include:
-
-- `feba9b27` — tolerate flattened All-A artifact layout;
-- `4fbd214d` — prefer canonical All-A report root;
+### Artifact/report-root resolver
+- `feba9b27` — tolerate flattened All-A artifact layout.
+- `4fbd214d` — prefer canonical All-A report root.
 - `2966619a` — nested deep-review decoy regression test.
 
-### Cash-flow unit correctness
-
-The financial loader no longer treats per-share operating cash flow as total operating cash flow. Total OCF, per-share OCF and provider cash-conversion ratio remain separate concepts. Sina `stock_financial_analysis_indicator` ratios such as `1.5263` are preserved as already-dimensionless ratios and are not divided by 100 again.
-
-Relevant commits include `6213c9f8` and `1d40b1bc`.
+### Financial cash-flow units / ratio semantics
+The loader no longer maps per-share OCF as total OCF. Total OCF, per-share OCF and provider cash-conversion ratio are separate. Sina OCF/net-profit ratio such as `1.5263` remains dimensionless and is not divided by 100.
+- relevant commits include `6213c9f8`, `1d40b1bc`.
 
 ### PIT financial-report safety
-
-Without a verified disclosure date, a report-period row is not assumed public just because its period ended. Statutory latest-disclosure deadlines are used as fail-closed fallback boundaries. For the `2026-08-17` snapshot, 今世缘 therefore uses 2026Q1 rather than pulling 2026H1 forward without verified disclosure.
-
-Relevant commits include `20397a84` and `754e14a7`.
+Undated report periods use conservative statutory latest-disclosure deadlines. A period-end row is not assumed public immediately.
+- relevant commits include `20397a84`, `754e14a7`.
 
 ### Industry recall provenance
-
-Canonical Postscan run `32102091118` falsely reported seven missing industries. The names were present, usually as `BOTH`, but global rows had blank `industry` and overlap merging did not backfill provenance.
-
-Fixes:
-
-- `3a358065` — backfill only missing industry provenance for overlaps while preserving global valuation/ranking/hard-blocker semantics;
-- `e569a498` — regression test for blank global industry plus populated industry-champion row.
-
-Replay changed the recall result to **missing=[] / 81 of 81 clean industries represented**.
+Run `32102091118` falsely reported seven missing industries because global+industry overlap rows kept blank global `industry` provenance.
+- `3a358065` — backfill only missing industry provenance without altering ranking/valuation/hard blockers.
+- `e569a498` — regression test.
+- fixed result: **81/81 clean industries represented**.
 
 ### Normal production progress runner
-
-Normal `GenGe Opportunity Discovery` permanently uses `all_a_progress_runner`; the old background heartbeat loop is gone. Screening formulas and hard thresholds were not changed.
-
-Key migration commit: `c9dee76e`.
+Normal `GenGe Opportunity Discovery` permanently uses `all_a_progress_runner`; old background heartbeat logic is gone.
+- migration commit: `c9dee76e`.
 
 ## Long-term final-decision proof
 
 ### `603369 今世缘`
-
 Current validated classification: **`LONG_TERM_BUY_READY`**
-
-- financial report date: `2026-03-31`;
-- cash conversion ratio: **1.5263**;
-- earnings quality score: **65**, confidence **HIGH**;
-- normalized core operating profit about **1.3810 billion CNY**;
+- financial report: `2026-03-31`;
+- cash conversion: **1.5263**;
+- earnings quality: **65 HIGH**;
+- normalized core operating profit about **1.381bn CNY**;
 - current PE: **15.76**;
-- required profit growth vs reference: **-25.31%**;
+- required profit growth vs historical reference: **-25.31%**;
 - real R/R: **7.05**;
-- current price: **29.63**;
-- research entry zone: **29.53–29.63**;
+- price: **29.63**;
+- entry: **29.53–29.63**;
 - invalidation: **29.01**;
 - targets: **34.00 / 34.54**;
 - blockers: none;
 - `long_term_formal_buy_eligible=True`;
-- `formal_signal_eligible=False`;
-- `automatic_promotion_allowed=False`;
 - `no_auto_trade=True`.
 
 ### `688687 凯因科技`
-
 Current validated classification: **`LONG_TERM_REVIEW_BLOCKED`**
-
-- financial report date: `2026-03-31`;
-- cash conversion ratio: **-0.4952**;
-- earnings quality score: **30**, confidence **HIGH**;
+- financial report: `2026-03-31`;
+- cash conversion: **-0.4952**;
+- earnings quality: **30 HIGH**;
 - current PE: **283.36**;
-- required profit growth vs reference: **+626.19%**;
+- required profit growth vs historical reference: **+626.19%**;
 - real R/R: **3.25**;
 - blockers: `earnings_quality_below_minimum;valuation_expectation_too_high`;
-- financial review: **OK**;
-- valuation diagnostic: completed;
 - `long_term_formal_buy_eligible=False`;
 - `no_auto_trade=True`.
 
-This distinction is intentional: pipeline/data bugs may restore a valid candidate, but substantive valuation/earnings-quality blockers remain binding.
+Pipeline fixes may restore a valid candidate, but substantive valuation/quality blockers remain binding.
 
 ## Master Opportunity Ranking — COMPLETE
 
-Master Opportunity Ranking is implemented, production-replayed, integrated into canonical Postscan, and validated against the same upstream All-A snapshot `32099563360`.
-
-### Implementation
-
 Module: `src/strategies/genge_opportunity_discovery/master_opportunity_ranking.py`
+Test: `tests/test_genge_master_opportunity_ranking.py`
+Canonical integration: `.github/workflows/genge-postscan-research.yml`
 
-- implementation commit: **`84d03bf056af53a2292a0574b88bdd652d33fc77`** — `feat: add master opportunity research ranking`;
-- test file: `tests/test_genge_master_opportunity_ranking.py`;
-- test commit: **`92ace140b838c05c118f8b79a7a29bd691fc51e3`** — `test: lock master opportunity ranking semantics`;
-- canonical workflow integration commit: **`2de14872987b7a736543b3be2adbf9e1c54ccd73`** — `ci: integrate master opportunity ranking into postscan`.
+Relevant commits:
+- implementation: `84d03bf056af53a2292a0574b88bdd652d33fc77`;
+- tests: `92ace140b838c05c118f8b79a7a29bd691fc51e3`;
+- workflow integration: `2de14872987b7a736543b3be2adbf9e1c54ccd73`.
 
-Master semantics:
-
+Semantics:
 - `ranking_semantics=research_priority_not_trade_score`;
-- names that reached valuation preserve their existing `valuation_research_rank`;
-- remaining every-industry Top5 names are appended by quant/industry research order for visibility;
-- long-term `BUY_READY` / `TRY_POSITION` / `REVIEW_BLOCKED` is a separate overlay;
-- no new numeric BUY score was invented;
-- high research rank never authorizes a trade;
-- `formal_signal_eligible=false`;
-- `automatic_promotion_allowed=false`;
-- `no_auto_trade=true`.
+- existing `valuation_research_rank` is preserved for researched names;
+- remaining industry Top5 names are appended for visibility;
+- long-term classification is an overlay, not a new buy score;
+- high rank never grants trade permission.
 
-Outputs:
+Validated integrated run before specialized execution:
+- run: `32107277842`, SUCCESS;
+- artifact ID: `9313621616`;
+- SHA256: `9796034093b407995dae63ee6e28d620531565ffc99afcbe78218b5c0aae041b`.
 
-1. `master_opportunity_ranking.csv`
-2. `every_industry_top5_enriched.csv`
-3. `actionable_long_term_candidates.csv`
-4. `master_opportunity_summary.json`
-5. `master_opportunity_ranking.md`
-
-### Independent real-production replay
-
-Run: **`32104411189`**
-Conclusion: **SUCCESS**
-Artifact: `genge-master-ranking-production-replay`
-Artifact ID: **`9312666959`**
-Artifact SHA256: `680f30a3412ac067e33248be333c1338a06b4daa47bfe3fa5d13b78e41ebfd98`
-
-This replay used the already validated production Postscan artifact and passed Master-focused tests, generation, production replay contract and artifact upload.
-
-### Temporary PR #37 CI note
-
-PR **#37** was a validation-marker PR only; the marker was never intended to merge. Docker build, Python syntax, flake8-critical and deterministic checks passed. The repository-wide offline pytest gate failed, but the available connector logs did not establish that failure as a Master regression. The independent production replay and the fully integrated canonical Postscan both passed Master-specific execution and production contracts.
-
-PR #37 is now **closed without merge**.
-
-### Canonical integrated Postscan proof
-
-Workflow: `GenGe Postscan Research Pipeline`
-Run: **`32107277842`**
-Upstream: **`32099563360`**
-Conclusion: **SUCCESS**
-Artifact: `genge-postscan-research`
-Artifact ID: **`9313621616`**
-Artifact SHA256: `9796034093b407995dae63ee6e28d620531565ffc99afcbe78218b5c0aae041b`
-
-The integrated run passed every stage, including:
-
-- focused Postscan + Master tests;
-- every-industry Top5 map;
-- long-term second pass;
-- valuation-source merge and recall contract;
-- reverse valuation and financial review;
-- valuation routing;
-- long-term Formal BUY;
-- zero-BUY audit;
-- **Build Master Opportunity Ranking**;
-- final production contract;
-- cache save;
-- unified artifact upload.
-
-Final Master artifact counts:
-
+Stable Master counts on the 2026-08-17 snapshot:
 - master names: **400**;
 - industry Top5 rows: **381**;
 - represented industries: **82**;
 - clean industries: **81**;
-- valuation-researched names: **257**;
-- actionable long-term names: **1**;
-- `LONG_TERM_BUY_READY`: **1**;
-- `LONG_TERM_TRY_POSITION`: **0**;
-- `LONG_TERM_REVIEW_BLOCKED`: **1**.
+- valuation-researched: **257**;
+- actionable long-term: **1**;
+- BUY_READY: **1**;
+- TRY_POSITION: **0**;
+- REVIEW_BLOCKED: **1**.
 
-Overlay proof:
+`603369` is Master #1 and actionable. `688687` is Master #2 but blocked and absent from actionable output.
 
-- `603369 今世缘`: Master research rank **#1**, `LONG_TERM_BUY_READY`, present in `actionable_long_term_candidates.csv`, `long_term_formal_buy_eligible=True`, `no_auto_trade=True`;
-- `688687 凯因科技`: Master research rank **#2**, `LONG_TERM_REVIEW_BLOCKED`, blockers remain `earnings_quality_below_minimum;valuation_expectation_too_high`, and it is **absent** from `actionable_long_term_candidates.csv`.
+## Specialized valuation execution — BROKER FAMILY COMPLETE
 
-The temporary dispatcher, run locator and locator record used to obtain the canonical proof were removed afterward.
+Goal: close the gap between `SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED` and an actually executed specialized valuation, without loosening Formal BUY and without fabricating model inputs.
+
+### Permanent implementation
+
+Module: `src/strategies/genge_opportunity_discovery/specialized_valuation_execution.py`
+Test: `tests/test_genge_specialized_valuation_execution.py`
+
+Relevant permanent commits:
+- **`612d5e803d28dd45abb08084dda21bc0ac87243f`** — `feat: execute PIT-safe broker valuation research`;
+- **`d1dbfbdf140dc58b84989d076e659951ebb065ce`** — `test: lock PIT-safe broker specialized execution`;
+- **`8f9fa8c3f95d6427382e6869d95302a355d5d76d`** — `ci: execute specialized broker valuation in postscan`;
+- **`961268e64f3eed28957b984c4a9426af283cc386`** — `fix: isolate and refresh specialized valuation cache`;
+- **`b3c132b1c6c6616bda6949829c86a79998cfa0bb`** — `test: lock specialized cache isolation`.
+
+The first executable specialized family is `capital_markets_cycle` for traditional securities brokers.
+
+Execution design:
+- use current PIT P/B plus PIT-safe historical annual ROE;
+- no quarterly ROE annualization;
+- only fiscal-year `12-31` ROE rows are eligible;
+- actual disclosure date must be <= as-of, or conservative statutory annual-report deadline must have passed;
+- provider ROE is percentage points and is converted `/100`;
+- require at least **3** annual ROE samples, use up to **5**;
+- normalize mid-cycle ROE by median;
+- default research assumptions: cost of equity **11%**, long-term growth **3%**;
+- execute the residual-income model in normalized book units (`BVPS=1`, current price=current PB), which is algebraically equivalent for fair PB / implied ROE / MOS and avoids inventing actual BVPS/share count;
+- results are a research sidecar only.
+
+Other specialized families remain explicit `INPUTS_REQUIRED` until their real inputs can be sourced:
+- insurance: disclosed EV/NBV;
+- transport: through-cycle EBITDA + lease-consistent net debt;
+- yield assets: normalized FCFE with maintenance/growth capex separation;
+- bank residual income, real-estate NAV, biotech rNPV, consumer compounder DCF likewise fail closed until model-specific evidence exists.
+
+### Specialized cache correctness
+
+The first integrated canonical run (`32108818113`) exposed a real cache bug: restoring the older general financial cache could leave annual ROE absent, causing broker execution to depend on cache history (1/3 instead of the independent replay's 3/3).
+
+Fix:
+- specialized executor now uses a dedicated versioned cache namespace: **`specialized_execution_v1`** under the existing valuation cache root;
+- if that specialized financial cache is hit but still lacks sufficient annual ROE, only the specialized financial cache file is removed and refetched once;
+- the general valuation/fundamental cache is never deleted by this repair;
+- the canonical Actions cache already persists the parent cache directory, so the specialized namespace is persisted with it.
+
+Focused validation after cache isolation:
+- run **`32109348122`** — SUCCESS;
+- syntax + specialized cache tests + broker valuation + routing + long-term runner all passed.
+
+Independent real-production replay before integration:
+- run **`32108514951`** — SUCCESS;
+- artifact `genge-specialized-production-replay`;
+- artifact ID **`9314032964`**;
+- SHA256 `9b13585e05ba3313e9c7dcf393bcd285ea14b15cc7869cf09361b7f3569e5d06`;
+- capital-markets specialized execution: **3/3**.
+
+### Final canonical Postscan proof — CURRENT BEST SNAPSHOT
+
+Workflow: `GenGe Postscan Research Pipeline`
+Run: **`32109532494`**
+Upstream: **`32099563360`**
+Conclusion: **SUCCESS**
+Artifact: `genge-postscan-research`
+Artifact ID: **`9314388591`**
+Artifact SHA256: **`be199bcf99397242b18d49ab8a07ec057bf224384419f227e0e6d5fd704f48af`**
+Head SHA at dispatch: `25f4923c0b4de580399dd4d47a0892cfd7779738`
+
+Every canonical stage passed, including:
+- focused tests;
+- industry Top5 / recall;
+- long-term second pass;
+- reverse valuation and financial review;
+- model routing;
+- **Execute specialized valuation models**;
+- long-term Formal BUY;
+- zero-BUY audit;
+- Master Ranking;
+- final contract;
+- cache save;
+- artifact upload.
+
+Final specialized summary:
+- total valuation rows: **257**;
+- specialized selected: **15**;
+- selected by strategy:
+  - `capital_markets_cycle`: **3**;
+  - `insurance_embedded_value`: **3**;
+  - `transport_cycle`: **6**;
+  - `yield_asset`: **3**;
+- execution states:
+  - `SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY`: **1**;
+  - `SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED`: **2**;
+  - `SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED`: **12**;
+- capital-markets selected: **3**;
+- capital-markets executed: **3**;
+- capital-markets input-required: **0**;
+- `ranking_changed=false`;
+- `formal_buy_consumes_specialized_sidecar=false`;
+- `formal_signal_eligible=false`;
+- `automatic_promotion_allowed=false`;
+- `no_auto_trade=true`.
+
+Broker proof:
+
+1. `600109 国金证券`, valuation research rank **#28**
+   - execution: `SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY` / `OK`;
+   - annual ROE years: `2021;2022;2023;2024;2025`;
+   - current PB: **0.89**;
+   - normalized mid-cycle ROE: **5.28%**;
+   - fair PB: **0.285**;
+   - market-implied mid-cycle ROE: **10.12%**;
+   - normalized-minus-implied ROE gap: **-4.84pp**;
+   - P/B-space MOS: about **-67.98%**.
+   - Interpretation: model executes successfully, but current PB requires a materially stronger sustainable ROE than the PIT historical normalization supports.
+
+2. `600155 华创云信`, valuation research rank **#102**
+   - execution: `SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED`;
+   - status: `NON_POSITIVE_RESIDUAL_INCOME_VALUE`;
+   - current PB: **0.65**;
+   - normalized mid-cycle ROE: **1.94%**;
+   - market-implied mid-cycle ROE: **8.20%**.
+
+3. `000712 锦龙股份`, valuation research rank **#150**
+   - execution: `SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED`;
+   - status: `NON_POSITIVE_RESIDUAL_INCOME_VALUE`;
+   - current PB: **3.04**;
+   - normalized mid-cycle ROE: **-3.99%**;
+   - market-implied mid-cycle ROE: **27.32%**.
+
+This is desired behavior: completing a model does not create a BUY. It converts unknown model state into an auditable valuation conclusion.
+
+The same final canonical artifact proves the existing long-term decisions were unchanged by the new sidecar:
+- `603369 今世缘`: still `LONG_TERM_BUY_READY`, eligible, R/R **7.05**, entry **29.53–29.63**, invalidation **29.01**, targets **34.00 / 34.54**;
+- `688687 凯因科技`: still `LONG_TERM_REVIEW_BLOCKED`, blockers `earnings_quality_below_minimum;valuation_expectation_too_high`, not eligible.
+
+Master counts also remain **400 / 381 / 82 / 81 / 257 / actionable 1**, exactly preserving Master semantics.
+
+All temporary specialized validation/replay/dispatcher/locator workflows and locator JSON records were removed after proof. Permanent canonical workflow remains `.github/workflows/genge-postscan-research.yml`.
 
 ## Automatic Postscan trigger note
 
-`GenGe Postscan Research Pipeline` supports automatic `workflow_run` after successful production `GenGe Opportunity Discovery` runs whose upstream event is `schedule` or `workflow_dispatch`, plus explicit `workflow_dispatch` with `upstream_run_id`.
+Canonical Postscan supports `workflow_run` after successful `GenGe Opportunity Discovery` production runs whose upstream event is `schedule` or `workflow_dispatch`, plus explicit `workflow_dispatch` with `upstream_run_id`.
 
-The validated production run `32099563360` was itself started by another GitHub Actions job using repository `GITHUB_TOKEN`. In that synthetic proof path, an automatic downstream `workflow_run` did not appear, so Postscan was explicitly dispatched with the already validated upstream ID.
+The validated All-A run `32099563360` was itself started by another Actions job using repository `GITHUB_TOKEN`. That synthetic path did not create the downstream `workflow_run`, so downstream validation used explicit dispatch. This does **not** prove native scheduled production is broken.
 
-This does **not** prove the native scheduled path is broken. Keep the current `workflow_run` design until a true native scheduled production success proves or disproves it. Do not add a duplicate permanent dispatcher solely because of the synthetic proof path. If a native scheduled success does not spawn exactly one Postscan, then replace the handoff with one deterministic mechanism and avoid duplicate downstream runs.
+Keep the current `workflow_run` architecture until a true native scheduled All-A success proves or disproves it. Do not add a duplicate permanent dispatcher. If a native scheduled success fails to spawn exactly one Postscan, replace the handoff with one deterministic mechanism and avoid duplicate downstream runs.
 
 ## Current architecture
 
 All-A universe
   -> hard data/risk/liquidity/history filters
   -> quant screen
-  -> recall A: global opportunity leaders
+  -> recall A: global leaders
   -> recall B: every-industry Top3–5 champions
-  -> recall C: exit-profile-only long-term second-pass names
-  -> merge/de-duplicate with provenance preservation
+  -> recall C: exit-profile-only long-term second pass
+  -> provenance-preserving merge/de-dup
   -> reverse valuation
-  -> prioritized financial review for long-term second-pass names
+  -> prioritized PIT financial review
   -> valuation model routing
+  -> specialized valuation execution sidecar where auditable inputs exist
+       (currently capital-markets/broker family; audit-only, not consumed by Formal BUY)
   -> long-term final decision
-  -> Master Opportunity Ranking (research priority + long-term decision overlay)
-  -> actionable long-term review list separated from research-watch names
-  -> legacy Zero-BUY audit / production contract
+  -> Master Opportunity Ranking
+  -> actionable long-term list separated from research-watch names
+  -> zero-BUY audit / production contract
 
 Valuation research capacity remains up to 500 names with financial deep review up to 100.
 
-## Long-term final-decision semantics
-
-- `LONG_TERM_BUY_READY`: true hard logic passes, real R/R is acceptable, market/event risk is acceptable, valuation diagnostic is ready, financial review is complete, normalized core profit is positive, earnings quality is strong enough and implied required profit growth is acceptable.
-- `LONG_TERM_TRY_POSITION`: hard logic and review are acceptable but valuation/earnings-quality comfort is weaker; research-only smaller trial-position classification.
-- `LONG_TERM_REVIEW_BLOCKED`: one or more substantive blockers remain.
-
-`valuation_model_execution_state=SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED` is not completed valuation. Missing specialized-model execution, missing financial review, missing valuation diagnostics or missing required-growth inputs cannot justify a silent non-defensive zero-BUY result.
-
 ## Next work — exact order
 
-1. **Do not rerun the validated 2026-08-17 All-A/Postscan merely to rebuild Master Ranking. Master is complete and canonical production-validated.**
-2. On the next **native scheduled** `GenGe Opportunity Discovery` success, verify that exactly one `GenGe Postscan Research Pipeline` run appears automatically and consumes that scheduled upstream artifact. Only change trigger architecture if this native schedule test fails.
-3. Use `reports/master_opportunity_ranking/master_opportunity_ranking.csv` as the broad cross-industry research-priority view, `every_industry_top5_enriched.csv` for industry visibility, and `actionable_long_term_candidates.csv` only for genuinely eligible long-term BUY/TRY review. Never turn Master rank into trade permission.
-4. Keep 603369 as the current validated `LONG_TERM_BUY_READY` example and 688687 as a validated substantive-blocker example; do not hard-code either future outcome because every new market snapshot must recompute them.
-5. Continue specialized valuation execution only when routing selects a specialized model whose required inputs can be sourced reliably. `model selected` must never masquerade as `model executed`.
-6. Preserve PIT correctness, every-industry recall, reverse-valuation discovery, strict hard blockers, `no_auto_trade` and all audit artifacts.
+1. **Do not rerun the validated 2026-08-17 All-A/Postscan again.** Current best canonical downstream proof is run `32109532494` / artifact `9314388591`.
+2. On the next **native scheduled** `GenGe Opportunity Discovery` success, verify exactly one automatic `GenGe Postscan Research Pipeline` run consumes that scheduled upstream artifact. Change trigger architecture only if this native test fails.
+3. Continue specialized-model execution **family by family**, only where required inputs can be sourced reliably and PIT-safely. The current unfinished selected pool is: transport **6**, insurance **3**, yield assets **3**. Do not mark any as executed until the actual model-specific inputs are present.
+4. Prefer the next family based on input feasibility and production coverage, not on a desire to create more BUYs. Transport has the largest current selected count but requires lease-consistent net debt and through-cycle EBITDA; insurance requires disclosed EV/NBV; yield assets require defensible normalized FCFE and maintenance/growth capex separation.
+5. Keep specialized execution sidecars research-only until a separately tested design explicitly integrates their completed outputs into long-term final-decision semantics. Do not silently switch Formal BUY to consume them.
+6. Use `master_opportunity_ranking.csv` for broad research priority, `every_industry_top5_enriched.csv` for industry visibility, and `actionable_long_term_candidates.csv` only for genuinely eligible long-term BUY/TRY review.
+7. Preserve PIT correctness, industry recall, reverse-valuation discovery, strict hard blockers, cache versioning, `no_auto_trade` and audit artifacts.
 
 ## Resume instruction for a new ChatGPT session
 
