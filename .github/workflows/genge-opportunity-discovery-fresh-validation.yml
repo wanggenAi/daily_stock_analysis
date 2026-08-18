@@ -5,9 +5,12 @@ on:
     branches: [main]
     paths:
       - 'docs/GENGE_FRESH_VALIDATION_TRIGGER.md'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/GENGE_FRESH_VALIDATION_TRIGGER.md'
   schedule:
-    # Temporary one-shot validation slot: 2026-08-18 01:55 UTC.
-    # Remove after end-to-end validation succeeds.
+    # Temporary one-shot validation slot retained as fallback.
     - cron: '55 1 18 8 *'
 
 permissions:
@@ -20,7 +23,10 @@ concurrency:
 jobs:
   all-a-production-report:
     name: All-A production research report
-    if: github.event_name == 'schedule' || contains(github.event.head_commit.message, '[run-all-a]')
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'schedule' ||
+      contains(github.event.head_commit.message, '[run-all-a]')
     runs-on: ubuntu-latest
     timeout-minutes: 180
     steps:
@@ -28,6 +34,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Publish Fresh runtime locator
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -153,7 +160,7 @@ jobs:
           if-no-files-found: error
 
       - name: Publish Fresh terminal status
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         env:
           JOB_STATUS: ${{ job.status }}
         run: |
