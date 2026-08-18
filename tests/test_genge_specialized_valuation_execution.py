@@ -1,11 +1,14 @@
 from datetime import date
+from pathlib import Path
 from types import SimpleNamespace
 
 import pandas as pd
 import pytest
 
 from src.strategies.genge_opportunity_discovery.specialized_valuation_execution import (
+    SPECIALIZED_CACHE_NAMESPACE,
     _annual_roe_history,
+    _dedicated_cache_dir,
     execute_specialized_rows,
 )
 
@@ -21,6 +24,34 @@ class FakeLoader:
         return SimpleNamespace(
             valuation_df=self.valuation_df.copy(),
             financial_df=self.financial_df.copy(),
+        )
+
+
+class RefreshingDedicatedLoader:
+    def __init__(self, cache_dir: Path, valuation_df, refreshed_financial_df):
+        self.cache_dir = cache_dir
+        self.valuation_df = valuation_df
+        self.refreshed_financial_df = refreshed_financial_df
+        self.calls = 0
+
+    def load(self, code, *, years, fetch_valuation, fetch_financial):
+        self.calls += 1
+        if self.calls == 1:
+            financial_df = pd.DataFrame(
+                {
+                    "report_date": ["2024-12-31"],
+                    "disclosure_date": [None],
+                    "roe": [None],
+                }
+            )
+            cache_hits = {"financial": True, "valuation": True}
+        else:
+            financial_df = self.refreshed_financial_df.copy()
+            cache_hits = {"financial": False, "valuation": True}
+        return SimpleNamespace(
+            valuation_df=self.valuation_df.copy(),
+            financial_df=financial_df,
+            cache_hits=cache_hits,
         )
 
 
@@ -76,7 +107,6 @@ def test_broker_executes_in_normalized_book_units_with_pit_safe_annual_roe():
     )
 
     row = rows[0]
-    # 2021-2024 annual ROE is available; Q1 and future FY2025 are excluded.
     assert row["specialized_model_input_report_years"] == "2021;2022;2023;2024"
     assert row["specialized_model_roe_sample_count"] == 4
     assert row["specialized_normalized_mid_cycle_roe"] == pytest.approx(0.09)
@@ -93,7 +123,6 @@ def test_broker_executes_in_normalized_book_units_with_pit_safe_annual_roe():
     assert row["specialized_model_execution_state"] == "SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY"
     assert row["specialized_model_status"] == "OK"
 
-    # Execution is a sidecar only; original routing state is deliberately preserved.
     assert row["valuation_model_execution_state"] == "SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED"
     assert row["specialized_model_formal_buy_eligible"] is False
     assert row["formal_signal_eligible"] is False
@@ -112,8 +141,6 @@ def test_annual_roe_history_uses_actual_disclosure_when_known_and_deadline_when_
     )
     history = _annual_roe_history(frame, as_of=date(2025, 5, 1), max_samples=5)
 
-    # 2022 uses real disclosure; undated 2023 is safe after 2024-04-30;
-    # 2024 has a known future disclosure and must not leak into 2025.
     assert history.years == (2022, 2023)
     assert history.values == pytest.approx((0.08, 0.10))
 
@@ -156,6 +183,30 @@ def test_broker_remains_inputs_required_when_annual_roe_history_is_too_short():
     assert row["specialized_model_status"] == "BROKER_INPUTS_INCOMPLETE"
     assert "insufficient_pit_safe_annual_roe_history" in row["specialized_model_execution_reason"]
     assert row["specialized_model_formal_buy_eligible"] is False
+
+
+def test_dedicated_specialized_cache_is_versioned_under_generic_cache_root():
+    root = Path("data/cache/valuation_research_fundamentals")
+    assert _dedicated_cache_dir(root) == root / SPECIALIZED_CACHE_NAMESPACE
+    already = root / SPECIALIZED_CACHE_NAMESPACE
+    assert _dedicated_cache_dir(already) == already
+
+
+def test_dedicated_cached_financial_without_roe_is_refreshed_once(tmp_path):
+    cache_dir = tmp_path / SPECIALIZED_CACHE_NAMESPACE
+    loader = RefreshingDedicatedLoader(cache_dir, _valuation_frame(), _financial_frame())
+
+    row = execute_specialized_rows(
+        [_broker_row()],
+        as_of=date(2025, 8, 17),
+        loader=loader,
+        minimum_annual_roe_samples=3,
+    )[0]
+
+    assert loader.calls == 2
+    assert row["specialized_model_executed"] is True
+    assert row["specialized_model_roe_sample_count"] == 4
+    assert row["specialized_model_execution_state"] == "SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY"
 
 
 def test_unimplemented_specialized_families_remain_explicitly_inputs_required_without_fetching():
