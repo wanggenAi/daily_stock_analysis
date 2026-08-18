@@ -8,6 +8,13 @@ on:
       - "src/strategies/genge_opportunity_discovery/master_opportunity_ranking.py"
       - "tests/test_genge_master_opportunity_ranking.py"
       - "docs/GENGE_MASTER_RANKING_REPLAY_TRIGGER.md"
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/genge-master-ranking-production-replay.yml"
+      - "src/strategies/genge_opportunity_discovery/master_opportunity_ranking.py"
+      - "tests/test_genge_master_opportunity_ranking.py"
+      - "docs/GENGE_MASTER_RANKING_REPLAY_TRIGGER.md"
   workflow_dispatch:
 
 permissions:
