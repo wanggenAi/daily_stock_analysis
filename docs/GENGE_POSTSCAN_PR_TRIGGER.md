@@ -1,6 +1,6 @@
 # GenGe Postscan PR Trigger
 
-retry: 8
+retry: 9
 upstream_run_id: 32090231706
 fresh_artifact_id: 9308603602
-purpose: trigger cycle-hosted normal-production progress migration and dispatch proof.
+purpose: trigger restored Cycle Bottom; dispatch bridge should launch normal production proof after it succeeds.
