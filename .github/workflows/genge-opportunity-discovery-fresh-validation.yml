@@ -3,6 +3,8 @@ name: GenGe Opportunity Discovery
 on:
   push:
     branches: [main]
+    paths:
+      - 'docs/GENGE_FRESH_VALIDATION_TRIGGER.md'
 
 permissions:
   contents: read
@@ -34,7 +36,9 @@ jobs:
             tests/test_genge_all_a_progress_runner.py \
             tests/test_genge_all_a_full_scan.py \
             tests/test_genge_long_term_second_pass.py \
-            tests/test_genge_long_term_valuation_merge.py
+            tests/test_genge_long_term_valuation_merge.py \
+            tests/test_genge_valuation_research_long_term_runner.py \
+            tests/test_genge_long_term_formal_buy.py
 
       - name: Restore all-A public-data cache and observation state
         uses: actions/cache/restore@v4
