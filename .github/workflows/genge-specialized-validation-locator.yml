@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Record focused validation run
+      - name: Record specialized validation runs
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -26,8 +26,14 @@ jobs:
             --limit 5 \
             --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url \
             > docs/GENGE_SPECIALIZED_VALIDATION_LOCATOR.json
+          gh run list \
+            --repo "${{ github.repository }}" \
+            --workflow genge-specialized-production-replay.yml \
+            --limit 5 \
+            --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url \
+            > docs/GENGE_SPECIALIZED_REPLAY_LOCATOR.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add docs/GENGE_SPECIALIZED_VALIDATION_LOCATOR.json
-          git commit -m "chore: record specialized validation run" || exit 0
+          git add docs/GENGE_SPECIALIZED_VALIDATION_LOCATOR.json docs/GENGE_SPECIALIZED_REPLAY_LOCATOR.json
+          git commit -m "chore: record specialized replay run" || exit 0
           git push origin HEAD:main
