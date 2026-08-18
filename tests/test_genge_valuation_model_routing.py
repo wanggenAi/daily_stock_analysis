@@ -177,6 +177,46 @@ def test_mixed_gas_resource_profile_overrides_yield_prior_with_cycle_normalizati
     assert routed["no_auto_trade"] is True
 
 
+def test_checked_in_gas_profiles_split_resource_and_city_gas_economics():
+    repository = load_company_valuation_profile_repository(
+        "config/valuation_company_profiles.yaml"
+    )
+    rows = annotate_valuation_routes(
+        [
+            _row(code="603393", stock_name="新天然气", industry="燃气"),
+            _row(code="600903", stock_name="贵州燃气", industry="燃气"),
+            _row(code="600681", stock_name="百川能源", industry="燃气"),
+        ],
+        as_of=date(2026, 8, 17),
+        profile_repository=repository,
+    )
+    by_code = {row["code"]: row for row in rows}
+
+    resource = by_code["603393"]
+    assert resource["valuation_profile_status"] == "FOUND"
+    assert resource["valuation_profile_used_for_routing"] is True
+    assert resource["valuation_disabled_strategy_ids"] == "yield_asset"
+    assert resource["valuation_strategy_ids"] == (
+        "capacity_cycle_normalizer;general_reverse_earnings"
+    )
+    assert resource["valuation_primary_strategy_id"] == "general_reverse_earnings"
+
+    for code in ("600903", "600681"):
+        city_gas = by_code[code]
+        assert city_gas["valuation_profile_status"] == "FOUND"
+        assert city_gas["valuation_profile_used_for_routing"] is True
+        assert city_gas["valuation_profile_archetype_hints"] == "YIELD_ASSET"
+        assert city_gas["valuation_disabled_strategy_ids"] == ""
+        assert city_gas["valuation_strategy_ids"] == "yield_asset"
+        assert city_gas["valuation_primary_strategy_id"] == "yield_asset"
+        assert city_gas["valuation_model_execution_state"] == (
+            "SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED"
+        )
+        assert city_gas["formal_signal_eligible"] is False
+        assert city_gas["automatic_promotion_allowed"] is False
+        assert city_gas["no_auto_trade"] is True
+
+
 def test_profile_driven_route_is_capped_by_profile_confidence(tmp_path):
     repository = load_company_valuation_profile_repository(
         _write_profile_config(tmp_path, [_profile()])
