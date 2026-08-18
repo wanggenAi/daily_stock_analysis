@@ -1,17 +1,17 @@
 # GenGe Fresh Validation Trigger
 
-Updated 2026-08-18 to force a fresh All-A validation run from the latest `main` after long-term financial-review priority and the long-term Formal BUY decision layer were integrated.
+PR-based validation trigger created 2026-08-18.
+
+This temporary branch changes only this marker so the `GenGe Opportunity Discovery` Fresh Validation workflow runs on a pull_request event against the latest main. The PR is validation-only and must not be merged.
 
 Expected chain:
 
-Fresh All-A (progress runner) -> `genge-all-a-production-report` -> `GenGe Postscan Research Pipeline` -> industry coverage + long-term second pass + long-term-priority reverse valuation + valuation routing + long-term Formal BUY review + zero-BUY audit.
+Fresh All-A using `all_a_progress_runner` -> `genge-all-a-production-report` -> `GenGe Postscan Research Pipeline` -> every-industry coverage -> long-term second pass -> prioritized valuation/financial review -> valuation routing -> long-term Formal BUY review -> zero-BUY contract.
 
-Validation must prove:
+Validation invariants:
 
-- percentage / throughput / ETA progress logs are live;
-- every clean industry remains represented;
-- every long-term second-pass candidate reaches valuation and gets first claim on bounded financial review;
-- `valuation_research_routed.csv` exists;
-- non-defensive zero long-term Formal BUY cannot be explained by missing model execution / missing financial review / missing valuation inputs.
-
-This marker can be removed after end-to-end validation succeeds.
+- progress logs expose processed/total, percentage, throughput and ETA;
+- every clean industry retains valuation representation;
+- every long-term second-pass candidate reaches valuation and bounded financial review even when generic PE is not applicable;
+- routed valuation output exists;
+- non-defensive zero Formal BUY cannot be explained by unfinished valuation/model/financial research.
