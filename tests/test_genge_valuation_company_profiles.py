@@ -258,9 +258,18 @@ def test_profile_resolution_metadata_never_promotes_to_trade_signal(tmp_path):
     assert payload["no_auto_trade"] is True
 
 
-def test_checked_in_empty_profile_registry_is_valid():
+def test_checked_in_profile_registry_contains_pit_safe_new_natural_gas_profile():
     repository = load_company_valuation_profile_repository(
         "config/valuation_company_profiles.yaml"
     )
 
-    assert repository.profiles == ()
+    assert len(repository.profiles) >= 1
+    before = repository.resolve("603393", as_of=date(2026, 7, 27))
+    current = repository.resolve("603393", as_of=date(2026, 8, 17))
+    assert before.status == "NOT_YET_KNOWN"
+    assert current.status == "FOUND"
+    assert current.profile is not None
+    assert current.profile.profile_id == "603393-resource-cycle-v1"
+    assert current.profile.confidence == "HIGH"
+    assert current.routing_archetype_hints == ("CAPACITY_CYCLE", "GENERAL_EARNINGS")
+    assert current.routing_disabled_strategy_ids == ("yield_asset",)
