@@ -1,6 +1,6 @@
 # GenGe Postscan PR Trigger
 
-retry: 18
+retry: 19
 upstream_run_id: 32099563360
 production_artifact_id: 9311716238
-purpose: locate automatic canonical Postscan after successful normal production; dispatch canonical Postscan only if no automatic run exists.
+purpose: inspect the 05:06-05:10 workflow_run window for the automatic canonical Postscan; dispatch canonical Postscan if absent.
