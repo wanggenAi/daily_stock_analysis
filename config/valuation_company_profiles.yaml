@@ -30,3 +30,51 @@ profiles:
     evidence_refs:
       - new-natural-gas-2025-annual-report-2026-03-28
       - new-natural-gas-2025-annual-report-inquiry-response-2026-07-28
+
+  - profile_id: 600903-city-gas-yield-v1
+    code: "600903"
+    stock_name: 贵州燃气
+    known_at: "2026-04-23"
+    evidence_as_of: "2026-04-23"
+    review_after: "2027-04-30"
+    confidence: HIGH
+    business_tags:
+      - 城市燃气运营
+      - 天然气输配管网
+      - LNG接收储备供应
+      - 综合能源服务
+      - 上游采购气源
+    archetype_hints:
+      - YIELD_ASSET
+    disabled_strategy_ids: []
+    rationale: >-
+      2025年度报告明确公司主要从事城市燃气运营，气源从上游供应商采购后经支线管道、门站、
+      储配站和城市输配管网向终端用户销售；未见类似603393的自有油气、煤层气或煤炭资源勘探开发
+      作为核心经济结构。公司级证据因此支持继续使用成熟受监管/长寿命基础设施收益资产路由，
+      但yield_asset模型仍须在真实normalized FCFE及maintenance/growth capex拆分可得前保持INPUTS_REQUIRED。
+    evidence_refs:
+      - guizhou-gas-2025-annual-report-2026-04-23
+
+  - profile_id: 600681-city-gas-yield-v1
+    code: "600681"
+    stock_name: 百川能源
+    known_at: "2026-04-29"
+    evidence_as_of: "2026-04-29"
+    review_after: "2027-04-30"
+    confidence: HIGH
+    business_tags:
+      - 城市管道燃气
+      - 燃气工程安装
+      - 燃气具销售
+      - 上游采购气源
+      - 价格联动机制
+    archetype_hints:
+      - YIELD_ASSET
+    disabled_strategy_ids: []
+    rationale: >-
+      2025年度报告明确公司主营城市管道燃气、燃气工程安装和燃气具销售，天然气主要从中石油等
+      上游气源方采购并通过城市管网向终端销售；2025年天然气销售收入占整体营业收入约85.2%，
+      居民及工商业终端价格具有政府定价/指导及上下游价格联动特征。公司级证据支持继续使用
+      收益资产路由，但在normalized FCFE与maintenance/growth capex可审计拆分前仍不得标记模型已执行。
+    evidence_refs:
+      - baichuan-energy-2025-annual-report-2026-04-29
