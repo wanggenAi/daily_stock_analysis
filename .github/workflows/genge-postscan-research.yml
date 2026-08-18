@@ -92,6 +92,8 @@ jobs:
             tests/test_genge_valuation_research_production.py \
             tests/test_genge_valuation_company_profiles.py \
             tests/test_genge_valuation_model_routing.py \
+            tests/test_genge_capital_markets_valuation.py \
+            tests/test_genge_specialized_valuation_execution.py \
             tests/test_genge_resource_asset_valuation.py \
             tests/test_genge_master_opportunity_ranking.py
 
@@ -178,6 +180,15 @@ jobs:
             --report-root reports/valuation_research_queue \
             --profile-config config/valuation_company_profiles.yaml
 
+      - name: Execute specialized valuation models
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.specialized_valuation_execution \
+            --report-root reports/valuation_research_queue \
+            --cache-dir data/cache/valuation_research_fundamentals \
+            --years 7 \
+            --minimum-annual-roe-samples 3 \
+            --maximum-annual-roe-samples 5
+
       - name: Build long-term Formal BUY review
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.long_term_formal_buy \
@@ -215,12 +226,15 @@ jobs:
               'valuation_research_queue.csv', 'valuation_research_queue.md',
               'valuation_research_summary.json', 'valuation_research_routed.csv',
               'valuation_research_routed.md', 'valuation_routing_summary.json',
+              'valuation_research_specialized.csv', 'valuation_research_specialized.md',
+              'specialized_valuation_summary.json',
           }
           missing = sorted(name for name in required if not (latest/name).exists())
           assert not missing, f'missing valuation outputs: {missing}'
 
           valuation_rows = list(csv.DictReader((latest/'valuation_research_queue.csv').open(encoding='utf-8')))
           routed_rows = list(csv.DictReader((latest/'valuation_research_routed.csv').open(encoding='utf-8')))
+          specialized_rows = list(csv.DictReader((latest/'valuation_research_specialized.csv').open(encoding='utf-8')))
           lt_rows = list(csv.DictReader(Path('reports/long_term_second_pass/long_term_second_pass_candidates.csv').open(encoding='utf-8')))
           valuation_codes = {r['code'] for r in valuation_rows}
           missing_lt = sorted({r['code'] for r in lt_rows} - valuation_codes)
@@ -249,6 +263,19 @@ jobs:
           assert routing['formal_signal_eligible'] is False
           assert routing['automatic_promotion_allowed'] is False
           assert routing['no_auto_trade'] is True
+
+          specialized = json.loads((latest/'specialized_valuation_summary.json').read_text(encoding='utf-8'))
+          assert len(specialized_rows) == len(routed_rows) == specialized['row_count']
+          expected_specialized = sum(
+              (r.get('valuation_primary_strategy_id') or '') not in {'', 'general_reverse_earnings'}
+              for r in routed_rows
+          )
+          assert specialized['specialized_selected_count'] == expected_specialized
+          assert specialized['ranking_changed'] is False
+          assert specialized['formal_buy_consumes_specialized_sidecar'] is False
+          assert specialized['formal_signal_eligible'] is False
+          assert specialized['automatic_promotion_allowed'] is False
+          assert specialized['no_auto_trade'] is True
 
           formal_path = Path('reports/long_term_formal_buy/long_term_formal_buy_candidates.csv')
           formal_rows = list(csv.DictReader(formal_path.open(encoding='utf-8')))
@@ -312,6 +339,7 @@ jobs:
               'long_term_second_pass': lt_summary,
               'long_term_formal_buy': formal_summary,
               'routing': routing,
+              'specialized_valuation': specialized,
               'master_opportunity_ranking': master_summary,
           }, ensure_ascii=False, indent=2))
           PY
@@ -332,9 +360,13 @@ jobs:
           from pathlib import Path
           root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in root.iterdir() if p.is_dir()) if root.exists() else []
-          if runs and (runs[-1]/'valuation_research_routed.md').exists():
+          if runs:
               with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as f:
-                  f.write((runs[-1]/'valuation_research_routed.md').read_text(encoding='utf-8'))
+                  for name in ('valuation_research_routed.md', 'valuation_research_specialized.md'):
+                      path = runs[-1]/name
+                      if path.exists():
+                          f.write(path.read_text(encoding='utf-8'))
+                          f.write('\n')
           PY
 
       - name: Save valuation fundamental cache
