@@ -1,0 +1,42 @@
+name: GenGe Maintenance Runtime Recorder
+
+on:
+  workflow_run:
+    workflows: ["GenGe Pipeline Maintenance"]
+    types: [requested, completed]
+
+permissions:
+  contents: write
+
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Persist maintenance runtime
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_STATUS: ${{ github.event.workflow_run.status }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_EVENT: ${{ github.event.workflow_run.event }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          ACTION: ${{ github.event.action }}
+        run: |
+          cat > docs/GENGE_MAINTENANCE_RUNTIME_STATUS.md <<EOF
+          # GenGe Maintenance Runtime Status
+
+          recorder_action: ${ACTION}
+          run_id: ${RUN_ID}
+          status: ${RUN_STATUS}
+          conclusion: ${RUN_CONCLUSION}
+          event: ${RUN_EVENT}
+          url: ${RUN_URL}
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_MAINTENANCE_RUNTIME_STATUS.md
+          git commit -m "docs: record maintenance ${ACTION} run ${RUN_ID} [skip ci]" || true
+          git push origin HEAD:main
