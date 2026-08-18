@@ -6,12 +6,12 @@ on:
     paths:
       - 'docs/GENGE_FRESH_VALIDATION_TRIGGER.md'
   schedule:
-    # Temporary one-shot validation slot: 2026-08-18 01:50 UTC.
+    # Temporary one-shot validation slot: 2026-08-18 01:55 UTC.
     # Remove after end-to-end validation succeeds.
-    - cron: '50 1 18 8 *'
+    - cron: '55 1 18 8 *'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: genge-fresh-all-a-validation
@@ -26,6 +26,24 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
+      - name: Publish Fresh runtime locator
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cat > docs/GENGE_FRESH_RUNTIME_STATUS.md <<EOF
+          # GenGe Fresh Runtime Status
+
+          status: RUNNING
+          run_id: ${{ github.run_id }}
+          run_attempt: ${{ github.run_attempt }}
+          head_sha: ${{ github.sha }}
+          event: ${{ github.event_name }}
+          started_at_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          EOF
+          git add docs/GENGE_FRESH_RUNTIME_STATUS.md
+          git commit -m "chore: record Fresh validation runtime [skip ci]" || true
+          git push || true
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -133,3 +151,25 @@ jobs:
           name: genge-all-a-production-report
           path: reports/all_a_full_scan
           if-no-files-found: error
+
+      - name: Publish Fresh terminal status
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          git pull --rebase || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          cat > docs/GENGE_FRESH_RUNTIME_STATUS.md <<EOF
+          # GenGe Fresh Runtime Status
+
+          status: ${JOB_STATUS}
+          run_id: ${{ github.run_id }}
+          run_attempt: ${{ github.run_attempt }}
+          head_sha: ${{ github.sha }}
+          event: ${{ github.event_name }}
+          finished_at_utc: $(date -u +%Y-%m-%dT%H:%M:%SZ)
+          EOF
+          git add docs/GENGE_FRESH_RUNTIME_STATUS.md
+          git commit -m "chore: record Fresh validation terminal status [skip ci]" || true
+          git push || true
