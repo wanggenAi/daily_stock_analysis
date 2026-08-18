@@ -1,0 +1,29 @@
+name: GenGe Final Postscan Locator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-final-postscan-locator.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  locate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record dispatcher and postscan runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run list --repo "${{ github.repository }}" --workflow genge-specialized-postscan-dispatch.yml --limit 5 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > docs/GENGE_FINAL_DISPATCH_LOCATOR.json
+          gh run list --repo "${{ github.repository }}" --workflow genge-postscan-research.yml --event workflow_dispatch --limit 8 --json databaseId,status,conclusion,createdAt,updatedAt,headSha,url > docs/GENGE_FINAL_POSTSCAN_LOCATOR.json
+          printf '{"locator_run":"%s","locator_sha":"%s"}\n' "${{ github.run_id }}" "${{ github.sha }}" > docs/GENGE_FINAL_LOCATOR_META.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_FINAL_DISPATCH_LOCATOR.json docs/GENGE_FINAL_POSTSCAN_LOCATOR.json docs/GENGE_FINAL_LOCATOR_META.json
+          git commit -m "chore: record final specialized postscan dispatch state"
+          git push origin HEAD:main
