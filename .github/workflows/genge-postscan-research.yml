@@ -92,7 +92,8 @@ jobs:
             tests/test_genge_valuation_research_production.py \
             tests/test_genge_valuation_company_profiles.py \
             tests/test_genge_valuation_model_routing.py \
-            tests/test_genge_resource_asset_valuation.py
+            tests/test_genge_resource_asset_valuation.py \
+            tests/test_genge_master_opportunity_ranking.py
 
       - name: Build every-industry Top 5 research map
         run: |
@@ -191,6 +192,14 @@ jobs:
             --report-root upstream/reports/all_a_full_scan \
             --output-dir reports/zero_buy_audit
 
+      - name: Build Master Opportunity Ranking
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.master_opportunity_ranking \
+            --industry-coverage reports/industry_coverage \
+            --valuation-root reports/valuation_research_queue \
+            --long-term-formal-buy reports/long_term_formal_buy \
+            --output-dir reports/master_opportunity_ranking
+
       - name: Validate final postscan production contract
         run: |
           python - <<'PY'
@@ -251,6 +260,28 @@ jobs:
           assert formal_summary['legacy_exit_profile_is_long_term_veto'] is False
           assert formal_summary['no_auto_trade'] is True
 
+          master_root = Path('reports/master_opportunity_ranking')
+          master_required_nonempty = {
+              'master_opportunity_ranking.csv',
+              'every_industry_top5_enriched.csv',
+          }
+          missing_master = sorted(
+              name for name in master_required_nonempty
+              if not (master_root/name).exists() or (master_root/name).stat().st_size == 0
+          )
+          assert not missing_master, f'missing/empty Master Ranking outputs: {missing_master}'
+          actionable_path = master_root/'actionable_long_term_candidates.csv'
+          summary_path = master_root/'master_opportunity_summary.json'
+          assert actionable_path.exists(), 'missing actionable_long_term_candidates.csv'
+          assert summary_path.exists(), 'missing master_opportunity_summary.json'
+          master_summary = json.loads(summary_path.read_text(encoding='utf-8'))
+          assert master_summary['ranking_semantics'] == 'research_priority_not_trade_score'
+          assert master_summary['no_auto_trade'] is True
+          assert master_summary['formal_signal_eligible'] is False
+          assert master_summary['automatic_promotion_allowed'] is False
+          assert master_summary['master_count'] >= master_summary['valuation_researched_count']
+          assert master_summary['clean_industry_count'] > 0
+
           zero = json.loads(Path('reports/zero_buy_audit/zero_buy_audit.json').read_text(encoding='utf-8'))
           lt_summary = json.loads(Path('reports/long_term_second_pass/long_term_second_pass_summary.json').read_text(encoding='utf-8'))
 
@@ -281,6 +312,7 @@ jobs:
               'long_term_second_pass': lt_summary,
               'long_term_formal_buy': formal_summary,
               'routing': routing,
+              'master_opportunity_ranking': master_summary,
           }, ensure_ascii=False, indent=2))
           PY
 
@@ -291,7 +323,8 @@ jobs:
             reports/industry_coverage/industry_top_candidates.md \
             reports/long_term_second_pass/long_term_second_pass.md \
             reports/long_term_formal_buy/long_term_formal_buy.md \
-            reports/zero_buy_audit/zero_buy_audit.md; do
+            reports/zero_buy_audit/zero_buy_audit.md \
+            reports/master_opportunity_ranking/master_opportunity_ranking.md; do
             if [ -f "$f" ]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo >> "$GITHUB_STEP_SUMMARY"; fi
           done
           python - <<'PY'
@@ -324,4 +357,5 @@ jobs:
             reports/valuation_research_queue
             reports/long_term_formal_buy
             reports/zero_buy_audit
+            reports/master_opportunity_ranking
           if-no-files-found: error
