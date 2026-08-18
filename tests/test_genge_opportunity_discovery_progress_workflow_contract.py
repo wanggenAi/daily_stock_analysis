@@ -20,7 +20,9 @@ def test_normal_all_a_workflow_uses_structured_progress_runner() -> None:
     assert 'while kill -0 "$scan_pid"' not in workflow
 
     assert "[ALL-A][PROGRESS]" in runner
-    assert "processed=" in runner
-    assert "throughput_per_s=" in runner
-    assert "eta=" in runner
-    assert "current_code=" in runner
+    assert "processed}/{total}" in runner
+    assert "{pct:.1f}%" in runner
+    assert "items/s" in runner
+    assert "tasks/s" in runner
+    assert "ETA {_eta_text(eta)}" in runner
+    assert "current={code}" in runner
