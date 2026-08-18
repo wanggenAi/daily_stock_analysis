@@ -41,7 +41,7 @@ jobs:
         run: |
           python -m src.strategies.genge_opportunity_discovery.specialized_valuation_execution \
             --report-root replay/valuation_research_queue \
-            --fundamental-cache-dir data/cache/gas-routing-specialized \
+            --cache-dir data/cache/gas-routing-specialized \
             --years 7
       - name: Validate routing replay
         run: |
