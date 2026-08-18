@@ -1,0 +1,243 @@
+name: GenGe Fresh Production Validation
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: genge-fresh-production-validation
+  cancel-in-progress: false
+
+jobs:
+  fresh-production-validation:
+    name: Fresh All-A to Postscan validation
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      contains(github.event.head_commit.message, '[run-all-a]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Run focused production tests
+        run: |
+          python -m pytest -q \
+            tests/test_genge_all_a_full_scan.py \
+            tests/test_genge_all_a_progress_runner.py \
+            tests/test_genge_industry_coverage.py \
+            tests/test_genge_industry_valuation_bridge.py \
+            tests/test_genge_long_term_second_pass.py \
+            tests/test_genge_long_term_valuation_merge.py \
+            tests/test_genge_zero_buy_audit.py \
+            tests/test_genge_valuation_research_report.py \
+            tests/test_genge_valuation_model_routing.py
+
+      - name: Restore All-A state
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            data/cache/all_a_full_scan
+            data/cache/genge_fundamentals
+            data/cache/opportunity_evidence
+            data/opportunity_snapshots/all_a_state
+            data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            data/opportunity_snapshots/exit_profile.csv
+            stock_pools/all_a_universe_*.csv
+          key: genge-all-a-state-${{ runner.os }}-main-${{ github.run_id }}
+          restore-keys: |
+            genge-all-a-state-${{ runner.os }}-main-
+            genge-all-a-state-${{ runner.os }}-
+
+      - name: Prepare production state
+        run: |
+          mkdir -p data/cache/all_a_full_scan data/cache/genge_fundamentals data/cache/opportunity_evidence
+          mkdir -p data/opportunity_snapshots/all_a_state
+          if [ ! -s data/opportunity_snapshots/exit_profile.csv ]; then
+            cp data/opportunity_snapshots/exit_profile_seed.csv data/opportunity_snapshots/exit_profile.csv
+          fi
+
+      - name: Run fresh All-A scan with observable progress
+        run: |
+          PYTHONUNBUFFERED=1 timeout --signal=TERM 105m \
+          python -m src.strategies.genge_opportunity_discovery.all_a_progress_runner \
+            --max-workers 12 \
+            --evidence-queue-size 80 \
+            --deep-review-size 30 \
+            --max-watchlist 15 \
+            --fundamental-limit 30 \
+            --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+            --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+            --industry-evidence-schema config/industry_evidence_schema.yaml \
+            --industry-alias-map config/industry_alias_map.yaml \
+            --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+
+      - name: Resolve latest All-A report
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          root = Path('reports/all_a_full_scan')
+          runs = sorted(p for p in root.iterdir() if p.is_dir() and (p/'run_summary.json').exists())
+          assert runs, 'no All-A report generated'
+          latest = runs[-1]
+          with open('/tmp/latest_all_a', 'w', encoding='utf-8') as f:
+              f.write(str(latest))
+          print(f'latest_all_a={latest}')
+          PY
+          echo "ALL_A_REPORT=$(cat /tmp/latest_all_a)" >> "$GITHUB_ENV"
+
+      - name: Build every-industry Top 5 map
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.industry_coverage \
+            --report-root "$ALL_A_REPORT" \
+            --output-dir reports/postscan/industry_coverage \
+            --per-industry 5
+
+      - name: Build long-term second pass
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.long_term_second_pass \
+            --report-root "$ALL_A_REPORT" \
+            --output-dir reports/postscan/long_term_second_pass
+
+      - name: Build industry-aware valuation source
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.industry_valuation_bridge \
+            --all-a-report "$ALL_A_REPORT" \
+            --industry-coverage reports/postscan/industry_coverage \
+            --output-dir reports/postscan/industry_valuation_source \
+            --global-limit 80 \
+            --relaxed-reserve 20 \
+            --per-industry 3
+
+      - name: Merge long-term second pass into valuation source
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.long_term_valuation_merge \
+            --valuation-source-dir reports/postscan/industry_valuation_source \
+            --long-term-dir reports/postscan/long_term_second_pass \
+            --output-dir reports/postscan/final_valuation_source
+
+      - name: Restore valuation cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/cache/valuation_research_fundamentals
+          key: genge-valuation-research-${{ runner.os }}-main-${{ github.run_id }}
+          restore-keys: |
+            genge-valuation-research-${{ runner.os }}-main-
+            genge-valuation-research-${{ runner.os }}-
+
+      - name: Build reverse valuation research queue
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_report \
+            --report-dir reports/postscan/final_valuation_source \
+            --output-dir reports/postscan/valuation_research_queue \
+            --fundamental-cache-dir data/cache/valuation_research_fundamentals \
+            --research-limit 320 \
+            --relaxed-reserve 240 \
+            --financial-review-limit 80 \
+            --years 5 \
+            --minimum-pe-samples 20 \
+            --max-workers 8
+
+      - name: Route valuation models
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.valuation_model_routing \
+            --report-root reports/postscan/valuation_research_queue \
+            --profile-config config/valuation_company_profiles.yaml
+
+      - name: Run Zero-BUY audit
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.zero_buy_audit \
+            --report-root "$ALL_A_REPORT" \
+            --output-dir reports/postscan/zero_buy_audit
+
+      - name: Validate unified production contract
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+
+          all_a = Path(__import__('os').environ['ALL_A_REPORT'])
+          post = Path('reports/postscan')
+          lt = list(csv.DictReader((post/'long_term_second_pass/long_term_second_pass_candidates.csv').open(encoding='utf-8')))
+          source = list(csv.DictReader((post/'final_valuation_source/all_a_quant_screen.csv').open(encoding='utf-8')))
+          source_by_code = {r['code']: r for r in source}
+          missing_lt = [r['code'] for r in lt if r['code'] not in source_by_code]
+          assert not missing_lt, f'long-term candidates missing valuation source: {missing_lt}'
+          assert all('LONG_TERM_SECOND_PASS' in source_by_code[r['code']].get('valuation_source_channel','') for r in lt)
+
+          runs = sorted(p for p in (post/'valuation_research_queue').iterdir() if p.is_dir())
+          assert runs, 'no valuation research run'
+          latest = runs[-1]
+          routed = latest/'valuation_research_routed.csv'
+          assert routed.exists(), 'valuation_research_routed.csv missing'
+          routed_rows = list(csv.DictReader(routed.open(encoding='utf-8')))
+          routed_codes = {r['code'] for r in routed_rows}
+          missing_lt_routed = [r['code'] for r in lt if r['code'] not in routed_codes]
+          assert not missing_lt_routed, f'long-term candidates lost before routed valuation: {missing_lt_routed}'
+
+          coverage_rows = list(csv.DictReader((post/'industry_coverage/industry_top_candidates.csv').open(encoding='utf-8')))
+          clean_industries = {r['industry'] for r in coverage_rows if r.get('industry_candidate_state') == 'RESEARCH_CANDIDATE'}
+          represented = {r.get('industry','') for r in source if r.get('valuation_source_channel') in {'INDUSTRY_CHAMPION','BOTH'} or 'INDUSTRY_CHAMPION' in r.get('valuation_source_channel','')}
+          assert not (clean_industries - represented), f'industries lost from valuation: {sorted(clean_industries - represented)}'
+
+          zero = json.loads((post/'zero_buy_audit/zero_buy_audit.json').read_text(encoding='utf-8'))
+          summary = json.loads((all_a/'run_summary.json').read_text(encoding='utf-8'))
+          assert zero['status'] in {'FORMAL_BUY_PRESENT','ZERO_BUY_DEFENSIVE_MARKET_ALLOWED','ZERO_BUY_REQUIRES_SECOND_PASS'}
+          if zero['status'] == 'ZERO_BUY_REQUIRES_SECOND_PASS':
+              assert lt, 'non-defensive zero BUY requires surviving long-term second-pass candidates or an explicit no-survivor explanation'
+
+          result = {
+              'all_a_effective_scan_count': summary.get('effective_scan_count'),
+              'market_regime_status': summary.get('market_regime_status'),
+              'formal_buy_count': zero.get('formal_buy_count'),
+              'zero_buy_status': zero.get('status'),
+              'industry_count': len({r['industry'] for r in coverage_rows}),
+              'long_term_second_pass_count': len(lt),
+              'valuation_source_count': len(source),
+              'valuation_routed_count': len(routed_rows),
+              'contract': 'PASS',
+          }
+          (post/'fresh_validation_summary.json').write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding='utf-8')
+          print(json.dumps(result, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Save caches
+        uses: actions/cache/save@v4
+        if: success()
+        with:
+          path: |
+            data/cache/all_a_full_scan
+            data/cache/genge_fundamentals
+            data/cache/opportunity_evidence
+            data/cache/valuation_research_fundamentals
+            data/opportunity_snapshots/all_a_state
+            data/opportunity_snapshots/all_a_forward_observation_ledger.csv
+            data/opportunity_snapshots/exit_profile.csv
+            stock_pools/all_a_universe_*.csv
+          key: genge-fresh-production-${{ runner.os }}-${{ github.run_id }}
+
+      - name: Upload unified fresh validation artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-fresh-production-validation
+          path: |
+            reports/all_a_full_scan
+            reports/postscan
+          if-no-files-found: error
