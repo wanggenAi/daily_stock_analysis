@@ -51,6 +51,7 @@ def test_find_latest_report_materializes_legacy_alias_for_flattened_artifact(tmp
         writer = csv.DictWriter(stream, fieldnames=["code", "industry", "quant_score"])
         writer.writeheader()
         writer.writerow({"code": "603369", "industry": "白酒", "quant_score": "76"})
+    (flattened_report / "run_summary.json").write_text("{}", encoding="utf-8")
 
     legacy_root = upstream / "reports" / "all_a_full_scan"
     resolved = find_latest_report(legacy_root)
@@ -59,3 +60,30 @@ def test_find_latest_report_materializes_legacy_alias_for_flattened_artifact(tmp
     assert legacy_root.exists()
     assert legacy_root.resolve() == flattened_report.resolve()
     assert (legacy_root / "all_a_quant_screen.csv").exists()
+    assert (legacy_root / "run_summary.json").exists()
+
+
+def test_flattened_artifact_prefers_top_level_all_a_over_nested_deep_review(tmp_path):
+    upstream = tmp_path / "upstream"
+    canonical = upstream / "20260818"
+    deep_review = canonical / "_deep_review" / "20260818_022714"
+    deep_review.mkdir(parents=True)
+
+    with (canonical / "all_a_quant_screen.csv").open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=["code", "industry", "quant_score"])
+        writer.writeheader()
+        writer.writerow({"code": "603369", "industry": "白酒", "quant_score": "76"})
+    (canonical / "run_summary.json").write_text("{}", encoding="utf-8")
+
+    with (deep_review / "quant_screen_all.csv").open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=["code", "industry", "quant_score"])
+        writer.writeheader()
+        writer.writerow({"code": "999999", "industry": "DECOY", "quant_score": "99"})
+
+    legacy_root = upstream / "reports" / "all_a_full_scan"
+    resolved = find_latest_report(legacy_root)
+
+    assert resolved.resolve() == canonical.resolve()
+    assert legacy_root.resolve() == canonical.resolve()
+    assert (legacy_root / "run_summary.json").exists()
+    assert not (legacy_root / "quant_screen_all.csv").exists()
