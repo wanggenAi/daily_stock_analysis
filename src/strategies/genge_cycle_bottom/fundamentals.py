@@ -27,6 +27,10 @@ FINANCIAL_COLUMNS = (
     "roe",
     "gross_margin",
 )
+# v1 financial cache could contain AkShare's per-share operating cash flow in
+# the total-cash-flow field. Never reuse that unit-ambiguous cache for reverse
+# valuation after the units fix.
+FINANCIAL_CACHE_KIND = "financial_v2_cashflow_units"
 
 
 @dataclass
@@ -212,7 +216,7 @@ class PublicFundamentalLoader:
         return merged, "akshare.stock_zh_valuation_baidu", errors, False
 
     def load_financial(self, code: str, *, years: int) -> Tuple[Optional[pd.DataFrame], str, List[str], bool]:
-        cached = _read_cache(self.cache_dir, "financial", code)
+        cached = _read_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code)
         if cached is not None:
             return _normalize_financial_frame(cached), "cache", [], True
 
@@ -239,7 +243,7 @@ class PublicFundamentalLoader:
         normalized = _normalize_financial_frame(raw_df)
         if normalized.empty:
             return None, "none", errors or ["financial_provider_unavailable"], False
-        _write_cache(self.cache_dir, "financial", code, normalized)
+        _write_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code, normalized)
         return normalized, provider, errors, False
 
 
@@ -295,9 +299,23 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
         ("扣除非经常性损益后的净利润", "扣非净利润", "recurring_profit"),
         ("同比", "增长率", "增长", "增速", "每股"),
     )
+    # Cash conversion is meaningful only when numerator and profit denominator
+    # use compatible total-currency units. AkShare's `每股经营性现金流` is
+    # yuan/share and must never be divided directly by total recurring profit.
+    # If a provider exposes only the per-share field, leave total OCF missing;
+    # missing data lowers confidence rather than fabricating a microscopic ratio.
     operating_cash_col = _first_column(
         local.columns,
-        ("经营活动产生的现金流量净额", "每股经营性现金流", "经营性现金流", "经营现金流", "NETCASH_OPERATE"),
+        (
+            "经营活动产生的现金流量净额",
+            "经营活动现金流量净额",
+            "经营性现金流",
+            "经营现金流",
+            "NETCASH_OPERATE",
+            "total_operating_cash_flow",
+            "operating_cash_flow",
+        ),
+        ("每股", "PER_SHARE", "per_share"),
     )
     roe_col = _first_column(local.columns, ("净资产收益率", "加权净资产收益率", "ROE"), ("同比",))
     gross_margin_col = _first_column(local.columns, ("销售毛利率", "毛利率", "GROSSPROFIT_MARGIN"), ("同比",))
