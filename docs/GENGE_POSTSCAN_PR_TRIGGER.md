@@ -1,6 +1,6 @@
 # GenGe Postscan PR Trigger
 
-retry: 11
+retry: 12
 upstream_run_id: 32090231706
 fresh_artifact_id: 9308603602
-purpose: validate final latest-main progress workflow contract before normal-production dispatch proof.
+purpose: dispatch normal production through the PR-backed Actions-write job while preserving the validated Postscan research job.
