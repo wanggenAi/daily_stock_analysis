@@ -1,30 +1,30 @@
-"""Execute specialized valuation models only when auditable inputs are available.
+"""Execute specialized valuation models only with auditable, PIT-safe inputs.
 
-Routing a company to a specialized model is not the same thing as executing the
-model.  This sidecar closes that gap conservatively.  The first executable
-family is the traditional securities-broker P/B residual-income bridge because
-existing public-data infrastructure can provide point-in-time P/B and historical
-annual ROE without inventing segment economics, embedded value, normalized FCFE,
-or lease-consistent transport debt.
+Routing to a specialized model is not execution. This research-only sidecar
+currently executes the traditional securities-broker P/B residual-income bridge
+because existing public-data infrastructure can supply historical P/B and annual
+ROE without inventing embedded value, FCFE, segment economics, or lease debt.
 
-The broker model is executed in normalized book-value units: common BVPS is set
-to 1 and current price is set to current P/B.  This is algebraically equivalent
-to valuing actual BVPS while avoiding a synthetic share-count/book-value bridge.
-The output therefore reports fair P/B, market-implied mid-cycle ROE and P/B-based
-margin of safety, not a fabricated per-share fair price.
+Broker valuation runs in normalized book-value units: BVPS=1 and price=current
+P/B. This is algebraically equivalent to using actual BVPS, while avoiding a
+synthetic share-count/book-value bridge. Outputs are fair P/B, market-implied
+mid-cycle ROE and P/B margin of safety; no fabricated per-share fair price is
+published.
 
-Annual ROE is deliberately conservative:
-* only fiscal-year rows (12-31) are used;
-* an actual disclosure date must be on/before the research as-of date, otherwise
-  the statutory latest annual-report deadline (April 30 of the next year) must
-  have passed;
-* provider ROE is treated as percentage points and converted to a ratio / 100;
-* at least three annual observations are required by default;
-* the median of the most recent bounded history is the mid-cycle normalization.
+Annual ROE rules are deliberately conservative: fiscal-year rows only, PIT-safe
+publication checks, provider percentage-points converted /100, at least three
+observations by default, and a bounded-history median as mid-cycle ROE.
 
-Other specialized families remain explicitly INPUTS_REQUIRED until their real
-model-specific evidence can be sourced.  Nothing in this module creates a
-Formal BUY, changes ranking, or enables automatic trading.
+Specialized model data uses its own versioned cache namespace. A generic
+financial cache can be perfectly adequate for earnings normalization while still
+lack fields such as ROE; allowing that cache to control specialized execution
+would make model state depend on historical cache accidents. If the dedicated
+specialized financial cache is hit but still lacks enough annual ROE, this module
+invalidates only that dedicated financial cache and retries once.
+
+Other specialized families remain INPUTS_REQUIRED until real model-specific
+evidence exists. Nothing here creates a Formal BUY, changes ranking, or enables
+automatic trading.
 """
 
 from __future__ import annotations
@@ -42,7 +42,10 @@ from typing import Any, Iterable, Mapping
 
 import pandas as pd
 
-from src.strategies.genge_cycle_bottom.fundamentals import PublicFundamentalLoader
+from src.strategies.genge_cycle_bottom.fundamentals import (
+    FINANCIAL_CACHE_KIND,
+    PublicFundamentalLoader,
+)
 from src.strategies.genge_opportunity_discovery.capital_markets_valuation import (
     value_traditional_broker,
 )
@@ -53,6 +56,7 @@ from src.strategies.genge_opportunity_discovery.valuation_research_long_term_run
 DISCLAIMER = "仅用于公开数据研究排序和人工复核，不构成买入或卖出建议，不应自动交易。"
 CAPITAL_MARKETS_STRATEGY_ID = "capital_markets_cycle"
 GENERAL_REVERSE_STRATEGY_ID = "general_reverse_earnings"
+SPECIALIZED_CACHE_NAMESPACE = "specialized_execution_v1"
 DEFAULT_MIN_ANNUAL_ROE_SAMPLES = 3
 DEFAULT_MAX_ANNUAL_ROE_SAMPLES = 5
 DEFAULT_COST_OF_EQUITY = 0.11
@@ -98,10 +102,6 @@ def _finite(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return number if math.isfinite(number) else None
-
-
-def _bool_text(value: bool) -> bool:
-    return bool(value)
 
 
 def _normalize_code(value: Any) -> str:
@@ -171,7 +171,6 @@ def _annual_roe_history(
         if roe_percentage_points is None:
             continue
         roe_ratio = roe_percentage_points / 100.0
-        # Reject obviously corrupt unit/value observations rather than clipping.
         if not math.isfinite(roe_ratio) or abs(roe_ratio) > 2.0:
             continue
         rows.append((report_date, roe_ratio))
@@ -254,6 +253,54 @@ def _locked_base(row: Mapping[str, Any]) -> dict[str, Any]:
     return output
 
 
+def _load_capital_markets_inputs(
+    loader: PublicFundamentalLoader,
+    *,
+    code: str,
+    years: int,
+    as_of: date,
+    maximum_annual_roe_samples: int,
+    minimum_annual_roe_samples: int,
+):
+    fetched = loader.load(
+        code,
+        years=max(5, int(years)),
+        fetch_valuation=True,
+        fetch_financial=True,
+    )
+    roe_history = _annual_roe_history(
+        fetched.financial_df,
+        as_of=as_of,
+        max_samples=maximum_annual_roe_samples,
+    )
+
+    cache_hits = getattr(fetched, "cache_hits", {}) or {}
+    cache_dir = getattr(loader, "cache_dir", None)
+    if (
+        len(roe_history.values) < max(1, int(minimum_annual_roe_samples))
+        and bool(cache_hits.get("financial"))
+        and isinstance(cache_dir, Path)
+        and cache_dir.name == SPECIALIZED_CACHE_NAMESPACE
+    ):
+        financial_cache = cache_dir / FINANCIAL_CACHE_KIND / f"{code}.csv"
+        try:
+            financial_cache.unlink(missing_ok=True)
+        except OSError:
+            pass
+        fetched = loader.load(
+            code,
+            years=max(5, int(years)),
+            fetch_valuation=True,
+            fetch_financial=True,
+        )
+        roe_history = _annual_roe_history(
+            fetched.financial_df,
+            as_of=as_of,
+            max_samples=maximum_annual_roe_samples,
+        )
+    return fetched, roe_history
+
+
 def execute_specialized_rows(
     rows: Iterable[Mapping[str, Any]],
     *,
@@ -290,18 +337,20 @@ def execute_specialized_rows(
 
         code = _normalize_code(row.get("code"))
         try:
-            fetched = loader.load(
-                code,
-                years=max(5, int(years)),
-                fetch_valuation=True,
-                fetch_financial=True,
+            fetched, roe_history = _load_capital_markets_inputs(
+                loader,
+                code=code,
+                years=years,
+                as_of=as_of,
+                maximum_annual_roe_samples=maximum_annual_roe_samples,
+                minimum_annual_roe_samples=minimum_annual_roe_samples,
             )
         except Exception as exc:
             row.update(
                 {
                     "specialized_model_execution_state": "SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED",
                     "specialized_model_status": "PUBLIC_FUNDAMENTAL_LOAD_FAILED",
-                    "specialized_model_execution_reason": f"{type(exc).__name__}",
+                    "specialized_model_execution_reason": type(exc).__name__,
                     "specialized_model_next_action": "retry_public_fundamental_inputs_without_promoting_model_state",
                 }
             )
@@ -309,11 +358,6 @@ def execute_specialized_rows(
             continue
 
         current_pb, pb_date = _latest_positive_pb(fetched.valuation_df, as_of=as_of)
-        roe_history = _annual_roe_history(
-            fetched.financial_df,
-            as_of=as_of,
-            max_samples=maximum_annual_roe_samples,
-        )
         row.update(
             {
                 "specialized_model_input_basis": (
@@ -364,15 +408,14 @@ def execute_specialized_rows(
             if model.implied_mid_cycle_roe is None
             else normalized_roe - model.implied_mid_cycle_roe
         )
-        executed_state = (
-            "SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY"
-            if model.valuation_model_applicable
-            else "SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED"
-        )
         row.update(
             {
                 "specialized_model_executed": True,
-                "specialized_model_execution_state": executed_state,
+                "specialized_model_execution_state": (
+                    "SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY"
+                    if model.valuation_model_applicable
+                    else "SPECIALIZED_MODEL_EXECUTED_FAIL_CLOSED"
+                ),
                 "specialized_model_status": model.status,
                 "specialized_model_execution_reason": (
                     "traditional_broker_pb_residual_income_in_normalized_book_units"
@@ -388,9 +431,6 @@ def execute_specialized_rows(
                 ),
             }
         )
-        # Do not overwrite the original routing field.  The sidecar state above
-        # is the auditable proof of execution while downstream Formal BUY remains
-        # unchanged until a separately tested integration explicitly consumes it.
         row["valuation_model_execution_state"] = original_state
         result.append(row)
     return result
@@ -430,6 +470,13 @@ def _write_csv(path: Path, rows: list[dict[str, Any]], source_fields: list[str])
         writer.writerows(rows)
 
 
+def _dedicated_cache_dir(cache_root: Path) -> Path:
+    cache_root = Path(cache_root)
+    if cache_root.name == SPECIALIZED_CACHE_NAMESPACE:
+        return cache_root
+    return cache_root / SPECIALIZED_CACHE_NAMESPACE
+
+
 def write_specialized_execution_sidecar(
     report_root: Path,
     *,
@@ -448,7 +495,9 @@ def write_specialized_execution_sidecar(
         source_fields = list(reader.fieldnames or [])
         rows = list(reader)
     as_of = _read_as_of(report_dir)
-    effective_loader = loader or PublicFundamentalLoader(cache_dir=cache_dir)
+
+    dedicated_cache = _dedicated_cache_dir(cache_dir)
+    effective_loader = loader or PublicFundamentalLoader(cache_dir=dedicated_cache)
     executed = execute_specialized_rows(
         rows,
         as_of=as_of,
@@ -460,11 +509,10 @@ def write_specialized_execution_sidecar(
         long_term_growth=long_term_growth,
     )
 
-    output_csv = report_dir / "valuation_research_specialized.csv"
-    _write_csv(output_csv, executed, source_fields)
-
+    _write_csv(report_dir / "valuation_research_specialized.csv", executed, source_fields)
     specialized = [
-        row for row in executed
+        row
+        for row in executed
         if str(row.get("valuation_primary_strategy_id") or "")
         not in {"", GENERAL_REVERSE_STRATEGY_ID}
     ]
@@ -494,6 +542,7 @@ def write_specialized_execution_sidecar(
             "roe_input_basis": ROE_INPUT_BASIS,
             "normalization_basis": BROKER_NORMALIZATION_BASIS,
             "valuation_space": "NORMALIZED_BOOK_VALUE_UNITS",
+            "cache_namespace": SPECIALIZED_CACHE_NAMESPACE,
         },
         "ranking_changed": False,
         "formal_buy_consumes_specialized_sidecar": False,
@@ -515,6 +564,7 @@ def write_specialized_execution_sidecar(
         f"- specialized_selected_count: {len(specialized)}",
         f"- capital_markets_selected_count: {len(broker_rows)}",
         f"- capital_markets_executed_count: {summary['capital_markets_executed_count']}",
+        f"- cache_namespace: {SPECIALIZED_CACHE_NAMESPACE}",
         "- ranking_changed: False",
         "- formal_buy_consumes_specialized_sidecar: False",
         "- no_auto_trade: True",
