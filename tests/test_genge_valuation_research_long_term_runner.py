@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.strategies.genge_opportunity_discovery import valuation_research_report as base
 from src.strategies.genge_opportunity_discovery.valuation_research_long_term_runner import (
+    _add_financial_review,
     _base_row,
     _build_valuation_research_rows,
     _rank_key,
@@ -51,6 +52,48 @@ def test_long_term_rows_sort_ahead_for_bounded_financial_review():
     normal = dict(common, valuation_source_channel="GLOBAL_RECALL", code="600000")
     long_term = dict(common, valuation_source_channel="LONG_TERM_SECOND_PASS", code="603369")
     assert _rank_key(long_term) < _rank_key(normal)
+
+
+def test_provider_cash_conversion_ratio_drives_quality_without_fake_total_ocf():
+    diag = base.PeReferenceDiagnostic(
+        current_pe=20,
+        reference_median_pe=20,
+        sample_count=30,
+        reference_start="2021-01-01",
+        reference_end="2026-01-01",
+        percentile=0.5,
+        implied_profit_multiple=1.0,
+        required_profit_growth=0.0,
+        status="OK",
+    )
+    row = _base_row(
+        {
+            "code": "603369",
+            "valuation_source_channel": "LONG_TERM_SECOND_PASS",
+        },
+        diag,
+    )
+    financial = pd.DataFrame(
+        [
+            {
+                "report_date": "2026-06-30",
+                "net_profit": 100.0,
+                "recurring_profit": 95.0,
+                "operating_cash_flow": None,
+                "operating_cash_flow_per_share": 1.2962,
+                "cash_conversion_ratio": 1.10,
+                "cash_conversion_ratio_basis": "PROVIDER_OCF_TO_NET_PROFIT_RATIO",
+            }
+        ]
+    )
+
+    reviewed = _add_financial_review(row, financial, as_of=date(2026, 8, 17))
+
+    assert pd.isna(reviewed["operating_cash_flow"])
+    assert reviewed["cash_conversion_ratio"] == 1.10
+    assert reviewed["cash_conversion_ratio_basis"] == "PROVIDER_OCF_TO_NET_PROFIT_RATIO"
+    assert reviewed["earnings_quality_score"] == 90.0
+    assert reviewed["earnings_quality_confidence"] == "HIGH"
 
 
 class _Loader:
