@@ -1,6 +1,6 @@
 # GenGe Pipeline Maintenance Trigger
 
-retry: 2
+retry: 3
 fresh_upstream_run_id: 32090231706
 fresh_artifact_id: 9308603602
 actions:
