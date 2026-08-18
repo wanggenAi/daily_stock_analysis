@@ -45,6 +45,7 @@ jobs:
       - name: Run focused Postscan tests
         run: |
           python -m pytest -q \
+            tests/test_genge_fundamental_cashflow_units.py \
             tests/test_genge_industry_coverage.py \
             tests/test_genge_industry_valuation_bridge.py \
             tests/test_genge_long_term_second_pass.py \
