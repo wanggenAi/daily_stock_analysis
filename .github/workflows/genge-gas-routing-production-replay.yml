@@ -63,7 +63,9 @@ jobs:
           assert r['valuation_model_execution_state'] == 'NORMALIZATION_REQUIRED_BEFORE_GENERIC_VALUATION'
           s = next(x for x in special if x['code'] == '603393')
           assert s['specialized_model_execution_state'] == 'NOT_SPECIALIZED_ROUTE'
-          summary = json.loads((latest/'valuation_specialized_summary.json').read_text(encoding='utf-8'))
+          summary = json.loads((latest/'specialized_valuation_summary.json').read_text(encoding='utf-8'))
+          assert summary['specialized_selected_count'] == 14
+          assert summary['specialized_strategy_counts']['yield_asset'] == 2
           assert summary['capital_markets_selected_count'] == 3
           assert summary['capital_markets_executed_count'] == 3
           assert summary['formal_buy_consumes_specialized_sidecar'] is False
