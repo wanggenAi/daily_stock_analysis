@@ -75,6 +75,8 @@ jobs:
             tests/test_genge_industry_valuation_bridge.py \
             tests/test_genge_long_term_second_pass.py \
             tests/test_genge_long_term_valuation_merge.py \
+            tests/test_genge_valuation_research_long_term_runner.py \
+            tests/test_genge_long_term_formal_buy.py \
             tests/test_genge_zero_buy_audit.py \
             tests/test_genge_valuation_research_report.py \
             tests/test_genge_valuation_research_production.py \
@@ -146,9 +148,9 @@ jobs:
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
 
-      - name: Build reverse-valuation research queue
+      - name: Build reverse-valuation research queue with long-term financial priority
         run: |
-          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_report \
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_long_term_runner \
             --report-dir reports/final_valuation_source \
             --output-dir reports/valuation_research_queue \
             --fundamental-cache-dir data/cache/valuation_research_fundamentals \
@@ -165,7 +167,15 @@ jobs:
             --report-root reports/valuation_research_queue \
             --profile-config config/valuation_company_profiles.yaml
 
-      - name: Audit zero Formal BUY
+      - name: Build long-term Formal BUY review
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.long_term_formal_buy \
+            --report-root upstream/reports/all_a_full_scan \
+            --long-term-dir reports/long_term_second_pass \
+            --valuation-root reports/valuation_research_queue \
+            --output-dir reports/long_term_formal_buy
+
+      - name: Audit legacy zero Formal BUY
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.zero_buy_audit \
             --report-root upstream/reports/all_a_full_scan \
@@ -175,6 +185,7 @@ jobs:
         run: |
           python - <<'PY'
           import csv, json
+          from collections import Counter
           from pathlib import Path
 
           valuation_root = Path('reports/valuation_research_queue')
@@ -188,27 +199,86 @@ jobs:
           }
           missing = sorted(name for name in required if not (latest/name).exists())
           assert not missing, f'missing valuation outputs: {missing}'
+
           valuation_rows = list(csv.DictReader((latest/'valuation_research_queue.csv').open(encoding='utf-8')))
           routed_rows = list(csv.DictReader((latest/'valuation_research_routed.csv').open(encoding='utf-8')))
           lt_rows = list(csv.DictReader(Path('reports/long_term_second_pass/long_term_second_pass_candidates.csv').open(encoding='utf-8')))
           valuation_codes = {r['code'] for r in valuation_rows}
           missing_lt = sorted({r['code'] for r in lt_rows} - valuation_codes)
           assert not missing_lt, f'long-term candidates dropped before valuation: {missing_lt}'
+
+          # Long-term recall must retain an auditable source tag through valuation.
+          tagged = {
+              r['code'] for r in valuation_rows
+              if 'LONG_TERM_SECOND_PASS' in r.get('valuation_source_channel','')
+          }
+          missing_tags = sorted({r['code'] for r in lt_rows} - tagged)
+          assert not missing_tags, f'long-term valuation source tags lost: {missing_tags}'
+
+          # Long-term names must get first claim on the bounded financial-review budget.
+          reviewed_lt = {
+              r['code'] for r in valuation_rows
+              if r['code'] in {x['code'] for x in lt_rows}
+              and r.get('financial_review_status') != 'NOT_SELECTED_FOR_DEEP_FINANCIAL_REVIEW'
+          }
+          if len(lt_rows) <= 100:
+              assert reviewed_lt == {r['code'] for r in lt_rows}, (
+                  f'long-term candidates skipped financial review: '
+                  f'{sorted({r["code"] for r in lt_rows} - reviewed_lt)}'
+              )
+
           routing = json.loads((latest/'valuation_routing_summary.json').read_text(encoding='utf-8'))
           assert len(routed_rows) == len(valuation_rows) == routing['routed_count']
           assert routing['formal_signal_eligible'] is False
           assert routing['automatic_promotion_allowed'] is False
           assert routing['no_auto_trade'] is True
 
+          formal_path = Path('reports/long_term_formal_buy/long_term_formal_buy_candidates.csv')
+          formal_rows = list(csv.DictReader(formal_path.open(encoding='utf-8')))
+          formal_summary = json.loads(Path('reports/long_term_formal_buy/long_term_formal_buy_summary.json').read_text(encoding='utf-8'))
+          assert len(formal_rows) == formal_summary['candidate_count']
+          assert formal_summary['long_term_formal_buy_count'] == sum(
+              r.get('long_term_formal_buy_eligible') == 'True' for r in formal_rows
+          )
+          assert formal_summary['legacy_exit_profile_is_long_term_veto'] is False
+          assert formal_summary['no_auto_trade'] is True
+
           zero = json.loads(Path('reports/zero_buy_audit/zero_buy_audit.json').read_text(encoding='utf-8'))
           lt_summary = json.loads(Path('reports/long_term_second_pass/long_term_second_pass_summary.json').read_text(encoding='utf-8'))
-          if zero['requires_second_pass']:
-              # A non-defensive zero cannot silently terminate the pipeline.
-              # Either we have long-term candidates routed through valuation,
-              # or the report explicitly proves none passed non-exit hard gates.
-              assert zero['zero_buy_allowed'] is False
-              assert lt_summary['candidate_count'] >= 0
-          print(json.dumps({'zero_buy': zero, 'long_term': lt_summary, 'routing': routing}, ensure_ascii=False, indent=2))
+
+          # Non-defensive zero is allowed only after the second pass is fully researched.
+          # Missing valuation/model execution/financial review is a production gap, not proof
+          # that the market contains no long-term opportunity.
+          if zero['requires_second_pass'] and formal_summary['long_term_formal_buy_count'] == 0:
+              unresolved_tokens = {
+                  'valuation_missing',
+                  'valuation_model_not_executed',
+                  'valuation_diagnostic_not_ready',
+                  'financial_review_not_ready',
+                  'required_profit_growth_unavailable',
+              }
+              blocker_counts = Counter()
+              for row in formal_rows:
+                  for token in str(row.get('long_term_blockers') or '').split(';'):
+                      if token:
+                          blocker_counts[token] += 1
+              unresolved = sorted(token for token in unresolved_tokens if blocker_counts[token])
+              assert not unresolved, (
+                  'non-defensive zero still has unresolved research/model gaps; '
+                  f'cannot publish as no-opportunity: {unresolved}'
+              )
+              # If no long-term names passed non-exit gates at all, zero can be explained.
+              # Otherwise every blocked row must carry at least one substantive investment blocker.
+              if lt_summary['candidate_count'] > 0:
+                  assert formal_rows, 'long-term candidates vanished before final decision'
+                  assert all(str(r.get('long_term_blockers') or '').strip() for r in formal_rows)
+
+          print(json.dumps({
+              'zero_buy': zero,
+              'long_term_second_pass': lt_summary,
+              'long_term_formal_buy': formal_summary,
+              'routing': routing,
+          }, ensure_ascii=False, indent=2))
           PY
 
       - name: Publish postscan summary
@@ -217,6 +287,7 @@ jobs:
           for f in \
             reports/industry_coverage/industry_top_candidates.md \
             reports/long_term_second_pass/long_term_second_pass.md \
+            reports/long_term_formal_buy/long_term_formal_buy.md \
             reports/zero_buy_audit/zero_buy_audit.md; do
             if [ -f "$f" ]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo >> "$GITHUB_STEP_SUMMARY"; fi
           done
@@ -248,5 +319,6 @@ jobs:
             reports/industry_valuation_source
             reports/final_valuation_source
             reports/valuation_research_queue
+            reports/long_term_formal_buy
             reports/zero_buy_audit
           if-no-files-found: error
