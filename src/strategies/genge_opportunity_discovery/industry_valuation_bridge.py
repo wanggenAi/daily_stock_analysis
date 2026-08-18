@@ -50,6 +50,31 @@ def _industry_rank(row: Mapping[str, Any]) -> int:
         return 10**9
 
 
+def _merge_industry_provenance(target: dict[str, Any], industry_row: Mapping[str, Any]) -> None:
+    """Fill missing industry-recall provenance on an existing global row.
+
+    A name can enter the valuation source through global recall before the
+    industry channel sees it.  In that case the global row may not carry the
+    normalized ``industry`` column.  Marking the row ``BOTH`` without copying
+    the industry provenance makes downstream coverage validation incorrectly
+    conclude that the industry disappeared even though its champion is present.
+    Only missing provenance is filled; global ranking/valuation fields and hard
+    blockers are never overwritten.
+    """
+    for key in (
+        "industry",
+        "normalized_industry",
+        "raw_industry",
+        "industry_research_rank",
+        "industry_candidate_state",
+        "industry_status",
+    ):
+        current = str(target.get(key) or "").strip()
+        incoming = str(industry_row.get(key) or "").strip()
+        if incoming and (not current or current == "UNCLASSIFIED"):
+            target[key] = industry_row.get(key)
+
+
 def merge_sources(
     all_a_rows: Iterable[Mapping[str, Any]],
     industry_rows: Iterable[Mapping[str, Any]],
@@ -88,7 +113,9 @@ def merge_sources(
         if not code:
             continue
         if code in by_code:
-            by_code[code]["valuation_source_channel"] = "BOTH"
+            existing = by_code[code]
+            existing["valuation_source_channel"] = "BOTH"
+            _merge_industry_provenance(existing, raw)
             continue
         row = dict(raw)
         row["code"] = code
