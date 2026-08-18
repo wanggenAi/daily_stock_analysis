@@ -1,0 +1,28 @@
+name: GenGe Insurance Marketcap Probe Locator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-insurance-marketcap-probe-locator.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  locate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record probe run
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          sleep 8
+          gh run list --repo "${{ github.repository }}" --workflow genge-insurance-marketcap-probe.yml --limit 3 --json databaseId,status,conclusion,headSha,url > docs/GENGE_INSURANCE_MARKETCAP_PROBE_LOCATOR.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_INSURANCE_MARKETCAP_PROBE_LOCATOR.json
+          git commit -m "chore: record insurance market cap probe" || exit 0
+          git push origin HEAD:main
