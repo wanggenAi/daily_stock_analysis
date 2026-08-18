@@ -3,4 +3,30 @@ description: >-
   Point-in-time company valuation profiles. Append reviewed versions; do not
   overwrite history. Records are research metadata only and cannot create a
   Formal BUY or an automatic trade signal.
-profiles: []
+profiles:
+  - profile_id: 603393-resource-cycle-v1
+    code: "603393"
+    stock_name: 新天然气
+    known_at: "2026-07-28"
+    evidence_as_of: "2026-07-28"
+    review_after: "2027-04-30"
+    confidence: HIGH
+    business_tags:
+      - 城市燃气
+      - 煤层气勘探开发
+      - 常规油气勘探开发
+      - 煤炭资源
+      - 上游资源开发
+    archetype_hints:
+      - CAPACITY_CYCLE
+      - GENERAL_EARNINGS
+    disabled_strategy_ids:
+      - yield_asset
+    rationale: >-
+      2025年度报告明确公司同时经营城市燃气以及非常规天然气、常规油气和煤炭资源勘探开发；
+      2025年年报监管问询回复进一步按煤层气储量、产量、销售价格、投资和操作费及10%折现率评估
+      马必、潘庄等上游区块。公司经济结构因此不能仅凭“燃气”行业标签按稳定FCFE收益资产处理；
+      以资源/产能周期归一化后再使用通用逆向盈利估值更保守，且避免伪造maintenance/growth capex拆分。
+    evidence_refs:
+      - new-natural-gas-2025-annual-report-2026-03-28
+      - new-natural-gas-2025-annual-report-inquiry-response-2026-07-28
