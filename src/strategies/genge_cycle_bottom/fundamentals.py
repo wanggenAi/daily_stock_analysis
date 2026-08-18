@@ -31,9 +31,9 @@ FINANCIAL_COLUMNS = (
     "gross_margin",
 )
 # Earlier financial caches could contain AkShare's per-share operating cash
-# flow in the total-cash-flow field or omit the provider's dimensionless cash
-# conversion ratio. Never reuse those unit-ambiguous/incomplete cache schemas.
-FINANCIAL_CACHE_KIND = "financial_v3_cashflow_units_ratio"
+# flow in the total-cash-flow field, omit the direct ratio, or divide Sina's
+# already dimensionless OCF/net-profit ratio by 100. Never reuse them.
+FINANCIAL_CACHE_KIND = "financial_v4_cashflow_units_ratio_semantics"
 
 
 @dataclass
@@ -323,8 +323,9 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
         ("比率", "比例"),
     )
 
-    # Cached normalized rows already store a decimal ratio. Raw AkShare rows
-    # expose 经营现金净流量与净利润的比率(%) and therefore need exactly one /100.
+    # Sina labels this field with "(%)" but publishes it as the direct
+    # dimensionless OCF/net-profit multiple: e.g. 2026Q1 今世缘 is 1.5263,
+    # matching 2.1138bn / 1.3849bn. AKShare passes the value through unchanged.
     normalized_cash_ratio_col = (
         "cash_conversion_ratio" if "cash_conversion_ratio" in local.columns else None
     )
@@ -366,11 +367,7 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
         else:
             result["cash_conversion_ratio_basis"] = "NORMALIZED_CACHED_RATIO"
     elif provider_cash_ratio_col is not None:
-        def _provider_ratio(value: Any) -> Optional[float]:
-            number = _safe_float(value)
-            return number / 100.0 if number is not None else None
-
-        result["cash_conversion_ratio"] = local[provider_cash_ratio_col].map(_provider_ratio)
+        result["cash_conversion_ratio"] = local[provider_cash_ratio_col].map(_safe_float)
         result["cash_conversion_ratio_basis"] = "PROVIDER_OCF_TO_NET_PROFIT_RATIO"
     else:
         result["cash_conversion_ratio"] = None
