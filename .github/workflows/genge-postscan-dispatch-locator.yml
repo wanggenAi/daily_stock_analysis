@@ -1,0 +1,105 @@
+name: GenGe Postscan Dispatch Locator
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "docs/GENGE_POSTSCAN_DISPATCH_TRIGGER.md"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: genge-postscan-dispatch-locator
+  cancel-in-progress: false
+
+jobs:
+  locate-or-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Locate or dispatch canonical Postscan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          UPSTREAM_RUN_ID: "32090231706"
+          FRESH_COMPLETED_AT: "2026-08-18T02:27:47Z"
+        run: |
+          set -euo pipefail
+          workflow_id=$(gh api "repos/${REPO}/actions/workflows/genge-postscan-research.yml" --jq '.id')
+          echo "postscan_workflow_id=${workflow_id}"
+
+          find_run() {
+            gh api "repos/${REPO}/actions/workflows/${workflow_id}/runs?per_page=30" \
+              --jq --arg cutoff "$FRESH_COMPLETED_AT" '
+                [.workflow_runs[]
+                 | select(.created_at >= $cutoff)
+                 | select(.event == "workflow_run" or .event == "workflow_dispatch")]
+                | sort_by(.created_at)
+                | reverse
+                | .[0] // empty
+                | [.id, .status, (.conclusion // ""), .event, .created_at, .html_url]
+                | @tsv'
+          }
+
+          run_line=$(find_run || true)
+          dispatch_performed=false
+          if [ -z "$run_line" ]; then
+            echo "No canonical Postscan run found after Fresh completion; dispatching upstream_run_id=${UPSTREAM_RUN_ID}"
+            gh workflow run genge-postscan-research.yml --repo "$REPO" --ref main -f upstream_run_id="$UPSTREAM_RUN_ID"
+            dispatch_performed=true
+            for _ in $(seq 1 12); do
+              sleep 5
+              run_line=$(find_run || true)
+              [ -n "$run_line" ] && break
+            done
+          fi
+
+          if [ -z "$run_line" ]; then
+            echo "Unable to locate Postscan run after dispatch" >&2
+            exit 1
+          fi
+
+          IFS=$'\t' read -r run_id run_status run_conclusion run_event run_created run_url <<< "$run_line"
+          echo "POSTSCAN_RUN_ID=$run_id" >> "$GITHUB_ENV"
+          echo "POSTSCAN_STATUS=$run_status" >> "$GITHUB_ENV"
+          echo "POSTSCAN_CONCLUSION=$run_conclusion" >> "$GITHUB_ENV"
+          echo "POSTSCAN_EVENT=$run_event" >> "$GITHUB_ENV"
+          echo "POSTSCAN_CREATED_AT=$run_created" >> "$GITHUB_ENV"
+          echo "POSTSCAN_URL=$run_url" >> "$GITHUB_ENV"
+          echo "DISPATCH_PERFORMED=$dispatch_performed" >> "$GITHUB_ENV"
+          echo "Located Postscan run: $run_id status=$run_status event=$run_event"
+
+      - name: Persist Postscan runtime locator
+        env:
+          UPSTREAM_RUN_ID: "32090231706"
+        run: |
+          cat > docs/GENGE_POSTSCAN_RUNTIME_STATUS.md <<EOF
+          # GenGe Postscan Runtime Status
+
+          upstream_run_id: ${UPSTREAM_RUN_ID}
+          postscan_run_id: ${POSTSCAN_RUN_ID}
+          status: ${POSTSCAN_STATUS}
+          conclusion: ${POSTSCAN_CONCLUSION}
+          event: ${POSTSCAN_EVENT}
+          created_at_utc: ${POSTSCAN_CREATED_AT}
+          dispatch_performed: ${DISPATCH_PERFORMED}
+          url: ${POSTSCAN_URL}
+          canonical_workflow: .github/workflows/genge-postscan-research.yml
+
+          Required terminal outputs: every-industry coverage, long-term second pass, long-term-priority financial review, valuation_research_routed.csv, long_term_formal_buy_candidates.csv, and zero_buy_audit.json.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_POSTSCAN_RUNTIME_STATUS.md
+          if ! git diff --cached --quiet; then
+            git commit -m "docs: persist canonical Postscan runtime [skip ci]"
+            git push origin HEAD:main
+          fi
