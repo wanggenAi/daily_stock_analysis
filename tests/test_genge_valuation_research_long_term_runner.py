@@ -8,7 +8,9 @@ from src.strategies.genge_opportunity_discovery.valuation_research_long_term_run
     _add_financial_review,
     _base_row,
     _build_valuation_research_rows,
+    _pit_safe_financial_frame,
     _rank_key,
+    _statutory_latest_disclosure_date,
 )
 
 
@@ -54,6 +56,53 @@ def test_long_term_rows_sort_ahead_for_bounded_financial_review():
     assert _rank_key(long_term) < _rank_key(normal)
 
 
+def test_statutory_deadlines_match_standard_a_share_reporting_periods():
+    assert _statutory_latest_disclosure_date("2025-12-31") == date(2026, 4, 30)
+    assert _statutory_latest_disclosure_date("2026-03-31") == date(2026, 4, 30)
+    assert _statutory_latest_disclosure_date("2026-06-30") == date(2026, 8, 31)
+    assert _statutory_latest_disclosure_date("2026-09-30") == date(2026, 10, 31)
+
+
+def test_undated_half_year_row_is_not_used_before_august_31():
+    financial = pd.DataFrame(
+        [
+            {"report_date": "2026-03-31", "cash_conversion_ratio": 1.5263},
+            {"report_date": "2026-06-30", "cash_conversion_ratio": 0.7763},
+        ]
+    )
+
+    safe, used = _pit_safe_financial_frame(financial, as_of=date(2026, 8, 17))
+
+    assert used is True
+    assert list(pd.to_datetime(safe["report_date"]).dt.date) == [date(2026, 3, 31)]
+
+    safe_after_deadline, used_after = _pit_safe_financial_frame(
+        financial, as_of=date(2026, 9, 1)
+    )
+    assert used_after is True
+    assert list(pd.to_datetime(safe_after_deadline["report_date"]).dt.date) == [
+        date(2026, 3, 31),
+        date(2026, 6, 30),
+    ]
+
+
+def test_actual_disclosure_date_takes_priority_over_statutory_fallback():
+    financial = pd.DataFrame(
+        [
+            {
+                "report_date": "2026-06-30",
+                "disclosure_date": "2026-08-10",
+                "cash_conversion_ratio": 0.90,
+            }
+        ]
+    )
+
+    safe, used = _pit_safe_financial_frame(financial, as_of=date(2026, 8, 17))
+
+    assert used is False
+    assert len(safe) == 1
+
+
 def test_provider_cash_conversion_ratio_drives_quality_without_fake_total_ocf():
     diag = base.PeReferenceDiagnostic(
         current_pe=20,
@@ -76,7 +125,7 @@ def test_provider_cash_conversion_ratio_drives_quality_without_fake_total_ocf():
     financial = pd.DataFrame(
         [
             {
-                "report_date": "2026-06-30",
+                "report_date": "2026-03-31",
                 "net_profit": 100.0,
                 "recurring_profit": 95.0,
                 "operating_cash_flow": None,
@@ -94,6 +143,7 @@ def test_provider_cash_conversion_ratio_drives_quality_without_fake_total_ocf():
     assert reviewed["cash_conversion_ratio_basis"] == "PROVIDER_OCF_TO_NET_PROFIT_RATIO"
     assert reviewed["earnings_quality_score"] == 90.0
     assert reviewed["earnings_quality_confidence"] == "HIGH"
+    assert reviewed["earnings_point_in_time_method"] == "STATUTORY_DEADLINE_FALLBACK"
 
 
 class _Loader:
@@ -117,7 +167,7 @@ class _Loader:
         financial = pd.DataFrame(
             [
                 {
-                    "report_date": "2026-06-30",
+                    "report_date": "2026-03-31",
                     "net_profit": 100.0,
                     "recurring_profit": 95.0,
                     "investment_income": 0.0,
