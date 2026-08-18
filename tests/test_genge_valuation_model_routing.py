@@ -105,6 +105,78 @@ def test_bank_route_uses_specialized_non_pe_model_family():
     )
 
 
+def test_broad_gas_industry_remains_yield_asset_without_company_profile():
+    routed = annotate_valuation_routes(
+        [
+            _row(
+                code="603393",
+                stock_name="新天然气",
+                industry="燃气",
+                valuation_diagnostic_status="OK",
+            )
+        ],
+        as_of=date(2026, 8, 17),
+        profile_repository=CompanyValuationProfileRepository(()),
+    )[0]
+
+    assert routed["valuation_profile_status"] == "NOT_FOUND"
+    assert routed["valuation_primary_strategy_id"] == "yield_asset"
+    assert routed["valuation_model_execution_state"] == (
+        "SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED"
+    )
+
+
+def test_mixed_gas_resource_profile_overrides_yield_prior_with_cycle_normalization(tmp_path):
+    repository = load_company_valuation_profile_repository(
+        _write_profile_config(
+            tmp_path,
+            [
+                _profile(
+                    profile_id="603393-resource-cycle-v1",
+                    code="603393",
+                    stock_name="新天然气",
+                    known_at="2026-07-28",
+                    evidence_as_of="2026-07-28",
+                    review_after="2027-04-30",
+                    confidence="HIGH",
+                    business_tags=["城市燃气", "煤层气勘探开发", "上游资源开发"],
+                    archetype_hints=["CAPACITY_CYCLE", "GENERAL_EARNINGS"],
+                    disabled_strategy_ids=["yield_asset"],
+                    rationale="Upstream coalbed-methane resource economics make a pure yield-asset route unsafe.",
+                    evidence_refs=["2025-annual-report", "2025-report-inquiry-response"],
+                )
+            ],
+        )
+    )
+
+    routed = annotate_valuation_routes(
+        [
+            _row(
+                code="603393",
+                stock_name="新天然气",
+                industry="燃气",
+                valuation_diagnostic_status="OK",
+            )
+        ],
+        as_of=date(2026, 8, 17),
+        profile_repository=repository,
+    )[0]
+
+    assert routed["valuation_profile_status"] == "FOUND"
+    assert routed["valuation_profile_used_for_routing"] is True
+    assert routed["valuation_disabled_strategy_ids"] == "yield_asset"
+    assert routed["valuation_strategy_ids"] == (
+        "capacity_cycle_normalizer;general_reverse_earnings"
+    )
+    assert routed["valuation_primary_strategy_id"] == "general_reverse_earnings"
+    assert routed["valuation_model_execution_state"] == (
+        "NORMALIZATION_REQUIRED_BEFORE_GENERIC_VALUATION"
+    )
+    assert routed["formal_signal_eligible"] is False
+    assert routed["automatic_promotion_allowed"] is False
+    assert routed["no_auto_trade"] is True
+
+
 def test_profile_driven_route_is_capped_by_profile_confidence(tmp_path):
     repository = load_company_valuation_profile_repository(
         _write_profile_config(tmp_path, [_profile()])
