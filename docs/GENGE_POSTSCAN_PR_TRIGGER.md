@@ -1,6 +1,6 @@
 # GenGe Postscan PR Trigger
 
-retry: 15
-upstream_run_id: 32090231706
-fresh_artifact_id: 9308603602
-purpose: clear stale main Opportunity runs, then dispatch exactly one normal production proof with the validated progress runner.
+retry: 16
+upstream_run_id: 32099563360
+production_artifact_id: 9311716238
+purpose: locate the automatic canonical Postscan for the successful normal production run; dispatch the same canonical workflow only if no automatic run exists.
