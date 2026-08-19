@@ -22,6 +22,10 @@ on:
       - "tests/fixtures/genge_cycle_bottom/**"
       - "config/industry_evidence_schema.yaml"
 
+concurrency:
+  group: genge-cycle-bottom-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   fixture-research-smoke:
     name: Fixture research smoke
