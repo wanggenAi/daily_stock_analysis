@@ -29,6 +29,7 @@ DISCLAIMER = "仅用于公开历史数据研究回放，不构成买入或卖出
 MIN_PRIOR_PE_OBSERVATIONS = 120
 PE_LOOKBACK = 1260
 DEFAULT_STRIDE = 5
+MAX_ENTRY_PE_PERCENTILE = 50.0
 BUY_DECISIONS = {"BUY_DEEP_VALUE", "BUYABLE", "BUYABLE_WITH_SUPPORTED_GROWTH"}
 
 
@@ -433,7 +434,13 @@ def simulate_company(
         if valuation is None:
             continue
         pmap = _price_map(data, day, close, valuation, logic)
-        if position is None and logic["state"] == "PASS" and pmap["price_decision"] in BUY_DECISIONS:
+        decision = str(pmap.get("price_decision") or "")
+        pe_percentile = _finite(valuation.get("historical_pe_percentile"))
+        low_zone_ok = bool(
+            decision == "BUY_DEEP_VALUE"
+            or (pe_percentile is not None and pe_percentile <= MAX_ENTRY_PE_PERCENTILE)
+        )
+        if position is None and logic["state"] == "PASS" and decision in BUY_DECISIONS and low_zone_ok:
             ceiling = _finite(pmap.get("buyable_price_ceiling"))
             if ceiling is not None and close <= ceiling:
                 pending = {
@@ -636,6 +643,9 @@ def run_suite(
         "low_buy_high_sell_trade_count": sum(bool(t.get("low_buy_high_sell")) for t in trades),
         "evaluation_stride_sessions": evaluation_stride,
         "cost_bps_per_side": cost_bps_per_side,
+        "valuation_low_zone_entry_required": True,
+        "max_entry_pe_percentile": MAX_ENTRY_PE_PERCENTILE,
+        "deep_value_bypasses_pe_percentile_gate": True,
         "point_in_time_financials": True,
         "next_open_execution": True,
         "famous_case_selection_bias_warning": True,
