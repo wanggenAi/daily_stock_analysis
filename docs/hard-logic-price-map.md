@@ -136,3 +136,5 @@ expectation_headroom = supported_base_profit_growth - market_required_profit_gro
 - 历史参考 PE 严格排除当前观测，避免自我引用；
 - 未来利润增长区间必须来自显式、可审计的硬逻辑证据，缺失时保持缺失；
 - 技术与执行条件不能反向污染公司硬逻辑判断。
+
+本功能的仓库级变更摘要同步记录在 `docs/CHANGELOG.md` 的 `[Unreleased]` 部分。
