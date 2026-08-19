@@ -1,21 +1,19 @@
 """Hard-logic company pool + reverse-valuation price expectation map.
 
-This module implements a deliberately simple decision model:
+The decision model is intentionally narrow:
 
-1. Company first: structural hard-risk blockers can reject a company; technical
-   timing/shape blockers are visible but are not allowed to veto a long-horizon
-   hard-logic company.
-2. Price second: for a company that passes the hard-logic boundary, reverse-solve
-   how much profit growth the current price is already demanding relative to the
-   stock's own historical PE reference.
-3. If an explicit hard-logic-supported profit-growth range is available, compare
-   the market-implied requirement directly with that range. Missing forward
-   growth support is never invented.
-4. Emit a price/expectation map instead of collapsing the entire market to one
-   stock. Ranking is only for reading convenience; every qualifying company
-   keeps its own independent price decision.
+1. Company first: only company-level structural hard risks may block the company.
+   Market regime, technical timing, entry geometry, R/R, position sizing and exit
+   profile gates remain visible context but cannot veto company quality here.
+2. Price second: reverse-solve how much profit growth today's price already
+   requires relative to the stock's own strictly-prior historical PE reference.
+3. If an explicit hard-logic-supported profit-growth range exists, compare it
+   directly with the market-implied requirement. Missing growth support is never
+   invented.
+4. Keep every qualifying company independently. Ranking is only for reading
+   convenience; the market is never collapsed to one global winner.
 
-The output is research-only and never authorizes automatic trading.
+Outputs are research-only and never authorize automatic trading.
 """
 from __future__ import annotations
 
@@ -29,9 +27,10 @@ from typing import Any, Iterable, Mapping
 
 DISCLAIMER = "仅用于公开数据研究和估值判断，不构成买入或卖出建议，不应自动交易。"
 
-# These are timing/shape/medium-horizon validation constraints. They remain in
-# the report, but they are intentionally not company-quality vetoes here.
-TECHNICAL_NON_VETO_BLOCKERS = frozenset(
+# These tokens/prefixes describe price shape, market environment or execution.
+# They are explicitly NOT company-quality vetoes in this layer even if an older
+# strict-gate report happened to place them in a blocker column.
+NON_COMPANY_GATE_TOKENS = frozenset(
     {
         "price_too_high",
         "board_5d_abnormal_move",
@@ -42,9 +41,13 @@ TECHNICAL_NON_VETO_BLOCKERS = frozenset(
         "price_above_ma60_limit",
         "too_far_from_ma20",
         "too_far_from_ma60",
+        "reward_risk_below_min",
+        "rr_below_min",
+        "entry_not_ready",
+        "market_regime_not_ready",
     }
 )
-TECHNICAL_NON_VETO_PREFIXES = (
+NON_COMPANY_GATE_PREFIXES = (
     "exit_profile_",
     "profile_validation_",
     "profile_data_",
@@ -54,6 +57,38 @@ TECHNICAL_NON_VETO_PREFIXES = (
     "ma10_",
     "ma20_",
     "ma60_",
+    "market_",
+    "industry_timing_",
+    "entry_",
+    "breakout_",
+    "pullback_",
+    "stop_",
+    "invalidation_",
+    "reward_risk_",
+    "risk_reward_",
+    "rr_",
+    "position_",
+    "sizing_",
+    "execution_",
+    "liquidity_timing_",
+    "volume_timing_",
+)
+
+# Fields whose semantics explicitly say "company hard blocker". These are the
+# only generic upstream blocker fields allowed to reject company quality here.
+COMPANY_BLOCKER_FIELDS = (
+    "hard_blockers",
+    "source_hard_blockers",
+    "hard_reject_blockers",
+)
+
+# These fields come from broad strict/execution gates. They are intentionally
+# retained as context only. If a company-level risk is genuine it must surface
+# through COMPANY_BLOCKER_FIELDS or an explicit hard-logic state.
+NON_VETO_CONTEXT_FIELDS = (
+    "strict_gate_failed",
+    "missing_conditions",
+    "classification_missing_conditions",
 )
 
 SUPPORTED_GROWTH_FIELDS = {
@@ -94,7 +129,7 @@ OUTPUT_COLUMNS = [
     "hard_logic_state",
     "hard_logic_reasons",
     "structural_blockers",
-    "ignored_technical_blockers",
+    "non_veto_context",
     "current_price",
     "current_pe",
     "historical_median_pe_reference",
@@ -148,24 +183,32 @@ def _split_tokens(value: Any) -> set[str]:
     return {token.strip() for token in str(value or "").split(";") if token.strip()}
 
 
-def _is_technical_non_veto(token: str) -> bool:
-    return token in TECHNICAL_NON_VETO_BLOCKERS or token.startswith(TECHNICAL_NON_VETO_PREFIXES)
+def _is_non_company_gate(token: str) -> bool:
+    return token in NON_COMPANY_GATE_TOKENS or token.startswith(NON_COMPANY_GATE_PREFIXES)
 
 
 def _blocker_partition(row: Mapping[str, Any]) -> tuple[list[str], list[str]]:
-    tokens: set[str] = set()
-    for key in (
-        "hard_blockers",
-        "source_hard_blockers",
-        "hard_reject_blockers",
-        "strict_gate_failed",
-        "missing_conditions",
-        "classification_missing_conditions",
-    ):
-        tokens.update(_split_tokens(row.get(key)))
-    ignored = sorted(token for token in tokens if _is_technical_non_veto(token))
-    structural = sorted(token for token in tokens if not _is_technical_non_veto(token))
-    return structural, ignored
+    """Separate company hard risks from execution/timing context.
+
+    Broad strict-gate/missing-condition fields are never promoted into company
+    structural blockers in this layer. Older hard-blocker fields are trusted for
+    company semantics, except known market/execution tokens that are downgraded
+    to non-veto context for compatibility with older reports.
+    """
+    structural: set[str] = set()
+    context: set[str] = set()
+
+    for key in COMPANY_BLOCKER_FIELDS:
+        for token in _split_tokens(row.get(key)):
+            if _is_non_company_gate(token):
+                context.add(token)
+            else:
+                structural.add(token)
+
+    for key in NON_VETO_CONTEXT_FIELDS:
+        context.update(_split_tokens(row.get(key)))
+
+    return sorted(structural), sorted(context)
 
 
 def _first_finite(row: Mapping[str, Any], names: Iterable[str]) -> float | None:
@@ -177,16 +220,7 @@ def _first_finite(row: Mapping[str, Any], names: Iterable[str]) -> float | None:
 
 
 def _current_price(row: Mapping[str, Any]) -> float | None:
-    return _first_finite(
-        row,
-        (
-            "current_price",
-            "price",
-            "latest_price",
-            "close",
-            "last_price",
-        ),
-    )
+    return _first_finite(row, ("current_price", "price", "latest_price", "close", "last_price"))
 
 
 def _supported_growth_ratio(row: Mapping[str, Any], band: str) -> float | None:
@@ -198,32 +232,34 @@ def _supported_growth_ratio(row: Mapping[str, Any], band: str) -> float | None:
 
 
 def _explicit_hard_logic_state(row: Mapping[str, Any]) -> str:
-    raw = str(row.get("hard_logic_state") or row.get("hard_logic_status") or "").strip().upper()
-    return raw
+    return str(row.get("hard_logic_state") or row.get("hard_logic_status") or "").strip().upper()
 
 
 def hard_logic_assessment(row: Mapping[str, Any]) -> tuple[str, list[str], list[str], list[str]]:
-    """Return PASS/REVIEW/BLOCKED without using short-term technical timing as a veto."""
-    structural, ignored = _blocker_partition(row)
+    """Return PASS/REVIEW/BLOCKED using company evidence, not trade timing."""
+    structural, context = _blocker_partition(row)
     reasons: list[str] = []
     explicit = _explicit_hard_logic_state(row)
 
     if explicit in {"FAIL", "FAILED", "BLOCKED", "REJECT", "HARD_REJECT"}:
         structural = sorted(set(structural + [f"explicit_hard_logic_state={explicit}"]))
     if structural:
-        reasons.append("structural_hard_risk_present")
-        return "BLOCKED", reasons, structural, ignored
+        return "BLOCKED", ["structural_hard_risk_present"], structural, context
 
     core_profit = _finite(row.get("normalized_core_operating_profit"))
     if core_profit is not None and core_profit <= 0:
-        reasons.append("normalized_core_profit_non_positive")
-        return "BLOCKED", reasons, ["normalized_core_profit_non_positive"], ignored
+        return (
+            "BLOCKED",
+            ["normalized_core_profit_non_positive"],
+            ["normalized_core_profit_non_positive"],
+            context,
+        )
 
     if explicit in {"PASS", "PASSED", "STRONG", "CONFIRMED", "HARD_LOGIC_PASS"}:
         reasons.append("explicit_hard_logic_pass")
-        if ignored:
-            reasons.append("technical_constraints_ignored_for_company_quality")
-        return "PASS", reasons, [], ignored
+        if context:
+            reasons.append("execution_context_ignored_for_company_quality")
+        return "PASS", reasons, [], context
 
     second_pass = str(row.get("long_term_second_pass_status") or "").strip().upper()
     industry_state = str(row.get("industry_candidate_state") or "").strip().upper()
@@ -232,32 +268,36 @@ def hard_logic_assessment(row: Mapping[str, Any]) -> tuple[str, list[str], list[
 
     if second_pass == "PASSED_ALL_NON_EXIT_PROFILE_HARD_GATES":
         reasons.append("passed_all_non_exit_profile_hard_gates")
-        if ignored:
-            reasons.append("technical_constraints_ignored_for_company_quality")
-        return "PASS", reasons, [], ignored
+        if context:
+            reasons.append("execution_context_ignored_for_company_quality")
+        return "PASS", reasons, [], context
 
-    # The industry map's RESEARCH_CANDIDATE means no hard blocker survived that
-    # layer. If valuation/earnings evidence is also usable, this is sufficient
-    # for the automated hard-logic pool. We deliberately do not require MA/price
-    # shape confirmation.
+    # A broad industry research candidate is not automatically called hard logic.
+    # Require usable reverse valuation plus non-weak recurring-earnings quality so
+    # the system does not manufacture certainty merely because a stock survived a
+    # ranking layer.
     if industry_state == "RESEARCH_CANDIDATE":
         reasons.append("clean_industry_research_candidate")
         if valuation_status == "OK":
             reasons.append("reverse_valuation_ready")
         if quality is not None and quality >= 50:
             reasons.append("earnings_quality_not_weak")
-        if ignored:
-            reasons.append("technical_constraints_ignored_for_company_quality")
-        return "PASS", reasons, [], ignored
+        if valuation_status == "OK" and quality is not None and quality >= 50:
+            if context:
+                reasons.append("execution_context_ignored_for_company_quality")
+            return "PASS", reasons, [], context
+        reasons.append("hard_logic_confirmation_incomplete")
+        return "REVIEW", reasons, [], context
 
-    # A valuation-researched company with no structural blocker is retained for
-    # review instead of being silently erased. This avoids another Top-1 funnel.
     if valuation_status == "OK":
-        reasons.append("valuation_ready_but_hard_logic_evidence_incomplete")
-        return "REVIEW", reasons, [], ignored
+        return (
+            "REVIEW",
+            ["valuation_ready_but_hard_logic_evidence_incomplete"],
+            [],
+            context,
+        )
 
-    reasons.append("hard_logic_evidence_incomplete")
-    return "REVIEW", reasons, [], ignored
+    return "REVIEW", ["hard_logic_evidence_incomplete"], [], context
 
 
 def _required_growth_ratio(row: Mapping[str, Any]) -> float | None:
@@ -274,7 +314,11 @@ def _required_growth_ratio(row: Mapping[str, Any]) -> float | None:
     return None
 
 
-def _price_for_required_growth(current_price: float | None, current_required: float | None, target_required: float) -> float | None:
+def _price_for_required_growth(
+    current_price: float | None,
+    current_required: float | None,
+    target_required: float,
+) -> float | None:
     if current_price is None or current_price <= 0 or current_required is None or current_required <= -1:
         return None
     price = current_price * (1.0 + target_required) / (1.0 + current_required)
@@ -292,30 +336,62 @@ def _decision(
     if hard_logic_state != "PASS":
         return "HARD_LOGIC_REVIEW", "company hard-logic evidence is not yet strong enough", None
     if required_growth is None:
-        return "VALUATION_REFERENCE_UNAVAILABLE", "cannot reverse-solve market expectations from available valuation history", None
+        return (
+            "VALUATION_REFERENCE_UNAVAILABLE",
+            "cannot reverse-solve market expectations from available valuation history",
+            None,
+        )
 
     if supported_base is not None:
         headroom = supported_base - required_growth
         if headroom >= 0.30:
-            return "BUY_DEEP_VALUE", "market-implied growth is at least 30pp below hard-logic-supported base growth", headroom
+            return (
+                "BUY_DEEP_VALUE",
+                "market-implied growth is at least 30pp below hard-logic-supported base growth",
+                headroom,
+            )
         if headroom >= 0.15:
-            return "BUYABLE_WITH_SUPPORTED_GROWTH", "market-implied growth is at least 15pp below hard-logic-supported base growth", headroom
+            return (
+                "BUYABLE_WITH_SUPPORTED_GROWTH",
+                "market-implied growth is at least 15pp below hard-logic-supported base growth",
+                headroom,
+            )
         if headroom >= 0:
-            return "WAIT_FOR_BETTER_PRICE", "hard logic can support current expectations but valuation headroom is thin", headroom
-        return "EXPECTATIONS_HIGH_WAIT", "current price requires more growth than the hard logic currently supports", headroom
+            return (
+                "WAIT_FOR_BETTER_PRICE",
+                "hard logic can support current expectations but valuation headroom is thin",
+                headroom,
+            )
+        return (
+            "EXPECTATIONS_HIGH_WAIT",
+            "current price requires more growth than the hard logic currently supports",
+            headroom,
+        )
 
-    # No forward growth range is invented. Historical-reference reverse valuation
-    # can still identify a conservative entry when the current price requires no
-    # growth (or contraction) relative to the normalized earnings base.
+    # No future business growth is fabricated. A conservative valuation decision
+    # is allowed only when today's price requires zero growth or contraction at
+    # the stock's own historical reference multiple.
     if required_growth <= -0.20:
-        return "BUY_DEEP_VALUE", "current price implies at least 20% profit contraction at the historical reference multiple", None
+        return (
+            "BUY_DEEP_VALUE",
+            "current price implies at least 20% profit contraction at the historical reference multiple",
+            None,
+        )
     if required_growth <= 0:
-        return "BUYABLE", "current price does not require profit growth at the historical reference multiple", None
-    return "NEED_HARD_LOGIC_GROWTH_SUPPORT", "current price requires profit growth; compare with an explicit hard-logic-supported growth range before buying", None
+        return (
+            "BUYABLE",
+            "current price does not require profit growth at the historical reference multiple",
+            None,
+        )
+    return (
+        "NEED_HARD_LOGIC_GROWTH_SUPPORT",
+        "current price requires profit growth; compare with explicit hard-logic-supported growth before buying",
+        None,
+    )
 
 
 def build_price_expectation_row(row: Mapping[str, Any]) -> dict[str, Any]:
-    hard_state, reasons, structural, ignored = hard_logic_assessment(row)
+    hard_state, reasons, structural, context = hard_logic_assessment(row)
     current_price = _current_price(row)
     current_pe = _finite(row.get("current_pe"))
     reference_pe = _finite(row.get("historical_median_pe_reference"))
@@ -344,7 +420,7 @@ def build_price_expectation_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "hard_logic_state": hard_state,
         "hard_logic_reasons": ";".join(reasons),
         "structural_blockers": ";".join(structural),
-        "ignored_technical_blockers": ";".join(ignored),
+        "non_veto_context": ";".join(context),
         "current_price": current_price,
         "current_pe": current_pe,
         "historical_median_pe_reference": reference_pe,
@@ -381,7 +457,7 @@ def _rank_key(row: Mapping[str, Any]) -> tuple[int, int, float, str]:
 
 
 def build_price_expectation_rows(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
-    """Evaluate every supplied company independently; never truncate to a global Top-1."""
+    """Evaluate every supplied company independently; never truncate to Top-1."""
     output: list[dict[str, Any]] = []
     seen: set[str] = set()
     for raw in rows:
@@ -417,31 +493,36 @@ def _choose_path(root: Path, filename: str, preferred_token: str = "") -> Path |
 
 
 def load_artifact_company_rows(artifact_root: Path) -> list[dict[str, Any]]:
-    """Merge postscan artifact channels into one company row per code.
-
-    Raw quant data is used only to restore fields such as current price. Industry,
-    valuation and master outputs then overlay progressively richer research data.
-    The candidate universe is the union of research channels, not the complete
-    5000+ raw market and not a global Top-1.
-    """
+    """Merge Postscan research channels into one row per researched company."""
     raw_path = _choose_path(artifact_root, "all_a_quant_screen.csv", "final_valuation_source")
     industry_path = _choose_path(artifact_root, "industry_top_candidates.csv")
     valuation_path = _choose_path(artifact_root, "valuation_research_routed.csv")
     master_path = _choose_path(artifact_root, "master_opportunity_ranking.csv")
     second_pass_path = _choose_path(artifact_root, "long_term_second_pass_candidates.csv")
 
-    raw_by_code = {_normalize_code(r.get("code")): r for r in _read_csv(raw_path) if _normalize_code(r.get("code"))}
+    raw_by_code = {
+        _normalize_code(row.get("code")): row
+        for row in _read_csv(raw_path)
+        if _normalize_code(row.get("code"))
+    }
     channels = [
         _read_csv(industry_path),
         _read_csv(valuation_path),
         _read_csv(master_path),
         _read_csv(second_pass_path),
     ]
+
     candidate_codes: set[str] = set()
     for channel in channels:
-        candidate_codes.update(_normalize_code(r.get("code")) for r in channel if _normalize_code(r.get("code")))
+        candidate_codes.update(
+            _normalize_code(row.get("code"))
+            for row in channel
+            if _normalize_code(row.get("code"))
+        )
 
-    merged: dict[str, dict[str, Any]] = {code: dict(raw_by_code.get(code, {})) for code in candidate_codes}
+    merged: dict[str, dict[str, Any]] = {
+        code: dict(raw_by_code.get(code, {})) for code in candidate_codes
+    }
     for channel in channels:
         for row in channel:
             code = _normalize_code(row.get("code"))
@@ -467,11 +548,22 @@ def write_price_map(artifact_root: Path, output_dir: Path) -> list[dict[str, Any
 
     summary = {
         "candidate_count": len(rows),
-        "hard_logic_pass_count": sum(r["hard_logic_state"] == "PASS" for r in rows),
-        "buy_deep_value_count": sum(r["price_decision"] == "BUY_DEEP_VALUE" for r in rows),
-        "buyable_count": sum(r["price_decision"] in {"BUYABLE", "BUYABLE_WITH_SUPPORTED_GROWTH"} for r in rows),
-        "wait_count": sum(r["price_decision"] in {"WAIT_FOR_BETTER_PRICE", "EXPECTATIONS_HIGH_WAIT", "NEED_HARD_LOGIC_GROWTH_SUPPORT"} for r in rows),
-        "semantics": "company hard logic first; reverse valuation decides whether the current price already embeds too much expectation",
+        "hard_logic_pass_count": sum(row["hard_logic_state"] == "PASS" for row in rows),
+        "buy_deep_value_count": sum(row["price_decision"] == "BUY_DEEP_VALUE" for row in rows),
+        "buyable_count": sum(
+            row["price_decision"] in {"BUYABLE", "BUYABLE_WITH_SUPPORTED_GROWTH"}
+            for row in rows
+        ),
+        "wait_count": sum(
+            row["price_decision"]
+            in {
+                "WAIT_FOR_BETTER_PRICE",
+                "EXPECTATIONS_HIGH_WAIT",
+                "NEED_HARD_LOGIC_GROWTH_SUPPORT",
+            }
+            for row in rows
+        ),
+        "semantics": "company hard logic first; reverse valuation decides whether current price already embeds too much expectation",
         "global_top1_required": False,
         "technical_context_is_non_veto": True,
         "formal_signal_eligible": False,
@@ -479,13 +571,14 @@ def write_price_map(artifact_root: Path, output_dir: Path) -> list[dict[str, Any
         "no_auto_trade": True,
     }
     (output_dir / "hard_logic_price_map_summary.json").write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8"
+        json.dumps(summary, ensure_ascii=False, indent=2),
+        encoding="utf-8",
     )
 
     lines = [
         "# Hard Logic × Price Expectation Map",
         "",
-        "Company logic is evaluated first. Short-term technical timing is displayed but does not veto the company. Price is then judged by reverse valuation.",
+        "Company hard logic is judged first. Market/technical/execution context is visible but non-veto here. Reverse valuation then judges today's price.",
         "",
         f"- hard-logic pass: {summary['hard_logic_pass_count']}/{summary['candidate_count']}",
         f"- deep-value: {summary['buy_deep_value_count']}",
