@@ -28,6 +28,21 @@ from src.strategies.genge_opportunity_discovery.hard_logic_historical_backtest i
 )
 
 
+def _sample_financial_dates(df) -> str:
+    if df is None or df.empty:
+        return "[]"
+    cols = [c for c in ("report_date", "disclosure_date", "net_profit", "recurring_profit") if c in df.columns]
+    sample = []
+    for _, row in df[cols].head(5).iterrows():
+        item = {}
+        for col in cols:
+            value = row.get(col)
+            item[col] = str(value)
+            item[f"{col}__type"] = type(value).__name__
+        sample.append(item)
+    return json.dumps(sample, ensure_ascii=False)
+
+
 def diagnose_company(data, *, start_date: date, end_date: date, stride: int) -> dict[str, Any]:
     price = prepare_price_frame(data.price_df)
     price = price[(price["date"] >= start_date) & (price["date"] <= end_date)].reset_index(drop=True)
@@ -65,9 +80,7 @@ def diagnose_company(data, *, start_date: date, end_date: date, stride: int) -> 
             continue
         buy_decision += 1
         pe_pct = _finite(valuation.get("historical_pe_percentile"))
-        low_ok = decision == "BUY_DEEP_VALUE" or (
-            pe_pct is not None and pe_pct <= MAX_ENTRY_PE_PERCENTILE
-        )
+        low_ok = decision == "BUY_DEEP_VALUE" or (pe_pct is not None and pe_pct <= MAX_ENTRY_PE_PERCENTILE)
         if not low_ok:
             first_examples.setdefault(
                 "entry_pe_percentile_too_high",
@@ -100,6 +113,7 @@ def diagnose_company(data, *, start_date: date, end_date: date, stride: int) -> 
         "code": data.code,
         "stock_name": data.stock_name,
         "price_rows": len(price),
+        "raw_financial_rows": len(data.financial_df),
         "financial_rows": len(financial),
         "valuation_rows": len(data.valuation_df),
         "evaluation_points": evaluated,
@@ -112,6 +126,7 @@ def diagnose_company(data, *, start_date: date, end_date: date, stride: int) -> 
         "buy_ready_points": ceiling_ok,
         "decision_counts": json.dumps(dict(decisions), ensure_ascii=False, sort_keys=True),
         "first_examples": json.dumps(first_examples, ensure_ascii=False, sort_keys=True),
+        "raw_financial_date_sample": _sample_financial_dates(data.financial_df),
         "financial_columns": ";".join(map(str, data.financial_df.columns)),
         "valuation_columns": ";".join(map(str, data.valuation_df.columns)),
         "warnings": ";".join(data.warnings),
