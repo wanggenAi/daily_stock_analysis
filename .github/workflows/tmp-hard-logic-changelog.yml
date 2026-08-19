@@ -1,0 +1,53 @@
+name: Temporary Hard Logic Changelog Patch
+
+on:
+  push:
+    branches:
+      - feat/hard-logic-price-expectation-map
+
+permissions:
+  contents: write
+
+jobs:
+  patch-and-self-remove:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/hard-logic-price-expectation-map
+          fetch-depth: 0
+
+      - name: Patch Unreleased and remove temporary workflow
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('docs/CHANGELOG.md')
+          text = path.read_text(encoding='utf-8')
+          marker = '## [Unreleased]\n'
+          entry = (
+              '\n- [新功能] GenGe 新增“硬逻辑 × 当前价格预期地图”：公司硬逻辑与市场/技术/入场/RR/仓位/退出等执行条件解耦，允许多个硬逻辑研究对象同时保留；公司通过后用当前 PE 相对严格历史参考 PE 反向估值，直接输出当前价格隐含利润增长、最高可接受买入价和深度低估价，预期已打满则等待更低价格，缺少未来增长证据时不编造预测。\n'
+              '- [测试] 新增硬逻辑价格地图回归与生产 workflow，覆盖多候选保留、执行门槛非否决、结构性硬风险、历史估值倒推、显式业务增长预期差、买入/深度低估价格上限、artifact 合并及 no-auto-trade 契约。\n'
+          )
+          if '硬逻辑 × 当前价格预期地图' not in text:
+              if marker not in text:
+                  raise SystemExit('missing Unreleased marker')
+              text = text.replace(marker, marker + entry, 1)
+              path.write_text(text, encoding='utf-8')
+          PY
+          rm -f .github/workflows/tmp-hard-logic-changelog.yml
+
+      - name: Commit changelog patch
+        shell: bash
+        run: |
+          if git diff --quiet -- docs/CHANGELOG.md .github/workflows/tmp-hard-logic-changelog.yml; then
+            echo 'Nothing to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add docs/CHANGELOG.md .github/workflows/tmp-hard-logic-changelog.yml
+          git commit -m 'docs: record hard-logic price expectation map'
+          git push origin HEAD:feat/hard-logic-price-expectation-map
