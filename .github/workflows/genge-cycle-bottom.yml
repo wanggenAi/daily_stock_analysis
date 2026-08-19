@@ -3,8 +3,24 @@ name: GenGe Cycle Bottom
 on:
   pull_request:
     branches: [main]
+    paths:
+      - ".github/workflows/genge-cycle-bottom.yml"
+      - ".github/requirements-ci.txt"
+      - "requirements.txt"
+      - "src/strategies/genge_cycle_bottom/**"
+      - "tests/test_genge_cycle_bottom_*.py"
+      - "tests/fixtures/genge_cycle_bottom/**"
+      - "config/industry_evidence_schema.yaml"
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/genge-cycle-bottom.yml"
+      - ".github/requirements-ci.txt"
+      - "requirements.txt"
+      - "src/strategies/genge_cycle_bottom/**"
+      - "tests/test_genge_cycle_bottom_*.py"
+      - "tests/fixtures/genge_cycle_bottom/**"
+      - "config/industry_evidence_schema.yaml"
 
 jobs:
   fixture-research-smoke:
