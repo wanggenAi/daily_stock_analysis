@@ -133,7 +133,7 @@ class HardLogicHistoricalBacktestTest(unittest.TestCase):
         self.assertGreaterEqual(len(trades), 1)
         self.assertEqual(signals[0]["signal_action"], "BUY")
         self.assertLessEqual(float(trades[0]["entry_price"]), 12.0)
-        self.assertEqual(trades[0]["exit_reason"], "SELL_EXPECTATIONS_FULL")
+        self.assertEqual(trades[0]["exit_reason"], "SELL_EXPECTATIONS_FULL_HIGH_VALUATION")
         self.assertGreaterEqual(float(trades[0]["exit_price"]), 24.0)
         self.assertGreater(float(trades[0]["net_return_pct"]), 90.0)
         self.assertEqual(case["status"], "OK")
