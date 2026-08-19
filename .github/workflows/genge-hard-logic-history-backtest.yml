@@ -1,0 +1,142 @@
+name: GenGe Hard Logic Historical Backtest
+
+on:
+  pull_request:
+    paths:
+      - "src/strategies/genge_opportunity_discovery/hard_logic_historical_backtest.py"
+      - "src/strategies/genge_opportunity_discovery/hard_logic_price_map.py"
+      - "tests/test_genge_hard_logic_historical_backtest.py"
+      - "config/genge_hard_logic_famous_cases.csv"
+      - ".github/workflows/genge-hard-logic-history-backtest.yml"
+      - "docs/hard-logic-price-map.md"
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Historical replay start date"
+        required: false
+        default: "2018-01-01"
+        type: string
+      end_date:
+        description: "Historical replay end date"
+        required: false
+        default: "2026-08-18"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: genge-hard-logic-history-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  deterministic-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Validate historical backtest
+        run: |
+          python -m py_compile src/strategies/genge_opportunity_discovery/hard_logic_historical_backtest.py
+          python -m pytest -q \
+            tests/test_genge_hard_logic_price_map.py \
+            tests/test_genge_hard_logic_historical_backtest.py
+
+  famous-stock-capture:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Cache historical public data
+        uses: actions/cache@v4
+        with:
+          path: data/cache/hard_logic_history_backtest
+          key: hard-logic-history-v1-${{ runner.os }}-${{ hashFiles('config/genge_hard_logic_famous_cases.csv') }}
+
+      - name: Resolve replay dates
+        shell: bash
+        run: |
+          echo "START_DATE=${{ inputs.start_date || '2018-01-01' }}" >> "$GITHUB_ENV"
+          echo "END_DATE=${{ inputs.end_date || '2026-08-18' }}" >> "$GITHUB_ENV"
+
+      - name: Run famous-stock point-in-time capture audit
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.hard_logic_historical_backtest \
+            --cases-file config/genge_hard_logic_famous_cases.csv \
+            --start-date "$START_DATE" \
+            --end-date "$END_DATE" \
+            --output-dir reports/hard_logic_historical_backtest \
+            --cache-dir data/cache/hard_logic_history_backtest \
+            --evaluation-stride 5 \
+            --cost-bps-per-side 15
+
+      - name: Validate historical output contract
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('reports/hard_logic_historical_backtest')
+          required = [
+              root / 'historical_backtest_summary.json',
+              root / 'historical_backtest.md',
+              root / 'historical_trades.csv',
+              root / 'historical_signals.csv',
+              root / 'famous_case_results.csv',
+              root / 'data_failures.csv',
+          ]
+          for path in required:
+              assert path.exists() and path.stat().st_size > 0, path
+          summary = json.loads((root / 'historical_backtest_summary.json').read_text(encoding='utf-8'))
+          assert summary['point_in_time_financials'] is True
+          assert summary['next_open_execution'] is True
+          assert summary['famous_case_selection_bias_warning'] is True
+          assert summary['headline_expected_return_allowed'] is False
+          assert summary['no_auto_trade'] is True
+          assert summary['data_ready_case_count'] >= 5, summary
+          cases = list(csv.DictReader((root / 'famous_case_results.csv').open(encoding='utf-8')))
+          assert len(cases) == summary['data_ready_case_count']
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Publish capture audit summary
+        if: always()
+        run: |
+          if [ -f reports/hard_logic_historical_backtest/historical_backtest.md ]; then
+            cat reports/hard_logic_historical_backtest/historical_backtest.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload historical backtest artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-hard-logic-historical-backtest
+          path: reports/hard_logic_historical_backtest
+          if-no-files-found: error
