@@ -1,0 +1,27 @@
+name: GenGe Cycle Bottom Failure Locator
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-cycle-bottom-failure-locator.yml"
+
+permissions:
+  contents: write
+  actions: read
+
+jobs:
+  locate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Record Cycle Bottom runs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh run list --repo "${{ github.repository }}" --workflow genge-cycle-bottom.yml --limit 12 --json databaseId,status,conclusion,headSha,event,createdAt,updatedAt,url > docs/GENGE_CYCLE_BOTTOM_FAILURE_LOCATOR.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/GENGE_CYCLE_BOTTOM_FAILURE_LOCATOR.json
+          git commit -m "chore: record Cycle Bottom failure runs" || exit 0
+          git push origin HEAD:main
