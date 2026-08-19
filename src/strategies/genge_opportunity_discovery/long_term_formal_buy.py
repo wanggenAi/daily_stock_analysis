@@ -1,15 +1,14 @@
 """Auditable long-term Formal BUY decision layer.
 
 This layer exists because a medium-horizon exit-profile sample shortage must not
-be allowed to erase a candidate that passed every other strict gate.  It joins
+be allowed to erase a candidate that passed every other strict gate. It joins
 those long-term second-pass names back to their full All-A price/risk plan and to
 completed reverse-valuation routing.
 
 The layer never auto-trades and never treats model *selection* as model
-*execution*.  A specialized valuation route whose inputs/model have not actually
-been run remains blocked.  Only candidates with usable valuation diagnostics,
-financial review, acceptable earnings quality, real R/R and no reintroduced hard
-risk can become long-term BUY/TRY-POSITION candidates.
+*execution*. A specialized valuation route whose inputs/model have not actually
+been run remains blocked. Candidates also pass through a drawdown-first portfolio
+risk budget before they can remain BUY/TRY-POSITION ready.
 """
 from __future__ import annotations
 
@@ -21,8 +20,17 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from .drawdown_risk_policy import (
+    DEFAULT_DRAWDOWN_POLICY,
+    RULE_VERSION as DRAWDOWN_POLICY_VERSION,
+    DrawdownRiskPolicy,
+    drawdown_magnitude,
+    exposure_multiplier,
+    position_fraction,
+)
+
 DISCLAIMER = "仅用于公开数据长期研究与人工复核，不构成买入或卖出建议，不应自动交易。"
-POLICY_VERSION = "long_term_formal_buy_v1"
+POLICY_VERSION = "long_term_formal_buy_v2_drawdown_budget"
 
 DEFENSIVE_MARKETS = {"RED", "CRISIS", "RISK_OFF", "EXTREME_RISK"}
 BLOCKING_EVENT_RISKS = {"HIGH", "CRITICAL", "EXTREME"}
@@ -44,6 +52,21 @@ class LongTermPolicy:
     min_routing_confidence: float = MIN_ROUTING_CONFIDENCE
     max_buy_ready_required_growth: float = MAX_BUY_READY_REQUIRED_GROWTH
     max_try_position_required_growth: float = MAX_TRY_POSITION_REQUIRED_GROWTH
+
+
+@dataclass(frozen=True)
+class PortfolioRiskState:
+    """Minimal state needed to convert a candidate into a bounded position."""
+
+    portfolio_drawdown_pct: float = 0.0
+    name_allocations: Mapping[str, float] | None = None
+    industry_allocations: Mapping[str, float] | None = None
+
+    def name_fraction(self, code: str) -> float:
+        return _allocation_fraction((self.name_allocations or {}).get(code, 0.0))
+
+    def industry_fraction(self, industry: str) -> float:
+        return _allocation_fraction((self.industry_allocations or {}).get(industry, 0.0))
 
 
 def _read(path: Path) -> list[dict[str, Any]]:
@@ -76,6 +99,34 @@ def _code(value: Any) -> str:
             text = text[len(prefix):]
             break
     return text.zfill(6) if text.isdigit() else text
+
+
+def _allocation_fraction(value: Any) -> float:
+    """Accept 0-1 fractions; tolerate human-entered 0-100 percentages."""
+
+    number = _float(value)
+    if number is None or number <= 0:
+        return 0.0
+    if number > 1.0 and number <= 100.0:
+        number /= 100.0
+    return min(1.0, max(0.0, number))
+
+
+def load_portfolio_risk_state(path: Path | None) -> PortfolioRiskState:
+    if path is None:
+        return PortfolioRiskState()
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("portfolio state must be a JSON object")
+    name_allocations = payload.get("name_allocations") or {}
+    industry_allocations = payload.get("industry_allocations") or {}
+    if not isinstance(name_allocations, dict) or not isinstance(industry_allocations, dict):
+        raise ValueError("portfolio allocation maps must be JSON objects")
+    return PortfolioRiskState(
+        portfolio_drawdown_pct=float(payload.get("portfolio_drawdown_pct") or 0.0),
+        name_allocations={_code(k): _allocation_fraction(v) for k, v in name_allocations.items()},
+        industry_allocations={str(k): _allocation_fraction(v) for k, v in industry_allocations.items()},
+    )
 
 
 def _latest_report(root: Path) -> Path:
@@ -177,12 +228,70 @@ def _entry_plan(plan: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
+def _position_budget(
+    *,
+    code: str,
+    industry: str,
+    entry: Mapping[str, Any],
+    classification: str,
+    portfolio_state: PortfolioRiskState,
+    risk_policy: DrawdownRiskPolicy,
+) -> dict[str, Any]:
+    low = _float(entry.get("entry_low"))
+    high = _float(entry.get("entry_high"))
+    stop = _float(entry.get("risk_invalidation_price"))
+    stop_distance_pct: float | None = None
+    position = 0.0
+    risk_blocker = ""
+
+    if low is None or high is None or stop is None or low <= 0 or high <= 0:
+        risk_blocker = "risk_geometry_unavailable"
+    else:
+        reference_entry = (low + high) / 2.0
+        if stop >= reference_entry:
+            risk_blocker = "risk_invalidation_not_below_entry"
+        else:
+            stop_distance_pct = (reference_entry - stop) / reference_entry * 100.0
+            position = position_fraction(
+                stop_distance_pct=stop_distance_pct,
+                portfolio_drawdown_pct=portfolio_state.portfolio_drawdown_pct,
+                current_name_fraction=portfolio_state.name_fraction(code),
+                current_industry_fraction=portfolio_state.industry_fraction(industry),
+                policy=risk_policy,
+            )
+            if classification == "LONG_TERM_TRY_POSITION":
+                position *= 0.5
+            if position <= 0:
+                risk_blocker = (
+                    "portfolio_drawdown_hard_stop"
+                    if drawdown_magnitude(portfolio_state.portfolio_drawdown_pct) >= risk_policy.hard_max_drawdown_pct
+                    else "risk_budget_no_capacity"
+                )
+
+    return {
+        "portfolio_drawdown_pct": drawdown_magnitude(portfolio_state.portfolio_drawdown_pct),
+        "drawdown_exposure_multiplier": exposure_multiplier(portfolio_state.portfolio_drawdown_pct, risk_policy),
+        "risk_budget_pct": risk_policy.risk_per_trade_pct,
+        "stop_distance_pct": round(stop_distance_pct, 6) if stop_distance_pct is not None else None,
+        "recommended_position_fraction": round(position, 6),
+        "recommended_position_pct": round(position * 100.0, 4),
+        "current_name_allocation_pct": round(portfolio_state.name_fraction(code) * 100.0, 4),
+        "current_industry_allocation_pct": round(portfolio_state.industry_fraction(industry) * 100.0, 4),
+        "max_single_name_pct": risk_policy.max_single_name_fraction * 100.0,
+        "max_industry_pct": risk_policy.max_industry_fraction * 100.0,
+        "drawdown_policy_version": DRAWDOWN_POLICY_VERSION,
+        "risk_budget_blocker": risk_blocker,
+    }
+
+
 def evaluate_long_term_candidate(
     second_pass: Mapping[str, Any],
     plan: Mapping[str, Any] | None,
     valuation: Mapping[str, Any] | None,
     *,
     policy: LongTermPolicy = LongTermPolicy(),
+    portfolio_state: PortfolioRiskState = PortfolioRiskState(),
+    risk_policy: DrawdownRiskPolicy = DEFAULT_DRAWDOWN_POLICY,
 ) -> dict[str, Any]:
     code = _code(second_pass.get("code"))
     plan = dict(plan or {})
@@ -233,8 +342,8 @@ def evaluate_long_term_candidate(
     elif required_growth is not None and required_growth > policy.max_try_position_required_growth:
         blockers.append("valuation_expectation_too_high")
 
-    eligible = not blockers
-    if eligible:
+    eligible_before_risk = not blockers
+    if eligible_before_risk:
         if (
             required_growth is not None
             and required_growth <= policy.max_buy_ready_required_growth
@@ -248,10 +357,29 @@ def evaluate_long_term_candidate(
         classification = "LONG_TERM_REVIEW_BLOCKED"
 
     entry = _entry_plan(plan)
+    industry = str(plan.get("industry") or second_pass.get("industry") or valuation.get("industry") or "")
+    budget = _position_budget(
+        code=code,
+        industry=industry,
+        entry=entry,
+        classification=classification,
+        portfolio_state=portfolio_state,
+        risk_policy=risk_policy,
+    )
+    risk_blocker = str(budget.get("risk_budget_blocker") or "")
+    if eligible_before_risk and risk_blocker:
+        blockers.append(risk_blocker)
+        classification = "LONG_TERM_REVIEW_BLOCKED"
+
+    eligible = not blockers
+    if not eligible:
+        budget["recommended_position_fraction"] = 0.0
+        budget["recommended_position_pct"] = 0.0
+
     return {
         "code": code,
         "stock_name": plan.get("stock_name") or second_pass.get("stock_name") or valuation.get("stock_name") or "",
-        "industry": plan.get("industry") or second_pass.get("industry") or valuation.get("industry") or "",
+        "industry": industry,
         "long_term_classification": classification,
         "long_term_formal_buy_eligible": eligible,
         "long_term_blockers": ";".join(blockers),
@@ -271,6 +399,7 @@ def evaluate_long_term_candidate(
         "medium_horizon_exit_profile_limitation": True,
         "legacy_exit_profile_is_long_term_veto": False,
         **entry,
+        **budget,
         "formal_signal_eligible": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
@@ -285,6 +414,8 @@ def build_long_term_formal_buy_rows(
     plan_map: Mapping[str, Mapping[str, Any]],
     valuation_map: Mapping[str, Mapping[str, Any]],
     policy: LongTermPolicy = LongTermPolicy(),
+    portfolio_state: PortfolioRiskState = PortfolioRiskState(),
+    risk_policy: DrawdownRiskPolicy = DEFAULT_DRAWDOWN_POLICY,
 ) -> list[dict[str, Any]]:
     rows = [
         evaluate_long_term_candidate(
@@ -292,6 +423,8 @@ def build_long_term_formal_buy_rows(
             plan_map.get(_code(raw.get("code"))),
             valuation_map.get(_code(raw.get("code"))),
             policy=policy,
+            portfolio_state=portfolio_state,
+            risk_policy=risk_policy,
         )
         for raw in second_pass_rows
         if _code(raw.get("code"))
@@ -314,6 +447,9 @@ def write_report(
     long_term_dir: Path,
     valuation_root: Path,
     output_dir: Path,
+    *,
+    portfolio_state: PortfolioRiskState = PortfolioRiskState(),
+    risk_policy: DrawdownRiskPolicy = DEFAULT_DRAWDOWN_POLICY,
 ) -> list[dict[str, Any]]:
     report_dir = _latest_report(report_root)
     valuation_dir = _latest_valuation(valuation_root)
@@ -322,6 +458,8 @@ def write_report(
         second_pass,
         plan_map=_full_plan_map(report_dir),
         valuation_map=_valuation_map(valuation_dir),
+        portfolio_state=portfolio_state,
+        risk_policy=risk_policy,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     fields = [
@@ -335,13 +473,19 @@ def write_report(
         "financial_review_status", "normalized_core_operating_profit",
         "preferred_plan", "current_price", "entry_low", "entry_high",
         "risk_invalidation_price", "target_1", "target_2", "entry_plan_status",
-        "current_action", "medium_horizon_exit_profile_limitation",
-        "legacy_exit_profile_is_long_term_veto", "formal_signal_eligible",
-        "automatic_promotion_allowed", "no_auto_trade", "policy_version", "disclaimer",
+        "current_action", "portfolio_drawdown_pct", "drawdown_exposure_multiplier",
+        "risk_budget_pct", "stop_distance_pct", "recommended_position_fraction",
+        "recommended_position_pct", "current_name_allocation_pct",
+        "current_industry_allocation_pct", "max_single_name_pct", "max_industry_pct",
+        "drawdown_policy_version", "risk_budget_blocker",
+        "medium_horizon_exit_profile_limitation", "legacy_exit_profile_is_long_term_veto",
+        "formal_signal_eligible", "automatic_promotion_allowed", "no_auto_trade",
+        "policy_version", "disclaimer",
     ]
     with (output_dir / "long_term_formal_buy_candidates.csv").open("w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields, extrasaction="ignore")
-        w.writeheader(); w.writerows({k: row.get(k, "") for k in fields} for row in rows)
+        w.writeheader()
+        w.writerows({k: row.get(k, "") for k in fields} for row in rows)
 
     eligible = [r for r in rows if r["long_term_formal_buy_eligible"]]
     summary = {
@@ -351,6 +495,13 @@ def write_report(
         "try_position_count": sum(r["long_term_classification"] == "LONG_TERM_TRY_POSITION" for r in rows),
         "blocked_count": sum(r["long_term_classification"] == "LONG_TERM_REVIEW_BLOCKED" for r in rows),
         "formal_buy_codes": [r["code"] for r in eligible],
+        "portfolio_drawdown_pct": drawdown_magnitude(portfolio_state.portfolio_drawdown_pct),
+        "drawdown_exposure_multiplier": exposure_multiplier(portfolio_state.portfolio_drawdown_pct, risk_policy),
+        "drawdown_policy_version": DRAWDOWN_POLICY_VERSION,
+        "risk_per_trade_pct": risk_policy.risk_per_trade_pct,
+        "max_single_name_pct": risk_policy.max_single_name_fraction * 100.0,
+        "max_industry_pct": risk_policy.max_industry_fraction * 100.0,
+        "hard_max_drawdown_pct": risk_policy.hard_max_drawdown_pct,
         "policy_version": POLICY_VERSION,
         "legacy_exit_profile_is_long_term_veto": False,
         "no_auto_trade": True,
@@ -365,6 +516,9 @@ def write_report(
         DISCLAIMER,
         "",
         f"- policy: {POLICY_VERSION}",
+        f"- drawdown policy: {DRAWDOWN_POLICY_VERSION}",
+        f"- portfolio drawdown: {drawdown_magnitude(portfolio_state.portfolio_drawdown_pct):.2f}%",
+        f"- new-risk multiplier: {exposure_multiplier(portfolio_state.portfolio_drawdown_pct, risk_policy):.2f}",
         f"- formal candidates: {len(eligible)} / {len(rows)}",
         "- legacy 60-day exit-profile shortage is not a long-term veto",
         "",
@@ -378,6 +532,8 @@ def write_report(
             f"- invalidation: {row['risk_invalidation_price']}",
             f"- target: {row['target_1']} / {row['target_2']}",
             f"- R/R: {row['real_reward_risk_ratio']}",
+            f"- stop distance: {row['stop_distance_pct']}%",
+            f"- recommended position: {row['recommended_position_pct']}%",
             f"- required profit growth vs historical reference: {row['required_profit_growth_pct']}",
             f"- earnings quality: {row['earnings_quality_score']} ({row['earnings_quality_confidence']})",
             f"- blockers: {row['long_term_blockers'] or 'NONE'}",
@@ -393,8 +549,23 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--long-term-dir", type=Path, required=True)
     p.add_argument("--valuation-root", type=Path, required=True)
     p.add_argument("--output-dir", type=Path, required=True)
+    p.add_argument(
+        "--portfolio-state",
+        type=Path,
+        help=(
+            "optional JSON with portfolio_drawdown_pct, name_allocations and "
+            "industry_allocations; allocations may be 0-1 fractions or 0-100 percentages"
+        ),
+    )
     args = p.parse_args(argv)
-    rows = write_report(args.report_root, args.long_term_dir, args.valuation_root, args.output_dir)
+    portfolio_state = load_portfolio_risk_state(args.portfolio_state)
+    rows = write_report(
+        args.report_root,
+        args.long_term_dir,
+        args.valuation_root,
+        args.output_dir,
+        portfolio_state=portfolio_state,
+    )
     print(f"long_term_formal_buy={args.output_dir};count={len(rows)}")
     return 0
 
