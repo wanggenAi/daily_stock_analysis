@@ -9,6 +9,7 @@ from pathlib import Path
 from src.strategies.genge_opportunity_discovery.hard_logic_price_map import (
     build_price_expectation_row,
     build_price_expectation_rows,
+    earnings_stage_assessment,
     hard_logic_assessment,
     load_artifact_company_rows,
     write_price_map,
@@ -105,12 +106,14 @@ class HardLogicPriceMapTest(unittest.TestCase):
         self.assertEqual(missing_quality["price_decision"], "HARD_LOGIC_REVIEW")
         self.assertEqual(weak_quality["hard_logic_state"], "REVIEW")
 
-    def test_no_growth_or_contraction_requirement_is_directly_buyable(self):
+    def test_no_growth_or_contraction_requirement_is_directly_buyable_in_reverse_fallback(self):
         deep = build_price_expectation_row(self._base_row(required_profit_growth_pct="-20"))
         buyable = build_price_expectation_row(self._base_row(required_profit_growth_pct="0"))
 
+        self.assertEqual(deep["valuation_framework"], "REFERENCE_ONLY_REVERSE_PE")
         self.assertEqual(deep["price_decision"], "BUY_DEEP_VALUE")
         self.assertEqual(buyable["price_decision"], "BUYABLE")
+        self.assertTrue(deep["historical_pe_is_reference_only"])
 
     def test_positive_required_growth_without_business_support_is_not_guessed(self):
         row = build_price_expectation_row(self._base_row(required_profit_growth_pct="12"))
@@ -158,7 +161,7 @@ class HardLogicPriceMapTest(unittest.TestCase):
         self.assertAlmostEqual(row["deep_value_price_ceiling"], 40.0)
         self.assertAlmostEqual(row["buyable_price_ceiling"], 50.0)
 
-    def test_supported_growth_creates_direct_buyable_and_deep_value_ceilings(self):
+    def test_supported_growth_creates_direct_buyable_and_deep_value_ceilings_in_reverse_fallback(self):
         row = build_price_expectation_row(
             self._base_row(
                 current_price="40",
@@ -170,15 +173,127 @@ class HardLogicPriceMapTest(unittest.TestCase):
         self.assertAlmostEqual(row["buyable_price_ceiling"], 55.0)
         self.assertAlmostEqual(row["deep_value_price_ceiling"], 47.5)
 
+    def test_forward_scenario_fair_value_overrides_historical_pe_as_buy_decision(self):
+        row = build_price_expectation_row(
+            self._base_row(
+                code="603369",
+                stock_name="今世缘",
+                current_price="28.92",
+                current_pe="13.9",
+                historical_median_pe_reference="21",
+                forward_eps_bear="2.00",
+                forward_eps_base="2.08",
+                forward_eps_bull="2.15",
+                reasonable_pe_bear="12",
+                reasonable_pe_base="15",
+                reasonable_pe_bull="18",
+                earnings_stage="EARLY_RECOVERY",
+            )
+        )
+
+        self.assertEqual(row["valuation_framework"], "FORWARD_SCENARIO")
+        self.assertEqual(row["earnings_stage"], "EARLY_RECOVERY")
+        self.assertTrue(row["historical_pe_is_reference_only"])
+        self.assertAlmostEqual(row["scenario_fair_price_bear"], 24.0)
+        self.assertAlmostEqual(row["scenario_fair_price_base"], 31.2)
+        self.assertAlmostEqual(row["scenario_fair_price_bull"], 38.7)
+        self.assertAlmostEqual(row["entry_price_ceiling"], 26.52)
+        self.assertAlmostEqual(row["ideal_price_ceiling"], 23.4)
+        self.assertEqual(row["price_zone"], "HOLD_FAIR_ZONE")
+        self.assertEqual(row["price_decision"], "HOLD_FAIR_VALUE")
+
+    def test_forward_scenario_uses_margin_of_safety_for_buy_and_deep_value(self):
+        buyable = build_price_expectation_row(
+            self._base_row(
+                current_price="26",
+                scenario_fair_price_base="31.2",
+                scenario_fair_price_bull="38.7",
+            )
+        )
+        deep = build_price_expectation_row(
+            self._base_row(
+                current_price="23",
+                scenario_fair_price_base="31.2",
+                scenario_fair_price_bull="38.7",
+            )
+        )
+
+        self.assertEqual(buyable["price_decision"], "BUYABLE")
+        self.assertEqual(buyable["price_zone"], "BUY_ZONE")
+        self.assertEqual(deep["price_decision"], "BUY_DEEP_VALUE")
+        self.assertEqual(deep["price_zone"], "DEEP_VALUE_ZONE")
+
+    def test_forward_scenario_marks_price_above_bull_as_overvalued_wait(self):
+        row = build_price_expectation_row(
+            self._base_row(
+                current_price="40",
+                scenario_fair_price_base="31.2",
+                scenario_fair_price_bull="38.7",
+            )
+        )
+
+        self.assertEqual(row["price_decision"], "OVERVALUED_WAIT")
+        self.assertEqual(row["price_zone"], "OVERVALUED_ZONE")
+
+    def test_forward_scenario_never_invents_missing_reasonable_pe(self):
+        row = build_price_expectation_row(
+            self._base_row(
+                current_price="28.92",
+                forward_eps_base="2.08",
+                reasonable_pe_base="",
+            )
+        )
+
+        self.assertEqual(row["scenario_valuation_status"], "FORWARD_BASE_VALUE_INPUTS_REQUIRED")
+        self.assertEqual(row["valuation_framework"], "REFERENCE_ONLY_REVERSE_PE")
+        self.assertIsNone(row["scenario_fair_price_base"])
+
+    def test_direct_specialized_fair_price_does_not_require_pe(self):
+        row = build_price_expectation_row(
+            self._base_row(
+                current_price="80",
+                scenario_fair_price_base="100",
+                scenario_fair_price_bull="120",
+                current_pe="",
+                historical_median_pe_reference="",
+                required_profit_growth_pct="",
+            )
+        )
+
+        self.assertEqual(row["valuation_framework"], "FORWARD_SCENARIO")
+        self.assertEqual(row["price_decision"], "BUYABLE")
+        self.assertAlmostEqual(row["entry_price_ceiling"], 85.0)
+
+    def test_negative_eps_or_multiple_cannot_create_forward_fair_value(self):
+        row = build_price_expectation_row(
+            self._base_row(
+                forward_eps_base="-2.08",
+                reasonable_pe_base="15",
+            )
+        )
+
+        self.assertIsNone(row["scenario_fair_price_base"])
+        self.assertEqual(row["valuation_framework"], "REFERENCE_ONLY_REVERSE_PE")
+
+    def test_earnings_stage_can_be_inferred_from_quarterly_inflection(self):
+        stage, basis = earnings_stage_assessment(
+            self._base_row(latest_quarter_profit_yoy_pct="19.17", previous_quarter_profit_yoy_pct="-15.76")
+        )
+
+        self.assertEqual(stage, "EARLY_RECOVERY")
+        self.assertEqual(basis, "LATEST_PROFIT_YOY_TURNED_POSITIVE")
+
     def test_artifact_merge_restores_raw_price_but_only_keeps_research_union(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             raw = root / "reports" / "final_valuation_source"
             industry = root / "reports" / "industry_coverage"
             valuation = root / "reports" / "valuation_research_queue" / "20260819"
+            scenario = root / "reports" / "forward_scenario_valuation"
             raw.mkdir(parents=True)
             industry.mkdir(parents=True)
             valuation.mkdir(parents=True)
+            scenario.mkdir(parents=True)
 
             self._write_csv(
                 raw / "all_a_quant_screen.csv",
@@ -210,6 +325,21 @@ class HardLogicPriceMapTest(unittest.TestCase):
                     }
                 ],
             )
+            self._write_csv(
+                scenario / "forward_scenario_valuation.csv",
+                [
+                    {
+                        "code": "600001",
+                        "forward_eps_base": "3",
+                        "reasonable_pe_base": "15",
+                    },
+                    {
+                        "code": "600777",
+                        "forward_eps_base": "1",
+                        "reasonable_pe_base": "10",
+                    },
+                ],
+            )
 
             rows = load_artifact_company_rows(root)
 
@@ -218,6 +348,8 @@ class HardLogicPriceMapTest(unittest.TestCase):
             self.assertEqual(rows[0]["current_price"], "40")
             self.assertEqual(rows[0]["industry"], "行业A")
             self.assertEqual(rows[0]["required_profit_growth_pct"], "-20")
+            self.assertEqual(rows[0]["forward_eps_base"], "3")
+            self.assertEqual(rows[0]["reasonable_pe_base"], "15")
 
     def test_written_summary_explicitly_disables_global_top_one_and_auto_trade(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -259,6 +391,7 @@ class HardLogicPriceMapTest(unittest.TestCase):
 
             self.assertFalse(summary["global_top1_required"])
             self.assertTrue(summary["technical_context_is_non_veto"])
+            self.assertTrue(summary["historical_pe_is_reference_only"])
             self.assertTrue(summary["no_auto_trade"])
             self.assertFalse(summary["formal_signal_eligible"])
 
