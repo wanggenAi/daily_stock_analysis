@@ -35,7 +35,7 @@ jobs:
         )
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 180
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -85,6 +85,8 @@ jobs:
             tests/test_genge_industry_valuation_bridge.py \
             tests/test_genge_long_term_second_pass.py \
             tests/test_genge_long_term_valuation_merge.py \
+            tests/test_genge_hard_logic_engine.py \
+            tests/test_genge_hard_logic_research_runner.py \
             tests/test_genge_valuation_research_long_term_runner.py \
             tests/test_genge_long_term_formal_buy.py \
             tests/test_genge_zero_buy_audit.py \
@@ -100,12 +102,88 @@ jobs:
             tests/test_genge_resource_asset_valuation.py \
             tests/test_genge_master_opportunity_ranking.py
 
-      - name: Build every-industry Top 5 research map
+      - name: Build every-industry Top 5 seed map
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.industry_coverage \
             --report-root upstream/reports/all_a_full_scan \
             --output-dir reports/industry_coverage \
             --per-industry 5
+
+      - name: Research structural hard logic for every industry
+        env:
+          GENERATION_BACKEND: ${{ vars.GENERATION_BACKEND || secrets.GENERATION_BACKEND }}
+          AGENT_GENERATION_BACKEND: ${{ vars.AGENT_GENERATION_BACKEND || secrets.AGENT_GENERATION_BACKEND }}
+          LITELLM_CONFIG: ${{ vars.LITELLM_CONFIG || secrets.LITELLM_CONFIG }}
+          LITELLM_CONFIG_YAML: ${{ vars.LITELLM_CONFIG_YAML || secrets.LITELLM_CONFIG_YAML }}
+          LITELLM_API_KEY: ${{ secrets.LITELLM_API_KEY }}
+          LITELLM_MODEL: ${{ vars.LITELLM_MODEL || secrets.LITELLM_MODEL }}
+          LITELLM_FALLBACK_MODELS: ${{ vars.LITELLM_FALLBACK_MODELS || secrets.LITELLM_FALLBACK_MODELS }}
+          AGENT_LITELLM_MODEL: ${{ vars.AGENT_LITELLM_MODEL || secrets.AGENT_LITELLM_MODEL }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_API_KEYS: ${{ secrets.OPENAI_API_KEYS }}
+          OPENAI_BASE_URL: ${{ vars.OPENAI_BASE_URL || secrets.OPENAI_BASE_URL }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || secrets.OPENAI_MODEL }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_API_KEYS: ${{ secrets.GEMINI_API_KEYS }}
+          GEMINI_MODEL: ${{ vars.GEMINI_MODEL || secrets.GEMINI_MODEL }}
+          AIHUBMIX_KEY: ${{ secrets.AIHUBMIX_KEY }}
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_API_KEYS: ${{ secrets.DEEPSEEK_API_KEYS }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          ANTHROPIC_API_KEYS: ${{ secrets.ANTHROPIC_API_KEYS }}
+          LLM_PRIMARY_PROTOCOL: ${{ vars.LLM_PRIMARY_PROTOCOL || secrets.LLM_PRIMARY_PROTOCOL }}
+          LLM_PRIMARY_BASE_URL: ${{ vars.LLM_PRIMARY_BASE_URL || secrets.LLM_PRIMARY_BASE_URL }}
+          LLM_PRIMARY_API_KEY: ${{ secrets.LLM_PRIMARY_API_KEY }}
+          LLM_PRIMARY_API_KEYS: ${{ secrets.LLM_PRIMARY_API_KEYS }}
+          LLM_PRIMARY_MODELS: ${{ vars.LLM_PRIMARY_MODELS || secrets.LLM_PRIMARY_MODELS }}
+          LLM_PRIMARY_ENABLED: ${{ vars.LLM_PRIMARY_ENABLED || secrets.LLM_PRIMARY_ENABLED }}
+          LLM_SECONDARY_PROTOCOL: ${{ vars.LLM_SECONDARY_PROTOCOL || secrets.LLM_SECONDARY_PROTOCOL }}
+          LLM_SECONDARY_BASE_URL: ${{ vars.LLM_SECONDARY_BASE_URL || secrets.LLM_SECONDARY_BASE_URL }}
+          LLM_SECONDARY_API_KEY: ${{ secrets.LLM_SECONDARY_API_KEY }}
+          LLM_SECONDARY_API_KEYS: ${{ secrets.LLM_SECONDARY_API_KEYS }}
+          LLM_SECONDARY_MODELS: ${{ vars.LLM_SECONDARY_MODELS || secrets.LLM_SECONDARY_MODELS }}
+          LLM_SECONDARY_ENABLED: ${{ vars.LLM_SECONDARY_ENABLED || secrets.LLM_SECONDARY_ENABLED }}
+          ANSPIRE_API_KEYS: ${{ secrets.ANSPIRE_API_KEYS }}
+          BOCHA_API_KEYS: ${{ secrets.BOCHA_API_KEYS }}
+          TAVILY_API_KEYS: ${{ secrets.TAVILY_API_KEYS }}
+          SERPAPI_API_KEYS: ${{ secrets.SERPAPI_API_KEYS }}
+          BRAVE_API_KEYS: ${{ secrets.BRAVE_API_KEYS }}
+          SEARXNG_BASE_URLS: ${{ vars.SEARXNG_BASE_URLS || secrets.SEARXNG_BASE_URLS }}
+          SEARXNG_PUBLIC_INSTANCES_ENABLED: ${{ vars.SEARXNG_PUBLIC_INSTANCES_ENABLED || secrets.SEARXNG_PUBLIC_INSTANCES_ENABLED }}
+        run: |
+          if [ -n "${LITELLM_CONFIG_YAML:-}" ] && [ -n "${LITELLM_CONFIG:-}" ]; then
+            mkdir -p "$(dirname "$LITELLM_CONFIG")"
+            printf '%s\n' "$LITELLM_CONFIG_YAML" > "$LITELLM_CONFIG"
+          fi
+          RAW_ALL_A_CSV="$(find upstream/reports/all_a_full_scan -type f -name all_a_quant_screen.csv | sort | tail -1)"
+          test -n "$RAW_ALL_A_CSV" && test -f "$RAW_ALL_A_CSV"
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.hard_logic_research_runner \
+            --industry-candidates-csv reports/industry_coverage/industry_top_candidates.csv \
+            --all-a-universe-csv "$RAW_ALL_A_CSV" \
+            --output-dir reports/hard_logic_research \
+            --per-industry-limit 5 \
+            --max-workers 3 \
+            --timeout-seconds 90
+
+      - name: Validate hard-logic industry research contract
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          root = Path('reports/hard_logic_research')
+          rows = list(csv.DictReader((root/'hard_logic_research.csv').open(encoding='utf-8')))
+          summary = json.loads((root/'hard_logic_research_summary.json').read_text(encoding='utf-8'))
+          assert rows, 'hard-logic industry research unexpectedly empty'
+          assert len(rows) == summary['industry_count']
+          assert len({r['industry'] for r in rows}) == len(rows), 'industry research must be one row per industry'
+          assert all(r.get('research_state') in {'PASS','NO_PASS','REVIEW'} for r in rows)
+          assert all(r.get('no_auto_trade') == 'True' for r in rows)
+          assert summary['topn_seed_is_answer'] is False
+          assert summary['all_industries_force_stock'] is False
+          assert summary['valuation_is_hard_logic'] is False
+          assert summary['quant_rank_is_hard_logic'] is False
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
 
       - name: Build long-term second-pass candidates
         run: |
@@ -130,7 +208,17 @@ jobs:
             --long-term-dir reports/long_term_second_pass \
             --output-dir reports/final_valuation_source
 
-      - name: Validate recall coverage before valuation
+      - name: Force structural hard-logic PASS into valuation source
+        run: |
+          RAW_ALL_A_CSV="$(find upstream/reports/all_a_full_scan -type f -name all_a_quant_screen.csv | sort | tail -1)"
+          test -n "$RAW_ALL_A_CSV" && test -f "$RAW_ALL_A_CSV"
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.hard_logic_valuation_merge \
+            --valuation-source-dir reports/final_valuation_source \
+            --hard-logic-research-dir reports/hard_logic_research \
+            --raw-all-a-csv "$RAW_ALL_A_CSV" \
+            --output-dir reports/hard_logic_valuation_source
+
+      - name: Validate recall and hard-logic coverage before valuation
         run: |
           python - <<'PY'
           import csv, json
@@ -138,10 +226,14 @@ jobs:
 
           coverage = Path('reports/industry_coverage')
           final_source = Path('reports/final_valuation_source')
+          hard_source = Path('reports/hard_logic_valuation_source')
           long_term = Path('reports/long_term_second_pass')
+          hard_research = Path('reports/hard_logic_research')
           industry_rows = list(csv.DictReader((coverage/'industry_top_candidates.csv').open(encoding='utf-8')))
           source_rows = list(csv.DictReader((final_source/'all_a_quant_screen.csv').open(encoding='utf-8')))
+          hard_source_rows = list(csv.DictReader((hard_source/'all_a_quant_screen.csv').open(encoding='utf-8')))
           lt_rows = list(csv.DictReader((long_term/'long_term_second_pass_candidates.csv').open(encoding='utf-8')))
+          hard_rows = list(csv.DictReader((hard_research/'hard_logic_research.csv').open(encoding='utf-8')))
           clean_industries = {
               r['industry'] for r in industry_rows
               if r['industry_candidate_state'] == 'RESEARCH_CANDIDATE'
@@ -156,18 +248,29 @@ jobs:
           source_codes = {r['code'] for r in source_rows}
           missing_lt = sorted({r['code'] for r in lt_rows} - source_codes)
           assert not missing_lt, f'long-term second-pass names missing valuation source: {missing_lt}'
+          hard_source_codes = {r['code'] for r in hard_source_rows}
+          hard_pass_codes = {
+              r['selected_code'] for r in hard_rows
+              if r.get('research_state') == 'PASS' and r.get('hard_logic_state') == 'PASS' and r.get('selected_code')
+          }
+          missing_hard = sorted(hard_pass_codes - hard_source_codes)
+          assert not missing_hard, f'hard-logic PASS names missing valuation source: {missing_hard}'
           summary = json.loads((final_source/'long_term_valuation_source_summary.json').read_text(encoding='utf-8'))
+          hard_summary = json.loads((hard_source/'hard_logic_valuation_source_summary.json').read_text(encoding='utf-8'))
           assert summary['long_term_routed_count'] >= len(lt_rows)
-          assert summary['formal_signal_eligible'] is False
-          assert summary['automatic_promotion_allowed'] is False
-          assert summary['no_auto_trade'] is True
-          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          assert hard_summary['hard_logic_routed_count'] == len(hard_pass_codes)
+          assert hard_summary['hard_logic_precedes_valuation'] is True
+          assert hard_summary['external_nomination_requires_all_a_membership'] is True
+          assert hard_summary['formal_signal_eligible'] is False
+          assert hard_summary['automatic_promotion_allowed'] is False
+          assert hard_summary['no_auto_trade'] is True
+          print(json.dumps({'legacy_recall': summary, 'hard_logic_route': hard_summary}, ensure_ascii=False, indent=2))
           PY
 
-      - name: Build reverse-valuation research queue with long-term financial priority
+      - name: Build reverse-valuation research queue after hard logic
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_long_term_runner \
-            --report-dir reports/final_valuation_source \
+            --report-dir reports/hard_logic_valuation_source \
             --output-dir reports/valuation_research_queue \
             --fundamental-cache-dir data/cache/valuation_research_fundamentals \
             --research-limit 500 \
@@ -249,9 +352,16 @@ jobs:
           routed_rows = list(csv.DictReader((latest/'valuation_research_routed.csv').open(encoding='utf-8')))
           specialized_rows = list(csv.DictReader((latest/'valuation_research_specialized.csv').open(encoding='utf-8')))
           lt_rows = list(csv.DictReader(Path('reports/long_term_second_pass/long_term_second_pass_candidates.csv').open(encoding='utf-8')))
+          hard_rows = list(csv.DictReader(Path('reports/hard_logic_research/hard_logic_research.csv').open(encoding='utf-8')))
           valuation_codes = {r['code'] for r in valuation_rows}
           missing_lt = sorted({r['code'] for r in lt_rows} - valuation_codes)
           assert not missing_lt, f'long-term candidates dropped before valuation: {missing_lt}'
+          hard_pass_codes = {
+              r['selected_code'] for r in hard_rows
+              if r.get('research_state') == 'PASS' and r.get('hard_logic_state') == 'PASS' and r.get('selected_code')
+          }
+          missing_hard = sorted(hard_pass_codes - valuation_codes)
+          assert not missing_hard, f'hard-logic PASS names dropped before valuation: {missing_hard}'
 
           tagged = {
               r['code'] for r in valuation_rows
@@ -368,6 +478,10 @@ jobs:
                   assert all(str(r.get('long_term_blockers') or '').strip() for r in formal_rows)
 
           print(json.dumps({
+              'hard_logic_industry_research': {
+                  'industry_count': len(hard_rows),
+                  'hard_logic_pass_count': len(hard_pass_codes),
+              },
               'zero_buy': zero,
               'long_term_second_pass': lt_summary,
               'long_term_formal_buy': formal_summary,
@@ -390,8 +504,17 @@ jobs:
             if [ -f "$f" ]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo >> "$GITHUB_STEP_SUMMARY"; fi
           done
           python - <<'PY'
-          import os
+          import json, os
           from pathlib import Path
+          with Path(os.environ['GITHUB_STEP_SUMMARY']).open('a', encoding='utf-8') as f:
+              hard_summary = Path('reports/hard_logic_research/hard_logic_research_summary.json')
+              if hard_summary.exists():
+                  payload = json.loads(hard_summary.read_text(encoding='utf-8'))
+                  f.write('## Hard Logic Industry Research\n\n')
+                  f.write(f"- industries: {payload.get('industry_count', 0)}\n")
+                  f.write(f"- HARD_LOGIC_PASS: {payload.get('hard_logic_pass_count', 0)}\n")
+                  f.write(f"- NO_PASS: {payload.get('no_pass_count', 0)}\n")
+                  f.write(f"- REVIEW: {payload.get('review_count', 0)}\n\n")
           root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in root.iterdir() if p.is_dir()) if root.exists() else []
           if runs:
@@ -417,9 +540,11 @@ jobs:
           name: genge-postscan-research
           path: |
             reports/industry_coverage
+            reports/hard_logic_research
             reports/long_term_second_pass
             reports/industry_valuation_source
             reports/final_valuation_source
+            reports/hard_logic_valuation_source
             reports/valuation_research_queue
             reports/long_term_formal_buy
             reports/zero_buy_audit
