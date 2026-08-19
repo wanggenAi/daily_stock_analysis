@@ -77,7 +77,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: data/cache/hard_logic_history_backtest
-          key: hard-logic-history-v2-${{ runner.os }}-${{ hashFiles('config/genge_hard_logic_famous_cases.csv') }}
+          key: hard-logic-history-v3-${{ runner.os }}-${{ hashFiles('config/genge_hard_logic_famous_cases.csv') }}
 
       - name: Resolve replay dates
         shell: bash
@@ -120,6 +120,8 @@ jobs:
           assert summary['valuation_low_zone_entry_required'] is True
           assert summary['max_entry_pe_percentile'] == 50.0
           assert summary['deep_value_bypasses_pe_percentile_gate'] is True
+          assert summary['high_valuation_exit_required'] is True
+          assert summary['min_exit_pe_percentile'] == 70.0
           assert summary['famous_case_selection_bias_warning'] is True
           assert summary['headline_expected_return_allowed'] is False
           assert summary['no_auto_trade'] is True
