@@ -9,11 +9,14 @@ from pathlib import Path
 
 from src.strategies.genge_opportunity_discovery import candidate_recovery_report
 from src.strategies.genge_opportunity_discovery import execution_lot_feasibility
+from src.strategies.genge_opportunity_discovery import factor_ic_monitor
+from src.strategies.genge_opportunity_discovery import industry_regime_policy
 from src.strategies.genge_opportunity_discovery import opportunity_engine_policy
 from src.strategies.genge_opportunity_discovery import opportunity_pipeline_policy
 from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
 from src.strategies.genge_opportunity_discovery import opportunity_report_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
+from src.strategies.genge_opportunity_discovery import universe_resilience_policy
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
 
 
@@ -80,6 +83,8 @@ def main(argv: list[str] | None = None) -> int:
     original_build_daily_signals = core.build_daily_signals
     original_exit_profile_health = core._exit_profile_strategy_health
     original_strict_checks = core.strict_candidate_checks
+    original_build_industry_regimes = core.build_industry_regimes
+    original_build_all_a_universe = core.build_all_a_universe
     original_build_quant_rows = pipeline._build_quant_rows
     original_screen_blockers = pipeline._screen_blockers
     original_screen_status = pipeline._screen_status
@@ -87,11 +92,17 @@ def main(argv: list[str] | None = None) -> int:
     original_research_queues = pipeline._research_queues
     plan_columns = list(core.PLAN_COLUMNS)
     top5_columns = list(core.TOP5_COLUMNS)
+    industry_regime_columns = list(core.INDUSTRY_REGIME_COLUMNS)
     quant_columns = list(pipeline.QUANT_COLUMNS)
     opportunity_columns = list(pipeline.OPPORTUNITY_COLUMNS)
 
     complete_material_event_pagination.install()
+    universe_resilience_policy.install()
+    industry_regime_policy.install()
     opportunity_pipeline_policy.install()
+    # Factor IC must wrap the engine-aware quant builder so earnings fields are
+    # already normalized before point-in-time observations are persisted.
+    factor_ic_monitor.install()
     opportunity_queue_policy.install()
     opportunity_engine_policy.install()
     opportunity_report_policy.install()
@@ -107,6 +118,7 @@ def main(argv: list[str] | None = None) -> int:
                 output_dir,
                 portfolio_capital=_portfolio_capital(),
             )
+            factor_ic_monitor.write_report(output_dir)
         return result
     finally:
         base._query_cninfo_material_events = original_cninfo
@@ -116,6 +128,8 @@ def main(argv: list[str] | None = None) -> int:
         core.build_daily_signals = original_build_daily_signals
         core._exit_profile_strategy_health = original_exit_profile_health
         core.strict_candidate_checks = original_strict_checks
+        core.build_industry_regimes = original_build_industry_regimes
+        core.build_all_a_universe = original_build_all_a_universe
         pipeline._build_quant_rows = original_build_quant_rows
         pipeline._screen_blockers = original_screen_blockers
         pipeline._screen_status = original_screen_status
@@ -123,6 +137,7 @@ def main(argv: list[str] | None = None) -> int:
         pipeline._research_queues = original_research_queues
         core.PLAN_COLUMNS[:] = plan_columns
         core.TOP5_COLUMNS[:] = top5_columns
+        core.INDUSTRY_REGIME_COLUMNS[:] = industry_regime_columns
         pipeline.QUANT_COLUMNS[:] = quant_columns
         pipeline.OPPORTUNITY_COLUMNS[:] = opportunity_columns
 

@@ -47,16 +47,35 @@ def _finite_float(value: Any) -> float | None:
 
 
 def _preliminary_engine(row: Mapping[str, Any]) -> str:
-    """Return an upstream research engine without pretending final gates passed."""
+    """Return an upstream research engine without pretending final gates passed.
 
-    if opportunity_engine_policy.factor_validity_status(row) == "INVALID":
-        return "NONE"
+    Factor evidence is checked only against the matching setup. A negative
+    momentum regime therefore cannot erase an otherwise independent valley
+    candidate, and negative reversal evidence cannot erase a trend candidate.
+    """
+
     percentile = _finite_float(row.get("price_percentile_5y"))
-    if percentile is not None and percentile <= 0.35:
+    if (
+        percentile is not None
+        and percentile <= 0.35
+        and opportunity_engine_policy.factor_validity_for_engine(
+            row, "VALLEY_REPAIR"
+        ) != "INVALID"
+    ):
         return "VALLEY_REPAIR"
-    if str(row.get("trend_confirmation_level") or "").upper() == "STRONG":
+    if (
+        str(row.get("trend_confirmation_level") or "").upper() == "STRONG"
+        and opportunity_engine_policy.factor_validity_for_engine(
+            row, "STRONG_TREND_PULLBACK"
+        ) != "INVALID"
+    ):
         return "STRONG_TREND_RESEARCH"
-    if opportunity_engine_policy.earnings_inflection_confirmed(row):
+    if (
+        opportunity_engine_policy.earnings_inflection_confirmed(row)
+        and opportunity_engine_policy.factor_validity_for_engine(
+            row, "EARNINGS_INFLECTION"
+        ) != "INVALID"
+    ):
         return "EARNINGS_INFLECTION"
     return "NONE"
 
@@ -90,18 +109,22 @@ def financial_inflection_metrics(financial_df: Any, *, as_of: date) -> dict[str,
         return empty
 
     local = financial_df.copy()
-    local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce").dt.date
+    as_of_ts = pd.Timestamp(as_of)
+    local["report_date"] = pd.to_datetime(local["report_date"], errors="coerce")
     local["net_profit"] = pd.to_numeric(local["net_profit"], errors="coerce")
     local = local.dropna(subset=["report_date", "net_profit"])
-    local = local[local["report_date"] <= as_of]
+    local = local[local["report_date"] <= as_of_ts]
     if "disclosure_date" in local.columns:
-        disclosure = pd.to_datetime(local["disclosure_date"], errors="coerce").dt.date
-        local = local[disclosure.isna() | (disclosure <= as_of)]
+        disclosure = pd.to_datetime(local["disclosure_date"], errors="coerce")
+        local = local[disclosure.isna() | (disclosure <= as_of_ts)]
     if local.empty:
         return empty
 
     local = local.sort_values("report_date").drop_duplicates("report_date", keep="last")
-    values = {row.report_date: float(row.net_profit) for row in local.itertuples(index=False)}
+    values = {
+        pd.Timestamp(row.report_date).date(): float(row.net_profit)
+        for row in local.itertuples(index=False)
+    }
     report_dates = list(values)
 
     def yoy_for(period: date) -> tuple[float | None, bool]:
@@ -202,13 +225,15 @@ def _tier_row(row: dict[str, Any]) -> dict[str, Any]:
     result["a_condition_fail_count"] = len(remaining)
     result["a_condition_pass_count"] = int(result.get("a_condition_pass_count") or 0) + 1
 
-    # Promote to Tier A only when price was literally the last failed A condition.
-    # Any hard blocker or other failed condition remains authoritative.
     hard = str(result.get("hard_blockers") or "").strip()
     if not remaining and not hard and str(row.get("quant_screen_status") or "") in pipeline.RESEARCH_STATUSES:
         result["tier"] = "TIER_A"
         result["research_label"] = pipeline._research_label("TIER_A")
-        result["upgrade_conditions"] = pipeline._upgrade_conditions([], str(result.get("industry_evidence_status") or ""), str(result.get("company_evidence_status") or ""))
+        result["upgrade_conditions"] = pipeline._upgrade_conditions(
+            [],
+            str(result.get("industry_evidence_status") or ""),
+            str(result.get("company_evidence_status") or ""),
+        )
     return result
 
 
