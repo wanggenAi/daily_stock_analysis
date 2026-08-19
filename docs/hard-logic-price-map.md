@@ -53,6 +53,37 @@ target_price = current_price
 
 所以报告会直接给出市场要求利润 `-20% / -10% / 0% / +10% / +20%` 时分别对应什么股价。
 
+### 直接给出“多少钱能买”
+
+报告额外输出两个最直接的字段：
+
+- `buyable_price_ceiling`：按当前规则仍保有足够估值空间的最高可接受价格；
+- `deep_value_price_ceiling`：进入深度低估区域的价格上限。
+
+如果还没有可靠的未来利润增长区间，为避免编造预测：
+
+```text
+buyable_price_ceiling = 市场只要求 0% 利润增长时对应的价格
+deep_value_price_ceiling = 市场隐含 -20% 利润增长时对应的价格
+```
+
+如果已有显式、可审计的硬逻辑基础增长率 `supported_base_growth`：
+
+```text
+buyable threshold required growth = supported_base_growth - 15pp
+deep-value threshold required growth = supported_base_growth - 30pp
+```
+
+因此用户可以直接看到类似：
+
+```text
+当前价 = 40
+最高可接受买入价 <= 45
+深度低估价 <= 38
+```
+
+当前价格高于上限就等，不需要再用技术指标重新决定公司值不值得买。
+
 ## 价格结论
 
 如果没有可靠的未来业务增长区间，系统绝不自行编造预测：
@@ -85,7 +116,7 @@ expectation_headroom = supported_base_profit_growth - market_required_profit_gro
 - `hard_logic_price_map.md`：适合人工快速阅读的当前结论；
 - `hard_logic_price_map_summary.json`：候选数量、硬逻辑通过数量及各价格状态统计。
 
-每一行都保留当前价、当前 PE、历史参考 PE、历史估值分位、当前价格隐含利润增长，以及在 -20% / -10% / 0% / +10% / +20% 市场增长要求下对应的价格。若有显式硬逻辑利润增长区间，还会额外输出其 low/base/high 对应的价值价格。
+每一行都保留当前价、当前 PE、历史参考 PE、历史估值分位、当前价格隐含利润增长、`buyable_price_ceiling`、`deep_value_price_ceiling`，以及在 -20% / -10% / 0% / +10% / +20% 市场增长要求下对应的价格。若有显式硬逻辑利润增长区间，还会额外输出其 low/base/high 对应的价值价格。
 
 报告明确保持：
 
