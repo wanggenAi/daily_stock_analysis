@@ -1,6 +1,7 @@
 import pandas as pd
 
 from src.strategies.genge_cycle_bottom.fundamentals import (
+    FINANCIAL_CACHE_KIND,
     FINANCIAL_COLUMNS,
     PublicFundamentalLoader,
     _normalize_financial_frame,
@@ -42,8 +43,8 @@ def test_recurring_profit_does_not_match_growth_rate_column():
     assert pd.isna(normalized.loc[0, "recurring_profit"])
 
 
-def test_old_financial_cache_is_forward_compatible_with_recurring_profit(tmp_path):
-    cache_path = tmp_path / "financial" / "600519.csv"
+def test_versioned_financial_cache_is_forward_compatible_with_recurring_profit(tmp_path):
+    cache_path = tmp_path / FINANCIAL_CACHE_KIND / "600519.csv"
     cache_path.parent.mkdir(parents=True)
     pd.DataFrame(
         {
