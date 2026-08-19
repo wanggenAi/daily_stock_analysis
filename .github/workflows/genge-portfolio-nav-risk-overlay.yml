@@ -1,0 +1,124 @@
+name: GenGe Portfolio NAV Risk Overlay
+
+on:
+  pull_request:
+    paths:
+      - "src/strategies/genge_opportunity_discovery/portfolio_nav_risk_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/drawdown_risk_policy.py"
+      - "src/strategies/genge_opportunity_discovery/drawdown_overlay_backtest.py"
+      - "src/strategies/genge_opportunity_discovery/hard_logic_historical_backtest.py"
+      - "tests/test_genge_portfolio_nav_risk_overlay.py"
+      - "config/genge_hard_logic_famous_cases.csv"
+      - ".github/workflows/genge-portfolio-nav-risk-overlay.yml"
+  workflow_dispatch:
+    inputs:
+      start_date:
+        description: "Historical replay start date"
+        required: false
+        default: "2018-01-01"
+        type: string
+      end_date:
+        description: "Historical replay end date"
+        required: false
+        default: "2026-08-18"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: genge-portfolio-nav-risk-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  deterministic-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Validate portfolio overlay
+        run: |
+          python -m py_compile src/strategies/genge_opportunity_discovery/portfolio_nav_risk_overlay.py
+          python -m pytest -q tests/test_genge_portfolio_nav_risk_overlay.py
+
+  public-data-diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Cache historical public data
+        uses: actions/cache@v4
+        with:
+          path: data/cache/hard_logic_history_backtest
+          key: hard-logic-history-v3-${{ runner.os }}-${{ hashFiles('config/genge_hard_logic_famous_cases.csv') }}
+      - name: Resolve replay dates
+        shell: bash
+        run: |
+          echo "START_DATE=${{ inputs.start_date || '2018-01-01' }}" >> "$GITHUB_ENV"
+          echo "END_DATE=${{ inputs.end_date || '2026-08-18' }}" >> "$GITHUB_ENV"
+      - name: Run portfolio NAV risk comparison
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.portfolio_nav_risk_overlay \
+            --cases-file config/genge_hard_logic_famous_cases.csv \
+            --start-date "$START_DATE" \
+            --end-date "$END_DATE" \
+            --output-dir reports/portfolio_nav_risk_overlay \
+            --cache-dir data/cache/hard_logic_history_backtest \
+            --evaluation-stride 5 \
+            --cost-bps-per-side 15
+      - name: Validate output contract
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('reports/portfolio_nav_risk_overlay')
+          required = [
+              root/'portfolio_nav_risk_overlay_summary.json',
+              root/'portfolio_nav_risk_overlay.md',
+              root/'portfolio_overlay_comparison.csv',
+              root/'data_failures.csv',
+          ]
+          for path in required:
+              assert path.exists() and path.stat().st_size > 0, path
+          summary = json.loads((root/'portfolio_nav_risk_overlay_summary.json').read_text(encoding='utf-8'))
+          assert summary['stock_entry_exit_signals_changed'] is False
+          assert summary['portfolio_exposure_decision_after_close_for_next_session'] is True
+          assert summary['famous_case_selection_bias_warning'] is True
+          assert summary['production_deployment_allowed'] is False
+          assert summary['full_all_a_walk_forward_required'] is True
+          assert summary['baseline_trade_count'] > 0
+          rows = list(csv.DictReader((root/'portfolio_overlay_comparison.csv').open(encoding='utf-8')))
+          assert len(rows) >= 2
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+      - name: Publish summary
+        if: always()
+        run: |
+          if [ -f reports/portfolio_nav_risk_overlay/portfolio_nav_risk_overlay.md ]; then
+            cat reports/portfolio_nav_risk_overlay/portfolio_nav_risk_overlay.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-portfolio-nav-risk-overlay
+          path: reports/portfolio_nav_risk_overlay
+          if-no-files-found: error
