@@ -59,6 +59,8 @@ def test_profitable_concentration_trim_reduces_only_excess_weight():
         entry=100,
         exit_=220,
     )
+    # 1% risk / 5% stop distance = 20% initial position.  After the price rises
+    # to 220, the winner drifts above 30% of account NAV and becomes eligible.
     entry_policy = PortfolioConstructionPolicy(
         name="fixture",
         risk_per_trade_pct=1.0,
@@ -68,8 +70,8 @@ def test_profitable_concentration_trim_reduces_only_excess_weight():
     )
     trim_policy = WinnerTrimPolicy(
         name="trim",
-        trigger_weight_fraction=0.55,
-        target_weight_fraction=0.40,
+        trigger_weight_fraction=0.30,
+        target_weight_fraction=0.22,
         minimum_gain_pct=50.0,
         cooldown_sessions=10,
         rebalance_cost_bps=0.0,
@@ -84,8 +86,8 @@ def test_profitable_concentration_trim_reduces_only_excess_weight():
     )
     assert len(trims) == 1
     assert trims[0]["gain_pct"] >= 50.0
-    assert trims[0]["weight_before_pct"] > 55.0
-    assert 39.0 <= trims[0]["weight_after_pct"] <= 41.0
+    assert trims[0]["weight_before_pct"] > 30.0
+    assert 21.0 <= trims[0]["weight_after_pct"] <= 23.0
 
 
 def test_no_trim_before_minimum_gain_even_if_weight_is_high():
