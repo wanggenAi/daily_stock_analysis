@@ -48,41 +48,76 @@ class HardLogicPriceMapTest(unittest.TestCase):
         self.assertTrue(all(row["no_auto_trade"] for row in rows))
 
     def test_technical_exit_profile_failure_is_visible_but_not_company_veto(self):
-        state, reasons, structural, ignored = hard_logic_assessment(
+        state, reasons, structural, context = hard_logic_assessment(
+            self._base_row(strict_gate_failed="exit_profile_sample_insufficient;ma20_not_ready")
+        )
+
+        self.assertEqual(state, "PASS")
+        self.assertFalse(structural)
+        self.assertEqual(set(context), {"exit_profile_sample_insufficient", "ma20_not_ready"})
+        self.assertIn("execution_context_ignored_for_company_quality", reasons)
+
+    def test_market_entry_rr_and_execution_failures_are_not_company_vetoes(self):
+        state, reasons, structural, context = hard_logic_assessment(
             self._base_row(
-                strict_gate_failed="exit_profile_sample_insufficient;ma20_not_ready",
+                strict_gate_failed=(
+                    "market_regime_not_ready;entry_not_ready;reward_risk_below_min;"
+                    "position_size_not_ready;execution_price_unavailable"
+                )
             )
         )
 
         self.assertEqual(state, "PASS")
         self.assertFalse(structural)
-        self.assertEqual(set(ignored), {"exit_profile_sample_insufficient", "ma20_not_ready"})
-        self.assertIn("technical_constraints_ignored_for_company_quality", reasons)
+        self.assertEqual(
+            set(context),
+            {
+                "market_regime_not_ready",
+                "entry_not_ready",
+                "reward_risk_below_min",
+                "position_size_not_ready",
+                "execution_price_unavailable",
+            },
+        )
+        self.assertIn("execution_context_ignored_for_company_quality", reasons)
+
+    def test_even_old_hard_blocker_columns_downgrade_known_execution_tokens(self):
+        state, _, structural, context = hard_logic_assessment(
+            self._base_row(hard_blockers="exit_profile_sample_insufficient;reward_risk_below_min")
+        )
+
+        self.assertEqual(state, "PASS")
+        self.assertFalse(structural)
+        self.assertEqual(set(context), {"exit_profile_sample_insufficient", "reward_risk_below_min"})
 
     def test_structural_hard_risk_blocks_company_before_price_decision(self):
-        row = build_price_expectation_row(
-            self._base_row(hard_blockers="financial_integrity_risk")
-        )
+        row = build_price_expectation_row(self._base_row(hard_blockers="financial_integrity_risk"))
 
         self.assertEqual(row["hard_logic_state"], "BLOCKED")
         self.assertEqual(row["price_decision"], "HARD_LOGIC_BLOCKED")
         self.assertIn("financial_integrity_risk", row["structural_blockers"])
 
+    def test_industry_research_candidate_needs_valuation_and_earnings_confirmation(self):
+        missing_quality = build_price_expectation_row(
+            self._base_row(earnings_quality_score="")
+        )
+        weak_quality = build_price_expectation_row(
+            self._base_row(earnings_quality_score="40")
+        )
+
+        self.assertEqual(missing_quality["hard_logic_state"], "REVIEW")
+        self.assertEqual(missing_quality["price_decision"], "HARD_LOGIC_REVIEW")
+        self.assertEqual(weak_quality["hard_logic_state"], "REVIEW")
+
     def test_no_growth_or_contraction_requirement_is_directly_buyable(self):
-        deep = build_price_expectation_row(
-            self._base_row(required_profit_growth_pct="-20")
-        )
-        buyable = build_price_expectation_row(
-            self._base_row(required_profit_growth_pct="0")
-        )
+        deep = build_price_expectation_row(self._base_row(required_profit_growth_pct="-20"))
+        buyable = build_price_expectation_row(self._base_row(required_profit_growth_pct="0"))
 
         self.assertEqual(deep["price_decision"], "BUY_DEEP_VALUE")
         self.assertEqual(buyable["price_decision"], "BUYABLE")
 
     def test_positive_required_growth_without_business_support_is_not_guessed(self):
-        row = build_price_expectation_row(
-            self._base_row(required_profit_growth_pct="12")
-        )
+        row = build_price_expectation_row(self._base_row(required_profit_growth_pct="12"))
 
         self.assertEqual(row["price_decision"], "NEED_HARD_LOGIC_GROWTH_SUPPORT")
         self.assertIsNone(row["supported_profit_growth_base_pct"])
@@ -191,7 +226,11 @@ class HardLogicPriceMapTest(unittest.TestCase):
             )
             self._write_csv(
                 industry / "industry_top_candidates.csv",
-                [{"code": "600001", "industry": "A", "industry_candidate_state": "RESEARCH_CANDIDATE"}],
+                [{
+                    "code": "600001",
+                    "industry": "A",
+                    "industry_candidate_state": "RESEARCH_CANDIDATE",
+                }],
             )
             self._write_csv(
                 valuation / "valuation_research_routed.csv",
@@ -201,6 +240,7 @@ class HardLogicPriceMapTest(unittest.TestCase):
                     "historical_median_pe_reference": "20",
                     "required_profit_growth_pct": "-20",
                     "valuation_diagnostic_status": "OK",
+                    "earnings_quality_score": "80",
                 }],
             )
 
