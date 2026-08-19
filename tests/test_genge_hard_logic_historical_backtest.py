@@ -7,6 +7,7 @@ import pandas as pd
 
 from src.strategies.genge_opportunity_discovery.hard_logic_historical_backtest import (
     HistoricalCompanyData,
+    _sell_reason,
     financials_visible_as_of,
     normalize_financial_point_in_time,
     point_in_time_hard_logic,
@@ -136,6 +137,30 @@ class HardLogicHistoricalBacktestTest(unittest.TestCase):
         self.assertGreaterEqual(float(trades[0]["exit_price"]), 24.0)
         self.assertGreater(float(trades[0]["net_return_pct"]), 90.0)
         self.assertEqual(case["status"], "OK")
+
+    def test_expectation_exit_requires_high_historical_valuation_zone(self):
+        logic = {"state": "PASS"}
+        low_zone = {
+            "required_profit_growth_pct": 40,
+            "supported_profit_growth_base_pct": 20,
+            "historical_pe_percentile": 55,
+        }
+        high_zone = dict(low_zone, historical_pe_percentile=80)
+        self.assertIsNone(_sell_reason(low_zone, logic))
+        self.assertEqual(_sell_reason(high_zone, logic), "SELL_EXPECTATIONS_FULL_HIGH_VALUATION")
+
+    def test_hard_logic_invalidation_exits_even_when_valuation_is_low(self):
+        self.assertEqual(
+            _sell_reason(
+                {
+                    "required_profit_growth_pct": -20,
+                    "supported_profit_growth_base_pct": 20,
+                    "historical_pe_percentile": 5,
+                },
+                {"state": "BLOCKED"},
+            ),
+            "SELL_HARD_LOGIC_INVALIDATED",
+        )
 
     def test_negative_visible_core_profit_blocks_new_buy(self):
         frame = normalize_financial_point_in_time(

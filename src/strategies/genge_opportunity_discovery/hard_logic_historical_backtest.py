@@ -30,6 +30,7 @@ MIN_PRIOR_PE_OBSERVATIONS = 120
 PE_LOOKBACK = 1260
 DEFAULT_STRIDE = 5
 MAX_ENTRY_PE_PERCENTILE = 50.0
+MIN_EXIT_PE_PERCENTILE = 70.0
 BUY_DECISIONS = {"BUY_DEEP_VALUE", "BUYABLE", "BUYABLE_WITH_SUPPORTED_GROWTH"}
 
 
@@ -293,12 +294,14 @@ def _sell_reason(price_map: Mapping[str, Any], logic: Mapping[str, Any]) -> str 
         return "SELL_HARD_LOGIC_INVALIDATED"
     required = _finite(price_map.get("required_profit_growth_pct"))
     base = _finite(price_map.get("supported_profit_growth_base_pct"))
-    if required is None:
+    percentile = _finite(price_map.get("historical_pe_percentile"))
+    if required is None or percentile is None:
         return None
-    if base is not None and required >= base:
-        return "SELL_EXPECTATIONS_FULL"
-    if base is None and required >= 20:
-        return "SELL_HISTORICAL_REFERENCE_PLUS20_EXPECTATION"
+    high_valuation_zone = percentile >= MIN_EXIT_PE_PERCENTILE
+    if base is not None and required >= base and high_valuation_zone:
+        return "SELL_EXPECTATIONS_FULL_HIGH_VALUATION"
+    if base is None and required >= 20 and high_valuation_zone:
+        return "SELL_HISTORICAL_REFERENCE_PLUS20_HIGH_VALUATION"
     return None
 
 
@@ -646,6 +649,8 @@ def run_suite(
         "valuation_low_zone_entry_required": True,
         "max_entry_pe_percentile": MAX_ENTRY_PE_PERCENTILE,
         "deep_value_bypasses_pe_percentile_gate": True,
+        "high_valuation_exit_required": True,
+        "min_exit_pe_percentile": MIN_EXIT_PE_PERCENTILE,
         "point_in_time_financials": True,
         "next_open_execution": True,
         "famous_case_selection_bias_warning": True,
