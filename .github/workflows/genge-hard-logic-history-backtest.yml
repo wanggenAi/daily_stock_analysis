@@ -126,6 +126,7 @@ jobs:
           assert summary['headline_expected_return_allowed'] is False
           assert summary['no_auto_trade'] is True
           assert summary['data_ready_case_count'] >= 5, summary
+          assert summary['trade_count'] > 0, 'zero-trade famous-case regression: do not publish performance'
           cases = list(csv.DictReader((root / 'famous_case_results.csv').open(encoding='utf-8')))
           assert len(cases) == summary['data_ready_case_count']
           print(json.dumps(summary, ensure_ascii=False, indent=2))
