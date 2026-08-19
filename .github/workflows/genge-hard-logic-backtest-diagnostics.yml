@@ -1,0 +1,58 @@
+name: GenGe Hard Logic Backtest Diagnostics
+
+on:
+  pull_request:
+    paths:
+      - "src/strategies/genge_opportunity_discovery/hard_logic_backtest_diagnostics.py"
+      - ".github/workflows/genge-hard-logic-backtest-diagnostics.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install CI dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Restore historical cache
+        uses: actions/cache@v4
+        with:
+          path: data/cache/hard_logic_history_backtest
+          key: hard-logic-history-v3-${{ runner.os }}-${{ hashFiles('config/genge_hard_logic_famous_cases.csv') }}
+      - name: Explain historical gate chain
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.hard_logic_backtest_diagnostics \
+            --cases-file config/genge_hard_logic_famous_cases.csv \
+            --start-date 2018-01-01 \
+            --end-date 2026-08-18 \
+            --output-dir reports/hard_logic_backtest_diagnostics \
+            --cache-dir data/cache/hard_logic_history_backtest \
+            --evaluation-stride 5
+      - name: Fail on unexplained zero-buy regression
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          rows = list(csv.DictReader(Path('reports/hard_logic_backtest_diagnostics/gate_diagnostics.csv').open(encoding='utf-8')))
+          assert rows, 'no diagnostic rows'
+          ready = sum(int(r['buy_ready_points']) for r in rows)
+          print(f'buy_ready_points={ready}')
+          if ready == 0:
+              raise SystemExit('ZERO_BUY_READY_POINTS: gate-chain regression must be fixed before historical returns are reported')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-hard-logic-backtest-diagnostics
+          path: reports/hard_logic_backtest_diagnostics
+          if-no-files-found: error
