@@ -108,6 +108,34 @@ expectation_headroom = supported_base_profit_growth - market_required_profit_gro
 
 这些阈值是可审计的研究分类，不是自动交易授权。
 
+## 历史回归：按当时信息做“低买高卖”
+
+`hard_logic_historical_backtest.py` 使用同一套反向估值决策做 point-in-time walk-forward 回放，不允许拿未来数据优化过去的信号。
+
+历史回放固定遵守：
+
+- 财报只有在真实披露日之后才可见；若数据源缺少披露日，使用保守披露滞后，不把报告期日期冒充公开日期；
+- 当前 PE 的历史参考只使用当前观测之前的正 PE，当前值绝不进入自己的参考分布；
+- 信号在当日收盘数据完成后生成，交易只允许在下一观察交易日开盘执行；
+- 买入必须先满足公司硬逻辑 `PASS` 和反向估值可买条件；
+- 为明确落实“低位买”，普通 `BUYABLE` / `BUYABLE_WITH_SUPPORTED_GROWTH` 还要求当前 PE 位于自身严格历史分布的低半区（`historical_pe_percentile <= 50`）；`BUY_DEEP_VALUE` 因预期差本身已经达到深度低估标准，可直接通过这一额外分位门槛；
+- 买入执行价若已经跳空高于信号日冻结的 `buyable_price_ceiling`，取消该次买入，不追价；
+- 卖出优先发生在硬逻辑被可见新数据破坏，或市场隐含增长已经达到/超过硬逻辑可支撑增长时；没有可靠增长支持时，历史参考 PE 上方约 `+20%` 的隐含增长作为保守“预期偏满”退出线；
+- 买卖均计入交易摩擦成本；
+- 买卖点不会使用未来最高价、未来最低价或事后知道的牛股身份。
+
+回归输出包括：
+
+- `historical_signals.csv`：每个历史 BUY / SELL 信号及当时可见估值；
+- `historical_trades.csv`：实际下一期开盘成交后的逐笔收益、持有期、最大回撤、最大上行和收益捕获率；
+- `famous_case_results.csv`：著名股票逐只捕获结果；
+- `data_failures.csv`：数据不足或历史估值不可用的案例，不得静默删除；
+- `historical_backtest_summary.json` 与 `historical_backtest.md`：总体审计摘要。
+
+著名股票案例集是**事后案例捕获审计**，用于回答“这套逻辑是否有机会在当时识别后来成为大牛股的公司”，不能把这一小组已经出名的赢家的平均收益冒充为全市场无偏预期收益。真正的策略总体收益必须进一步使用历史时点全市场股票池并处理退市股/幸存者偏差。
+
+对于上市时间过短、没有至少一段可形成自身历史估值参考的股票，系统必须明确输出历史不足，而不是伪造历史 PE；此类公司需要走新股/同业可比估值路由后才能做当前价格判断。
+
 ## 输出文件
 
 生产链在 `GenGe Postscan Research Pipeline` 成功后运行 `GenGe Hard Logic Price Map`，生成：
@@ -135,6 +163,7 @@ expectation_headroom = supported_base_profit_growth - market_required_profit_gro
 - 当前 PE 必须是当前状态，当前 PE 非正数时不偷偷回退到过去的正 PE；
 - 历史参考 PE 严格排除当前观测，避免自我引用；
 - 未来利润增长区间必须来自显式、可审计的硬逻辑证据，缺失时保持缺失；
-- 技术与执行条件不能反向污染公司硬逻辑判断。
+- 技术与执行条件不能反向污染公司硬逻辑判断；
+- 历史案例没有数据就是没有数据，禁止用后验信息补洞。
 
 本功能的仓库级变更摘要同步记录在 `docs/CHANGELOG.md` 的 `[Unreleased]` 部分。
