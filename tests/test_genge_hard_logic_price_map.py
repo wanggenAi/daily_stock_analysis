@@ -98,12 +98,8 @@ class HardLogicPriceMapTest(unittest.TestCase):
         self.assertIn("financial_integrity_risk", row["structural_blockers"])
 
     def test_industry_research_candidate_needs_valuation_and_earnings_confirmation(self):
-        missing_quality = build_price_expectation_row(
-            self._base_row(earnings_quality_score="")
-        )
-        weak_quality = build_price_expectation_row(
-            self._base_row(earnings_quality_score="40")
-        )
+        missing_quality = build_price_expectation_row(self._base_row(earnings_quality_score=""))
+        weak_quality = build_price_expectation_row(self._base_row(earnings_quality_score="40"))
 
         self.assertEqual(missing_quality["hard_logic_state"], "REVIEW")
         self.assertEqual(missing_quality["price_decision"], "HARD_LOGIC_REVIEW")
@@ -159,6 +155,20 @@ class HardLogicPriceMapTest(unittest.TestCase):
         self.assertAlmostEqual(row["price_if_market_requires_zero_growth"], 50.0)
         self.assertAlmostEqual(row["historical_reference_price"], 50.0)
         self.assertAlmostEqual(row["price_if_market_requires_plus20pct_growth"], 60.0)
+        self.assertAlmostEqual(row["deep_value_price_ceiling"], 40.0)
+        self.assertAlmostEqual(row["buyable_price_ceiling"], 50.0)
+
+    def test_supported_growth_creates_direct_buyable_and_deep_value_ceilings(self):
+        row = build_price_expectation_row(
+            self._base_row(
+                current_price="40",
+                required_profit_growth_pct="-20",
+                hard_logic_supported_profit_growth_base_pct="25",
+            )
+        )
+
+        self.assertAlmostEqual(row["buyable_price_ceiling"], 55.0)
+        self.assertAlmostEqual(row["deep_value_price_ceiling"], 47.5)
 
     def test_artifact_merge_restores_raw_price_but_only_keeps_research_union(self):
         with tempfile.TemporaryDirectory() as tmp:
