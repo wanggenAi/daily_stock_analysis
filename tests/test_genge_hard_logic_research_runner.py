@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from src.strategies.genge_opportunity_discovery.hard_logic_research_runner import (
+    ResearchExecution,
     group_industry_seeds,
     normalize_research_payload,
     run_research,
@@ -30,8 +31,8 @@ class HardLogicResearchRunnerTest(unittest.TestCase):
             "hard_logic_duration_years": 5,
             "hard_logic_persistence": "结构性需求和认证壁垒预计持续五年以上",
             "hard_logic_evidence_sources": [
-                {"title": "公司年度报告", "url": "source://annual-report"},
-                {"title": "行业协会数据", "url": "source://industry"},
+                {"title": "公司年度报告", "url": "https://example.com/annual-report"},
+                {"title": "行业协会数据", "url": "https://example.com/industry"},
             ],
             "research_summary": "存在可审计的长期产业驱动和公司卡位。",
         }
@@ -97,6 +98,76 @@ class HardLogicResearchRunnerTest(unittest.TestCase):
         self.assertEqual(rejected["selected_code"], "")
         self.assertIn("selected_code_not_found_in_all_a_universe", rejected["research_error"])
 
+    def test_external_nomination_without_raw_all_a_is_rejected(self):
+        row = normalize_research_payload(
+            "行业A",
+            [{"code": "600001", "stock_name": "甲"}],
+            self._payload(code="600999", name="无法核验外部提名"),
+            raw_universe_codes=None,
+        )
+
+        self.assertEqual(row["research_state"], "REVIEW")
+        self.assertEqual(row["selected_code"], "")
+        self.assertEqual(row["selection_origin"], "REJECTED_EXTERNAL_NOMINATION")
+        self.assertIn("external_nomination_unverifiable_without_all_a_universe", row["research_error"])
+
+    def test_production_pass_requires_actual_tool_call(self):
+        row = normalize_research_payload(
+            "行业A",
+            [{"code": "600001", "stock_name": "甲"}],
+            self._payload(),
+            raw_universe_codes={"600001"},
+            research_tool_context=(
+                '{"title":"公司年度报告","url":"https://example.com/annual-report"}'
+            ),
+            successful_tool_calls=0,
+            require_tool_evidence=True,
+        )
+
+        self.assertEqual(row["research_state"], "REVIEW")
+        self.assertEqual(row["hard_logic_state"], "REVIEW")
+        self.assertIn("research_tool_call", row["hard_logic_missing_evidence"])
+        self.assertIn("pass_without_research_tool_call", row["research_error"])
+
+    def test_production_pass_rejects_claimed_source_not_seen_in_tools(self):
+        row = normalize_research_payload(
+            "行业A",
+            [{"code": "600001", "stock_name": "甲"}],
+            self._payload(),
+            raw_universe_codes={"600001"},
+            research_tool_context=(
+                '{"title":"另一篇无关报道","url":"https://example.com/unrelated"}'
+            ),
+            successful_tool_calls=2,
+            require_tool_evidence=True,
+        )
+
+        self.assertEqual(row["research_state"], "REVIEW")
+        self.assertEqual(row["hard_logic_state"], "REVIEW")
+        self.assertFalse(row["evidence_source_verified"])
+        self.assertIn("tool_verified_source", row["hard_logic_missing_evidence"])
+        self.assertIn("claimed_sources_not_found_in_tool_results", row["research_error"])
+
+    def test_production_pass_accepts_source_seen_in_tool_results(self):
+        row = normalize_research_payload(
+            "行业A",
+            [{"code": "600001", "stock_name": "甲"}],
+            self._payload(),
+            raw_universe_codes={"600001"},
+            research_tool_context=(
+                '{"title":"公司年度报告","url":"https://example.com/annual-report",'
+                '"snippet":"行业未来五年需求扩张"}'
+            ),
+            successful_tool_calls=2,
+            require_tool_evidence=True,
+        )
+
+        self.assertEqual(row["research_state"], "PASS")
+        self.assertEqual(row["hard_logic_state"], "PASS")
+        self.assertTrue(row["evidence_source_verified"])
+        self.assertEqual(row["evidence_tool_call_count"], 2)
+        self.assertIn("https://example.com/annual-report", row["evidence_verification_matches"])
+
     def test_no_pass_is_preserved_instead_of_forcing_a_stock(self):
         row = normalize_research_payload(
             "行业A",
@@ -161,6 +232,37 @@ class HardLogicResearchRunnerTest(unittest.TestCase):
             self.assertEqual(summary["hard_logic_pass_count"], 2)
             self.assertFalse(summary["topn_seed_is_answer"])
             self.assertFalse(summary["all_industries_force_stock"])
+            self.assertTrue(summary["production_pass_requires_research_tools"])
+            self.assertTrue(summary["production_pass_requires_tool_verified_source"])
+
+    def test_research_execution_fake_is_held_to_production_evidence_rule(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            candidates = root / "industry_top_candidates.csv"
+            raw = root / "all_a_quant_screen.csv"
+            out = root / "out"
+            self._write_csv(
+                candidates,
+                [{"industry": "行业A", "code": "600001", "stock_name": "甲", "industry_rank": "1"}],
+            )
+            self._write_csv(raw, [{"industry": "行业A", "code": "600001", "stock_name": "甲"}])
+
+            def fake_call(industry, seeds):
+                return ResearchExecution(
+                    content=json.dumps(self._payload(), ensure_ascii=False),
+                    tool_context='{"title":"公司年度报告","url":"https://example.com/annual-report"}',
+                    successful_tool_calls=1,
+                )
+
+            rows = run_research(
+                industry_candidates_csv=candidates,
+                all_a_universe_csv=raw,
+                output_dir=out,
+                research_call=fake_call,
+            )
+
+            self.assertEqual(rows[0]["hard_logic_state"], "PASS")
+            self.assertTrue(rows[0]["evidence_source_verified"])
 
     def test_hard_logic_pass_is_forced_into_valuation_even_outside_seed_source(self):
         research = normalize_research_payload(
