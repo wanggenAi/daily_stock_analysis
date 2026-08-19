@@ -1,21 +1,24 @@
 name: Temporary Fix Hard Logic History
 
 on:
-  push:
-    branches:
-      - feat/hard-logic-price-expectation-map
+  pull_request:
+    paths:
+      - ".github/workflows/tmp-fix-hard-logic-history.yml"
+      - "tests/test_genge_hard_logic_historical_backtest.py"
 
 permissions:
   contents: write
 
 jobs:
   patch-and-self-remove:
+    if: github.event.pull_request.head.repo.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: feat/hard-logic-price-expectation-map
           fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Patch source, contract and stale docs
         shell: bash
         run: |
@@ -46,7 +49,7 @@ jobs:
           end = text.find('## 回归输出', start)
           if start == -1 or end == -1:
               raise SystemExit('stale performance docs block not found')
-          replacement = '''### 历史案例捕获审计（2018-01-01 至 2026-08-18）\n\n历史回放必须以 GitHub Actions 当前 head 的真实 artifact 为准，禁止把旧运行或不可复现的漂亮数字写成当前结果。此前文档中的 43 笔、90.70% 胜率及若干 700%+ 单笔收益，在最新可复现 artifact 中并不存在，已经撤销。\n\n排查确认旧回放存在 `pd.NaT` 日期语义 bug：公开财务数据本身有数十个报告期，但缺失披露日被规范化为 `NaT` 后，历史 point-in-time 层误把 `NaT` 当有效披露日期，导致全部财报在后续 `dropna` 中被删除，所有公司均停留在 `HARD_LOGIC_REVIEW`。现在先修复为“`NaT` 等同缺失披露日，使用保守披露滞后”，再以新 artifact 重新生成买卖点和收益。\n\n长鑫科技（688825）于 2026 年 7 月上市，不能用于多年低位到高位的历史验证；只作为新上市标的捕获观察。著名股票案例面板本身仍是事后样本，只能回答“规则有没有能力在历史上识别这些公司”，不能当作全市场无偏预期收益。\n\n在新的可复现 artifact 完成前，本节不发布任何胜率、平均收益或明星股单笔收益数字。\n\n'''
+          replacement = '''### 历史案例捕获审计（2018-01-01 至 2026-08-18）\n\n历史回放必须以 GitHub Actions 当前 head 的真实 artifact 为准，禁止把旧运行或不可复现的漂亮数字写成当前结果。此前文档中的 43 笔、90.70% 胜率及若干 700%+ 单笔收益，在最新可复现 artifact 中并不存在，已经撤销。\n\n排查确认旧回放存在 `pd.NaT` 日期语义 bug：公开财务数据本身有数十个报告期，但缺失披露日被规范化为 `NaT` 后，历史 point-in-time 层误把 `NaT` 当有效披露日期，导致全部财报在后续 `dropna` 中被删除，所有公司均停留在 `HARD_LOGIC_REVIEW`。现在修复为“`NaT` 等同缺失披露日，使用保守披露滞后”，然后只以新 artifact 重新生成买卖点和收益。\n\n长鑫科技（688825）于 2026 年 7 月上市，不能用于多年低位到高位的历史验证；只作为新上市标的捕获观察。著名股票案例面板本身仍是事后样本，只能回答“规则有没有能力在历史上识别这些公司”，不能当作全市场无偏预期收益。\n\n在新的可复现 artifact 完成前，本节不发布任何胜率、平均收益或明星股单笔收益数字。\n\n'''
           docs.write_text(text[:start] + replacement + text[end:], encoding='utf-8')
           PY
           rm -f .github/workflows/tmp-fix-hard-logic-history.yml
