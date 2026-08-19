@@ -1,0 +1,142 @@
+name: GenGe Hard Logic Price Map
+
+on:
+  pull_request:
+    paths:
+      - "src/strategies/genge_opportunity_discovery/hard_logic_price_map.py"
+      - "tests/test_genge_hard_logic_price_map.py"
+      - ".github/workflows/genge-hard-logic-price-map.yml"
+      - "docs/hard-logic-price-map.md"
+      - "docs/CHANGELOG.md"
+  workflow_run:
+    workflows: ["GenGe Postscan Research Pipeline"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      upstream_run_id:
+        description: "Completed GenGe Postscan Research Pipeline run id"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: genge-hard-logic-price-map-${{ github.event.pull_request.number || github.event.workflow_run.id || inputs.upstream_run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  unit-tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependency
+        run: python -m pip install pytest
+
+      - name: Validate price-map module
+        run: |
+          python -m py_compile src/strategies/genge_opportunity_discovery/hard_logic_price_map.py
+          python -m pytest -q tests/test_genge_hard_logic_price_map.py
+
+  build-price-map:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install test dependency
+        run: python -m pip install pytest
+
+      - name: Resolve upstream run id
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "UPSTREAM_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
+          else
+            echo "UPSTREAM_RUN_ID=${{ inputs.upstream_run_id }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Download unified postscan research artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-postscan-research
+          path: postscan
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ env.UPSTREAM_RUN_ID }}
+
+      - name: Validate price-map module
+        run: |
+          python -m py_compile src/strategies/genge_opportunity_discovery/hard_logic_price_map.py
+          python -m pytest -q tests/test_genge_hard_logic_price_map.py
+
+      - name: Build hard-logic price expectation map
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.hard_logic_price_map \
+            --artifact-root postscan \
+            --output-dir reports/hard_logic_price_map
+
+      - name: Validate production contract
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('reports/hard_logic_price_map')
+          csv_path = root / 'hard_logic_price_map.csv'
+          md_path = root / 'hard_logic_price_map.md'
+          summary_path = root / 'hard_logic_price_map_summary.json'
+          for path in (csv_path, md_path, summary_path):
+              assert path.exists() and path.stat().st_size > 0, f'missing/empty output: {path}'
+
+          rows = list(csv.DictReader(csv_path.open(encoding='utf-8')))
+          summary = json.loads(summary_path.read_text(encoding='utf-8'))
+          assert rows, 'hard-logic price map unexpectedly empty'
+          assert len(rows) == summary['candidate_count']
+          assert summary['global_top1_required'] is False
+          assert summary['technical_context_is_non_veto'] is True
+          assert summary['formal_signal_eligible'] is False
+          assert summary['automatic_promotion_allowed'] is False
+          assert summary['no_auto_trade'] is True
+          assert all(row.get('no_auto_trade') == 'True' for row in rows)
+          assert all(row.get('formal_signal_eligible') == 'False' for row in rows)
+          assert all(row.get('automatic_promotion_allowed') == 'False' for row in rows)
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Publish price-map summary
+        if: always()
+        run: |
+          if [ -f reports/hard_logic_price_map/hard_logic_price_map.md ]; then
+            cat reports/hard_logic_price_map/hard_logic_price_map.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload hard-logic price map
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-hard-logic-price-map
+          path: reports/hard_logic_price_map
+          if-no-files-found: error
