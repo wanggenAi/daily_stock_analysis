@@ -44,6 +44,34 @@ class DrawdownRiskPolicyTest(unittest.TestCase):
             0.0,
         )
 
+    def test_total_gross_cap_keeps_cash_buffer(self):
+        room = position_fraction(
+            stop_distance_pct=10.0,
+            current_total_fraction=0.86,
+        )
+        self.assertAlmostEqual(room, 0.04, places=6)
+        self.assertEqual(
+            position_fraction(
+                stop_distance_pct=10.0,
+                current_total_fraction=DEFAULT_DRAWDOWN_POLICY.max_total_gross_fraction,
+            ),
+            0.0,
+        )
+
+    def test_total_open_risk_cap_blocks_risk_stacking(self):
+        room = position_fraction(
+            stop_distance_pct=10.0,
+            current_open_risk_pct=5.5,
+        )
+        self.assertAlmostEqual(room, 0.05, places=6)
+        self.assertEqual(
+            position_fraction(
+                stop_distance_pct=10.0,
+                current_open_risk_pct=DEFAULT_DRAWDOWN_POLICY.max_total_open_risk_pct,
+            ),
+            0.0,
+        )
+
     def test_optimizer_rejects_low_drawdown_if_cagr_is_destroyed(self):
         baseline = StrategyMetrics("baseline", cagr_pct=20.0, max_drawdown_pct=30.0)
         too_slow = StrategyMetrics("too_slow", cagr_pct=10.0, max_drawdown_pct=8.0)
