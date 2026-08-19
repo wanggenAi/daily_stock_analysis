@@ -60,6 +60,13 @@ def _finite(value: Any) -> float | None:
 
 
 def _parse_date(value: Any) -> date | None:
+    if value is None:
+        return None
+    try:
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
     if isinstance(value, date):
         return value
     try:
