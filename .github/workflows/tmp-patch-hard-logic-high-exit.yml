@@ -2,16 +2,12 @@ name: Temporary Patch Hard Logic High Exit
 
 on:
   pull_request:
-  push:
-    branches:
-      - feat/hard-logic-price-expectation-map
 
 permissions:
   contents: write
 
 jobs:
-  patch-and-self-remove:
-    if: github.event_name == 'pull_request'
+  patch-source-only:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
@@ -28,7 +24,6 @@ jobs:
 
           path = Path('src/strategies/genge_opportunity_discovery/hard_logic_historical_backtest.py')
           text = path.read_text(encoding='utf-8')
-
           old = 'MAX_ENTRY_PE_PERCENTILE = 50.0\nBUY_DECISIONS = {"BUY_DEEP_VALUE", "BUYABLE", "BUYABLE_WITH_SUPPORTED_GROWTH"}\n'
           new = 'MAX_ENTRY_PE_PERCENTILE = 50.0\nMIN_EXIT_PE_PERCENTILE = 70.0\nBUY_DECISIONS = {"BUY_DEEP_VALUE", "BUYABLE", "BUYABLE_WITH_SUPPORTED_GROWTH"}\n'
           if old not in text:
@@ -45,38 +40,26 @@ jobs:
           new = '''        "max_entry_pe_percentile": MAX_ENTRY_PE_PERCENTILE,\n        "deep_value_bypasses_pe_percentile_gate": True,\n        "high_valuation_exit_required": True,\n        "min_exit_pe_percentile": MIN_EXIT_PE_PERCENTILE,\n        "point_in_time_financials": True,\n'''
           if old not in text:
               raise SystemExit('summary anchor not found')
-          text = text.replace(old, new, 1)
-          path.write_text(text, encoding='utf-8')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
 
           test_path = Path('tests/test_genge_hard_logic_historical_backtest.py')
           tests = test_path.read_text(encoding='utf-8')
-          tests = tests.replace(
-              '    HistoricalCompanyData,\n',
-              '    HistoricalCompanyData,\n    _sell_reason,\n',
-              1,
-          )
+          if '    _sell_reason,\n' not in tests:
+              tests = tests.replace('    HistoricalCompanyData,\n', '    HistoricalCompanyData,\n    _sell_reason,\n', 1)
           anchor = '''    def test_negative_visible_core_profit_blocks_new_buy(self):\n'''
-          addition = '''    def test_expectation_exit_requires_high_historical_valuation_zone(self):\n        logic = {"state": "PASS"}\n        low_zone = {\n            "required_profit_growth_pct": 40,\n            "supported_profit_growth_base_pct": 20,\n            "historical_pe_percentile": 55,\n        }\n        high_zone = dict(low_zone, historical_pe_percentile=80)\n\n        self.assertIsNone(_sell_reason(low_zone, logic))\n        self.assertEqual(\n            _sell_reason(high_zone, logic),\n            "SELL_EXPECTATIONS_FULL_HIGH_VALUATION",\n        )\n\n    def test_hard_logic_invalidation_exits_even_when_valuation_is_low(self):\n        self.assertEqual(\n            _sell_reason(\n                {\n                    "required_profit_growth_pct": -20,\n                    "supported_profit_growth_base_pct": 20,\n                    "historical_pe_percentile": 5,\n                },\n                {"state": "BLOCKED"},\n            ),\n            "SELL_HARD_LOGIC_INVALIDATED",\n        )\n\n'''
-          if anchor not in tests:
-              raise SystemExit('test anchor not found')
-          tests = tests.replace(anchor, addition + anchor, 1)
+          addition = '''    def test_expectation_exit_requires_high_historical_valuation_zone(self):\n        logic = {"state": "PASS"}\n        low_zone = {\n            "required_profit_growth_pct": 40,\n            "supported_profit_growth_base_pct": 20,\n            "historical_pe_percentile": 55,\n        }\n        high_zone = dict(low_zone, historical_pe_percentile=80)\n        self.assertIsNone(_sell_reason(low_zone, logic))\n        self.assertEqual(_sell_reason(high_zone, logic), "SELL_EXPECTATIONS_FULL_HIGH_VALUATION")\n\n    def test_hard_logic_invalidation_exits_even_when_valuation_is_low(self):\n        self.assertEqual(\n            _sell_reason(\n                {\n                    "required_profit_growth_pct": -20,\n                    "supported_profit_growth_base_pct": 20,\n                    "historical_pe_percentile": 5,\n                },\n                {"state": "BLOCKED"},\n            ),\n            "SELL_HARD_LOGIC_INVALIDATED",\n        )\n\n'''
+          if 'test_expectation_exit_requires_high_historical_valuation_zone' not in tests:
+              if anchor not in tests:
+                  raise SystemExit('test anchor not found')
+              tests = tests.replace(anchor, addition + anchor, 1)
           test_path.write_text(tests, encoding='utf-8')
-
-          workflow = Path('.github/workflows/genge-hard-logic-history-backtest.yml')
-          yml = workflow.read_text(encoding='utf-8')
-          old_yml = "          assert summary['deep_value_bypasses_pe_percentile_gate'] is True\n          assert summary['famous_case_selection_bias_warning'] is True\n"
-          new_yml = "          assert summary['deep_value_bypasses_pe_percentile_gate'] is True\n          assert summary['high_valuation_exit_required'] is True\n          assert summary['min_exit_pe_percentile'] == 70.0\n          assert summary['famous_case_selection_bias_warning'] is True\n"
-          if old_yml not in yml:
-              raise SystemExit('workflow anchor not found')
-          workflow.write_text(yml.replace(old_yml, new_yml, 1), encoding='utf-8')
           PY
-          rm -f .github/workflows/tmp-patch-hard-logic-high-exit.yml
 
-      - name: Commit patch
+      - name: Commit source patch
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/strategies/genge_opportunity_discovery/hard_logic_historical_backtest.py tests/test_genge_hard_logic_historical_backtest.py .github/workflows/genge-hard-logic-history-backtest.yml .github/workflows/tmp-patch-hard-logic-high-exit.yml
+          git add src/strategies/genge_opportunity_discovery/hard_logic_historical_backtest.py tests/test_genge_hard_logic_historical_backtest.py
           git commit -m 'fix: require high valuation zone for expectation exits'
           git push origin HEAD:feat/hard-logic-price-expectation-map
