@@ -26,6 +26,21 @@ class HardLogicHistoricalBacktestTest(unittest.TestCase):
         self.assertTrue(financials_visible_as_of(normalized, date(2025, 3, 1)).empty)
         self.assertEqual(len(financials_visible_as_of(normalized, date(2025, 5, 20))), 1)
 
+    def test_nat_disclosure_date_uses_same_conservative_fallback(self):
+        frame = pd.DataFrame(
+            [{
+                "report_date": date(2024, 12, 31),
+                "disclosure_date": pd.NaT,
+                "recurring_profit": 100,
+                "roe": 12,
+            }]
+        )
+        normalized = normalize_financial_point_in_time(frame)
+
+        self.assertEqual(len(normalized), 1)
+        self.assertTrue(financials_visible_as_of(normalized, date(2025, 3, 1)).empty)
+        self.assertEqual(len(financials_visible_as_of(normalized, date(2025, 5, 20))), 1)
+
     def test_future_disclosure_cannot_improve_historical_hard_logic(self):
         frame = normalize_financial_point_in_time(
             pd.DataFrame(
