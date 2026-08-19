@@ -27,9 +27,6 @@ from typing import Any, Iterable, Mapping
 
 DISCLAIMER = "仅用于公开数据研究和估值判断，不构成买入或卖出建议，不应自动交易。"
 
-# These tokens/prefixes describe price shape, market environment or execution.
-# They are explicitly NOT company-quality vetoes in this layer even if an older
-# strict-gate report happened to place them in a blocker column.
 NON_COMPANY_GATE_TOKENS = frozenset(
     {
         "price_too_high",
@@ -74,17 +71,11 @@ NON_COMPANY_GATE_PREFIXES = (
     "volume_timing_",
 )
 
-# Fields whose semantics explicitly say "company hard blocker". These are the
-# only generic upstream blocker fields allowed to reject company quality here.
 COMPANY_BLOCKER_FIELDS = (
     "hard_blockers",
     "source_hard_blockers",
     "hard_reject_blockers",
 )
-
-# These fields come from broad strict/execution gates. They are intentionally
-# retained as context only. If a company-level risk is genuine it must surface
-# through COMPANY_BLOCKER_FIELDS or an explicit hard-logic state.
 NON_VETO_CONTEXT_FIELDS = (
     "strict_gate_failed",
     "missing_conditions",
@@ -139,6 +130,8 @@ OUTPUT_COLUMNS = [
     "supported_profit_growth_base_pct",
     "supported_profit_growth_high_pct",
     "expectation_headroom_pct",
+    "buyable_price_ceiling",
+    "deep_value_price_ceiling",
     "historical_reference_price",
     "price_if_market_requires_minus20pct_growth",
     "price_if_market_requires_minus10pct_growth",
@@ -188,13 +181,7 @@ def _is_non_company_gate(token: str) -> bool:
 
 
 def _blocker_partition(row: Mapping[str, Any]) -> tuple[list[str], list[str]]:
-    """Separate company hard risks from execution/timing context.
-
-    Broad strict-gate/missing-condition fields are never promoted into company
-    structural blockers in this layer. Older hard-blocker fields are trusted for
-    company semantics, except known market/execution tokens that are downgraded
-    to non-veto context for compatibility with older reports.
-    """
+    """Separate company hard risks from execution/timing context."""
     structural: set[str] = set()
     context: set[str] = set()
 
@@ -272,10 +259,6 @@ def hard_logic_assessment(row: Mapping[str, Any]) -> tuple[str, list[str], list[
             reasons.append("execution_context_ignored_for_company_quality")
         return "PASS", reasons, [], context
 
-    # A broad industry research candidate is not automatically called hard logic.
-    # Require usable reverse valuation plus non-weak recurring-earnings quality so
-    # the system does not manufacture certainty merely because a stock survived a
-    # ranking layer.
     if industry_state == "RESEARCH_CANDIDATE":
         reasons.append("clean_industry_research_candidate")
         if valuation_status == "OK":
@@ -325,6 +308,29 @@ def _price_for_required_growth(
     return round(price, 4) if math.isfinite(price) and price > 0 else None
 
 
+def _valuation_price_thresholds(
+    current_price: float | None,
+    required_growth: float | None,
+    supported_base: float | None,
+) -> tuple[float | None, float | None]:
+    """Return (buyable ceiling, deep-value ceiling).
+
+    With supported business growth, preserve at least 15pp expectation headroom
+    for BUYABLE and 30pp for DEEP_VALUE. Without supported growth, use the
+    deliberately conservative zero-growth and -20%-growth reference thresholds.
+    """
+    if supported_base is None:
+        buyable_required = 0.0
+        deep_required = -0.20
+    else:
+        buyable_required = supported_base - 0.15
+        deep_required = supported_base - 0.30
+    return (
+        _price_for_required_growth(current_price, required_growth, buyable_required),
+        _price_for_required_growth(current_price, required_growth, deep_required),
+    )
+
+
 def _decision(
     *,
     hard_logic_state: str,
@@ -368,9 +374,6 @@ def _decision(
             headroom,
         )
 
-    # No future business growth is fabricated. A conservative valuation decision
-    # is allowed only when today's price requires zero growth or contraction at
-    # the stock's own historical reference multiple.
     if required_growth <= -0.20:
         return (
             "BUY_DEEP_VALUE",
@@ -406,6 +409,11 @@ def build_price_expectation_row(row: Mapping[str, Any]) -> dict[str, Any]:
         required_growth=required,
         supported_base=supported_base,
     )
+    buyable_ceiling, deep_ceiling = _valuation_price_thresholds(
+        current_price,
+        required,
+        supported_base,
+    )
 
     def supported_price(growth: float | None) -> float | None:
         if growth is None:
@@ -430,6 +438,8 @@ def build_price_expectation_row(row: Mapping[str, Any]) -> dict[str, Any]:
         "supported_profit_growth_base_pct": round(supported_base * 100.0, 4) if supported_base is not None else None,
         "supported_profit_growth_high_pct": round(supported_high * 100.0, 4) if supported_high is not None else None,
         "expectation_headroom_pct": round(headroom * 100.0, 4) if headroom is not None else None,
+        "buyable_price_ceiling": buyable_ceiling,
+        "deep_value_price_ceiling": deep_ceiling,
         "historical_reference_price": _price_for_required_growth(current_price, required, 0.0),
         "price_if_market_requires_minus20pct_growth": _price_for_required_growth(current_price, required, -0.20),
         "price_if_market_requires_minus10pct_growth": _price_for_required_growth(current_price, required, -0.10),
@@ -594,8 +604,9 @@ def write_price_map(artifact_root: Path, output_dir: Path) -> list[dict[str, Any
             f"- #{row['price_map_rank']} {row.get('code','')} {row.get('stock_name','')} | "
             f"{row.get('price_decision','')} | price={row.get('current_price','')} | "
             f"required_growth={row.get('required_profit_growth_pct','')}% | "
-            f"zero-growth-price={row.get('price_if_market_requires_zero_growth','')} | "
-            f"supported-base-price={row.get('supported_fair_price_base','')}"
+            f"buyable<={row.get('buyable_price_ceiling','')} | "
+            f"deep_value<={row.get('deep_value_price_ceiling','')} | "
+            f"supported_base_value={row.get('supported_fair_price_base','')}"
         )
     (output_dir / "hard_logic_price_map.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return rows
