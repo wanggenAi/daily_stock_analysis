@@ -7,6 +7,13 @@ This is the bridge that restores the intended decision order:
 A selected company outside the Quant Top-N seed list may enter valuation only when
 (1) the strict hard-logic research row is PASS and (2) its code exists in the raw
 All-A scan.  The sidecar alone can never invent a security.
+
+The legacy valuation queue only accepts PRIORITY_RESEARCH / SECONDARY_RESEARCH
+rows and still interprets several old ``hard_blockers`` as vetoes.  A strict
+HARD_LOGIC_PASS has already separated structural company risks from technical /
+execution context, so this bridge preserves the old fields for audit and routes
+the company as SECONDARY_RESEARCH with the old blocker text moved to an audit
+column.  It does not grant a formal signal or an automatic trade.
 """
 from __future__ import annotations
 
@@ -58,6 +65,22 @@ def _code(value: Any) -> str:
     return text.zfill(6) if text.isdigit() else text
 
 
+def _prepare_for_legacy_valuation_route(row: dict[str, Any]) -> None:
+    """Preserve old screening context while making a strict PASS researchable."""
+    prior_status = str(row.get("quant_status") or row.get("quant_screen_status") or "").strip()
+    if prior_status:
+        row["pre_hard_logic_quant_status"] = prior_status
+    row["quant_status"] = "SECONDARY_RESEARCH"
+
+    prior_blockers = str(row.get("hard_blockers") or row.get("hard_reject_blockers") or "").strip()
+    if prior_blockers:
+        row["pre_hard_logic_source_blockers"] = prior_blockers
+    # The strict gate has already rejected any structural company blocker.
+    # Legacy technical/exit/timing blockers must not prevent valuation research.
+    row["hard_blockers"] = ""
+    row["hard_reject_blockers"] = ""
+
+
 def merge_hard_logic_into_valuation(
     valuation_rows: list[Mapping[str, Any]],
     hard_logic_rows: list[Mapping[str, Any]],
@@ -106,7 +129,6 @@ def merge_hard_logic_into_valuation(
             row["code"] = code
             row["valuation_source_channel"] = "HARD_LOGIC_PASS"
             row["wide_recall_reason"] = "STRUCTURAL_HARD_LOGIC_PASS"
-            row["quant_status"] = row.get("quant_status") or "HARD_LOGIC_RESEARCH"
             merged.append(row)
             by_code[code] = row
             if str(research.get("selection_origin") or "") == "EXTERNAL_A_SHARE_NOMINATION":
@@ -120,6 +142,7 @@ def merge_hard_logic_into_valuation(
                 )
 
         row = by_code[code]
+        _prepare_for_legacy_valuation_route(row)
         row["hard_logic_state"] = "PASS"
         row["hard_logic_research_industry"] = research.get("industry") or row.get("industry") or ""
         for field in HARD_LOGIC_FIELDS:
@@ -174,6 +197,8 @@ def write_source(
         "hard_logic_precedes_valuation": True,
         "topn_seed_is_answer": False,
         "external_nomination_requires_all_a_membership": True,
+        "legacy_quant_status_can_veto_hard_logic_pass": False,
+        "legacy_technical_blockers_can_veto_hard_logic_pass": False,
         "formal_signal_eligible": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
