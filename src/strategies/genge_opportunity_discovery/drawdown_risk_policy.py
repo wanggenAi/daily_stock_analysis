@@ -15,7 +15,7 @@ import math
 from typing import Iterable, Sequence
 
 
-RULE_VERSION = "genge_drawdown_first_risk_v1"
+RULE_VERSION = "genge_drawdown_first_risk_v2_portfolio_caps"
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,8 @@ class DrawdownRiskPolicy:
     risk_per_trade_pct: float = 1.25
     max_single_name_fraction: float = 0.20
     max_industry_fraction: float = 0.35
+    max_total_gross_fraction: float = 0.90
+    max_total_open_risk_pct: float = 6.0
     minimum_stop_distance_pct: float = 5.0
 
     # Exposure scaling as portfolio drawdown deepens.
@@ -136,6 +138,8 @@ def position_fraction(
     portfolio_drawdown_pct: float = 0.0,
     current_industry_fraction: float = 0.0,
     current_name_fraction: float = 0.0,
+    current_total_fraction: float = 0.0,
+    current_open_risk_pct: float = 0.0,
     policy: DrawdownRiskPolicy = DEFAULT_DRAWDOWN_POLICY,
 ) -> float:
     """Return maximum additional portfolio fraction for a qualified setup.
@@ -143,6 +147,11 @@ def position_fraction(
     Risk budget is expressed as the fraction of total equity lost if the frozen
     stop is reached. Example: 1.25% risk budget / 10% stop distance = 12.5%
     gross position before portfolio/industry/name caps and drawdown scaling.
+
+    ``current_open_risk_pct`` is the portfolio-equity loss, in percentage
+    points, if every currently frozen stop were reached from its risk reference.
+    The total-open-risk cap prevents a collection of individually sensible
+    positions from silently creating an excessive portfolio loss budget.
     """
 
     stop = _finite(stop_distance_pct)
@@ -153,7 +162,21 @@ def position_fraction(
 
     name_room = max(0.0, policy.max_single_name_fraction - max(0.0, float(current_name_fraction)))
     industry_room = max(0.0, policy.max_industry_fraction - max(0.0, float(current_industry_fraction)))
-    gross_room = min(risk_budget_fraction, name_room, industry_room)
+    total_room = max(0.0, policy.max_total_gross_fraction - max(0.0, float(current_total_fraction)))
+
+    open_risk_room_pct = max(0.0, policy.max_total_open_risk_pct - max(0.0, float(current_open_risk_pct)))
+    # Both ``open_risk_room_pct`` and ``stop`` are percentage points, so their
+    # ratio is the additional portfolio fraction that can be exposed to this
+    # stop without violating the aggregate loss budget.
+    open_risk_room_fraction = open_risk_room_pct / stop
+
+    gross_room = min(
+        risk_budget_fraction,
+        name_room,
+        industry_room,
+        total_room,
+        open_risk_room_fraction,
+    )
     scaled = gross_room * exposure_multiplier(portfolio_drawdown_pct, policy)
     return round(max(0.0, min(1.0, scaled)), 6)
 
