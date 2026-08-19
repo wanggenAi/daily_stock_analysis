@@ -242,7 +242,8 @@ def test_public_fundamental_normalizers_emit_contract_columns() -> None:
     assert valuation.iloc[0]["pe"] == 12.5
     assert list(financial.columns) == list(FINANCIAL_COLUMNS)
     assert financial.iloc[0]["debt_ratio"] == 42.5
-    assert financial.iloc[0]["operating_cash_flow"] == 0.88
+    assert pd.isna(financial.iloc[0]["operating_cash_flow"])
+    assert financial.iloc[0]["operating_cash_flow_per_share"] == 0.88
 
 
 def test_industry_cycle_missing_degrades_to_neutral_score() -> None:
