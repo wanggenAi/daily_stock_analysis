@@ -1,6 +1,7 @@
 name: Temporary Patch Hard Logic High Exit
 
 on:
+  pull_request:
   push:
     branches:
       - feat/hard-logic-price-expectation-map
@@ -10,6 +11,7 @@ permissions:
 
 jobs:
   patch-and-self-remove:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout feature branch
