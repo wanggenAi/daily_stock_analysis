@@ -3,6 +3,8 @@ name: GenGe Hard Logic Price Map
 on:
   pull_request:
     paths:
+      - "src/strategies/genge_opportunity_discovery/sector_opportunity_engine.py"
+      - "src/strategies/genge_opportunity_discovery/sector_first_hard_logic_research.py"
       - "src/strategies/genge_opportunity_discovery/hard_logic_price_map.py"
       - "src/strategies/genge_opportunity_discovery/hard_logic_engine.py"
       - "src/strategies/genge_opportunity_discovery/hard_logic_research_runner.py"
@@ -10,6 +12,8 @@ on:
       - "src/strategies/genge_opportunity_discovery/forward_scenario_valuation.py"
       - "src/strategies/genge_opportunity_discovery/forward_scenario_postscan.py"
       - "src/strategies/genge_opportunity_discovery/strict_hard_logic_price_map.py"
+      - "tests/test_genge_sector_opportunity_engine.py"
+      - "tests/test_genge_sector_first_hard_logic_research.py"
       - "tests/test_genge_hard_logic_price_map.py"
       - "tests/test_genge_hard_logic_engine.py"
       - "tests/test_genge_hard_logic_research_runner.py"
@@ -58,9 +62,11 @@ jobs:
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
-      - name: Validate strict hard-logic research and price-map modules
+      - name: Validate industry-first hard-logic research and price-map modules
         run: |
           python -m py_compile \
+            src/strategies/genge_opportunity_discovery/sector_opportunity_engine.py \
+            src/strategies/genge_opportunity_discovery/sector_first_hard_logic_research.py \
             src/strategies/genge_opportunity_discovery/hard_logic_price_map.py \
             src/strategies/genge_opportunity_discovery/hard_logic_engine.py \
             src/strategies/genge_opportunity_discovery/hard_logic_research_runner.py \
@@ -69,6 +75,8 @@ jobs:
             src/strategies/genge_opportunity_discovery/forward_scenario_postscan.py \
             src/strategies/genge_opportunity_discovery/strict_hard_logic_price_map.py
           python -m pytest -q \
+            tests/test_genge_sector_opportunity_engine.py \
+            tests/test_genge_sector_first_hard_logic_research.py \
             tests/test_genge_hard_logic_price_map.py \
             tests/test_genge_hard_logic_engine.py \
             tests/test_genge_hard_logic_research_runner.py \
@@ -117,6 +125,26 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ env.UPSTREAM_RUN_ID }}
 
+      - name: Validate industry-first upstream contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          sector = Path('postscan/reports/sector_opportunity/sector_opportunity_summary.json')
+          hard = Path('postscan/reports/hard_logic_research/hard_logic_research_summary.json')
+          assert sector.exists(), 'sector opportunity artifact missing from Postscan'
+          assert hard.exists(), 'hard-logic research summary missing from Postscan'
+          sector_summary = json.loads(sector.read_text(encoding='utf-8'))
+          hard_summary = json.loads(hard.read_text(encoding='utf-8'))
+          assert sector_summary['industry_first_discovery'] is True
+          assert sector_summary['sector_strength_is_hard_logic'] is False
+          assert sector_summary['sector_strength_can_create_buy'] is False
+          assert hard_summary['sector_opportunity_used'] is True
+          assert hard_summary['industry_first_discovery'] is True
+          assert hard_summary['sector_strength_is_hard_logic'] is False
+          assert hard_summary['sector_strength_can_create_buy'] is False
+          PY
+
       - name: Restore forward-consensus cache
         uses: actions/cache/restore@v4
         with:
@@ -127,9 +155,11 @@ jobs:
             genge-forward-consensus-${{ runner.os }}-main-
             genge-forward-consensus-${{ runner.os }}-
 
-      - name: Validate strict hard-logic research and price-map modules
+      - name: Validate industry-first hard-logic research and price-map modules
         run: |
           python -m py_compile \
+            src/strategies/genge_opportunity_discovery/sector_opportunity_engine.py \
+            src/strategies/genge_opportunity_discovery/sector_first_hard_logic_research.py \
             src/strategies/genge_opportunity_discovery/hard_logic_price_map.py \
             src/strategies/genge_opportunity_discovery/hard_logic_engine.py \
             src/strategies/genge_opportunity_discovery/hard_logic_research_runner.py \
@@ -138,6 +168,8 @@ jobs:
             src/strategies/genge_opportunity_discovery/forward_scenario_postscan.py \
             src/strategies/genge_opportunity_discovery/strict_hard_logic_price_map.py
           python -m pytest -q \
+            tests/test_genge_sector_opportunity_engine.py \
+            tests/test_genge_sector_first_hard_logic_research.py \
             tests/test_genge_hard_logic_price_map.py \
             tests/test_genge_hard_logic_engine.py \
             tests/test_genge_hard_logic_research_runner.py \
@@ -161,7 +193,6 @@ jobs:
           python - <<'PY'
           import csv, json
           from pathlib import Path
-
           root = Path('postscan/reports/forward_scenario_valuation')
           csv_path = root/'forward_scenario_valuation.csv'
           summary_path = root/'forward_scenario_valuation_summary.json'
@@ -196,14 +227,12 @@ jobs:
           import csv
           import json
           from pathlib import Path
-
           root = Path('reports/hard_logic_price_map')
           csv_path = root / 'hard_logic_price_map.csv'
           md_path = root / 'hard_logic_price_map.md'
           summary_path = root / 'hard_logic_price_map_summary.json'
           for path in (csv_path, md_path, summary_path):
               assert path.exists() and path.stat().st_size > 0, f'missing/empty output: {path}'
-
           rows = list(csv.DictReader(csv_path.open(encoding='utf-8')))
           summary = json.loads(summary_path.read_text(encoding='utf-8'))
           assert rows, 'hard-logic price map unexpectedly empty'
@@ -255,6 +284,10 @@ jobs:
       - name: Publish price-map summary
         if: always()
         run: |
+          if [ -f postscan/reports/sector_opportunity/sector_opportunity.md ]; then
+            cat postscan/reports/sector_opportunity/sector_opportunity.md >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+          fi
           if [ -f postscan/reports/forward_scenario_valuation/forward_scenario_valuation.md ]; then
             cat postscan/reports/forward_scenario_valuation/forward_scenario_valuation.md >> "$GITHUB_STEP_SUMMARY"
             echo >> "$GITHUB_STEP_SUMMARY"
@@ -277,5 +310,6 @@ jobs:
           name: genge-hard-logic-price-map
           path: |
             reports/hard_logic_price_map
+            postscan/reports/sector_opportunity
             postscan/reports/forward_scenario_valuation
           if-no-files-found: error
