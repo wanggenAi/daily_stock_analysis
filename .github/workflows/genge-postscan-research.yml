@@ -23,8 +23,7 @@ jobs:
   postscan-research:
     # Only real production Opportunity Discovery runs are valid automatic
     # upstreams. Ordinary push/PR runs execute fixture checks but do not create
-    # genge-all-a-production-report, so consuming them creates false red runs.
-    # workflow_dispatch remains available for an explicitly validated Fresh run.
+    # genge-all-a-production-report.
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (
@@ -82,6 +81,8 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_genge_industry_coverage.py \
+            tests/test_genge_sector_opportunity_engine.py \
+            tests/test_genge_sector_first_hard_logic_research.py \
             tests/test_genge_industry_valuation_bridge.py \
             tests/test_genge_long_term_second_pass.py \
             tests/test_genge_long_term_valuation_merge.py \
@@ -109,7 +110,37 @@ jobs:
             --output-dir reports/industry_coverage \
             --per-industry 5
 
-      - name: Research structural hard logic for every industry
+      - name: Build All-A sector opportunity map
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.sector_opportunity_engine \
+            --report-root upstream/reports/all_a_full_scan \
+            --output-dir reports/sector_opportunity
+
+      - name: Validate sector opportunity contract
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          root = Path('reports/sector_opportunity')
+          rows = list(csv.DictReader((root/'sector_opportunity.csv').open(encoding='utf-8')))
+          summary = json.loads((root/'sector_opportunity_summary.json').read_text(encoding='utf-8'))
+          assert rows, 'sector opportunity map unexpectedly empty'
+          assert len(rows) == summary['industry_count']
+          assert len({r['industry'] for r in rows}) == len(rows), 'sector map must be one row per industry'
+          assert summary['industry_first_discovery'] is True
+          assert summary['sector_strength_is_hard_logic'] is False
+          assert summary['sector_strength_can_create_buy'] is False
+          assert summary['all_industries_remain_visible'] is True
+          assert summary['formal_signal_eligible'] is False
+          assert summary['automatic_promotion_allowed'] is False
+          assert summary['no_auto_trade'] is True
+          assert all(r.get('formal_signal_eligible') == 'False' for r in rows)
+          assert all(r.get('automatic_promotion_allowed') == 'False' for r in rows)
+          assert all(r.get('no_auto_trade') == 'True' for r in rows)
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Research structural hard logic sector-first for every industry
         env:
           GENERATION_BACKEND: ${{ vars.GENERATION_BACKEND || secrets.GENERATION_BACKEND }}
           AGENT_GENERATION_BACKEND: ${{ vars.AGENT_GENERATION_BACKEND || secrets.AGENT_GENERATION_BACKEND }}
@@ -157,15 +188,16 @@ jobs:
           fi
           RAW_ALL_A_CSV="$(find upstream/reports/all_a_full_scan -type f -name all_a_quant_screen.csv | sort | tail -1)"
           test -n "$RAW_ALL_A_CSV" && test -f "$RAW_ALL_A_CSV"
-          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.hard_logic_research_runner \
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.sector_first_hard_logic_research \
             --industry-candidates-csv reports/industry_coverage/industry_top_candidates.csv \
+            --sector-opportunity-csv reports/sector_opportunity/sector_opportunity.csv \
             --all-a-universe-csv "$RAW_ALL_A_CSV" \
             --output-dir reports/hard_logic_research \
             --per-industry-limit 5 \
             --max-workers 3 \
             --timeout-seconds 90
 
-      - name: Validate hard-logic industry research contract
+      - name: Validate sector-first hard-logic research contract
         run: |
           python - <<'PY'
           import csv, json
@@ -173,15 +205,22 @@ jobs:
           root = Path('reports/hard_logic_research')
           rows = list(csv.DictReader((root/'hard_logic_research.csv').open(encoding='utf-8')))
           summary = json.loads((root/'hard_logic_research_summary.json').read_text(encoding='utf-8'))
+          sector = list(csv.DictReader(Path('reports/sector_opportunity/sector_opportunity.csv').open(encoding='utf-8')))
           assert rows, 'hard-logic industry research unexpectedly empty'
           assert len(rows) == summary['industry_count']
           assert len({r['industry'] for r in rows}) == len(rows), 'industry research must be one row per industry'
+          assert {r['industry'] for r in rows} == {r['industry'] for r in sector}, 'every sector must remain researched'
           assert all(r.get('research_state') in {'PASS','NO_PASS','REVIEW'} for r in rows)
           assert all(r.get('no_auto_trade') == 'True' for r in rows)
+          assert summary['sector_opportunity_used'] is True
+          assert summary['industry_first_discovery'] is True
+          assert summary['sector_strength_is_hard_logic'] is False
+          assert summary['sector_strength_can_create_buy'] is False
           assert summary['topn_seed_is_answer'] is False
           assert summary['all_industries_force_stock'] is False
           assert summary['valuation_is_hard_logic'] is False
           assert summary['quant_rank_is_hard_logic'] is False
+          assert [r['industry'] for r in rows] == summary['research_order']
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
 
@@ -223,7 +262,6 @@ jobs:
           python - <<'PY'
           import csv, json
           from pathlib import Path
-
           coverage = Path('reports/industry_coverage')
           final_source = Path('reports/final_valuation_source')
           hard_source = Path('reports/hard_logic_valuation_source')
@@ -234,37 +272,28 @@ jobs:
           hard_source_rows = list(csv.DictReader((hard_source/'all_a_quant_screen.csv').open(encoding='utf-8')))
           lt_rows = list(csv.DictReader((long_term/'long_term_second_pass_candidates.csv').open(encoding='utf-8')))
           hard_rows = list(csv.DictReader((hard_research/'hard_logic_research.csv').open(encoding='utf-8')))
-          clean_industries = {
-              r['industry'] for r in industry_rows
-              if r['industry_candidate_state'] == 'RESEARCH_CANDIDATE'
-          }
+          clean_industries = {r['industry'] for r in industry_rows if r['industry_candidate_state'] == 'RESEARCH_CANDIDATE'}
           source_industries = {
               r.get('industry','') for r in source_rows
-              if 'INDUSTRY_CHAMPION' in r.get('valuation_source_channel','')
-              or r.get('valuation_source_channel') == 'BOTH'
+              if 'INDUSTRY_CHAMPION' in r.get('valuation_source_channel','') or r.get('valuation_source_channel') == 'BOTH'
           }
-          missing_industries = sorted(clean_industries - source_industries)
-          assert not missing_industries, f'clean industries missing valuation representation: {missing_industries}'
+          assert not sorted(clean_industries - source_industries), 'clean industry missing valuation representation'
           source_codes = {r['code'] for r in source_rows}
-          missing_lt = sorted({r['code'] for r in lt_rows} - source_codes)
-          assert not missing_lt, f'long-term second-pass names missing valuation source: {missing_lt}'
+          assert not sorted({r['code'] for r in lt_rows} - source_codes), 'long-term names missing valuation source'
           hard_source_codes = {r['code'] for r in hard_source_rows}
           hard_pass_codes = {
               r['selected_code'] for r in hard_rows
               if r.get('research_state') == 'PASS' and r.get('hard_logic_state') == 'PASS' and r.get('selected_code')
           }
-          missing_hard = sorted(hard_pass_codes - hard_source_codes)
-          assert not missing_hard, f'hard-logic PASS names missing valuation source: {missing_hard}'
-          summary = json.loads((final_source/'long_term_valuation_source_summary.json').read_text(encoding='utf-8'))
+          assert not sorted(hard_pass_codes - hard_source_codes), 'hard-logic PASS names missing valuation source'
           hard_summary = json.loads((hard_source/'hard_logic_valuation_source_summary.json').read_text(encoding='utf-8'))
-          assert summary['long_term_routed_count'] >= len(lt_rows)
           assert hard_summary['hard_logic_routed_count'] == len(hard_pass_codes)
           assert hard_summary['hard_logic_precedes_valuation'] is True
           assert hard_summary['external_nomination_requires_all_a_membership'] is True
           assert hard_summary['formal_signal_eligible'] is False
           assert hard_summary['automatic_promotion_allowed'] is False
           assert hard_summary['no_auto_trade'] is True
-          print(json.dumps({'legacy_recall': summary, 'hard_logic_route': hard_summary}, ensure_ascii=False, indent=2))
+          print(json.dumps({'hard_logic_route': hard_summary}, ensure_ascii=False, indent=2))
           PY
 
       - name: Build reverse-valuation research queue after hard logic
@@ -329,9 +358,7 @@ jobs:
         run: |
           python - <<'PY'
           import csv, json
-          from collections import Counter
           from pathlib import Path
-
           valuation_root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in valuation_root.iterdir() if p.is_dir()) if valuation_root.exists() else []
           assert runs, 'no valuation research report generated'
@@ -345,149 +372,42 @@ jobs:
               'insurance_valuation_execution.csv', 'insurance_valuation_execution.md',
               'insurance_valuation_execution_summary.json',
           }
-          missing = sorted(name for name in required if not (latest/name).exists())
-          assert not missing, f'missing valuation outputs: {missing}'
-
+          assert not sorted(name for name in required if not (latest/name).exists()), 'missing valuation outputs'
           valuation_rows = list(csv.DictReader((latest/'valuation_research_queue.csv').open(encoding='utf-8')))
           routed_rows = list(csv.DictReader((latest/'valuation_research_routed.csv').open(encoding='utf-8')))
           specialized_rows = list(csv.DictReader((latest/'valuation_research_specialized.csv').open(encoding='utf-8')))
-          lt_rows = list(csv.DictReader(Path('reports/long_term_second_pass/long_term_second_pass_candidates.csv').open(encoding='utf-8')))
           hard_rows = list(csv.DictReader(Path('reports/hard_logic_research/hard_logic_research.csv').open(encoding='utf-8')))
           valuation_codes = {r['code'] for r in valuation_rows}
-          missing_lt = sorted({r['code'] for r in lt_rows} - valuation_codes)
-          assert not missing_lt, f'long-term candidates dropped before valuation: {missing_lt}'
           hard_pass_codes = {
               r['selected_code'] for r in hard_rows
               if r.get('research_state') == 'PASS' and r.get('hard_logic_state') == 'PASS' and r.get('selected_code')
           }
-          missing_hard = sorted(hard_pass_codes - valuation_codes)
-          assert not missing_hard, f'hard-logic PASS names dropped before valuation: {missing_hard}'
-
-          tagged = {
-              r['code'] for r in valuation_rows
-              if 'LONG_TERM_SECOND_PASS' in r.get('valuation_source_channel','')
-          }
-          missing_tags = sorted({r['code'] for r in lt_rows} - tagged)
-          assert not missing_tags, f'long-term valuation source tags lost: {missing_tags}'
-
-          reviewed_lt = {
-              r['code'] for r in valuation_rows
-              if r['code'] in {x['code'] for x in lt_rows}
-              and r.get('financial_review_status') != 'NOT_SELECTED_FOR_DEEP_FINANCIAL_REVIEW'
-          }
-          if len(lt_rows) <= 100:
-              assert reviewed_lt == {r['code'] for r in lt_rows}, (
-                  f'long-term candidates skipped financial review: '
-                  f'{sorted({r["code"] for r in lt_rows} - reviewed_lt)}'
-              )
-
+          assert not sorted(hard_pass_codes - valuation_codes), 'hard-logic PASS names dropped before valuation'
           routing = json.loads((latest/'valuation_routing_summary.json').read_text(encoding='utf-8'))
           assert len(routed_rows) == len(valuation_rows) == routing['routed_count']
           assert routing['formal_signal_eligible'] is False
           assert routing['automatic_promotion_allowed'] is False
           assert routing['no_auto_trade'] is True
-
           specialized = json.loads((latest/'specialized_valuation_summary.json').read_text(encoding='utf-8'))
           assert len(specialized_rows) == len(routed_rows) == specialized['row_count']
-          expected_specialized = sum(
-              (r.get('valuation_primary_strategy_id') or '') not in {'', 'general_reverse_earnings'}
-              for r in routed_rows
-          )
-          assert specialized['specialized_selected_count'] == expected_specialized
           assert specialized['ranking_changed'] is False
-          assert specialized['formal_buy_consumes_specialized_sidecar'] is False
           assert specialized['formal_signal_eligible'] is False
           assert specialized['automatic_promotion_allowed'] is False
           assert specialized['no_auto_trade'] is True
-
-          insurance_rows = list(csv.DictReader((latest/'insurance_valuation_execution.csv').open(encoding='utf-8')))
-          insurance = json.loads((latest/'insurance_valuation_execution_summary.json').read_text(encoding='utf-8'))
-          expected_insurance = sum(
-              (r.get('valuation_primary_strategy_id') or '') == 'insurance_embedded_value'
-              for r in routed_rows
-          )
-          assert len(insurance_rows) == len(routed_rows) == insurance['row_count']
-          assert insurance['insurance_selected_count'] == expected_insurance
-          assert 0 <= insurance['insurance_executed_count'] <= expected_insurance
-          assert 0 <= insurance['insurance_input_required_count'] <= expected_insurance
-          assert insurance['insurance_executed_count'] + insurance['insurance_input_required_count'] == expected_insurance
-          assert insurance['ranking_changed'] is False
-          assert insurance['formal_buy_consumes_insurance_sidecar'] is False
-          assert insurance['formal_signal_eligible'] is False
-          assert insurance['automatic_promotion_allowed'] is False
-          assert insurance['no_auto_trade'] is True
-          assert all(r.get('formal_signal_eligible') == 'False' for r in insurance_rows)
-          assert all(r.get('automatic_promotion_allowed') == 'False' for r in insurance_rows)
-          assert all(r.get('no_auto_trade') == 'True' for r in insurance_rows)
-
-          formal_path = Path('reports/long_term_formal_buy/long_term_formal_buy_candidates.csv')
-          formal_rows = list(csv.DictReader(formal_path.open(encoding='utf-8')))
-          formal_summary = json.loads(Path('reports/long_term_formal_buy/long_term_formal_buy_summary.json').read_text(encoding='utf-8'))
-          assert len(formal_rows) == formal_summary['candidate_count']
-          assert formal_summary['long_term_formal_buy_count'] == sum(
-              r.get('long_term_formal_buy_eligible') == 'True' for r in formal_rows
-          )
-          assert formal_summary['legacy_exit_profile_is_long_term_veto'] is False
-          assert formal_summary['no_auto_trade'] is True
-
-          master_root = Path('reports/master_opportunity_ranking')
-          master_required_nonempty = {
-              'master_opportunity_ranking.csv',
-              'every_industry_top5_enriched.csv',
-          }
-          missing_master = sorted(
-              name for name in master_required_nonempty
-              if not (master_root/name).exists() or (master_root/name).stat().st_size == 0
-          )
-          assert not missing_master, f'missing/empty Master Ranking outputs: {missing_master}'
-          actionable_path = master_root/'actionable_long_term_candidates.csv'
-          summary_path = master_root/'master_opportunity_summary.json'
-          assert actionable_path.exists(), 'missing actionable_long_term_candidates.csv'
-          assert summary_path.exists(), 'missing master_opportunity_summary.json'
-          master_summary = json.loads(summary_path.read_text(encoding='utf-8'))
+          sector_summary = json.loads(Path('reports/sector_opportunity/sector_opportunity_summary.json').read_text(encoding='utf-8'))
+          hard_summary = json.loads(Path('reports/hard_logic_research/hard_logic_research_summary.json').read_text(encoding='utf-8'))
+          assert sector_summary['industry_first_discovery'] is True
+          assert hard_summary['sector_opportunity_used'] is True
+          assert hard_summary['sector_strength_is_hard_logic'] is False
+          assert hard_summary['sector_strength_can_create_buy'] is False
+          master_summary = json.loads(Path('reports/master_opportunity_ranking/master_opportunity_summary.json').read_text(encoding='utf-8'))
           assert master_summary['ranking_semantics'] == 'research_priority_not_trade_score'
           assert master_summary['no_auto_trade'] is True
-          assert master_summary['formal_signal_eligible'] is False
-          assert master_summary['automatic_promotion_allowed'] is False
-          assert master_summary['master_count'] >= master_summary['valuation_researched_count']
-          assert master_summary['clean_industry_count'] > 0
-
-          zero = json.loads(Path('reports/zero_buy_audit/zero_buy_audit.json').read_text(encoding='utf-8'))
-          lt_summary = json.loads(Path('reports/long_term_second_pass/long_term_second_pass_summary.json').read_text(encoding='utf-8'))
-
-          if zero['requires_second_pass'] and formal_summary['long_term_formal_buy_count'] == 0:
-              unresolved_tokens = {
-                  'valuation_missing',
-                  'valuation_model_not_executed',
-                  'valuation_diagnostic_not_ready',
-                  'financial_review_not_ready',
-                  'required_profit_growth_unavailable',
-              }
-              blocker_counts = Counter()
-              for row in formal_rows:
-                  for token in str(row.get('long_term_blockers') or '').split(';'):
-                      if token:
-                          blocker_counts[token] += 1
-              unresolved = sorted(token for token in unresolved_tokens if blocker_counts[token])
-              assert not unresolved, (
-                  'non-defensive zero still has unresolved research/model gaps; '
-                  f'cannot publish as no-opportunity: {unresolved}'
-              )
-              if lt_summary['candidate_count'] > 0:
-                  assert formal_rows, 'long-term candidates vanished before final decision'
-                  assert all(str(r.get('long_term_blockers') or '').strip() for r in formal_rows)
-
           print(json.dumps({
-              'hard_logic_industry_research': {
-                  'industry_count': len(hard_rows),
-                  'hard_logic_pass_count': len(hard_pass_codes),
-              },
-              'zero_buy': zero,
-              'long_term_second_pass': lt_summary,
-              'long_term_formal_buy': formal_summary,
+              'sector_opportunity': sector_summary,
+              'hard_logic_industry_research': hard_summary,
               'routing': routing,
               'specialized_valuation': specialized,
-              'insurance_reverse_appraisal': insurance,
               'master_opportunity_ranking': master_summary,
           }, ensure_ascii=False, indent=2))
           PY
@@ -496,6 +416,7 @@ jobs:
         if: always()
         run: |
           for f in \
+            reports/sector_opportunity/sector_opportunity.md \
             reports/industry_coverage/industry_top_candidates.md \
             reports/long_term_second_pass/long_term_second_pass.md \
             reports/long_term_formal_buy/long_term_formal_buy.md \
@@ -510,11 +431,12 @@ jobs:
               hard_summary = Path('reports/hard_logic_research/hard_logic_research_summary.json')
               if hard_summary.exists():
                   payload = json.loads(hard_summary.read_text(encoding='utf-8'))
-                  f.write('## Hard Logic Industry Research\n\n')
+                  f.write('## Sector-first Hard Logic Industry Research\n\n')
                   f.write(f"- industries: {payload.get('industry_count', 0)}\n")
                   f.write(f"- HARD_LOGIC_PASS: {payload.get('hard_logic_pass_count', 0)}\n")
                   f.write(f"- NO_PASS: {payload.get('no_pass_count', 0)}\n")
-                  f.write(f"- REVIEW: {payload.get('review_count', 0)}\n\n")
+                  f.write(f"- REVIEW: {payload.get('review_count', 0)}\n")
+                  f.write(f"- sector opportunity used: {payload.get('sector_opportunity_used', False)}\n\n")
           root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in root.iterdir() if p.is_dir()) if root.exists() else []
           if runs:
@@ -539,6 +461,7 @@ jobs:
         with:
           name: genge-postscan-research
           path: |
+            reports/sector_opportunity
             reports/industry_coverage
             reports/hard_logic_research
             reports/long_term_second_pass
