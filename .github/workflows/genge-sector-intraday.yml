@@ -5,8 +5,10 @@ on:
     paths:
       - "src/strategies/genge_opportunity_discovery/sector_opportunity_engine.py"
       - "src/strategies/genge_opportunity_discovery/sector_opportunity_intraday.py"
+      - "src/strategies/genge_opportunity_discovery/intraday_industry_action_overlay.py"
       - "tests/test_genge_sector_opportunity_engine.py"
       - "tests/test_genge_sector_opportunity_intraday.py"
+      - "tests/test_genge_intraday_industry_action_overlay.py"
       - ".github/workflows/genge-sector-intraday.yml"
   schedule:
     # Beijing time: 10:45 and 14:20 on weekdays.
@@ -44,14 +46,16 @@ jobs:
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
-      - name: Validate intraday sector modules with fixtures
+      - name: Validate intraday industry-first modules with fixtures
         run: |
           python -m py_compile \
             src/strategies/genge_opportunity_discovery/sector_opportunity_engine.py \
-            src/strategies/genge_opportunity_discovery/sector_opportunity_intraday.py
+            src/strategies/genge_opportunity_discovery/sector_opportunity_intraday.py \
+            src/strategies/genge_opportunity_discovery/intraday_industry_action_overlay.py
           python -m pytest -q \
             tests/test_genge_sector_opportunity_engine.py \
-            tests/test_genge_sector_opportunity_intraday.py
+            tests/test_genge_sector_opportunity_intraday.py \
+            tests/test_genge_intraday_industry_action_overlay.py
 
   intraday-sector:
     if: github.event_name != 'pull_request'
@@ -135,17 +139,91 @@ jobs:
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
 
+      - name: Resolve latest validated hard-logic price map
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PRICE_RUN_ID="$(
+            gh run list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --workflow genge-hard-logic-price-map.yml \
+              --branch main \
+              --status success \
+              --limit 30 \
+              --json databaseId,event,createdAt \
+              --jq '[.[] | select(.event == "workflow_run" or .event == "workflow_dispatch")][0].databaseId // empty'
+          )"
+          if [ -z "$PRICE_RUN_ID" ]; then
+            echo "No stable price-map run found; publishing sector radar only"
+            exit 0
+          fi
+          echo "PRICE_MAP_RUN_ID=$PRICE_RUN_ID" >> "$GITHUB_ENV"
+          if ! gh run download "$PRICE_RUN_ID" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name genge-hard-logic-price-map \
+            --dir stable-price-map; then
+            echo "Price-map artifact unavailable; publishing sector radar only"
+            rm -rf stable-price-map
+          fi
+
+      - name: Overlay live price and sector state on validated fair values
+        if: env.PRICE_MAP_RUN_ID != ''
+        run: |
+          STABLE_PRICE_MAP="$(find stable-price-map -type f -name hard_logic_price_map.csv | sort | tail -1)"
+          if [ -z "$STABLE_PRICE_MAP" ] || [ ! -f "$STABLE_PRICE_MAP" ]; then
+            echo "Stable price map CSV unavailable; skip action overlay"
+            exit 0
+          fi
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.intraday_industry_action_overlay \
+            --stable-price-map-csv "$STABLE_PRICE_MAP" \
+            --intraday-stock-csv reports/sector_opportunity_intraday/intraday_stock_snapshot.csv \
+            --intraday-sector-csv reports/sector_opportunity_intraday/sector_opportunity_intraday.csv \
+            --output-dir reports/intraday_industry_action
+
+      - name: Validate optional action overlay
+        if: env.PRICE_MAP_RUN_ID != ''
+        run: |
+          if [ ! -f reports/intraday_industry_action/intraday_industry_action_summary.json ]; then
+            echo "No action overlay produced; sector radar remains valid"
+            exit 0
+          fi
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          root = Path('reports/intraday_industry_action')
+          rows = list(csv.DictReader((root/'intraday_industry_action_map.csv').open(encoding='utf-8')))
+          summary = json.loads((root/'intraday_industry_action_summary.json').read_text(encoding='utf-8'))
+          assert len(rows) == summary['candidate_count']
+          assert summary['industry_first_action_refresh'] is True
+          assert summary['sector_strength_is_hard_logic'] is False
+          assert summary['sector_strength_can_create_buy'] is False
+          assert summary['fair_value_recomputed_intraday'] is False
+          assert summary['historical_backtest_eligible'] is False
+          assert summary['formal_signal_eligible'] is False
+          assert summary['automatic_promotion_allowed'] is False
+          assert summary['no_auto_trade'] is True
+          assert all(row.get('sector_strength_can_create_buy') == 'False' for row in rows)
+          assert all(row.get('fair_value_recomputed_intraday') == 'False' for row in rows)
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+
       - name: Publish intraday industry radar
         if: always()
         run: |
           if [ -f reports/sector_opportunity_intraday/sector_opportunity_intraday.md ]; then
             cat reports/sector_opportunity_intraday/sector_opportunity_intraday.md >> "$GITHUB_STEP_SUMMARY"
           fi
+          if [ -f reports/intraday_industry_action/intraday_industry_action_map.md ]; then
+            echo >> "$GITHUB_STEP_SUMMARY"
+            cat reports/intraday_industry_action/intraday_industry_action_map.md >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      - name: Upload intraday sector opportunity artifact
+      - name: Upload intraday industry-first artifact
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: genge-sector-opportunity-intraday
-          path: reports/sector_opportunity_intraday
+          path: |
+            reports/sector_opportunity_intraday
+            reports/intraday_industry_action
           if-no-files-found: error
