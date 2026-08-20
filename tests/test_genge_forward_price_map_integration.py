@@ -18,6 +18,28 @@ def _write_csv(path: Path, rows: list[dict]) -> None:
         writer.writerows(rows)
 
 
+def _hard_logic_research_row(code: str, name: str, industry: str) -> dict:
+    return {
+        "industry": industry,
+        "research_state": "PASS",
+        "selected_code": code,
+        "selected_name": name,
+        "selection_origin": "SEED",
+        "hard_logic_state": "PASS",
+        "hard_logic_score": 95,
+        "hard_logic_missing_evidence": "",
+        "hard_logic_structural_driver": "行业长期结构变化形成持续需求与盈利机会",
+        "hard_logic_supply_constraint": "牌照、客户或资本约束限制有效供给扩张",
+        "hard_logic_company_edge": "公司拥有难以短期复制的牌照、客户与规模优势",
+        "hard_logic_profit_transmission": "行业结构改善传导至业务量、收入、利润率与现金流",
+        "hard_logic_invalidation": "若行业结构逆转且核心客户/份额持续流失则逻辑失效",
+        "hard_logic_duration_years": 5,
+        "hard_logic_persistence": "关键竞争壁垒和行业结构预计持续多年",
+        "hard_logic_evidence_sources": "公司年报 | https://example.com/annual-report",
+        "research_summary": "结构逻辑通过，估值需独立判断。",
+    }
+
+
 def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp)
@@ -54,27 +76,7 @@ def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
         )
         _write_csv(
             artifact / "reports" / "hard_logic_research" / "hard_logic_research.csv",
-            [
-                {
-                    "industry": "白酒",
-                    "research_state": "PASS",
-                    "selected_code": "603369",
-                    "selected_name": "今世缘",
-                    "selection_origin": "SEED",
-                    "hard_logic_state": "PASS",
-                    "hard_logic_score": 95,
-                    "hard_logic_missing_evidence": "",
-                    "hard_logic_structural_driver": "区域消费升级和宴席场景形成可持续的结构性需求基础",
-                    "hard_logic_supply_constraint": "优质基酒产能与渠道培育需要较长周期",
-                    "hard_logic_company_edge": "省内品牌、渠道密度和产品结构形成难以短期复制的区域竞争优势",
-                    "hard_logic_profit_transmission": "需求与产品升级带动量价和产品结构改善，进而传导至收入、毛利率与利润",
-                    "hard_logic_invalidation": "若核心市场份额持续下降且产品升级失败、渠道库存长期恶化则逻辑失效",
-                    "hard_logic_duration_years": 5,
-                    "hard_logic_persistence": "区域品牌和渠道网络的形成与替代均需要多年",
-                    "hard_logic_evidence_sources": "公司年报 | https://example.com/annual-report",
-                    "research_summary": "结构逻辑通过，估值需独立判断。",
-                }
-            ],
+            [_hard_logic_research_row("603369", "今世缘", "白酒")],
         )
         _write_csv(
             artifact / "reports" / "forward_scenario_valuation" / "forward_scenario_valuation.csv",
@@ -116,3 +118,79 @@ def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
         assert row["hard_logic_profit_transmission"]
         assert row["hard_logic_invalidation"]
         assert row["hard_logic_evidence_sources"]
+
+
+def test_executed_broker_specialized_model_drives_base_fair_price_without_pe():
+    with tempfile.TemporaryDirectory() as tmp:
+        root = Path(tmp)
+        artifact = root / "postscan"
+        output = root / "price_map"
+        valuation_root = artifact / "reports" / "valuation_research_queue" / "20260820"
+
+        routed = {
+            "code": "600030",
+            "stock_name": "中信证券",
+            "industry": "证券",
+            "earnings_quality_score": 70,
+            "valuation_diagnostic_status": "PE_MODEL_NOT_APPLICABLE",
+            "valuation_primary_strategy_id": "capital_markets_cycle",
+            "valuation_route_status": "SPECIALIZED_MODEL_SELECTED",
+        }
+        _write_csv(valuation_root / "valuation_research_queue.csv", [routed])
+        _write_csv(valuation_root / "valuation_research_routed.csv", [routed])
+        _write_csv(
+            valuation_root / "valuation_research_specialized.csv",
+            [
+                {
+                    **routed,
+                    "specialized_model_executed": True,
+                    "specialized_model_execution_state": "SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY",
+                    "specialized_model_status": "OK",
+                    "specialized_current_pb": 1.20,
+                    "specialized_fair_pb": 1.50,
+                }
+            ],
+        )
+        _write_csv(
+            artifact / "reports" / "hard_logic_research" / "hard_logic_research.csv",
+            [_hard_logic_research_row("600030", "中信证券", "证券")],
+        )
+        # Forward research still supplies the current share price for specialized
+        # routes, but deliberately refuses to fabricate a PE-based fair value.
+        _write_csv(
+            artifact / "reports" / "forward_scenario_valuation" / "forward_scenario_valuation.csv",
+            [
+                {
+                    "code": "600030",
+                    "current_price": 24.0,
+                    "earnings_stage": "EXPANSION",
+                    "reasonable_pe_status": "SPECIALIZED_MODEL_REQUIRED",
+                    "scenario_fair_price_base": "",
+                    "scenario_valuation_status": "SPECIALIZED_MODEL_REQUIRED",
+                    "historical_pe_used_for_reasonable_pe": False,
+                }
+            ],
+        )
+        _write_csv(
+            artifact / "reports" / "hard_logic_valuation_source" / "raw_all_a_universe.csv",
+            [{"code": "600030", "stock_name": "中信证券", "industry": "证券", "raw_latest_close": 24.0}],
+        )
+
+        write_price_map(artifact, output)
+
+        rows = list(csv.DictReader((output / "hard_logic_price_map.csv").open(encoding="utf-8")))
+        assert len(rows) == 1
+        row = rows[0]
+        assert row["code"] == "600030"
+        assert row["hard_logic_state"] == "PASS"
+        assert row["valuation_framework"] == "FORWARD_SCENARIO"
+        assert float(row["scenario_fair_price_base"]) == 30.0
+        assert row["scenario_fair_price_bear"] == ""
+        assert row["scenario_fair_price_bull"] == ""
+        assert round(float(row["entry_price_ceiling"]), 2) == 25.50
+        assert round(float(row["ideal_price_ceiling"]), 2) == 22.50
+        assert row["price_decision"] == "BUYABLE"
+        assert row["price_zone"] == "BUY_ZONE"
+        assert row["specialized_scenario_bridge_status"] == "OK_BASE_ONLY"
+        assert row["specialized_scenario_strategy_id"] == "capital_markets_cycle"
+        assert "fair_pb/current_pb" in row["specialized_scenario_basis"]
