@@ -1,6 +1,13 @@
 name: GenGe Intraday Sector Opportunity
 
 on:
+  pull_request:
+    paths:
+      - "src/strategies/genge_opportunity_discovery/sector_opportunity_engine.py"
+      - "src/strategies/genge_opportunity_discovery/sector_opportunity_intraday.py"
+      - "tests/test_genge_sector_opportunity_engine.py"
+      - "tests/test_genge_sector_opportunity_intraday.py"
+      - ".github/workflows/genge-sector-intraday.yml"
   schedule:
     # Beijing time: 10:45 and 14:20 on weekdays.
     # This refreshes market/sector discovery only; structural research and
@@ -14,11 +21,40 @@ permissions:
   actions: read
 
 concurrency:
-  group: genge-intraday-sector-${{ github.ref }}
+  group: genge-intraday-sector-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
+  unit-tests:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Validate intraday sector modules with fixtures
+        run: |
+          python -m py_compile \
+            src/strategies/genge_opportunity_discovery/sector_opportunity_engine.py \
+            src/strategies/genge_opportunity_discovery/sector_opportunity_intraday.py
+          python -m pytest -q \
+            tests/test_genge_sector_opportunity_engine.py \
+            tests/test_genge_sector_opportunity_intraday.py
+
   intraday-sector:
+    if: github.event_name != 'pull_request'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
