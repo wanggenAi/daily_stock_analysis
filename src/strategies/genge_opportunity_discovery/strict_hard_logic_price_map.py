@@ -9,6 +9,11 @@ valuation readiness, or earnings quality alone from being promoted to HARD_LOGIC
 that the final price map contains the *reason* a company passed, not merely a
 PASS label.  The research sidecar cannot create an unrelated security here; a
 company must already have entered the postscan/valuation research union.
+
+Executed specialized valuation evidence is also consumed here.  Only an
+auditable unit conversion supported by ``specialized_scenario_bridge`` may add a
+specialized fair price.  Route selection, reverse-implied diagnostics, or
+incomplete model inputs never create a target price.
 """
 from __future__ import annotations
 
@@ -20,6 +25,7 @@ from typing import Any, Iterable, Iterator, Mapping
 
 from . import hard_logic_price_map as price_map
 from .hard_logic_engine import hard_logic_assessment
+from .specialized_scenario_postscan import overlay_specialized_scenarios
 
 
 EVIDENCE_COLUMNS = [
@@ -36,6 +42,11 @@ EVIDENCE_COLUMNS = [
     "hard_logic_research_summary",
     "hard_logic_selection_origin",
 ]
+SPECIALIZED_AUDIT_COLUMNS = [
+    "specialized_scenario_bridge_status",
+    "specialized_scenario_strategy_id",
+    "specialized_scenario_basis",
+]
 
 
 def _normalize_code(value: Any) -> str:
@@ -51,19 +62,29 @@ def _normalize_code(value: Any) -> str:
     return text.zfill(6) if text.isdigit() else text
 
 
-def _read_csv(path: Path) -> list[dict[str, Any]]:
-    if not path.exists():
+def _read_csv(path: Path | None) -> list[dict[str, Any]]:
+    if path is None or not path.exists():
         return []
     with path.open(encoding="utf-8") as stream:
         return list(csv.DictReader(stream))
 
 
-def _hard_logic_sidecar_path(root: Path) -> Path | None:
+def _choose_path(root: Path, filename: str, preferred_token: str = "") -> Path | None:
     candidates = sorted(
-        (path for path in root.glob("**/hard_logic_research.csv") if path.is_file()),
+        (path for path in root.glob(f"**/{filename}") if path.is_file()),
         key=str,
     )
-    return candidates[-1] if candidates else None
+    if not candidates:
+        return None
+    if preferred_token:
+        preferred = [path for path in candidates if preferred_token in str(path)]
+        if preferred:
+            return preferred[-1]
+    return candidates[-1]
+
+
+def _hard_logic_sidecar_path(root: Path) -> Path | None:
+    return _choose_path(root, "hard_logic_research.csv")
 
 
 def _research_by_code(root: Path) -> dict[str, dict[str, Any]]:
@@ -113,6 +134,28 @@ def _merge_research_into_company_rows(
     return merged
 
 
+def _merge_executed_specialized_scenarios(
+    root: Path,
+    rows: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    specialized_path = _choose_path(
+        root,
+        "valuation_research_specialized.csv",
+        "valuation_research_queue",
+    )
+    raw_path = _choose_path(
+        root,
+        "raw_all_a_universe.csv",
+        "hard_logic_valuation_source",
+    )
+    specialized = _read_csv(specialized_path)
+    raw = _read_csv(raw_path)
+    if not specialized or not raw:
+        return rows
+    merged, _stats = overlay_specialized_scenarios(rows, specialized, raw)
+    return merged
+
+
 @contextmanager
 def _strict_gate_installed(artifact_root: Path | None = None) -> Iterator[None]:
     original_gate = price_map.hard_logic_assessment
@@ -123,7 +166,9 @@ def _strict_gate_installed(artifact_root: Path | None = None) -> Iterator[None]:
         research = _research_by_code(artifact_root)
 
         def strict_loader(root: Path) -> list[dict[str, Any]]:
-            return _merge_research_into_company_rows(original_loader(root), research)
+            rows = original_loader(root)
+            rows = _merge_research_into_company_rows(rows, research)
+            return _merge_executed_specialized_scenarios(root, rows)
 
         price_map.load_artifact_company_rows = strict_loader
     try:
@@ -140,12 +185,46 @@ def build_strict_price_expectation_rows(
         return price_map.build_price_expectation_rows(rows)
 
 
-def _enrich_written_csv(output_dir: Path, research: Mapping[str, Mapping[str, Any]]) -> None:
+def _enrich_written_csv(
+    output_dir: Path,
+    research: Mapping[str, Mapping[str, Any]],
+    *,
+    artifact_root: Path,
+) -> None:
     path = output_dir / "hard_logic_price_map.csv"
     rows = _read_csv(path)
     if not rows:
         return
-    for row in rows:
+
+    specialized_rows = _read_csv(
+        _choose_path(
+            artifact_root,
+            "valuation_research_specialized.csv",
+            "valuation_research_queue",
+        )
+    )
+    specialized_by_code = {
+        _normalize_code(row.get("code")): row
+        for row in specialized_rows
+        if _normalize_code(row.get("code"))
+    }
+    raw_rows = _read_csv(
+        _choose_path(
+            artifact_root,
+            "raw_all_a_universe.csv",
+            "hard_logic_valuation_source",
+        )
+    )
+    # Re-run only the pure specialized bridge over the written price-map rows so
+    # its audit status/basis is visible in the final CSV.  Fair-value decisions
+    # were already made with the same bridge inside the strict loader.
+    audit_rows, _stats = overlay_specialized_scenarios(
+        rows,
+        list(specialized_by_code.values()),
+        raw_rows,
+    ) if specialized_by_code and raw_rows else (rows, {})
+
+    for row in audit_rows:
         evidence = research.get(_normalize_code(row.get("code")))
         if not evidence:
             continue
@@ -162,14 +241,14 @@ def _enrich_written_csv(output_dir: Path, research: Mapping[str, Mapping[str, An
         row["hard_logic_research_summary"] = evidence.get("research_summary") or ""
         row["hard_logic_selection_origin"] = evidence.get("selection_origin") or ""
 
-    fields = list(rows[0].keys())
-    for field in EVIDENCE_COLUMNS:
+    fields = list(audit_rows[0].keys())
+    for field in EVIDENCE_COLUMNS + SPECIALIZED_AUDIT_COLUMNS:
         if field not in fields:
             fields.append(field)
     with path.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=fields, extrasaction="ignore")
         writer.writeheader()
-        writer.writerows(rows)
+        writer.writerows(audit_rows)
 
 
 def _append_evidence_markdown(output_dir: Path, research: Mapping[str, Mapping[str, Any]]) -> None:
@@ -201,7 +280,11 @@ def write_price_map(artifact_root: Path, output_dir: Path) -> list[dict[str, Any
     research = _research_by_code(artifact_root)
     with _strict_gate_installed(artifact_root):
         rows = price_map.write_price_map(artifact_root, output_dir)
-    _enrich_written_csv(output_dir, research)
+    _enrich_written_csv(
+        output_dir,
+        research,
+        artifact_root=artifact_root,
+    )
     _append_evidence_markdown(output_dir, research)
     return rows
 
