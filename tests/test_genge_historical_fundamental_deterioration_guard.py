@@ -14,10 +14,15 @@ from src.strategies.genge_opportunity_discovery.historical_fundamental_deteriora
 
 def _data() -> HistoricalCompanyData:
     start = date(2021, 1, 1)
+    end = date(2023, 6, 2)
     price_rows = []
-    for i in range(620):
+    for i in range((end - start).days + 1):
         day = start + timedelta(days=i)
-        close = 100.0 if i < 500 else 80.0
+        # Keep the fixture's long-run price at 100, then model a recent
+        # deterioration-driven break to 80 shortly before the 2023-04-20
+        # warning. This preserves a meaningful below-MA60 confirmation while
+        # also covering the next-open execution date and original exit date.
+        close = 100.0 if day < date(2023, 4, 1) else 80.0
         price_rows.append({
             "date": day, "open": close, "high": close * 1.01,
             "low": close * 0.99, "close": close,
