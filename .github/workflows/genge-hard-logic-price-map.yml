@@ -15,6 +15,7 @@ on:
       - "tests/test_genge_hard_logic_research_runner.py"
       - "tests/test_genge_forward_scenario_valuation.py"
       - "tests/test_genge_forward_scenario_postscan.py"
+      - "tests/test_genge_forward_price_map_integration.py"
       - ".github/workflows/genge-hard-logic-price-map.yml"
       - ".github/workflows/genge-postscan-research.yml"
       - "docs/hard-logic-price-map.md"
@@ -72,7 +73,8 @@ jobs:
             tests/test_genge_hard_logic_engine.py \
             tests/test_genge_hard_logic_research_runner.py \
             tests/test_genge_forward_scenario_valuation.py \
-            tests/test_genge_forward_scenario_postscan.py
+            tests/test_genge_forward_scenario_postscan.py \
+            tests/test_genge_forward_price_map_integration.py
 
   build-price-map:
     if: >-
@@ -140,7 +142,8 @@ jobs:
             tests/test_genge_hard_logic_engine.py \
             tests/test_genge_hard_logic_research_runner.py \
             tests/test_genge_forward_scenario_valuation.py \
-            tests/test_genge_forward_scenario_postscan.py
+            tests/test_genge_forward_scenario_postscan.py \
+            tests/test_genge_forward_price_map_integration.py
 
       - name: Build live analyst EPS and peer reasonable-PE scenarios
         run: |
