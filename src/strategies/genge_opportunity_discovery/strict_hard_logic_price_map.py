@@ -10,6 +10,10 @@ that the final price map contains the *reason* a company passed, not merely a
 PASS label.  The research sidecar cannot create an unrelated security here; a
 company must already have entered the postscan/valuation research union.
 
+Sector opportunity context is carried through for visibility only.  Sector
+rank/strength never participates in the deterministic hard-logic gate and never
+creates fair value or a buy decision.
+
 Executed specialized valuation evidence is also consumed here.  Only an
 auditable unit conversion supported by ``specialized_scenario_bridge`` may add a
 specialized fair price.  Route selection, reverse-implied diagnostics, or
@@ -28,6 +32,17 @@ from .hard_logic_engine import hard_logic_assessment
 from .specialized_scenario_postscan import overlay_specialized_scenarios
 
 
+SECTOR_CONTEXT_COLUMNS = [
+    "sector_rank",
+    "sector_opportunity_state",
+    "sector_research_action",
+    "sector_opportunity_score",
+    "sector_advance_ratio",
+    "sector_excess_return_1d_pct",
+    "sector_excess_return_5d_pct",
+    "sector_expanding_activity_ratio",
+    "sector_overheated",
+]
 EVIDENCE_COLUMNS = [
     "hard_logic_score",
     "hard_logic_missing_evidence",
@@ -41,6 +56,7 @@ EVIDENCE_COLUMNS = [
     "hard_logic_evidence_sources",
     "hard_logic_research_summary",
     "hard_logic_selection_origin",
+    *SECTOR_CONTEXT_COLUMNS,
 ]
 SPECIALIZED_AUDIT_COLUMNS = [
     "specialized_scenario_bridge_status",
@@ -124,6 +140,7 @@ def _merge_research_into_company_rows(
                 "hard_logic_duration_years",
                 "hard_logic_persistence",
                 "hard_logic_evidence_sources",
+                *SECTOR_CONTEXT_COLUMNS,
             ):
                 value = evidence.get(field)
                 if value not in (None, ""):
@@ -216,7 +233,7 @@ def _enrich_written_csv(
         )
     )
     # Re-run only the pure specialized bridge over the written price-map rows so
-    # its audit status/basis is visible in the final CSV.  Fair-value decisions
+    # its audit status/basis is visible in the final CSV. Fair-value decisions
     # were already made with the same bridge inside the strict loader.
     audit_rows, _stats = overlay_specialized_scenarios(
         rows,
@@ -240,6 +257,8 @@ def _enrich_written_csv(
         row["hard_logic_evidence_sources"] = evidence.get("hard_logic_evidence_sources") or ""
         row["hard_logic_research_summary"] = evidence.get("research_summary") or ""
         row["hard_logic_selection_origin"] = evidence.get("selection_origin") or ""
+        for field in SECTOR_CONTEXT_COLUMNS:
+            row[field] = evidence.get(field) or ""
 
     fields = list(audit_rows[0].keys())
     for field in EVIDENCE_COLUMNS + SPECIALIZED_AUDIT_COLUMNS:
@@ -260,9 +279,12 @@ def _append_evidence_markdown(output_dir: Path, research: Mapping[str, Mapping[s
         state = str(evidence.get("hard_logic_state") or "REVIEW")
         name = str(evidence.get("selected_name") or "")
         industry = str(evidence.get("industry") or "")
+        sector_state = str(evidence.get("sector_opportunity_state") or "")
+        sector_rank = str(evidence.get("sector_rank") or "")
         lines.extend(
             [
                 f"### {code} {name} | {industry} | {state}",
+                f"- sector context: rank={sector_rank or 'N/A'} | state={sector_state or 'N/A'} (discovery-only, not hard-logic evidence)",
                 f"- structural driver: {evidence.get('hard_logic_structural_driver') or 'MISSING'}",
                 f"- company edge: {evidence.get('hard_logic_company_edge') or 'MISSING'}",
                 f"- profit transmission: {evidence.get('hard_logic_profit_transmission') or 'MISSING'}",
