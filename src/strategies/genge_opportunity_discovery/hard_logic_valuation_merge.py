@@ -14,6 +14,11 @@ HARD_LOGIC_PASS has already separated structural company risks from technical /
 execution context, so this bridge preserves the old fields for audit and routes
 the company as SECONDARY_RESEARCH with the old blocker text moved to an audit
 column.  It does not grant a formal signal or an automatic trade.
+
+The complete point-in-time All-A source snapshot is copied alongside the narrowed
+valuation source as ``raw_all_a_universe.csv``.  Downstream peer valuation can
+therefore reconstruct same-snapshot industry Forward PE without fetching a
+second, time-misaligned market-price universe.
 """
 from __future__ import annotations
 
@@ -181,6 +186,13 @@ def write_source(
         writer.writeheader()
         writer.writerows(rows)
 
+    # Preserve the exact production market snapshot used to validate external
+    # nominations.  The unified Postscan artifact already uploads this output
+    # directory, so downstream peer valuation gets a full All-A universe with
+    # the original raw_latest_close/industry fields and no second market fetch.
+    raw_snapshot_path = output_dir / "raw_all_a_universe.csv"
+    shutil.copy2(raw_all_a_csv, raw_snapshot_path)
+
     for name in (
         "long_term_valuation_source_summary.json",
         "run_summary.json",
@@ -193,6 +205,9 @@ def write_source(
     summary = {
         "source_count": len(valuation),
         "merged_count": len(rows),
+        "raw_all_a_snapshot_count": len(raw),
+        "raw_all_a_snapshot_file": raw_snapshot_path.name,
+        "raw_all_a_snapshot_preserved": True,
         **stats,
         "hard_logic_precedes_valuation": True,
         "topn_seed_is_answer": False,
