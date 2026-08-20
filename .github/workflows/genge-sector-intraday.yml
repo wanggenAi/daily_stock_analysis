@@ -1,0 +1,115 @@
+name: GenGe Intraday Sector Opportunity
+
+on:
+  schedule:
+    # Beijing time: 10:45 and 14:20 on weekdays.
+    # This refreshes market/sector discovery only; structural research and
+    # valuation are deliberately reused rather than re-run intraday.
+    - cron: "45 2 * * 1-5"
+    - cron: "20 6 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: genge-intraday-sector-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  intraday-sector:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Resolve latest complete All-A production baseline
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="$(
+            gh run list \
+              --repo "${GITHUB_REPOSITORY}" \
+              --workflow genge-opportunity-discovery.yml \
+              --branch main \
+              --status success \
+              --limit 30 \
+              --json databaseId,event,createdAt \
+              --jq '[.[] | select(.event == "schedule" or .event == "workflow_dispatch")][0].databaseId // empty'
+          )"
+          test -n "$RUN_ID" || { echo "No successful production All-A baseline run found"; exit 1; }
+          echo "BASELINE_RUN_ID=$RUN_ID" >> "$GITHUB_ENV"
+          gh run download "$RUN_ID" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name genge-all-a-production-report \
+            --dir baseline
+
+      - name: Build live Shanghai/Shenzhen sector snapshot
+        run: |
+          BASELINE_CSV="$(find baseline -type f -name all_a_quant_screen.csv | sort | tail -1)"
+          test -n "$BASELINE_CSV" && test -f "$BASELINE_CSV"
+          echo "BASELINE_CSV=$BASELINE_CSV" >> "$GITHUB_ENV"
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.sector_opportunity_intraday \
+            --baseline-all-a-csv "$BASELINE_CSV" \
+            --output-dir reports/sector_opportunity_intraday \
+            --min-match-ratio 0.85 \
+            --min-industry-coverage-ratio 0.90
+
+      - name: Validate intraday sector contract
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+
+          root = Path('reports/sector_opportunity_intraday')
+          summary = json.loads((root/'sector_opportunity_intraday_summary.json').read_text(encoding='utf-8'))
+          sectors = list(csv.DictReader((root/'sector_opportunity_intraday.csv').open(encoding='utf-8')))
+          stocks = list(csv.DictReader((root/'intraday_stock_snapshot.csv').open(encoding='utf-8')))
+
+          assert sectors, 'intraday sector map unexpectedly empty'
+          assert stocks, 'intraday stock snapshot unexpectedly empty'
+          assert len(sectors) == summary['industry_count']
+          assert summary['snapshot_type'] == 'INTRADAY_REALTIME_OVERLAY'
+          assert summary['realtime_match_ratio'] >= 0.85
+          assert summary['industry_mapping_coverage_ratio'] >= 0.90
+          assert summary['industry_first_discovery'] is True
+          assert summary['intraday_refresh_only'] is True
+          assert summary['structural_research_reused_not_rerun'] is True
+          assert summary['valuation_reused_not_rerun'] is True
+          assert summary['sector_strength_is_hard_logic'] is False
+          assert summary['sector_strength_can_create_buy'] is False
+          assert summary['historical_backtest_eligible'] is False
+          assert summary['formal_signal_eligible'] is False
+          assert summary['automatic_promotion_allowed'] is False
+          assert summary['no_auto_trade'] is True
+          assert all(row.get('historical_backtest_eligible') == 'False' for row in sectors)
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Publish intraday industry radar
+        if: always()
+        run: |
+          if [ -f reports/sector_opportunity_intraday/sector_opportunity_intraday.md ]; then
+            cat reports/sector_opportunity_intraday/sector_opportunity_intraday.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload intraday sector opportunity artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-sector-opportunity-intraday
+          path: reports/sector_opportunity_intraday
+          if-no-files-found: error
