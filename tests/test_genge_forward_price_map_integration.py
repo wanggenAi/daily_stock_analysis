@@ -23,19 +23,32 @@ def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
         root = Path(tmp)
         artifact = root / "postscan"
         output = root / "price_map"
+        valuation_root = artifact / "reports" / "valuation_research_queue" / "20260820"
 
+        valuation_row = {
+            "code": "603369",
+            "stock_name": "今世缘",
+            "industry": "白酒",
+            "valuation_diagnostic_status": "OK",
+            "earnings_quality_score": 70,
+            "current_pe": 13.9,
+            "historical_median_pe_reference": 21.1,
+            "required_profit_growth_vs_reference": -0.34,
+        }
         _write_csv(
-            artifact / "reports" / "valuation_research_queue" / "20260820" / "valuation_research_queue.csv",
+            valuation_root / "valuation_research_queue.csv",
+            [valuation_row],
+        )
+        # Production price-map candidate membership comes from the routed
+        # valuation sidecar, not from the queue alone.  Forward valuation is an
+        # enrichment channel and must never create a security on its own.
+        _write_csv(
+            valuation_root / "valuation_research_routed.csv",
             [
                 {
-                    "code": "603369",
-                    "stock_name": "今世缘",
-                    "industry": "白酒",
-                    "valuation_diagnostic_status": "OK",
-                    "earnings_quality_score": 70,
-                    "current_pe": 13.9,
-                    "historical_median_pe_reference": 21.1,
-                    "required_profit_growth_vs_reference": -0.34,
+                    **valuation_row,
+                    "valuation_primary_strategy_id": "general_reverse_earnings",
+                    "valuation_route_status": "DEFAULT_GENERAL_REVERSE_EARNINGS",
                 }
             ],
         )
