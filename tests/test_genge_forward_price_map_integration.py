@@ -37,7 +37,28 @@ def _hard_logic_research_row(code: str, name: str, industry: str) -> dict:
         "hard_logic_persistence": "关键竞争壁垒和行业结构预计持续多年",
         "hard_logic_evidence_sources": "公司年报 | https://example.com/annual-report",
         "research_summary": "结构逻辑通过，估值需独立判断。",
+        "sector_rank": 3,
+        "sector_opportunity_state": "EMERGING",
+        "sector_research_action": "PRIORITY_RESEARCH",
+        "sector_opportunity_score": 74.5,
+        "sector_advance_ratio": 0.78,
+        "sector_excess_return_1d_pct": 1.8,
+        "sector_excess_return_5d_pct": 2.6,
+        "sector_expanding_activity_ratio": 0.62,
+        "sector_overheated": False,
     }
+
+
+def _assert_sector_context(row: dict) -> None:
+    assert row["sector_rank"] == "3"
+    assert row["sector_opportunity_state"] == "EMERGING"
+    assert row["sector_research_action"] == "PRIORITY_RESEARCH"
+    assert float(row["sector_opportunity_score"]) == 74.5
+    assert float(row["sector_advance_ratio"]) == 0.78
+    assert float(row["sector_excess_return_1d_pct"]) == 1.8
+    assert float(row["sector_excess_return_5d_pct"]) == 2.6
+    assert float(row["sector_expanding_activity_ratio"]) == 0.62
+    assert row["sector_overheated"] == "False"
 
 
 def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
@@ -57,22 +78,17 @@ def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
             "historical_median_pe_reference": 21.1,
             "required_profit_growth_vs_reference": -0.34,
         }
-        _write_csv(
-            valuation_root / "valuation_research_queue.csv",
-            [valuation_row],
-        )
+        _write_csv(valuation_root / "valuation_research_queue.csv", [valuation_row])
         # Production price-map candidate membership comes from the routed
-        # valuation sidecar, not from the queue alone.  Forward valuation is an
+        # valuation sidecar, not from the queue alone. Forward valuation is an
         # enrichment channel and must never create a security on its own.
         _write_csv(
             valuation_root / "valuation_research_routed.csv",
-            [
-                {
-                    **valuation_row,
-                    "valuation_primary_strategy_id": "general_reverse_earnings",
-                    "valuation_route_status": "DEFAULT_GENERAL_REVERSE_EARNINGS",
-                }
-            ],
+            [{
+                **valuation_row,
+                "valuation_primary_strategy_id": "general_reverse_earnings",
+                "valuation_route_status": "DEFAULT_GENERAL_REVERSE_EARNINGS",
+            }],
         )
         _write_csv(
             artifact / "reports" / "hard_logic_research" / "hard_logic_research.csv",
@@ -80,23 +96,21 @@ def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
         )
         _write_csv(
             artifact / "reports" / "forward_scenario_valuation" / "forward_scenario_valuation.csv",
-            [
-                {
-                    "code": "603369",
-                    "current_price": 28.92,
-                    "earnings_stage": "EARLY_RECOVERY",
-                    "forward_eps_bear": 2.00,
-                    "forward_eps_base": 2.08,
-                    "forward_eps_bull": 2.15,
-                    "reasonable_pe_bear": 12.0,
-                    "reasonable_pe_base": 15.0,
-                    "reasonable_pe_bull": 18.0,
-                    "scenario_fair_price_bear": 24.00,
-                    "scenario_fair_price_base": 31.20,
-                    "scenario_fair_price_bull": 38.70,
-                    "historical_pe_used_for_reasonable_pe": False,
-                }
-            ],
+            [{
+                "code": "603369",
+                "current_price": 28.92,
+                "earnings_stage": "EARLY_RECOVERY",
+                "forward_eps_bear": 2.00,
+                "forward_eps_base": 2.08,
+                "forward_eps_bull": 2.15,
+                "reasonable_pe_bear": 12.0,
+                "reasonable_pe_base": 15.0,
+                "reasonable_pe_bull": 18.0,
+                "scenario_fair_price_bear": 24.00,
+                "scenario_fair_price_base": 31.20,
+                "scenario_fair_price_bull": 38.70,
+                "historical_pe_used_for_reasonable_pe": False,
+            }],
         )
 
         write_price_map(artifact, output)
@@ -118,6 +132,7 @@ def test_forward_sidecar_drives_strict_price_map_and_margin_of_safety():
         assert row["hard_logic_profit_transmission"]
         assert row["hard_logic_invalidation"]
         assert row["hard_logic_evidence_sources"]
+        _assert_sector_context(row)
 
 
 def test_executed_broker_specialized_model_drives_base_fair_price_without_pe():
@@ -140,16 +155,14 @@ def test_executed_broker_specialized_model_drives_base_fair_price_without_pe():
         _write_csv(valuation_root / "valuation_research_routed.csv", [routed])
         _write_csv(
             valuation_root / "valuation_research_specialized.csv",
-            [
-                {
-                    **routed,
-                    "specialized_model_executed": True,
-                    "specialized_model_execution_state": "SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY",
-                    "specialized_model_status": "OK",
-                    "specialized_current_pb": 1.20,
-                    "specialized_fair_pb": 1.50,
-                }
-            ],
+            [{
+                **routed,
+                "specialized_model_executed": True,
+                "specialized_model_execution_state": "SPECIALIZED_MODEL_EXECUTED_RESEARCH_ONLY",
+                "specialized_model_status": "OK",
+                "specialized_current_pb": 1.20,
+                "specialized_fair_pb": 1.50,
+            }],
         )
         _write_csv(
             artifact / "reports" / "hard_logic_research" / "hard_logic_research.csv",
@@ -159,17 +172,15 @@ def test_executed_broker_specialized_model_drives_base_fair_price_without_pe():
         # routes, but deliberately refuses to fabricate a PE-based fair value.
         _write_csv(
             artifact / "reports" / "forward_scenario_valuation" / "forward_scenario_valuation.csv",
-            [
-                {
-                    "code": "600030",
-                    "current_price": 24.0,
-                    "earnings_stage": "EXPANSION",
-                    "reasonable_pe_status": "SPECIALIZED_MODEL_REQUIRED",
-                    "scenario_fair_price_base": "",
-                    "scenario_valuation_status": "SPECIALIZED_MODEL_REQUIRED",
-                    "historical_pe_used_for_reasonable_pe": False,
-                }
-            ],
+            [{
+                "code": "600030",
+                "current_price": 24.0,
+                "earnings_stage": "EXPANSION",
+                "reasonable_pe_status": "SPECIALIZED_MODEL_REQUIRED",
+                "scenario_fair_price_base": "",
+                "scenario_valuation_status": "SPECIALIZED_MODEL_REQUIRED",
+                "historical_pe_used_for_reasonable_pe": False,
+            }],
         )
         _write_csv(
             artifact / "reports" / "hard_logic_valuation_source" / "raw_all_a_universe.csv",
@@ -194,3 +205,4 @@ def test_executed_broker_specialized_model_drives_base_fair_price_without_pe():
         assert row["specialized_scenario_bridge_status"] == "OK_BASE_ONLY"
         assert row["specialized_scenario_strategy_id"] == "capital_markets_cycle"
         assert "fair_pb/current_pb" in row["specialized_scenario_basis"]
+        _assert_sector_context(row)
