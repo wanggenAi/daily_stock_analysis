@@ -1,9 +1,4 @@
-"""Run the existing All-A production scanner with low-overhead progress logging.
-
-This module deliberately does not change screening logic.  It wraps the existing
-module's async completion iterator and quant-screen input iteration so GitHub
-Actions can show processed/total, percentage, throughput, ETA and current code.
-"""
+"""Run the All-A production scanner with progress logging and V3.1 BUY guard."""
 from __future__ import annotations
 
 import time
@@ -11,6 +6,7 @@ from collections.abc import Iterable, Iterator
 from typing import Any
 
 from src.strategies.genge_opportunity_discovery import all_a_full_scan as scan
+from src.strategies.genge_opportunity_discovery import v31_formal_signal_guard
 
 
 LOG_EVERY_ITEMS = 50
@@ -140,7 +136,9 @@ def install_progress_hooks() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     install_progress_hooks()
+    v31_formal_signal_guard.install()
     print("[ALL-A][PROGRESS] instrumentation=enabled", flush=True)
+    print("[ALL-A][V3.1] formal-buy-guard=enabled", flush=True)
     return scan.main(argv)
 
 
