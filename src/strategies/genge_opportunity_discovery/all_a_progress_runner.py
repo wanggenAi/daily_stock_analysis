@@ -136,10 +136,14 @@ def install_progress_hooks() -> None:
 
 def main(argv: list[str] | None = None) -> int:
     install_progress_hooks()
+    original_classify = scan.classify_candidate
     v31_formal_signal_guard.install()
     print("[ALL-A][PROGRESS] instrumentation=enabled", flush=True)
     print("[ALL-A][V3.1] formal-buy-guard=enabled", flush=True)
-    return scan.main(argv)
+    try:
+        return scan.main(argv)
+    finally:
+        scan.classify_candidate = original_classify
 
 
 if __name__ == "__main__":
