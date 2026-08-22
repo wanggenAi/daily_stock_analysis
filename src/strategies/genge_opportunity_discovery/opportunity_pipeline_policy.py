@@ -1,15 +1,10 @@
-"""Engine-aware research-funnel policy for opportunity discovery.
+"""Engine-aware research funnel with frozen V3.1 Tier-A authority.
 
-The production strict gate cannot discover a strong-trend or earnings-inflection
-candidate if an earlier research stage discarded it solely because its five-year
-price percentile was not low. This module removes that hidden coupling while
-preserving every non-price hard blocker.
-
-Upstream admission is research-only. Final eligibility is still decided by
-``opportunity_engine_policy`` plus the complete legacy strict gate set and the
-risk-capped exit-history policy.
+Discovery may be broad. Strong-trend and earnings-inflection engines are allowed
+into research even when they are not historically cheap, but research recall is
+not qualification. The frozen V3.1 framework is the only authority allowed to
+label a candidate Tier A.
 """
-
 from __future__ import annotations
 
 from datetime import date
@@ -19,6 +14,7 @@ import pandas as pd
 
 from src.strategies.genge_opportunity_discovery import opportunity_engine_policy
 from src.strategies.genge_opportunity_discovery import pipeline
+from src.strategies.genge_opportunity_discovery import selection_framework_v31
 
 
 _ORIGINAL_BUILD_QUANT_ROWS = pipeline._build_quant_rows
@@ -26,13 +22,26 @@ _ORIGINAL_SCREEN_BLOCKERS = pipeline._screen_blockers
 _ORIGINAL_SCREEN_STATUS = pipeline._screen_status
 _ORIGINAL_TIER_ROW = pipeline._tier_row
 
-DIAGNOSTIC_COLUMNS = (
+QUANT_DIAGNOSTIC_COLUMNS = (
     "preliminary_opportunity_engine",
     "net_profit_yoy",
     "previous_net_profit_yoy",
     "earnings_inflection_confirmed",
     "earnings_inflection_reason",
     "earnings_inflection_report_date",
+)
+
+V31_DIAGNOSTIC_COLUMNS = (
+    "legacy_research_tier",
+    "v31_policy_version",
+    "v31_hard_gates_passed",
+    "v31_hard_gate_failures",
+    "v31_hard_gate_unknowns",
+    "v31_score_total",
+    "v31_score_complete",
+    "v31_candidate_class",
+    "v31_a_eligible",
+    "v31_blockers",
 )
 
 
@@ -48,7 +57,6 @@ def _finite_float(value: Any) -> float | None:
 
 def _preliminary_engine(row: Mapping[str, Any]) -> str:
     """Return an upstream research engine without pretending final gates passed."""
-
     if opportunity_engine_policy.factor_validity_status(row) == "INVALID":
         return "NONE"
     percentile = _finite_float(row.get("price_percentile_5y"))
@@ -76,7 +84,6 @@ def _profit_growth(current: float, prior: float) -> float | None:
 
 def financial_inflection_metrics(financial_df: Any, *, as_of: date) -> dict[str, Any]:
     """Derive auditable earnings-inflection fields from published net profit."""
-
     empty = {
         "net_profit_yoy": None,
         "previous_net_profit_yoy": None,
@@ -184,44 +191,66 @@ def _build_quant_rows(**kwargs: Any) -> list[dict[str, Any]]:
     return rows
 
 
-def _tier_row(row: dict[str, Any]) -> dict[str, Any]:
-    """Remove only the duplicated Tier-A price condition for new engines."""
-
-    result = _ORIGINAL_TIER_ROW(row)
+def _remove_duplicated_price_failure(result: dict[str, Any], row: Mapping[str, Any]) -> None:
+    """Price flexibility changes research proximity only, never A qualification."""
     engine = _preliminary_engine(row)
-    result["preliminary_opportunity_engine"] = engine
     if engine not in {"STRONG_TREND_RESEARCH", "EARNINGS_INFLECTION"}:
-        return result
-
+        return
     failed = [token for token in str(result.get("a_condition_failed") or "").split(";") if token]
     if "price_low_or_reasonable" not in failed:
-        return result
-
+        return
     remaining = [token for token in failed if token != "price_low_or_reasonable"]
     result["a_condition_failed"] = ";".join(remaining)
     result["a_condition_fail_count"] = len(remaining)
     result["a_condition_pass_count"] = int(result.get("a_condition_pass_count") or 0) + 1
 
-    # Promote to Tier A only when price was literally the last failed A condition.
-    # Any hard blocker or other failed condition remains authoritative.
+
+def _tier_row(row: dict[str, Any]) -> dict[str, Any]:
+    """Keep broad legacy research recall but reserve Tier A for frozen V3.1."""
+    result = _ORIGINAL_TIER_ROW(row)
+    result["preliminary_opportunity_engine"] = _preliminary_engine(row)
+    _remove_duplicated_price_failure(result, row)
+
+    legacy_tier = str(result.get("tier") or "")
+    result["legacy_research_tier"] = legacy_tier
+
+    # V3.1 fields may be supplied by a later qualitative/fundamental review.
+    # Absent fields remain UNKNOWN and therefore cannot manufacture Tier A.
+    v31_input = selection_framework_v31.merge_research_inputs(result, row)
+    assessment = selection_framework_v31.assess_v31(v31_input)
+    result.update(assessment.as_dict())
+
     hard = str(result.get("hard_blockers") or "").strip()
-    if not remaining and not hard and str(row.get("quant_screen_status") or "") in pipeline.RESEARCH_STATUSES:
+    research_status = str(row.get("quant_screen_status") or "") in pipeline.RESEARCH_STATUSES
+    if assessment.a_eligible and not hard and research_status:
         result["tier"] = "TIER_A"
         result["research_label"] = pipeline._research_label("TIER_A")
-        result["upgrade_conditions"] = pipeline._upgrade_conditions([], str(result.get("industry_evidence_status") or ""), str(result.get("company_evidence_status") or ""))
+    elif legacy_tier == "TIER_A":
+        # A legacy technical/evidence pass is only a strong research object.
+        # It must not be presented as an A-grade investment candidate.
+        result["tier"] = "TIER_B"
+        result["research_label"] = pipeline._research_label("TIER_B")
+        upgrade = str(result.get("upgrade_conditions") or "").strip()
+        requirement = "complete_frozen_v31_hard_gate_and_a_class_review"
+        result["upgrade_conditions"] = ";".join(
+            token for token in (upgrade, requirement) if token
+        )
     return result
 
 
 def install() -> None:
-    """Install engine-aware research admission; safe to call repeatedly."""
-
+    """Install engine-aware recall and V3.1 Tier-A authority; safe repeatedly."""
     if pipeline._build_quant_rows is _build_quant_rows:
         return
     pipeline._screen_blockers = _screen_blockers
     pipeline._screen_status = _screen_status
     pipeline._build_quant_rows = _build_quant_rows
     pipeline._tier_row = _tier_row
-    for columns in (pipeline.QUANT_COLUMNS, pipeline.OPPORTUNITY_COLUMNS):
-        for column in DIAGNOSTIC_COLUMNS:
-            if column not in columns:
-                columns.append(column)
+    for column in QUANT_DIAGNOSTIC_COLUMNS:
+        if column not in pipeline.QUANT_COLUMNS:
+            pipeline.QUANT_COLUMNS.append(column)
+        if column not in pipeline.OPPORTUNITY_COLUMNS:
+            pipeline.OPPORTUNITY_COLUMNS.append(column)
+    for column in V31_DIAGNOSTIC_COLUMNS:
+        if column not in pipeline.OPPORTUNITY_COLUMNS:
+            pipeline.OPPORTUNITY_COLUMNS.append(column)
