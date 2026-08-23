@@ -1,0 +1,45 @@
+# Evidence-gated finite-life resource NAV inputs.
+#
+# IMPORTANT:
+# - Do not add guessed reserves, commodity prices, costs, ownership or discount rates.
+# - input_as_of must be the date the full evidence deck was known.
+# - review_after forces stale inputs back to INPUTS_REQUIRED.
+# - every company must provide all four scenarios: extreme_stress, bear, base, bull.
+# - units must be internally consistent inside each asset (e.g. tonnes with CNY/tonne).
+# - mine/resource cash flows included in assets must NOT be duplicated in
+#   non_resource_segment_value.
+#
+# Example structure (intentionally commented; there are no fabricated defaults):
+# companies:
+#   "601899":
+#     input_as_of: "2026-08-23"
+#     review_after: "2026-11-30"
+#     evidence_urls:
+#       - "https://official-company-filing/..."
+#     scenarios:
+#       extreme_stress:
+#         assets:
+#           - asset_id: "mine-a"
+#             economic_scope_id: "mine-a-resource-cashflows"
+#             economic_ownership: 0.0
+#             recoverable_units_100pct: 0.0
+#             annual_production_units_100pct: 0.0
+#             normalized_realized_unit_price: 0.0
+#             unit_cash_operating_cost: 0.0
+#             sustaining_capex_per_unit: 0.0
+#             royalty_rate_on_revenue: 0.0
+#             cash_tax_rate_on_positive_pretax_cash_flow: 0.0
+#             required_return: 0.0
+#             closure_and_reclamation_cash_outflow_100pct: 0.0
+#         equity_bridge:
+#           non_resource_segment_value: 0.0
+#           unrestricted_cash: 0.0
+#           interest_bearing_debt_not_in_resource_cash_flows: 0.0
+#           other_corporate_liability_pv_not_in_resource_cash_flows: 0.0
+#           explicit_equity_adjustment: 0.0
+#           total_common_shares: 0.0
+#       bear: {}
+#       base: {}
+#       bull: {}
+
+companies: {}
