@@ -30,7 +30,8 @@ jobs:
             tests/test_genge_all_a_full_scan.py \
             tests/test_genge_valuation_model_routing.py \
             tests/test_genge_resource_asset_valuation.py \
-            tests/test_genge_resource_routing_v31.py
+            tests/test_genge_resource_routing_v31.py \
+            tests/test_genge_v31_execution_extensions.py
       - name: Restore all-A state
         uses: actions/cache/restore@v4
         with:
@@ -109,9 +110,15 @@ jobs:
       - name: Route valuation models
         run: |
           python -m src.strategies.genge_opportunity_discovery.valuation_model_routing --report-root reports/valuation_research_queue --profile-config config/valuation_company_profiles.yaml
+      - name: Enrich obvious resource-owner routes
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.resource_route_enrichment --report-root reports/valuation_research_queue
       - name: Execute specialized models
         run: |
           python -m src.strategies.genge_opportunity_discovery.specialized_valuation_execution --report-root reports/valuation_research_queue --cache-dir data/cache/valuation_research_fundamentals --years 7 --minimum-annual-roe-samples 3 --maximum-annual-roe-samples 5
+      - name: Execute bank residual-income valuation
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.bank_valuation_execution --report-root reports/valuation_research_queue --cache-dir data/cache/valuation_research_fundamentals --years 7 --minimum-annual-roe-samples 3 --maximum-annual-roe-samples 5
       - name: Execute insurance appraisal
         run: |
           python -m src.strategies.genge_opportunity_discovery.insurance_valuation_execution --report-root reports/valuation_research_queue --input-config config/insurance_embedded_value_inputs.yaml --cache-dir data/cache/valuation_research_fundamentals --years 3
