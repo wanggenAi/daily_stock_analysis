@@ -1,4 +1,4 @@
-"""Risk-capped all-A production entrypoint with complete event pagination."""
+"""Risk-capped all-A production entrypoint with complete events and V3.1 guard."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from src.strategies.genge_opportunity_discovery import opportunity_pipeline_poli
 from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
 from src.strategies.genge_opportunity_discovery import opportunity_report_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
+from src.strategies.genge_opportunity_discovery import v31_formal_signal_guard
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
 
 
@@ -53,7 +54,6 @@ def _positive_float(value: object) -> float | None:
 
 def _portfolio_capital() -> float | None:
     """Read optional reporting capital; environment overrides repository config."""
-
     env_value = _positive_float(os.environ.get("GENGE_PORTFOLIO_CAPITAL", "").strip())
     if env_value is not None:
         return env_value
@@ -96,7 +96,13 @@ def main(argv: list[str] | None = None) -> int:
     opportunity_engine_policy.install()
     opportunity_report_policy.install()
     try:
-        result = risk_capped.main(argv)
+        # Ordering is intentional: risk-capped may relax only exit-history
+        # uncertainty; frozen V3.1 is installed afterwards and remains the last
+        # authority on whether a Formal BUY is allowed at all.
+        risk_capped.install_policy()
+        v31_formal_signal_guard.install()
+        print("[ALL-A][V3.1] risk-capped-formal-buy-guard=enabled", flush=True)
+        result = core.main(argv)
         if result != 0:
             return result
         effective_argv = list(sys.argv[1:] if argv is None else argv)

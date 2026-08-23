@@ -6,6 +6,7 @@ from src.strategies.genge_opportunity_discovery import opportunity_queue_policy
 from src.strategies.genge_opportunity_discovery import opportunity_report_policy
 from src.strategies.genge_opportunity_discovery import risk_capped_all_a_full_scan as risk_capped
 from src.strategies.genge_opportunity_discovery import risk_capped_complete_event_scan as entrypoint
+from src.strategies.genge_opportunity_discovery import v31_formal_signal_guard
 from src.strategies.genge_opportunity_discovery.evidence_collectors import complete_material_event_pagination
 
 
@@ -34,9 +35,7 @@ def test_production_policy_stack_is_scoped_and_restored(monkeypatch):
     }
     observed = {}
 
-    def fake_risk_capped_main(argv):
-        # Mirror the real risk-capped main's install step without running a scan.
-        risk_capped.install_policy()
+    def fake_core_main(argv):
         observed.update({
             "argv": argv,
             "cninfo": event_base._query_cninfo_material_events,
@@ -52,7 +51,7 @@ def test_production_policy_stack_is_scoped_and_restored(monkeypatch):
         })
         return 0
 
-    monkeypatch.setattr(entrypoint.risk_capped, "main", fake_risk_capped_main)
+    monkeypatch.setattr(core, "main", fake_core_main)
 
     result = entrypoint.main(["--fixture-mode"])
 
@@ -61,7 +60,8 @@ def test_production_policy_stack_is_scoped_and_restored(monkeypatch):
     assert observed["cninfo"] is complete_material_event_pagination.query_cninfo_material_events_complete
     assert observed["sse"] is complete_material_event_pagination.query_sse_material_events_complete
     assert observed["strict"] is opportunity_engine_policy.strict_candidate_checks
-    assert observed["classify"] is risk_capped.classify_candidate
+    assert getattr(observed["classify"], "_v31_formal_guard", False) is True
+    assert observed["classify"] is not risk_capped.classify_candidate
     assert observed["build_quant_rows"] is opportunity_pipeline_policy._build_quant_rows
     assert observed["research_queues"] is opportunity_queue_policy.research_queues
     assert observed["engine_columns"] == opportunity_report_policy.ENGINE_REPORT_COLUMNS

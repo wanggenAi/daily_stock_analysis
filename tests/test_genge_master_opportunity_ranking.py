@@ -121,6 +121,19 @@ class MasterOpportunityRankingTest(unittest.TestCase):
         self.assertFalse(rows[0]["formal_signal_eligible"])
         self.assertFalse(rows[0]["automatic_promotion_allowed"])
 
+    def test_legacy_try_position_is_visible_but_never_actionable(self):
+        formal = [
+            {
+                "code": "600001",
+                "stock_name": "旧试仓对象",
+                "long_term_classification": "LONG_TERM_TRY_POSITION",
+                "long_term_formal_buy_eligible": "True",
+                "real_reward_risk_ratio": "3.0",
+            }
+        ]
+
+        self.assertEqual(actionable_long_term_rows(formal), [])
+
     def test_every_industry_map_preserves_all_rows_and_adds_decision_overlay(self):
         industry = [
             {
@@ -160,6 +173,10 @@ class MasterOpportunityRankingTest(unittest.TestCase):
         self.assertEqual({row["industry"] for row in rows}, {"行业A", "行业B"})
         by_code = {row["code"]: row for row in rows}
         self.assertEqual(by_code["600001"]["long_term_classification"], "LONG_TERM_TRY_POSITION")
+        self.assertEqual(
+            by_code["600001"]["master_research_bucket"],
+            "LONG_TERM_REVIEW_BLOCKED_LEGACY_TRY_POSITION",
+        )
         self.assertEqual(by_code["600002"]["master_research_bucket"], "BLOCKED_INDUSTRY_RESEARCH_ONLY")
 
 

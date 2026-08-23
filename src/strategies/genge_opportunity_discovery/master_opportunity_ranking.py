@@ -1,10 +1,9 @@
 """Build the final research-priority view across industry and valuation channels.
 
-This module deliberately does not invent a new BUY score. Existing valuation
-research order remains authoritative for names that reached valuation. Remaining
-industry Top5 names are appended as research-only visibility. Long-term Formal
-BUY/TRY/BLOCKED decisions are overlaid as a separate decision dimension so a
-high research rank can never be mistaken for trade permission.
+This module does not invent a new BUY score. Existing valuation research order
+remains authoritative for research priority. Frozen V3.1 long-term Formal BUY is
+overlaid as a separate decision dimension. Legacy TRY_POSITION rows may still be
+visible for audit, but they are never actionable.
 """
 from __future__ import annotations
 
@@ -16,7 +15,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 DISCLAIMER = "仅用于公开数据研究排序和人工复核，不构成买入或卖出建议，不应自动交易。"
-ACTIONABLE_LONG_TERM = {"LONG_TERM_BUY_READY", "LONG_TERM_TRY_POSITION"}
+ACTIONABLE_LONG_TERM = {"LONG_TERM_BUY_READY"}
 
 
 def _read(path: Path) -> list[dict[str, Any]]:
@@ -175,6 +174,12 @@ def _apply_formal_overlay(target: dict[str, Any], formal: Mapping[str, Any]) -> 
         "target_1",
         "target_2",
         "current_action",
+        "v31_policy_version",
+        "v31_hard_gates_passed",
+        "v31_candidate_class",
+        "v31_score_total",
+        "v31_buy_ready",
+        "v31_blockers",
     ):
         if key in formal:
             target[key] = formal.get(key)
@@ -182,6 +187,8 @@ def _apply_formal_overlay(target: dict[str, Any], formal: Mapping[str, Any]) -> 
 
 def _bucket(row: Mapping[str, Any], *, has_valuation: bool) -> str:
     classification = str(row.get("long_term_classification") or "").strip()
+    if classification == "LONG_TERM_TRY_POSITION":
+        return "LONG_TERM_REVIEW_BLOCKED_LEGACY_TRY_POSITION"
     if classification:
         return classification
     if has_valuation:
@@ -253,10 +260,9 @@ def actionable_long_term_rows(formal_rows: Iterable[Mapping[str, Any]]) -> list[
         row["code"] = _code(row.get("code"))
         _lock_research_only_policy(row)
         rows.append(row)
-    priority = {"LONG_TERM_BUY_READY": 0, "LONG_TERM_TRY_POSITION": 1}
     rows.sort(
         key=lambda row: (
-            priority.get(str(row.get("long_term_classification")), 9),
+            -_float(row.get("v31_score_total"), -math.inf),
             -_float(row.get("real_reward_risk_ratio"), -math.inf),
             _code(row.get("code")),
         )
@@ -303,7 +309,8 @@ def write_reports(
         "valuation_primary_strategy_id", "financial_review_status",
         "valuation_diagnostic_status", "current_pe", "historical_median_pe_reference",
         "required_profit_growth_pct", "cash_conversion_ratio", "earnings_quality_score",
-        "earnings_quality_confidence", "long_term_classification",
+        "earnings_quality_confidence", "v31_candidate_class", "v31_score_total",
+        "v31_hard_gates_passed", "v31_buy_ready", "long_term_classification",
         "long_term_formal_buy_eligible", "long_term_blockers", "real_reward_risk_ratio",
         "current_price", "entry_low", "entry_high", "risk_invalidation_price",
         "target_1", "target_2", "current_action", "formal_signal_eligible",
@@ -327,11 +334,12 @@ def write_reports(
         "valuation_researched_count": len(valuation_rows),
         "actionable_long_term_count": len(actionable),
         "buy_ready_count": sum(row.get("long_term_classification") == "LONG_TERM_BUY_READY" for row in actionable),
-        "try_position_count": sum(row.get("long_term_classification") == "LONG_TERM_TRY_POSITION" for row in actionable),
+        "try_position_count": 0,
         "blocked_long_term_count": sum(
             row.get("long_term_classification") == "LONG_TERM_REVIEW_BLOCKED" for row in formal_rows
         ),
-        "ordering_rule": "existing valuation_research_rank first; remaining industry Top5 by quant_score; long-term decision is an overlay, not a new buy score",
+        "legacy_try_position_actionable": False,
+        "ordering_rule": "existing valuation_research_rank first; remaining industry Top5 by quant_score; frozen V3.1 long-term BUY is an overlay, not a new research score",
         "formal_signal_eligible": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
@@ -349,7 +357,7 @@ def write_reports(
         f"- represented industries: {summary['represented_industry_count']}",
         f"- clean industries: {summary['clean_industry_count']}",
         f"- valuation researched: {summary['valuation_researched_count']}",
-        f"- actionable long-term review: {summary['actionable_long_term_count']}",
+        f"- actionable frozen-V3.1 long-term review: {summary['actionable_long_term_count']}",
         "",
         "## Top research queue",
     ]
@@ -359,7 +367,7 @@ def write_reports(
             f"{row.get('master_research_bucket','')} | quant={row.get('quant_score','')} | "
             f"required_growth={row.get('required_profit_growth_pct','')}%"
         )
-    lines.extend(["", "## Actionable long-term manual review"])
+    lines.extend(["", "## Actionable frozen-V3.1 long-term manual review"])
     if actionable:
         for row in actionable:
             lines.append(
