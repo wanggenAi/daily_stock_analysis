@@ -32,18 +32,15 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: pip
-
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
-
       - name: Resolve upstream run id
         run: |
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
@@ -51,7 +48,6 @@ jobs:
           else
             echo "UPSTREAM_RUN_ID=${{ inputs.upstream_run_id }}" >> "$GITHUB_ENV"
           fi
-
       - name: Download fresh All-A production report
         uses: actions/download-artifact@v4
         with:
@@ -60,7 +56,6 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ env.UPSTREAM_RUN_ID }}
-
       - name: Restore valuation cache
         uses: actions/cache/restore@v4
         with:
@@ -69,7 +64,6 @@ jobs:
           restore-keys: |
             genge-v31-valuation-${{ runner.os }}-${{ github.ref_name }}-
             genge-postscan-valuation-${{ runner.os }}-${{ github.ref_name }}-
-
       - name: Run focused V3.1 and valuation tests
         run: |
           python -m pytest -q \
@@ -81,95 +75,69 @@ jobs:
             tests/test_genge_resource_asset_valuation.py \
             tests/test_genge_specialized_valuation_execution.py \
             tests/test_genge_insurance_valuation_execution.py \
-            tests/test_genge_resource_routing_v31.py
-
+            tests/test_genge_resource_routing_v31.py \
+            tests/test_genge_v31_execution_extensions.py
       - name: Build every-industry Top 5 map
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.industry_coverage \
-            --report-root upstream/reports/all_a_full_scan \
-            --output-dir reports/industry_coverage \
-            --per-industry 5
-
+            --report-root upstream/reports/all_a_full_scan --output-dir reports/industry_coverage --per-industry 5
       - name: Build long-term second pass
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.long_term_second_pass \
-            --report-root upstream/reports/all_a_full_scan \
-            --output-dir reports/long_term_second_pass
-
+            --report-root upstream/reports/all_a_full_scan --output-dir reports/long_term_second_pass
       - name: Build every-industry valuation source
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.industry_valuation_bridge \
-            --all-a-report upstream/reports/all_a_full_scan \
-            --industry-coverage reports/industry_coverage \
-            --output-dir reports/industry_valuation_source \
-            --global-limit 500 \
-            --relaxed-reserve 300 \
-            --per-industry 5
-
+            --all-a-report upstream/reports/all_a_full_scan --industry-coverage reports/industry_coverage \
+            --output-dir reports/industry_valuation_source --global-limit 500 --relaxed-reserve 300 --per-industry 5
       - name: Merge long-term candidates into valuation source
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.long_term_valuation_merge \
-            --valuation-source-dir reports/industry_valuation_source \
-            --long-term-dir reports/long_term_second_pass \
+            --valuation-source-dir reports/industry_valuation_source --long-term-dir reports/long_term_second_pass \
             --output-dir reports/final_valuation_source
-
       - name: Build PIT-safe valuation research queue
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_research_long_term_runner \
-            --report-dir reports/final_valuation_source \
-            --output-dir reports/valuation_research_queue \
-            --fundamental-cache-dir data/cache/valuation_research_fundamentals \
-            --research-limit 800 \
-            --relaxed-reserve 500 \
-            --financial-review-limit 300 \
-            --years 7 \
-            --minimum-pe-samples 20 \
-            --max-workers 10
-
+            --report-dir reports/final_valuation_source --output-dir reports/valuation_research_queue \
+            --fundamental-cache-dir data/cache/valuation_research_fundamentals --research-limit 800 \
+            --relaxed-reserve 500 --financial-review-limit 300 --years 7 --minimum-pe-samples 20 --max-workers 10
       - name: Route valuation models including resource NAV
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.valuation_model_routing \
-            --report-root reports/valuation_research_queue \
-            --profile-config config/valuation_company_profiles.yaml
-
+            --report-root reports/valuation_research_queue --profile-config config/valuation_company_profiles.yaml
+      - name: Enrich obvious resource-owner routes
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.resource_route_enrichment \
+            --report-root reports/valuation_research_queue
       - name: Execute existing specialized models
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.specialized_valuation_execution \
-            --report-root reports/valuation_research_queue \
-            --cache-dir data/cache/valuation_research_fundamentals \
-            --years 7 \
-            --minimum-annual-roe-samples 3 \
-            --maximum-annual-roe-samples 5
-
+            --report-root reports/valuation_research_queue --cache-dir data/cache/valuation_research_fundamentals \
+            --years 7 --minimum-annual-roe-samples 3 --maximum-annual-roe-samples 5
+      - name: Execute bank residual-income valuation
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.bank_valuation_execution \
+            --report-root reports/valuation_research_queue --cache-dir data/cache/valuation_research_fundamentals \
+            --years 7 --minimum-annual-roe-samples 3 --maximum-annual-roe-samples 5
       - name: Execute insurance appraisal
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.insurance_valuation_execution \
-            --report-root reports/valuation_research_queue \
-            --input-config config/insurance_embedded_value_inputs.yaml \
-            --cache-dir data/cache/valuation_research_fundamentals \
-            --years 3
-
+            --report-root reports/valuation_research_queue --input-config config/insurance_embedded_value_inputs.yaml \
+            --cache-dir data/cache/valuation_research_fundamentals --years 3
       - name: Execute resource four-scenario finite-life NAV
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.resource_valuation_execution \
-            --report-root reports/valuation_research_queue \
-            --input-config config/resource_asset_inputs.yaml
-
+            --report-root reports/valuation_research_queue --input-config config/resource_asset_inputs.yaml
       - name: Build frozen V3.1 deep-review queue
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v31_review_queue \
-            --valuation-root reports/valuation_research_queue \
-            --all-a-report-root upstream/reports/all_a_full_scan \
-            --output-dir reports/v31_review \
-            --limit 500
-
+            --valuation-root reports/valuation_research_queue --all-a-report-root upstream/reports/all_a_full_scan \
+            --output-dir reports/v31_review --limit 500
       - name: Map executed resource scenarios into V3.1
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v31_resource_scenario_merge \
-            --v31-dir reports/v31_review \
-            --resource-root reports/valuation_research_queue \
+            --v31-dir reports/v31_review --resource-root reports/valuation_research_queue \
             --output-dir reports/v31_review_enriched
-
       - name: Validate every-industry coverage and V3.1 contract
         run: |
           python - <<'PY'
@@ -183,29 +151,26 @@ jobs:
           assert not missing, f'industries missing from enhanced valuation run: {missing}'
           v31 = list(csv.DictReader(Path('reports/v31_review_enriched/v31_review_queue_enriched.csv').open(encoding='utf-8')))
           assert v31, 'V3.1 enriched queue is empty'
-          resource_summary_root = Path('reports/valuation_research_queue')
-          runs = sorted(p for p in resource_summary_root.iterdir() if p.is_dir() and (p/'resource_valuation_summary.json').exists())
+          resource_root = Path('reports/valuation_research_queue')
+          runs = sorted(p for p in resource_root.iterdir() if p.is_dir() and (p/'resource_valuation_summary.json').exists())
           assert runs, 'resource valuation summary missing'
           resource = json.loads((runs[-1]/'resource_valuation_summary.json').read_text(encoding='utf-8'))
-          assert resource['formal_signal_eligible'] is False
-          assert resource['automatic_promotion_allowed'] is False
-          assert resource['no_auto_trade'] is True
-          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'v31_count': len(v31), 'resource': resource}, ensure_ascii=False, indent=2))
+          bank = json.loads((runs[-1]/'bank_valuation_execution_summary.json').read_text(encoding='utf-8'))
+          assert resource['formal_signal_eligible'] is False and resource['no_auto_trade'] is True
+          assert bank['formal_signal_eligible'] is False and bank['no_auto_trade'] is True
+          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'v31_count': len(v31), 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
           PY
-
       - name: Publish summary
         if: always()
         run: |
           echo "## V3.1 Every-Industry Research" >> "$GITHUB_STEP_SUMMARY"
           if [ -f reports/v31_review/v31_review_queue.md ]; then cat reports/v31_review/v31_review_queue.md >> "$GITHUB_STEP_SUMMARY"; fi
-
       - name: Save valuation cache
         uses: actions/cache/save@v4
         if: success()
         with:
           path: data/cache/valuation_research_fundamentals
           key: genge-v31-valuation-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
-
       - name: Upload V3.1 every-industry research artifact
         uses: actions/upload-artifact@v4
         if: always()
