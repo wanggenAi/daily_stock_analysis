@@ -1,4 +1,4 @@
-"""Frozen V3.1 stock-selection decision contract.
+"""Frozen V3.1 stock-selection and execution decision contract.
 
 This module is the authoritative qualification layer for the GenGe opportunity
 pipeline. Discovery/ranking code may recall names broadly, but it must not turn
@@ -7,6 +7,16 @@ candidate or a formal long-term BUY.
 
 V3.1 deliberately keeps judgement-heavy items explicit. Missing evidence is
 UNKNOWN and blocks A-grade eligibility; it is never silently converted to PASS.
+
+Research may cover the broader A-share universe, but actual BUY eligibility is
+hard-limited to the user's execution universe: Shanghai main-board 600/601/603/
+605 and Shenzhen main-board 000/001/002/003 prefixes. STAR/ChiNext/BSE names may
+still appear in research outputs, but can never become V3.1 BUY-ready.
+
+The same contract also freezes a valuation-driven exit discipline. Valuation
+alone does not force liquidation when fundamentals remain intact, but it does
+control staged de-risking. A broken hard logic gate overrides valuation and
+forces EXIT review.
 """
 from __future__ import annotations
 
@@ -49,6 +59,10 @@ SCORE_WEIGHTS = {
 SCORE_FIELDS = {name: f"v31_score_{name}" for name in SCORE_WEIGHTS}
 A_TYPES = frozenset({"A1", "A2", "A3"})
 
+# Actual execution universe. Broader names remain research-only.
+SSE_EXECUTION_PREFIXES = ("600", "601", "603", "605")
+SZSE_EXECUTION_PREFIXES = ("000", "001", "002", "003")
+
 # These are V3.1 reference bands only. They are diagnostic, not universal buy
 # gates; industry/capital-intensity judgement still has to explicitly pass.
 REFERENCE_NEUTRAL_VALUE_BANDS = (
@@ -59,6 +73,12 @@ REFERENCE_NEUTRAL_VALUE_BANDS = (
     (1.20, "OVERVALUED_REFERENCE"),
     (math.inf, "SEVERELY_PRICED_IN_REFERENCE"),
 )
+
+# Frozen valuation-driven de-risking ladder. Ratios are current_price/base_value.
+# 1.00: stop adding; 1.20: trim 25%; 1.40: cumulative 50%; 1.70: core only.
+EXIT_REDUCE_25_RATIO = 1.20
+EXIT_REDUCE_50_RATIO = 1.40
+EXIT_CORE_ONLY_RATIO = 1.70
 
 
 def _text(value: Any) -> str:
@@ -80,6 +100,35 @@ def _status(value: Any) -> Status:
     if text in {"FAIL", "FAILED", "NO", "FALSE", "UNQUALIFIED", "RED", "STRUCTURAL_DECLINE", "WEAKENING"}:
         return Status.FAIL
     return Status.UNKNOWN
+
+
+def _normalize_code(value: Any) -> str:
+    text = _text(value).upper()
+    if "." in text:
+        base, suffix = text.rsplit(".", 1)
+        if suffix in {"SH", "SZ", "BJ"}:
+            text = base
+    for prefix in ("SH", "SZ", "BJ"):
+        if text.startswith(prefix) and text[len(prefix):].isdigit():
+            text = text[len(prefix):]
+            break
+    return text.zfill(6) if text.isdigit() else text
+
+
+def execution_universe_status(code: Any) -> str:
+    """Return EXECUTION_ELIGIBLE or RESEARCH_ONLY for a security code."""
+    normalized = _normalize_code(code)
+    if len(normalized) != 6 or not normalized.isdigit():
+        return "UNKNOWN"
+    if normalized.startswith(SSE_EXECUTION_PREFIXES):
+        return "EXECUTION_ELIGIBLE"
+    if normalized.startswith(SZSE_EXECUTION_PREFIXES):
+        return "EXECUTION_ELIGIBLE"
+    return "RESEARCH_ONLY"
+
+
+def is_execution_universe_eligible(code: Any) -> bool:
+    return execution_universe_status(code) == "EXECUTION_ELIGIBLE"
 
 
 def merge_research_inputs(*sources: Mapping[str, Any] | None) -> dict[str, Any]:
@@ -105,6 +154,8 @@ class V31Assessment:
     score_complete: bool
     candidate_class: str
     a_eligible: bool
+    execution_universe_status: str
+    execution_universe_eligible: bool
     normalized_profit_ready: bool
     scenario_valuation_ready: bool
     implied_expectation_ready: bool
@@ -115,6 +166,9 @@ class V31Assessment:
     margin_reference_band: str
     buy_conditions: dict[str, bool]
     buy_ready: bool
+    exit_action: str
+    exit_reason: str
+    target_position_fraction: float | None
     blockers: tuple[str, ...]
 
     def as_dict(self) -> dict[str, Any]:
@@ -127,6 +181,8 @@ class V31Assessment:
             "v31_score_complete": self.score_complete,
             "v31_candidate_class": self.candidate_class,
             "v31_a_eligible": self.a_eligible,
+            "v31_execution_universe_status": self.execution_universe_status,
+            "v31_execution_universe_eligible": self.execution_universe_eligible,
             "v31_normalized_profit_ready": self.normalized_profit_ready,
             "v31_scenario_valuation_ready": self.scenario_valuation_ready,
             "v31_implied_expectation_ready": self.implied_expectation_ready,
@@ -136,6 +192,9 @@ class V31Assessment:
             "v31_falsification_ready": self.falsification_ready,
             "v31_margin_reference_band": self.margin_reference_band,
             "v31_buy_ready": self.buy_ready,
+            "v31_exit_action": self.exit_action,
+            "v31_exit_reason": self.exit_reason,
+            "v31_target_position_fraction": self.target_position_fraction,
             "v31_blockers": ";".join(self.blockers),
         }
         for name, status in self.hard_gates.items():
@@ -208,6 +267,39 @@ def margin_reference_band(current_price: Any, neutral_value: Any) -> str:
     return "UNKNOWN"
 
 
+def exit_action_from_valuation(
+    *,
+    current_price: Any,
+    neutral_value: Any,
+    hard_gate_failures: tuple[str, ...] = (),
+) -> tuple[str, str, float | None]:
+    """Return the frozen V3.1 valuation/fundamental exit action.
+
+    EXIT is reserved for broken hard logic. With fundamentals intact, valuation
+    drives staged de-risking rather than all-or-nothing liquidation.
+    """
+    if hard_gate_failures:
+        return (
+            "EXIT",
+            "hard_logic_broken:" + ";".join(hard_gate_failures),
+            0.0,
+        )
+    current = _finite(current_price)
+    neutral = _finite(neutral_value)
+    if current is None or neutral is None or current <= 0.0 or neutral <= 0.0:
+        return "HOLD_REVIEW", "valuation_incomplete", None
+    ratio = current / neutral
+    if ratio >= EXIT_CORE_ONLY_RATIO:
+        return "CORE_ONLY", f"price_to_neutral={ratio:.3f}>=1.70", 0.25
+    if ratio >= EXIT_REDUCE_50_RATIO:
+        return "REDUCE_50", f"price_to_neutral={ratio:.3f}>=1.40", 0.50
+    if ratio >= EXIT_REDUCE_25_RATIO:
+        return "REDUCE_25", f"price_to_neutral={ratio:.3f}>=1.20", 0.75
+    if ratio >= 1.00:
+        return "HOLD_NO_ADD", f"price_to_neutral={ratio:.3f}>=1.00", 1.00
+    return "HOLD", f"price_to_neutral={ratio:.3f}<1.00", 1.00
+
+
 def _explicit_pass(data: Mapping[str, Any], field: str) -> bool:
     return _status(data.get(field)) is Status.PASS
 
@@ -261,10 +353,20 @@ def assess_v31(data: Mapping[str, Any]) -> V31Assessment:
     else:
         candidate_class = "PENDING"
 
+    code = data.get("code") or data.get("stock_code") or data.get("symbol")
+    exec_status = execution_universe_status(code)
+    exec_eligible = exec_status == "EXECUTION_ELIGIBLE"
+
     margin_band = margin_reference_band(current, base)
+    exit_action, exit_reason, target_position_fraction = exit_action_from_valuation(
+        current_price=current,
+        neutral_value=base,
+        hard_gate_failures=failures,
+    )
 
     buy_conditions = {
         "all_hard_logic_gates": hard_pass,
+        "execution_universe_eligible": exec_eligible,
         "clear_margin_of_safety": scenarios_ready and _explicit_pass(data, "v31_margin_of_safety_status"),
         "attractive_risk_adjusted_3y_cagr": risk_adjusted_cagr_ready and _explicit_pass(data, "v31_cagr_attractiveness_status"),
         "pessimistic_loss_tolerable": downside_ready and _explicit_pass(data, "v31_pessimistic_loss_status"),
@@ -277,6 +379,8 @@ def assess_v31(data: Mapping[str, Any]) -> V31Assessment:
     blockers.extend(f"hard_gate_unknown:{name}" for name in unknowns)
     if not class_is_a:
         blockers.append("a_class_not_proven")
+    if not exec_eligible:
+        blockers.append(f"execution_universe_blocked:{exec_status}")
     if not score_complete:
         blockers.append("v31_score_incomplete")
     if not normalized_profit_ready:
@@ -299,6 +403,7 @@ def assess_v31(data: Mapping[str, Any]) -> V31Assessment:
 
     buy_ready = bool(
         a_eligible
+        and exec_eligible
         and score_complete
         and normalized_profit_ready
         and scenarios_ready
@@ -320,6 +425,8 @@ def assess_v31(data: Mapping[str, Any]) -> V31Assessment:
         score_complete=score_complete,
         candidate_class=candidate_class,
         a_eligible=a_eligible,
+        execution_universe_status=exec_status,
+        execution_universe_eligible=exec_eligible,
         normalized_profit_ready=normalized_profit_ready,
         scenario_valuation_ready=scenarios_ready,
         implied_expectation_ready=implied_ready,
@@ -330,6 +437,9 @@ def assess_v31(data: Mapping[str, Any]) -> V31Assessment:
         margin_reference_band=margin_band,
         buy_conditions=buy_conditions,
         buy_ready=buy_ready,
+        exit_action=exit_action,
+        exit_reason=exit_reason,
+        target_position_fraction=target_position_fraction,
         blockers=tuple(dict.fromkeys(blockers)),
     )
 
