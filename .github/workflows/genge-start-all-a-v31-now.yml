@@ -1,0 +1,21 @@
+name: GenGe Start All-A V3.1 Now
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/genge-start-all-a-v31-now.yml"]
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch full All-A V3.1 scan
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-all-a-v31-once.yml --repo "$GITHUB_REPOSITORY" --ref main
+          echo "Dispatched GenGe All-A V3.1 One Shot"
