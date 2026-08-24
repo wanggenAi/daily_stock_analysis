@@ -83,17 +83,9 @@ def _yahoo_symbol(code: str) -> str:
 
 def resilient_fetch_price(code: str) -> pd.DataFrame:
     errors: list[str] = []
-
-    # 1) Original Eastmoney route, but with shorter bounded retries.
     for attempt in range(2):
         try:
-            df = ak.stock_zh_a_hist(
-                symbol=code,
-                period="daily",
-                start_date=core.START,
-                end_date=core.END,
-                adjust="qfq",
-            )
+            df = ak.stock_zh_a_hist(symbol=code, period="daily", start_date=core.START, end_date=core.END, adjust="qfq")
             out = _normalise(df)
             if len(out) >= 200:
                 print(f"PRICE_SOURCE {code} eastmoney rows={len(out)}")
@@ -102,17 +94,9 @@ def resilient_fetch_price(code: str) -> pd.DataFrame:
         except Exception as exc:
             errors.append(f"eastmoney:{type(exc).__name__}:{exc}")
             time.sleep(1 + attempt)
-
-    # 2) Sina route exposed by AkShare. qfq preserves comparability with the
-    # locked script's original total-return-like arithmetic.
     for attempt in range(2):
         try:
-            df = ak.stock_zh_a_daily(
-                symbol=_market_symbol(code),
-                start_date=core.START,
-                end_date=core.END,
-                adjust="qfq",
-            )
+            df = ak.stock_zh_a_daily(symbol=_market_symbol(code), start_date=core.START, end_date=core.END, adjust="qfq")
             out = _normalise(df)
             if len(out) >= 200:
                 print(f"PRICE_SOURCE {code} sina rows={len(out)}")
@@ -121,24 +105,12 @@ def resilient_fetch_price(code: str) -> pd.DataFrame:
         except Exception as exc:
             errors.append(f"sina:{type(exc).__name__}:{exc}")
             time.sleep(1 + attempt)
-
-    # 3) Yahoo fallback. auto_adjust=True yields a split/dividend adjusted close,
-    # used only if both Chinese public routes fail.
     for attempt in range(2):
         try:
-            df = yf.download(
-                _yahoo_symbol(code),
-                start="2018-01-01",
-                end="2026-08-25",
-                auto_adjust=True,
-                progress=False,
-                threads=False,
-                timeout=30,
-            )
+            df = yf.download(_yahoo_symbol(code), start="2018-01-01", end="2026-08-25", auto_adjust=True, progress=False, threads=False, timeout=30)
             if isinstance(df.columns, pd.MultiIndex):
                 df.columns = [c[0] for c in df.columns]
-            df = df.reset_index()
-            out = _normalise(df)
+            out = _normalise(df.reset_index())
             if len(out) >= 200:
                 print(f"PRICE_SOURCE {code} yahoo rows={len(out)}")
                 return out
@@ -146,14 +118,11 @@ def resilient_fetch_price(code: str) -> pd.DataFrame:
         except Exception as exc:
             errors.append(f"yahoo:{type(exc).__name__}:{exc}")
             time.sleep(1 + attempt)
-
     raise RuntimeError(f"all price sources failed for {code}: {' | '.join(errors)}")
 
 
 def resilient_fetch_valuation(code: str) -> pd.DataFrame:
     errors: list[str] = []
-
-    # Primary source is unchanged. Current AkShare calls the date field 数据日期.
     for attempt in range(3):
         try:
             out = _normalise_valuation(ak.stock_value_em(symbol=code))
@@ -162,8 +131,6 @@ def resilient_fetch_valuation(code: str) -> pd.DataFrame:
         except Exception as exc:
             errors.append(f"stock_value_em:{type(exc).__name__}:{exc}")
             time.sleep(1 + attempt)
-
-    # Preserve the historical fallback when the installed AkShare still exposes it.
     legacy = getattr(ak, "stock_a_indicator_lg", None)
     if legacy is not None:
         for attempt in range(2):
@@ -176,12 +143,50 @@ def resilient_fetch_valuation(code: str) -> pd.DataFrame:
                 time.sleep(1 + attempt)
     else:
         errors.append("stock_a_indicator_lg:unavailable_in_installed_akshare")
-
     raise RuntimeError(f"all valuation sources failed for {code}: {' | '.join(errors)}")
+
+
+def _series_from_index_frame(df: pd.DataFrame, source: str) -> pd.Series:
+    out = _normalise(df)
+    out = out[(out["date"] >= core.START_TS) & (out["date"] <= core.END_TS)].set_index("date")
+    if len(out) < 200:
+        raise RuntimeError(f"too few CSI300 rows={len(out)} from {source}")
+    s = out["close"] / out["close"].iloc[0]
+    s.name = "CSI300"
+    print(f"BENCHMARK_SOURCE CSI300 {source} rows={len(out)}")
+    return s
+
+
+def resilient_fetch_csi300() -> pd.Series:
+    errors: list[str] = []
+    for attempt in range(2):
+        try:
+            return _series_from_index_frame(ak.stock_zh_index_daily_em(symbol="sh000300"), "eastmoney")
+        except Exception as exc:
+            errors.append(f"eastmoney:{type(exc).__name__}:{exc}")
+            time.sleep(1 + attempt)
+    for attempt in range(2):
+        try:
+            df = ak.stock_zh_index_daily(symbol="sh000300")
+            return _series_from_index_frame(df, "sina")
+        except Exception as exc:
+            errors.append(f"sina:{type(exc).__name__}:{exc}")
+            time.sleep(1 + attempt)
+    for attempt in range(2):
+        try:
+            df = yf.download("000300.SS", start="2018-01-01", end="2026-08-25", auto_adjust=True, progress=False, threads=False, timeout=30)
+            if isinstance(df.columns, pd.MultiIndex):
+                df.columns = [c[0] for c in df.columns]
+            return _series_from_index_frame(df.reset_index(), "yahoo")
+        except Exception as exc:
+            errors.append(f"yahoo:{type(exc).__name__}:{exc}")
+            time.sleep(1 + attempt)
+    raise RuntimeError(f"all CSI300 sources failed: {' | '.join(errors)}")
 
 
 if __name__ == "__main__":
     # Monkeypatch transport only; all V3.1 decision logic stays in the locked core.
     core.fetch_price = resilient_fetch_price
     core.fetch_valuation = resilient_fetch_valuation
+    core.fetch_csi300 = resilient_fetch_csi300
     core.main()
