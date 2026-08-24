@@ -7,6 +7,10 @@ from typing import Any
 
 from src.strategies.genge_opportunity_discovery import all_a_full_scan as scan
 from src.strategies.genge_opportunity_discovery import v31_formal_signal_guard
+from src.strategies.genge_opportunity_discovery.user_trade_universe import (
+    is_user_tradable_a_share,
+    trade_universe_rejection_reason,
+)
 
 
 LOG_EVERY_ITEMS = 50
@@ -58,6 +62,28 @@ class _ProgressIterable:
             yield row
 
 
+def _apply_user_trade_universe(rows: list[dict[str, Any]]) -> tuple[int, int]:
+    """Hard-exclude securities outside the user's SH/SZ A-share universe.
+
+    Preserve any stronger upstream exclusion reason.  This is an execution-
+    scope gate, not an investment-quality judgement.
+    """
+    allowed = rejected = 0
+    for row in rows:
+        code = row.get("code")
+        if is_user_tradable_a_share(code):
+            allowed += 1
+            continue
+        rejected += 1
+        if not str(row.get("exclusion_reason") or "").strip():
+            row["exclusion_reason"] = trade_universe_rejection_reason(code)
+        row["user_trade_universe_eligible"] = False
+    for row in rows:
+        if is_user_tradable_a_share(row.get("code")):
+            row["user_trade_universe_eligible"] = True
+    return allowed, rejected
+
+
 def _wrap_quant_screen() -> None:
     original = scan.quant_screen
 
@@ -72,7 +98,12 @@ def _wrap_quant_screen() -> None:
         board_rules,
     ):
         rows = list(universe_rows)
+        allowed, rejected = _apply_user_trade_universe(rows)
         active = sum(not bool(row.get("exclusion_reason")) for row in rows)
+        print(
+            f"[ALL-A][TRADE-UNIVERSE] allowed_sh_sz_a={allowed} rejected={rejected}",
+            flush=True,
+        )
         print(
             f"[ALL-A][QUANT] start total={len(rows)} active={active}",
             flush=True,
@@ -139,6 +170,7 @@ def main(argv: list[str] | None = None) -> int:
     original_classify = scan.classify_candidate
     v31_formal_signal_guard.install()
     print("[ALL-A][PROGRESS] instrumentation=enabled", flush=True)
+    print("[ALL-A][TRADE-UNIVERSE] SH/SZ A-shares only", flush=True)
     print("[ALL-A][V3.1] formal-buy-guard=enabled", flush=True)
     try:
         return scan.main(argv)
