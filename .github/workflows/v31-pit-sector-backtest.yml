@@ -7,6 +7,10 @@ on:
     paths:
       - 'scripts/v31_pit_sector_backtest.py'
       - '.github/workflows/v31-pit-sector-backtest.yml'
+  pull_request:
+    paths:
+      - 'scripts/v31_pit_sector_backtest.py'
+      - '.github/workflows/v31-pit-sector-backtest.yml'
 
 permissions:
   contents: write
@@ -27,6 +31,7 @@ jobs:
       - name: Run V3.1 PIT test
         run: python scripts/v31_pit_sector_backtest.py
       - name: Persist auditable results in repository
+        if: github.event_name == 'push'
         run: |
           rm -rf backtests/v31_pit_latest
           mkdir -p backtests/v31_pit_latest
