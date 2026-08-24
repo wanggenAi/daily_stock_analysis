@@ -49,7 +49,21 @@ Formal BUY still requires every explicit V3.1 buy condition to pass.
 
 ## Frozen SELL / REDUCE discipline
 
-When the hard logic remains intact, valuation drives staged de-risking rather than all-or-nothing liquidation:
+### The sell basis is intrinsic value, never the holder's profit percentage
+
+V3.1 MUST NOT issue `REDUCE` or `EXIT` merely because a position is up 20%, 40%, 80% or any other percentage from its purchase price. Entry cost, unrealized P/L, historical return since purchase and the psychological desire to "take profit" are not valuation inputs.
+
+Before a valuation-driven sell decision, the research process must refresh the company's normalized earnings and the pessimistic / neutral / optimistic / extreme-stress valuation using the latest available financial and industry evidence. The decision basis is then:
+
+`latest tradable market price / refreshed V3.1 neutral intrinsic value`
+
+The denominator is therefore dynamic. If earnings, ROIC, asset value, commodity assumptions, competitive position or other model inputs improve, neutral value may rise and a stock can remain `HOLD` even after a large gain from the original entry price. Conversely, if normalized earnings or intrinsic value falls, a stock can require reduction even when the holder is not in profit.
+
+Example: a position bought at 10 has a former neutral value of 15 and trades at 18. With a still-valid neutral value of 15, `18 / 15 = 1.20`, which reaches the first reduction band. If new evidence raises refreshed neutral value to 25, the same market price gives `18 / 25 = 0.72`; V3.1 must not reduce merely because the position is +80% versus cost.
+
+### Valuation-driven de-risking ladder
+
+When the hard logic remains intact and the valuation inputs are current and reviewable, staged de-risking is based on the latest `price / refreshed neutral value` ratio:
 
 - below neutral value: `HOLD`
 - `price / neutral >= 1.00`: `HOLD_NO_ADD`
@@ -57,9 +71,31 @@ When the hard logic remains intact, valuation drives staged de-risking rather th
 - `>= 1.40`: `REDUCE_50`, target position 50%
 - `>= 1.70`: `CORE_ONLY`, target position 25%
 
-If any V3.1 hard logic gate changes to FAIL, valuation no longer protects the position: the contract emits `EXIT` with target position 0 and requires human review/execution.
+These thresholds are valuation ratios, not gains from cost basis.
 
-Unknown or incomplete valuation emits `HOLD_REVIEW`; it must not fabricate a sell signal.
+### Reverse-implied expectation check
+
+The neutral-value ladder is not the only analytical input. Every serious reduce review should also re-check the market-implied profit CAGR against realistic normalized profit growth and the V3.1 expectation-gap thesis. A price that requires implausibly high future earnings, margins, ROIC, commodity prices or market share strengthens a reduction case; a realistic implied expectation weakens it.
+
+Market position, momentum and sentiment are secondary risk controls. They may affect timing or position sizing, but they cannot replace the refreshed valuation and expectation-gap analysis.
+
+### Fundamental falsification overrides valuation
+
+If any V3.1 hard logic gate changes to FAIL, valuation no longer protects the position: the contract emits `EXIT` with target position 0 and requires human review/execution. This can happen even below the original purchase price.
+
+If valuation evidence is missing, stale or cannot be refreshed reliably, the safe semantic is `HOLD_REVIEW` / valuation refresh required. The system must not fabricate a mechanical profit-taking signal from the purchase price or recent涨幅.
+
+## Explicit anti-patterns
+
+A new session or implementation must reject all of the following as standalone SELL rules:
+
+- "up 20% from my cost, therefore sell"
+- "I have recovered my loss, therefore sell"
+- "the stock doubled, therefore it must be expensive"
+- "the chart is overbought, therefore intrinsic value no longer matters"
+- "the old neutral value is still valid even though new financial/industry evidence materially changed"
+
+The correct sequence is always: refresh fundamentals -> refresh normalized earnings -> refresh scenario valuation -> reverse-solve market expectations -> compare price with refreshed value -> decide `HOLD / REDUCE / CORE_ONLY / EXIT`.
 
 ## Human execution only
 
@@ -67,4 +103,4 @@ V3.1 is a research and decision-support contract. It does not connect to a broke
 
 ## New-session handoff
 
-A new AI session working on this repository should read this document and the authoritative Python contract before issuing actual BUY recommendations. If chat instructions and old research notes disagree with the frozen code contract, the current frozen contract wins unless the user explicitly changes it.
+A new AI session working on this repository should read this document and the authoritative Python contract before issuing actual BUY or SELL recommendations. It must never substitute purchase-cost return for intrinsic-value analysis. If chat instructions and old research notes disagree with the frozen code contract, the current frozen contract wins unless the user explicitly changes it.
