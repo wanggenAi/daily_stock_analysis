@@ -16,6 +16,9 @@ import shutil
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from src.strategies.genge_opportunity_discovery.industry_coverage import (
+    find_latest_report,
+)
 from src.strategies.genge_opportunity_discovery.valuation_research_report import (
     RELAXABLE_TECHNICAL_BLOCKERS,
     select_wide_recall_rows,
@@ -190,16 +193,16 @@ def merge_sources(
 
 
 def _find_all_a_report(root: Path) -> Path:
-    names = ("all_a_quant_screen.csv", "quant_screen_all.csv", "top80_evidence_queue.csv")
-    if any((root / name).exists() for name in names):
-        return root
-    candidates = sorted(
-        {p.parent for name in names for p in root.glob(f"**/{name}") if p.is_file()},
-        key=str,
-    )
-    if not candidates:
-        raise FileNotFoundError(f"no All-A report under {root}")
-    return candidates[-1]
+    """Resolve the same canonical All-A report used by industry coverage.
+
+    Production artifacts contain both the full dated All-A screen and nested
+    deep-review ``quant_screen_all.csv`` files. A union-of-filenames followed by
+    lexicographic sorting can incorrectly select the nested bounded review. The
+    canonical resolver prioritizes ``all_a_quant_screen.csv`` and its production
+    ``run_summary.json`` so durable research recall is matched against the full
+    universe rather than a downstream sample.
+    """
+    return find_latest_report(root)
 
 
 def _read_all_a(report: Path) -> list[dict[str, Any]]:
