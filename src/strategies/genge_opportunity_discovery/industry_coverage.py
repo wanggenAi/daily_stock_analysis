@@ -2,8 +2,9 @@
 
 This is a research recall layer, not a buy-signal layer.  It prevents an entire
 industry from disappearing merely because a global ranking exhausted the
-research budget.  Hard blockers remain visible and are never converted into
-buy eligibility.
+research budget.  True hard blockers remain visible and are never converted
+into buy eligibility; technical/price-only blockers remain research eligible so
+valuation can decide whether the correct outcome is BUY or WAIT.
 """
 from __future__ import annotations
 
@@ -13,6 +14,10 @@ import json
 from collections import defaultdict
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+
+from src.strategies.genge_opportunity_discovery.valuation_research_report import (
+    RELAXABLE_TECHNICAL_BLOCKERS,
+)
 
 DEFAULT_PER_INDUSTRY = 5
 UNKNOWN_INDUSTRY = "UNCLASSIFIED"
@@ -38,21 +43,42 @@ def _blockers(row: Mapping[str, Any]) -> str:
     return str(row.get("hard_blockers") or row.get("hard_reject_blockers") or "").strip()
 
 
+def _blocker_set(row: Mapping[str, Any]) -> set[str]:
+    return {token.strip() for token in _blockers(row).split(";") if token.strip()}
+
+
+def _true_hard_blocked(row: Mapping[str, Any]) -> bool:
+    """Return whether research should be blocked before valuation.
+
+    ``price_too_high`` and the other frozen technical/price blockers are timing
+    signals.  They must survive into valuation/V3.1 review and can still force a
+    downstream WAIT, but they are not evidence that the business itself fails.
+    """
+    return bool(_blocker_set(row) - RELAXABLE_TECHNICAL_BLOCKERS)
+
+
 def _status(row: Mapping[str, Any]) -> str:
     return str(row.get("quant_status") or row.get("quant_screen_status") or "").strip().upper()
 
 
 def _research_key(row: Mapping[str, Any]) -> tuple[int, float, float, str]:
-    """Rank investable research names first without hiding blocked names."""
-    hard = bool(_blockers(row))
-    status_rank = {
-        "PRIORITY_RESEARCH": 0,
-        "SECONDARY_RESEARCH": 1,
-        "LOW_PRIORITY": 2,
-        "HARD_REJECT": 3,
-    }.get(_status(row), 2)
+    """Rank research-eligible names first without hiding true blocked names."""
+    true_hard = _true_hard_blocked(row)
+    status = _status(row)
+    # A HARD_REJECT caused only by a relaxable price/technical blocker is a
+    # research recovery, not a terminal hard reject.  Keep it in the broad
+    # research tier while preserving the original quant_status and blockers.
+    if status == "HARD_REJECT" and _blocker_set(row) and not true_hard:
+        status_rank = 2
+    else:
+        status_rank = {
+            "PRIORITY_RESEARCH": 0,
+            "SECONDARY_RESEARCH": 1,
+            "LOW_PRIORITY": 2,
+            "HARD_REJECT": 3,
+        }.get(status, 2)
     return (
-        1 if hard else 0,
+        1 if true_hard else 0,
         status_rank,
         -_float(row.get("quant_score")),
         str(row.get("code") or ""),
@@ -65,8 +91,9 @@ def select_industry_coverage(
     """Return up to N research names for every represented industry.
 
     The function deliberately does not require a stock to pass Formal BUY or
-    strict gates.  An industry with no clean names is still represented by its
-    best blocked research names, explicitly labelled NO_INVESTABLE_CANDIDATE.
+    strict gates.  Price/technical-only blockers remain research candidates; an
+    industry with no research-eligible names is still represented by its best
+    truly blocked names, explicitly labelled NO_INVESTABLE_CANDIDATE.
     """
     buckets: dict[str, list[dict[str, Any]]] = defaultdict(list)
     seen: set[str] = set()
@@ -83,14 +110,22 @@ def select_industry_coverage(
     keep = max(1, int(per_industry))
     for industry in sorted(buckets):
         ranked = sorted(buckets[industry], key=_research_key)
-        clean_count = sum(not bool(_blockers(row)) for row in ranked)
-        industry_state = "RESEARCH_CANDIDATES_AVAILABLE" if clean_count else "NO_INVESTABLE_CANDIDATE"
+        research_eligible_count = sum(not _true_hard_blocked(row) for row in ranked)
+        industry_state = (
+            "RESEARCH_CANDIDATES_AVAILABLE"
+            if research_eligible_count
+            else "NO_INVESTABLE_CANDIDATE"
+        )
         for industry_rank, row in enumerate(ranked[:keep], 1):
             result.append({
                 **row,
                 "industry": industry,
                 "industry_research_rank": industry_rank,
-                "industry_candidate_state": "BLOCKED_RESEARCH_ONLY" if _blockers(row) else "RESEARCH_CANDIDATE",
+                "industry_candidate_state": (
+                    "BLOCKED_RESEARCH_ONLY"
+                    if _true_hard_blocked(row)
+                    else "RESEARCH_CANDIDATE"
+                ),
                 "industry_status": industry_state,
                 "formal_signal_eligible": False,
                 "automatic_promotion_allowed": False,
