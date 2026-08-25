@@ -2341,7 +2341,7 @@ def _diversified_cohort_samples(
     return samples
 
 
-def test_extended_history_fetch_can_fall_back_to_recent_validated_cache(
+def test_extended_history_fetch_reuses_recent_validated_cache_before_provider_calls(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -2360,8 +2360,10 @@ def test_extended_history_fetch_can_fall_back_to_recent_validated_cache(
 
     class FakeAkshare:
         should_fail = False
+        call_count = 0
 
         def stock_zh_a_daily(self, **kwargs: object) -> pd.DataFrame:
+            self.call_count += 1
             if self.should_fail:
                 raise ConnectionError("temporary provider outage")
             if kwargs.get("adjust") == "qfq-factor":
@@ -2384,8 +2386,10 @@ def test_extended_history_fetch_can_fall_back_to_recent_validated_cache(
 
     assert len(fresh_histories["600001"]) == 400
     assert fresh_summary["fresh_fetch_count"] == 1
+    assert fresh_summary["cache_hit_count"] == 0
     assert fresh_summary["cache_write_count"] == 1
     assert (cache_dir / "600001.metadata.json").is_file()
+    fresh_provider_call_count = fake_akshare.call_count
 
     fake_akshare.should_fail = True
     monkeypatch.setitem(
@@ -2403,11 +2407,13 @@ def test_extended_history_fetch_can_fall_back_to_recent_validated_cache(
 
     assert len(cached_histories["600001"]) == 400
     assert cached_summary["fresh_fetch_count"] == 0
-    assert cached_summary["cache_fallback_count"] == 1
+    assert cached_summary["cache_hit_count"] == 1
+    assert cached_summary["cache_fallback_count"] == 0
     assert cached_summary["source_counts"] == {
         "validated_cache_qfq_with_raw_mapping": 1,
     }
     assert "600001" not in cached_summary["errors"]
+    assert fake_akshare.call_count == fresh_provider_call_count
 
     stale_histories, stale_summary = fetch_extended_adjusted_histories(
         candidates=[candidate],

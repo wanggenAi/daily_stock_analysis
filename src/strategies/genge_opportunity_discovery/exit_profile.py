@@ -1314,6 +1314,7 @@ def fetch_extended_adjusted_histories(
     cache_read_errors: dict[str, str] = {}
     cache_fallback_reasons: dict[str, str] = {}
     fresh_fetch_count = 0
+    cache_hit_count = 0
     cache_write_count = 0
 
     def store_fresh_history(code: str, frame: pd.DataFrame, source: str) -> None:
@@ -1328,7 +1329,30 @@ def fetch_extended_adjusted_histories(
         except Exception as exc:
             cache_write_errors[code] = f"{type(exc).__name__}:{exc}"
 
-    for candidate in candidate_rows:
+    cache_statuses: dict[str, str] = {}
+    if cache_root is not None:
+        for candidate in candidate_rows:
+            code = _normalize_code(candidate.get("code"))
+            if not code or code in histories:
+                continue
+            cached_frame, cache_status = _read_history_cache(
+                cache_dir=cache_root,
+                code=code,
+                as_of=as_of,
+                max_age_days=cache_max_age_days,
+            )
+            cache_statuses[code] = cache_status
+            if cached_frame is None:
+                continue
+            histories[code] = cached_frame
+            source_counts["validated_cache_qfq_with_raw_mapping"] += 1
+            cache_hit_count += 1
+
+    provider_rows = [
+        item for item in candidate_rows
+        if _normalize_code(item.get("code")) not in histories
+    ]
+    for candidate in provider_rows:
         code = _normalize_code(candidate.get("code"))
         if not code:
             continue
@@ -1357,7 +1381,7 @@ def fetch_extended_adjusted_histories(
         except Exception as exc:
             errors[code] = f"akshare_sina_qfq_raw:{type(exc).__name__}:{exc}"
 
-    missing = [item for item in candidate_rows if _normalize_code(item.get("code")) not in histories]
+    missing = [item for item in provider_rows if _normalize_code(item.get("code")) not in histories]
     if missing:
         import baostock as bs
 
@@ -1420,26 +1444,16 @@ def fetch_extended_adjusted_histories(
             code = _normalize_code(candidate.get("code"))
             if not code or code in histories:
                 continue
-            cached_frame, cache_status = _read_history_cache(
-                cache_dir=cache_root,
-                code=code,
-                as_of=as_of,
-                max_age_days=cache_max_age_days,
-            )
-            if cached_frame is None:
-                cache_read_errors[code] = cache_status
-                errors[code] = f"{errors.get(code, '')};validated_cache:{cache_status}".strip(";")
-                continue
-            cache_fallback_reasons[code] = errors.pop(code, "provider_failure")
-            histories[code] = cached_frame
-            source_counts["validated_cache_qfq_with_raw_mapping"] += 1
-            cache_fallback_count += 1
+            cache_status = cache_statuses.get(code, "missing")
+            cache_read_errors[code] = cache_status
+            errors[code] = f"{errors.get(code, '')};validated_cache:{cache_status}".strip(";")
     return histories, {
         "source": "akshare_sina_qfq_raw_mapping_with_baostock_fallback",
         "source_counts": dict(source_counts),
         "requested_count": len(candidate_rows),
         "success_count": len(histories),
         "fresh_fetch_count": fresh_fetch_count,
+        "cache_hit_count": cache_hit_count,
         "cache_fallback_count": cache_fallback_count,
         "cache_write_count": cache_write_count,
         "cache_enabled": cache_root is not None,
