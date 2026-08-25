@@ -6,6 +6,7 @@ from src.strategies.genge_opportunity_discovery.selection_framework_v31 import (
 
 def complete_v31(**overrides):
     row = {
+        "code": "600000",
         "v31_predictability_status": "PASS",
         "v31_long_term_demand_status": "PASS",
         "v31_moat_status": "PASS",
