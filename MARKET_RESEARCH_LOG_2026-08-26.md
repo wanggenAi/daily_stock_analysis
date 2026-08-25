@@ -1,6 +1,6 @@
 # MARKET_RESEARCH_LOG_2026-08-26
 
-> Production V3.1 hourly scan handoff. Repository `main` remains the source of truth. This log records the latest completed production artifacts available to this run and must not be interpreted as an automatic trading instruction.
+> Production V3.1 hourly scan handoff. Repository `main` remains the source of truth. This log records the latest completed production artifacts available to each run and must not be interpreted as an automatic trading instruction.
 
 ## 2026-08-26 01:10 CST — hourly production scan
 
@@ -68,6 +68,67 @@ The dominant reason no Formal BUY exists is not merely price. The frozen V3.1 re
 - Scan-result confidence: **HIGH** for the statement that there is currently no production-grade Formal BUY in the inspected latest completed artifacts.
 - Candidate-level fundamental/valuation confidence remains intentionally lower where frozen V3.1 evidence is incomplete; those names stay PENDING/WAIT.
 - Reproduction anchors: production run `32873471270`, postscan run `32873471268`, latest trade date `2026-08-25`, policy `selection_framework_v3_1_frozen` / `long_term_formal_buy_v2_v31_frozen`.
+
+### Formal BUY
+
+**Formal BUY = NONE.**
+
+---
+
+## 2026-08-26 03:06 CST — hourly production scan
+
+### Canonical rules / data provenance
+
+- Re-read latest `main` durable rules and handoffs before interpreting artifacts: `AGENTS.md`, `CURRENT_MARKET_RESEARCH.md`, `RESEARCH_QUEUE.md`, `MODEL_EVOLUTION_LOG.md`, `V31_CANDIDATE_LEDGER.md`, and this daily log.
+- Latest completed `GenGe V3.1 Every-Industry Research`: **success**, `run_id=32885281412`, run #72, created 2026-08-26 02:42 CST and completed about 02:44 CST.
+- Latest completed `GenGe Postscan Research Pipeline`: **success**, `run_id=32885281466`, run #500, completed about 02:45 CST.
+- Latest verified A-share trade date remains `2026-08-25`; for `603658`, raw/qfq/latest trade date all equal 2026-08-25 and verified current price is 34.17.
+- Price freshness: **FRESH** for the inspected production artifact. No stale-price override was used.
+- Execution universe: actual candidates restricted to eligible SSE/SZSE ordinary A shares; `688526` and `688687` remain research-only for this user's execution scope.
+
+### Production funnel
+
+- Industry coverage: **83 industries / 383 industry candidates / 83 clean industries**.
+- Frozen V3.1 deep-review queue expanded to **500 names**, all `RESEARCH_REQUIRED`; automatic gate inference remains forbidden.
+- Long-term second pass remains exactly 3 names: `688526 科前生物`, `603658 安图生物`, `688687 凯因科技`.
+- Postscan master ranking: **456 names**; `actionable_long_term_count=0`, `buy_ready_count=0`, `try_position_count=0`, `blocked_long_term_count=3`.
+- Long-term Formal BUY: **0**; BUY-ready: **0**; TRY-position: **0**.
+- Zero-buy audit examined 4525 candidates and again required second pass; it did not authorize bypassing hard safety gates.
+
+### Candidate state / ledger delta
+
+- **A1:** 0 new executable names.
+- **A2:** 0 new executable names.
+- **WATCH:** no new execution-eligible name entered the durable deep-research queue.
+- **WAIT / RESEEN:** `603658 安图生物` reproduced as the only current execution-eligible durable deep-research candidate. Verified price **34.17**, observed entry band **33.58–34.15**, risk invalidation reference **33.07**, targets 36.80 / 37.51, real reward/risk 2.45. These execution-plan fields do **not** constitute Formal BUY because the frozen V3.1 hard gates and scenario valuation remain incomplete.
+- **INVALIDATED:** none.
+- **Ledger delta:** `RESEEN 603658`; no `NEW`, `UPGRADED`, `DOWNGRADED`, `INVALIDATED`, or material `PRICE_ONLY_CHANGE`.
+
+### Why 603658 is still blocked
+
+The latest frozen V3.1 row still has:
+
+- `v31_candidate_class=PENDING`
+- `v31_hard_gates_passed=false`
+- unknown hard gates: predictability, long-term demand, moat, financial safety, earnings authenticity
+- `v31_a_eligible=false`
+- `v31_buy_ready=false`
+- scenario valuation / implied expectation / expectation gap / risk-adjusted CAGR / downside / falsification incomplete
+- Formal signal eligibility=false and no automatic promotion.
+
+Production financial diagnostics report `financial_review_status=OK`, `earnings_quality_score=57`, `earnings_quality_confidence=HIGH`, and normalized source profit from reported recurring profit, but those diagnostics do not replace the missing company-level V3.1 qualitative hard-gate evidence.
+
+### Delta versus 01:10 CST handoff
+
+- Production and Postscan remain healthy; no CI/data-source failure was detected.
+- Industry clean coverage improved from 82 to 83 industries; deep-review breadth expanded from 375 to 500 names and postscan master breadth from 399 to 456.
+- These breadth changes did **not** produce a new A1/A2, actionable long-term name, Formal BUY, valuation-band change, or thesis invalidation.
+- `603658` price and entry band are unchanged, so this is a **RESEEN**, not a new opportunity alert.
+
+### Confidence / reproducibility
+
+- Confidence: **HIGH** that the inspected latest production state contains no production-grade Formal BUY.
+- Reproduction anchors: `run_id=32885281412`, Postscan `run_id=32885281466`, artifact ids `9577398597` / `9577455502`, latest trade date `2026-08-25`, frozen policies `selection_framework_v3_1_frozen` and `long_term_formal_buy_v2_v31_frozen`.
 
 ### Formal BUY
 
