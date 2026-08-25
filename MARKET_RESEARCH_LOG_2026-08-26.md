@@ -133,3 +133,60 @@ Production financial diagnostics report `financial_review_status=OK`, `earnings_
 ### Formal BUY
 
 **Formal BUY = NONE.**
+
+---
+
+## 2026-08-26 06:09 CST — hourly production scan
+
+### Canonical rules / data provenance
+
+- Re-read the latest `main` rule/evidence chain before interpreting this round: `AGENTS.md`, `CURRENT_MARKET_RESEARCH.md`, `RESEARCH_QUEUE.md`, `MODEL_EVOLUTION_LOG.md`, `V31_CANDIDATE_LEDGER.md`, this daily log and `V31_DURABLE_HANDOFF.md`.
+- Latest completed `GenGe V3.1 Every-Industry Research`: **success**, `run_id=32902392600`.
+- Latest completed `GenGe Postscan Research Pipeline`: **success**, `run_id=32902392565`; its upstream full-A production artifact came from `run_id=32900338757`.
+- Postscan focused regression suite: **130 passed, 1 warning**.
+- Latest verified A-share trade date remains **2026-08-25**. At this pre-open scan there is no newer trading-day price; `603658` remains verified at **34.17 CNY** on 2026-08-25. No stale-price override is permitted.
+- Execution universe remains restricted to execution-eligible Shanghai/Shenzhen ordinary A shares; `688526` and `688687` stay research-only for this user's actual execution scope.
+
+### Production funnel
+
+- Industry map: **383 candidates / 83 clean industries**.
+- Valuation research: **320 names**.
+- Long-term second pass: exactly **3 names** — `688526 科前生物`, `603658 安图生物`, `688687 凯因科技`.
+- Master opportunity ranking: **456 names**.
+- `actionable_long_term_count=0`, `buy_ready_count=0`, `try_position_count=0`, `blocked_long_term_count=3`.
+- Long-term Formal BUY count: **0**.
+- Zero-buy audit examined **4525** candidates, found market regime `GREEN`, and still required a second pass rather than allowing hard-gate bypass.
+- Specialized valuation stayed fail-closed/no-auto-trade; no sidecar valuation was permitted to auto-promote a candidate.
+
+### Candidate state / ledger delta
+
+- **A1:** no new execution-eligible A1.
+- **A2:** no new execution-eligible A2.
+- **WATCH:** no new execution-eligible name entered the durable deep-research queue.
+- **WAIT / RESEEN:** `603658 安图生物` remains the only durable execution-eligible deep-research candidate. Tier **WAIT**, Formal BUY **NO**, verified close **34.17**, observed entry band **33.58–34.15**.
+- **INVALIDATED:** none.
+- **Ledger delta:** `RESEEN 603658` only. No `NEW`, `UPGRADED`, `DOWNGRADED`, `INVALIDATED`, or material `PRICE_ONLY_CHANGE`.
+
+### Fundamental / valuation status
+
+The negative 2026H1 evidence recorded at 05:06 CST remains the controlling company-level update: revenue was approximately flat, attributable profit fell 12.94% YoY and operating cash flow fell 47.38% YoY. That evidence continues to strengthen the blockers rather than justify promotion. The formal moat/predictability/financial-safety audit, normalized sustainable earnings, Bear/Base/Bull reverse valuation, implied expectation/required growth, expectation gap, downside and falsification work remain incomplete.
+
+The observed execution band is therefore only a research/entry-condition reference. It cannot override the missing V3.1 hard gates and does not authorize a Formal BUY.
+
+### Delta versus 05:06 CST durable handoff
+
+- No new eligible deep-research candidate.
+- No A1/A2 promotion.
+- No valuation range or executable buy-band change.
+- No Formal BUY.
+- No thesis invalidation/exit event.
+- Production chain, artifact download, focused tests and postscan pipeline all completed successfully; no CI/data-source failure was identified.
+
+### Confidence / reproducibility
+
+- Confidence: **HIGH** that this latest completed production cycle contains no production-grade Formal BUY.
+- Reproduction anchors: Every-Industry `run_id=32902392600`, Postscan `run_id=32902392565`, upstream full-A `run_id=32900338757`, latest verified trade date `2026-08-25`, frozen policy `long_term_formal_buy_v2_v31_frozen`.
+
+### Formal BUY
+
+**Formal BUY = NONE.**
