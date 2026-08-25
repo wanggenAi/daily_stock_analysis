@@ -7,6 +7,7 @@ def _strict_original(row, plan, profile, evidence_urls, *, board_rule):
 
 def _v31_ready():
     return {
+        "code": "600000",
         "v31_predictability_status": "PASS",
         "v31_long_term_demand_status": "PASS",
         "v31_moat_status": "PASS",
