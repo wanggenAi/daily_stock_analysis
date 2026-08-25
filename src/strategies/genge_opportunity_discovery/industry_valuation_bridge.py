@@ -300,7 +300,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--global-limit", type=int, default=80)
     parser.add_argument("--relaxed-reserve", type=int, default=20)
     parser.add_argument("--per-industry", type=int, default=3)
-    parser.add_argument("--curated-pool", type=Path)
+    parser.add_argument(
+        "--curated-pool",
+        type=Path,
+        default=Path("stock_pools/genge_v31_research_pool.txt"),
+    )
     args = parser.parse_args(argv)
     rows = write_merged_report(
         args.all_a_report,
