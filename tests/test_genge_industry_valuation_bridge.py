@@ -1,8 +1,14 @@
 from __future__ import annotations
 
+import csv
+import tempfile
 import unittest
+from pathlib import Path
 
-from src.strategies.genge_opportunity_discovery.industry_valuation_bridge import merge_sources
+from src.strategies.genge_opportunity_discovery.industry_valuation_bridge import (
+    _find_all_a_report,
+    merge_sources,
+)
 
 
 class IndustryValuationBridgeTest(unittest.TestCase):
@@ -212,6 +218,54 @@ class IndustryValuationBridgeTest(unittest.TestCase):
         self.assertEqual(rows[0]["valuation_source_channel"], "GLOBAL_RECALL")
         self.assertTrue(rows[0]["curated_research_recall"])
         self.assertFalse(rows[0]["formal_signal_eligible"])
+
+    def test_report_resolution_prefers_full_all_a_over_nested_deep_review(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "upstream" / "reports" / "all_a_full_scan"
+            canonical = root / "20260826"
+            deep_review = canonical / "_deep_review" / "20260825_154044"
+            deep_review.mkdir(parents=True)
+
+            with (canonical / "all_a_quant_screen.csv").open(
+                "w", encoding="utf-8", newline=""
+            ) as stream:
+                writer = csv.DictWriter(
+                    stream,
+                    fieldnames=["code", "stock_name", "quant_status", "quant_score"],
+                )
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "code": "603993",
+                        "stock_name": "洛阳钼业",
+                        "quant_status": "HARD_REJECT",
+                        "quant_score": "37.2",
+                    }
+                )
+            (canonical / "run_summary.json").write_text("{}", encoding="utf-8")
+
+            with (deep_review / "quant_screen_all.csv").open(
+                "w", encoding="utf-8", newline=""
+            ) as stream:
+                writer = csv.DictWriter(
+                    stream,
+                    fieldnames=["code", "stock_name", "quant_status", "quant_score"],
+                )
+                writer.writeheader()
+                writer.writerow(
+                    {
+                        "code": "999999",
+                        "stock_name": "DECOY",
+                        "quant_status": "PRIORITY_RESEARCH",
+                        "quant_score": "99",
+                    }
+                )
+
+            resolved = _find_all_a_report(root)
+
+            self.assertEqual(resolved.resolve(), canonical.resolve())
+            self.assertTrue((resolved / "all_a_quant_screen.csv").exists())
+            self.assertFalse((resolved / "quant_screen_all.csv").exists())
 
 
 if __name__ == "__main__":
