@@ -43,6 +43,38 @@ def test_bad_industry_is_visible_but_never_promoted():
     assert normal[0]["industry_status"] == "RESEARCH_CANDIDATES_AVAILABLE"
 
 
+def test_price_too_high_is_research_eligible_but_blocker_is_preserved():
+    rows = [
+        {
+            "code": "600406",
+            "industry": "电网设备",
+            "quant_status": "HARD_REJECT",
+            "quant_score": 27.5,
+            "hard_reject_blockers": "price_too_high",
+        },
+        {
+            "code": "600999",
+            "industry": "电网设备",
+            "quant_status": "HARD_REJECT",
+            "quant_score": 99,
+            "hard_reject_blockers": "financial_data_invalid",
+        },
+    ]
+
+    selected = select_industry_coverage(rows, per_industry=5)
+    by_code = {row["code"]: row for row in selected}
+
+    assert by_code["600406"]["industry_candidate_state"] == "RESEARCH_CANDIDATE"
+    assert by_code["600406"]["industry_status"] == "RESEARCH_CANDIDATES_AVAILABLE"
+    assert by_code["600406"]["hard_blockers"] == "price_too_high"
+    assert by_code["600406"]["formal_signal_eligible"] is False
+    assert by_code["600406"]["automatic_promotion_allowed"] is False
+    assert by_code["600406"]["no_auto_trade"] is True
+
+    assert by_code["600999"]["industry_candidate_state"] == "BLOCKED_RESEARCH_ONLY"
+    assert by_code["600999"]["hard_blockers"] == "financial_data_invalid"
+
+
 def test_find_latest_report_materializes_legacy_alias_for_flattened_artifact(tmp_path):
     upstream = tmp_path / "upstream"
     flattened_report = upstream / "20260818"
