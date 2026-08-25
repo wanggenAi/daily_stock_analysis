@@ -120,6 +120,7 @@ def select_industry_coverage(
             result.append({
                 **row,
                 "industry": industry,
+                "hard_blockers": _blockers(row),
                 "industry_research_rank": industry_rank,
                 "industry_candidate_state": (
                     "BLOCKED_RESEARCH_ONLY"
