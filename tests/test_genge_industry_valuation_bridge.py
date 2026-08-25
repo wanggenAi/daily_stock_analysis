@@ -122,6 +122,97 @@ class IndustryValuationBridgeTest(unittest.TestCase):
         rows = merge_sources(all_a, industry, global_limit=0, relaxed_reserve=0, per_industry=3)
         self.assertEqual(rows, [])
 
+    def test_price_only_industry_blocker_is_research_eligible(self):
+        all_a = []
+        industry = [
+            {
+                "code": "600406",
+                "industry": "电网设备",
+                "industry_research_rank": 1,
+                "quant_status": "HARD_REJECT",
+                "quant_score": 27.5,
+                "hard_blockers": "price_too_high",
+            }
+        ]
+
+        rows = merge_sources(all_a, industry, global_limit=0, relaxed_reserve=0, per_industry=3)
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["code"], "600406")
+        self.assertEqual(rows[0]["valuation_source_channel"], "INDUSTRY_CHAMPION")
+        self.assertEqual(rows[0]["hard_blockers"], "price_too_high")
+        self.assertFalse(rows[0]["formal_signal_eligible"])
+        self.assertFalse(rows[0]["automatic_promotion_allowed"])
+        self.assertTrue(rows[0]["no_auto_trade"])
+
+    def test_curated_research_pool_recalls_low_rank_price_blocked_name_without_promotion(self):
+        all_a = [
+            {
+                "code": f"600{index:03d}",
+                "industry": "热门行业",
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_rank": index + 1,
+                "quant_score": 90 - index,
+                "hard_blockers": "",
+            }
+            for index in range(10)
+        ]
+        all_a.append(
+            {
+                "code": "603993",
+                "stock_name": "洛阳钼业",
+                "industry": "有色金属",
+                "quant_status": "HARD_REJECT",
+                "quant_rank": 2115,
+                "quant_score": 37.2,
+                "hard_reject_blockers": "price_too_high",
+            }
+        )
+
+        rows = merge_sources(
+            all_a,
+            [],
+            global_limit=3,
+            relaxed_reserve=0,
+            per_industry=3,
+            curated_codes={"603993.SH"},
+        )
+        by_code = {row["code"]: row for row in rows}
+        recalled = by_code["603993"]
+
+        self.assertEqual(recalled["valuation_source_channel"], "CURATED_RESEARCH_POOL")
+        self.assertTrue(recalled["curated_research_recall"])
+        self.assertEqual(recalled["wide_recall_reason"], "CURATED_DURABLE_RESEARCH")
+        self.assertEqual(recalled["source_hard_blockers"], "price_too_high")
+        self.assertEqual(recalled["hard_reject_blockers"], "price_too_high")
+        self.assertFalse(recalled["formal_signal_eligible"])
+        self.assertFalse(recalled["automatic_promotion_allowed"])
+        self.assertTrue(recalled["no_auto_trade"])
+
+    def test_curated_recall_marks_existing_row_without_changing_existing_channel(self):
+        all_a = [
+            {
+                "code": "600406",
+                "industry": "电网设备",
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_rank": 1,
+                "quant_score": 90,
+                "hard_blockers": "",
+            }
+        ]
+        rows = merge_sources(
+            all_a,
+            [],
+            global_limit=1,
+            relaxed_reserve=0,
+            curated_codes={"600406.SH"},
+        )
+
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["valuation_source_channel"], "GLOBAL_RECALL")
+        self.assertTrue(rows[0]["curated_research_recall"])
+        self.assertFalse(rows[0]["formal_signal_eligible"])
+
 
 if __name__ == "__main__":
     unittest.main()
