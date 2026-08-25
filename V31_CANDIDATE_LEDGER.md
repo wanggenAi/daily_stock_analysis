@@ -6,7 +6,7 @@
 
 | Priority | Code | Name | Tier | Formal BUY | Latest verified price | Trade date | Why research now | Missing step before upgrade |
 | ---: | --- | --- | --- | --- | ---: | --- | --- | --- |
-| 1 | 603658 | 安图生物 | WAIT | NO | 34.17 | 2026-08-25 | Latest completed hourly production scan found an execution-eligible entry-condition-present state near the indicated entry band; it survived into the long-term second-pass research layer. | Complete V3.1 hard-gate evidence for predictability, long-term demand, moat, financial safety and earnings authenticity, then finish normalized profit, Bear/Base/Bull, expectation-gap, downside and falsification review. |
+| 1 | 603658 | 安图生物 | WAIT | NO | 34.17 | 2026-08-25 | Reappeared in the latest successful production cycle as execution-eligible, passed all non-exit-profile hard gates in second pass, and still has an entry-condition-present review state near 33.58–34.15. | Complete evidence-backed V3.1 hard gates for predictability, long-term demand, moat, financial safety and earnings authenticity; then finish normalized profit, Bear/Base/Bull, expectation-gap, downside and falsification review. |
 
 Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with material research value belong here. A broad `PENDING` universe, technical-only setups, low-valuation-only names and research-only markets are excluded.
 
@@ -18,11 +18,11 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 
 - **execution eligibility:** ELIGIBLE
 - **first_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **last_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **seen_count:** 1
+- **last_seen:** 2026-08-26 02:45 CST completed production cycle (inspected 03:06 CST)
+- **seen_count:** 2
 - **first source run_id:** 32873471270
-- **latest source run_id:** 32873471270
-- **postscan source run_id:** 32873471268
+- **latest source run_id:** 32885281412
+- **postscan source run_id:** 32885281466
 - **current tier:** WAIT
 - **Formal BUY:** NO
 - **latest verified price:** 34.17 CNY
@@ -31,21 +31,22 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 - **Bear/Base/Bull / fair-value range:** PENDING_DEEP_RESEARCH
 - **long-term demand logic:** PENDING_EVIDENCE
 - **moat / ASML test:** PENDING_EVIDENCE
-- **earnings / cash-flow conclusion:** PENDING_EVIDENCE
-- **current blockers:** predictability, long-term demand, moat, financial safety and earnings-authenticity evidence are unresolved/unknown in frozen V3.1; A-class is not proven; normalized profit, scenario valuation, implied expectations, downside and falsification work are incomplete.
+- **earnings / cash-flow conclusion:** PENDING_EVIDENCE; production source reports financial review `OK`, earnings-quality score 57 / HIGH confidence, but this does not substitute for the frozen V3.1 company-level hard-gate audit.
+- **current blockers:** predictability, long-term demand, moat, financial safety and earnings-authenticity evidence remain unresolved/unknown in frozen V3.1; A-class is not proven; scenario valuation, implied expectations, expectation gap, risk-adjusted 3Y CAGR, downside and falsification work remain incomplete.
 - **invalidation conditions:** to be defined by deep research; until then this candidate cannot be promoted to Formal BUY.
 - **confidence:** HIGH that it is *not yet* production-grade Formal BUY; candidate-level valuation confidence remains intentionally incomplete.
 - **next deep-research action:** perform company-level V3.1 hard-logic audit first; only if passed, complete normalized earnings and Bear/Base/Bull reverse valuation against a fresh price.
 
 #### Delta history
 
-- **2026-08-26 01:10 CST — NEW:** entered durable deep-research queue from latest completed production artifacts. Execution-eligible and near an indicated entry band, but still blocked by incomplete V3.1 evidence. Formal BUY = NO.
+- **2026-08-26 01:10 CST — NEW:** entered durable deep-research queue from production artifacts. Execution-eligible and near an indicated entry band, but still blocked by incomplete V3.1 evidence. Formal BUY = NO.
+- **2026-08-26 03:06 CST — RESEEN:** latest successful V3.1 production run `32885281412` and Postscan `32885281466` reproduced the same second-pass candidate and the same verified 2026-08-25 price/entry band. No tier, valuation band or Formal BUY upgrade; hard-gate evidence remains incomplete.
 
 ---
 
 ## Research-only observations retained outside executable queue
 
-The 2026-08-26 01:10 CST production scan also surfaced `688526 科前生物` and `688687 凯因科技` in long-term second pass, but they were marked `RESEARCH_ONLY` for this user's execution universe and therefore are not part of `CURRENT DEEP RESEARCH QUEUE`.
+The latest production cycle again surfaced `688526 科前生物` and `688687 凯因科技` in long-term second pass, but both are `RESEARCH_ONLY` for this user's execution universe and therefore are not part of `CURRENT DEEP RESEARCH QUEUE`.
 
 ---
 
