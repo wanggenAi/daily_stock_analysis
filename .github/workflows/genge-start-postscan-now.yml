@@ -1,0 +1,43 @@
+name: GenGe Start Postscan Now
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/genge-start-postscan-now.yml"]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dispatch correct V3.1 postscan research
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-postscan-research.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f upstream_run_id=32865436950
+          sleep 8
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow genge-postscan-research.yml \
+            --event workflow_dispatch \
+            --branch main \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$RUN_ID"
+          printf '%s\n' "$RUN_ID" > .github/last_postscan_run.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/last_postscan_run.txt
+          git commit -m "chore: record latest postscan run $RUN_ID" || true
+          git push
+          echo "POSTSCAN_RUN_ID=$RUN_ID"
