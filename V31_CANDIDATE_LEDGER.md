@@ -6,7 +6,7 @@
 
 | Priority | Code | Name | Tier | Formal BUY | Latest verified price | Trade date | Why research now | Missing step before upgrade |
 | ---: | --- | --- | --- | --- | ---: | --- | --- | --- |
-| 1 | 603658 | 安图生物 | WAIT | NO | 34.17 | 2026-08-25 | Reappeared in production near the observed entry band, and the 2026H1 report now resolves part of the evidence gap: long-term IVD scale/R&D remain research-worthy, but H1 revenue was flat and profit/cash flow weakened materially. | Complete moat/long-term-demand and financial-safety audit, normalize earnings after the H1 deterioration, then finish Bear/Base/Bull reverse valuation, expectation gap, downside and falsification review. |
+| 1 | 603658 | 安图生物 | WAIT | NO | 34.17 | 2026-08-25 | Reappeared in production near the observed entry band, and the 2026H1 report resolves part of the evidence gap: long-term IVD scale/R&D remain research-worthy, but H1 revenue was flat and profit/cash flow weakened materially. | Complete moat/long-term-demand and financial-safety audit, normalize earnings after the H1 deterioration, then finish Bear/Base/Bull reverse valuation, expectation gap, downside and falsification review. |
 
 Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with material research value belong here. A broad `PENDING` universe, technical-only setups, low-valuation-only names and research-only markets are excluded.
 
@@ -18,11 +18,11 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 
 - **execution eligibility:** ELIGIBLE
 - **first_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **last_seen:** 2026-08-26 05:06 CST fundamental refresh
-- **seen_count:** 3
+- **last_seen:** 2026-08-26 06:09 CST production refresh
+- **seen_count:** 4
 - **first source run_id:** 32873471270
-- **latest source run_id:** 32885281412
-- **postscan source run_id:** 32885281466
+- **latest source run_id:** 32902392600
+- **postscan source run_id:** 32902392565
 - **current tier:** WAIT
 - **Formal BUY:** NO
 - **latest verified price:** 34.17 CNY
@@ -42,6 +42,7 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 - **2026-08-26 01:10 CST — NEW:** entered durable deep-research queue from production artifacts. Execution-eligible and near an indicated entry band, but still blocked by incomplete V3.1 evidence. Formal BUY = NO.
 - **2026-08-26 03:06 CST — RESEEN:** latest successful V3.1 production run `32885281412` and Postscan `32885281466` reproduced the same second-pass candidate and the same verified 2026-08-25 price/entry band. No tier, valuation band or Formal BUY upgrade; hard-gate evidence remains incomplete.
 - **2026-08-26 05:06 CST — DOWNGRADED_EVIDENCE / RESEEN:** fresh 2026H1 filing evidence resolves part of the prior unknown financial gate but is negative: revenue ~flat, attributable profit -12.94% YoY and operating cash flow -47.38% YoY. Tier remains WAIT, Formal BUY remains NO, and the blocker set is now stronger and more explicit. The current price remains 34.17 on 2026-08-25, so there is no price-only upgrade.
+- **2026-08-26 06:09 CST — RESEEN:** latest successful production cycle (`Every-Industry run_id=32902392600`, `Postscan run_id=32902392565`, upstream full-A `run_id=32900338757`) reproduced the same three long-term second-pass names. `603658` remains the only execution-eligible durable candidate; verified price/trade date and observed entry band are unchanged, tier remains WAIT and Formal BUY remains NO. The 05:06 H1 downgrade evidence remains fully effective; no valuation/buy-band or thesis change occurred.
 
 ---
 
