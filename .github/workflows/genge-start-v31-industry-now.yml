@@ -20,7 +20,7 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 2026-08-26: rerun after durable research-recall / price-blocker fix.
+          # 2026-08-26: rerun after canonical All-A source resolution fix.
           gh workflow run genge-v31-industry-research.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
