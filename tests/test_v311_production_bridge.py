@@ -1,6 +1,7 @@
 """Tests for the V3.1.1 discovery-to-production bridge."""
 
 from src.strategies.genge_opportunity_discovery.v311_production_bridge import (
+    add_holdings_to_source_evidence,
     join_selected_candidates_with_evidence,
     merge_source_and_current_rows,
 )
@@ -29,7 +30,7 @@ def test_bridge_preserves_qualitative_evidence_and_overlays_fresh_inputs() -> No
     assert row["v31_moat_status"] == "PASS"
     assert row["v31_current_price"] == 80.0
     assert row["v31_neutral_value"] == 100.0
-    assert row["v311_production_bridge"] == "SAME_RUN_EVIDENCE_PLUS_FRESH_STRICT_PIT"
+    assert row["v311_production_bridge"] == "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT"
 
 
 def test_bridge_fails_closed_instead_of_falling_back_to_stale_valuation() -> None:
@@ -87,7 +88,6 @@ def test_top5_selects_codes_while_same_run_audit_supplies_full_v31_evidence() ->
             "candidate_rank": "1",
             "candidate_action": "RESEARCH_WATCH",
             "stock_name": "top5-name",
-            # Empty display field must not erase rich evidence.
             "v31_moat_status": "",
         }
     ]
@@ -103,10 +103,7 @@ def test_top5_selects_codes_while_same_run_audit_supplies_full_v31_evidence() ->
             "v31_score_total": "88",
             "production_action": "STALE_BUY",
         },
-        {
-            "code": "601899",
-            "v31_predictability_status": "PASS",
-        },
+        {"code": "601899", "v31_predictability_status": "PASS"},
     ]
 
     rows = join_selected_candidates_with_evidence(candidates, evidence)
@@ -121,6 +118,7 @@ def test_top5_selects_codes_while_same_run_audit_supplies_full_v31_evidence() ->
     assert row["v31_moat_status"] == "PASS"
     assert row["v31_financial_safety_status"] == "PASS"
     assert row["v31_earnings_authenticity_status"] == "PASS"
+    assert row["v311_source_scope"] == "CANDIDATE"
     assert row["v311_same_run_evidence_joined"] is True
     assert "production_action" not in row
 
@@ -135,3 +133,72 @@ def test_evidence_join_never_introduces_unselected_security() -> None:
     rows = join_selected_candidates_with_evidence(candidates, evidence)
 
     assert [row["code"] for row in rows] == ["600036"]
+
+
+def test_confirmed_holding_is_added_and_receives_same_run_evidence_when_available() -> None:
+    candidates = join_selected_candidates_with_evidence(
+        [{"code": "600036", "candidate_rank": "1"}],
+        [{"code": "600036", "v31_moat_status": "PASS"}],
+    )
+    holdings = [
+        {
+            "code": "601899",
+            "stock_name": "confirmed-holding",
+            "confirmed_quantity": "1000",
+            "holding_evidence_date": "2026-08-27",
+        }
+    ]
+    evidence = [
+        {
+            "code": "601899.SH",
+            "v31_long_term_demand_status": "PASS",
+            "v31_moat_status": "PASS",
+        }
+    ]
+
+    rows = add_holdings_to_source_evidence(candidates, holdings, evidence)
+    holding = next(row for row in rows if row["code"] == "601899")
+
+    assert holding["v311_source_scope"] == "HOLDING"
+    assert holding["v311_same_run_evidence_joined"] is True
+    assert holding["confirmed_quantity"] == "1000"
+    assert holding["v31_moat_status"] == "PASS"
+
+
+def test_confirmed_holding_without_rich_evidence_is_kept_but_evidence_is_not_fabricated() -> None:
+    rows = add_holdings_to_source_evidence(
+        [],
+        [{"code": "601899", "confirmed_quantity": "1000"}],
+        [],
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["code"] == "601899"
+    assert rows[0]["v311_source_scope"] == "HOLDING"
+    assert rows[0]["v311_same_run_evidence_joined"] is False
+    assert "v31_moat_status" not in rows[0]
+
+
+def test_fresh_current_row_for_explicit_holding_is_not_dropped() -> None:
+    source = [
+        {
+            "code": "601899",
+            "v311_source_scope": "HOLDING",
+            "confirmed_quantity": "1000",
+        }
+    ]
+    current = [
+        {
+            "code": "601899",
+            "v31_current_price": 25.0,
+            "v31_neutral_value": 30.0,
+            "v311_expectation_input_status": "READY",
+        }
+    ]
+
+    rows = merge_source_and_current_rows(source, current)
+
+    assert len(rows) == 1
+    assert rows[0]["v31_current_price"] == 25.0
+    assert rows[0]["v31_neutral_value"] == 30.0
+    assert rows[0]["confirmed_quantity"] == "1000"
