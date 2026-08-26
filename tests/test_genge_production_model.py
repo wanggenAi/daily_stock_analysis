@@ -9,17 +9,22 @@ from src.strategies.genge_opportunity_discovery.production_decision_scan import 
 from src.strategies.genge_opportunity_discovery.production_model import (
     ALLOWED_ACTIONS,
     PRODUCTION_MODEL_VERSION,
+    PRODUCTION_POLICY_SOURCE,
+    V32_SELL_CONFIRMATION_ENABLED,
     production_payload,
 )
-from tests.test_genge_opportunity_discovery_selection_framework_v32 import complete_row
+from tests.test_genge_opportunity_discovery_selection_framework_v311 import complete_v311_row
 
 
 def test_production_is_gate_only_with_immediate_v31_sell() -> None:
-    row = complete_row(current=150.0)
+    row = complete_v311_row(current=150.0)
     payload = production_payload(row)
     assert payload["production_model_version"] == PRODUCTION_MODEL_VERSION
     assert payload["production_action"] == "REDUCE_50"
     assert payload["production_sell_contract"] == "V31_IMMEDIATE_VALUATION_LADDER"
+    assert payload["production_policy_source"] == PRODUCTION_POLICY_SOURCE
+    assert payload["v32_sell_confirmation_enabled"] is False
+    assert V32_SELL_CONFIRMATION_ENABLED is False
 
 
 def test_production_action_vocabulary_is_complete_and_frozen() -> None:
@@ -41,39 +46,29 @@ def test_production_can_emit_every_frozen_action() -> None:
     }
     observed = set()
     for expected, (price, held) in cases.items():
-        row = complete_row(current=price)
-        row.update(
-            {
-                "v31_falsification_status": "PASS",
-                "v31_margin_of_safety_status": "PASS",
-                "v31_cagr_attractiveness_status": "PASS",
-                "v31_pessimistic_loss_status": "PASS",
-                "v31_portfolio_exposure_status": "PASS",
-                "v31_market_position_status": "PASS",
-            }
-        )
+        row = complete_v311_row(current=price)
         row["v32_has_position"] = held
         action = production_payload(row)["production_action"]
         assert action == expected
         observed.add(action)
 
-    review = complete_row(current=90.0)
+    review = complete_v311_row(current=90.0)
     review["cash_conversion_ratio"] = -0.1
     observed.add(production_payload(review)["production_action"])
-    failed = complete_row(current=90.0)
+    failed = complete_v311_row(current=90.0)
     failed["v31_moat_status"] = "FAIL"
     observed.add(production_payload(failed)["production_action"])
     assert observed == ALLOWED_ACTIONS
 
 
 def test_production_low_confidence_is_hold_review() -> None:
-    row = complete_row(current=150.0)
+    row = complete_v311_row(current=150.0)
     row["cash_conversion_ratio"] = -0.1
     assert production_payload(row)["production_action"] == "HOLD_REVIEW"
 
 
 def test_holding_cost_is_display_only() -> None:
-    candidate = complete_row(current=180.0)
+    candidate = complete_v311_row(current=180.0)
     candidate["code"] = "600000"
     low_cost = {"code": "600000", "display_only_average_cost": "10", "confirmed_quantity": "100"}
     high_cost = {"code": "600000", "display_only_average_cost": "300", "confirmed_quantity": "100"}
