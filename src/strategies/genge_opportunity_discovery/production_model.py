@@ -16,6 +16,7 @@ PRODUCTION_DECISION = "PROMOTE_CONFIDENCE_GATE_ONLY"
 SELL_CONTRACT = "V31_IMMEDIATE_VALUATION_LADDER"
 RESEARCH_MODEL_VERSION = "gen_ge_v3_2_candidate_round8_round9_frozen"
 PRODUCTION_POLICY_SOURCE = "gen_ge_v3_1_1_confidence_gate_only_round8_round9_validated"
+V32_SELL_CONFIRMATION_ENABLED = False
 ALLOWED_ACTIONS = frozenset(
     {
         "BUY",
@@ -48,6 +49,7 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
             "production_sell_contract": SELL_CONTRACT,
             "production_policy_source": PRODUCTION_POLICY_SOURCE,
             "research_model_version": RESEARCH_MODEL_VERSION,
+            "v32_sell_confirmation_enabled": V32_SELL_CONFIRMATION_ENABLED,
             "production_model_frozen": True,
             "valuation_confidence_reason_codes": ";".join(confidence.reason_codes),
         }
