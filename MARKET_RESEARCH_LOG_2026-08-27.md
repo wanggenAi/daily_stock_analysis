@@ -53,3 +53,34 @@
 ### Notification decision
 
 - **NO USER NOTIFICATION.** No new A1/A2 entered an executable buy range; no important new name entered `CURRENT DEEP RESEARCH QUEUE`; no material candidate rating/valuation/entry-band change; no holding REDUCE/EXIT or hard-thesis invalidation; no confirmed production/data/CI failure making the scan unreliable.
+
+## 2026-08-27 03:09 CST — hourly opportunity + holdings-risk refresh
+
+### Data cutoff / reproducibility
+
+- Re-read current `main` truth sources and rebuilt the holding universe exclusively from `CURRENT_HOLDINGS.md`: `603369 今世缘`, `001316 润贝航科`, `600276 恒瑞医药`, `600406 国电南瑞`.
+- Latest completed A-share trading session remains 2026-08-26; this run is a post-close filing/news refresh, not a new trading-session price scan.
+- Fresh public-event cutoff: 2026-08-27 03:09 CST. Fresh-data invariant remains controlling.
+
+### Opportunity / ledger delta
+
+- `603658 安图生物`: **RESEEN / NO MATERIAL CHANGE**. Tier `WAIT`; Formal BUY `NO`; valuation confidence `INVALID`. Existing slower-demand/pricing-pressure evidence, weakened H1 earnings/cash conversion, unresolved moat audit, and incomplete normalized Bear/Base/Bull valuation remain the blockers.
+- No NEW / UPGRADED / DOWNGRADED / INVALIDATED execution-eligible candidate and no new A1/A2 entered an executable buy range.
+- Ledger persisted with `last_seen=2026-08-27 03:09 CST`, `seen_count=18`, run_id `hourly-20260827-0309`.
+
+### Holdings risk delta
+
+- `603369 今世缘`: **HOLD_REVIEW / NO ADD**. No fresh post-02:05 filing/event establishes a REDUCE/EXIT trigger.
+- `001316 润贝航科`: **HOLD_REVIEW**, not REDUCE. The 2026-08-26 evening management/shareholder reduction plan is already incorporated; public post-close refresh adds no new evidence of order, margin, cash-conversion or management-continuity deterioration. Accepted 2026-08-26 close remains 26.69 CNY.
+- `600276 恒瑞医药`: **HOLD_REVIEW**. No fresh post-02:05 pipeline/governance/customer/moat event creates REDUCE/EXIT.
+- `600406 国电南瑞`: **HOLD_REVIEW**. H1 cash-conversion/margin deterioration remains the active issue; no fresh post-02:05 evidence escalates it to REDUCE/EXIT.
+- **New REDUCE/EXIT:** NONE. **New hard-thesis invalidation:** NONE.
+
+### Production / data-source health
+
+- No confirmed production-chain, data-source or CI failure was found that would make the scan unreliable.
+- No model threshold, valuation rule or production policy changed.
+
+### Notification decision
+
+- **NO USER NOTIFICATION.** None of the configured notification thresholds was met.
