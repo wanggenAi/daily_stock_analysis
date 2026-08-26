@@ -14,10 +14,10 @@
 
 - **execution eligibility:** ELIGIBLE
 - **first_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **last_seen:** 2026-08-27 05:07 CST production refresh
-- **seen_count:** 20
+- **last_seen:** 2026-08-27 06:09 CST production refresh
+- **seen_count:** 21
 - **first source run_id:** 32873471270
-- **latest source run_id:** hourly-20260827-0507
+- **latest source run_id:** hourly-20260827-0609
 - **current tier:** WAIT
 - **Formal BUY:** NO
 - **GenGe V3.1.1 production action:** HOLD_REVIEW
@@ -52,10 +52,11 @@
 - **2026-08-27 03:09 CST — RESEEN / NO MATERIAL CHANGE:** fresh post-close filing/news refresh found no new evidence changing tier, valuation, entry band or Formal BUY; no new executable A1/A2 entered the queue.
 - **2026-08-27 04:09 CST — RESEEN / NO MATERIAL CHANGE:** post-close filing/news refresh found no candidate-level evidence changing tier, valuation, entry band or Formal BUY. A separate CI/test-compatibility failure in downstream V3.1.1 workflows was detected and is tracked in the dated production log; it does not upgrade this candidate.
 - **2026-08-27 05:07 CST — RESEEN / NO MATERIAL CHANGE:** no new candidate-level evidence changed tier, valuation, entry band or Formal BUY. Production CI investigation found a separate execution-universe scope defect in the postscan zero-BUY contract; it does not change this candidate's WAIT status.
+- **2026-08-27 06:09 CST — RESEEN / NO MATERIAL CHANGE:** latest repaired downstream Every-Industry and Postscan workflows completed successfully on main; successful artifact still produced no execution-eligible BUY candidate. `603658` remains WAIT / Formal BUY NO with the same fundamental and valuation blockers.
 
 ## Research-only observations retained outside executable queue
 
-`688526 科前生物` and `688687 凯因科技` remain RESEARCH_ONLY and excluded from actual-buy candidates. `688739` also remains RESEARCH_ONLY; unresolved valuation-model diagnostics on that research-only row must not control the executable production contract.
+`688526 科前生物`, `688739 成大生物`, `688247 宣泰医药` and `688687 凯因科技` remain RESEARCH_ONLY and excluded from actual-buy candidates. Unresolved valuation-model diagnostics on research-only rows must not control the executable production contract.
 
 ## Archived / INVALIDATED
 
