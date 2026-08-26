@@ -135,7 +135,9 @@ def build_company(code: str) -> pd.DataFrame:
     x["normalized_cfo_4q_median"] = x["ttm_operating_cashflow"].rolling(4, min_periods=2).median()
 
     x["code"] = code
-    x["name"] = UNIVERSE[code]
+    # The helper is reusable by later untouched OOS universes. A missing display
+    # name must never block the financial calculations themselves.
+    x["name"] = UNIVERSE.get(code, code)
     keep = [
         "code", "name", "report_date", "profit_notice_date", "cash_notice_date", "available_date",
         "p_PARENT_NETPROFIT", "p_DEDUCT_PARENT_NETPROFIT", "p_BASIC_EPS", "p_TOTAL_OPERATE_INCOME", "p_RESEARCH_EXPENSE", "c_NETCASH_OPERATE",
