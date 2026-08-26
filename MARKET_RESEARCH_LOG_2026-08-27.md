@@ -119,3 +119,38 @@
 ### Notification decision
 
 - **USER NOTIFICATION REQUIRED — production/CI failure.** This meets notification condition (5). There is no new BUY or REDUCE/EXIT; the notification is specifically about degraded automated opportunity-scan reliability and the minimal compatibility fix already pushed.
+
+## 2026-08-27 05:07 CST — hourly opportunity + holdings-risk refresh
+
+### Data cutoff / reproducibility
+
+- Re-read current `main` truth sources and rebuilt the holding universe exclusively from `CURRENT_HOLDINGS.md`: `603369 今世缘`, `001316 润贝航科`, `600276 恒瑞医药`, `600406 国电南瑞`.
+- Latest completed A-share trading session remains 2026-08-26. Exchange/CNINFO overnight refresh through 05:07 CST found no new material filing changing the four holdings or `603658 安图生物`; no new session price exists yet.
+- Fresh-data invariant remains active. No stale/unverified price can promote Formal BUY/ADD or a price-dependent REDUCE.
+
+### Opportunity / ledger delta
+
+- `603658 安图生物`: **RESEEN / NO MATERIAL CHANGE**. Tier `WAIT`; Formal BUY `NO`; production action `HOLD_REVIEW`; valuation confidence remains `INVALID`. Existing slower-demand/pricing-pressure, weakened H1 earnings/cash conversion, moat and normalized Bear/Base/Bull blockers remain controlling.
+- Ledger persisted with `last_seen=2026-08-27 05:07 CST`, `seen_count=20`, run_id `hourly-20260827-0507`.
+- No NEW / UPGRADED / DOWNGRADED / INVALIDATED execution-eligible candidate; no new A1/A2; **Formal BUY/ADD = NONE**.
+
+### Holdings risk delta
+
+- `603369 今世缘`: **HOLD_REVIEW / NO ADD**; no fresh REDUCE/EXIT trigger.
+- `001316 润贝航科`: **HOLD_REVIEW**; known insider/shareholder reduction overhang remains, with no new evidence of operating-thesis break.
+- `600276 恒瑞医药`: **HOLD_REVIEW**; no fresh pipeline/governance/customer/moat event creates REDUCE/EXIT.
+- `600406 国电南瑞`: **HOLD_REVIEW**; H1 cash-conversion/margin deterioration remains under review, with no fresh escalation evidence.
+- **New REDUCE/EXIT = NONE. New hard-thesis invalidation = NONE.**
+
+### Production / CI health — ROOT CAUSE REFINED + MINIMAL REPAIR
+
+- Latest postscan run `33012470841` progressed through the entire research/valuation/production build. The focused suite is now **141/141 passing**; the prior V3.1.1 fixture/scanner compatibility defect is repaired.
+- Final contract validation still failed with `valuation_model_not_executed` and `valuation_diagnostic_not_ready`. Artifact inspection traced both unresolved tokens to `688739`, which is `RESEARCH_ONLY` / not execution eligible. The other long-term rows were also `688xxx` research-only names. Production `production_decision_scan.py` already excludes non-execution-eligible candidates, so the final zero-BUY validator was applying a stricter universe than the production decision authority.
+- Defect classification: **PRODUCTION_VALIDATOR_EXECUTION_SCOPE_DRIFT**. This is a contract-scope bug, not evidence that an executable沪A/深A candidate was missing valuation research.
+- Minimal repair committed without changing any V3.1/V3.1.1 ranking, valuation, BUY/SELL threshold or research record: added `postscan_contract.py`, which scopes unresolved zero-BUY model gaps to `EXECUTION_ELIGIBLE` rows; added regression tests proving a research-only `688739` gap does not block production while an executable `603658` gap still does; updated the postscan workflow to use that helper and run the regression test.
+- Research-only valuation diagnostics remain preserved in artifacts; they are not silently converted to READY. They simply no longer control the executable production contract.
+- Full downstream green verification on the new workflow revision is still pending the next valid postscan execution. Until confirmed green, keep automated opportunity discovery **DEGRADED / FAIL-CLOSED**; manual holdings-risk conclusions above remain valid.
+
+### Notification decision
+
+- **USER NOTIFICATION REQUIRED — production/CI condition (5) remains active.** Root cause is now isolated and minimally repaired, but full downstream green proof is still pending. No new BUY, REDUCE or EXIT accompanies this notification.
