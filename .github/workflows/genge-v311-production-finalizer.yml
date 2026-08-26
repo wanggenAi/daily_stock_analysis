@@ -68,7 +68,7 @@ jobs:
           test -n "$RUN_ID"
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-          echo "production_code_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
+          echo "production_code_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
       - name: Download exact discovery artifact
         uses: actions/download-artifact@v4
@@ -110,60 +110,42 @@ jobs:
         id: holdings
         run: |
           python - <<'PY'
+          import json
           import os
           from datetime import date
           from pathlib import Path
 
-          from src.strategies.genge_opportunity_discovery.production_decision_scan import (
-              read_holdings_markdown,
+          from src.strategies.genge_opportunity_discovery.confirmed_holdings_source import (
+              STABLE_HOLDINGS_PATH,
+              assess_confirmed_holdings_source,
           )
 
-          path = Path("data/user_supplied/manual_confirmed_holdings.md")
-          today = date.today().isoformat()
-          status = "HOLDINGS_NOT_EVALUATED_NO_FRESH_SOURCE"
-          enabled = False
-          reason = "stable confirmed-holdings file missing"
-
-          if path.exists():
-              rows = read_holdings_markdown(path)
-              if not rows:
-                  status = "HOLDINGS_NOT_EVALUATED_INVALID_SOURCE"
-                  reason = "confirmed-holdings file exists but has no parseable rows"
-              else:
-                  evidence_dates = {str(row.get("holding_evidence_date") or "").strip() for row in rows}
-                  quantities_valid = all(
-                      str(row.get("confirmed_quantity") or "").strip()
-                      and str(row.get("confirmed_quantity") or "").strip() not in {"0", "0.0"}
-                      for row in rows
-                  )
-                  if evidence_dates != {today}:
-                      status = "HOLDINGS_NOT_EVALUATED_STALE_SOURCE"
-                      reason = f"holding evidence dates {sorted(evidence_dates)} do not equal {today}"
-                  elif not quantities_valid:
-                      status = "HOLDINGS_NOT_EVALUATED_INVALID_SOURCE"
-                      reason = "one or more confirmed quantities are empty/zero"
-                  else:
-                      status = "HOLDINGS_EVALUATED_FRESH_CONFIRMED_SOURCE"
-                      enabled = True
-                      reason = f"{len(rows)} holdings confirmed for {today}"
-
+          assessment = assess_confirmed_holdings_source(
+              STABLE_HOLDINGS_PATH,
+              as_of=date.today(),
+          )
+          data = assessment.as_dict()
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
-              out.write(f"enabled={'true' if enabled else 'false'}\n")
-              out.write(f"status={status}\n")
-              out.write(f"source={path if path.exists() else ''}\n")
-              out.write(f"reason={reason}\n")
-          print(f"holdings_status={status};reason={reason}")
+              out.write(f"enabled={'true' if assessment.enabled else 'false'}\n")
+              out.write(f"status={assessment.status}\n")
+              out.write(f"source={assessment.source}\n")
+              out.write(f"reason={assessment.reason}\n")
+              out.write(f"row_count={assessment.row_count}\n")
+              out.write(f"as_of={assessment.as_of}\n")
+          print(json.dumps(data, ensure_ascii=False))
           PY
 
       - name: Run authoritative V3.1.1 production bridge
         env:
           HOLDINGS_ENABLED: ${{ steps.holdings.outputs.enabled }}
           HOLDINGS_SOURCE: ${{ steps.holdings.outputs.source }}
+          PRODUCTION_AS_OF: ${{ steps.holdings.outputs.as_of }}
         run: |
           ARGS=(
             --source-csv "${{ steps.candidate.outputs.source_csv }}"
             --evidence-csv "${{ steps.candidate.outputs.evidence_csv }}"
             --output-dir v311_production
+            --as-of "$PRODUCTION_AS_OF"
           )
           if [ "$HOLDINGS_ENABLED" = "true" ]; then
             ARGS+=(--holdings-md "$HOLDINGS_SOURCE")
@@ -179,6 +161,8 @@ jobs:
           HOLDINGS_STATUS: ${{ steps.holdings.outputs.status }}
           HOLDINGS_SOURCE: ${{ steps.holdings.outputs.source }}
           HOLDINGS_REASON: ${{ steps.holdings.outputs.reason }}
+          HOLDINGS_ROW_COUNT: ${{ steps.holdings.outputs.row_count }}
+          PRODUCTION_AS_OF: ${{ steps.holdings.outputs.as_of }}
         run: |
           python - <<'PY'
           import csv
@@ -218,6 +202,8 @@ jobs:
           holding_rows = [row for row in rows if row.get("decision_scope") == "HOLDING"]
           if holdings_enabled and not holding_rows:
               raise SystemExit("fresh confirmed holdings source enabled but no holding decisions were emitted")
+          if holdings_enabled and len(holding_rows) != int(os.environ["HOLDINGS_ROW_COUNT"]):
+              raise SystemExit("holding decision count does not match confirmed holdings source")
           if not holdings_enabled and holding_rows:
               raise SystemExit("holding decisions emitted without a fresh confirmed holdings source")
 
@@ -237,6 +223,7 @@ jobs:
               "source_run_id": os.environ["SOURCE_RUN_ID"],
               "source_head_sha": os.environ["SOURCE_HEAD_SHA"],
               "production_code_sha": os.environ["PRODUCTION_CODE_SHA"],
+              "production_as_of": os.environ["PRODUCTION_AS_OF"],
               "source_artifact": "genge-all-a-production-report",
               "source_candidate_file": "daily_candidate_top5.csv",
               "source_evidence_file": "real_world_signal_audit.csv",
