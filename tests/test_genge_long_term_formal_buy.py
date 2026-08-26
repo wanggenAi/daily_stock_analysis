@@ -87,6 +87,13 @@ def _valuation(required_growth="0.10", quality="75", execution="GENERIC_REVERSE_
         "earnings_quality_confidence": "HIGH",
         "financial_review_status": "OK",
         "normalized_core_operating_profit": "100",
+        # V3.1.1 Round-8/9 confidence evidence.  BUY fixtures must prove the
+        # promoted gate rather than relying on pre-V3.1.1 implicit defaults.
+        "normalized_earnings_observation_count": "4",
+        "deduct_profit_quality_factor": "0.90",
+        "cash_conversion_ratio": "0.90",
+        "realistic_growth_four_report_range": "0.08",
+        "implied_growth_status": "OK",
         **_v31(),
     }
 
