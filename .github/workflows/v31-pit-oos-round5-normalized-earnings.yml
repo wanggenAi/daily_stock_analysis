@@ -1,0 +1,53 @@
+name: V3.1 PIT OOS round 5 normalized earnings
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/v31_pit_oos_round5_normalized_earnings.py'
+      - 'docs/V31_NORMALIZED_EARNINGS_VALUATION_DRAFT.md'
+      - '.github/workflows/v31-pit-oos-round5-normalized-earnings.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'akshare>=1.12.0' 'pandas>=2.0.0' 'numpy>=1.24.0' 'yfinance>=0.2.0' tabulate
+
+      - name: Run frozen Round-5 OOS
+        run: python scripts/v31_pit_oos_round5_normalized_earnings.py
+
+      - name: Persist auditable Round-5 results
+        if: success()
+        run: |
+          rm -rf backtests/v31_pit_oos_round5_normalized_earnings
+          mkdir -p backtests/v31_pit_oos_round5_normalized_earnings
+          cp -a artifacts/v31_pit_oos_round5_normalized_earnings/. backtests/v31_pit_oos_round5_normalized_earnings/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backtests/v31_pit_oos_round5_normalized_earnings
+          if ! git diff --cached --quiet; then
+            git commit -m 'Store V3.1 Round-5 normalized earnings OOS results'
+            git push
+          fi
+
+      - name: Upload Round-5 artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v31-pit-oos-round5-normalized-earnings
+          path: artifacts/v31_pit_oos_round5_normalized_earnings/
+          if-no-files-found: warn
