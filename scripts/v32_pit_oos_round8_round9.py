@@ -54,6 +54,11 @@ def _json_value(value: Any) -> Any:
 
 def add_confidence_inputs(panel: pd.DataFrame, financial: pd.DataFrame) -> pd.DataFrame:
     f = financial.copy().sort_values(["available_date", "report_date"])
+    f["available_date"] = pd.to_datetime(f["available_date"], errors="coerce").astype("datetime64[ns]")
+    panel = panel.copy()
+    panel["fund_available_date"] = pd.to_datetime(
+        panel["fund_available_date"], errors="coerce"
+    ).astype("datetime64[ns]")
     clean = pd.to_numeric(f["clean_eps_round6"], errors="coerce").where(lambda x: x > 0)
     f["normalized_earnings_observation_count"] = clean.notna().rolling(4, min_periods=1).sum()
     growth = pd.to_numeric(f["realistic_growth_round6"], errors="coerce")

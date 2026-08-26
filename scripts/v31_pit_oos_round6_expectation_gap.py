@@ -277,11 +277,19 @@ def build_daily_panel(code: str) -> tuple[pd.DataFrame, pd.DataFrame]:
         "quality_factor_round5",
     ]
     signals = f[signal_cols].copy()
-    signals["available_date"] = pd.to_datetime(signals["available_date"], errors="coerce").dt.normalize()
+    signals["available_date"] = (
+        pd.to_datetime(signals["available_date"], errors="coerce")
+        .dt.normalize()
+        .astype("datetime64[ns]")
+    )
     signals = signals.dropna(subset=["available_date"]).sort_values(["available_date", "report_date"])
     signals = signals.drop_duplicates("available_date", keep="last")
 
-    d["date"] = pd.to_datetime(d["date"], errors="coerce").dt.normalize()
+    d["date"] = (
+        pd.to_datetime(d["date"], errors="coerce")
+        .dt.normalize()
+        .astype("datetime64[ns]")
+    )
     d = pd.merge_asof(
         d.sort_values("date"),
         signals.rename(columns={"available_date": "fund_available_date"}).sort_values("fund_available_date"),

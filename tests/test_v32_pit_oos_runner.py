@@ -49,3 +49,22 @@ def test_low_confidence_never_executes_mechanical_action() -> None:
     assert result.trades.empty
     assert set(result.decisions["action"]) == {"HOLD_REVIEW"}
     assert result.summary["mechanical_low_invalid_actions"] == 0
+
+
+def test_confidence_merge_normalizes_datetime_units() -> None:
+    daily = panel().iloc[:1].copy()
+    daily["fund_available_date"] = pd.Series(
+        [pd.Timestamp("2017-12-31")], dtype="datetime64[s]"
+    )
+    daily["date"] = pd.to_datetime(daily["date"]).astype("datetime64[ns]")
+    financial = pd.DataFrame(
+        {
+            "available_date": pd.Series([pd.Timestamp("2017-12-31")], dtype="datetime64[us]"),
+            "report_date": pd.to_datetime(["2017-09-30"]),
+            "clean_eps_round6": [1.0],
+            "realistic_growth_round6": [0.1],
+        }
+    )
+    merged = runner.add_confidence_inputs(daily, financial)
+    assert len(merged) == 1
+    assert merged["normalized_earnings_observation_count"].iloc[0] == 1

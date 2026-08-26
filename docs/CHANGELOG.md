@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] V3.1/V3.2 严格 PIT 日频面板在合并财报可用日之前统一 pandas datetime 精度，避免新版 pandas 因秒/微秒内部精度不同拒绝 `merge_asof`；日期值和可用性规则不变。
 - [改进] 冻结 GenGe V3.2 Round 8/9 生产候选：保持 V3.1 估值和仓位阈值不变，新增 Valuation Confidence Gate 与估值 SELL 连续两月确认；同时预先冻结 discovery/untouched OOS 股票池、PIT/交易方向审计、真实 Buy & Hold 和 A/B/C 晋级标准，Round 9 后停止参数调整。
 - [测试] 新增 GenGe V3.2 Confidence `LOW/INVALID` 禁止机械估值买卖、Hard Gate FAIL 强制 `EXIT`、SELL 二次确认和个人成本价不影响 SELL 的回归测试，并新增 Round 8/9 独立可持久化 Actions 工作流。
 - [改进] 冻结 V3.1 作为 A1/A2/A3 和长期 Formal BUY 的唯一资格层：长期需求、可预测性、护城河、财务安全和盈利真实性任一失败或证据未知时均不得升级；旧 Tier A、TRY_POSITION、低估值和高量化分只保留研究召回作用。新增 V3.1 深审队列、正常化盈利、情景估值、市场隐含预期、风险调整三年 CAGR、下行与反证完整性检查，且不连接券商或自动交易。
