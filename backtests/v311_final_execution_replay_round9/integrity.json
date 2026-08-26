@@ -1,0 +1,18 @@
+{
+  "round": 9,
+  "source_dir": "backtests/v32_pit_oos_round9_untouched_confirmation",
+  "model_thresholds_changed": false,
+  "universe_changed": false,
+  "valuation_logic_changed": false,
+  "confidence_gate_changed": false,
+  "sell_confirmation_logic_changed": false,
+  "cost_basis_used_by_sell": false,
+  "execution_fixes": [
+    "missing union-date return is zero; ret is never forward-filled",
+    "month-end execution requires an observed valid close on that exact date",
+    "non-tradable weights are preserved and excluded from buy cash scaling"
+  ],
+  "phantom_nonzero_return_days_prevented": 24,
+  "nontradable_union_month_ends": 2,
+  "synthetic_stale_trades_after_fix": 0
+}
