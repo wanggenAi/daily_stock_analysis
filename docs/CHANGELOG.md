@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] 全 A 生产扫描在中国市场收盘后保留 4 小时日线发布缓冲；公开行情尚未覆盖全市场时继续使用上一完整交易日，避免混用新旧交易日触发系统性 `DATE_MISMATCH`，深市扫描既有日期行为不变。
 - [新功能] 晋级 `GEN_GE_V3_1_1_PRODUCTION`：保留 V3.1 BUY 与即时 SELL contract，正式加入验证通过的 Valuation Confidence Gate；LOW/INVALID 一律 HOLD_REVIEW，Hard Gate FAIL 仍强制 EXIT，并统一输出九种生产动作、估值字段与 reason codes。
 - [修复] V3.1.1 production decision scanner 在生产候选输出前再次强制沪深主板执行范围，STAR/ChiNext/BSE 等对象只保留在研究排名中；已确认持仓仍按安全复核路径处理。
 - [改进] 每日 postscan、每行业扫描、All-A one-shot、长期 Formal BUY、Master Ranking、候选 ledger 和确认持仓接入 V3.1.1 生产决策扫描器；持仓成本仅展示且决策输出明确记录 `cost_basis_used_by_decision=False`。

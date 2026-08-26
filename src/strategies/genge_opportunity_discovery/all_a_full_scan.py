@@ -85,6 +85,7 @@ EXIT_VALIDATION_REFERENCE_SELECTION_VERSION = "fixed_partition_industry_diverse_
 EXIT_PROFILE_EXPLORATION_LIMIT = 40
 EXIT_PROFILE_EXPLORATION_SELECTION_VERSION = "weekly_industry_rotation_v1"
 MIN_EXIT_HISTORY_COVERAGE_RATIO = 0.75
+ALL_A_DAILY_BAR_PUBLICATION_GRACE = timedelta(hours=4)
 ENTRY_TRIGGER_WINDOW_SESSIONS = 10
 SIGNAL_STATE_SCHEMA_VERSION = 4
 SIGNAL_LIFECYCLE_RULE_VERSION = "all_a_signal_lifecycle_v5_executable_entry_exit"
@@ -5087,7 +5088,9 @@ def main(argv: list[str] | None = None) -> int:
         next_trade_date = coerce_date(args.next_trade_date)
         external_context_date = as_of
     else:
-        as_of, next_trade_date = resolve_scan_dates()
+        as_of, next_trade_date = resolve_scan_dates(
+            completion_grace=ALL_A_DAILY_BAR_PUBLICATION_GRACE,
+        )
         external_context_date = datetime.now(ZoneInfo("Asia/Shanghai")).date()
     if next_trade_date <= as_of:
         raise SystemExit("--next-trade-date must be later than --as-of-date")
