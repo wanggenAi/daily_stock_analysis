@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] 冻结 GenGe V3.2 Round 8/9 生产候选：保持 V3.1 估值和仓位阈值不变，新增 Valuation Confidence Gate 与估值 SELL 连续两月确认；同时预先冻结 discovery/untouched OOS 股票池、PIT/交易方向审计、真实 Buy & Hold 和 A/B/C 晋级标准，Round 9 后停止参数调整。
+- [测试] 新增 GenGe V3.2 Confidence `LOW/INVALID` 禁止机械估值买卖、Hard Gate FAIL 强制 `EXIT`、SELL 二次确认和个人成本价不影响 SELL 的回归测试，并新增 Round 8/9 独立可持久化 Actions 工作流。
 - [改进] 冻结 V3.1 作为 A1/A2/A3 和长期 Formal BUY 的唯一资格层：长期需求、可预测性、护城河、财务安全和盈利真实性任一失败或证据未知时均不得升级；旧 Tier A、TRY_POSITION、低估值和高量化分只保留研究召回作用。新增 V3.1 深审队列、正常化盈利、情景估值、市场隐含预期、风险调整三年 CAGR、下行与反证完整性检查，且不连接券商或自动交易。
 - [修复] 退出画像升级到 v9 样本可重放质量口径：公司行动、已知行情断档和正常右删失不再被误当成负收益令整股/整组永久失败，但仍进入覆盖率分母；只有可重放覆盖率至少 80% 且断档比例不高于 5% 才能通过。未解锁一字跌停、执行日无法映射和未知不完整结果继续硬阻断，避免排除最差亏损样本形成幸存者偏差。
 - [修复] 全 A 退出画像改为“候选自身优先、固定参考分区回退”：参考分区只依赖板块、行业和版本化代码哈希，不依赖当日 Top80 排名或回测结果；候选与参考股票重合时逐候选执行 leave-one-out，避免用自身结果证明自身。
