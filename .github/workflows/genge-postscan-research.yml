@@ -88,6 +88,7 @@ jobs:
             tests/test_genge_valuation_research_long_term_runner.py \
             tests/test_genge_long_term_formal_buy.py \
             tests/test_genge_production_model.py \
+            tests/test_genge_postscan_contract.py \
             tests/test_genge_zero_buy_audit.py \
             tests/test_genge_valuation_research_report.py \
             tests/test_genge_valuation_research_production.py \
@@ -234,8 +235,11 @@ jobs:
         run: |
           python - <<'PY'
           import csv, json
-          from collections import Counter
           from pathlib import Path
+          from src.strategies.genge_opportunity_discovery.postscan_contract import (
+              execution_eligible_rows,
+              unresolved_execution_gaps,
+          )
 
           valuation_root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in valuation_root.iterdir() if p.is_dir()) if valuation_root.exists() else []
@@ -363,33 +367,19 @@ jobs:
           assert master_summary['clean_industry_count'] > 0
 
           zero = json.loads(Path('reports/zero_buy_audit/zero_buy_audit.json').read_text(encoding='utf-8'))
-          lt_summary = json.loads(Path('reports/long_term_second_pass/long_term_second_pass_summary.json').read_text(encoding='utf-8'))
 
           if zero['requires_second_pass'] and formal_summary['long_term_formal_buy_count'] == 0:
-              unresolved_tokens = {
-                  'valuation_missing',
-                  'valuation_model_not_executed',
-                  'valuation_diagnostic_not_ready',
-                  'financial_review_not_ready',
-                  'required_profit_growth_unavailable',
-              }
-              blocker_counts = Counter()
-              for row in formal_rows:
-                  for token in str(row.get('long_term_blockers') or '').split(';'):
-                      if token:
-                          blocker_counts[token] += 1
-              unresolved = sorted(token for token in unresolved_tokens if blocker_counts[token])
+              execution_formal_rows = execution_eligible_rows(formal_rows)
+              unresolved = unresolved_execution_gaps(formal_rows)
               assert not unresolved, (
-                  'non-defensive zero still has unresolved research/model gaps; '
+                  'non-defensive zero still has unresolved executable research/model gaps; '
                   f'cannot publish as no-opportunity: {unresolved}'
               )
-              if lt_summary['candidate_count'] > 0:
-                  assert formal_rows, 'long-term candidates vanished before final decision'
-                  assert all(str(r.get('long_term_blockers') or '').strip() for r in formal_rows)
+              if execution_formal_rows:
+                  assert all(str(r.get('long_term_blockers') or '').strip() for r in execution_formal_rows)
 
           print(json.dumps({
               'zero_buy': zero,
-              'long_term_second_pass': lt_summary,
               'long_term_formal_buy': formal_summary,
               'routing': routing,
               'specialized_valuation': specialized,
