@@ -14,16 +14,16 @@
 
 - **execution eligibility:** ELIGIBLE
 - **first_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **last_seen:** 2026-08-26 20:09 CST production refresh
-- **seen_count:** 13
+- **last_seen:** 2026-08-26 23:08 CST production refresh
+- **seen_count:** 14
 - **first source run_id:** 32873471270
-- **latest source run_id:** hourly-20260826-2009
+- **latest source run_id:** hourly-20260826-2308
 - **current tier:** WAIT
 - **Formal BUY:** NO
 - **GenGe V3.1.1 production action:** HOLD_REVIEW
 - **valuation confidence:** INVALID — normalized earnings, realistic/implied growth and neutral value are incomplete
 - **latest independently accepted close:** 34.17 CNY on 2026-08-25
-- **fresh 2026-08-26 quote evidence:** Sina intraday reporting observed 33.48 CNY at 11:23 and after-close reporting confirmed a decline on 2026-08-26, but the directly retrievable quote pages still do not provide a second independently accepted exact 15:00 close; the company IR page remains internally inconsistent at 45.75. Therefore the execution-grade accepted exact close remains 2026-08-25 and fresh-data invariant continues to block Formal BUY/ADD.
+- **fresh 2026-08-26 quote evidence:** Sina intraday reporting observed 33.48 CNY at 11:23 and after-close reporting confirmed a decline on 2026-08-26, but directly retrievable exact-close sources checked again at 23:08 still did not provide a second independently accepted exact 15:00 close; the company IR page remains internally inconsistent at 45.75. Therefore the execution-grade accepted exact close remains 2026-08-25 and fresh-data invariant continues to block Formal BUY/ADD.
 - **observed entry band:** 33.58–34.15 CNY
 - **Bear/Base/Bull / fair-value range:** PENDING_DEEP_RESEARCH; rebuild using normalized earnings after 2026H1 deterioration and the company-confirmed slower-demand / pricing-pressure regime.
 - **long-term demand logic:** WEAKENED_BUT_NOT_FALSIFIED — IVD remains a durable clinical need, but the company now explicitly states that policy changes have caused a phase of slower market-demand growth; IQVIA data cited by the company show only slight global IVD reagent growth in 2026Q1 and negative conventional biochemistry reagent growth. This lowers the prior growth assumption and raises the burden of proof for a 5–10Y A-tier demand thesis.
@@ -52,6 +52,7 @@
 - **2026-08-26 19:07 CST — RESEEN / PRICE_OBSERVED_ONLY:** 33.48–33.49 intraday/current public quotes were cross-observed, but no second independently accepted 15:00 close was recovered. Tier, valuation and Formal BUY status unchanged.
 - **2026-08-26 20:09 CST — RESEEN / PRICE_OBSERVED_ONLY:** after-close reporting confirms a decline while direct exact-close sources remain incomplete/inconsistent. No tier, valuation, entry-band or Formal BUY change.
 - **2026-08-26 22:56 CST — DEEP_RESEARCH_EVIDENCE_RESOLVED:** full募投变更 rationale reviewed. The ambiguity around why expansion stopped is resolved: management explicitly cites slower demand growth, oversupply risk, homogeneous competition and procurement-price pressure. Interpreted as prudent defensive capital allocation, not a bullish demand signal. Long-term demand status changed to WEAKENED_BUT_NOT_FALSIFIED; moat burden of proof increased; Formal BUY remains NO pending normalized earnings and reverse valuation.
+- **2026-08-26 23:08 CST — RESEEN / NO MATERIAL CHANGE:** late-filing and quote refresh found no new tier, valuation, entry-band or Formal BUY change. Exact 2026-08-26 close remains unaccepted under fresh-data invariant.
 
 ## Research-only observations retained outside executable queue
 
