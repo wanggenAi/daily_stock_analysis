@@ -116,16 +116,18 @@ The existing V3.1 price/neutral execution bands remain unchanged:
 
 ## 8. Untouched Round-6 OOS universe
 
-Frozen before results; all are Shanghai/Shenzhen main-board A shares and none appeared in Rounds 1-5:
+Frozen before results; all are Shanghai/Shenzhen main-board A shares, all were listed before the 2018 test start, and none appeared in Rounds 1-5:
 
 - 002179 中航光电
 - 002138 顺络电子
 - 002241 歌尔股份
-- 002938 鹏鼎控股
+- 002815 崇达技术
 - 603019 中科曙光
 - 600570 恒生电子
 
 The sample deliberately spans connectors/passives/consumer electronics/PCB/server infrastructure/software rather than selecting only one winning historical sub-theme.
+
+`002938 鹏鼎控股` was removed **before any Round-6 result existed** because its 2018 listing would make the literal six-stock buy-and-hold comparator begin later than the strategy. `002815 崇达技术` was substituted solely to keep a common pre-2018 listing window.
 
 ## 9. Comparators
 
