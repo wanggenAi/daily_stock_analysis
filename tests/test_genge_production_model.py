@@ -90,19 +90,26 @@ def test_parse_current_holdings_contract() -> None:
     assert {row["code"] for row in holdings} >= {"603369", "001316", "600276", "600406"}
 
 
-def test_scanner_preserves_authoritative_candidate_only_with_exact_policy_source() -> None:
-    row = {
-        "code": "600000",
-        "production_model_version": PRODUCTION_MODEL_VERSION,
-        "production_policy_source": PRODUCTION_POLICY_SOURCE,
-        "production_action": "BUY",
-        "valuation_confidence": "HIGH",
-        "reason_codes": "V31_BUY_GATES_PASS;MARGIN_OF_SAFETY_PASS",
-    }
+def test_scanner_recomputes_candidate_even_with_exact_policy_source() -> None:
+    # Exact policy labels are audit metadata only.  The scanner must recompute
+    # the production decision from complete evidence and never reuse upstream
+    # production_action / confidence fields as authority.
+    row = complete_v311_row(current=70.0)
+    row.update(
+        {
+            "code": "600000",
+            "production_model_version": PRODUCTION_MODEL_VERSION,
+            "production_policy_source": PRODUCTION_POLICY_SOURCE,
+            "production_action": "WAIT",
+            "valuation_confidence": "LOW",
+            "reason_codes": "STALE_UPSTREAM_DECISION_FIELDS",
+        }
+    )
     decision = build_decisions([row])[0]
     assert decision["production_action"] == "BUY"
     assert decision["valuation_confidence"] == "HIGH"
-    assert decision["upstream_policy_reused"] is True
+    assert decision["upstream_policy_matches"] is True
+    assert decision["upstream_policy_reused"] is False
 
 
 def test_same_version_legacy_policy_is_not_trusted() -> None:
