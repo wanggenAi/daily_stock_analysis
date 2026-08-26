@@ -38,3 +38,23 @@
 ### Notification decision
 
 - Triggered because an existing holding (`600406`) had a material rating change from HOLD to HOLD_REVIEW after a fresh H1 filing. This is a review downgrade, not a sell instruction.
+
+## 2026-08-26 22:07 CST — late filing / insider-sell risk refresh
+
+### Opportunity / ledger delta
+
+- `603658 安图生物`: **RESEEN / NO MATERIAL CHANGE**. WAIT; Formal BUY NO. No newly accepted execution-grade 2026-08-26 exact close; existing H1 earnings/cash-flow, capacity-project reallocation and valuation-confidence blockers remain controlling.
+- No new A1/A2 in executable buy zone; no Formal BUY/ADD.
+
+### Holdings risk delta
+
+- Holdings universe rebuilt exclusively from `CURRENT_HOLDINGS.md`: `603369`, `001316`, `600276`, `600406`.
+- `001316 润贝航科`: **HOLD -> HOLD_REVIEW (governance/supply-overhang watch; NOT REDUCE)**. A newly surfaced 2026-08-27 pre-disclosure says director/GM 徐烁华 may sell up to 808,542 shares (0.50%), director/deputy GM 高木锐 up to 141,155 (0.09%), and 18 other natural-person shareholders up to 776,883 (0.48%), aggregate maximum about 1.07% of shares, during 2026-09-17 through 2026-12-16, stated reason own funding needs. This follows the controlling shareholder/actual controller reduction completed in May 2026, so repeated insider selling is a governance/expectation-gap negative and potential supply overhang. It does NOT by itself falsify the operating thesis: 2026H1 revenue/profit/deduct-profit/OCF remained strongly positive YoY and the announced selling is not a control-change event. Escalate to REDUCE only if selling is accompanied by deterioration in orders, margins/cash conversion, management continuity, or other evidence that insiders' behavior reflects weakening fundamentals; downgrade can be reversed if execution remains strong and the sell plan proves immaterial to operating quality. Exact 2026-08-26 close remains unverified, so no price-dependent sell/add action is emitted.
+- `600406 国电南瑞`: remains **HOLD_REVIEW**, with H1 cash-conversion/margin review controlling; accepted close 23.42.
+- `603369 今世缘`: remains **HOLD_REVIEW / NO ADD**; no new sell trigger.
+- `600276 恒瑞医药`: remains **HOLD_REVIEW**; no new sell trigger.
+- **New REDUCE/EXIT:** NONE. **New hard-thesis invalidation:** NONE.
+
+### Notification decision
+
+- Triggered because a confirmed holding (`001316`) received a new material insider/shareholder reduction plan and therefore moved from HOLD to HOLD_REVIEW. This is not a REDUCE/EXIT instruction.
