@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [新功能] 晋级 `GEN_GE_V3_1_1_PRODUCTION`：保留 V3.1 BUY 与即时 SELL contract，正式加入验证通过的 Valuation Confidence Gate；LOW/INVALID 一律 HOLD_REVIEW，Hard Gate FAIL 仍强制 EXIT，并统一输出九种生产动作、估值字段与 reason codes。
+- [改进] 每日 postscan、每行业扫描、All-A one-shot、长期 Formal BUY、Master Ranking、候选 ledger 和确认持仓接入 V3.1.1 生产决策扫描器；持仓成本仅展示且决策输出明确记录 `cost_basis_used_by_decision=False`。
+- [文档] 新增生产模型、V3.1 到 V3.1.1 变更记录与 Round 8/9 最终晋级决策；冻结生产版本并明确未来 V3.3 必须独立研究/OOS，禁止直接修改 Production。
 - [修复] V3.1/V3.2 严格 PIT 日频面板在合并财报可用日之前统一 pandas datetime 精度，避免新版 pandas 因秒/微秒内部精度不同拒绝 `merge_asof`；日期值和可用性规则不变。
 - [改进] 冻结 GenGe V3.2 Round 8/9 生产候选：保持 V3.1 估值和仓位阈值不变，新增 Valuation Confidence Gate 与估值 SELL 连续两月确认；同时预先冻结 discovery/untouched OOS 股票池、PIT/交易方向审计、真实 Buy & Hold 和 A/B/C 晋级标准，Round 9 后停止参数调整。
 - [测试] 新增 GenGe V3.2 Confidence `LOW/INVALID` 禁止机械估值买卖、Hard Gate FAIL 强制 `EXIT`、SELL 二次确认和个人成本价不影响 SELL 的回归测试，并新增 Round 8/9 独立可持久化 Actions 工作流。

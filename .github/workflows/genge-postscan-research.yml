@@ -87,6 +87,7 @@ jobs:
             tests/test_genge_long_term_valuation_merge.py \
             tests/test_genge_valuation_research_long_term_runner.py \
             tests/test_genge_long_term_formal_buy.py \
+            tests/test_genge_production_model.py \
             tests/test_genge_zero_buy_audit.py \
             tests/test_genge_valuation_research_report.py \
             tests/test_genge_valuation_research_production.py \
@@ -222,6 +223,13 @@ jobs:
             --long-term-formal-buy reports/long_term_formal_buy \
             --output-dir reports/master_opportunity_ranking
 
+      - name: Build GenGe V3.1.1 production candidate and holding decisions
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.production_decision_scan \
+            --candidate-csv reports/long_term_formal_buy/long_term_formal_buy_candidates.csv \
+            --holdings-md CURRENT_HOLDINGS.md \
+            --output-dir reports/production_decisions
+
       - name: Validate final postscan production contract
         run: |
           python - <<'PY'
@@ -319,6 +327,18 @@ jobs:
           )
           assert formal_summary['legacy_exit_profile_is_long_term_veto'] is False
           assert formal_summary['no_auto_trade'] is True
+          assert formal_summary['production_model_version'] == 'GEN_GE_V3_1_1_PRODUCTION'
+          assert all(r.get('production_model_version') == 'GEN_GE_V3_1_1_PRODUCTION' for r in formal_rows)
+
+          production_root = Path('reports/production_decisions')
+          production_rows = list(csv.DictReader((production_root/'production_decisions.csv').open(encoding='utf-8')))
+          production_summary = json.loads((production_root/'production_decision_summary.json').read_text(encoding='utf-8'))
+          allowed_actions = {'BUY','WAIT','HOLD','HOLD_NO_ADD','HOLD_REVIEW','REDUCE_25','REDUCE_50','CORE_ONLY','EXIT'}
+          assert production_rows
+          assert all(row['production_action'] in allowed_actions for row in production_rows)
+          assert all(row['production_model_version'] == 'GEN_GE_V3_1_1_PRODUCTION' for row in production_rows)
+          assert all(row['cost_basis_used_by_decision'] == 'False' for row in production_rows)
+          assert production_summary['cost_basis_used_by_decision'] is False
 
           master_root = Path('reports/master_opportunity_ranking')
           master_required_nonempty = {
@@ -375,6 +395,7 @@ jobs:
               'specialized_valuation': specialized,
               'insurance_reverse_appraisal': insurance,
               'master_opportunity_ranking': master_summary,
+              'production_decisions': production_summary,
           }, ensure_ascii=False, indent=2))
           PY
 
@@ -389,6 +410,7 @@ jobs:
             reports/master_opportunity_ranking/master_opportunity_ranking.md; do
             if [ -f "$f" ]; then cat "$f" >> "$GITHUB_STEP_SUMMARY"; echo >> "$GITHUB_STEP_SUMMARY"; fi
           done
+          if [ -f reports/production_decisions/production_decisions.md ]; then cat reports/production_decisions/production_decisions.md >> "$GITHUB_STEP_SUMMARY"; fi
           python - <<'PY'
           import os
           from pathlib import Path
@@ -424,4 +446,5 @@ jobs:
             reports/long_term_formal_buy
             reports/zero_buy_audit
             reports/master_opportunity_ranking
+            reports/production_decisions
           if-no-files-found: error

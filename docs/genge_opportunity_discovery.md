@@ -12,6 +12,12 @@
 
 所有股票都只能是 `研究候选`、`人工复核候选` 或 `观察对象`。报告不承诺收益，不生成实盘委托。
 
+## 当前 Production：GenGe V3.1.1
+
+当前唯一正式版本为 `GEN_GE_V3_1_1_PRODUCTION`。它保留冻结 V3.1 的 BUY、即时 SELL 和 Hard Gate contract，并加入已经通过 Round 8/9 验证的 Valuation Confidence Gate：LOW/INVALID 一律 HOLD_REVIEW，不能机械 BUY/SELL；Hard Gate FAIL 仍优先 EXIT。完整说明见 `docs/GEN_GE_PRODUCTION_MODEL.md`。
+
+Round 9 后本版本经济参数已冻结，不再启动 Round 10 或继续调参。未来只有在用户明确要求研究 V3.3 时，才能在独立研究模块/分支和新 OOS 中进行，不能直接修改 Production。
+
 ## 冻结 V3.1 资格层
 
 宽池量化排序只负责召回研究对象，不再直接授权 A 类或长期 Formal BUY。冻结 V3.1 是 A1/A2/A3 和长期 Formal BUY 的唯一资格层，按以下顺序执行：

@@ -1,6 +1,15 @@
 # V31_DURABLE_HANDOFF
 
-> Latest compact handoff for the production-grade V3.1 Shanghai/Shenzhen A-share scan. Repository `main`, `V31_CANDIDATE_LEDGER.md`, and the dated `MARKET_RESEARCH_LOG_*.md` files remain the evidence chain.
+> Latest compact handoff for the production-grade GenGe V3.1.1 Shanghai/Shenzhen A-share scan. `GEN_GE_V3_1_1_PRODUCTION` promotes the validated Confidence Gate while retaining the original immediate V3.1 SELL contract. Repository `main`, `V31_CANDIDATE_LEDGER.md`, and the dated `MARKET_RESEARCH_LOG_*.md` files remain the evidence chain.
+
+## Production promotion 2026-08-26
+
+- Decision: `PROMOTE_CONFIDENCE_GATE_ONLY`.
+- Production: `GEN_GE_V3_1_1_PRODUCTION`.
+- LOW/INVALID valuation confidence now returns HOLD_REVIEW and cannot create mechanical valuation BUY/SELL.
+- Hard Gate FAIL still overrides all other rules and returns EXIT.
+- The two-month V3.2 SELL confirmation was rejected after Round 9; V3.1 immediate SELL thresholds remain active.
+- Research stops after Round 9. No V3.3 work is authorized without a new explicit request.
 
 ## 2026-08-26 06:09 CST
 

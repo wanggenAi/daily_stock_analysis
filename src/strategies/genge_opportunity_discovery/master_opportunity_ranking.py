@@ -180,6 +180,19 @@ def _apply_formal_overlay(target: dict[str, Any], formal: Mapping[str, Any]) -> 
         "v31_score_total",
         "v31_buy_ready",
         "v31_blockers",
+        "production_model_version",
+        "production_model_name",
+        "production_action",
+        "production_target_position_fraction",
+        "valuation_confidence",
+        "valuation_confidence_reason_codes",
+        "reason_codes",
+        "normalized_earnings",
+        "realistic_growth",
+        "market_implied_growth",
+        "expectation_gap",
+        "neutral_value",
+        "price_to_neutral",
     ):
         if key in formal:
             target[key] = formal.get(key)
@@ -314,6 +327,7 @@ def write_reports(
         "long_term_formal_buy_eligible", "long_term_blockers", "real_reward_risk_ratio",
         "current_price", "entry_low", "entry_high", "risk_invalidation_price",
         "target_1", "target_2", "current_action", "formal_signal_eligible",
+        "production_model_version", "production_action", "valuation_confidence", "reason_codes",
         "automatic_promotion_allowed", "no_auto_trade", "disclaimer",
     ]
     _write_csv(output_dir / "master_opportunity_ranking.csv", master, preferred)

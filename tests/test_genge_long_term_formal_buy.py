@@ -97,6 +97,9 @@ def test_buy_ready_requires_both_production_safety_and_frozen_v31():
     assert row["long_term_classification"] == "LONG_TERM_BUY_READY"
     assert row["v31_buy_ready"] is True
     assert row["v31_hard_gates_passed"] is True
+    assert row["production_model_version"] == "GEN_GE_V3_1_1_PRODUCTION"
+    assert row["production_action"] == "BUY"
+    assert row["valuation_confidence"] == "HIGH"
     assert row["legacy_exit_profile_is_long_term_veto"] is False
     assert row["entry_low"] == 39.0
     assert row["entry_high"] == 41.0
@@ -169,3 +172,12 @@ def test_missing_financial_review_never_promotes_candidate():
     row = evaluate_long_term_candidate(_second_pass(), _plan(), valuation)
     assert row["long_term_formal_buy_eligible"] is False
     assert "financial_review_not_ready" in row["long_term_blockers"]
+
+
+def test_low_valuation_confidence_blocks_formal_buy():
+    valuation = _valuation()
+    valuation["cash_conversion_ratio"] = -0.1
+    row = evaluate_long_term_candidate(_second_pass(), _plan(), valuation)
+    assert row["production_action"] == "HOLD_REVIEW"
+    assert row["long_term_formal_buy_eligible"] is False
+    assert "production_action_not_buy:HOLD_REVIEW" in row["long_term_blockers"]

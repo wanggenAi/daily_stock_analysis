@@ -1,4 +1,4 @@
-name: GenGe V3.1 Every-Industry Research
+name: GenGe V3.1.1 Every-Industry Research
 
 on:
   workflow_run:
@@ -76,7 +76,8 @@ jobs:
             tests/test_genge_specialized_valuation_execution.py \
             tests/test_genge_insurance_valuation_execution.py \
             tests/test_genge_resource_routing_v31.py \
-            tests/test_genge_v31_execution_extensions.py
+            tests/test_genge_v31_execution_extensions.py \
+            tests/test_genge_production_model.py
       - name: Build every-industry Top 5 map
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.industry_coverage \
@@ -138,6 +139,12 @@ jobs:
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v31_resource_scenario_merge \
             --v31-dir reports/v31_review --resource-root reports/valuation_research_queue \
             --output-dir reports/v31_review_enriched
+      - name: Build GenGe V3.1.1 production candidate and holding decisions
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.production_decision_scan \
+            --candidate-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --holdings-md CURRENT_HOLDINGS.md \
+            --output-dir reports/production_decisions
       - name: Validate every-industry coverage and V3.1 contract
         run: |
           python - <<'PY'
@@ -151,6 +158,8 @@ jobs:
           assert not missing, f'industries missing from enhanced valuation run: {missing}'
           v31 = list(csv.DictReader(Path('reports/v31_review_enriched/v31_review_queue_enriched.csv').open(encoding='utf-8')))
           assert v31, 'V3.1 enriched queue is empty'
+          production = list(csv.DictReader(Path('reports/production_decisions/production_decisions.csv').open(encoding='utf-8')))
+          assert production and all(r['production_model_version'] == 'GEN_GE_V3_1_1_PRODUCTION' for r in production)
           resource_root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in resource_root.iterdir() if p.is_dir() and (p/'resource_valuation_summary.json').exists())
           assert runs, 'resource valuation summary missing'
@@ -163,8 +172,9 @@ jobs:
       - name: Publish summary
         if: always()
         run: |
-          echo "## V3.1 Every-Industry Research" >> "$GITHUB_STEP_SUMMARY"
+          echo "## V3.1.1 Every-Industry Research" >> "$GITHUB_STEP_SUMMARY"
           if [ -f reports/v31_review/v31_review_queue.md ]; then cat reports/v31_review/v31_review_queue.md >> "$GITHUB_STEP_SUMMARY"; fi
+          if [ -f reports/production_decisions/production_decisions.md ]; then cat reports/production_decisions/production_decisions.md >> "$GITHUB_STEP_SUMMARY"; fi
       - name: Save valuation cache
         uses: actions/cache/save@v4
         if: success()
@@ -184,4 +194,5 @@ jobs:
             reports/valuation_research_queue
             reports/v31_review
             reports/v31_review_enriched
+            reports/production_decisions
           if-no-files-found: error

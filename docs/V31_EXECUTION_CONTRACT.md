@@ -1,5 +1,11 @@
 # V3.1 Execution Contract
 
+> Production note: this BUY/SELL contract remains the base of
+> `GEN_GE_V3_1_1_PRODUCTION`, but production now applies the promoted Valuation
+> Confidence Gate documented in `docs/GEN_GE_PRODUCTION_MODEL.md`. LOW/INVALID
+> confidence returns HOLD_REVIEW; all ratios and Hard Gate FAIL -> EXIT remain
+> unchanged.
+
 This document records the frozen execution semantics for the GenGe V3.1 research pipeline. The authoritative executable implementation is `src/strategies/genge_opportunity_discovery/selection_framework_v31.py`.
 
 ## Research universe vs execution universe

@@ -1,6 +1,6 @@
 # V31_CANDIDATE_LEDGER
 
-> Durable cross-session ledger for V3.1 candidates that are genuinely worth deeper research. This is **not** the full scan universe and is not an automatic trading instruction.
+> Durable cross-session ledger for GenGe V3.1.1 Production candidates that are genuinely worth deeper research. The historical filename is retained for continuity. Production version is `GEN_GE_V3_1_1_PRODUCTION`; LOW/INVALID valuation confidence must be HOLD_REVIEW. This is **not** the full scan universe and is not an automatic trading instruction.
 
 ## CURRENT DEEP RESEARCH QUEUE
 
@@ -25,6 +25,8 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 - **postscan source run_id:** 32907982947
 - **current tier:** WAIT
 - **Formal BUY:** NO
+- **GenGe V3.1.1 production action:** HOLD_REVIEW
+- **valuation confidence:** INVALID — normalized earnings, realistic/implied growth and neutral value are not yet complete
 - **latest verified price:** 34.17 CNY
 - **latest verified trade date:** 2026-08-25
 - **observed entry band:** 33.58–34.15 CNY
@@ -36,6 +38,7 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 - **invalidation conditions:** sustained multi-period decline in core reagent/instrument revenue or installed-base monetization; persistent cash-flow conversion deterioration without working-capital explanation; evidence that domestic/import competition materially erodes pricing, reagent pull-through or instrument placement economics; normalized Base value falling below the current/entry-band price after full V3.1 review.
 - **confidence:** HIGH that Formal BUY is not justified now; MEDIUM on maintaining deep-research priority pending full moat/normalized-earnings audit.
 - **next deep-research action:** read the full 2026H1 filing and segment/working-capital detail; complete company-level moat/long-term-demand audit; normalize sustainable profit and cash conversion; then run Bear/Base/Bull reverse valuation against a newly verified market price.
+- **production reason codes:** VALUATION_CONFIDENCE_INVALID; NEUTRAL_VALUE_INVALID; NORMALIZED_EARNINGS_INVALID; REALISTIC_GROWTH_INVALID; MARKET_IMPLIED_GROWTH_INVALID
 
 #### Delta history
 
@@ -65,7 +68,7 @@ None yet.
 
 ## Ledger maintenance contract
 
-Every hourly V3.1 scan must update this file when a candidate is `NEW`, `RESEEN`, `UPGRADED`, `DOWNGRADED`, `INVALIDATED`, or has a material `PRICE_ONLY_CHANGE` that changes entry readiness.
+Every hourly GenGe V3.1.1 scan must update this file when a candidate is `NEW`, `RESEEN`, `UPGRADED`, `DOWNGRADED`, `INVALIDATED`, or has a material `PRICE_ONLY_CHANGE` that changes entry readiness. Each refreshed record must include the production action, valuation confidence and reason codes; LOW/INVALID cannot be promoted to mechanical BUY/SELL.
 
 For repeated candidates, update `last_seen`, `seen_count`, source run id, price/trade date, tier, valuation/buy range, blockers and next action. Do not create duplicate stock entries. `INVALIDATED` names are archived rather than deleted so the evidence chain survives future sessions.
 

@@ -1,4 +1,4 @@
-"""Auditable long-term Formal BUY layer governed by frozen V3.1.
+"""Auditable long-term Formal BUY layer governed by GenGe V3.1.1 Production.
 
 Legacy operational checks remain as additional production safety constraints.
 They can block a candidate, but they can no longer promote a candidate. A formal
@@ -15,10 +15,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from src.strategies.genge_opportunity_discovery import selection_framework_v31
+from src.strategies.genge_opportunity_discovery import production_model, selection_framework_v31
 
 DISCLAIMER = "仅用于公开数据长期研究与人工复核，不构成买入或卖出建议，不应自动交易。"
-POLICY_VERSION = "long_term_formal_buy_v2_v31_frozen"
+POLICY_VERSION = "long_term_formal_buy_v3_gen_ge_v3_1_1_production"
 
 DEFENSIVE_MARKETS = {"RED", "CRISIS", "RISK_OFF", "EXTREME_RISK"}
 BLOCKING_EVENT_RISKS = {"HIGH", "CRITICAL", "EXTREME"}
@@ -246,10 +246,25 @@ def evaluate_long_term_candidate(
         v31_input["v31_current_price"] = plan.get("raw_latest_close")
     assessment = selection_framework_v31.assess_v31(v31_input)
 
+    production_input = dict(v31_input)
+    production_input.update(
+        {
+            "v32_has_position": False,
+            "valuation_model_execution_state": diagnostics["valuation_model_execution_state"],
+            "valuation_routing_confidence": diagnostics["valuation_routing_confidence"],
+            "earnings_quality_confidence": valuation.get("earnings_quality_confidence") or "",
+            "financial_review_status": valuation.get("financial_review_status") or "",
+            "valuation_diagnostic_status": valuation.get("valuation_diagnostic_status") or "",
+        }
+    )
+    production = production_model.production_payload(production_input)
+
     if not assessment.buy_ready:
         blockers.extend(f"v31:{item}" for item in assessment.blockers)
+    if assessment.buy_ready and production["production_action"] != "BUY":
+        blockers.append(f"production_action_not_buy:{production['production_action']}")
     blockers = list(dict.fromkeys(blockers))
-    eligible = not blockers and assessment.buy_ready
+    eligible = not blockers and assessment.buy_ready and production["production_action"] == "BUY"
 
     entry = _entry_plan(plan)
     result = {
@@ -278,6 +293,7 @@ def evaluate_long_term_candidate(
         "disclaimer": DISCLAIMER,
     }
     result.update(assessment.as_dict())
+    result.update(production)
     return result
 
 
@@ -319,6 +335,14 @@ V31_REPORT_FIELDS = [
     "v31_buy_ready", "v31_blockers",
 ]
 
+PRODUCTION_REPORT_FIELDS = [
+    "production_model_version", "production_model_name", "production_promotion_decision",
+    "production_sell_contract", "production_action", "production_target_position_fraction",
+    "valuation_confidence", "valuation_confidence_reason_codes", "reason_codes",
+    "normalized_earnings", "realistic_growth", "market_implied_growth", "expectation_gap",
+    "neutral_value", "price_to_neutral", "production_model_frozen",
+]
+
 
 def write_report(
     report_root: Path,
@@ -339,6 +363,7 @@ def write_report(
         "code", "stock_name", "industry", "long_term_classification",
         "long_term_formal_buy_eligible", "long_term_blockers",
         *V31_REPORT_FIELDS,
+        *PRODUCTION_REPORT_FIELDS,
         "market_regime_status", "event_risk_level", "real_reward_risk_ratio",
         "valuation_model_execution_state", "valuation_primary_strategy_id",
         "valuation_routing_confidence", "valuation_diagnostic_status",
@@ -365,7 +390,10 @@ def write_report(
         "blocked_count": len(rows) - len(eligible),
         "formal_buy_codes": [r["code"] for r in eligible],
         "policy_version": POLICY_VERSION,
-        "frozen_v31_required": True,
+        "production_model_version": production_model.PRODUCTION_MODEL_VERSION,
+        "production_promotion_decision": production_model.PRODUCTION_DECISION,
+        "frozen_v31_buy_and_sell_contract_required": True,
+        "valuation_confidence_gate_required": True,
         "legacy_exit_profile_is_long_term_veto": False,
         "no_auto_trade": True,
     }
@@ -374,7 +402,7 @@ def write_report(
     )
 
     lines = [
-        "# Long-Term Formal BUY Review — Frozen V3.1",
+        "# Long-Term Formal BUY Review - GenGe V3.1.1 Production",
         "",
         DISCLAIMER,
         "",
@@ -383,6 +411,7 @@ def write_report(
         "- formal TRY_POSITION: disabled",
         "- legacy 60-day exit-profile shortage is not by itself a long-term veto",
         "- missing V3.1 qualitative evidence remains UNKNOWN and blocks Formal BUY",
+        "- LOW/INVALID valuation confidence always returns HOLD_REVIEW",
         "",
     ]
     for i, row in enumerate(rows, 1):
@@ -392,6 +421,8 @@ def write_report(
             f"- V3.1 class: {row.get('v31_candidate_class','')}",
             f"- V3.1 score: {row.get('v31_score_total','')}",
             f"- V3.1 gates passed: {row.get('v31_hard_gates_passed','')}",
+            f"- production action: {row.get('production_action','')}",
+            f"- valuation confidence: {row.get('valuation_confidence','')}",
             f"- current action: {row['current_action']}",
             f"- entry: {row['entry_low']} ~ {row['entry_high']}",
             f"- invalidation: {row['risk_invalidation_price']}",

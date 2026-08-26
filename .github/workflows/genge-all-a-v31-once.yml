@@ -1,4 +1,4 @@
-name: GenGe All-A V3.1 One Shot
+name: GenGe All-A V3.1.1 One Shot
 
 on:
   workflow_dispatch:
@@ -28,7 +28,8 @@ jobs:
             tests/test_genge_valuation_model_routing.py \
             tests/test_genge_resource_asset_valuation.py \
             tests/test_genge_resource_routing_v31.py \
-            tests/test_genge_v31_execution_extensions.py
+            tests/test_genge_v31_execution_extensions.py \
+            tests/test_genge_production_model.py
       - name: Restore all-A state
         uses: actions/cache/restore@v4
         with:
@@ -128,6 +129,12 @@ jobs:
       - name: Map resource scenarios into V3.1
         run: |
           python -m src.strategies.genge_opportunity_discovery.v31_resource_scenario_merge --v31-dir reports/v31_review --resource-root reports/valuation_research_queue --output-dir reports/v31_review_enriched
+      - name: Build GenGe V3.1.1 production candidate and holding decisions
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.production_decision_scan \
+            --candidate-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --holdings-md CURRENT_HOLDINGS.md \
+            --output-dir reports/production_decisions
       - name: Validate every industry represented
         run: |
           python - <<'PY'
@@ -139,6 +146,8 @@ jobs:
           represented={r.get('industry','') for r in source if r.get('industry','')}
           missing=sorted(clean-represented); assert not missing, f'missing industries: {missing}'
           v31=list(csv.DictReader(Path('reports/v31_review_enriched/v31_review_queue_enriched.csv').open(encoding='utf-8'))); assert v31
+          production=list(csv.DictReader(Path('reports/production_decisions/production_decisions.csv').open(encoding='utf-8'))); assert production
+          assert all(r['production_model_version']=='GEN_GE_V3_1_1_PRODUCTION' for r in production)
           print(json.dumps({'clean_industries':len(clean),'represented':len(represented),'v31_candidates':len(v31)},ensure_ascii=False,indent=2))
           PY
       - name: Save caches
@@ -168,4 +177,5 @@ jobs:
             reports/valuation_research_queue
             reports/v31_review
             reports/v31_review_enriched
+            reports/production_decisions
           if-no-files-found: error

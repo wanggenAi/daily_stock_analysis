@@ -1,6 +1,16 @@
 # MARKET_RESEARCH_LOG_2026-08-26
 
-> Production V3.1 hourly scan handoff. Repository `main` remains the source of truth. This log records completed production artifacts and is not an automatic trading instruction.
+> Production GenGe V3.1.1 hourly scan handoff. Repository `main` remains the source of truth. This log records completed production artifacts and is not an automatic trading instruction.
+
+## GenGe V3.1.1 production promotion and current-date dry-run
+
+- Production decision: `PROMOTE_CONFIDENCE_GATE_ONLY`.
+- Current version: `GEN_GE_V3_1_1_PRODUCTION`.
+- Round 8 discovery passed all frozen thresholds. Round 9 confirmed PIT, confidence, Sharpe, drawdown, CAGR and cash requirements; full V3.2 was rejected because its 12-month SELL opportunity cost exceeded the frozen limit.
+- The original immediate V3.1 SELL ladder remains active. LOW/INVALID valuation confidence now forces HOLD_REVIEW; Hard Gate FAIL still forces EXIT.
+- Current-date dry-run used the latest accepted 2026-08-25 observations and explicit UNKNOWN/null for unavailable valuation inputs. `603658` plus confirmed holdings `603369`, `001316`, `600276`, `600406` all return HOLD_REVIEW / Confidence INVALID until normalized earnings, realistic/implied growth and neutral value are refreshed. No mechanical BUY/SELL was emitted.
+- Personal cost was read only for holding reconciliation and was not used by any decision.
+- Research stops here. No Round 10 or V3.3 is authorized.
 
 ## Prior runs retained
 
