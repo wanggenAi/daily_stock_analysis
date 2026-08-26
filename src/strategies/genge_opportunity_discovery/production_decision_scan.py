@@ -70,11 +70,10 @@ def read_holdings_markdown(path: Path) -> list[dict[str, Any]]:
 
 
 def _candidate_policy_matches_production(candidate: Mapping[str, Any]) -> bool:
-    """Only reuse an upstream decision when its exact frozen policy is identical.
+    """Report whether upstream claims the same frozen policy.
 
-    The repository previously emitted a different implementation under the same
-    human-facing V3.1.1 version label.  Version equality alone is therefore not
-    sufficient evidence of decision parity.
+    This is audit metadata only. Production-owned decision fields are always
+    recomputed by ``production_payload`` and are never reused from artifacts.
     """
     return bool(
         str(candidate.get("production_model_version") or "").strip() == PRODUCTION_MODEL_VERSION
@@ -100,13 +99,14 @@ def build_decisions(
         # Kept only as an input alias for older upstream payloads; V3.1.1 does
         # not depend on V3.2 policy or SELL confirmation.
         merged["v32_has_position"] = bool(holding)
-        payload = production_payload(merged)
 
-        upstream_policy_reused = bool(not holding and _candidate_policy_matches_production(candidate))
-        if upstream_policy_reused:
-            for key in tuple(payload):
-                if str(merged.get(key) or "").strip():
-                    payload[key] = merged[key]
+        # Authority boundary: artifacts may supply raw/derived inputs, but every
+        # production-owned gate/decision field is generated fresh here. Never
+        # copy production_payload keys back from an upstream CSV, even when its
+        # version/policy labels match, because labels do not prove freshness or
+        # provenance and stale/tampered artifacts must not control live output.
+        payload = production_payload(merged)
+        upstream_policy_matches = bool(not holding and _candidate_policy_matches_production(candidate))
 
         action = payload["production_action"]
         if action not in ALLOWED_ACTIONS:
@@ -125,7 +125,8 @@ def build_decisions(
                 "source_expectation_gap": merged.get("v31_expectation_gap_pct") or "",
                 "source_neutral_value": merged.get("v31_neutral_value") or "",
                 "source_current_price": merged.get("v31_current_price") or merged.get("raw_latest_close") or "",
-                "upstream_policy_reused": upstream_policy_reused,
+                "upstream_policy_reused": False,
+                "upstream_policy_matches": upstream_policy_matches,
                 "confirmed_quantity": holding.get("confirmed_quantity") or "",
                 "display_only_average_cost": holding.get("display_only_average_cost") or "",
                 "holding_evidence_date": holding.get("holding_evidence_date") or "",
@@ -155,9 +156,9 @@ def write_reports(
         "valuation_confidence_reason_codes", "reason_codes", "normalized_earnings",
         "realistic_growth", "market_implied_growth", "expectation_gap", "neutral_value",
         "current_price", "price_to_neutral", "hard_gate_failures", "hard_gate_unknowns",
-        "upstream_policy_reused", "confirmed_quantity", "display_only_average_cost",
-        "holding_evidence_date", "cost_basis_used_by_decision", "production_model_frozen",
-        "no_auto_trade",
+        "upstream_policy_reused", "upstream_policy_matches", "confirmed_quantity",
+        "display_only_average_cost", "holding_evidence_date", "cost_basis_used_by_decision",
+        "production_model_frozen", "no_auto_trade",
     ]
     extras = sorted({key for row in rows for key in row if key not in preferred})
     with (output_dir / "production_decisions.csv").open("w", encoding="utf-8", newline="") as stream:
@@ -177,13 +178,15 @@ def write_reports(
             and execution_universe_status(row.get("code")) != "EXECUTION_ELIGIBLE"
             for row in candidate_rows
         ),
-        "upstream_policy_reused_count": sum(bool(row["upstream_policy_reused"]) for row in rows),
+        "upstream_policy_reused_count": 0,
+        "upstream_policy_match_count": sum(bool(row["upstream_policy_matches"]) for row in rows),
         "action_counts": {
             action: sum(row["production_action"] == action for row in rows)
             for action in sorted(ALLOWED_ACTIONS)
         },
         "cost_basis_used_by_decision": False,
         "v32_sell_confirmation_enabled": False,
+        "fresh_production_decision_authority": True,
         "no_auto_trade": True,
     }
     (output_dir / "production_decision_summary.json").write_text(
@@ -194,6 +197,7 @@ def write_reports(
         "",
         "Manual execution only. Personal cost basis is displayed for reconciliation and never used by the decision.",
         f"Frozen policy source: `{PRODUCTION_POLICY_SOURCE}`.",
+        "Production gate and action are recomputed fresh; upstream decision fields are never reused.",
         "",
     ]
     for row in rows:
@@ -204,7 +208,8 @@ def write_reports(
                 f"- valuation confidence: {row['valuation_confidence']}",
                 f"- price / neutral: {row['price_to_neutral']}",
                 f"- reason codes: {row['reason_codes']}",
-                f"- upstream exact-policy decision reused: {row['upstream_policy_reused']}",
+                f"- upstream exact-policy label matches: {row['upstream_policy_matches']}",
+                "- upstream decision reused: False",
                 "",
             ]
         )
