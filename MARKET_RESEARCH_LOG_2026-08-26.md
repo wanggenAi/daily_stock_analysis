@@ -8,74 +8,38 @@
 - Current version: `GEN_GE_V3_1_1_PRODUCTION`.
 - Round 8 discovery passed all frozen thresholds. Round 9 confirmed PIT, confidence, Sharpe, drawdown, CAGR and cash requirements; full V3.2 was rejected because its 12-month SELL opportunity cost exceeded the frozen limit.
 - The original immediate V3.1 SELL ladder remains active. LOW/INVALID valuation confidence now forces HOLD_REVIEW; Hard Gate FAIL still forces EXIT.
-- Current-date dry-run used the latest accepted 2026-08-25 observations and explicit UNKNOWN/null for unavailable valuation inputs. `603658` plus confirmed holdings `603369`, `001316`, `600276`, `600406` all return HOLD_REVIEW / Confidence INVALID until normalized earnings, realistic/implied growth and neutral value are refreshed. No mechanical BUY/SELL was emitted.
-- Personal cost was read only for holding reconciliation and was not used by any decision.
-- Research stops here. No Round 10 or V3.3 is authorized.
+- The original current-date dry-run and earlier intraday scans are retained in git history. No Round 10 or V3.3 is authorized.
 
 ## Prior runs retained
 
-01:10, 03:06, 05:06, 06:09, 07:08, 12:08 and 13:08 CST scans are retained by the durable ledger/history. Formal BUY remained NONE. `603658 安图生物` remained the only execution-eligible durable deep-research candidate; its 2026H1 attributable profit -12.94% YoY and operating cash flow -47.38% YoY remain controlling blockers.
+01:10, 03:06, 05:06, 06:09, 07:08, 12:08, 13:08, 14:11, 15:07, 16:06 and 17:10 CST scans are retained by the durable ledger/history. Formal BUY remained NONE. `603658 安图生物` remained the only execution-eligible durable deep-research candidate; its 2026H1 attributable profit -12.94% YoY, operating cash flow -47.38% YoY and capacity-project reallocation remain controlling blockers.
 
 ---
 
-## 2026-08-26 14:11 CST — opportunity + holdings-risk refresh
+## 2026-08-26 19:07 CST — opportunity + full CURRENT_HOLDINGS risk refresh
 
 ### Fresh-data / production guardrails
 
-- Re-read current `main` `AGENTS.md`, `CURRENT_HOLDINGS.md`, `V31_CANDIDATE_LEDGER.md` and the current daily durable log before assessment; repository rules remain controlling.
-- Public retrieval did not yield a clean independently accepted 2026-08-26 executable intraday quote for the candidate/holding set. Therefore **no Formal BUY/ADD** and no purely valuation-driven REDUCE is generated from intraday price.
-- Latest accepted closes used for context where recovered: 今世缘 27.82, 润贝航科 26.74, 恒瑞医药 46.49 on 2026-08-25. 国电南瑞 was not freshly re-verified in this interval.
+- Re-read current `main` `AGENTS.md`, `CURRENT_HOLDINGS.md`, `V31_CANDIDATE_LEDGER.md`, `CURRENT_MARKET_RESEARCH.md`, `RESEARCH_QUEUE.md`, `MODEL_EVOLUTION_LOG.md` and today's durable market log. Current repository rules remain controlling.
+- `603658 安图生物`: public sources now consistently observe ~33.48–33.49 during 2026-08-26, but the company IR quote remains internally inconsistent and a second independently accepted 15:00 close was not recovered. Therefore the execution-grade accepted close remains 34.17 on 2026-08-25 and **Formal BUY/ADD remains blocked**.
+- No new execution-eligible A1/A2 candidate was established. `603658` remains WAIT / Formal BUY = NO.
 
-### Candidate opportunity status
+### Candidate delta
 
-- `603658 安图生物`: **WAIT / Formal BUY = NO / RESEEN**. Latest accepted price remains 34.17 CNY on 2026-08-25; observed entry band remains 33.58–34.15. Price proximity cannot override the verified H1 profit/cash-flow deterioration and incomplete moat/normalized-earnings/Bear-Base-Bull/expectation-gap work.
-- No NEW or UPGRADED executable A1/A2 candidate. No accepted PRICE_ONLY_CHANGE.
+- `603658 安图生物`: **RESEEN / PRICE_OBSERVED_ONLY**; last_seen -> 19:07 CST; seen_count -> 12. H1 earnings/cash-flow weakness, incomplete normalized Bear/Base/Bull valuation and the unresolved capacity-expansion-to-R&D capital-allocation signal remain controlling blockers. No tier, valuation or entry-band upgrade.
 
-### Holding risk status
+### Holdings-risk review
 
-- `603369 今世缘`: **HOLD_REVIEW**. Verified 2026H1 revenue 64.35亿 RMB, -7.41% YoY. The detailed filing also shows operating cash flow 16.16亿, +50.31%, with improvement attributed partly to higher customer prepayments and lower tax cash outflow. Structural baijiu demand remains a V3.1 concern, but this interval adds no evidence sufficient to convert the prior HOLD_REVIEW into formal REDUCE/EXIT. Do not ADD until long-term-demand and normalized-earnings valuation are re-underwritten.
-- `001316 润贝航科`: **HOLD**. Verified 2026H1 revenue 5.732亿 +21.97%, attributable profit 1.119亿 +44.82%, deduct-profit +45.14%, operating cash flow 1.194亿 +26.52%; self-developed product revenue +35.78%. Current evidence supports rather than falsifies the thesis.
-- `600276 恒瑞医药`: **HOLD_REVIEW**. Previously identified H1 deduct-profit and operating-cash-flow deterioration remains the material risk watch; no new evidence this interval establishes pipeline/moat failure or a formal REDUCE/EXIT condition. Latest accepted close 46.49 on 2026-08-25.
-- `600406 国电南瑞`: **HOLD**. No newly accepted evidence in this interval falsifies grid digitization/UHV demand or grid-control/customer-certification moat. Fresh-price/valuation evidence remains incomplete, so no ADD/valuation-driven REDUCE is emitted.
-- No action is based on personal cost basis or ordinary price fluctuation.
+- **600879 航天电子: REDUCE — NEW MATERIAL HOLDING RISK.** 2026H1 revenue 45.30亿元, -22.19% YoY; attributable profit 4058.92万元, -76.63%; deduct-profit 2272.40万元, -84.90%; operating cash flow remains deeply negative at -23.46亿元. This is not a one-period ordinary fluctuation: H1 revenue had already fallen about 20% in 2024 and 24.5% in 2025, while H1 attributable profit fell about 35.8%, 30.4% and now 76.6% across 2024–2026. The company attributes the current decline to product delivery progress below expectation and lower pricing on some products. Long-term aerospace-electronics/unmanned-system demand and technical/qualification moat are **not** judged invalidated; overseas unmanned-system orders/receipts are still described as improving. However, sustained delivery/earnings deterioration plus price pressure creates a negative expectation gap. Fresh 2026-08-26 close is **14.23 CNY** (15:00:02), flat on the day; reported TTM PE is about **205x**, versus the referenced industry median around 50x. Under V3.1 this produces a **REDUCE**, not EXIT: de-risk exposure until delivery normalization and earnings quality are demonstrated. **REDUCE trigger:** sustained revenue/profit contraction + product pricing pressure + valuation far above earnings support. **Escalate to EXIT if:** H2/next report confirms continued delivery weakness or pricing erosion, core order/market-share/qualification moat deteriorates, or normalized Bear/Base value remains materially below market after refreshed valuation. **Cancel REDUCE / return HOLD if:** delivery slippage is demonstrably temporary, H2 revenue/deduct-profit recover materially with cash conversion, and refreshed normalized valuation restores a positive expectation gap.
+- `003816 中国广核`: **HOLD**. 2026H1 revenue -2.76% YoY but attributable profit +2.66%; no hard thesis break found. Nuclear long-term demand/asset moat remains intact.
+- `600900 长江电力`: **HOLD**. Latest relevant disclosure is controlling-shareholder accumulation through 2026-08-22; no new thesis-break evidence found in this interval.
+- `600795 国电电力`, `601985 中国核电`, `600674 川投能源`, `600905 三峡能源`, `601872 招商轮船`, `600026 中远海能`, `600938 中国海油`, `002053 云南能投`, `600312 平高电气`, `600089 特变电工`, `600875 东方电气`, `601899 紫金矿业`, `600522 中天科技`, `601012 隆基绿能`, `601919 中远海控`, `600071 凤凰光学`, `600118 中国卫星`, `600893 航发动力`: **HOLD / HOLD_REVIEW as previously applicable; no newly verified 2026-08-26 evidence in this interval was sufficient to create an additional REDUCE/EXIT.** Ordinary price movement and personal cost basis were not used as sell triggers.
 
 ### Delta / notification decision
 
-- **Ledger:** RESEEN `603658`; seen_count -> 8; last_seen -> 14:11 CST.
-- **NEW / UPGRADED / DOWNGRADED / INVALIDATED / PRICE_ONLY_CHANGE:** none this interval.
-- **Holding NEW REDUCE / EXIT:** none.
+- **Ledger:** `603658` RESEEN; PRICE_OBSERVED_ONLY; no BUY upgrade.
+- **NEW / UPGRADED candidate:** none.
 - **Formal BUY / ADD:** NONE.
-- No production-chain/data-source failure was established that invalidates the scan.
-- **Notification trigger:** none. This is a no-material-change refresh; do not notify the user.
-
----
-
-## 2026-08-26 15:07 CST — post-close opportunity + holdings-risk refresh
-
-### Fresh-data / production guardrails
-
-- Re-read current `main` `AGENTS.md`, `CURRENT_HOLDINGS.md`, `V31_CANDIDATE_LEDGER.md`, `CURRENT_MARKET_RESEARCH.md`, `RESEARCH_QUEUE.md` and this daily durable log before assessment.
-- The market had just closed. Public quote retrieval still did not provide a clean independently cross-verified 2026-08-26 closing-price set for all four holdings plus the executable deep-research candidate. Under the fresh-data invariant, **no new Formal BUY/ADD and no valuation-only REDUCE** can be emitted from unverified prices.
-- Latest independently accepted price context remains from 2026-08-25 where available. Price-only movement is not treated as a thesis change.
-
-### Candidate opportunity status
-
-- `603658 安图生物`: **WAIT / Formal BUY = NO / RESEEN**. Latest accepted price remains 34.17 CNY on 2026-08-25; observed entry band remains 33.58–34.15. The verified 2026H1 deterioration remains controlling: revenue 20.58亿, -0.12% YoY; attributable profit 4.97亿, -12.94%; operating cash flow 2.16亿, -47.38%. No fair-value or entry-band upgrade is justified before normalized earnings, moat and expectation-gap work is completed.
-- No NEW or UPGRADED execution-eligible A1/A2 candidate was established in this interval.
-
-### Holding risk status
-
-- `603369 今世缘`: **HOLD_REVIEW**. 2026H1 revenue 64.35亿, -7.4%; attributable profit 20.82亿, -6.6%; deduct-profit -5.8%, while operating cash flow improved to 16.16亿, +50.3%. Structural baijiu demand and channel pressure remain material thesis risks, but the current evidence is not yet a formal REDUCE/EXIT trigger because cash flow did not deteriorate and Q2 showed a partial earnings recovery. **No ADD** until long-term demand and normalized earnings are re-underwritten. 
-- `001316 润贝航科`: **HOLD**. 2026H1 revenue 5.73亿, +21.97%; attributable profit 1.12亿, +44.82%; self-developed aviation-material revenue +35.78%. No new thesis-break evidence was found; current fundamentals remain supportive.
-- `600276 恒瑞医药`: **HOLD_REVIEW**. 2026H1 revenue 154.56亿, -1.94%; attributable profit 44.65亿, +0.34%; deduct-profit 37.30亿, -12.71%; operating cash flow 19.87亿, -53.80%. The earnings-quality deterioration remains a real watch item, but no new evidence shows a durable innovation-pipeline/moat break; therefore no formal REDUCE/EXIT this interval.
-- `600406 国电南瑞`: **HOLD**. No newly verified material event falsifies long-term grid digitization/UHV demand or its grid-control/customer-certification moat. The scheduled 2026H1 report is still an important next evidence point; without a fresh accepted close, no valuation-only action is emitted.
-- No holding action is based on personal cost basis, unrealized P/L or ordinary daily volatility.
-
-### Delta / notification decision
-
-- **Ledger:** `603658` RESEEN; seen_count -> 9; last_seen -> 15:07 CST.
-- **NEW / UPGRADED / DOWNGRADED / INVALIDATED / PRICE_ONLY_CHANGE:** none.
-- **Holding NEW REDUCE / EXIT:** none.
-- **Formal BUY / ADD:** NONE.
-- **Production/data status:** no hard CI/production failure established; only public close-price verification remained incomplete immediately after the close, so the system correctly failed closed on price-dependent actions.
-- **Notification trigger:** none. No user-facing alert should be sent for this interval.
+- **Holding risk:** `600879 航天电子` **NEW REDUCE**.
+- **Production/data status:** no CI/production-chain failure established. Fresh-price invariant correctly continues to fail closed for `603658` Formal BUY.
+- **Notification trigger:** YES — holding-level REDUCE risk on `600879 航天电子`.
