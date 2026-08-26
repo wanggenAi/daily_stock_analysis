@@ -1,0 +1,22 @@
+{
+  "source": "persisted round-2 PIT panels only",
+  "production_rules_changed": false,
+  "no_best_variant_selection": true,
+  "corrected_engine_change": "execute explicit sells first, then scale only positive BUY requests to available cash; no cross-normalization of unrelated holdings",
+  "true_buyhold_definition": "initial equal-dollar purchase, zero subsequent rebalancing",
+  "forward_horizons_trading_days": [
+    252,
+    504
+  ],
+  "proxy_windows": [
+    504,
+    756,
+    1260
+  ],
+  "limits": [
+    "still conditional on the pre-declared research universe passing qualitative hard gates",
+    "does not reconstruct historical moat/demand/predictability states",
+    "no-sell attribution is path-dependent and not an exact causal decomposition",
+    "PE/PB are historical-relative proxies, not intrinsic DCF/NAV values"
+  ]
+}
