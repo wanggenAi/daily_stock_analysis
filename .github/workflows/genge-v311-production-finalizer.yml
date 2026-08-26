@@ -1,0 +1,188 @@
+name: GenGe V3.1.1 Production Finalizer
+
+on:
+  workflow_run:
+    workflows: ["GenGe Opportunity Discovery"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Completed GenGe Opportunity Discovery run id"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: genge-v311-production-finalizer-${{ github.event.workflow_run.id || inputs.source_run_id }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  finalize-v311-production:
+    name: V3.1.1 authoritative production decision
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          (github.event.workflow_run.conclusion == 'success' &&
+           (github.event.workflow_run.event == 'schedule' || github.event.workflow_run.event == 'workflow_dispatch')) }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout frozen production code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+
+      - name: Install production dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Resolve source discovery run
+        id: source
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          MANUAL_RUN_ID: ${{ inputs.source_run_id }}
+          WORKFLOW_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            RUN_ID="$MANUAL_RUN_ID"
+            HEAD_SHA="manual-source-run"
+          else
+            RUN_ID="$WORKFLOW_RUN_ID"
+            HEAD_SHA="$WORKFLOW_HEAD_SHA"
+          fi
+          test -n "$RUN_ID"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact discovery artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-all-a-production-report
+          path: incoming
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Locate exact Top5 discovery input
+        id: candidate
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          matches = sorted(Path("incoming").rglob("daily_candidate_top5.csv"))
+          if not matches:
+              raise SystemExit("daily_candidate_top5.csv missing from source discovery artifact")
+          # The artifact should contain exactly one completed latest report. If
+          # multiple historical directories are present, take the newest path
+          # deterministically and record it for audit.
+          source = matches[-1]
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
+              out.write(f"source_csv={source}\n")
+              out.write(f"source_dir={source.parent}\n")
+          print(f"source_candidate_csv={source}")
+          PY
+
+      - name: Run authoritative V3.1.1 production bridge
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.v311_production_bridge \
+            --source-csv "${{ steps.candidate.outputs.source_csv }}" \
+            --output-dir v311_production
+
+      - name: Validate production authority contract
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
+          SOURCE_HEAD_SHA: ${{ steps.source.outputs.head_sha }}
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          import os
+          from pathlib import Path
+
+          from src.strategies.genge_opportunity_discovery.production_model import (
+              ALLOWED_ACTIONS,
+              PRODUCTION_MODEL_VERSION,
+              PRODUCTION_POLICY_SOURCE,
+          )
+
+          root = Path("v311_production")
+          decisions = root / "production_decisions.csv"
+          summary_path = root / "production_decision_summary.json"
+          inputs = root / "v311_production_inputs.csv"
+          if not decisions.exists() or not summary_path.exists() or not inputs.exists():
+              raise SystemExit("V3.1.1 production outputs incomplete")
+
+          with decisions.open(encoding="utf-8") as handle:
+              rows = list(csv.DictReader(handle))
+          summary = json.loads(summary_path.read_text(encoding="utf-8"))
+          if not rows:
+              raise SystemExit("V3.1.1 production produced zero eligible rows")
+          assert summary["row_count"] == len(rows)
+          assert summary["production_model_version"] == PRODUCTION_MODEL_VERSION
+          assert summary["production_policy_source"] == PRODUCTION_POLICY_SOURCE
+          assert summary["upstream_policy_reused_count"] == 0
+          for row in rows:
+              assert row["production_model_version"] == PRODUCTION_MODEL_VERSION
+              assert row["production_policy_source"] == PRODUCTION_POLICY_SOURCE
+              assert row["production_action"] in ALLOWED_ACTIONS
+              assert row["upstream_policy_reused"] == "False"
+              assert row["no_auto_trade"] == "True"
+
+          provenance = {
+              "source_workflow": "GenGe Opportunity Discovery",
+              "source_run_id": os.environ["SOURCE_RUN_ID"],
+              "source_head_sha": os.environ["SOURCE_HEAD_SHA"],
+              "source_artifact": "genge-all-a-production-report",
+              "source_candidate_file": "daily_candidate_top5.csv",
+              "production_model_version": PRODUCTION_MODEL_VERSION,
+              "production_policy_source": PRODUCTION_POLICY_SOURCE,
+              "production_authority": "fresh_recompute_no_upstream_decision_reuse",
+              "no_auto_trade": True,
+          }
+          (root / "production_provenance.json").write_text(
+              json.dumps(provenance, ensure_ascii=False, indent=2), encoding="utf-8"
+          )
+          print(json.dumps(provenance, ensure_ascii=False))
+          PY
+
+      - name: Publish authoritative V3.1.1 summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import os
+          from pathlib import Path
+
+          target = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          report = Path("v311_production/production_decisions.md")
+          if report.exists():
+              content = report.read_text(encoding="utf-8")
+          else:
+              content = "# GenGe V3.1.1 Production\n\nProduction finalizer did not produce a decision report. Inspect this run before using any research signal.\n"
+          with target.open("a", encoding="utf-8") as stream:
+              stream.write("# Authoritative Production Layer\n\n")
+              stream.write(content)
+          PY
+
+      - name: Upload V3.1.1 authoritative production artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-v311-production-${{ steps.source.outputs.run_id }}
+          path: v311_production
+          if-no-files-found: error
