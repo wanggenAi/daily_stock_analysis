@@ -39,7 +39,14 @@ def metrics_with_explicit_initial(nav: pd.Series, label: str) -> dict:
     x = nav.copy().sort_index()
     if x.index[0] > core.START_TS:
         x = pd.concat([pd.Series([1.0], index=[core.START_TS]), x])
-    return core.metrics(x, label)
+    summary = core.metrics(x, label)
+    annual_nav = x.resample("YE").last()
+    annual_returns = annual_nav.pct_change()
+    if not annual_returns.empty:
+        annual_returns.iloc[0] = annual_nav.iloc[0] / x.iloc[0] - 1.0
+        summary["worst_calendar_year"] = float(annual_returns.min())
+        summary["best_calendar_year"] = float(annual_returns.max())
+    return summary
 
 
 def result_summary(result: core.Result, label: str) -> dict:

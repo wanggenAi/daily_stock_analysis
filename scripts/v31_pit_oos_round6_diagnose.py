@@ -166,6 +166,39 @@ def growth_diagnostics(base: Path, names: dict[str, str]) -> pd.DataFrame:
     return pd.DataFrame(rows)
 
 
+def include_first_calendar_year(base: Path, summary: pd.DataFrame) -> pd.DataFrame:
+    """Correct the legacy metric that drops the first calendar-year return."""
+    corrected = summary.copy()
+    for idx, row in corrected.iterrows():
+        group = str(row["group"])
+        variant = row["variant"]
+        if variant == "csi300":
+            path, value_col = base / "csi300.csv", None
+        elif variant == "expectation_gap_10y":
+            path, value_col = base / f"equity_expectation_{group}.csv", "nav"
+        elif variant == "round5_5y_15x":
+            path, value_col = base / f"equity_round5_{group}.csv", "nav"
+        elif variant == "universal_geomean":
+            path, value_col = base / f"equity_universal_{group}.csv", "nav"
+        elif variant == "true_buyhold":
+            path, value_col = base / f"true_buyhold_{group}.csv", None
+        else:
+            continue
+
+        data = pd.read_csv(path)
+        dates = pd.to_datetime(data.iloc[:, 0], errors="coerce")
+        values = pd.to_numeric(data[value_col] if value_col else data.iloc[:, 1], errors="coerce")
+        nav = pd.Series(values.to_numpy(), index=dates).dropna().sort_index()
+        if nav.index[0] > pd.Timestamp("2018-01-01"):
+            nav = pd.concat([pd.Series([1.0], index=[pd.Timestamp("2018-01-01")]), nav])
+        annual_nav = nav.resample("YE").last()
+        annual_returns = annual_nav.pct_change()
+        annual_returns.iloc[0] = annual_nav.iloc[0] / nav.iloc[0] - 1.0
+        corrected.loc[idx, "worst_calendar_year"] = annual_returns.min()
+        corrected.loc[idx, "best_calendar_year"] = annual_returns.max()
+    return corrected
+
+
 def _forward_observation(
     price: pd.DataFrame,
     sale_date: pd.Timestamp,
@@ -289,7 +322,10 @@ def summarize_sells(outcomes: pd.DataFrame) -> pd.DataFrame:
 def main() -> None:
     assumptions = json.loads((BASE / "assumptions.json").read_text(encoding="utf-8"))
     names = {str(code): name for code, name in assumptions["universe"].items()}
-    headline = pd.read_csv(BASE / "headline.csv")
+    summary = include_first_calendar_year(BASE, pd.read_csv(BASE / "summary.csv"))
+    summary.to_csv(BASE / "summary.csv", index=False)
+    headline = summary[summary["group"] == "growth6"].copy()
+    headline.to_csv(BASE / "headline.csv", index=False)
     write_headline_json(BASE, headline)
 
     audit = audit_inputs(BASE, list(names), "growth6")

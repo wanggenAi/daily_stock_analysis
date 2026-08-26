@@ -44,7 +44,16 @@ jobs:
           git add backtests/v31_pit_oos_round7_cross_industry
           if ! git diff --cached --quiet; then
             git commit -m 'Store V3.1 Round-7 cross-industry OOS results'
-            git push
+            for attempt in 1 2 3; do
+              git pull --rebase origin main
+              if git push origin HEAD:main; then
+                break
+              fi
+              if [ "$attempt" -eq 3 ]; then
+                exit 1
+              fi
+              sleep $((attempt * 2))
+            done
           fi
 
       - name: Upload Round-7 artifact

@@ -23,7 +23,7 @@ It modestly improved capital use and return over the already-falsified Round-5 f
 | Round-5 5Y/15x | RMB 1.191m | 2.04% | -9.47% | 0.437 | -6.17% | 15.11% | 51 | 90.62% |
 | Universal PE/PB | RMB 2.007m | 8.40% | -43.01% | 0.490 | -23.48% | 28.67% | 78 | 39.35% |
 | True buy-and-hold | RMB 2.214m | 9.64% | -49.60% | 0.458 | -33.41% | 68.49% | n/a | n/a |
-| CSI 300 | RMB 1.116m | 1.28% | -45.60% | 0.165 | -21.63% | 36.07% | n/a | n/a |
+| CSI 300 | RMB 1.116m | 1.28% | -45.60% | 0.165 | -26.34% | 36.07% | n/a | n/a |
 
 Relative to Round 5, Round 6 added only RMB 12,354 of ending capital and 0.12 percentage points of CAGR. Average cash fell by 10.41 percentage points, but remained 80.21%. The price paid for that small deployment improvement was 10.56 percentage points of additional drawdown and a lower Sharpe ratio.
 

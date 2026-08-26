@@ -1,0 +1,53 @@
+{
+  "status": "research only; production V3.1 unchanged",
+  "round7_purpose": "cross-industry replication of the unchanged Round-6 economic model",
+  "universe": {
+    "601100": "恒立液压",
+    "002747": "埃斯顿",
+    "002050": "三花智控",
+    "600845": "宝信软件",
+    "002027": "分众传媒",
+    "600489": "中金黄金",
+    "600089": "特变电工",
+    "600887": "伊利股份"
+  },
+  "period": [
+    "2018-01-01",
+    "2026-08-24"
+  ],
+  "strict_pit": "financial metrics become usable from the later profit/cash-flow NOTICE_DATE; UPDATE_DATE ignored",
+  "round6_normalization_unchanged": "median latest 4 positive (TTM basic EPS * clipped deduct-profit quality), min 2; TTM cash conversion diagnostic only",
+  "realistic_growth_unchanged": "clip(min(~3y normalized-EPS CAGR, ~3y revenue CAGR + 5pp), 0, 30%)",
+  "valuation_unchanged": {
+    "horizon_years": 10,
+    "discount_rate": 0.1,
+    "terminal_growth": 0.03,
+    "terminal_multiple_formula": "1/(r-g)",
+    "implied_growth_search": [
+      0.0,
+      1.0
+    ]
+  },
+  "execution_thresholds": {
+    "buy": [
+      0.85,
+      0.75,
+      0.65
+    ],
+    "sell": [
+      1.2,
+      1.4,
+      1.7
+    ]
+  },
+  "one_way_cost": 0.001,
+  "rebalance": "month-end",
+  "buyhold_cost_accounting": "explicit original-capital observation retained before first-day purchase",
+  "comparators": [
+    "round5_5y_15x",
+    "universal_geomean",
+    "true_buyhold",
+    "CSI300"
+  ],
+  "scope_limit": "fixed-universe valuation/execution OOS; not historical qualitative hard-gate reconstruction"
+}
