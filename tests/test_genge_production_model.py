@@ -90,10 +90,11 @@ def test_parse_current_holdings_contract() -> None:
     assert {row["code"] for row in holdings} >= {"603369", "001316", "600276", "600406"}
 
 
-def test_scanner_preserves_authoritative_candidate_production_decision() -> None:
+def test_scanner_preserves_authoritative_candidate_only_with_exact_policy_source() -> None:
     row = {
         "code": "600000",
-        "production_model_version": "GEN_GE_V3_1_1_PRODUCTION",
+        "production_model_version": PRODUCTION_MODEL_VERSION,
+        "production_policy_source": PRODUCTION_POLICY_SOURCE,
         "production_action": "BUY",
         "valuation_confidence": "HIGH",
         "reason_codes": "V31_BUY_GATES_PASS;MARGIN_OF_SAFETY_PASS",
@@ -101,12 +102,30 @@ def test_scanner_preserves_authoritative_candidate_production_decision() -> None
     decision = build_decisions([row])[0]
     assert decision["production_action"] == "BUY"
     assert decision["valuation_confidence"] == "HIGH"
+    assert decision["upstream_policy_reused"] is True
+
+
+def test_same_version_legacy_policy_is_not_trusted() -> None:
+    # This reproduces the old name-only V3.1.1 ambiguity: a stale upstream row
+    # may carry the current version label but not the validated policy source.
+    row = {
+        "code": "600000",
+        "production_model_version": PRODUCTION_MODEL_VERSION,
+        "production_action": "BUY",
+        "valuation_confidence": "HIGH",
+        "reason_codes": "STALE_OLD_IMPLEMENTATION",
+    }
+    decision = build_decisions([row])[0]
+    assert decision["upstream_policy_reused"] is False
+    assert decision["production_action"] == "HOLD_REVIEW"
+    assert decision["valuation_confidence"] == "INVALID"
 
 
 def test_research_only_market_never_enters_production_candidate_output() -> None:
     research_only = {
         "code": "688001",
-        "production_model_version": "GEN_GE_V3_1_1_PRODUCTION",
+        "production_model_version": PRODUCTION_MODEL_VERSION,
+        "production_policy_source": PRODUCTION_POLICY_SOURCE,
         "production_action": "BUY",
         "valuation_confidence": "HIGH",
     }
