@@ -39,7 +39,7 @@ jobs:
         if: steps.existing.outputs.done != 'true'
         run: |
           python -m pip install --upgrade pip
-          pip install 'akshare>=1.12.0' 'pandas>=2.0.0' 'numpy>=1.24.0' tabulate
+          pip install 'akshare>=1.12.0' 'pandas>=2.0.0' 'numpy>=1.24.0' 'yfinance>=0.2.0' tabulate
 
       - name: Run locked round-3 diagnosis
         if: steps.existing.outputs.done != 'true'
