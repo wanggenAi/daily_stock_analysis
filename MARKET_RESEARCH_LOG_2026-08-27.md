@@ -35,3 +35,36 @@
 ### Notification decision
 
 - No notification trigger this round: no new A1/A2 in executable buy range; no new deep-research queue name; no material candidate valuation/entry-band change; no holding REDUCE/EXIT or hard-thesis invalidation; no confirmed production/data/CI failure that makes the scan unreliable.
+
+## 2026-08-27 01:08 CST — hourly opportunity + holdings-risk refresh
+
+### Data cutoff / reproducibility
+
+- Re-read repository truth sources before execution: `AGENTS.md`, `CURRENT_MARKET_RESEARCH.md`, `RESEARCH_QUEUE.md`, `MODEL_EVOLUTION_LOG.md`, `V31_CANDIDATE_LEDGER.md`, `CURRENT_HOLDINGS.md`, and the current market logs.
+- Holdings universe rebuilt exclusively from `CURRENT_HOLDINGS.md`: `603369 今世缘`, `001316 润贝航科`, `600276 恒瑞医药`, `600406 国电南瑞`.
+- Public post-close quote/news refresh cutoff: 2026-08-27 01:08 CST. Latest completed A-share trading day remains 2026-08-26.
+- Fresh-data invariant remains mandatory: no stale/unverified price can create Formal BUY/ADD.
+
+### Opportunity / ledger delta
+
+- `603658 安图生物`: **RESEEN / NO MATERIAL CHANGE**. Tier remains `WAIT`; Formal BUY = `NO`; production action remains `HOLD_REVIEW` because valuation confidence is INVALID. The latest accepted execution-grade exact close remains 34.17 CNY on 2026-08-25; a second independently accepted exact 2026-08-26 15:00 close was still not recovered. Existing blockers remain controlling: company-confirmed slower demand growth, homogeneous competition/procurement-price pressure, weakened H1 earnings/cash conversion, unresolved moat strength under that regime, and incomplete normalized Bear/Base/Bull reverse valuation.
+- Ledger persisted with `last_seen=2026-08-27 01:08 CST`, `seen_count=16`, latest run_id `hourly-20260827-0108`.
+- No new execution-eligible A1/A2; no UPGRADED/DOWNGRADED/INVALIDATED candidate; no Formal BUY/ADD.
+
+### Holdings risk delta
+
+- `603369 今世缘`: remains **HOLD_REVIEW / NO ADD**. Accepted 2026-08-26 close remains 28.10 CNY. No new filing/event since the prior refresh establishes a REDUCE/EXIT trigger or reverses the structural demand burden.
+- `001316 润贝航科`: remains **HOLD_REVIEW**, not REDUCE. The previously identified insider/shareholder reduction plan remains the controlling governance/supply-overhang watch. Fresh post-close sources now establish 2026-08-26 close at **26.69 CNY**. This closes the prior exact-price gap but does not by itself change action: 2026H1 operating growth remains strong and no new evidence links the sell plan to order, margin, cash-conversion or management-continuity deterioration. Escalate toward REDUCE only if those operating/governance signals deteriorate together.
+- `600276 恒瑞医药`: remains **HOLD_REVIEW**. Accepted 2026-08-26 close 46.74 CNY. No new pipeline/moat break, governance event, or REDUCE/EXIT trigger surfaced after the prior refresh.
+- `600406 国电南瑞`: remains **HOLD_REVIEW**. Accepted 2026-08-26 close 23.42 CNY. H1 cash-conversion/margin review remains controlling; no new order/moat evidence escalates action to REDUCE/EXIT.
+- **New REDUCE/EXIT:** NONE. **New hard-thesis invalidation:** NONE.
+
+### Ledger delta summary
+
+- `603658 安图生物`: `RESEEN / NO MATERIAL CHANGE`.
+- Holdings: `001316` has `PRICE_ONLY_CHANGE / PRICE_FRESHNESS_RESOLVED` to accepted 2026-08-26 close 26.69; no rating/action change.
+- No NEW / UPGRADED / DOWNGRADED / INVALIDATED executable opportunity in this run.
+
+### Notification decision
+
+- **NO USER NOTIFICATION.** No new A1/A2 entered an executable buy range; no new important name entered `CURRENT DEEP RESEARCH QUEUE`; no material candidate valuation/entry-band/tier change; no holding REDUCE/EXIT or hard-thesis invalidation; no confirmed production/data/CI failure that makes the scan unreliable. `001316` exact-price recovery is a data-quality resolution only and does not meet the notification threshold.
