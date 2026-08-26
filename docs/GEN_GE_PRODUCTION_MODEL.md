@@ -6,9 +6,19 @@
 
 Production decision: `PROMOTE_CONFIDENCE_GATE_ONLY`.
 
+Authoritative production policy source:
+
+`gen_ge_v3_1_1_confidence_gate_only_round8_round9_validated`
+
+The implementation entry point is `production_model.py`, which delegates to
+`selection_framework_v311.py`. Production does **not** import or execute
+`selection_framework_v32.py`. The rejected V3.2 two-month SELL confirmation is
+explicitly disabled.
+
 The model is frozen. Future research cannot directly change this module. A
-future V3.3 requires an explicit request, separate research code/branch, frozen
-out-of-sample tests, and a new promotion decision while V3.1.1 remains live.
+future model version requires an explicit user request, separate research code,
+frozen out-of-sample tests and a new promotion decision while V3.1.1 remains
+live.
 
 ## Scope
 
@@ -27,8 +37,8 @@ BUY keeps the complete frozen V3.1 order:
 3. normalized earnings, pessimistic/neutral/optimistic/extreme-stress values,
    realistic growth, market-implied growth, expectation gap, downside,
    risk-adjusted CAGR and falsification must be complete;
-4. the explicit quality, expectation-gap, valuation, risk/reward, exposure and
-   market-position buy conditions must PASS;
+4. the explicit valuation/risk/exposure/market-position V3.1 buy conditions
+   must PASS;
 5. price/neutral must reach the unchanged margin-of-safety BUY range, with
    reference bands at 0.85, 0.75 and 0.65;
 6. Valuation Confidence must be HIGH or MEDIUM.
@@ -70,24 +80,68 @@ Industry-specific executed valuation can supply the frozen V3.1 scenario fields
 when its semantics are equivalent and auditable. Missing or inconsistent inputs
 do not receive a synthetic value.
 
-## Valuation Confidence
+## Exact V3.1.1 Valuation Confidence contract
 
-`INVALID` covers missing/non-positive required valuation inputs or failed PIT
-integrity. `LOW` covers materially weak earnings history/quality, cash
-conversion, diagnostics or unstable growth. `MEDIUM` covers usable but less
-robust inputs. Complete robust inputs are `HIGH`.
+This section is intentionally narrow: it documents the confidence gate that was
+actually used by the frozen Round-8/9 `v31_1_confidence_gate_only` variant. It
+must not silently inherit additional V3.2 research rules.
 
-LOW/INVALID always returns `HOLD_REVIEW` and cannot create valuation BUY,
-REDUCE or CORE_ONLY. Hard Gate FAIL remains the only higher-priority override
-and always returns EXIT.
+Required finite current inputs are current price, positive normalized earnings,
+realistic growth, market-implied growth and positive neutral value. Missing or
+non-positive required valuation inputs are `INVALID`. When both a financial
+availability date and decision date are provided, a financial date later than
+the decision date is also `INVALID`.
+
+With required valuation inputs valid, confidence is `LOW` if any of the
+following frozen Round-8/9 conditions is true:
+
+- normalized-earnings observation count is below 3;
+- deduct-profit quality factor is missing or below 0.50;
+- cash conversion is missing or non-positive;
+- four-report realistic-growth range is above 0.15;
+- implied-growth status is `INPUT_INCOMPLETE` or
+  `IMPLIED_ABOVE_SEARCH_RANGE`.
+
+It is `MEDIUM` when no LOW condition exists but any of these conditions is true:
+
+- normalized-earnings observation count is below 4;
+- deduct-profit quality factor is below 0.80;
+- cash conversion is below 0.80;
+- four-report realistic-growth range is above 0.10;
+- realistic growth is at either frozen model boundary (<=0% or >=30%).
+
+Otherwise confidence is `HIGH`.
+
+LOW/INVALID always returns `HOLD_REVIEW` and cannot create mechanical valuation
+BUY, REDUCE or CORE_ONLY. Hard Gate FAIL remains the higher-priority override
+and always returns EXIT. MEDIUM/HIGH preserves the original immediate V3.1
+valuation action.
+
+Fields introduced only by the research-only V3.2 confidence implementation —
+for example valuation routing confidence, generic execution-state checks or
+extra financial-review status gates — are **not** part of this promoted V3.1.1
+confidence contract.
+
+## Policy-parity protection
+
+A historical upstream candidate row is not trusted merely because it carries
+`GEN_GE_V3_1_1_PRODUCTION`. Earlier code briefly used that same human-facing
+version label while delegating to a different V3.2-backed implementation.
+
+`production_decision_scan.py` therefore reuses an upstream decision only when
+both of these fields match the current frozen contract:
+
+- `production_model_version == GEN_GE_V3_1_1_PRODUCTION`;
+- `production_policy_source == gen_ge_v3_1_1_confidence_gate_only_round8_round9_validated`.
+
+Otherwise the row is recomputed through the current production model. Reports
+record whether an upstream exact-policy decision was reused.
 
 ## HOLD_REVIEW conditions
 
-`HOLD_REVIEW` is required for missing normalized earnings, realistic/implied
-growth, neutral value or price; failed or incomplete valuation/financial
-diagnostics; LOW/INVALID valuation confidence; or otherwise unreviewable
-current data. It is a safe request for evidence/valuation refresh, not a hidden
-BUY or SELL.
+`HOLD_REVIEW` is required when the V3.1 valuation itself is incomplete, or when
+the exact V3.1.1 confidence gate is LOW/INVALID. It is a safe request for an
+evidence/valuation refresh, not a hidden BUY or SELL.
 
 ## Data requirements
 
@@ -96,7 +150,16 @@ BUY or SELL.
 - daily price and valuation must be dated and code-normalized;
 - normalized earnings and confidence inputs must preserve source provenance;
 - current holdings require explicit user evidence; cost is display-only;
-- production reports must include reason codes and all valuation fields above.
+- production reports must include the exact policy source, reason codes and all
+  valuation fields above.
+
+## Historical simulator integrity
+
+The Round-8/9 final execution replay corrected a simulator-only issue without
+changing economic parameters: sparse-symbol returns are never forward-filled,
+missing/suspended quote days contribute zero return, and execution requires an
+observed valid quote on that exact date. The frozen confidence-gate promotion
+survived this corrected replay.
 
 ## Not suitable for
 
@@ -109,8 +172,7 @@ BUY or SELL.
 
 ## Known risks
 
-- strict confidence protection can leave many names in HOLD_REVIEW and retain
-  cash;
+- confidence protection can leave names in HOLD_REVIEW and retain cash;
 - valuation inputs and qualitative hard gates still require reliable current
   evidence and can be unavailable between filings;
 - some sectors need specialized valuation rather than the generic 10-year
