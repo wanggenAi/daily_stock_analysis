@@ -18,8 +18,8 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 
 - **execution eligibility:** ELIGIBLE
 - **first_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **last_seen:** 2026-08-26 07:08 CST production refresh
-- **seen_count:** 5
+- **last_seen:** 2026-08-26 12:08 CST production refresh
+- **seen_count:** 6
 - **first source run_id:** 32873471270
 - **latest source run_id:** 32907982933
 - **postscan source run_id:** 32907982947
@@ -32,10 +32,10 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 - **long-term demand logic:** PARTIALLY_SUPPORTED — IVD remains a durable diagnostic demand category; company has broad immunoassay/biochemistry/microbiology/molecular/POCT coverage, but the company-specific 5–10Y demand-growth case still needs evidence-backed quantification.
 - **moat / ASML test:** PARTIALLY_SUPPORTED — broad instrument/reagent platform, registrations/patents/R&D and installed service base are supportive, but customer stickiness, reagent pull-through, domestic/import competition and replacement difficulty still require a formal V3.1 moat audit.
 - **earnings / cash-flow conclusion:** DOWNGRADED / VERIFIED_WEAKENING — 2026H1 revenue 20.58 亿 RMB (=2.058bn RMB), YoY -0.12%; attributable net profit 4.97 亿 RMB, YoY -12.94%; operating cash flow 2.16 亿 RMB, YoY -47.38%. Earnings direction/quality is weaker and does not justify A-class promotion.
-- **current blockers:** H1 earnings direction and cash-flow conversion weakened materially; predictability, company-level long-term demand, moat durability and financial-safety hard gates are not fully completed; normalized earnings must be recalculated; Bear/Base/Bull valuation, implied expectations, expectation gap, risk-adjusted 3Y CAGR, downside and falsification remain incomplete. The observed entry band alone is insufficient.
+- **current blockers:** H1 earnings direction and cash-flow conversion weakened materially; predictability, company-level long-term demand, moat durability and financial-safety hard gates are not fully completed; normalized earnings must be recalculated; Bear/Base/Bull valuation, implied expectations, expectation gap, risk-adjusted 3Y CAGR, downside and falsification remain incomplete. The observed entry band alone is insufficient. Intraday 2026-08-26 price was not independently verified in the 12:08 scan, so fresh-data invariant also blocks Formal BUY/ADD.
 - **invalidation conditions:** sustained multi-period decline in core reagent/instrument revenue or installed-base monetization; persistent cash-flow conversion deterioration without working-capital explanation; evidence that domestic/import competition materially erodes pricing, reagent pull-through or instrument placement economics; normalized Base value falling below the current/entry-band price after full V3.1 review.
 - **confidence:** HIGH that Formal BUY is not justified now; MEDIUM on maintaining deep-research priority pending full moat/normalized-earnings audit.
-- **next deep-research action:** read the full 2026H1 filing and segment/working-capital detail; complete company-level moat/long-term-demand audit; normalize sustainable profit and cash conversion; then run Bear/Base/Bull reverse valuation against the fresh 34.17 close.
+- **next deep-research action:** read the full 2026H1 filing and segment/working-capital detail; complete company-level moat/long-term-demand audit; normalize sustainable profit and cash conversion; then run Bear/Base/Bull reverse valuation against a newly verified market price.
 
 #### Delta history
 
@@ -44,6 +44,7 @@ Current queue rule: only execution-eligible Shanghai/Shenzhen A-share names with
 - **2026-08-26 05:06 CST — DOWNGRADED_EVIDENCE / RESEEN:** fresh 2026H1 evidence resolved part of the financial gate negatively: revenue ~flat, attributable profit -12.94% YoY and operating cash flow -47.38% YoY. Tier remains WAIT and Formal BUY remains NO.
 - **2026-08-26 06:09 CST — RESEEN:** production again reproduced the same three long-term second-pass names; `603658` remained the only execution-eligible durable candidate. No valuation/buy-band or thesis change.
 - **2026-08-26 07:08 CST — RESEEN:** latest successful `GenGe V3.1 Every-Industry Research` run `32907982933` and `GenGe Postscan Research Pipeline` run `32907982947` again reproduce `603658` as the only execution-eligible long-term second-pass/deep-review candidate. Production artifact still shows verified close 34.17 on 2026-08-25, observed entry band remains 33.58–34.15, and V3.1 review still blocks on predictability, long-term demand, moat, financial safety and earnings-authenticity/normalized valuation completion. No tier, Formal BUY, valuation or entry-band change.
+- **2026-08-26 12:08 CST — RESEEN:** hourly opportunity + holdings-risk scan retained `603658` as the only execution-eligible deep-research queue name. No fresh 2026-08-26 intraday quote was independently verified, so the 2026-08-25 close remains the latest verified price and Formal BUY/ADD stays blocked. H1 earnings/cash-flow downgrade remains controlling; no tier, valuation or entry-band change.
 
 ---
 
