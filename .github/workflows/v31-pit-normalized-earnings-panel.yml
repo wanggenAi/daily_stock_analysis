@@ -1,0 +1,52 @@
+name: V3.1 PIT normalized earnings panel
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/v31_pit_normalized_earnings_panel.py'
+      - '.github/workflows/v31-pit-normalized-earnings-panel.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'akshare>=1.12.0' 'pandas>=2.0.0' 'numpy>=1.24.0' tabulate
+
+      - name: Build strict PIT normalized earnings inputs
+        run: python scripts/v31_pit_normalized_earnings_panel.py
+
+      - name: Persist PIT input evidence
+        if: success()
+        run: |
+          rm -rf backtests/v31_pit_normalized_earnings_panel
+          mkdir -p backtests/v31_pit_normalized_earnings_panel
+          cp -a artifacts/v31_pit_normalized_earnings_panel/. backtests/v31_pit_normalized_earnings_panel/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backtests/v31_pit_normalized_earnings_panel
+          if ! git diff --cached --quiet; then
+            git commit -m 'Store strict PIT normalized earnings inputs'
+            git push
+          fi
+
+      - name: Upload PIT panel artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v31-pit-normalized-earnings-panel
+          path: artifacts/v31_pit_normalized_earnings_panel/
+          if-no-files-found: warn
