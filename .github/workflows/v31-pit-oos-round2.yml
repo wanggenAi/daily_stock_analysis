@@ -1,0 +1,70 @@
+name: V3.1 PIT OOS round 2
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/v31_pit_oos_round2.py'
+      - 'scripts/v31_pit_sector_backtest.py'
+      - 'scripts/v31_pit_sector_backtest_resilient.py'
+      - '.github/workflows/v31-pit-oos-round2.yml'
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check whether locked round 2 already finished
+        id: existing
+        shell: bash
+        run: |
+          if [ -f backtests/v31_pit_oos_round2/summary.csv ]; then
+            echo 'done=true' >> "$GITHUB_OUTPUT"
+            echo 'Round 2 already has persisted results; skipping recomputation.'
+          else
+            echo 'done=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-python@v5
+        if: steps.existing.outputs.done != 'true'
+        with:
+          python-version: '3.11'
+
+      - name: Install locked runtime dependencies
+        if: steps.existing.outputs.done != 'true'
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'akshare>=1.12.0' 'pandas>=2.0.0' 'numpy>=1.24.0' tabulate yfinance
+
+      - name: Run locked V3.1 OOS round 2
+        if: steps.existing.outputs.done != 'true'
+        run: python scripts/v31_pit_oos_round2.py
+
+      - name: Persist auditable round-2 results
+        if: steps.existing.outputs.done != 'true' && success()
+        run: |
+          rm -rf backtests/v31_pit_oos_round2
+          mkdir -p backtests/v31_pit_oos_round2
+          cp -a artifacts/v31_pit_oos_round2/. backtests/v31_pit_oos_round2/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backtests/v31_pit_oos_round2
+          if ! git diff --cached --quiet; then
+            git commit -m 'Store locked V3.1 OOS round 2 results'
+            git push
+          fi
+
+      - name: Upload full round-2 audit artifacts
+        if: steps.existing.outputs.done != 'true' && always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v31-pit-oos-round2
+          path: artifacts/v31_pit_oos_round2/
+          if-no-files-found: warn
