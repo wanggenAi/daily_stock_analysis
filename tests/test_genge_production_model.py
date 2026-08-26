@@ -106,3 +106,13 @@ def test_scanner_preserves_authoritative_candidate_production_decision() -> None
     decision = build_decisions([row])[0]
     assert decision["production_action"] == "BUY"
     assert decision["valuation_confidence"] == "HIGH"
+
+
+def test_research_only_market_never_enters_production_candidate_output() -> None:
+    research_only = {
+        "code": "688001",
+        "production_model_version": "GEN_GE_V3_1_1_PRODUCTION",
+        "production_action": "BUY",
+        "valuation_confidence": "HIGH",
+    }
+    assert build_decisions([research_only]) == []

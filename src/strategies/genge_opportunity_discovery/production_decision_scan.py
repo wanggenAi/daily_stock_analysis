@@ -13,6 +13,7 @@ from .production_model import (
     PRODUCTION_MODEL_VERSION,
     production_payload,
 )
+from .selection_framework_v31 import execution_universe_status
 
 
 def _read_csv(path: Path) -> list[dict[str, Any]]:
@@ -77,6 +78,8 @@ def build_decisions(
     for code in sorted(set(candidates) | set(holdings)):
         candidate = candidates.get(code, {})
         holding = holdings.get(code, {})
+        if not holding and execution_universe_status(code) != "EXECUTION_ELIGIBLE":
+            continue
         merged = {**candidate, **{key: value for key, value in holding.items() if str(value or "").strip()}}
         merged["code"] = code
         merged["v32_has_position"] = bool(holding)
@@ -118,10 +121,10 @@ def write_reports(
     *,
     holdings_md: Path | None = None,
 ) -> list[dict[str, Any]]:
-    rows = build_decisions(
-        _read_csv(candidate_csv),
-        read_holdings_markdown(holdings_md) if holdings_md else (),
-    )
+    candidate_rows = _read_csv(candidate_csv)
+    holding_rows = read_holdings_markdown(holdings_md) if holdings_md else []
+    holding_codes = {_code(row.get("code")) for row in holding_rows}
+    rows = build_decisions(candidate_rows, holding_rows)
     output_dir.mkdir(parents=True, exist_ok=True)
     preferred = [
         "code", "stock_name", "decision_scope", "production_model_version",
@@ -143,6 +146,12 @@ def write_reports(
         "row_count": len(rows),
         "candidate_count": sum(row["decision_scope"] == "CANDIDATE" for row in rows),
         "holding_count": sum(row["decision_scope"] == "HOLDING" for row in rows),
+        "research_only_candidates_excluded": sum(
+            bool(_code(row.get("code")))
+            and _code(row.get("code")) not in holding_codes
+            and execution_universe_status(row.get("code")) != "EXECUTION_ELIGIBLE"
+            for row in candidate_rows
+        ),
         "action_counts": {
             action: sum(row["production_action"] == action for row in rows)
             for action in sorted(ALLOWED_ACTIONS)
