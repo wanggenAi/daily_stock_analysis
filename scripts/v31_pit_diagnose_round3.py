@@ -2,19 +2,18 @@ from __future__ import annotations
 
 """Round-3 diagnosis for the locked V3.1 PIT execution layer.
 
-This is a falsification/attribution experiment, NOT a parameter-optimization run.
-It consumes the already-persisted round-2 point-in-time panels and asks three
-separate questions without changing the production V3.1 contract:
+This is a falsification / implementation-audit experiment, NOT a parameter-
+optimization run. It consumes the already-persisted round-2 PIT panels and asks:
 
-1) SELL drag: with the same BUY ladder and same valuation proxy, what happens if
-   valuation-based REDUCE/CORE actions are disabled after entry?
-2) Proxy fragility: with the same BUY/SELL ladder, how sensitive are results to
-   PE-only, PB-only, and fixed 504/756/1260-day past-only anchors?
-3) Signal pathology: after actual baseline SELL and BUY events, what happened over
-   the following 12/24 months, and how often did PE/PB components strongly disagree?
+1) Is the old benchmark really buy-and-hold?
+2) Does the core target-normalization step create trades not implied by V3.1?
+3) After removing those simulation artifacts, how much return drag comes from the
+   valuation SELL ladder versus delayed / partial entry?
+4) How fragile is the PE/PB historical-relative neutral-value proxy?
+5) What happened after genuine SELL and BUY events over the next 12/24 months?
 
-No variant becomes a recommendation. We do not select the best-performing variant.
-The production thresholds remain untouched.
+No diagnostic variant becomes a recommendation and no production threshold is
+changed here.
 """
 
 from pathlib import Path
@@ -35,12 +34,15 @@ MIN_HISTORY = 252
 def load_panels() -> dict[str, pd.DataFrame]:
     panels: dict[str, pd.DataFrame] = {}
     for code in LOCKED_GROUPS["combined"]:
-        p = BASE / f"panel_{code}.csv"
-        if not p.exists():
-            raise FileNotFoundError(f"missing persisted round-2 panel: {p}")
-        df = pd.read_csv(p)
+        path = BASE / f"panel_{code}.csv"
+        if not path.exists():
+            raise FileNotFoundError(f"missing persisted round-2 panel: {path}")
+        df = pd.read_csv(path)
         df["date"] = pd.to_datetime(df["date"])
-        for col in ["close", "pe_ttm", "pb", "pe_anchor", "pb_anchor", "price_to_neutral", "neutral_value", "ret"]:
+        for col in [
+            "close", "pe_ttm", "pb", "pe_anchor", "pb_anchor",
+            "price_to_neutral", "neutral_value", "ret",
+        ]:
             if col in df.columns:
                 df[col] = pd.to_numeric(df[col], errors="coerce")
         if "ret" not in df.columns:
@@ -83,7 +85,7 @@ def rebuild_ratio(df: pd.DataFrame, mode: str, window: int = 756) -> pd.DataFram
 
 
 def no_sell_policy(ratio: float, current_weight: float, cap: float) -> tuple[float, str]:
-    """Diagnostic only: preserve frozen BUY ladder but never de-risk on valuation."""
+    """Diagnostic only: preserve frozen BUY ladder but never valuation-de-risk."""
     if not math.isfinite(ratio) or ratio <= 0:
         return current_weight, "HOLD_REVIEW"
     if ratio <= 0.65:
@@ -95,21 +97,162 @@ def no_sell_policy(ratio: float, current_weight: float, cap: float) -> tuple[flo
     return current_weight, "HOLD_NO_SELL_DIAG"
 
 
-def run_policy(
+def _month_end_dates(index: pd.DatetimeIndex) -> set[pd.Timestamp]:
+    s = pd.Series(index=index, data=index)
+    return set(s.groupby(index.to_period("M")).max().tolist())
+
+
+def run_cash_constrained_strategy(
     panels: dict[str, pd.DataFrame],
     codes: list[str],
     label: str,
-    *,
-    disable_sell: bool = False,
+    policy,
+) -> core.Result:
+    """Same V3.1 policy, but buys are cash-constrained without cross-normalizing holdings.
+
+    Core v31_pit_sector_backtest normalizes *all* targets when raw targets sum above
+    100%. That can reduce a HOLD or even a BUY-labelled position because another
+    stock requested capital. This diagnostic engine instead executes explicit sells
+    first, then scales only positive buy requests to available cash.
+    """
+    frames = []
+    for code in codes:
+        x = panels[code].set_index("date")[["ret", "close", "price_to_neutral", "neutral_value"]].copy()
+        x.columns = pd.MultiIndex.from_product([[code], x.columns])
+        frames.append(x)
+    panel = pd.concat(frames, axis=1).sort_index()
+    panel = panel[(panel.index >= core.START_TS) & (panel.index <= core.END_TS)].ffill()
+    rebalance_dates = _month_end_dates(panel.index)
+    cap = 1.0 / len(codes)
+    weights = {c: 0.0 for c in codes}
+    nav = 1.0
+    records: list[dict] = []
+    trades: list[dict] = []
+
+    for i, dt in enumerate(panel.index):
+        if i > 0:
+            daily = 0.0
+            for c in codes:
+                r = panel.loc[dt, (c, "ret")]
+                if pd.notna(r):
+                    daily += weights[c] * float(r)
+            nav *= 1.0 + daily
+            denom = 1.0 + daily
+            if denom != 0:
+                for c in codes:
+                    r = panel.loc[dt, (c, "ret")]
+                    rr = float(r) if pd.notna(r) else 0.0
+                    weights[c] = weights[c] * (1.0 + rr) / denom
+
+        turnover = 0.0
+        if dt in rebalance_dates:
+            raw_targets = dict(weights)
+            actions: dict[str, str] = {}
+            for c in codes:
+                ratio = panel.loc[dt, (c, "price_to_neutral")]
+                if pd.isna(ratio):
+                    raw_targets[c], actions[c] = weights[c], "HOLD_REVIEW"
+                else:
+                    raw_targets[c], actions[c] = policy(float(ratio), weights[c], cap)
+
+            # Execute direct de-risking first. Never sell an unrelated holding merely
+            # because another stock requests a BUY allocation.
+            targets = dict(weights)
+            for c in codes:
+                if raw_targets[c] < weights[c]:
+                    targets[c] = raw_targets[c]
+
+            available_cash = max(0.0, 1.0 - sum(targets.values()))
+            buy_requests = {c: max(0.0, raw_targets[c] - targets[c]) for c in codes}
+            total_request = sum(buy_requests.values())
+            scale = min(1.0, available_cash / total_request) if total_request > 0 else 0.0
+            for c in codes:
+                targets[c] += buy_requests[c] * scale
+
+            turnover = sum(abs(targets[c] - weights[c]) for c in codes)
+            cost = turnover * core.ONE_WAY_COST
+            nav *= 1.0 - cost
+            for c in codes:
+                delta = targets[c] - weights[c]
+                if abs(delta) > 1e-8:
+                    ratio = panel.loc[dt, (c, "price_to_neutral")]
+                    trades.append({
+                        "strategy": label,
+                        "date": dt,
+                        "code": c,
+                        "name": LOCKED_NAMES[c],
+                        "action": actions[c],
+                        "price_to_neutral": float(ratio) if pd.notna(ratio) else np.nan,
+                        "neutral_value": panel.loc[dt, (c, "neutral_value")],
+                        "close_qfq": panel.loc[dt, (c, "close")],
+                        "weight_before": weights[c],
+                        "weight_after": targets[c],
+                        "weight_change": delta,
+                        "cost_fraction": abs(delta) * core.ONE_WAY_COST,
+                    })
+            weights = targets
+
+        records.append({
+            "date": dt,
+            "nav": nav,
+            "cash_weight": max(0.0, 1.0 - sum(weights.values())),
+            "turnover": turnover,
+            **{f"w_{c}": weights[c] for c in codes},
+        })
+
+    equity = pd.DataFrame(records).set_index("date")
+    trades_df = pd.DataFrame(trades)
+    summary = core.metrics(equity["nav"], label)
+    summary["trades"] = int(len(trades_df))
+    summary["avg_cash_weight"] = float(equity["cash_weight"].mean())
+    summary["total_turnover"] = float(equity["turnover"].sum())
+    return core.Result(equity, trades_df, summary)
+
+
+def run_legacy_strategy(
+    panels: dict[str, pd.DataFrame],
+    codes: list[str],
+    label: str,
+    policy,
 ) -> core.Result:
     old = core.desired_weight
     core.NAMES = LOCKED_NAMES
     try:
-        if disable_sell:
-            core.desired_weight = no_sell_policy
+        core.desired_weight = policy
         return core.run_strategy(panels, codes, label)
     finally:
         core.desired_weight = old
+
+
+def _returns_matrix(panels: dict[str, pd.DataFrame], codes: list[str]) -> pd.DataFrame:
+    rets = pd.concat({c: panels[c].set_index("date")["ret"] for c in codes}, axis=1).sort_index()
+    return rets[(rets.index >= core.START_TS) & (rets.index <= core.END_TS)].fillna(0.0)
+
+
+def _prepend_initial_one(nav: pd.Series) -> pd.Series:
+    if nav.empty:
+        return nav
+    start = nav.index[0] - pd.Timedelta(days=1)
+    out = pd.concat([pd.Series([1.0], index=[start]), nav])
+    out.name = nav.name
+    return out
+
+
+def run_true_buy_hold(panels: dict[str, pd.DataFrame], codes: list[str], label: str) -> pd.Series:
+    """Initial equal-dollar purchase; holdings then drift with zero rebalancing."""
+    rets = _returns_matrix(panels, codes)
+    growth = (1.0 + rets).cumprod()
+    nav = growth.mean(axis=1) * (1.0 - core.ONE_WAY_COST)
+    nav.name = label
+    return _prepend_initial_one(nav)
+
+
+def run_legacy_daily_equal_weight(panels: dict[str, pd.DataFrame], codes: list[str], label: str) -> pd.Series:
+    """Replicate old 'BUYHOLD': fixed equal weights are effectively reset every day."""
+    rets = _returns_matrix(panels, codes)
+    nav = (1.0 + rets.mean(axis=1)).cumprod() * (1.0 - core.ONE_WAY_COST)
+    nav.name = label
+    return _prepend_initial_one(nav)
 
 
 def month_end_rows(df: pd.DataFrame) -> pd.DataFrame:
@@ -141,18 +284,7 @@ def summarize_signal_outcomes(group: str, result: core.Result, raw: dict[str, pd
     sells: list[dict] = []
     buys: list[dict] = []
     if result.trades.empty:
-        return {
-            "group": group,
-            "sell_events": 0,
-            "sell_median_12m_return": np.nan,
-            "sell_share_12m_return_gt20": np.nan,
-            "sell_median_12m_max_gain": np.nan,
-            "sell_median_24m_max_gain": np.nan,
-            "buy_events": 0,
-            "buy_median_12m_return": np.nan,
-            "buy_median_12m_max_drawdown": np.nan,
-            "buy_share_12m_drawdown_le_minus30": np.nan,
-        }
+        return {"group": group, "sell_events": 0, "buy_events": 0}
 
     for _, tr in result.trades.iterrows():
         dt = pd.Timestamp(tr["date"])
@@ -183,6 +315,28 @@ def summarize_signal_outcomes(group: str, result: core.Result, raw: dict[str, pd
     }
 
 
+def legacy_normalization_artifacts(group: str, result: core.Result) -> dict:
+    if result.trades.empty:
+        return {"group": group, "trade_rows": 0, "direction_mismatch_rows": 0, "mismatch_turnover": 0.0, "mismatch_share_of_turnover": 0.0}
+    bad = []
+    for _, tr in result.trades.iterrows():
+        action = str(tr["action"])
+        delta = float(tr["weight_change"])
+        expected = 1 if action.startswith("BUY_") else -1 if action in {"REDUCE_25", "REDUCE_50", "CORE_ONLY"} else 0
+        mismatch = (expected == 1 and delta < 0) or (expected == -1 and delta > 0) or (expected == 0 and abs(delta) > 1e-8)
+        if mismatch:
+            bad.append(abs(delta))
+    total_turnover = float(result.summary.get("total_turnover", 0.0))
+    mismatch_turnover = float(sum(bad))
+    return {
+        "group": group,
+        "trade_rows": int(len(result.trades)),
+        "direction_mismatch_rows": int(len(bad)),
+        "mismatch_turnover": mismatch_turnover,
+        "mismatch_share_of_turnover": mismatch_turnover / total_turnover if total_turnover > 0 else 0.0,
+    }
+
+
 def proxy_disagreement(group: str, geomean_panels: dict[str, pd.DataFrame], codes: list[str]) -> dict:
     vals: list[float] = []
     for code in codes:
@@ -195,7 +349,7 @@ def proxy_disagreement(group: str, geomean_panels: dict[str, pd.DataFrame], code
             vals.extend([float(v) for v in d if math.isfinite(float(v))])
     a = np.array(vals, dtype=float)
     if len(a) == 0:
-        return {"group": group, "observations": 0, "median_divergence_factor": np.nan, "p90_divergence_factor": np.nan, "share_over_2x": np.nan, "share_over_3x": np.nan}
+        return {"group": group, "observations": 0}
     return {
         "group": group,
         "observations": int(len(a)),
@@ -211,100 +365,134 @@ def main() -> None:
     raw = load_panels()
     core.NAMES = LOCKED_NAMES
 
-    # Pre-declared variants. None is selected as a winner after seeing results.
-    variants = [
-        ("baseline_geomean_756", "geomean", 756, False),
-        ("same_buy_no_valuation_sell", "geomean", 756, True),
-        ("pb_only_756", "pb_only", 756, False),
-        ("pe_only_756", "pe_only", 756, False),
-        ("geomean_504", "geomean", 504, False),
-        ("geomean_1260", "geomean", 1260, False),
-    ]
-
-    panel_cache: dict[tuple[str, int], dict[str, pd.DataFrame]] = {}
-    for _, mode, window, _ in variants:
-        key = (mode, window)
-        if key not in panel_cache:
-            panel_cache[key] = {c: rebuild_ratio(raw[c], mode, window) for c in LOCKED_GROUPS["combined"]}
+    # Pre-declared; the best row is never auto-promoted.
+    ratio_specs = {
+        "geomean_756": ("geomean", 756),
+        "pb_only_756": ("pb_only", 756),
+        "pe_only_756": ("pe_only", 756),
+        "geomean_504": ("geomean", 504),
+        "geomean_1260": ("geomean", 1260),
+    }
+    panel_cache = {
+        name: {c: rebuild_ratio(raw[c], mode, window) for c in LOCKED_GROUPS["combined"]}
+        for name, (mode, window) in ratio_specs.items()
+    }
 
     summary_rows: list[dict] = []
-    baseline_results: dict[str, core.Result] = {}
-    result_map: dict[tuple[str, str], core.Result] = {}
+    legacy_baseline: dict[str, core.Result] = {}
+    corrected_baseline: dict[str, core.Result] = {}
+    corrected_no_sell: dict[str, core.Result] = {}
 
     for group, codes in LOCKED_GROUPS.items():
-        for vname, mode, window, disable_sell in variants:
-            panels = panel_cache[(mode, window)]
-            result = run_policy(panels, codes, f"DIAG_{group}_{vname}", disable_sell=disable_sell)
-            result_map[(group, vname)] = result
-            if vname == "baseline_geomean_756":
-                baseline_results[group] = result
-            row = dict(result.summary)
-            row.update({"group": group, "variant": vname, "mode": mode, "anchor_window": window, "sell_disabled": disable_sell})
+        geo = panel_cache["geomean_756"]
+
+        legacy = run_legacy_strategy(geo, codes, f"LEGACY_{group}", core.desired_weight)
+        legacy_baseline[group] = legacy
+        row = dict(legacy.summary)
+        row.update({"group": group, "variant": "legacy_engine_geomean_756"})
+        summary_rows.append(row)
+
+        corrected = run_cash_constrained_strategy(geo, codes, f"CORRECTED_{group}", core.desired_weight)
+        corrected_baseline[group] = corrected
+        row = dict(corrected.summary)
+        row.update({"group": group, "variant": "corrected_engine_geomean_756"})
+        summary_rows.append(row)
+
+        no_sell = run_cash_constrained_strategy(geo, codes, f"NOSELL_{group}", no_sell_policy)
+        corrected_no_sell[group] = no_sell
+        row = dict(no_sell.summary)
+        row.update({"group": group, "variant": "corrected_same_buy_no_valuation_sell"})
+        summary_rows.append(row)
+
+        for spec in ["pb_only_756", "pe_only_756", "geomean_504", "geomean_1260"]:
+            res = run_cash_constrained_strategy(panel_cache[spec], codes, f"DIAG_{group}_{spec}", core.desired_weight)
+            row = dict(res.summary)
+            row.update({"group": group, "variant": f"corrected_{spec}"})
             summary_rows.append(row)
 
-        bh = core.run_buy_hold(raw, codes, f"BUYHOLD_{group}")
-        brow = core.metrics(bh, f"BUYHOLD_{group}")
-        brow.update({"group": group, "variant": "buyhold", "mode": "none", "anchor_window": np.nan, "sell_disabled": False, "trades": np.nan, "avg_cash_weight": 0.0, "total_turnover": np.nan})
-        summary_rows.append(brow)
+        true_bh = run_true_buy_hold(raw, codes, f"TRUE_BUYHOLD_{group}")
+        row = core.metrics(true_bh, f"TRUE_BUYHOLD_{group}")
+        row.update({"group": group, "variant": "true_buyhold", "trades": np.nan, "avg_cash_weight": 0.0, "total_turnover": np.nan})
+        summary_rows.append(row)
+
+        old_bh = run_legacy_daily_equal_weight(raw, codes, f"LEGACY_DAILY_EQ_{group}")
+        row = core.metrics(old_bh, f"LEGACY_DAILY_EQ_{group}")
+        row.update({"group": group, "variant": "legacy_daily_equal_weight_benchmark", "trades": np.nan, "avg_cash_weight": 0.0, "total_turnover": np.nan})
+        summary_rows.append(row)
 
     summary = pd.DataFrame(summary_rows)
     summary.to_csv(OUT / "diagnostic_summary.csv", index=False)
 
-    # Exact baseline reproduction check against persisted round-2 summary.
+    # Reproduce the persisted strategy itself exactly before diagnosing it.
     stored = pd.read_csv(BASE / "summary.csv")
     repro_rows = []
     for group in LOCKED_GROUPS:
-        got = summary[(summary["group"] == group) & (summary["variant"] == "baseline_geomean_756")].iloc[0]
+        got = legacy_baseline[group].summary
         want = stored[stored["label"] == f"V31_{group}"].iloc[0]
         rel_err = abs(float(got["final_multiple"]) - float(want["final_multiple"])) / max(abs(float(want["final_multiple"])), 1e-12)
-        repro_rows.append({"group": group, "stored_final_multiple": float(want["final_multiple"]), "reproduced_final_multiple": float(got["final_multiple"]), "relative_error": rel_err})
+        repro_rows.append({
+            "group": group,
+            "stored_final_multiple": float(want["final_multiple"]),
+            "reproduced_final_multiple": float(got["final_multiple"]),
+            "relative_error": rel_err,
+        })
         if rel_err > 1e-10:
             raise AssertionError(f"baseline reproduction mismatch for {group}: {rel_err}")
     reproduction = pd.DataFrame(repro_rows)
     reproduction.to_csv(OUT / "baseline_reproduction_check.csv", index=False)
 
-    # Approximate attribution: baseline -> no-sell isolates valuation SELL effect;
-    # no-sell -> buyhold captures delayed/partial entry plus any remaining path effects.
+    implementation = pd.DataFrame([
+        legacy_normalization_artifacts(group, legacy_baseline[group])
+        for group in LOCKED_GROUPS
+    ])
+    implementation.to_csv(OUT / "legacy_normalization_artifacts.csv", index=False)
+
+    # Approximate attribution after using the semantics-preserving cash-constrained engine.
     attribution_rows = []
     for group in LOCKED_GROUPS:
-        base = summary[(summary.group == group) & (summary.variant == "baseline_geomean_756")].iloc[0]
-        ns = summary[(summary.group == group) & (summary.variant == "same_buy_no_valuation_sell")].iloc[0]
-        bh = summary[(summary.group == group) & (summary.variant == "buyhold")].iloc[0]
+        legacy = summary[(summary["group"] == group) & (summary["variant"] == "legacy_engine_geomean_756")].iloc[0]
+        base = summary[(summary["group"] == group) & (summary["variant"] == "corrected_engine_geomean_756")].iloc[0]
+        ns = summary[(summary["group"] == group) & (summary["variant"] == "corrected_same_buy_no_valuation_sell")].iloc[0]
+        bh = summary[(summary["group"] == group) & (summary["variant"] == "true_buyhold")].iloc[0]
+        old_bh = summary[(summary["group"] == group) & (summary["variant"] == "legacy_daily_equal_weight_benchmark")].iloc[0]
         attribution_rows.append({
             "group": group,
-            "baseline_cagr": float(base.cagr),
-            "no_sell_cagr": float(ns.cagr),
-            "buyhold_cagr": float(bh.cagr),
-            "sell_drag_cagr_pp": float(ns.cagr - base.cagr),
-            "entry_underexposure_gap_cagr_pp": float(bh.cagr - ns.cagr),
-            "baseline_max_drawdown": float(base.max_drawdown),
-            "no_sell_max_drawdown": float(ns.max_drawdown),
-            "buyhold_max_drawdown": float(bh.max_drawdown),
-            "drawdown_cost_of_no_sell_pp": float(ns.max_drawdown - base.max_drawdown),
-            "baseline_avg_cash": float(base.avg_cash_weight),
-            "no_sell_avg_cash": float(ns.avg_cash_weight),
-            "cash_reduction_when_sell_disabled_pp": float(base.avg_cash_weight - ns.avg_cash_weight),
+            "engine_artifact_cagr_pp": float(base["cagr"] - legacy["cagr"]),
+            "baseline_cagr_corrected_engine": float(base["cagr"]),
+            "no_sell_cagr": float(ns["cagr"]),
+            "true_buyhold_cagr": float(bh["cagr"]),
+            "legacy_benchmark_cagr": float(old_bh["cagr"]),
+            "benchmark_definition_gap_cagr_pp": float(bh["cagr"] - old_bh["cagr"]),
+            "sell_drag_cagr_pp": float(ns["cagr"] - base["cagr"]),
+            "entry_underexposure_gap_cagr_pp": float(bh["cagr"] - ns["cagr"]),
+            "baseline_max_drawdown": float(base["max_drawdown"]),
+            "no_sell_max_drawdown": float(ns["max_drawdown"]),
+            "true_buyhold_max_drawdown": float(bh["max_drawdown"]),
+            "baseline_avg_cash": float(base["avg_cash_weight"]),
+            "no_sell_avg_cash": float(ns["avg_cash_weight"]),
         })
     attribution = pd.DataFrame(attribution_rows)
     attribution.to_csv(OUT / "attribution.csv", index=False)
 
     signal = pd.DataFrame([
-        summarize_signal_outcomes(group, baseline_results[group], raw)
+        summarize_signal_outcomes(group, corrected_baseline[group], raw)
         for group in LOCKED_GROUPS
     ])
     signal.to_csv(OUT / "signal_forward_outcomes.csv", index=False)
 
-    geo756 = panel_cache[("geomean", 756)]
     disagreement = pd.DataFrame([
-        proxy_disagreement(group, geo756, codes)
+        proxy_disagreement(group, panel_cache["geomean_756"], codes)
         for group, codes in LOCKED_GROUPS.items()
     ])
     disagreement.to_csv(OUT / "proxy_component_disagreement.csv", index=False)
 
     sensitivity_rows = []
-    sensitivity_variants = ["baseline_geomean_756", "pb_only_756", "pe_only_756", "geomean_504", "geomean_1260"]
+    sens_variants = [
+        "corrected_engine_geomean_756", "corrected_pb_only_756", "corrected_pe_only_756",
+        "corrected_geomean_504", "corrected_geomean_1260",
+    ]
     for group in LOCKED_GROUPS:
-        x = summary[(summary.group == group) & (summary.variant.isin(sensitivity_variants))]
+        x = summary[(summary["group"] == group) & (summary["variant"].isin(sens_variants))]
         vals = pd.to_numeric(x["cagr"], errors="coerce").dropna()
         sensitivity_rows.append({
             "group": group,
@@ -316,84 +504,96 @@ def main() -> None:
     sensitivity = pd.DataFrame(sensitivity_rows)
     sensitivity.to_csv(OUT / "proxy_sensitivity.csv", index=False)
 
-    # Fixed diagnostic labels; they describe fragility, not a new trading rule.
     verdicts = []
     for _, r in attribution.iterrows():
         group = r["group"]
-        if r["sell_drag_cagr_pp"] >= 0.05:
-            sell_text = "valuation SELL appears materially costly"
-        elif r["sell_drag_cagr_pp"] >= 0.02:
+        sell_drag = float(r["sell_drag_cagr_pp"])
+        entry_gap = float(r["entry_underexposure_gap_cagr_pp"])
+        sens = float(sensitivity[sensitivity["group"] == group].iloc[0]["cagr_range_pp"])
+        if sell_drag >= 0.05:
+            sell_text = "valuation SELL is materially costly"
+        elif sell_drag >= 0.02:
             sell_text = "valuation SELL has a noticeable return cost"
         else:
             sell_text = "valuation SELL is not the dominant return drag"
-        if r["entry_underexposure_gap_cagr_pp"] >= 0.05:
-            entry_text = "delayed/partial entry and underexposure remain a major drag even with SELL disabled"
-        elif r["entry_underexposure_gap_cagr_pp"] >= 0.02:
-            entry_text = "entry underexposure remains a meaningful drag"
+        if entry_gap >= 0.05:
+            entry_text = "delayed/partial entry remains a major underexposure drag"
+        elif entry_gap >= 0.02:
+            entry_text = "entry underexposure remains meaningful"
         else:
             entry_text = "entry underexposure is comparatively small"
-        sens = sensitivity[sensitivity.group == group].iloc[0]
-        if sens["cagr_range_pp"] >= 0.10:
+        if sens >= 0.10:
             proxy_text = "valuation proxy is highly specification-sensitive"
-        elif sens["cagr_range_pp"] >= 0.05:
-            proxy_text = "valuation proxy shows meaningful specification sensitivity"
+        elif sens >= 0.05:
+            proxy_text = "valuation proxy has meaningful specification sensitivity"
         else:
-            proxy_text = "valuation proxy sensitivity is moderate/low in this test"
+            proxy_text = "valuation proxy sensitivity is moderate/low"
         verdicts.append(f"- **{group}**: {sell_text}; {entry_text}; {proxy_text}.")
 
     assumptions = {
         "source": "persisted round-2 PIT panels only",
         "production_rules_changed": False,
-        "selection_rule": "none; no best variant is promoted",
-        "variants": [v[0] for v in variants],
+        "no_best_variant_selection": True,
+        "corrected_engine_change": "execute explicit sells first, then scale only positive BUY requests to available cash; no cross-normalization of unrelated holdings",
+        "true_buyhold_definition": "initial equal-dollar purchase, zero subsequent rebalancing",
         "forward_horizons_trading_days": [252, 504],
-        "sensitivity_windows": [504, 756, 1260],
+        "proxy_windows": [504, 756, 1260],
         "limits": [
             "still conditional on the pre-declared research universe passing qualitative hard gates",
-            "does not reconstruct historical moat/demand/predictability gate states",
-            "no-sell attribution is path-dependent and should be read as diagnostic, not an exact causal decomposition",
-            "PE/PB are relative historical valuation proxies, not intrinsic DCF/NAV values",
+            "does not reconstruct historical moat/demand/predictability states",
+            "no-sell attribution is path-dependent and not an exact causal decomposition",
+            "PE/PB are historical-relative proxies, not intrinsic DCF/NAV values",
         ],
     }
     (OUT / "assumptions.json").write_text(json.dumps(assumptions, ensure_ascii=False, indent=2), encoding="utf-8")
 
     show_cols = ["group", "variant", "final_multiple", "cagr", "max_drawdown", "sharpe", "trades", "avg_cash_weight"]
     report = [
-        "# V3.1 PIT round-3 diagnosis — attribution, not tuning",
+        "# V3.1 PIT round-3 diagnosis — implementation audit + attribution",
         "",
-        "> Production V3.1 rules are unchanged. This run is designed to locate failure modes, not to pick a prettier parameter set.",
+        "> Production V3.1 rules are unchanged. This run diagnoses the backtest and the valuation/execution layer; it does not optimize thresholds.",
         "",
-        "## Baseline reproduction check",
+        "## 1. Exact reproduction of the persisted V3.1 strategy",
         "",
         reproduction.to_markdown(index=False),
         "",
-        "## Counterfactual / proxy diagnostics",
+        "## 2. Important benchmark audit",
+        "",
+        "The previous function named `run_buy_hold` used a fixed equal-weight return vector every day. That is a **daily equal-weight rebalanced portfolio**, not literal buy-and-hold. Round 3 therefore reports both the legacy benchmark and a true initial-equal-dollar / zero-rebalance buy-and-hold benchmark.",
+        "",
+        "## 3. Cross-normalization audit",
+        "",
+        implementation.to_markdown(index=False),
+        "",
+        "A direction mismatch is a recorded trade whose weight change contradicts its V3.1 action label (for example BUY with a negative delta, or HOLD with a non-zero delta). These can be created by the old all-target normalization step rather than by a stock-level V3.1 signal.",
+        "",
+        "## 4. All diagnostic variants",
         "",
         summary[show_cols].to_markdown(index=False),
         "",
-        "## Approximate return-drag attribution",
+        "## 5. Approximate return-drag attribution using the corrected execution engine",
         "",
         attribution.to_markdown(index=False),
         "",
-        "Interpretation: `sell_drag_cagr_pp = no-sell CAGR - baseline CAGR`. `entry_underexposure_gap_cagr_pp = buyhold CAGR - no-sell CAGR`. The second quantity is only an approximate underexposure diagnostic because the paths differ.",
+        "`sell_drag_cagr_pp = no-sell CAGR - corrected-baseline CAGR`. `entry_underexposure_gap_cagr_pp = true-buyhold CAGR - no-sell CAGR`. The latter remains an approximate path-dependent diagnostic.",
         "",
-        "## What happened after actual baseline SELL / BUY events",
+        "## 6. What happened after genuine corrected-engine SELL / BUY events",
         "",
         signal.to_markdown(index=False),
         "",
-        "SELL forward statistics use only genuine negative weight changes caused by REDUCE_25 / REDUCE_50 / CORE_ONLY. BUY statistics use only positive weight changes. Incomplete 12/24-month windows are excluded from the corresponding medians.",
+        "Incomplete 12/24-month forward windows are excluded from corresponding forward statistics.",
         "",
-        "## PE vs PB component disagreement at month-end",
+        "## 7. PE vs PB disagreement",
         "",
         disagreement.to_markdown(index=False),
         "",
-        "A divergence factor of 2x means the PE-relative and PB-relative valuation components differ by a factor of two at the same month-end. Large disagreement is a warning that the geometric-mean proxy is mixing incompatible signals.",
+        "A 2x divergence means the PE-relative and PB-relative components differ by a factor of two at the same month-end. Large disagreement warns that the geometric mean is combining economically inconsistent signals.",
         "",
-        "## Specification sensitivity",
+        "## 8. Proxy specification sensitivity",
         "",
         sensitivity.to_markdown(index=False),
         "",
-        "CAGR range is across pre-declared PE-only, PB-only, and 504/756/1260-day geometric-mean variants. A wide range is evidence of model fragility, not a reason to choose the best row.",
+        "The CAGR range spans pre-declared PE-only, PB-only and 504/756/1260-day geometric-mean variants. A wide range is evidence of fragility, not a reason to select the best row.",
         "",
         "## Mechanical diagnostic labels",
         "",
@@ -401,9 +601,9 @@ def main() -> None:
         "",
         "## Limits",
         "",
-        "- This is still an execution-layer test conditional on a fixed research universe; it is not a full historical reconstruction of qualitative V3.1 hard gates.",
-        "- The neutral-value proxy remains historical relative PE/PB, not a true normalized-earnings DCF/NAV engine.",
-        "- No production threshold is changed by this diagnosis.",
+        "- This is still an execution-layer test conditional on a fixed research universe; it is not a full PIT reconstruction of qualitative V3.1 hard gates.",
+        "- The current neutral-value proxy is historical relative PE/PB, not normalized-earnings DCF/NAV.",
+        "- No production BUY/SELL threshold is changed by this diagnosis.",
     ]
     (OUT / "REPORT.md").write_text("\n".join(report), encoding="utf-8")
     print("\n".join(report), flush=True)
