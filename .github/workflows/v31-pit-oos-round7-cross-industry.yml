@@ -1,0 +1,56 @@
+name: V3.1 PIT OOS round 7 cross industry
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/v31_pit_oos_round7_cross_industry.py'
+      - 'scripts/v31_pit_oos_round6_expectation_gap.py'
+      - 'scripts/v31_pit_oos_round6_diagnose.py'
+      - 'scripts/v31_pit_normalized_earnings_panel.py'
+      - 'docs/V31_EXPECTATION_GAP_ROUND7_CROSS_INDUSTRY_DRAFT.md'
+      - '.github/workflows/v31-pit-oos-round7-cross-industry.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  backtest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install runtime
+        run: |
+          python -m pip install --upgrade pip
+          pip install 'akshare>=1.12.0' 'pandas>=2.0.0,<3.0.0' 'numpy>=1.24.0' 'yfinance>=0.2.0' tabulate
+
+      - name: Run frozen Round-7 OOS
+        run: python scripts/v31_pit_oos_round7_cross_industry.py
+
+      - name: Persist auditable Round-7 results
+        if: success()
+        run: |
+          rm -rf backtests/v31_pit_oos_round7_cross_industry
+          mkdir -p backtests/v31_pit_oos_round7_cross_industry
+          cp -a artifacts/v31_pit_oos_round7_cross_industry/. backtests/v31_pit_oos_round7_cross_industry/
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add backtests/v31_pit_oos_round7_cross_industry
+          if ! git diff --cached --quiet; then
+            git commit -m 'Store V3.1 Round-7 cross-industry OOS results'
+            git push
+          fi
+
+      - name: Upload Round-7 artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: v31-pit-oos-round7-cross-industry
+          path: artifacts/v31_pit_oos_round7_cross_industry/
+          if-no-files-found: warn
