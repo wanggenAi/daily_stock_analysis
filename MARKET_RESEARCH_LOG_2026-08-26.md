@@ -58,3 +58,33 @@
 ### Notification decision
 
 - Triggered because a confirmed holding (`001316`) received a new material insider/shareholder reduction plan and therefore moved from HOLD to HOLD_REVIEW. This is not a REDUCE/EXIT instruction.
+
+## 2026-08-26 23:08 CST — hourly opportunity + holdings risk refresh
+
+### Data cutoff / reproducibility
+
+- Repository `main` rules and truth sources re-read before execution: `AGENTS.md`, current V3.1/V3.1.1 framework artifacts, `CURRENT_MARKET_RESEARCH.md`, `RESEARCH_QUEUE.md`, `MODEL_EVOLUTION_LOG.md`, `V31_CANDIDATE_LEDGER.md`, `CURRENT_HOLDINGS.md`, and this current-date market log.
+- Holdings universe rebuilt exclusively from `CURRENT_HOLDINGS.md`: `603369`, `001316`, `600276`, `600406`.
+- Public post-close quote/filing refresh cutoff: 2026-08-26 23:08 CST. Fresh-data invariant remains mandatory.
+
+### Opportunity / ledger delta
+
+- `603658 安图生物`: **RESEEN / NO MATERIAL CHANGE**. WAIT; Formal BUY NO. The 22:56 deep-review conclusion remains controlling: capacity-expansion termination is prudent defensive capital allocation but simultaneously direct evidence of slower demand growth, oversupply risk, homogeneous competition and procurement-price pressure. No new evidence reverses the weakened-demand/moat burden, and no independently accepted second exact 2026-08-26 15:00 close was recovered. Accepted execution-grade close remains 34.17 CNY on 2026-08-25; observed entry band remains 33.58–34.15; Bear/Base/Bull valuation remains pending normalized earnings and moat audit.
+- Ledger delta: `RESEEN / NO MATERIAL CHANGE`; `last_seen=2026-08-26 23:08 CST`, `seen_count=14`, latest run_id `hourly-20260826-2308`.
+- No new execution-eligible A1/A2; no UPGRADED/DOWNGRADED/INVALIDATED candidate; no Formal BUY/ADD.
+
+### Holdings risk delta
+
+- `603369 今世缘`: **HOLD_REVIEW / NO ADD**, accepted 2026-08-26 close 28.10 CNY. No new filing or evidence since the prior refresh triggers REDUCE/EXIT or restores the long-term demand burden.
+- `001316 润贝航科`: **HOLD_REVIEW**, not REDUCE. Insider/shareholder sell-plan review remains controlling; operating thesis is not falsified. Exact 2026-08-26 close remains independently unverified, so price-dependent action stays fail-closed.
+- `600276 恒瑞医药`: **HOLD_REVIEW**, accepted 2026-08-26 close 46.74 CNY. No new pipeline/moat break, governance event, or REDUCE/EXIT trigger surfaced after the prior refresh.
+- `600406 国电南瑞`: **HOLD_REVIEW**, accepted 2026-08-26 close 23.42 CNY. H1 cash-conversion/margin review remains controlling; no new order/moat evidence escalates it to REDUCE/EXIT.
+- **New REDUCE/EXIT:** NONE. **New hard-thesis invalidation:** NONE.
+
+### Production / CI health
+
+- Latest observed `main` head before this persistence pass was `aac6c8715f1f332aa8c7f6392f84b33809945a83` (`Cover V3.1.1 production parity in existing GenGe CI`). Combined commit status returned no failure statuses; GitHub Actions query for that exact head SHA returned zero workflow runs. Recorded as `CI_NOT_RUN_FOR_HEAD / NOT_A_FAILURE`, not as a production-chain failure. A prior Auto Tag workflow for an earlier parity-test commit remained queued in the recent-runs feed, which is not sufficient evidence of scan distortion.
+
+### Notification decision
+
+- No notification trigger this round: no new A1/A2 in executable buy range; no new deep-research queue name; no material candidate valuation/entry-band change; no holding REDUCE/EXIT or hard-thesis invalidation; no confirmed production/data/CI failure that makes the scan unreliable.
