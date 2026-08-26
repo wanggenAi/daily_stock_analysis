@@ -134,3 +134,40 @@ Both latest production workflows completed successfully. No data-source/CI failu
 ### Notification decision
 
 No user-notification trigger is met this round: no new A1/A2 in executable buy zone, no important queue addition, no material candidate valuation/buy-band change, no holding with an established REDUCE/EXIT or hard-logic falsification, and no scan-invalidating production failure. Ordinary HOLD_REVIEW risk notes are persisted here for the next run.
+
+---
+
+## 2026-08-26 13:08 CST — opportunity + holdings-risk refresh
+
+### Fresh-data / production guardrails
+
+- Re-read the current `main` rule and state files before assessment, including holdings and permanent candidate ledger.
+- No independently verified newer executable quote was accepted for `603658` or the holdings set during this refresh; the fresh-data invariant therefore blocks any new Formal BUY/ADD and any purely valuation-driven REDUCE based on unverified intraday prices.
+- No new filing/event evidence was recovered in this interval that establishes a hard-thesis break for the holdings or resolves the remaining 安图 hard gates positively.
+- No threshold, hard gate, valuation rule or execution-universe rule was relaxed.
+
+### Candidate opportunity status
+
+- `603658 安图生物` remains **WAIT / Formal BUY = NO** and remains the only execution-eligible name in `CURRENT DEEP RESEARCH QUEUE`.
+- Latest accepted price remains **34.17 CNY on 2026-08-25**; observed entry band remains **33.58–34.15** and is not sufficient to authorize a buy while the financial/hard-gate review is incomplete.
+- Verified 2026H1 weakening remains controlling: attributable profit -12.94% YoY and operating cash flow -47.38% YoY. Normalized earnings, Bear/Base/Bull valuation, required growth and expectation gap still require completion.
+- **NEW A1/A2:** none. **UPGRADED:** none. **INVALIDATED:** none. **PRICE_ONLY_CHANGE:** none accepted.
+
+### Holding risk status
+
+- `603369 今世缘`: **HOLD_REVIEW**; no new REDUCE/EXIT trigger. Existing long-term-demand concern remains unresolved, but no new evidence this interval converts it to a hard-gate FAIL.
+- `001316 润贝航科`: **HOLD**; no new REDUCE/EXIT trigger. Previously verified H1 earnings/cash-flow/self-produced-material evidence remains supportive.
+- `600276 恒瑞医药`: **HOLD_REVIEW**; previously identified deduct-profit/CFO deterioration remains a material risk watch, but no new evidence this interval establishes pipeline/moat failure or a formal REDUCE/EXIT condition.
+- `600406 国电南瑞`: **HOLD**; no new REDUCE/EXIT trigger established. No new evidence this interval falsifies grid digitization/UHV demand or grid-control/customer-certification moat.
+- No action above is based on personal cost basis or ordinary price fluctuation.
+
+### Ledger delta / reproducibility
+
+- **RESEEN:** `603658 安图生物` (last_seen -> 13:08 CST; seen_count -> 7).
+- **NEW / UPGRADED / DOWNGRADED / INVALIDATED / PRICE_ONLY_CHANGE:** none this interval.
+- Formal BUY/ADD remains **NONE**; new holding REDUCE/EXIT remains **NONE**.
+- This round is a no-material-change refresh; the existing 12:08 evidence package remains the controlling detailed evidence record.
+
+### Notification decision
+
+No user-notification trigger is met: no executable A1/A2 entered a buy zone, no important deep-queue addition, no material candidate valuation/rating change, no holding reached REDUCE/EXIT or hard-thesis falsification, and no scan-invalidating production fault was established.
