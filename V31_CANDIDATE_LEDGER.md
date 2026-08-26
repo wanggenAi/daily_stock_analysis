@@ -14,10 +14,10 @@
 
 - **execution eligibility:** ELIGIBLE
 - **first_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **last_seen:** 2026-08-27 02:05 CST production refresh
-- **seen_count:** 17
+- **last_seen:** 2026-08-27 03:09 CST production refresh
+- **seen_count:** 18
 - **first source run_id:** 32873471270
-- **latest source run_id:** hourly-20260827-0205
+- **latest source run_id:** hourly-20260827-0309
 - **current tier:** WAIT
 - **Formal BUY:** NO
 - **GenGe V3.1.1 production action:** HOLD_REVIEW
@@ -49,6 +49,7 @@
 - **2026-08-27 00:10 CST — RESEEN / NO MATERIAL CHANGE:** no new A1/A2 or Formal BUY.
 - **2026-08-27 01:08 CST — RESEEN / NO MATERIAL CHANGE:** no new A1/A2 or Formal BUY.
 - **2026-08-27 02:05 CST — RESEEN / NO MATERIAL CHANGE:** post-close filing/event refresh found no new evidence changing tier, fair-value work, entry band or Formal BUY. Exact 2026-08-26 close remains unaccepted under fresh-data invariant.
+- **2026-08-27 03:09 CST — RESEEN / NO MATERIAL CHANGE:** fresh post-close filing/news refresh found no new evidence changing tier, valuation, entry band or Formal BUY; no new executable A1/A2 entered the queue.
 
 ## Research-only observations retained outside executable queue
 
