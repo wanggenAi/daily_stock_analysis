@@ -14,21 +14,21 @@
 
 - **execution eligibility:** ELIGIBLE
 - **first_seen:** 2026-08-26 01:10 CST durable hourly scan
-- **last_seen:** 2026-08-27 06:09 CST production refresh
-- **seen_count:** 21
+- **last_seen:** 2026-08-27 07:08 CST production refresh
+- **seen_count:** 22
 - **first source run_id:** 32873471270
-- **latest source run_id:** hourly-20260827-0609
+- **latest source run_id:** hourly-20260827-0708
 - **current tier:** WAIT
 - **Formal BUY:** NO
 - **GenGe V3.1.1 production action:** HOLD_REVIEW
 - **valuation confidence:** INVALID — normalized earnings, realistic/implied growth and neutral value are incomplete
 - **latest independently accepted close:** 34.17 CNY on 2026-08-25
-- **fresh 2026-08-26 quote evidence:** post-close reporting confirms a 2.22% decline and prior intraday observation saw 33.48 CNY, but a second independently accepted exact 15:00 close remains unavailable. The execution-grade accepted exact close therefore remains 2026-08-25 under fresh-data invariant.
+- **fresh 2026-08-26 quote evidence:** post-close reporting confirms a decline and prior intraday observation saw 33.48 CNY, but a second independently accepted exact 15:00 close remains unavailable. The execution-grade accepted exact close therefore remains 2026-08-25 under fresh-data invariant.
 - **observed entry band:** 33.58–34.15 CNY
 - **Bear/Base/Bull / fair-value range:** PENDING_DEEP_RESEARCH; rebuild using normalized earnings after 2026H1 deterioration and the company-confirmed slower-demand / pricing-pressure regime.
 - **long-term demand logic:** WEAKENED_BUT_NOT_FALSIFIED — IVD remains a durable clinical need, but the company explicitly states that policy changes caused a phase of slower market-demand growth and greater pricing pressure.
 - **moat / ASML test:** PARTIALLY_SUPPORTED — broad platform, registrations/patents/R&D, installed service base and instrument+reagent+software+AI strategy are supportive; homogeneous competition and procurement-price pressure raise the burden of proof on stickiness, reagent pull-through, pricing power and switching cost.
-- **earnings / cash-flow conclusion:** DOWNGRADED / VERIFIED_WEAKENING — 2026H1 revenue 20.58亿 RMB, YoY -0.12%; attributable profit 4.97亿, -12.94%; operating cash flow 2.16亿, -47.38%.
+- **earnings / cash-flow conclusion:** DOWNGRADED / VERIFIED_WEAKENING — 2026H1 revenue 20.58亿 RMB, YoY -0.12%; attributable profit 4.97亿, -12.94%; operating cash flow 2.16亿, -47.38%. Q2 revenue was approximately flat/slightly positive YoY, which is a marginal stabilization signal but not enough to reverse the H1 earnings/cash-conversion downgrade.
 - **capital-allocation update:** RESOLVED_AS_PRUDENT_DEFENSIVE_REALLOCATION, NOT A BULLISH DEMAND SIGNAL. The 2026-08-25 board announcement terminates further investment in the IVD capacity-expansion project after 68,073.61万元 of募集资金 had been invested and redirects about 81,187.63万元 remaining funds toward the R&D center. Management cites slower demand growth, oversupply risk, homogeneous competition and procurement-price pressure.
 - **current blockers:** company-confirmed slower demand growth and pricing pressure; weakened H1 earnings/cash conversion; unresolved moat strength under homogeneous competition; incomplete normalized earnings, Bear/Base/Bull valuation, implied expectations and falsification; no independently accepted exact 2026-08-26 official close.
 - **invalidation conditions:** sustained core reagent/instrument decline; persistent cash-conversion deterioration without working-capital explanation; material erosion of pricing/reagent pull-through/instrument economics; evidence that domestic demand weakness is structural; R&D reallocation fails to generate differentiated products/overseas growth; normalized Base value below market/entry band after full review.
@@ -53,6 +53,7 @@
 - **2026-08-27 04:09 CST — RESEEN / NO MATERIAL CHANGE:** post-close filing/news refresh found no candidate-level evidence changing tier, valuation, entry band or Formal BUY. A separate CI/test-compatibility failure in downstream V3.1.1 workflows was detected and is tracked in the dated production log; it does not upgrade this candidate.
 - **2026-08-27 05:07 CST — RESEEN / NO MATERIAL CHANGE:** no new candidate-level evidence changed tier, valuation, entry band or Formal BUY. Production CI investigation found a separate execution-universe scope defect in the postscan zero-BUY contract; it does not change this candidate's WAIT status.
 - **2026-08-27 06:09 CST — RESEEN / NO MATERIAL CHANGE:** latest repaired downstream Every-Industry and Postscan workflows completed successfully on main; successful artifact still produced no execution-eligible BUY candidate. `603658` remains WAIT / Formal BUY NO with the same fundamental and valuation blockers.
+- **2026-08-27 07:08 CST — RESEEN / NO MATERIAL CHANGE:** pre-open filing/news refresh found only a marginal Q2 revenue stabilization signal; H1 earnings/cash-flow weakness, company-confirmed domestic demand/pricing pressure, incomplete normalized valuation and fresh-close deficiency remain controlling blockers. No tier/valuation/entry-band/Formal-BUY change.
 
 ## Research-only observations retained outside executable queue
 
