@@ -1,10 +1,10 @@
 """Bridge discovery candidates into the authoritative GenGe V3.1.1 production path.
 
 Candidate selection and evidence provenance are deliberately separate. A narrow
-Top5 CSV may select the codes, while an optional same-run rich evidence CSV
-supplies the complete qualitative/V3.1 assessment fields for those codes. Fresh
-strict-PIT expectation inputs then replace valuation primitives, including with
-missing values when current evidence is unavailable. Final gate/action fields
+Top5 CSV selects candidate codes, while an optional same-run rich evidence CSV
+supplies complete qualitative/V3.1 assessment fields. Fresh strict-PIT inputs
+replace valuation primitives. Confirmed holdings, when explicitly supplied,
+are also refreshed and retained as production inputs. Final gate/action fields
 are always recomputed by :mod:`production_decision_scan`.
 """
 from __future__ import annotations
@@ -15,7 +15,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .production_decision_scan import write_reports
+from .production_decision_scan import read_holdings_markdown, write_reports
 from .v311_current_expectation_inputs import write_current_expectation_inputs
 
 
@@ -72,45 +72,74 @@ def _strip_upstream_production_fields(row: Mapping[str, Any]) -> dict[str, Any]:
     }
 
 
-def join_selected_candidates_with_evidence(
-    candidate_rows: Iterable[Mapping[str, Any]],
-    evidence_rows: Iterable[Mapping[str, Any]],
-) -> list[dict[str, Any]]:
-    """Use candidate rows only as the selected-code set and enrich from same-run evidence.
-
-    Evidence is the base row. Non-empty candidate fields then overlay presentation
-    metadata such as candidate rank/plan. Empty fields never erase richer evidence.
-    Production-owned outputs are stripped from both sides before the fresh run.
-    """
-    evidence_by_code = {
+def _evidence_by_code(evidence_rows: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {
         _code(row.get("code")): _strip_upstream_production_fields(row)
         for row in evidence_rows
         if _code(row.get("code"))
     }
+
+
+def join_selected_candidates_with_evidence(
+    candidate_rows: Iterable[Mapping[str, Any]],
+    evidence_rows: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Use candidate rows only as selected-code set and enrich from same-run evidence."""
+    evidence = _evidence_by_code(evidence_rows)
     joined: list[dict[str, Any]] = []
     for candidate in candidate_rows:
         code = _code(candidate.get("code"))
         if not code:
             continue
-        row = dict(evidence_by_code.get(code, {}))
+        row = dict(evidence.get(code, {}))
         for key, value in _strip_upstream_production_fields(candidate).items():
             if _has_value(value):
                 row[key] = value
         row["code"] = code
-        row["v311_same_run_evidence_joined"] = code in evidence_by_code
+        row["v311_source_scope"] = "CANDIDATE"
+        row["v311_same_run_evidence_joined"] = code in evidence
         joined.append(row)
     return joined
+
+
+def add_holdings_to_source_evidence(
+    source_rows: Iterable[Mapping[str, Any]],
+    holding_rows: Iterable[Mapping[str, Any]],
+    evidence_rows: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Add confirmed holdings without letting them expand candidate selection.
+
+    Same-run rich evidence is attached when available. If it is absent, only
+    explicit holding metadata is added; missing hard-logic evidence remains
+    missing and the downstream V3.1.1 contract must fail closed rather than
+    fabricate it.
+    """
+    result = [dict(row) for row in source_rows]
+    existing = {_code(row.get("code")) for row in result}
+    evidence = _evidence_by_code(evidence_rows)
+    for holding in holding_rows:
+        code = _code(holding.get("code"))
+        if not code or code in existing:
+            continue
+        row = dict(evidence.get(code, {}))
+        row.update(_strip_upstream_production_fields(holding))
+        row["code"] = code
+        row["v311_source_scope"] = "HOLDING"
+        row["v311_same_run_evidence_joined"] = code in evidence
+        result.append(row)
+        existing.add(code)
+    return result
 
 
 def merge_source_and_current_rows(
     source_rows: Iterable[Mapping[str, Any]],
     current_rows: Iterable[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Preserve source evidence and overlay fresh strict-PIT numeric inputs.
+    """Preserve selected candidate/holding evidence and overlay fresh PIT inputs.
 
-    Current rows intentionally overwrite source values even when the fresh
-    value is empty/None. Falling back to a stale valuation when a current fetch
-    failed would violate the production fail-closed contract.
+    Current rows intentionally overwrite source valuation values even when the
+    fresh value is empty/None. Falling back to stale valuation after a current
+    fetch failure would violate the production fail-closed contract.
     """
     source_by_code = {
         _code(row.get("code")): _strip_upstream_production_fields(row)
@@ -123,14 +152,14 @@ def merge_source_and_current_rows(
         if _code(row.get("code"))
     }
     merged: list[dict[str, Any]] = []
-    # Source rows define the selected production candidate set. Current rows are
-    # refresh material only and cannot introduce an unselected security.
+    # Only explicitly selected candidates and explicitly confirmed holdings are
+    # allowed into production. Current refresh rows cannot introduce securities.
     for code in sorted(source_by_code):
         row = dict(source_by_code[code])
         if code in current_by_code:
             row.update(current_by_code[code])
         row["code"] = code
-        row["v311_production_bridge"] = "SAME_RUN_EVIDENCE_PLUS_FRESH_STRICT_PIT"
+        row["v311_production_bridge"] = "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT"
         merged.append(row)
     return merged
 
@@ -153,20 +182,27 @@ def run_bridge(
     holdings_md: Path | None = None,
     as_of: date | None = None,
 ) -> list[dict[str, Any]]:
-    """Join same-run evidence, refresh strict-PIT inputs, and emit decisions."""
+    """Join evidence, refresh strict-PIT inputs, and emit production decisions."""
     output_dir.mkdir(parents=True, exist_ok=True)
     candidate_rows = _read_csv(source_csv)
+    evidence_rows = _read_csv(evidence_csv) if evidence_csv is not None else []
     if evidence_csv is not None:
-        source_rows = join_selected_candidates_with_evidence(
-            candidate_rows,
-            _read_csv(evidence_csv),
-        )
+        source_rows = join_selected_candidates_with_evidence(candidate_rows, evidence_rows)
     else:
-        source_rows = [
-            _strip_upstream_production_fields(row)
-            for row in candidate_rows
-            if _code(row.get("code"))
-        ]
+        source_rows = []
+        for candidate in candidate_rows:
+            code = _code(candidate.get("code"))
+            if not code:
+                continue
+            row = _strip_upstream_production_fields(candidate)
+            row["code"] = code
+            row["v311_source_scope"] = "CANDIDATE"
+            row["v311_same_run_evidence_joined"] = False
+            source_rows.append(row)
+
+    holding_rows = read_holdings_markdown(holdings_md) if holdings_md else []
+    if holding_rows:
+        source_rows = add_holdings_to_source_evidence(source_rows, holding_rows, evidence_rows)
 
     selected_source_csv = output_dir / "v311_selected_source_evidence.csv"
     _write_csv(selected_source_csv, source_rows)
