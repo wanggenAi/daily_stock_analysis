@@ -1,0 +1,45 @@
+{
+  "status": "research only; production V3.1 unchanged",
+  "universe": {
+    "002371": "北方华创",
+    "002475": "立讯精密",
+    "002384": "东山精密",
+    "600584": "长电科技",
+    "603228": "景旺电子",
+    "600703": "三安光电"
+  },
+  "period": [
+    "2018-01-01",
+    "2026-08-24"
+  ],
+  "strict_pit": "financial metrics usable only from max(profit NOTICE_DATE, cashflow NOTICE_DATE); UPDATE_DATE ignored",
+  "quality_factor": "min(1, deduct_quality, cash_conversion), requires positive EPS/NP/deduct/cash conversion",
+  "normalization": "median latest 4 positive quality-adjusted TTM EPS, min 2",
+  "growth": {
+    "historical_window_years": 3,
+    "haircut": 0.5,
+    "cap": 0.15,
+    "floor": 0.0
+  },
+  "valuation": {
+    "discount_rate": 0.1,
+    "terminal_growth_target": 0.03,
+    "terminal_pe": 15.0,
+    "horizon_years": 5
+  },
+  "execution_thresholds": {
+    "buy": [
+      0.85,
+      0.75,
+      0.65
+    ],
+    "sell": [
+      1.2,
+      1.4,
+      1.7
+    ]
+  },
+  "one_way_cost": 0.001,
+  "rebalance": "month-end",
+  "scope_limit": "fixed-universe valuation/execution OOS; not historical qualitative hard-gate reconstruction"
+}
