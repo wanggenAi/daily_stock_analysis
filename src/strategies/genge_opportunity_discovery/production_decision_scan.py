@@ -11,6 +11,7 @@ from .production_model import (
     ALLOWED_ACTIONS,
     PRODUCTION_MODEL_NAME,
     PRODUCTION_MODEL_VERSION,
+    PRODUCTION_POLICY_SOURCE,
     production_payload,
 )
 from .selection_framework_v31 import execution_universe_status
@@ -68,6 +69,19 @@ def read_holdings_markdown(path: Path) -> list[dict[str, Any]]:
     return rows
 
 
+def _candidate_policy_matches_production(candidate: Mapping[str, Any]) -> bool:
+    """Only reuse an upstream decision when its exact frozen policy is identical.
+
+    The repository previously emitted a different implementation under the same
+    human-facing V3.1.1 version label.  Version equality alone is therefore not
+    sufficient evidence of decision parity.
+    """
+    return bool(
+        str(candidate.get("production_model_version") or "").strip() == PRODUCTION_MODEL_VERSION
+        and str(candidate.get("production_policy_source") or "").strip() == PRODUCTION_POLICY_SOURCE
+    )
+
+
 def build_decisions(
     candidate_rows: Iterable[Mapping[str, Any]],
     holding_rows: Iterable[Mapping[str, Any]] = (),
@@ -82,12 +96,18 @@ def build_decisions(
             continue
         merged = {**candidate, **{key: value for key, value in holding.items() if str(value or "").strip()}}
         merged["code"] = code
+        merged["v311_has_position"] = bool(holding)
+        # Kept only as an input alias for older upstream payloads; V3.1.1 does
+        # not depend on V3.2 policy or SELL confirmation.
         merged["v32_has_position"] = bool(holding)
         payload = production_payload(merged)
-        if not holding and merged.get("production_model_version") == PRODUCTION_MODEL_VERSION:
+
+        upstream_policy_reused = bool(not holding and _candidate_policy_matches_production(candidate))
+        if upstream_policy_reused:
             for key in tuple(payload):
                 if str(merged.get(key) or "").strip():
                     payload[key] = merged[key]
+
         action = payload["production_action"]
         if action not in ALLOWED_ACTIONS:
             raise ValueError(f"unsupported production action: {action}")
@@ -105,6 +125,7 @@ def build_decisions(
                 "source_expectation_gap": merged.get("v31_expectation_gap_pct") or "",
                 "source_neutral_value": merged.get("v31_neutral_value") or "",
                 "source_current_price": merged.get("v31_current_price") or merged.get("raw_latest_close") or "",
+                "upstream_policy_reused": upstream_policy_reused,
                 "confirmed_quantity": holding.get("confirmed_quantity") or "",
                 "display_only_average_cost": holding.get("display_only_average_cost") or "",
                 "holding_evidence_date": holding.get("holding_evidence_date") or "",
@@ -129,12 +150,14 @@ def write_reports(
     preferred = [
         "code", "stock_name", "decision_scope", "production_model_version",
         "production_model_name", "production_promotion_decision", "production_sell_contract",
-        "production_action", "production_target_position_fraction", "valuation_confidence",
+        "production_policy_source", "v32_sell_confirmation_enabled", "production_action",
+        "production_target_position_fraction", "valuation_confidence",
         "valuation_confidence_reason_codes", "reason_codes", "normalized_earnings",
         "realistic_growth", "market_implied_growth", "expectation_gap", "neutral_value",
         "current_price", "price_to_neutral", "hard_gate_failures", "hard_gate_unknowns",
-        "confirmed_quantity", "display_only_average_cost", "holding_evidence_date",
-        "cost_basis_used_by_decision", "production_model_frozen", "no_auto_trade",
+        "upstream_policy_reused", "confirmed_quantity", "display_only_average_cost",
+        "holding_evidence_date", "cost_basis_used_by_decision", "production_model_frozen",
+        "no_auto_trade",
     ]
     extras = sorted({key for row in rows for key in row if key not in preferred})
     with (output_dir / "production_decisions.csv").open("w", encoding="utf-8", newline="") as stream:
@@ -143,6 +166,8 @@ def write_reports(
         writer.writerows(rows)
     summary = {
         "production_model": PRODUCTION_MODEL_NAME,
+        "production_model_version": PRODUCTION_MODEL_VERSION,
+        "production_policy_source": PRODUCTION_POLICY_SOURCE,
         "row_count": len(rows),
         "candidate_count": sum(row["decision_scope"] == "CANDIDATE" for row in rows),
         "holding_count": sum(row["decision_scope"] == "HOLDING" for row in rows),
@@ -152,11 +177,13 @@ def write_reports(
             and execution_universe_status(row.get("code")) != "EXECUTION_ELIGIBLE"
             for row in candidate_rows
         ),
+        "upstream_policy_reused_count": sum(bool(row["upstream_policy_reused"]) for row in rows),
         "action_counts": {
             action: sum(row["production_action"] == action for row in rows)
             for action in sorted(ALLOWED_ACTIONS)
         },
         "cost_basis_used_by_decision": False,
+        "v32_sell_confirmation_enabled": False,
         "no_auto_trade": True,
     }
     (output_dir / "production_decision_summary.json").write_text(
@@ -166,6 +193,7 @@ def write_reports(
         f"# {PRODUCTION_MODEL_NAME} Decision Scan",
         "",
         "Manual execution only. Personal cost basis is displayed for reconciliation and never used by the decision.",
+        f"Frozen policy source: `{PRODUCTION_POLICY_SOURCE}`.",
         "",
     ]
     for row in rows:
@@ -176,6 +204,7 @@ def write_reports(
                 f"- valuation confidence: {row['valuation_confidence']}",
                 f"- price / neutral: {row['price_to_neutral']}",
                 f"- reason codes: {row['reason_codes']}",
+                f"- upstream exact-policy decision reused: {row['upstream_policy_reused']}",
                 "",
             ]
         )
