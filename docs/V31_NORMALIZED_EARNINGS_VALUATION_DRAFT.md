@@ -52,7 +52,7 @@ Frozen base assumptions:
 
 - discount rate: **10%**
 - five-year starting growth: as defined above
-- growth fades linearly over five years toward **3%**
+- growth fades linearly over five years toward `min(starting_growth, 3%)`; the model never raises a 0%-to-3% starting assumption just to manufacture growth
 - terminal multiple at year 5: **15x** normalized owner earnings
 
 For years 1..5, project owner earnings with the fading growth path and discount each year's earning power at 10%. Add a year-5 terminal value of `15 * year5_owner_earnings`, also discounted at 10%.
