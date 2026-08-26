@@ -78,7 +78,7 @@ jobs:
           run-id: ${{ steps.source.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Locate exact Top5 discovery input
+      - name: Locate Top5 and same-run V3.1 evidence
         id: candidate
         run: |
           python - <<'PY'
@@ -88,20 +88,26 @@ jobs:
           matches = sorted(Path("incoming").rglob("daily_candidate_top5.csv"))
           if not matches:
               raise SystemExit("daily_candidate_top5.csv missing from source discovery artifact")
-          # The artifact should contain exactly one completed latest report. If
-          # multiple historical directories are present, take the newest path
-          # deterministically and record it for audit.
           source = matches[-1]
+          evidence = source.parent / "real_world_signal_audit.csv"
+          if not evidence.exists():
+              raise SystemExit(
+                  "real_world_signal_audit.csv missing beside daily_candidate_top5.csv; "
+                  "refusing production without same-run V3.1 evidence"
+              )
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
               out.write(f"source_csv={source}\n")
+              out.write(f"evidence_csv={evidence}\n")
               out.write(f"source_dir={source.parent}\n")
           print(f"source_candidate_csv={source}")
+          print(f"same_run_evidence_csv={evidence}")
           PY
 
       - name: Run authoritative V3.1.1 production bridge
         run: |
           python -m src.strategies.genge_opportunity_discovery.v311_production_bridge \
             --source-csv "${{ steps.candidate.outputs.source_csv }}" \
+            --evidence-csv "${{ steps.candidate.outputs.evidence_csv }}" \
             --output-dir v311_production
 
       - name: Validate production authority contract
@@ -125,14 +131,22 @@ jobs:
           decisions = root / "production_decisions.csv"
           summary_path = root / "production_decision_summary.json"
           inputs = root / "v311_production_inputs.csv"
-          if not decisions.exists() or not summary_path.exists() or not inputs.exists():
+          source_evidence = root / "v311_selected_source_evidence.csv"
+          required = (decisions, summary_path, inputs, source_evidence)
+          if any(not path.exists() for path in required):
               raise SystemExit("V3.1.1 production outputs incomplete")
 
           with decisions.open(encoding="utf-8") as handle:
               rows = list(csv.DictReader(handle))
+          with source_evidence.open(encoding="utf-8") as handle:
+              evidence_rows = list(csv.DictReader(handle))
           summary = json.loads(summary_path.read_text(encoding="utf-8"))
           if not rows:
               raise SystemExit("V3.1.1 production produced zero eligible rows")
+          if not evidence_rows:
+              raise SystemExit("V3.1.1 selected evidence set is empty")
+          if any(row.get("v311_same_run_evidence_joined") != "True" for row in evidence_rows):
+              raise SystemExit("selected candidate missing same-run rich V3.1 evidence")
           assert summary["row_count"] == len(rows)
           assert summary["production_model_version"] == PRODUCTION_MODEL_VERSION
           assert summary["production_policy_source"] == PRODUCTION_POLICY_SOURCE
@@ -150,6 +164,8 @@ jobs:
               "source_head_sha": os.environ["SOURCE_HEAD_SHA"],
               "source_artifact": "genge-all-a-production-report",
               "source_candidate_file": "daily_candidate_top5.csv",
+              "source_evidence_file": "real_world_signal_audit.csv",
+              "same_run_evidence_required": True,
               "production_model_version": PRODUCTION_MODEL_VERSION,
               "production_policy_source": PRODUCTION_POLICY_SOURCE,
               "production_authority": "fresh_recompute_no_upstream_decision_reuse",
