@@ -19,24 +19,27 @@
 - A historical log entry for a security not present in current holdings is research history only and cannot generate a current holding instruction.
 - The 2026-08-26 19:07 log section that treated `600879 航天电子` and other stale names as current holdings is SUPERSEDED / NON-CONTROLLING.
 
-## Latest authoritative refresh — 2026-08-27 06:09 CST
+## Latest authoritative refresh — 2026-08-27 07:08 CST
 
-- Latest completed A-share session remains 2026-08-26; this refresh is overnight filing/news + production-health verification.
+- Latest completed A-share session remains 2026-08-26; this refresh is pre-open filing/news + production-health verification.
 - Confirmed holdings from `CURRENT_HOLDINGS.md`: `603369 今世缘`, `001316 润贝航科`, `600276 恒瑞医药`, `600406 国电南瑞` only.
-- Accepted 2026-08-26 closes: 今世缘 **28.10**, 润贝航科 **26.69**, 恒瑞医药 **46.74**, 国电南瑞 **23.42** CNY.
+- Accepted 2026-08-26 closes remain: 今世缘 **28.10**, 润贝航科 **26.69**, 恒瑞医药 **46.74**, 国电南瑞 **23.42** CNY.
 - Holding actions remain: 今世缘 **HOLD_REVIEW / NO ADD**; 润贝航科 **HOLD_REVIEW**; 恒瑞医药 **HOLD_REVIEW**; 国电南瑞 **HOLD_REVIEW**. **No new REDUCE/EXIT and no newly established hard-thesis invalidation.**
-- Latest durable execution-eligible candidate remains `603658 安图生物`, tier **WAIT**, Formal BUY **NO**. Accepted execution-grade close remains **34.17 CNY on 2026-08-25** because a second independently accepted exact 2026-08-26 close is still unavailable under the fresh-data invariant.
-- `603658` blockers remain: company-confirmed slower IVD demand growth / procurement-price pressure, weaker 2026H1 profit and cash conversion, unresolved moat strength under homogeneous competition, and incomplete normalized Bear/Base/Bull reverse valuation.
-- Ledger delta: `603658` **RESEEN / NO MATERIAL CHANGE**, seen_count 21. No NEW A1/A2, no tier/valuation/buy-band upgrade, no INVALIDATED executable name.
+- 今世缘: H1 revenue/profit weakness and structural baijiu demand/channel pressure remain active; Q2 partial recovery and stronger H1 operating cash flow prevent escalation to REDUCE/EXIT in this refresh.
+- 润贝航科: previously logged management/shareholder reduction overhang remains a governance/supply watch, but H1 revenue, profit and operating cash flow remain strongly positive YoY; no new order/margin/cash-conversion/management-continuity break found.
+- 恒瑞医药: H1 earnings/cash-conversion pressure remains under review; recent drug-registration/marketing-application progress remains pipeline-supportive. No new innovation-pipeline or moat break found.
+- 国电南瑞: newly published H1 summary confirms revenue **277.67亿 (+14.54%)** and attributable profit **30.73亿 (+4.08%)**, with proposed interim dividend **0.153 CNY/share**. Profit growth lagging revenue and previously identified cash-conversion/margin pressure remain review items, but grid digitization/UHV demand and grid-control/customer-certification moat are not falsified. No escalation to REDUCE/EXIT.
+- Latest durable execution-eligible candidate remains `603658 安图生物`, tier **WAIT**, Formal BUY **NO**. Accepted execution-grade close remains **34.17 CNY on 2026-08-25** because a second independently accepted exact 2026-08-26 15:00 close is still unavailable under the fresh-data invariant.
+- `603658` H1 blockers remain: company-confirmed slower IVD demand growth / procurement-price pressure, weaker profit and cash conversion, unresolved moat strength under homogeneous competition, and incomplete normalized Bear/Base/Bull reverse valuation. Q2 revenue being approximately flat/slightly positive YoY is only a marginal stabilization signal and does not remove these blockers.
+- Ledger delta: `603658` **RESEEN / NO MATERIAL CHANGE**, seen_count **22**, last_seen **2026-08-27 07:08 CST**. No NEW A1/A2, no tier/valuation/buy-band upgrade, no INVALIDATED executable name.
 
-## Production / CI health — RECOVERED 2026-08-27 06:09 CST
+## Production / CI health — HEALTHY 2026-08-27 07:08 CST
 
-- Previous downstream failure (`PRODUCTION_VALIDATOR_EXECUTION_SCOPE_DRIFT`) was repaired without changing V3.1/V3.1.1 ranking, valuation, BUY/SELL thresholds or user trading eligibility.
-- Latest `main` workflow runs on head `e1f5699f1ebf6df625265d4375a32cc6e043adba` completed successfully:
-  - `GenGe V3.1.1 Every-Industry Research` run `33017580568`: **SUCCESS**.
-  - `GenGe Postscan Research Pipeline` run `33017580700`: **SUCCESS**.
-- The successful postscan artifact reports **0 long-term Formal BUY**, **0 execution-eligible candidate rows**, and **4 holding rows**, all `HOLD_REVIEW` under invalid/incomplete valuation confidence. The four second-pass names are `688526`, `688739`, `688247`, `688687` and remain RESEARCH_ONLY / ineligible for actual user trading candidates.
-- Automated opportunity discovery is therefore no longer marked DEGRADED for this repaired workflow revision. Fresh-data and confidence fail-closed rules remain active.
+- Previous downstream execution-scope failure remains repaired without changing V3.1/V3.1.1 ranking, valuation, BUY/SELL thresholds or user trading eligibility.
+- Latest visible `main` workflow runs completed successfully:
+  - `GenGe V3.1.1 Every-Industry Research` run `33021974261`: **SUCCESS**.
+  - `GenGe Postscan Research Pipeline` run `33021974263`: **SUCCESS**.
+- No fresh production-chain, data-source or CI fault was found that would invalidate this refresh. Fresh-data and confidence fail-closed rules remain active.
 
 ## Current deep-research priority
 
