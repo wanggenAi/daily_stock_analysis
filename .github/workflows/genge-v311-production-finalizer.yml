@@ -68,6 +68,7 @@ jobs:
           test -n "$RUN_ID"
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
+          echo "production_code_sha=$GITHUB_SHA" >> "$GITHUB_OUTPUT"
 
       - name: Download exact discovery artifact
         uses: actions/download-artifact@v4
@@ -78,7 +79,7 @@ jobs:
           run-id: ${{ steps.source.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Locate Top5 and same-run V3.1 evidence
+      - name: Locate unique Top5 and same-run V3.1 evidence
         id: candidate
         run: |
           python - <<'PY'
@@ -86,14 +87,16 @@ jobs:
           from pathlib import Path
 
           matches = sorted(Path("incoming").rglob("daily_candidate_top5.csv"))
-          if not matches:
-              raise SystemExit("daily_candidate_top5.csv missing from source discovery artifact")
-          source = matches[-1]
+          if len(matches) != 1:
+              raise SystemExit(
+                  f"expected exactly one daily_candidate_top5.csv in source artifact; found {len(matches)}"
+              )
+          source = matches[0]
           evidence = source.parent / "real_world_signal_audit.csv"
           if not evidence.exists():
               raise SystemExit(
                   "real_world_signal_audit.csv missing beside daily_candidate_top5.csv; "
-                  "refusing production without same-run V3.1 evidence"
+                  "refusing production without same-run V3.1 candidate evidence"
               )
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
               out.write(f"source_csv={source}\n")
@@ -103,17 +106,79 @@ jobs:
           print(f"same_run_evidence_csv={evidence}")
           PY
 
-      - name: Run authoritative V3.1.1 production bridge
+      - name: Resolve fresh confirmed holdings source
+        id: holdings
         run: |
-          python -m src.strategies.genge_opportunity_discovery.v311_production_bridge \
-            --source-csv "${{ steps.candidate.outputs.source_csv }}" \
-            --evidence-csv "${{ steps.candidate.outputs.evidence_csv }}" \
+          python - <<'PY'
+          import os
+          from datetime import date
+          from pathlib import Path
+
+          from src.strategies.genge_opportunity_discovery.production_decision_scan import (
+              read_holdings_markdown,
+          )
+
+          path = Path("data/user_supplied/manual_confirmed_holdings.md")
+          today = date.today().isoformat()
+          status = "HOLDINGS_NOT_EVALUATED_NO_FRESH_SOURCE"
+          enabled = False
+          reason = "stable confirmed-holdings file missing"
+
+          if path.exists():
+              rows = read_holdings_markdown(path)
+              if not rows:
+                  status = "HOLDINGS_NOT_EVALUATED_INVALID_SOURCE"
+                  reason = "confirmed-holdings file exists but has no parseable rows"
+              else:
+                  evidence_dates = {str(row.get("holding_evidence_date") or "").strip() for row in rows}
+                  quantities_valid = all(
+                      str(row.get("confirmed_quantity") or "").strip()
+                      and str(row.get("confirmed_quantity") or "").strip() not in {"0", "0.0"}
+                      for row in rows
+                  )
+                  if evidence_dates != {today}:
+                      status = "HOLDINGS_NOT_EVALUATED_STALE_SOURCE"
+                      reason = f"holding evidence dates {sorted(evidence_dates)} do not equal {today}"
+                  elif not quantities_valid:
+                      status = "HOLDINGS_NOT_EVALUATED_INVALID_SOURCE"
+                      reason = "one or more confirmed quantities are empty/zero"
+                  else:
+                      status = "HOLDINGS_EVALUATED_FRESH_CONFIRMED_SOURCE"
+                      enabled = True
+                      reason = f"{len(rows)} holdings confirmed for {today}"
+
+          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
+              out.write(f"enabled={'true' if enabled else 'false'}\n")
+              out.write(f"status={status}\n")
+              out.write(f"source={path if path.exists() else ''}\n")
+              out.write(f"reason={reason}\n")
+          print(f"holdings_status={status};reason={reason}")
+          PY
+
+      - name: Run authoritative V3.1.1 production bridge
+        env:
+          HOLDINGS_ENABLED: ${{ steps.holdings.outputs.enabled }}
+          HOLDINGS_SOURCE: ${{ steps.holdings.outputs.source }}
+        run: |
+          ARGS=(
+            --source-csv "${{ steps.candidate.outputs.source_csv }}"
+            --evidence-csv "${{ steps.candidate.outputs.evidence_csv }}"
             --output-dir v311_production
+          )
+          if [ "$HOLDINGS_ENABLED" = "true" ]; then
+            ARGS+=(--holdings-md "$HOLDINGS_SOURCE")
+          fi
+          python -m src.strategies.genge_opportunity_discovery.v311_production_bridge "${ARGS[@]}"
 
       - name: Validate production authority contract
         env:
           SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
           SOURCE_HEAD_SHA: ${{ steps.source.outputs.head_sha }}
+          PRODUCTION_CODE_SHA: ${{ steps.source.outputs.production_code_sha }}
+          HOLDINGS_ENABLED: ${{ steps.holdings.outputs.enabled }}
+          HOLDINGS_STATUS: ${{ steps.holdings.outputs.status }}
+          HOLDINGS_SOURCE: ${{ steps.holdings.outputs.source }}
+          HOLDINGS_REASON: ${{ steps.holdings.outputs.reason }}
         run: |
           python - <<'PY'
           import csv
@@ -143,10 +208,19 @@ jobs:
           summary = json.loads(summary_path.read_text(encoding="utf-8"))
           if not rows:
               raise SystemExit("V3.1.1 production produced zero eligible rows")
-          if not evidence_rows:
-              raise SystemExit("V3.1.1 selected evidence set is empty")
-          if any(row.get("v311_same_run_evidence_joined") != "True" for row in evidence_rows):
-              raise SystemExit("selected candidate missing same-run rich V3.1 evidence")
+          candidate_evidence = [row for row in evidence_rows if row.get("v311_source_scope") == "CANDIDATE"]
+          if not candidate_evidence:
+              raise SystemExit("V3.1.1 selected candidate evidence set is empty")
+          if any(row.get("v311_same_run_evidence_joined") != "True" for row in candidate_evidence):
+              raise SystemExit("selected Top5 candidate missing same-run rich V3.1 evidence")
+
+          holdings_enabled = os.environ["HOLDINGS_ENABLED"] == "true"
+          holding_rows = [row for row in rows if row.get("decision_scope") == "HOLDING"]
+          if holdings_enabled and not holding_rows:
+              raise SystemExit("fresh confirmed holdings source enabled but no holding decisions were emitted")
+          if not holdings_enabled and holding_rows:
+              raise SystemExit("holding decisions emitted without a fresh confirmed holdings source")
+
           assert summary["row_count"] == len(rows)
           assert summary["production_model_version"] == PRODUCTION_MODEL_VERSION
           assert summary["production_policy_source"] == PRODUCTION_POLICY_SOURCE
@@ -162,10 +236,15 @@ jobs:
               "source_workflow": "GenGe Opportunity Discovery",
               "source_run_id": os.environ["SOURCE_RUN_ID"],
               "source_head_sha": os.environ["SOURCE_HEAD_SHA"],
+              "production_code_sha": os.environ["PRODUCTION_CODE_SHA"],
               "source_artifact": "genge-all-a-production-report",
               "source_candidate_file": "daily_candidate_top5.csv",
               "source_evidence_file": "real_world_signal_audit.csv",
-              "same_run_evidence_required": True,
+              "same_run_candidate_evidence_required": True,
+              "holdings_status": os.environ["HOLDINGS_STATUS"],
+              "holdings_source": os.environ["HOLDINGS_SOURCE"],
+              "holdings_reason": os.environ["HOLDINGS_REASON"],
+              "holding_decision_count": len(holding_rows),
               "production_model_version": PRODUCTION_MODEL_VERSION,
               "production_policy_source": PRODUCTION_POLICY_SOURCE,
               "production_authority": "fresh_recompute_no_upstream_decision_reuse",
@@ -179,6 +258,9 @@ jobs:
 
       - name: Publish authoritative V3.1.1 summary
         if: always()
+        env:
+          HOLDINGS_STATUS: ${{ steps.holdings.outputs.status }}
+          HOLDINGS_REASON: ${{ steps.holdings.outputs.reason }}
         run: |
           python - <<'PY'
           import os
@@ -190,9 +272,15 @@ jobs:
               content = report.read_text(encoding="utf-8")
           else:
               content = "# GenGe V3.1.1 Production\n\nProduction finalizer did not produce a decision report. Inspect this run before using any research signal.\n"
+          holdings = (
+              f"\n\n## Holdings authority\n"
+              f"- status: `{os.environ.get('HOLDINGS_STATUS', '')}`\n"
+              f"- reason: {os.environ.get('HOLDINGS_REASON', '')}\n"
+          )
           with target.open("a", encoding="utf-8") as stream:
               stream.write("# Authoritative Production Layer\n\n")
               stream.write(content)
+              stream.write(holdings)
           PY
 
       - name: Upload V3.1.1 authoritative production artifact
