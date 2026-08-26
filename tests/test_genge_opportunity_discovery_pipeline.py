@@ -2320,6 +2320,34 @@ def test_shenzhen_scan_dates_use_completed_china_sessions(
     assert resolve_scan_dates(reference_time, calendar=_FakeChinaCalendar()) == (expected_as_of, expected_tomorrow)
 
 
+@pytest.mark.parametrize(
+    ("reference_time", "expected_as_of", "expected_tomorrow"),
+    [
+        (datetime(2026, 7, 10, 18, 59, tzinfo=ZoneInfo("Asia/Shanghai")), date(2026, 7, 9), date(2026, 7, 10)),
+        (datetime(2026, 7, 10, 19, 0, tzinfo=ZoneInfo("Asia/Shanghai")), date(2026, 7, 10), date(2026, 7, 13)),
+    ],
+)
+def test_scan_dates_can_wait_for_daily_bar_publication(
+    reference_time: datetime,
+    expected_as_of: date,
+    expected_tomorrow: date,
+) -> None:
+    assert resolve_scan_dates(
+        reference_time,
+        calendar=_FakeChinaCalendar(),
+        completion_grace=timedelta(hours=4),
+    ) == (expected_as_of, expected_tomorrow)
+
+
+def test_scan_dates_reject_negative_completion_grace() -> None:
+    with pytest.raises(ValueError, match="completion_grace"):
+        resolve_scan_dates(
+            datetime(2026, 7, 10, 19, tzinfo=ZoneInfo("Asia/Shanghai")),
+            calendar=_FakeChinaCalendar(),
+            completion_grace=timedelta(seconds=-1),
+        )
+
+
 def _diversified_cohort_samples(
     *, member_returns: tuple[float, float, float] = (2.0, 2.0, 2.0),
 ) -> list[dict[str, object]]:

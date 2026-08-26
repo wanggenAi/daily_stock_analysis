@@ -214,13 +214,17 @@ def resolve_scan_dates(
     reference_time: datetime | None = None,
     *,
     calendar: Any | None = None,
+    completion_grace: timedelta = timedelta(0),
 ) -> tuple[date, date]:
-    """Return the latest completed China session and its next session."""
+    """Return the latest data-ready China session and its next session."""
+    if completion_grace < timedelta(0):
+        raise ValueError("completion_grace must not be negative")
     market_time = reference_time or datetime.now(ZoneInfo("Asia/Shanghai"))
     if market_time.tzinfo is None:
         market_time = market_time.replace(tzinfo=ZoneInfo("Asia/Shanghai"))
     else:
         market_time = market_time.astimezone(ZoneInfo("Asia/Shanghai"))
+    market_time -= completion_grace
     if calendar is None:
         try:
             import exchange_calendars as xcals
