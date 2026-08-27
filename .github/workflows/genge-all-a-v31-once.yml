@@ -33,7 +33,8 @@ jobs:
             tests/test_genge_canonical_snapshot.py \
             tests/test_genge_canonical_operating_view.py \
             tests/test_v311_production_bridge.py \
-            tests/test_v311_production_authority.py
+            tests/test_v311_production_authority.py \
+            tests/test_v311_price_date_provenance.py
       - name: Restore all-A state
         uses: actions/cache/restore@v4
         with:
