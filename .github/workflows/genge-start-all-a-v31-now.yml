@@ -13,10 +13,10 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch current canonical All-A V3.1.1 production proof
+      - name: Dispatch finalized canonical All-A V3.1.1 production proof
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run genge-all-a-v31-once.yml --repo "$GITHUB_REPOSITORY" --ref main
-          echo "Dispatched current-main GenGe All-A V3.1.1 canonical production proof"
-          echo "Expected artifact includes Discovery, production decisions, Canonical Snapshot, HOURLY_MONITOR and DAILY_SETTLEMENT views." >> "$GITHUB_STEP_SUMMARY"
+          echo "Dispatched finalized current-main GenGe All-A V3.1.1 canonical production proof"
+          echo "Proof target includes reconciled price-date provenance, hardened Canonical authority, ledger-independent Discovery, production decisions, HOURLY_MONITOR and DAILY_SETTLEMENT views." >> "$GITHUB_STEP_SUMMARY"
