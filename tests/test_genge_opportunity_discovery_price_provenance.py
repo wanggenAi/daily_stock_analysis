@@ -49,14 +49,34 @@ def test_upstream_price_without_real_trade_date_fails_closed() -> None:
 
 
 def test_price_loader_without_observation_date_fails_closed() -> None:
+    def unverified_price_observation(*args, **kwargs):
+        return None, "PRICE_DATE_UNVERIFIED"
+
     rows = reconcile_current_price_provenance(
         [],
         [_ready_row("AKSHARE_QFQ_DAILY")],
         as_of=date(2026, 8, 27),
+        price_verifier=unverified_price_observation,
     )
 
     assert rows[0]["v311_expectation_input_status"] == "HOLD_REVIEW_INPUT_INCOMPLETE"
     assert rows[0]["v311_input_error"] == "PRICE_DATE_UNVERIFIED"
+    assert rows[0]["v31_current_price"] is None
+
+
+def test_price_verifier_fetch_error_is_preserved_for_diagnostics() -> None:
+    def failed_price_observation(*args, **kwargs):
+        return None, "PRICE_VERIFICATION_FETCH_ERROR:ConnectionError"
+
+    rows = reconcile_current_price_provenance(
+        [],
+        [_ready_row("AKSHARE_QFQ_DAILY")],
+        as_of=date(2026, 8, 27),
+        price_verifier=failed_price_observation,
+    )
+
+    assert rows[0]["v311_expectation_input_status"] == "HOLD_REVIEW_INPUT_INCOMPLETE"
+    assert rows[0]["v311_input_error"] == "PRICE_VERIFICATION_FETCH_ERROR:ConnectionError"
     assert rows[0]["v31_current_price"] is None
 
 
