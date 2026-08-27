@@ -1,6 +1,16 @@
 # V31_DURABLE_HANDOFF
 
-> Latest compact handoff for the production-grade GenGe V3.1.1 Shanghai/Shenzhen A-share scan. `GEN_GE_V3_1_1_PRODUCTION` promotes the validated Confidence Gate while retaining the original immediate V3.1 SELL contract. Repository `main`, `V31_CANDIDATE_LEDGER.md`, `CURRENT_HOLDINGS.md`, and dated market-research logs remain the evidence chain.
+> Latest compact handoff for the production-grade GenGe V3.1.1 Shanghai/Shenzhen A-share scan. `GEN_GE_V3_1_1_PRODUCTION` promotes the validated Confidence Gate while retaining the original immediate V3.1 SELL contract. Repository `main`, `V31_CANONICAL_SNAPSHOT.json`, `V31_CANDIDATE_LEDGER.md`, `CURRENT_HOLDINGS.md`, and dated market-research logs remain the evidence chain.
+
+## Canonical synchronization invariant — 2026-08-27
+
+- Canonical production snapshot: `d32ab6d5787f0e571296`.
+- Canonical source: `GenGe V3.1.1 Every-Industry Research` run `33021974261`, artifact `9626921839`, latest completed A-share trade date `2026-08-26`.
+- Durable pointer: `V31_CANONICAL_SNAPSHOT.json`.
+- The 09:07 CST candidate-metabolism work below is an explicit **research overlay** on that canonical production snapshot; it does not silently replace snapshot price/production-decision fields.
+- Hourly and daily/pre-open consumers must first resolve the newest successful canonical snapshot and then use the same `canonical_snapshot_id` for Discovery, Deep Review, candidate actions and holding actions. Cross-run section mixing must fail closed.
+- `V31_CANDIDATE_LEDGER.md` is downstream memory only. It may prioritize durable research names but must never cap/filter the broad Discovery Pool.
+- Synchronization changes no V3.1.1 BUY/SELL threshold: LOW/INVALID valuation confidence remains HOLD_REVIEW, Hard Gate FAIL remains EXIT, and stale/unverified prices cannot create Formal BUY/ADD or price-dependent REDUCE/EXIT.
 
 ## Production promotion 2026-08-26
 
@@ -22,6 +32,7 @@
 
 ## Latest authoritative refresh — 2026-08-27 09:07 CST
 
+- **canonical_snapshot_id: `d32ab6d5787f0e571296`**; production source run `33021974261`; candidate/news work below is the 09:07 CST research overlay.
 - Latest completed A-share session: **2026-08-26**. This refresh is pre-open; no 2026-08-27 price-dependent BUY/ADD/REDUCE/EXIT is allowed before fresh same-day quotes.
 - Confirmed holdings remain `603369 今世缘`, `001316 润贝航科`, `600276 恒瑞医药`, `600406 国电南瑞` only. No new REDUCE/EXIT or new hard-thesis invalidation was established pre-open.
 
@@ -44,8 +55,9 @@
 
 ## Production / CI health
 
-- Latest repaired Every-Industry and Postscan chains remain the controlling successful production evidence. No new production/data-source/CI failure was found in this refresh.
-- Fresh-data and confidence fail-closed rules remain active.
+- Canonical snapshot publishing code and regression tests are now on `main`; the current push CI is still running, so this handoff does not claim final green status yet.
+- The bootstrap canonical pointer was reconstructed from the exact latest successful Every-Industry artifact. The next normally triggered post-change Every-Industry run must produce native `reports/canonical_snapshot/latest.json` before the new synchronization path is considered end-to-end production-proven.
+- Fresh-data and confidence fail-closed rules remain active throughout this transition.
 
 ## Current deep-research priority
 
