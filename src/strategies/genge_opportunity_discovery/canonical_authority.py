@@ -1,14 +1,15 @@
 """Finalize one validated GenGe V3.1.1 canonical snapshot for production consumers.
 
 This module deliberately does not rank stocks, recompute valuation, or create a
-new trading decision.  Its only job is to authenticate one already-built
+new trading decision. Its only job is to authenticate one already-built
 canonical snapshot and publish read-only hourly/daily operating views from that
 same snapshot.
 
-The authority layer exists to prevent a second workflow from silently becoming a
-competing production truth.  A finalized artifact therefore contains the exact
-canonical snapshot, a cryptographic digest, an authority receipt, and consumer
-views that all point at the same ``snapshot_id``.
+There may be more than one legitimate production cycle per trading day (for
+example premarket One Shot and post-close Every-Industry research). Each cycle
+must still have exactly one formal truth: its validated canonical ``snapshot_id``.
+The authority layer prevents a downstream workflow from silently becoming a
+competing decision engine.
 """
 from __future__ import annotations
 
@@ -28,7 +29,12 @@ from .canonical_operating_view import (
 from .canonical_snapshot import PRODUCTION_VERSION, validate_snapshot
 
 AUTHORITY_CONTRACT_VERSION = "GEN_GE_V31_CANONICAL_AUTHORITY_V1"
-AUTHORIZED_SOURCE_KIND = "every-industry"
+AUTHORIZED_SOURCE_KINDS = frozenset(
+    {
+        "every-industry",
+        "GenGe All-A V3.1.1 One Shot",
+    }
+)
 
 
 def _sha256(path: Path) -> str:
@@ -69,6 +75,8 @@ def validate_authority(
         raise ValueError("canonical authority source run mismatch")
     if str(authority.get("upstream_run_id") or "") != str(snapshot.get("upstream_run_id") or ""):
         raise ValueError("canonical authority upstream run mismatch")
+    if str(authority.get("canonical_source_kind") or "") != str(snapshot.get("source_kind") or ""):
+        raise ValueError("canonical authority source kind mismatch")
 
     consumer_contract = authority.get("consumer_contract") or {}
     if consumer_contract.get("canonical_is_only_formal_decision_truth") is not True:
@@ -95,6 +103,7 @@ def finalize_canonical(
     *,
     expected_source_run_id: str,
     source_workflow: str,
+    expected_source_kind: str = "",
     source_head_sha: str = "",
     finalizer_run_id: str = "",
     finalizer_code_sha: str = "",
@@ -104,10 +113,15 @@ def finalize_canonical(
     snapshot = _load_json(snapshot_path)
     validate_snapshot(snapshot, expected_source_run_id=str(expected_source_run_id))
 
-    if str(snapshot.get("source_kind") or "") != AUTHORIZED_SOURCE_KIND:
+    source_kind = str(snapshot.get("source_kind") or "")
+    if source_kind not in AUTHORIZED_SOURCE_KINDS:
         raise ValueError(
-            f"production authority requires source_kind={AUTHORIZED_SOURCE_KIND}; "
-            f"got {snapshot.get('source_kind')!r}"
+            f"production authority rejects source_kind={source_kind!r}; "
+            f"allowed={sorted(AUTHORIZED_SOURCE_KINDS)!r}"
+        )
+    if expected_source_kind and source_kind != expected_source_kind:
+        raise ValueError(
+            f"production authority source kind mismatch: expected {expected_source_kind!r}, got {source_kind!r}"
         )
     if not str(snapshot.get("upstream_run_id") or "").strip():
         raise ValueError("production authority requires an upstream discovery run id")
@@ -140,7 +154,7 @@ def finalize_canonical(
         "authorized": True,
         "canonical_snapshot_id": str(snapshot["snapshot_id"]),
         "canonical_sha256": _sha256(canonical_copy),
-        "canonical_source_kind": str(snapshot.get("source_kind") or ""),
+        "canonical_source_kind": source_kind,
         "canonical_source_run_id": str(snapshot.get("source_run_id") or ""),
         "upstream_run_id": str(snapshot.get("upstream_run_id") or ""),
         "source_workflow": str(source_workflow),
@@ -153,6 +167,7 @@ def finalize_canonical(
         "finalized_at": finalized,
         "source_hashes": dict(source_hashes),
         "consumer_contract": {
+            "one_formal_truth_per_production_cycle": True,
             "canonical_is_only_formal_decision_truth": True,
             "consumer_may_recompute_formal_action": False,
             "overlay_may_overwrite_formal_action": False,
@@ -182,6 +197,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--expected-source-run-id", required=True)
     parser.add_argument("--source-workflow", required=True)
+    parser.add_argument("--expected-source-kind", default="")
     parser.add_argument("--source-head-sha", default="")
     parser.add_argument("--finalizer-run-id", default="")
     parser.add_argument("--finalizer-code-sha", default="")
@@ -191,6 +207,7 @@ def main(argv: list[str] | None = None) -> int:
         args.output_dir,
         expected_source_run_id=args.expected_source_run_id,
         source_workflow=args.source_workflow,
+        expected_source_kind=args.expected_source_kind,
         source_head_sha=args.source_head_sha,
         finalizer_run_id=args.finalizer_run_id,
         finalizer_code_sha=args.finalizer_code_sha,
