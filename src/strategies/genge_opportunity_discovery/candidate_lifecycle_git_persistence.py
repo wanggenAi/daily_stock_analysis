@@ -19,10 +19,20 @@ import shutil
 import subprocess
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
-from .candidate_lifecycle_persistence import persist_finalized_snapshot
-from .candidate_lifecycle_state import LIFECYCLE_CONTRACT_VERSION, load_state
+from .candidate_lifecycle_persistence import (
+    LEDGER_PROJECTION_VERSION,
+    persist_finalized_snapshot,
+    render_ledger_projection,
+)
+from .candidate_lifecycle_state import (
+    ACTIVE,
+    ARCHIVED,
+    INVALIDATED,
+    LIFECYCLE_CONTRACT_VERSION,
+    load_state,
+)
 
 STATE_RELATIVE_PATH = Path("data/opportunity_snapshots/candidate_lifecycle_state.json")
 LEDGER_RELATIVE_PATH = Path("V31_CANDIDATE_LEDGER.md")
@@ -60,6 +70,55 @@ def _preserve_legacy_notes_once(worktree: Path) -> None:
     notes_path = worktree / LEGACY_NOTES_RELATIVE_PATH
     if not state_path.exists() and ledger_path.is_file() and not notes_path.exists():
         shutil.copy2(ledger_path, notes_path)
+
+
+def _is_exact_persisted_snapshot(state: Mapping[str, Any], snapshot: Mapping[str, Any]) -> bool:
+    snapshot_id = str(snapshot.get("snapshot_id") or "")
+    source_run_id = str(snapshot.get("source_run_id") or "")
+    return bool(
+        snapshot_id
+        and source_run_id
+        and state.get("latest_applied_snapshot_id") == snapshot_id
+        and state.get("last_persisted_snapshot_id") == snapshot_id
+        and str(state.get("last_persisted_source_run_id") or "") == source_run_id
+    )
+
+
+def _write_duplicate_outputs(
+    *,
+    snapshot: Mapping[str, Any],
+    state: Mapping[str, Any],
+    ledger_path: Path,
+    events_path: Path,
+    summary_path: Path,
+) -> None:
+    """Regenerate projections for an already-persisted snapshot without mutating state."""
+    ledger_path.write_text(render_ledger_projection(state), encoding="utf-8")
+    events_path.parent.mkdir(parents=True, exist_ok=True)
+    events_path.write_text("[]\n", encoding="utf-8")
+
+    candidates = state.get("candidates") or {}
+    rows = [row for row in candidates.values() if isinstance(row, Mapping)]
+    summary = {
+        "contract_version": LIFECYCLE_CONTRACT_VERSION,
+        "projection_version": LEDGER_PROJECTION_VERSION,
+        "canonical_snapshot_id": snapshot.get("snapshot_id"),
+        "canonical_source_run_id": snapshot.get("source_run_id"),
+        "bootstrapped_from_legacy": False,
+        "snapshot_event_count": 0,
+        "candidate_count": len(candidates),
+        "active_count": sum(1 for row in rows if row.get("lifecycle_state") == ACTIVE),
+        "inactive_count": sum(
+            1 for row in rows if row.get("lifecycle_state") in {ARCHIVED, INVALIDATED}
+        ),
+        "latest_applied_snapshot_id": state.get("latest_applied_snapshot_id"),
+        "latest_research_as_of": state.get("latest_research_as_of"),
+        "seen_count_semantics": "DISTINCT_CANONICAL_OBSERVATIONS_SINCE_MACHINE_MIGRATION",
+        "no_auto_trade": True,
+        "discovery_is_filtered_by_lifecycle": False,
+    }
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _validate_replayed_lifecycle(
@@ -181,14 +240,27 @@ def publish_candidate_lifecycle_with_replay(
                 events_path = attempt_artifacts / "snapshot_events.json"
                 summary_path = attempt_artifacts / "summary.json"
 
-                persist_finalized_snapshot(
-                    snapshot_path=snapshot_path,
-                    state_path=state_path,
-                    projection_path=ledger_path,
-                    legacy_ledger=ledger_path,
-                    events_path=events_path,
-                    summary_path=summary_path,
-                )
+                existing_state = load_state(state_path) if state_path.exists() else None
+                if existing_state is not None and _is_exact_persisted_snapshot(
+                    existing_state, snapshot
+                ):
+                    _write_duplicate_outputs(
+                        snapshot=snapshot,
+                        state=existing_state,
+                        ledger_path=ledger_path,
+                        events_path=events_path,
+                        summary_path=summary_path,
+                    )
+                else:
+                    persist_finalized_snapshot(
+                        snapshot_path=snapshot_path,
+                        state_path=state_path,
+                        projection_path=ledger_path,
+                        legacy_ledger=ledger_path,
+                        events_path=events_path,
+                        summary_path=summary_path,
+                    )
+
                 validation = _validate_replayed_lifecycle(
                     snapshot_path=snapshot_path,
                     state_path=state_path,
