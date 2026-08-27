@@ -24,15 +24,15 @@ concurrency:
 
 jobs:
   dispatch:
-    name: Dispatch premarket All-A opportunity scan
+    name: Dispatch authoritative GenGe V3.1.1 premarket production scan
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Dispatch GenGe Opportunity Discovery on main
+      - name: Dispatch GenGe All-A V3.1.1 One Shot on main
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run genge-opportunity-discovery.yml \
+          gh workflow run genge-all-a-v31-once.yml \
             --repo "${GITHUB_REPOSITORY}" \
             --ref main
 
@@ -41,8 +41,10 @@ jobs:
           {
             echo "# GenGe Premarket Dispatch"
             echo
-            echo "- target workflow: GenGe Opportunity Discovery"
+            echo "- target workflow: GenGe All-A V3.1.1 One Shot"
             echo "- target ref: main"
             echo "- intended Beijing run time: 06:00 Monday-Friday"
-            echo "- downstream: GenGe Valuation Research Queue via workflow_run"
+            echo "- production entrypoint: V3.1.1 strict-PIT production bridge"
+            echo "- policy: frozen V3.1.1 / Round8-Round9 confidence gate / no auto trade"
+            echo "- legacy GenGe Opportunity Discovery remains research-only upstream for Postscan Research"
           } >> "$GITHUB_STEP_SUMMARY"

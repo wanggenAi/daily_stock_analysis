@@ -1,9 +1,9 @@
-name: GenGe Risk-Capped Opportunity Discovery
+name: GenGe Legacy Risk-Capped Research (Manual)
 
+# Legacy risk-capped logic is retained for research and regression diagnostics.
+# It is not an authoritative GenGe V3.1.1 production signal source and must not
+# run on an automatic market schedule.
 on:
-  schedule:
-    # 18:40 Beijing time on weekdays (10:40 UTC), after the strict shadow scan.
-    - cron: "40 10 * * 1-5"
   workflow_dispatch:
   pull_request:
     branches: [main]
@@ -47,9 +47,9 @@ jobs:
             tests/test_genge_real_world_signals.py \
             tests/test_genge_live_exit_policy.py
 
-  production-report:
-    name: Risk-capped All-A production report
-    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+  research-report:
+    name: Legacy risk-capped All-A research report
+    if: github.event_name == 'workflow_dispatch'
     needs: policy-tests
     runs-on: ubuntu-latest
     timeout-minutes: 180
@@ -92,7 +92,7 @@ jobs:
             cp data/opportunity_snapshots/exit_profile_seed.csv data/opportunity_snapshots/exit_profile.csv
           fi
 
-      - name: Run risk-capped all-A production scan
+      - name: Run legacy risk-capped all-A research scan
         run: |
           PYTHONUNBUFFERED=1 timeout --signal=TERM 100m \
           python -m src.strategies.genge_opportunity_discovery.risk_capped_complete_event_scan \
@@ -107,7 +107,7 @@ jobs:
             --industry-alias-map config/industry_alias_map.yaml \
             --exit-profile-file data/opportunity_snapshots/exit_profile.csv
 
-      - name: Validate risk-capped production contract
+      - name: Validate legacy risk-capped research contract
         run: |
           python - <<'PY'
           import csv
@@ -119,7 +119,7 @@ jobs:
               path for path in root.iterdir()
               if path.is_dir() and (path / "run_summary.json").exists()
           )
-          assert runs, "no all-A production report generated"
+          assert runs, "no all-A research report generated"
           latest = runs[-1]
           summary = json.loads((latest / "run_summary.json").read_text(encoding="utf-8"))
 
@@ -195,11 +195,11 @@ jobs:
           print(
               f"market={summary['market_regime_status']} "
               f"strict_ready={summary['strict_review_ready_count']} "
-              f"formal_buys={summary['buy_signal_count']}"
+              f"legacy_research_buys={summary['buy_signal_count']}"
           )
           PY
 
-      - name: Publish daily signal summary
+      - name: Publish legacy research summary
         run: |
           python - <<'PY'
           import os
@@ -213,9 +213,10 @@ jobs:
           target = Path(os.environ["GITHUB_STEP_SUMMARY"])
           content = (
               (reports[-1] / "daily_signals.md").read_text(encoding="utf-8")
-              if reports else "# Risk-capped signals\n\nNo report generated.\n"
+              if reports else "# Legacy risk-capped research signals\n\nNo report generated.\n"
           )
           with target.open("a", encoding="utf-8") as stream:
+              stream.write("# Research only — not V3.1.1 production\n\n")
               stream.write(content)
           PY
 
@@ -233,11 +234,11 @@ jobs:
             stock_pools/all_a_universe_*.csv
           key: genge-all-a-state-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
 
-      - name: Upload risk-capped production report
+      - name: Upload legacy risk-capped research report
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: genge-risk-capped-all-a-production-report
+          name: genge-risk-capped-all-a-research-report
           path: |
             reports/all_a_full_scan
             stock_pools/all_a_universe_*.csv
