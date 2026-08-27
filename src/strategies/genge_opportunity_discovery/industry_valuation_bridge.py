@@ -1,11 +1,13 @@
 """Build an industry-aware source pool for reverse valuation research.
 
 The global channel keeps the existing broad-recall leaders. A second channel
-adds the best research-eligible names from every represented industry. An
-optional durable curated channel guarantees that already deep-researched names
-cannot disappear merely because a bounded quant/technical recall budget is
-exhausted. Original blockers are never erased and this module never grants
-Formal BUY status.
+adds the best research-eligible names from every represented industry. Durable
+research recall combines the static research pool with Active candidates from
+``V31_CANDIDATE_LEDGER.md`` so old hard-logic names are continuously
+re-underwritten instead of being forgotten by a bounded recall budget.
+Archived/INVALIDATED ledger names are excluded from ordinary recall and cannot
+auto-revive without an explicit evidence-backed ledger reactivation. Original
+blockers are never erased and this module never grants Formal BUY status.
 """
 from __future__ import annotations
 
@@ -76,17 +78,47 @@ def _read_curated_codes(path: Path | None) -> set[str]:
     return codes
 
 
-def _merge_industry_provenance(target: dict[str, Any], industry_row: Mapping[str, Any]) -> None:
-    """Fill missing industry-recall provenance on an existing global row.
+def _read_candidate_ledger_codes(path: Path | None) -> tuple[set[str], set[str]]:
+    """Return Active and Archived/INVALIDATED codes from the durable ledger.
 
-    A name can enter the valuation source through global recall before the
-    industry channel sees it. In that case the global row may not carry the
-    normalized ``industry`` column. Marking the row ``BOTH`` without copying
-    the industry provenance makes downstream coverage validation incorrectly
-    conclude that the industry disappeared even though its champion is present.
-    Only missing provenance is filled; global ranking/valuation fields and hard
-    blockers are never overwritten.
+    Only ``###`` stock headings inside the canonical Active/Archived sections
+    are parsed. The CURRENT DEEP RESEARCH QUEUE and research-only observations
+    are intentionally ignored so the ledger has one unambiguous lifecycle
+    source for recall/exclusion semantics.
     """
+    if path is None or not path.exists():
+        return set(), set()
+
+    active: set[str] = set()
+    invalidated: set[str] = set()
+    section: str | None = None
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if line == "## Active candidate ledger":
+            section = "active"
+            continue
+        if line.startswith("## Archived") or line.startswith("## INVALIDATED"):
+            section = "invalidated"
+            continue
+        if line.startswith("## "):
+            section = None
+            continue
+        if not line.startswith("### ") or section is None:
+            continue
+        token = line[4:].split(None, 1)[0]
+        code = _code({"code": token})
+        if len(code) != 6 or not code.isdigit():
+            continue
+        if section == "active":
+            active.add(code)
+        else:
+            invalidated.add(code)
+
+    return active - invalidated, invalidated
+
+
+def _merge_industry_provenance(target: dict[str, Any], industry_row: Mapping[str, Any]) -> None:
+    """Fill missing industry-recall provenance on an existing global row."""
     for key in (
         "industry",
         "normalized_industry",
@@ -115,14 +147,19 @@ def merge_sources(
     relaxed_reserve: int = 20,
     per_industry: int = 3,
     curated_codes: Iterable[str] = (),
+    excluded_codes: Iterable[str] = (),
 ) -> list[dict[str, Any]]:
     """Return global + industry + durable curated research recall.
 
-    Curated recall is deliberately not a score override. It only ensures the
-    row reaches valuation/V3.1 review. Original quant status, price/technical
-    blockers, true hard blockers and all downstream frozen gates remain intact.
+    ``excluded_codes`` is a lifecycle veto used for Archived/INVALIDATED ledger
+    names. It overrides every ordinary source channel, including static curated
+    recall, so an invalidated candidate cannot silently auto-revive. Curated
+    recall remains research-only and never overrides downstream V3.1 gates.
     """
     all_a = [dict(row) for row in all_a_rows]
+    excluded = {_code({"code": value}) for value in excluded_codes}
+    excluded.discard("")
+
     global_selected = select_wide_recall_rows(
         all_a,
         research_limit=max(0, int(global_limit)),
@@ -133,7 +170,7 @@ def merge_sources(
     by_code: dict[str, dict[str, Any]] = {}
     for raw in global_selected:
         code = _code(raw)
-        if not code or code in by_code:
+        if not code or code in excluded or code in by_code:
             continue
         row = dict(raw)
         row["code"] = code
@@ -150,7 +187,7 @@ def merge_sources(
     ]
     for raw in industry_selected:
         code = _code(raw)
-        if not code:
+        if not code or code in excluded:
             continue
         if code in by_code:
             existing = by_code[code]
@@ -167,6 +204,7 @@ def merge_sources(
 
     requested = {_code({"code": value}) for value in curated_codes}
     requested.discard("")
+    requested -= excluded
     for raw in all_a:
         code = _code(raw)
         if not code or code not in requested:
@@ -193,15 +231,7 @@ def merge_sources(
 
 
 def _find_all_a_report(root: Path) -> Path:
-    """Resolve the same canonical All-A report used by industry coverage.
-
-    Production artifacts contain both the full dated All-A screen and nested
-    deep-review ``quant_screen_all.csv`` files. A union-of-filenames followed by
-    lexicographic sorting can incorrectly select the nested bounded review. The
-    canonical resolver prioritizes ``all_a_quant_screen.csv`` and its production
-    ``run_summary.json`` so durable research recall is matched against the full
-    universe rather than a downstream sample.
-    """
+    """Resolve the same canonical All-A report used by industry coverage."""
     return find_latest_report(root)
 
 
@@ -222,6 +252,7 @@ def write_merged_report(
     relaxed_reserve: int = 20,
     per_industry: int = 3,
     curated_pool: Path | None = None,
+    candidate_ledger: Path | None = Path("V31_CANDIDATE_LEDGER.md"),
 ) -> list[dict[str, Any]]:
     report = _find_all_a_report(all_a_report)
     all_a_rows = _read_all_a(report)
@@ -231,7 +262,9 @@ def write_merged_report(
     if not industry_rows:
         raise FileNotFoundError("missing industry coverage source")
 
-    curated_codes = _read_curated_codes(curated_pool)
+    static_curated_codes = _read_curated_codes(curated_pool)
+    ledger_active_codes, ledger_invalidated_codes = _read_candidate_ledger_codes(candidate_ledger)
+    curated_codes = static_curated_codes | ledger_active_codes
     rows = merge_sources(
         all_a_rows,
         industry_rows,
@@ -239,7 +272,16 @@ def write_merged_report(
         relaxed_reserve=relaxed_reserve,
         per_industry=per_industry,
         curated_codes=curated_codes,
+        excluded_codes=ledger_invalidated_codes,
     )
+
+    for row in rows:
+        code = _code(row)
+        if code in ledger_active_codes:
+            row["ledger_candidate_recall"] = True
+            row["ledger_candidate_state"] = "ACTIVE"
+            _mark_research_only(row)
+
     output_dir.mkdir(parents=True, exist_ok=True)
     fields = sorted({key for row in rows for key in row})
     with (output_dir / "all_a_quant_screen.csv").open("w", encoding="utf-8", newline="") as f:
@@ -270,6 +312,8 @@ def write_merged_report(
     source_codes = {_code(row) for row in all_a_rows}
     found_curated = sorted(curated_codes & source_codes)
     missing_curated = sorted(curated_codes - source_codes)
+    found_ledger = sorted(ledger_active_codes & source_codes)
+    missing_ledger = sorted(ledger_active_codes - source_codes)
     summary = {
         "merged_count": len(rows),
         "global_limit": int(global_limit),
@@ -285,6 +329,12 @@ def write_merged_report(
         "curated_research_recall_count": sum(bool(r.get("curated_research_recall")) for r in rows),
         "curated_only_count": sum(r.get("valuation_source_channel") == "CURATED_RESEARCH_POOL" for r in rows),
         "curated_pool_missing_codes": missing_curated,
+        "static_curated_pool_requested_count": len(static_curated_codes),
+        "ledger_active_candidate_count": len(ledger_active_codes),
+        "ledger_invalidated_exclusion_count": len(ledger_invalidated_codes),
+        "ledger_active_found_count": len(found_ledger),
+        "ledger_active_missing_codes": missing_ledger,
+        "ledger_invalidated_suppressed_codes": sorted(ledger_invalidated_codes & source_codes),
         "formal_signal_eligible": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
@@ -308,6 +358,11 @@ def main(argv: list[str] | None = None) -> int:
         type=Path,
         default=Path("stock_pools/genge_v31_research_pool.txt"),
     )
+    parser.add_argument(
+        "--candidate-ledger",
+        type=Path,
+        default=Path("V31_CANDIDATE_LEDGER.md"),
+    )
     args = parser.parse_args(argv)
     rows = write_merged_report(
         args.all_a_report,
@@ -317,6 +372,7 @@ def main(argv: list[str] | None = None) -> int:
         relaxed_reserve=args.relaxed_reserve,
         per_industry=args.per_industry,
         curated_pool=args.curated_pool,
+        candidate_ledger=args.candidate_ledger,
     )
     print(f"industry_valuation_source={args.output_dir};count={len(rows)}")
     return 0
