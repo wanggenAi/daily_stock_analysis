@@ -18,5 +18,5 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run genge-all-a-v31-once.yml --repo "$GITHUB_REPOSITORY" --ref main
-          echo "Dispatched finalized current-main GenGe All-A V3.1.1 canonical production proof"
-          echo "Proof target includes reconciled price-date provenance, hardened Canonical authority, ledger-independent Discovery, production decisions, HOURLY_MONITOR and DAILY_SETTLEMENT views." >> "$GITHUB_STEP_SUMMARY"
+          echo "Dispatched finalized current-main GenGe All-A V3.1.1 canonical + lifecycle production proof"
+          echo "Proof target includes reconciled price-date provenance, hardened Canonical authority, ledger-independent Discovery, production decisions, HOURLY_MONITOR and DAILY_SETTLEMENT views, holdings reconciliation, persistent candidate lifecycle JSON, and generated candidate-ledger projection." >> "$GITHUB_STEP_SUMMARY"
