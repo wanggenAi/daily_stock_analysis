@@ -79,7 +79,8 @@ jobs:
             tests/test_genge_resource_routing_v31.py \
             tests/test_genge_v31_execution_extensions.py \
             tests/test_genge_production_model.py \
-            tests/test_genge_canonical_snapshot.py
+            tests/test_genge_canonical_snapshot.py \
+            tests/test_v311_price_date_provenance.py
       - name: Build every-industry Top 5 map
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.industry_coverage \
@@ -146,10 +147,10 @@ jobs:
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v31_resource_scenario_merge \
             --v31-dir reports/v31_review --resource-root reports/valuation_research_queue \
             --output-dir reports/v31_review_enriched
-      - name: Build GenGe V3.1.1 production candidate and holding decisions
+      - name: Build GenGe V3.1.1 strict-PIT production candidate and holding decisions
         run: |
-          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.production_decision_scan \
-            --candidate-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v311_production_bridge \
+            --source-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
             --holdings-md CURRENT_HOLDINGS.md \
             --output-dir reports/production_decisions
       - name: Build canonical hourly/daily snapshot
@@ -188,6 +189,13 @@ jobs:
           assert v31, 'V3.1 enriched queue is empty'
           production = list(csv.DictReader(Path('reports/production_decisions/production_decisions.csv').open(encoding='utf-8')))
           assert production and all(r['production_model_version'] == 'GEN_GE_V3_1_1_PRODUCTION' for r in production)
+          assert all(r.get('v311_production_bridge') == 'EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT' for r in production)
+          for row in production:
+              if row.get('v311_expectation_input_status') == 'READY':
+                  assert row.get('price_date'), f"READY row missing price_date: {row.get('code')}"
+                  assert row.get('decision_date'), f"READY row missing decision_date: {row.get('code')}"
+                  assert row['price_date'] <= row['decision_date'], f"future price date: {row.get('code')}"
+                  assert not row.get('v311_input_error'), f"READY row has input error: {row.get('code')}"
           snapshot = json.loads(Path('reports/canonical_snapshot/latest.json').read_text(encoding='utf-8'))
           validate_snapshot(snapshot, expected_source_run_id=str(__import__('os').environ['GITHUB_RUN_ID']))
           assert snapshot['discovery']['execution_eligible_count'] > 0
