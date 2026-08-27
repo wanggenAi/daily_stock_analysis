@@ -2,11 +2,30 @@
 
 ## Purpose
 
-GenGe V3.1.1 has exactly one formal production truth per authorized research cycle: the validated native Canonical Snapshot.
+GenGe V3.1.1 has exactly one formal production truth **per authorized production cycle**: the validated native Canonical Snapshot.
+
+There may be more than one legitimate production cycle on a trading day. In particular, the system can produce a fresh premarket snapshot and a later post-close snapshot. This does not create competing truths because each cycle is identified by its own source run and immutable `snapshot_id`; downstream consumers must use one finalized snapshot at a time and may never mix components across cycles.
 
 This contract separates computation from authorization so that scheduled monitoring, daily settlement, holdings review, and candidate metabolism cannot silently create competing BUY/ADD/HOLD/REDUCE/EXIT states.
 
-## Authoritative chain
+## Authorized production chains
+
+### Premarket cycle
+
+```text
+GenGe Opportunity Premarket Dispatch
+  -> GenGe All-A V3.1.1 One Shot
+      -> full current-market Discovery
+      -> deep review / valuation
+      -> V3.1.1 strict-PIT candidate + holding decisions
+      -> canonical_snapshot/latest.json
+          -> GenGe V3.1.1 Production Finalizer
+              -> production_authority.json
+              -> operating_views/hourly.json
+              -> operating_views/daily.json
+```
+
+### Post-close cycle
 
 ```text
 GenGe Opportunity Discovery
@@ -21,6 +40,8 @@ GenGe Opportunity Discovery
               -> operating_views/daily.json
 ```
 
+The two producer workflows are allowed to create a new formal action because both execute the frozen V3.1.1 research/production contract and build a native Canonical Snapshot. The Finalizer never creates a new action.
+
 ## Ownership of responsibilities
 
 ### Discovery
@@ -29,17 +50,19 @@ GenGe Opportunity Discovery
 - The durable candidate ledger is not allowed to filter broad discovery.
 - Discovery does not grant a Formal BUY/ADD/REDUCE/EXIT action.
 
-### Every-Industry Research
+### Authorized research / production producer
 
-- Performs hard-logic research, deep review, valuation, strict-PIT production decisioning, holdings decisioning, and candidate research.
-- Builds the native Canonical Snapshot.
-- This is the only stage allowed to create or change a formal production action.
+- `GenGe All-A V3.1.1 One Shot` is the premarket full production cycle.
+- `GenGe V3.1.1 Every-Industry Research` is the post-close full production cycle.
+- Each performs hard-logic research, deep review, valuation, strict-PIT production decisioning, holdings decisioning, and candidate research before building its native Canonical Snapshot.
+- Only these authorized research/production stages may create or change a formal production action.
 
 ### Canonical Snapshot
 
 - Stamps discovery, deep review, candidate decisions, and holding decisions with one `snapshot_id`.
-- Records the source run, upstream discovery run, source hashes, latest trade date, and production version.
+- Records the source run, upstream run, source hashes, latest trade date, and production version.
 - A valid Canonical Snapshot is immutable for downstream consumers.
+- Components from different `snapshot_id` values must never be combined into a synthetic decision state.
 
 ### Production Finalizer
 
@@ -47,8 +70,9 @@ GenGe Opportunity Discovery
 - Does not recalculate valuation.
 - Does not re-run a Top5 bridge.
 - Does not create a second production decision table.
+- Accepts only the two authorized canonical producer workflows.
 - Validates the native Canonical Snapshot, writes a cryptographic authority receipt, and derives read-only hourly/daily operating views.
-- Fails closed when source run identity, upstream identity, source hashes, trade-date evidence, schema, or snapshot synchronization is invalid.
+- Fails closed when producer identity, source run identity, upstream identity, source hashes, trade-date evidence, schema, or snapshot synchronization is invalid.
 
 ### Hourly consumer
 
@@ -76,22 +100,25 @@ Confirmed holdings are part of the production decision layer and must share the 
 
 ## Formal action rules
 
-1. One authorized `snapshot_id` = one formal production truth.
-2. Only the research/production stage may create a new Formal action.
-3. Finalizer authenticates; it never recomputes the action.
-4. Hourly and daily consumers read the same canonical truth but perform different jobs.
-5. Fresh overlays may add context but may not overwrite a Formal action.
-6. Formal action changes require a new validated Canonical Snapshot.
-7. Production thresholds and the V3.1.1 hard-logic policy are not changed by synchronization code.
-8. `no_auto_trade` remains true: the system produces research/decision support, not unattended order execution.
+1. One authorized production cycle has one formal `snapshot_id` truth.
+2. A newer successfully finalized production cycle may supersede an older cycle, but components from the two cycles may not be mixed.
+3. Only an authorized research/production producer may create a new Formal action.
+4. Finalizer authenticates; it never recomputes the action.
+5. Hourly and daily consumers read the same finalized canonical truth but perform different jobs.
+6. Fresh overlays may add context but may not overwrite a Formal action.
+7. Formal action changes require a new validated Canonical Snapshot.
+8. Production thresholds and the V3.1.1 hard-logic policy are not changed by synchronization code.
+9. `no_auto_trade` remains true: the system produces research/decision support, not unattended order execution.
 
 ## Fail-closed conditions
 
 Do not authorize or consume a formal action when any of the following is true:
 
 - native canonical snapshot is missing;
+- source workflow is not one of the two authorized canonical producers;
+- snapshot `source_kind` does not match the producer workflow;
 - snapshot schema or production version is invalid;
-- canonical `source_run_id` does not match the completed Every-Industry run;
+- canonical `source_run_id` does not match the completed producer run;
 - `upstream_run_id` is missing;
 - canonical source hashes are missing;
 - latest trade date is missing or production price freshness is invalid;
@@ -101,7 +128,7 @@ Do not authorize or consume a formal action when any of the following is true:
 
 ## Production proof
 
-A production cycle is considered natively proven only after a successful authoritative `GenGe V3.1.1 Every-Industry Research` run is followed by a successful `GenGe V3.1.1 Production Finalizer` run that publishes:
+A production cycle is considered natively proven only after a successful authorized producer run (`GenGe All-A V3.1.1 One Shot` or `GenGe V3.1.1 Every-Industry Research`) is followed by a successful `GenGe V3.1.1 Production Finalizer` run that publishes:
 
 ```text
 authoritative/canonical_snapshot/latest.json
@@ -110,4 +137,4 @@ authoritative/operating_views/hourly.json
 authoritative/operating_views/daily.json
 ```
 
-All four files must resolve to the same canonical `snapshot_id`.
+All four files must resolve to the same canonical `snapshot_id`, the same canonical source run, and the same producer identity.
