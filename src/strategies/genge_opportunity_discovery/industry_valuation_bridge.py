@@ -3,11 +3,14 @@
 The global channel keeps the existing broad-recall leaders. A second channel
 adds the best research-eligible names from every represented industry. Durable
 research recall combines the static research pool with Active candidates from
-``V31_CANDIDATE_LEDGER.md`` so old hard-logic names are continuously
+the machine candidate lifecycle state so old hard-logic names are continuously
 re-underwritten instead of being forgotten by a bounded recall budget.
-Archived/INVALIDATED ledger names are excluded from ordinary recall and cannot
-auto-revive without an explicit evidence-backed ledger reactivation. Original
-blockers are never erased and this module never grants Formal BUY status.
+Archived/INVALIDATED lifecycle names are excluded from ordinary recall and
+cannot auto-revive without an explicit evidence-backed reactivation.
+
+``V31_CANDIDATE_LEDGER.md`` is now a generated human projection. It is accepted
+only as a one-time compatibility fallback before the JSON lifecycle state exists.
+Original blockers are never erased and this module never grants Formal BUY status.
 """
 from __future__ import annotations
 
@@ -18,6 +21,12 @@ import shutil
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+    ACTIVE,
+    ARCHIVED,
+    INVALIDATED,
+    load_state,
+)
 from src.strategies.genge_opportunity_discovery.industry_coverage import (
     find_latest_report,
 )
@@ -78,13 +87,40 @@ def _read_curated_codes(path: Path | None) -> set[str]:
     return codes
 
 
+def _read_candidate_state_codes(path: Path | None) -> tuple[set[str], set[str]] | None:
+    """Return Active and Archived/INVALIDATED codes from machine lifecycle JSON.
+
+    ``None`` means the JSON state does not exist yet and the caller may use the
+    one-time legacy Markdown compatibility fallback. If a JSON file exists but
+    is invalid, ``load_state`` raises and the research pipeline fails closed
+    instead of silently trusting Markdown.
+    """
+    if path is None or not path.exists():
+        return None
+    state = load_state(path)
+    active: set[str] = set()
+    inactive: set[str] = set()
+    for raw_code, raw_candidate in (state.get("candidates") or {}).items():
+        if not isinstance(raw_candidate, Mapping):
+            continue
+        code = _code({"code": raw_code})
+        lifecycle = str(raw_candidate.get("lifecycle_state") or "")
+        if not code:
+            continue
+        if lifecycle == ACTIVE:
+            active.add(code)
+        elif lifecycle in {ARCHIVED, INVALIDATED}:
+            inactive.add(code)
+    return active - inactive, inactive
+
+
 def _read_candidate_ledger_codes(path: Path | None) -> tuple[set[str], set[str]]:
-    """Return Active and Archived/INVALIDATED codes from the durable ledger.
+    """Compatibility fallback for the pre-state-machine Markdown ledger.
 
     Only ``###`` stock headings inside the canonical Active/Archived sections
     are parsed. The CURRENT DEEP RESEARCH QUEUE and research-only observations
-    are intentionally ignored so the ledger has one unambiguous lifecycle
-    source for recall/exclusion semantics.
+    are intentionally ignored. Once lifecycle JSON exists, this parser must not
+    be used as durable recall authority.
     """
     if path is None or not path.exists():
         return set(), set()
@@ -151,10 +187,10 @@ def merge_sources(
 ) -> list[dict[str, Any]]:
     """Return global + industry + durable curated research recall.
 
-    ``excluded_codes`` is a lifecycle veto used for Archived/INVALIDATED ledger
-    names. It overrides every ordinary source channel, including static curated
-    recall, so an invalidated candidate cannot silently auto-revive. Curated
-    recall remains research-only and never overrides downstream V3.1 gates.
+    ``excluded_codes`` is a lifecycle veto used for Archived/INVALIDATED names.
+    It overrides every ordinary source channel, including static curated recall,
+    so an invalidated candidate cannot silently auto-revive. Curated recall
+    remains research-only and never overrides downstream V3.1 gates.
     """
     all_a = [dict(row) for row in all_a_rows]
     excluded = {_code({"code": value}) for value in excluded_codes}
@@ -252,6 +288,7 @@ def write_merged_report(
     relaxed_reserve: int = 20,
     per_industry: int = 3,
     curated_pool: Path | None = None,
+    candidate_state: Path | None = Path("data/opportunity_snapshots/candidate_lifecycle_state.json"),
     candidate_ledger: Path | None = Path("V31_CANDIDATE_LEDGER.md"),
 ) -> list[dict[str, Any]]:
     report = _find_all_a_report(all_a_report)
@@ -263,7 +300,14 @@ def write_merged_report(
         raise FileNotFoundError("missing industry coverage source")
 
     static_curated_codes = _read_curated_codes(curated_pool)
-    ledger_active_codes, ledger_invalidated_codes = _read_candidate_ledger_codes(candidate_ledger)
+    lifecycle_codes = _read_candidate_state_codes(candidate_state)
+    if lifecycle_codes is not None:
+        ledger_active_codes, ledger_invalidated_codes = lifecycle_codes
+        candidate_memory_source = "LIFECYCLE_STATE_JSON"
+    else:
+        ledger_active_codes, ledger_invalidated_codes = _read_candidate_ledger_codes(candidate_ledger)
+        candidate_memory_source = "LEGACY_MARKDOWN_FALLBACK"
+
     curated_codes = static_curated_codes | ledger_active_codes
     rows = merge_sources(
         all_a_rows,
@@ -280,6 +324,7 @@ def write_merged_report(
         if code in ledger_active_codes:
             row["ledger_candidate_recall"] = True
             row["ledger_candidate_state"] = "ACTIVE"
+            row["candidate_memory_source"] = candidate_memory_source
             _mark_research_only(row)
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -330,6 +375,9 @@ def write_merged_report(
         "curated_only_count": sum(r.get("valuation_source_channel") == "CURATED_RESEARCH_POOL" for r in rows),
         "curated_pool_missing_codes": missing_curated,
         "static_curated_pool_requested_count": len(static_curated_codes),
+        "candidate_memory_source": candidate_memory_source,
+        "candidate_state_path": str(candidate_state or ""),
+        "legacy_candidate_ledger_path": str(candidate_ledger or ""),
         "ledger_active_candidate_count": len(ledger_active_codes),
         "ledger_invalidated_exclusion_count": len(ledger_invalidated_codes),
         "ledger_active_found_count": len(found_ledger),
@@ -359,9 +407,15 @@ def main(argv: list[str] | None = None) -> int:
         default=Path("stock_pools/genge_v31_research_pool.txt"),
     )
     parser.add_argument(
+        "--candidate-state",
+        type=Path,
+        default=Path("data/opportunity_snapshots/candidate_lifecycle_state.json"),
+    )
+    parser.add_argument(
         "--candidate-ledger",
         type=Path,
         default=Path("V31_CANDIDATE_LEDGER.md"),
+        help="legacy fallback only when candidate lifecycle JSON does not yet exist",
     )
     args = parser.parse_args(argv)
     rows = write_merged_report(
@@ -372,6 +426,7 @@ def main(argv: list[str] | None = None) -> int:
         relaxed_reserve=args.relaxed_reserve,
         per_industry=args.per_industry,
         curated_pool=args.curated_pool,
+        candidate_state=args.candidate_state,
         candidate_ledger=args.candidate_ledger,
     )
     print(f"industry_valuation_source={args.output_dir};count={len(rows)}")
