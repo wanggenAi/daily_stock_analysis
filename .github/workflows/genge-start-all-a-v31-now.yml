@@ -13,9 +13,10 @@ jobs:
   dispatch:
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch full All-A V3.1 scan
+      - name: Dispatch current canonical All-A V3.1.1 production proof
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run genge-all-a-v31-once.yml --repo "$GITHUB_REPOSITORY" --ref main
-          echo "Dispatched GenGe All-A V3.1.1 One Shot"
+          echo "Dispatched current-main GenGe All-A V3.1.1 canonical production proof"
+          echo "Expected artifact includes Discovery, production decisions, Canonical Snapshot, HOURLY_MONITOR and DAILY_SETTLEMENT views." >> "$GITHUB_STEP_SUMMARY"
