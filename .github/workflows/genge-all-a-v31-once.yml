@@ -29,7 +29,9 @@ jobs:
             tests/test_genge_resource_asset_valuation.py \
             tests/test_genge_resource_routing_v31.py \
             tests/test_genge_v31_execution_extensions.py \
-            tests/test_genge_production_model.py
+            tests/test_genge_production_model.py \
+            tests/test_v311_production_bridge.py \
+            tests/test_v311_production_authority.py
       - name: Restore all-A state
         uses: actions/cache/restore@v4
         with:
@@ -129,13 +131,13 @@ jobs:
       - name: Map resource scenarios into V3.1
         run: |
           python -m src.strategies.genge_opportunity_discovery.v31_resource_scenario_merge --v31-dir reports/v31_review --resource-root reports/valuation_research_queue --output-dir reports/v31_review_enriched
-      - name: Build GenGe V3.1.1 production candidate and holding decisions
+      - name: Build GenGe V3.1.1 strict-PIT production candidate and holding decisions
         run: |
-          python -m src.strategies.genge_opportunity_discovery.production_decision_scan \
-            --candidate-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+          python -m src.strategies.genge_opportunity_discovery.v311_production_bridge \
+            --source-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
             --holdings-md CURRENT_HOLDINGS.md \
             --output-dir reports/production_decisions
-      - name: Validate every industry represented
+      - name: Validate every industry and authoritative production bridge
         run: |
           python - <<'PY'
           import csv,json
@@ -146,9 +148,23 @@ jobs:
           represented={r.get('industry','') for r in source if r.get('industry','')}
           missing=sorted(clean-represented); assert not missing, f'missing industries: {missing}'
           v31=list(csv.DictReader(Path('reports/v31_review_enriched/v31_review_queue_enriched.csv').open(encoding='utf-8'))); assert v31
-          production=list(csv.DictReader(Path('reports/production_decisions/production_decisions.csv').open(encoding='utf-8'))); assert production
+          production_root=Path('reports/production_decisions')
+          bridge_inputs=production_root/'v311_production_inputs.csv'
+          strict_pit=production_root/'expectation_inputs'/'v311_current_expectation_inputs.csv'
+          assert bridge_inputs.exists() and bridge_inputs.stat().st_size > 0
+          assert strict_pit.exists() and strict_pit.stat().st_size > 0
+          bridge_rows=list(csv.DictReader(bridge_inputs.open(encoding='utf-8'))); assert bridge_rows
+          assert all(r.get('v311_production_bridge')=='EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT' for r in bridge_rows)
+          production=list(csv.DictReader((production_root/'production_decisions.csv').open(encoding='utf-8'))); assert production
           assert all(r['production_model_version']=='GEN_GE_V3_1_1_PRODUCTION' for r in production)
-          print(json.dumps({'clean_industries':len(clean),'represented':len(represented),'v31_candidates':len(v31)},ensure_ascii=False,indent=2))
+          assert all(r['upstream_policy_reused']=='False' for r in production)
+          assert all(r['no_auto_trade']=='True' for r in production)
+          summary=json.loads((production_root/'production_decision_summary.json').read_text(encoding='utf-8'))
+          assert summary['fresh_production_decision_authority'] is True
+          assert summary['upstream_policy_reused_count'] == 0
+          assert summary['v32_sell_confirmation_enabled'] is False
+          assert summary['no_auto_trade'] is True
+          print(json.dumps({'clean_industries':len(clean),'represented':len(represented),'v31_candidates':len(v31),'production_rows':len(production)},ensure_ascii=False,indent=2))
           PY
       - name: Save caches
         uses: actions/cache/save@v4
