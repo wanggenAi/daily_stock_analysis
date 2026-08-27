@@ -1,0 +1,26 @@
+name: GenGe V3.1.1 Current-Main Dispatch Once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/genge-v31-current-main-dispatch-once.yml
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-current-main:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch current-main Every-Industry replay
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run genge-v31-industry-research.yml \
+            --repo "${{ github.repository }}" \
+            --ref main \
+            -f upstream_run_id=33027424135
+          echo "Dispatched current main against authoritative All-A upstream run 33027424135."
