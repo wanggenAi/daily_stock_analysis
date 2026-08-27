@@ -76,7 +76,17 @@ jobs:
       - name: ✅ Local deterministic checks
         run: ./scripts/ci_gate.sh deterministic
       - name: ✅ Offline test suite
+        env:
+          CI_ARTIFACT_DIR: .ci-artifacts
         run: ./scripts/ci_gate.sh offline-tests
+      - name: 📎 Upload offline pytest diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: offline-pytest-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .ci-artifacts/
+          if-no-files-found: error
+          retention-days: 7
 
   docker-build:
     name: docker-build
