@@ -34,3 +34,12 @@ def test_legacy_discovery_is_explicitly_not_the_premarket_production_target() ->
 
     assert "legacy GenGe Opportunity Discovery remains research-only upstream" in premarket
     assert "name: GenGe Opportunity Discovery" in discovery
+
+
+def test_legacy_risk_capped_signals_are_manual_research_only() -> None:
+    text = _workflow("genge-risk-capped-opportunity-discovery.yml")
+
+    assert "name: GenGe Legacy Risk-Capped Research (Manual)" in text
+    assert "\n  schedule:" not in text
+    assert "if: github.event_name == 'workflow_dispatch'" in text
+    assert "not an authoritative GenGe V3.1.1 production signal source" in text
