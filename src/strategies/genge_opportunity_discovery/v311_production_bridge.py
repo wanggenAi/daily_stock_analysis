@@ -16,6 +16,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from .price_observation_verifier import verify_price_observation
 from .production_decision_scan import read_holdings_markdown, write_reports
 from .v311_current_expectation_inputs import write_current_expectation_inputs
 
@@ -213,6 +214,8 @@ def _invalidate_price_dependent_inputs(row: dict[str, Any], error: str) -> None:
     row["v311_expectation_input_status"] = "HOLD_REVIEW_INPUT_INCOMPLETE"
     row["v311_input_error"] = error
     row["price_date"] = ""
+    row["price_date_verification_status"] = "FAILED"
+    row["price_date_verification_error"] = error
     # Keep financial-history evidence, but remove fields that could manufacture
     # a price-dependent BUY/ADD/REDUCE/EXIT from an unverified observation.
     for field in (
@@ -227,19 +230,32 @@ def _invalidate_price_dependent_inputs(row: dict[str, Any], error: str) -> None:
         row[field] = None
 
 
+def _price_value(row: Mapping[str, Any]) -> float | None:
+    for field in ("v31_current_price", "current_price"):
+        if not _has_value(row.get(field)):
+            continue
+        try:
+            value = float(row.get(field))
+        except (TypeError, ValueError):
+            continue
+        if value > 0:
+            return value
+    return None
+
+
 def reconcile_current_price_provenance(
     source_rows: Iterable[Mapping[str, Any]],
     current_rows: Iterable[Mapping[str, Any]],
     *,
     as_of: date,
+    price_verifier=verify_price_observation,
 ) -> list[dict[str, Any]]:
     """Repair or fail closed on price dates before production decisions.
 
-    The current strict-PIT extractor historically wrote ``decision_date`` into
-    ``price_date`` even when the reused upstream close belonged to the previous
-    trading session. The authoritative bridge therefore resolves upstream
-    observations against their real source trade date. A price with no provable
-    observation date cannot drive a production price-dependent action.
+    Upstream prices are reconciled to same-run source trade dates. Provider
+    prices are independently rechecked against the provider's dated observation.
+    A numeric price without a provable observation date cannot drive a formal
+    price-dependent V3.1.1 action.
     """
     source_dates = _source_price_dates(source_rows)
     reconciled: list[dict[str, Any]] = []
@@ -247,8 +263,8 @@ def reconcile_current_price_provenance(
         row = dict(raw)
         code = _code(row.get("code"))
         source = str(row.get("current_price_source") or "").strip().upper()
-        has_price = _has_value(row.get("v31_current_price")) or _has_value(row.get("current_price"))
-        if not code or not has_price:
+        price = _price_value(row)
+        if not code or price is None:
             reconciled.append(row)
             continue
 
@@ -260,10 +276,23 @@ def reconcile_current_price_provenance(
                 _invalidate_price_dependent_inputs(row, "PRICE_DATE_AFTER_DECISION_DATE")
             else:
                 row["price_date"] = observed.isoformat()
+                row["price_date_verification_status"] = "VERIFIED"
+                row["price_date_verification_method"] = "SAME_RUN_SOURCE_TRADE_DATE"
+                row["price_date_verification_error"] = ""
         else:
-            # The legacy price loader returns only value/source, not the actual
-            # observation date. Do not trust its synthetic as-of date here.
-            _invalidate_price_dependent_inputs(row, "PRICE_DATE_UNVERIFIED")
+            try:
+                observed, error = price_verifier(code, price, source, as_of=as_of)
+            except Exception as exc:  # verifier/provider boundary
+                observed, error = None, f"PRICE_VERIFICATION_ERROR:{type(exc).__name__}"
+            if observed is None or error:
+                _invalidate_price_dependent_inputs(row, error or "PRICE_DATE_UNVERIFIED")
+            elif observed > as_of:
+                _invalidate_price_dependent_inputs(row, "PRICE_DATE_AFTER_DECISION_DATE")
+            else:
+                row["price_date"] = observed.isoformat()
+                row["price_date_verification_status"] = "VERIFIED"
+                row["price_date_verification_method"] = "INDEPENDENT_PROVIDER_RECHECK"
+                row["price_date_verification_error"] = ""
         reconciled.append(row)
     return reconciled
 
@@ -279,18 +308,15 @@ def _rewrite_expectation_summary(output_dir: Path, rows: list[dict[str, Any]]) -
         summary = {}
     statuses = [str(row.get("v311_expectation_input_status") or "") for row in rows]
     errors = [str(row.get("v311_input_error") or "") for row in rows]
+    verification_statuses = [str(row.get("price_date_verification_status") or "") for row in rows]
     summary.update(
         {
             "row_count": len(rows),
             "ready_count": sum(status == "READY" for status in statuses),
             "hold_review_input_count": sum(status != "READY" for status in statuses),
             "price_provenance_reconciled": True,
-            "verified_price_date_count": sum(_parse_iso_date(row.get("price_date")) is not None for row in rows),
-            "unverified_price_date_count": sum(
-                bool(row.get("v31_current_price") or row.get("current_price"))
-                and _parse_iso_date(row.get("price_date")) is None
-                for row in rows
-            ),
+            "verified_price_date_count": sum(status == "VERIFIED" for status in verification_statuses),
+            "unverified_price_date_count": sum(status == "FAILED" for status in verification_statuses),
             "input_error_counts": {
                 error: errors.count(error)
                 for error in sorted({error for error in errors if error})
