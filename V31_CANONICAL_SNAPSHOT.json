@@ -1,0 +1,139 @@
+{
+  "schema_version": "genge_v31_canonical_snapshot_v1_durable_projection",
+  "production_version": "GEN_GE_V3_1_1_PRODUCTION",
+  "canonical_snapshot_id": "d32ab6d5787f0e571296",
+  "source_kind": "every-industry",
+  "source_run_id": "33021974261",
+  "source_artifact_id": "9626921839",
+  "source_artifact_name": "genge-v31-every-industry-research",
+  "source_head_sha": "5889d5afe46569336a236aac0daaa0fcd37e9698",
+  "generated_at": "2026-08-26T23:07:15Z",
+  "research_as_of": "2026-08-27T08:09:00+08:00",
+  "latest_trade_date": "2026-08-26",
+  "source_hashes": {
+    "discovery_csv": "14979ba7006fb546e7d23eccde6ccb7f6152b65464378f4c70d812b82ec62d55",
+    "deep_review_csv": "655e132d4d01e0cca15f788414cbf65d2e7f71672cccc94fb170b1b42031b80c",
+    "production_csv": "996a3a24cda2c0d0ccdf5270581c692295e042cd4b078c2eb092cd442a27a2c4"
+  },
+  "architecture_contract": {
+    "discovery_is_upstream_of_ledger": true,
+    "ledger_may_filter_discovery": false,
+    "candidate_ledger_is_downstream_memory_only": true,
+    "formal_buy_thresholds_changed": false,
+    "full_snapshot_available_in_artifact": true
+  },
+  "freshness_contract": {
+    "stale_or_unverified_price_may_promote_buy_add": false,
+    "hourly_and_daily_must_share_canonical_snapshot_id": true,
+    "newer_filing_news_must_be_timestamped_as_research_overlay": true
+  },
+  "counts": {
+    "execution_eligible_discovery": 566,
+    "execution_eligible_deep_review": 382,
+    "production_candidate_decisions": 378,
+    "production_holding_decisions": 4,
+    "production_action_counts": {
+      "HOLD_REVIEW": 382
+    }
+  },
+  "confirmed_holding_production_actions": [
+    {
+      "code": "001316",
+      "stock_name": "润贝航科",
+      "action": "HOLD_REVIEW",
+      "valuation_confidence": "INVALID",
+      "confirmed_quantity": "200",
+      "display_only_average_cost": "26.0955"
+    },
+    {
+      "code": "600276",
+      "stock_name": "恒瑞医药",
+      "action": "HOLD_REVIEW",
+      "valuation_confidence": "INVALID",
+      "confirmed_quantity": "100",
+      "display_only_average_cost": "46.4115"
+    },
+    {
+      "code": "600406",
+      "stock_name": "国电南瑞",
+      "action": "HOLD_REVIEW",
+      "valuation_confidence": "INVALID",
+      "confirmed_quantity": "200",
+      "display_only_average_cost": "23.1258"
+    },
+    {
+      "code": "603369",
+      "stock_name": "今世缘",
+      "action": "HOLD_REVIEW",
+      "valuation_confidence": "INVALID",
+      "confirmed_quantity": "300",
+      "display_only_average_cost": "29.5003"
+    }
+  ],
+  "same_snapshot_deep_review_examples": [
+    {
+      "code": "603986",
+      "stock_name": "兆易创新",
+      "v31_review_rank": 21,
+      "quant_score": 29.6357,
+      "production_action": "HOLD_REVIEW"
+    },
+    {
+      "code": "600312",
+      "stock_name": "平高电气",
+      "v31_review_rank": 76,
+      "quant_score": 43.1493,
+      "production_action": "HOLD_REVIEW"
+    },
+    {
+      "code": "603993",
+      "stock_name": "洛阳钼业",
+      "v31_review_rank": 83,
+      "quant_score": 30.7764,
+      "production_action": "HOLD_REVIEW"
+    },
+    {
+      "code": "603658",
+      "stock_name": "安图生物",
+      "v31_review_rank": 92,
+      "quant_score": 75.1546,
+      "artifact_current_price": "33.41",
+      "production_action": "HOLD_REVIEW",
+      "price_note": "artifact value is not a substitute for the independent execution-price verification required by the durable research ledger"
+    },
+    {
+      "code": "601899",
+      "stock_name": "紫金矿业",
+      "v31_review_rank": 116,
+      "quant_score": 57.1517,
+      "production_action": "HOLD_REVIEW"
+    },
+    {
+      "code": "002028",
+      "stock_name": "思源电气",
+      "v31_review_rank": 316,
+      "quant_score": 41.427,
+      "production_action": "HOLD_REVIEW"
+    },
+    {
+      "code": "002371",
+      "stock_name": "北方华创",
+      "v31_review_rank": 372,
+      "quant_score": 32.1392,
+      "production_action": "HOLD_REVIEW"
+    },
+    {
+      "code": "002463",
+      "stock_name": "沪电股份",
+      "v31_review_rank": 373,
+      "quant_score": 43.2631,
+      "production_action": "HOLD_REVIEW"
+    }
+  ],
+  "consumer_contract": {
+    "hourly": "refresh this projection from the newest successful canonical Every-Industry artifact, then stamp Ledger/log/handoff with the same canonical_snapshot_id",
+    "daily": "resolve the newest canonical artifact first, synchronize this projection if newer, then generate the pre-open report from that same canonical_snapshot_id",
+    "ledger": "may retain only important deep-research names but must never be treated as the full Discovery Pool",
+    "formal_buy": "unchanged fail-closed V3.1.1 contract"
+  }
+}
