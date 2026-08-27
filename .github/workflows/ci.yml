@@ -85,6 +85,7 @@ jobs:
         with:
           name: offline-pytest-diagnostics-${{ github.run_id }}-${{ github.run_attempt }}
           path: .ci-artifacts/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 7
 
