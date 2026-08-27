@@ -104,6 +104,7 @@ def build_operating_view(snapshot: Mapping[str, Any], *, mode: str) -> dict[str,
     }
 
     if normalized_mode == HOURLY_MONITOR:
+        focus = _hourly_focus(snapshot)
         return {
             **common,
             "job_contract": {
@@ -114,10 +115,10 @@ def build_operating_view(snapshot: Mapping[str, Any], *, mode: str) -> dict[str,
                 "lifecycle_settlement": False,
             },
             "holding_decisions": holdings,
-            "focus_candidates": _hourly_focus(snapshot),
+            "focus_candidates": focus,
             "counts": {
                 "holdings": len(holdings),
-                "focus_candidates": len(deep_review),
+                "focus_candidates": len(focus),
                 "canonical_candidate_decisions": len(candidates),
             },
         }
