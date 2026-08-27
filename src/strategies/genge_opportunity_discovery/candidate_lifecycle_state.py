@@ -1,7 +1,7 @@
 """Stateful candidate metabolism for finalized GenGe V3.1.1 snapshots.
 
-This module is downstream memory.  It must never filter broad Discovery and it
-must never manufacture a Formal BUY/ADD/REDUCE/EXIT action.  Its purpose is to
+This module is downstream memory. It must never filter broad Discovery and it
+must never manufacture a Formal BUY/ADD/REDUCE/EXIT action. Its purpose is to
 make candidate lifecycle bookkeeping idempotent and auditable:
 
 * one canonical snapshot may increment a candidate's ``seen_count`` at most once;
@@ -10,7 +10,11 @@ make candidate lifecycle bookkeeping idempotent and auditable:
 * upgrades, downgrades, invalidations and reactivations require an explicit,
   uniquely identified evidence event;
 * out-of-order canonical snapshots are rejected instead of silently rewriting
-  later state with older research.
+  later state with older research;
+* generic production-only HOLD_REVIEW rows do not inflate durable candidate
+  memory. New names enter automatically only through Deep Review or a meaningful
+  non-HOLD_REVIEW candidate action, while already-known candidates may continue
+  to be observed through production re-underwriting.
 """
 from __future__ import annotations
 
@@ -47,6 +51,8 @@ _EXPLICIT_EVENTS = {
     EXPLICIT_INVALIDATED,
     EXPLICIT_REACTIVATED,
 }
+
+_DURABLE_PRODUCTION_ENTRY_ACTIONS = {"BUY", "ADD", "REDUCE", "EXIT"}
 
 
 def _code(value: Any) -> str:
@@ -107,8 +113,21 @@ def _validate_state(state: Mapping[str, Any]) -> None:
             raise ValueError(f"invalid candidate lifecycle state: {code}")
 
 
-def _observed_candidates(snapshot: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
-    """Return durable-research observations, never the whole broad Discovery pool."""
+def _observed_candidates(
+    snapshot: Mapping[str, Any],
+    *,
+    existing_codes: Iterable[str] = (),
+) -> dict[str, dict[str, Any]]:
+    """Return durable-research observations, never the broad Discovery pool.
+
+    Deep Review is the normal automatic entry path. Production candidate rows
+    enrich those observations. A production-only row is admitted when the name
+    is already in lifecycle memory (continuous re-underwriting) or when the row
+    carries a meaningful non-HOLD_REVIEW candidate action. This prevents
+    hundreds of ordinary fail-closed production rows from becoming a fake
+    long-term candidate pool.
+    """
+    known = {_code(code) for code in existing_codes if _code(code)}
     result: dict[str, dict[str, Any]] = {}
     deep_rows = list((snapshot.get("deep_review") or {}).get("rows") or [])
     production_rows = list((snapshot.get("production") or {}).get("candidate_decisions") or [])
@@ -134,6 +153,9 @@ def _observed_candidates(snapshot: Mapping[str, Any]) -> dict[str, dict[str, Any
         code = _code(raw.get("code"))
         if not code:
             continue
+        action = str(raw.get("action") or "").strip().upper()
+        if code not in result and code not in known and action not in _DURABLE_PRODUCTION_ENTRY_ACTIONS:
+            continue
         existing = result.setdefault(
             code,
             {
@@ -142,18 +164,18 @@ def _observed_candidates(snapshot: Mapping[str, Any]) -> dict[str, dict[str, Any
                 "research_tier": "",
                 "valuation_confidence": "",
                 "formal_action": "",
-                "observed_scope": "PRODUCTION_DECISION",
+                "observed_scope": "PRODUCTION_REUNDERWRITE",
             },
         )
         existing["stock_name"] = str(raw.get("stock_name") or existing.get("stock_name") or "")
         existing["valuation_confidence"] = str(
             raw.get("valuation_confidence") or existing.get("valuation_confidence") or ""
         )
-        existing["formal_action"] = str(raw.get("action") or "")
+        existing["formal_action"] = action
         existing["observed_scope"] = (
             "DEEP_REVIEW+PRODUCTION_DECISION"
             if existing.get("observed_scope") == "DEEP_REVIEW"
-            else "PRODUCTION_DECISION"
+            else "PRODUCTION_REUNDERWRITE"
         )
     return result
 
@@ -161,7 +183,6 @@ def _observed_candidates(snapshot: Mapping[str, Any]) -> dict[str, dict[str, Any
 def _append_event(candidate: dict[str, Any], event: dict[str, Any]) -> None:
     history = candidate.setdefault("history", [])
     history.append(event)
-    # Keep the durable file bounded while retaining substantial audit history.
     if len(history) > 100:
         del history[:-100]
     candidate["last_event"] = event["event"]
@@ -172,11 +193,7 @@ def apply_snapshot(
     state: Mapping[str, Any] | None,
     snapshot: Mapping[str, Any],
 ) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    """Apply one canonical snapshot exactly once.
-
-    Broad Discovery is intentionally not persisted as durable candidates here;
-    only deep-review/production candidate observations enter metabolism.
-    """
+    """Apply one canonical snapshot exactly once."""
     validate_snapshot(snapshot)
     next_state = copy.deepcopy(dict(state) if state is not None else empty_state())
     _validate_state(next_state)
@@ -194,8 +211,9 @@ def apply_snapshot(
         raise ValueError("out-of-order canonical snapshot rejected by candidate lifecycle")
 
     candidates = next_state["candidates"]
+    observations = _observed_candidates(snapshot, existing_codes=candidates.keys())
     events: list[dict[str, Any]] = []
-    for code, observation in sorted(_observed_candidates(snapshot).items()):
+    for code, observation in sorted(observations.items()):
         candidate = candidates.get(code)
         if candidate is None:
             candidate = {
@@ -222,7 +240,6 @@ def apply_snapshot(
         else:
             event_name = SYSTEM_RESEEN
 
-        # Per-candidate defense in depth in addition to the global snapshot list.
         if candidate.get("last_seen_snapshot_id") == snapshot_id:
             continue
 
@@ -306,7 +323,6 @@ def apply_explicit_transition(
         EXPLICIT_DOWNGRADED,
         EXPLICIT_PRICE_ONLY_CHANGE,
     }:
-        # Research can continue, but only REACTIVATED may restore Active recall.
         new_state = prior_state
 
     candidate["lifecycle_state"] = new_state
