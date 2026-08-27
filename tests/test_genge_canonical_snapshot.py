@@ -3,9 +3,37 @@
 import pytest
 
 from src.strategies.genge_opportunity_discovery.canonical_snapshot import (
+    PRODUCTION_BRIDGE,
+    PRODUCTION_VERSION,
     build_snapshot,
     validate_snapshot,
 )
+
+
+def _production_row(
+    code: str = "600003",
+    *,
+    scope: str = "CANDIDATE",
+    action: str = "HOLD_REVIEW",
+    **overrides,
+) -> dict:
+    row = {
+        "code": code,
+        "decision_scope": scope,
+        "production_action": action,
+        "production_model_version": PRODUCTION_VERSION,
+        "v311_production_bridge": PRODUCTION_BRIDGE,
+        "strict_pit_refresh_applied": True,
+        "v311_expectation_input_status": "READY",
+        "decision_date": "2026-08-27",
+        "price_date": "2026-08-26",
+        "current_price": "20.0",
+        "v311_input_error": "",
+        "upstream_policy_reused": False,
+        "no_auto_trade": True,
+    }
+    row.update(overrides)
+    return row
 
 
 def test_discovery_is_not_capped_by_deep_review_or_ledger() -> None:
@@ -23,13 +51,7 @@ def test_discovery_is_not_capped_by_deep_review_or_ledger() -> None:
             "v31_execution_universe_status": "EXECUTION_ELIGIBLE",
         }
     ]
-    production = [
-        {
-            "code": "600003",
-            "decision_scope": "CANDIDATE",
-            "production_action": "HOLD_REVIEW",
-        }
-    ]
+    production = [_production_row()]
 
     snapshot = build_snapshot(
         discovery,
@@ -97,3 +119,56 @@ def test_sync_contract_does_not_change_formal_buy_or_freshness_rules() -> None:
 
     assert snapshot["architecture_contract"]["formal_buy_thresholds_changed"] is False
     assert snapshot["freshness_contract"]["stale_or_unverified_price_may_promote_buy_add"] is False
+    assert snapshot["freshness_contract"]["formal_buy_add_requires_verified_price_date"] is True
+    assert snapshot["freshness_contract"]["production_rows_require_fresh_strict_pit_bridge"] is True
+
+
+def test_wrong_production_version_or_authority_fails_closed() -> None:
+    with pytest.raises(ValueError, match="version mismatch"):
+        build_snapshot(
+            [],
+            [],
+            [_production_row(production_model_version="OLD")],
+            source_kind="test",
+            source_run_id="1",
+        )
+
+    with pytest.raises(ValueError, match="bridge authority mismatch"):
+        build_snapshot(
+            [],
+            [],
+            [_production_row(v311_production_bridge="LEGACY")],
+            source_kind="test",
+            source_run_id="1",
+        )
+
+
+def test_buy_add_requires_ready_verified_price_date() -> None:
+    with pytest.raises(ValueError, match="lacks READY"):
+        build_snapshot(
+            [],
+            [],
+            [_production_row(action="BUY", v311_expectation_input_status="HOLD_REVIEW_INPUT_INCOMPLETE")],
+            source_kind="test",
+            source_run_id="1",
+        )
+
+    with pytest.raises(ValueError, match="price date is unverified"):
+        build_snapshot(
+            [],
+            [],
+            [_production_row(action="ADD", price_date="")],
+            source_kind="test",
+            source_run_id="1",
+        )
+
+
+def test_duplicate_production_code_fails_closed() -> None:
+    with pytest.raises(ValueError, match="duplicate code"):
+        build_snapshot(
+            [],
+            [],
+            [_production_row(), _production_row(scope="HOLDING")],
+            source_kind="test",
+            source_run_id="1",
+        )
