@@ -7,6 +7,10 @@ The durable JSON state is the lifecycle source of truth. ``V31_CANDIDATE_LEDGER.
 is a generated human-readable projection only. For the first migration, an
 existing legacy Markdown ledger may be imported so historically researched names
 are not silently forgotten when the state machine becomes authoritative.
+
+Legacy ``seen_count`` values are retained only as audit metadata. Machine
+``seen_count`` starts at zero at migration and thereafter counts distinct
+canonical observations under the idempotent lifecycle contract.
 """
 from __future__ import annotations
 
@@ -63,8 +67,10 @@ def bootstrap_state_from_legacy_ledger(path: Path) -> dict[str, Any]:
     """Import lifecycle identity from the old hand-maintained Markdown ledger.
 
     The importer is intentionally conservative. It imports lifecycle membership,
-    identity, tier, seen count and a few last-known fields, but does not convert
-    prose research notes into evidence or Formal actions.
+    identity, tier and a few last-known fields, but does not convert prose
+    research notes into evidence or Formal actions. The legacy seen count is
+    preserved separately for audit because it predates canonical-idempotency and
+    may include repeated reads of the same snapshot.
     """
     state = empty_state()
     if not path.exists():
@@ -81,7 +87,7 @@ def bootstrap_state_from_legacy_ledger(path: Path) -> dict[str, Any]:
         code = _code(current.get("code"))
         lifecycle_state = _legacy_state_for_section(current.get("section"))
         if code and lifecycle_state:
-            seen_count = max(0, int(current.get("seen_count") or 0))
+            legacy_seen_count = max(0, int(current.get("seen_count") or 0))
             candidate = {
                 "code": code,
                 "stock_name": str(current.get("stock_name") or ""),
@@ -91,7 +97,9 @@ def bootstrap_state_from_legacy_ledger(path: Path) -> dict[str, Any]:
                 "first_seen_source_run_id": "",
                 "last_seen_snapshot_id": "",
                 "last_seen_source_run_id": "",
-                "seen_count": seen_count,
+                # Machine count begins at migration. Historical Markdown counts
+                # are not canonical-idempotent and therefore cannot seed it.
+                "seen_count": 0,
                 "last_formal_action": str(current.get("last_formal_action") or ""),
                 "last_valuation_confidence": str(current.get("valuation_confidence") or ""),
                 "last_event": LEGACY_IMPORT_EVENT,
@@ -101,7 +109,7 @@ def bootstrap_state_from_legacy_ledger(path: Path) -> dict[str, Any]:
                 "legacy_imported": True,
                 "legacy_first_seen_text": str(current.get("first_seen") or ""),
                 "legacy_last_seen_text": str(current.get("last_seen") or ""),
-                "legacy_seen_count_imported": seen_count,
+                "legacy_seen_count_imported": legacy_seen_count,
             }
             state["candidates"][code] = candidate
         current = None
@@ -162,6 +170,7 @@ def bootstrap_state_from_legacy_ledger(path: Path) -> dict[str, Any]:
     state["bootstrap_source"] = "LEGACY_MARKDOWN"
     state["legacy_ledger_path"] = str(path)
     state["legacy_imported_candidate_count"] = len(state["candidates"])
+    state["machine_seen_count_epoch"] = "FIRST_FINALIZED_CANONICAL_AFTER_LIFECYCLE_MIGRATION"
     return state
 
 
@@ -208,6 +217,7 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
         f"- active_candidates: {len(active)}",
         f"- archived_or_invalidated_candidates: {len(inactive)}",
         f"- lifecycle_event_count: {int(state.get('event_count') or 0)}",
+        "- seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration",
         "- no_auto_trade: `true`",
         "- discovery_is_filtered_by_lifecycle: `false`",
         "",
@@ -265,6 +275,7 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
         "",
         "## Contract",
         "",
+        "- `seen_count` counts distinct canonical observations since machine lifecycle migration; legacy counts are audit-only metadata.",
         "- Re-reading the same canonical snapshot is idempotent and must not increment `seen_count`.",
         "- Absence from a snapshot does not automatically archive or invalidate a candidate.",
         "- Archived/INVALIDATED rediscovery requires explicit evidence-backed reactivation.",
@@ -293,6 +304,9 @@ def _render_candidate_detail(row: Mapping[str, Any]) -> list[str]:
     ]
     if row.get("legacy_imported"):
         lines.append("- **legacy migration:** imported once from the pre-state-machine Markdown ledger")
+        lines.append(
+            f"- **legacy seen_count (audit only):** {int(row.get('legacy_seen_count_imported') or 0)}"
+        )
     lines.extend(["", "#### Delta history"])
     if history:
         for event in history[-10:]:
@@ -359,6 +373,7 @@ def persist_finalized_snapshot(
             ),
             "latest_applied_snapshot_id": state.get("latest_applied_snapshot_id"),
             "latest_research_as_of": state.get("latest_research_as_of"),
+            "seen_count_semantics": "DISTINCT_CANONICAL_OBSERVATIONS_SINCE_MACHINE_MIGRATION",
             "no_auto_trade": True,
             "discovery_is_filtered_by_lifecycle": False,
         }
