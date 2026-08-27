@@ -143,6 +143,12 @@ def write_reports(
     *,
     holdings_md: Path | None = None,
 ) -> list[dict[str, Any]]:
+    """Low-level renderer for already-authoritative V3.1.1 production inputs.
+
+    Scheduled/CLI callers must enter through :mod:`v311_production_bridge`,
+    which refreshes strict point-in-time expectation inputs before this function
+    recomputes the frozen production gate and action.
+    """
     candidate_rows = _read_csv(candidate_csv)
     holding_rows = read_holdings_markdown(holdings_md) if holdings_md else []
     holding_codes = {_code(row.get("code")) for row in holding_rows}
@@ -218,14 +224,36 @@ def write_reports(
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser()
+    """Compatibility CLI that cannot bypass the strict-PIT production bridge."""
+    parser = argparse.ArgumentParser(
+        description="Legacy alias; authoritative execution is delegated to v311_production_bridge."
+    )
     parser.add_argument("--candidate-csv", type=Path, required=True)
+    parser.add_argument("--evidence-csv", type=Path)
+    parser.add_argument("--codes-csv", type=Path)
     parser.add_argument("--holdings-md", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--as-of")
     args = parser.parse_args(argv)
-    rows = write_reports(args.candidate_csv, args.output_dir, holdings_md=args.holdings_md)
-    print(f"production_decisions={args.output_dir};count={len(rows)}")
-    return 0
+
+    # Import lazily to avoid a module-level cycle: the bridge intentionally uses
+    # write_reports() above as its final low-level renderer after strict-PIT
+    # refresh. Any legacy CLI invocation is therefore forced through the bridge.
+    from .v311_production_bridge import main as bridge_main
+
+    bridge_argv = [
+        "--source-csv", str(args.candidate_csv),
+        "--output-dir", str(args.output_dir),
+    ]
+    if args.evidence_csv:
+        bridge_argv.extend(["--evidence-csv", str(args.evidence_csv)])
+    if args.codes_csv:
+        bridge_argv.extend(["--codes-csv", str(args.codes_csv)])
+    if args.holdings_md:
+        bridge_argv.extend(["--holdings-md", str(args.holdings_md)])
+    if args.as_of:
+        bridge_argv.extend(["--as-of", str(args.as_of)])
+    return bridge_main(bridge_argv)
 
 
 if __name__ == "__main__":
