@@ -4,7 +4,8 @@ Downstream jobs must never reconstruct a formal investment decision from durable
 markdown, an older raw snapshot, a different workflow run, or a fresh market-data
 overlay.  This module is the read-side guard for that rule: it accepts only a
 complete artifact produced by ``GenGe V3.1.1 Production Finalizer`` and returns
-one validated hourly or daily operating view.
+one validated hourly or daily operating view plus the holding-sync state bound to
+that exact canonical snapshot.
 
 It deliberately performs no stock ranking, valuation, lifecycle transition, or
 trading-action recomputation.
@@ -18,6 +19,11 @@ from pathlib import Path
 from typing import Any
 
 from .canonical_authority import validate_authority
+from .canonical_holdings_reconciliation import (
+    HOLDINGS_IN_SYNC,
+    HOLDINGS_OUT_OF_SYNC,
+    HOLDINGS_RECONCILIATION_VERSION,
+)
 from .canonical_operating_view import DAILY_SETTLEMENT, HOURLY_MONITOR
 from .canonical_snapshot import PRODUCTION_VERSION, validate_snapshot
 
@@ -49,6 +55,35 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _validate_holdings_reconciliation(
+    reconciliation: dict[str, Any],
+    *,
+    snapshot_id: str,
+    source_run_id: str,
+) -> None:
+    if reconciliation.get("contract_version") != HOLDINGS_RECONCILIATION_VERSION:
+        raise ValueError("authorized holdings reconciliation contract mismatch")
+    if str(reconciliation.get("canonical_snapshot_id") or "") != snapshot_id:
+        raise ValueError("authorized holdings reconciliation snapshot mismatch")
+    if str(reconciliation.get("canonical_source_run_id") or "") != source_run_id:
+        raise ValueError("authorized holdings reconciliation source run mismatch")
+    status = str(reconciliation.get("status") or "")
+    if status not in {HOLDINGS_IN_SYNC, HOLDINGS_OUT_OF_SYNC}:
+        raise ValueError("authorized holdings reconciliation status invalid")
+    in_sync = reconciliation.get("in_sync") is True
+    usable = reconciliation.get("formal_holding_actions_currently_usable") is True
+    if in_sync != usable:
+        raise ValueError("holdings reconciliation usability does not match sync state")
+    if status == HOLDINGS_IN_SYNC and not in_sync:
+        raise ValueError("HOLDINGS_IN_SYNC requires in_sync=true")
+    if status == HOLDINGS_OUT_OF_SYNC and in_sync:
+        raise ValueError("HOLDINGS_OUT_OF_SYNC requires in_sync=false")
+    if reconciliation.get("candidate_formal_actions_affected_by_holdings_mismatch") is not False:
+        raise ValueError("holdings mismatch must not invalidate canonical candidate actions")
+    if reconciliation.get("no_auto_trade") is not True:
+        raise ValueError("holdings reconciliation no-auto-trade contract missing")
+
+
 def load_authorized_view(authority_root: Path, *, mode: str) -> dict[str, Any]:
     """Return one authenticated read-only operating view or fail closed.
 
@@ -62,10 +97,12 @@ def load_authorized_view(authority_root: Path, *, mode: str) -> dict[str, Any]:
     authority_path = authority_root / "production_authority.json"
     snapshot_path = authority_root / "canonical_snapshot" / "latest.json"
     view_path = authority_root / "operating_views" / _MODE_FILES[normalized_mode]
+    holdings_path = authority_root / "holdings_reconciliation.json"
 
     authority = _load_json(authority_path)
     snapshot = _load_json(snapshot_path)
     view = _load_json(view_path)
+    holdings = _load_json(holdings_path)
 
     source_workflow = str(authority.get("source_workflow") or "")
     expected_kind = AUTHORIZED_PRODUCER_KINDS.get(source_workflow)
@@ -120,6 +157,12 @@ def load_authorized_view(authority_root: Path, *, mode: str) -> dict[str, Any]:
     if consumer_contract.get("research_overlay_may_overwrite_canonical_action") is not False:
         raise ValueError("authorized consumer overlay overwrite must be forbidden")
 
+    _validate_holdings_reconciliation(
+        holdings,
+        snapshot_id=snapshot_id,
+        source_run_id=canonical_source_run_id,
+    )
+
     return {
         "mode": normalized_mode,
         "canonical_snapshot_id": snapshot_id,
@@ -129,9 +172,14 @@ def load_authorized_view(authority_root: Path, *, mode: str) -> dict[str, Any]:
         "latest_trade_date": str(snapshot.get("latest_trade_date") or ""),
         "research_as_of": str(snapshot.get("research_as_of") or ""),
         "finalized_at": str(authority.get("finalized_at") or ""),
+        "holdings_status": str(holdings.get("status") or ""),
+        "formal_holding_actions_currently_usable": bool(
+            holdings.get("formal_holding_actions_currently_usable") is True
+        ),
         "authority": authority,
         "canonical": snapshot,
         "view": view,
+        "holdings_reconciliation": holdings,
     }
 
 
@@ -156,6 +204,10 @@ def main(argv: list[str] | None = None) -> int:
                 "latest_trade_date": bundle["latest_trade_date"],
                 "research_as_of": bundle["research_as_of"],
                 "finalized_at": bundle["finalized_at"],
+                "holdings_status": bundle["holdings_status"],
+                "formal_holding_actions_currently_usable": bundle[
+                    "formal_holding_actions_currently_usable"
+                ],
                 "formal_action_recalculation": False,
             },
             ensure_ascii=False,
