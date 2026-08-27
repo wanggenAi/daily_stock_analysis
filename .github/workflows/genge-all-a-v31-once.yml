@@ -31,6 +31,7 @@ jobs:
             tests/test_genge_v31_execution_extensions.py \
             tests/test_genge_production_model.py \
             tests/test_genge_canonical_snapshot.py \
+            tests/test_genge_canonical_operating_view.py \
             tests/test_v311_production_bridge.py \
             tests/test_v311_production_authority.py
       - name: Restore all-A state
@@ -157,6 +158,11 @@ jobs:
             --source-kind "${{ github.workflow }}" \
             --source-run-id "${{ github.run_id }}" \
             --upstream-run-id "self:${{ github.run_id }}"
+      - name: Publish canonical hourly and daily operating views
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.canonical_operating_view \
+            --snapshot reports/canonical_snapshot/latest.json \
+            --output-dir reports/operating_views
       - name: Validate every industry and authoritative canonical production truth
         run: |
           python - <<'PY'
@@ -202,6 +208,17 @@ jobs:
           assert snapshot['architecture_contract']['ledger_may_filter_discovery'] is False
           assert snapshot['architecture_contract']['formal_buy_thresholds_changed'] is False
           assert snapshot['production_version']=='GEN_GE_V3_1_1_PRODUCTION'
+
+          hourly=json.loads(Path('reports/operating_views/hourly.json').read_text(encoding='utf-8'))
+          daily=json.loads(Path('reports/operating_views/daily.json').read_text(encoding='utf-8'))
+          assert hourly['canonical_snapshot_id']==sid==daily['canonical_snapshot_id']
+          assert hourly['mode']=='HOURLY_MONITOR'
+          assert daily['mode']=='DAILY_SETTLEMENT'
+          assert hourly['consumer_contract']['decision_recalculation_allowed'] is False
+          assert hourly['consumer_contract']['decision_mutation_allowed'] is False
+          assert daily['consumer_contract']['same_canonical_truth_required'] is True
+          assert hourly['job_contract']['full_market_reunderwrite'] is False
+          assert daily['job_contract']['full_market_reunderwrite'] is True
           print(json.dumps({
             'clean_industries':len(clean),
             'represented':len(represented),
@@ -209,6 +226,8 @@ jobs:
             'v31_candidates':len(v31),
             'production_rows':len(production),
             'canonical_snapshot_id':sid,
+            'hourly_holdings':hourly['counts']['holdings'],
+            'daily_candidate_decisions':daily['counts']['candidate_decisions'],
           },ensure_ascii=False,indent=2))
           PY
       - name: Save caches
@@ -241,4 +260,5 @@ jobs:
             reports/v31_review_enriched
             reports/production_decisions
             reports/canonical_snapshot
+            reports/operating_views
           if-no-files-found: error
