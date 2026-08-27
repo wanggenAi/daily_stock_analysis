@@ -129,12 +129,13 @@ jobs:
           print(f"canonical_snapshot={snapshot}")
           PY
 
-      - name: Run canonical authority tests
+      - name: Run canonical authority and consumer tests
         run: |
           python -m pytest -q \
             tests/test_genge_canonical_snapshot.py \
             tests/test_genge_canonical_operating_view.py \
-            tests/test_genge_canonical_authority.py
+            tests/test_genge_canonical_authority.py \
+            tests/test_genge_canonical_authorized_consumer.py
 
       - name: Finalize canonical production authority
         run: |
@@ -154,34 +155,42 @@ jobs:
           import json
           from pathlib import Path
 
-          from src.strategies.genge_opportunity_discovery.canonical_authority import validate_authority
-          from src.strategies.genge_opportunity_discovery.canonical_snapshot import validate_snapshot
+          from src.strategies.genge_opportunity_discovery.canonical_authorized_consumer import (
+              load_authorized_view,
+          )
+          from src.strategies.genge_opportunity_discovery.canonical_operating_view import (
+              DAILY_SETTLEMENT,
+              HOURLY_MONITOR,
+          )
 
           root = Path("authoritative")
-          snapshot = json.loads((root / "canonical_snapshot/latest.json").read_text(encoding="utf-8"))
-          authority = json.loads((root / "production_authority.json").read_text(encoding="utf-8"))
-          hourly = json.loads((root / "operating_views/hourly.json").read_text(encoding="utf-8"))
-          daily = json.loads((root / "operating_views/daily.json").read_text(encoding="utf-8"))
+          hourly_bundle = load_authorized_view(root, mode=HOURLY_MONITOR)
+          daily_bundle = load_authorized_view(root, mode=DAILY_SETTLEMENT)
 
-          validate_snapshot(snapshot, expected_source_run_id="${{ steps.source.outputs.run_id }}")
-          validate_authority(authority, snapshot, hourly_view=hourly, daily_view=daily)
-          assert authority["canonical_snapshot_id"] == hourly["canonical_snapshot_id"] == daily["canonical_snapshot_id"]
-          assert authority["canonical_source_kind"] == "${{ steps.source.outputs.source_kind }}"
-          assert authority["source_workflow"] == "${{ steps.source.outputs.workflow }}"
+          authority = hourly_bundle["authority"]
+          hourly = hourly_bundle["view"]
+          daily = daily_bundle["view"]
+
+          assert hourly_bundle["canonical_snapshot_id"] == daily_bundle["canonical_snapshot_id"]
+          assert hourly_bundle["canonical_source_run_id"] == daily_bundle["canonical_source_run_id"]
+          assert hourly_bundle["canonical_source_run_id"] == "${{ steps.source.outputs.run_id }}"
+          assert hourly_bundle["source_kind"] == "${{ steps.source.outputs.source_kind }}"
+          assert hourly_bundle["source_workflow"] == "${{ steps.source.outputs.workflow }}"
           assert authority["consumer_contract"]["one_formal_truth_per_production_cycle"] is True
           assert authority["consumer_contract"]["canonical_is_only_formal_decision_truth"] is True
           assert authority["consumer_contract"]["consumer_may_recompute_formal_action"] is False
           assert authority["consumer_contract"]["overlay_may_overwrite_formal_action"] is False
           print(json.dumps({
               "authorized": authority["authorized"],
-              "snapshot_id": authority["canonical_snapshot_id"],
-              "source_workflow": authority["source_workflow"],
-              "source_kind": authority["canonical_source_kind"],
-              "source_run_id": authority["canonical_source_run_id"],
+              "snapshot_id": hourly_bundle["canonical_snapshot_id"],
+              "source_workflow": hourly_bundle["source_workflow"],
+              "source_kind": hourly_bundle["source_kind"],
+              "source_run_id": hourly_bundle["canonical_source_run_id"],
               "upstream_run_id": authority["upstream_run_id"],
-              "latest_trade_date": authority["latest_trade_date"],
+              "latest_trade_date": hourly_bundle["latest_trade_date"],
               "hourly_mode": hourly["mode"],
               "daily_mode": daily["mode"],
+              "digest_verified": True,
           }, ensure_ascii=False, indent=2))
           PY
 
@@ -206,6 +215,7 @@ jobs:
               out.write(f"- upstream run: `{authority['upstream_run_id']}`\n")
               out.write(f"- latest trade date: `{authority['latest_trade_date']}`\n")
               out.write(f"- action counts: `{counts}`\n")
+              out.write("- canonical SHA256 and consumer views validated before publication\n")
               out.write("- formal decisions: canonical snapshot only within this production cycle\n")
               out.write("- hourly/daily: same snapshot, different read-only jobs\n")
               out.write("- overlays cannot overwrite a formal action\n")
