@@ -30,6 +30,7 @@ jobs:
             tests/test_genge_resource_routing_v31.py \
             tests/test_genge_v31_execution_extensions.py \
             tests/test_genge_production_model.py \
+            tests/test_genge_canonical_snapshot.py \
             tests/test_v311_production_bridge.py \
             tests/test_v311_production_authority.py
       - name: Restore all-A state
@@ -81,6 +82,15 @@ jobs:
       - name: Every-industry Top 5
         run: |
           python -m src.strategies.genge_opportunity_discovery.industry_coverage --report-root reports/all_a_full_scan --output-dir reports/industry_coverage --per-industry 5
+      - name: Build ledger-independent broad Discovery Pool
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.ledger_independent_discovery \
+            --all-a-report reports/all_a_full_scan \
+            --industry-coverage reports/industry_coverage \
+            --output-dir reports/discovery_pool \
+            --global-limit 500 \
+            --relaxed-reserve 300 \
+            --per-industry 5
       - name: Long-term second pass
         run: |
           python -m src.strategies.genge_opportunity_discovery.long_term_second_pass --report-root reports/all_a_full_scan --output-dir reports/long_term_second_pass
@@ -137,16 +147,34 @@ jobs:
             --source-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
             --holdings-md CURRENT_HOLDINGS.md \
             --output-dir reports/production_decisions
-      - name: Validate every industry and authoritative production bridge
+      - name: Build native canonical V3.1.1 snapshot
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.canonical_snapshot \
+            --discovery-csv reports/discovery_pool/ledger_independent_discovery.csv \
+            --deep-review-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --production-csv reports/production_decisions/production_decisions.csv \
+            --output-dir reports/canonical_snapshot \
+            --source-kind "${{ github.workflow }}" \
+            --source-run-id "${{ github.run_id }}" \
+            --upstream-run-id "self:${{ github.run_id }}"
+      - name: Validate every industry and authoritative canonical production truth
         run: |
           python - <<'PY'
           import csv,json
           from pathlib import Path
+          from src.strategies.genge_opportunity_discovery.canonical_snapshot import validate_snapshot
+
           coverage=list(csv.DictReader(Path('reports/industry_coverage/industry_top_candidates.csv').open(encoding='utf-8')))
           source=list(csv.DictReader(Path('reports/final_valuation_source/all_a_quant_screen.csv').open(encoding='utf-8')))
           clean={r['industry'] for r in coverage if r.get('industry_candidate_state')=='RESEARCH_CANDIDATE'}
           represented={r.get('industry','') for r in source if r.get('industry','')}
           missing=sorted(clean-represented); assert not missing, f'missing industries: {missing}'
+
+          discovery_path=Path('reports/discovery_pool/ledger_independent_discovery.csv')
+          discovery=list(csv.DictReader(discovery_path.open(encoding='utf-8'))); assert discovery
+          assert all(r.get('discovery_ledger_filter_applied')=='False' for r in discovery)
+          assert all(r.get('discovery_durable_recall_applied')=='False' for r in discovery)
+
           v31=list(csv.DictReader(Path('reports/v31_review_enriched/v31_review_queue_enriched.csv').open(encoding='utf-8'))); assert v31
           production_root=Path('reports/production_decisions')
           bridge_inputs=production_root/'v311_production_inputs.csv'
@@ -164,7 +192,24 @@ jobs:
           assert summary['upstream_policy_reused_count'] == 0
           assert summary['v32_sell_confirmation_enabled'] is False
           assert summary['no_auto_trade'] is True
-          print(json.dumps({'clean_industries':len(clean),'represented':len(represented),'v31_candidates':len(v31),'production_rows':len(production)},ensure_ascii=False,indent=2))
+
+          snapshot=json.loads(Path('reports/canonical_snapshot/latest.json').read_text(encoding='utf-8'))
+          validate_snapshot(snapshot, expected_source_run_id='${{ github.run_id }}')
+          sid=snapshot['snapshot_id']
+          assert snapshot['discovery']['snapshot_id']==sid
+          assert snapshot['deep_review']['snapshot_id']==sid
+          assert snapshot['production']['snapshot_id']==sid
+          assert snapshot['architecture_contract']['ledger_may_filter_discovery'] is False
+          assert snapshot['architecture_contract']['formal_buy_thresholds_changed'] is False
+          assert snapshot['production_version']=='GEN_GE_V3_1_1_PRODUCTION'
+          print(json.dumps({
+            'clean_industries':len(clean),
+            'represented':len(represented),
+            'discovery_rows':len(discovery),
+            'v31_candidates':len(v31),
+            'production_rows':len(production),
+            'canonical_snapshot_id':sid,
+          },ensure_ascii=False,indent=2))
           PY
       - name: Save caches
         uses: actions/cache/save@v4
@@ -187,6 +232,7 @@ jobs:
           path: |
             reports/all_a_full_scan
             reports/industry_coverage
+            reports/discovery_pool
             reports/long_term_second_pass
             reports/industry_valuation_source
             reports/final_valuation_source
@@ -194,4 +240,5 @@ jobs:
             reports/v31_review
             reports/v31_review_enriched
             reports/production_decisions
+            reports/canonical_snapshot
           if-no-files-found: error
