@@ -2,14 +2,23 @@ name: GenGe V3.1.1 Production Finalizer
 
 on:
   workflow_run:
-    workflows: ["GenGe V3.1.1 Every-Industry Research"]
+    workflows:
+      - "GenGe V3.1.1 Every-Industry Research"
+      - "GenGe All-A V3.1.1 One Shot"
     types: [completed]
   workflow_dispatch:
     inputs:
       source_run_id:
-        description: "Completed GenGe V3.1.1 Every-Industry Research run id"
+        description: "Completed canonical producer run id"
         required: true
         type: string
+      source_workflow:
+        description: "Canonical producer workflow"
+        required: true
+        type: choice
+        options:
+          - "GenGe V3.1.1 Every-Industry Research"
+          - "GenGe All-A V3.1.1 One Shot"
 
 permissions:
   contents: read
@@ -54,25 +63,46 @@ jobs:
         env:
           EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
           WORKFLOW_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           MANUAL_RUN_ID: ${{ inputs.source_run_id }}
+          MANUAL_WORKFLOW: ${{ inputs.source_workflow }}
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             RUN_ID="$MANUAL_RUN_ID"
+            SOURCE_WORKFLOW="$MANUAL_WORKFLOW"
             HEAD_SHA="manual-source-run"
           else
             RUN_ID="$WORKFLOW_RUN_ID"
+            SOURCE_WORKFLOW="$WORKFLOW_NAME"
             HEAD_SHA="$WORKFLOW_HEAD_SHA"
           fi
           test -n "$RUN_ID"
+          case "$SOURCE_WORKFLOW" in
+            "GenGe V3.1.1 Every-Industry Research")
+              ARTIFACT_NAME="genge-v31-every-industry-research"
+              SOURCE_KIND="every-industry"
+              ;;
+            "GenGe All-A V3.1.1 One Shot")
+              ARTIFACT_NAME="genge-all-a-v31-one-shot"
+              SOURCE_KIND="GenGe All-A V3.1.1 One Shot"
+              ;;
+            *)
+              echo "unsupported canonical producer: $SOURCE_WORKFLOW" >&2
+              exit 1
+              ;;
+          esac
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "workflow=$SOURCE_WORKFLOW" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$ARTIFACT_NAME" >> "$GITHUB_OUTPUT"
+          echo "source_kind=$SOURCE_KIND" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
           echo "authority_code_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Download exact every-industry artifact
+      - name: Download exact canonical producer artifact
         uses: actions/download-artifact@v4
         with:
-          name: genge-v31-every-industry-research
+          name: ${{ steps.source.outputs.artifact_name }}
           path: incoming
           repository: ${{ github.repository }}
           run-id: ${{ steps.source.outputs.run_id }}
@@ -103,6 +133,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_genge_canonical_snapshot.py \
+            tests/test_genge_canonical_operating_view.py \
             tests/test_genge_canonical_authority.py
 
       - name: Finalize canonical production authority
@@ -111,7 +142,8 @@ jobs:
             --snapshot "${{ steps.canonical.outputs.snapshot }}" \
             --output-dir authoritative \
             --expected-source-run-id "${{ steps.source.outputs.run_id }}" \
-            --source-workflow "GenGe V3.1.1 Every-Industry Research" \
+            --source-workflow "${{ steps.source.outputs.workflow }}" \
+            --expected-source-kind "${{ steps.source.outputs.source_kind }}" \
             --source-head-sha "${{ steps.source.outputs.head_sha }}" \
             --finalizer-run-id "${GITHUB_RUN_ID}" \
             --finalizer-code-sha "${{ steps.source.outputs.authority_code_sha }}"
@@ -134,12 +166,17 @@ jobs:
           validate_snapshot(snapshot, expected_source_run_id="${{ steps.source.outputs.run_id }}")
           validate_authority(authority, snapshot, hourly_view=hourly, daily_view=daily)
           assert authority["canonical_snapshot_id"] == hourly["canonical_snapshot_id"] == daily["canonical_snapshot_id"]
+          assert authority["canonical_source_kind"] == "${{ steps.source.outputs.source_kind }}"
+          assert authority["source_workflow"] == "${{ steps.source.outputs.workflow }}"
+          assert authority["consumer_contract"]["one_formal_truth_per_production_cycle"] is True
           assert authority["consumer_contract"]["canonical_is_only_formal_decision_truth"] is True
           assert authority["consumer_contract"]["consumer_may_recompute_formal_action"] is False
           assert authority["consumer_contract"]["overlay_may_overwrite_formal_action"] is False
           print(json.dumps({
               "authorized": authority["authorized"],
               "snapshot_id": authority["canonical_snapshot_id"],
+              "source_workflow": authority["source_workflow"],
+              "source_kind": authority["canonical_source_kind"],
               "source_run_id": authority["canonical_source_run_id"],
               "upstream_run_id": authority["upstream_run_id"],
               "latest_trade_date": authority["latest_trade_date"],
@@ -163,11 +200,13 @@ jobs:
               out.write("# GenGe V3.1.1 Canonical Production Authority\n\n")
               out.write(f"- authorized: `{authority['authorized']}`\n")
               out.write(f"- snapshot_id: `{authority['canonical_snapshot_id']}`\n")
+              out.write(f"- source workflow: `{authority['source_workflow']}`\n")
+              out.write(f"- source kind: `{authority['canonical_source_kind']}`\n")
               out.write(f"- canonical source run: `{authority['canonical_source_run_id']}`\n")
-              out.write(f"- upstream discovery run: `{authority['upstream_run_id']}`\n")
+              out.write(f"- upstream run: `{authority['upstream_run_id']}`\n")
               out.write(f"- latest trade date: `{authority['latest_trade_date']}`\n")
               out.write(f"- action counts: `{counts}`\n")
-              out.write("- formal decisions: canonical snapshot only\n")
+              out.write("- formal decisions: canonical snapshot only within this production cycle\n")
               out.write("- hourly/daily: same snapshot, different read-only jobs\n")
               out.write("- overlays cannot overwrite a formal action\n")
           PY
