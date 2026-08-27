@@ -66,7 +66,7 @@ def _snapshot(run_id: str = "100", generated_at: str = "2026-08-27T08:00:00+00:0
     )
 
 
-def test_legacy_bootstrap_imports_membership_and_seen_count(tmp_path: Path) -> None:
+def test_legacy_bootstrap_imports_membership_but_resets_machine_seen_count(tmp_path: Path) -> None:
     ledger = tmp_path / "V31_CANDIDATE_LEDGER.md"
     ledger.write_text(
         """# V31_CANDIDATE_LEDGER
@@ -94,11 +94,14 @@ def test_legacy_bootstrap_imports_membership_and_seen_count(tmp_path: Path) -> N
 
     assert state["bootstrap_source"] == "LEGACY_MARKDOWN"
     assert state["candidates"]["600312"]["lifecycle_state"] == ACTIVE
-    assert state["candidates"]["600312"]["seen_count"] == 7
+    assert state["candidates"]["600312"]["seen_count"] == 0
+    assert state["candidates"]["600312"]["legacy_seen_count_imported"] == 7
     assert state["candidates"]["600312"]["research_tier"] == "WATCH / BUY_REVIEW"
     assert state["candidates"]["600312"]["last_formal_action"] == "HOLD_REVIEW"
     assert state["candidates"]["603658"]["lifecycle_state"] == INVALIDATED
-    assert state["candidates"]["603658"]["seen_count"] == 24
+    assert state["candidates"]["603658"]["seen_count"] == 0
+    assert state["candidates"]["603658"]["legacy_seen_count_imported"] == 24
+    assert state["machine_seen_count_epoch"] == "FIRST_FINALIZED_CANONICAL_AFTER_LIFECYCLE_MIGRATION"
 
 
 def test_persistence_bootstraps_once_then_same_snapshot_is_noop(tmp_path: Path) -> None:
@@ -138,16 +141,19 @@ def test_persistence_bootstraps_once_then_same_snapshot_is_noop(tmp_path: Path) 
 
     assert len(first_events) == 1
     assert first_events[0]["event"] == "RESEEN"
-    assert first_state["candidates"]["600312"]["seen_count"] == 3
+    assert first_state["candidates"]["600312"]["seen_count"] == 1
+    assert first_state["candidates"]["600312"]["legacy_seen_count_imported"] == 2
     assert second_events == []
-    assert second_state["candidates"]["600312"]["seen_count"] == 3
+    assert second_state["candidates"]["600312"]["seen_count"] == 1
     assert second_state["latest_applied_snapshot_id"] == snapshot["snapshot_id"]
     rendered = projection.read_text(encoding="utf-8")
     assert "GENERATED FILE — DO NOT EDIT" in rendered
     assert "Machine source of truth" in rendered
+    assert "legacy seen_count (audit only): 2" in rendered
     assert "600312" in rendered
     summary_payload = json.loads(summary.read_text(encoding="utf-8"))
     assert summary_payload["canonical_snapshot_id"] == snapshot["snapshot_id"]
+    assert summary_payload["seen_count_semantics"] == "DISTINCT_CANONICAL_OBSERVATIONS_SINCE_MACHINE_MIGRATION"
     assert summary_payload["discovery_is_filtered_by_lifecycle"] is False
 
 
@@ -198,4 +204,5 @@ def test_projection_separates_active_and_inactive_candidates() -> None:
     assert "## Archived / INVALIDATED candidate ledger" in text
     assert "600312" in text
     assert "603658" in text
+    assert "seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration" in text
     assert "discovery_is_filtered_by_lifecycle: `false`" in text
