@@ -2,12 +2,12 @@ name: GenGe V3.1.1 Production Finalizer
 
 on:
   workflow_run:
-    workflows: ["GenGe Opportunity Discovery"]
+    workflows: ["GenGe V3.1.1 Every-Industry Research"]
     types: [completed]
   workflow_dispatch:
     inputs:
       source_run_id:
-        description: "Completed GenGe Opportunity Discovery run id"
+        description: "Completed GenGe V3.1.1 Every-Industry Research run id"
         required: true
         type: string
 
@@ -24,16 +24,15 @@ env:
   PYTHONUNBUFFERED: "1"
 
 jobs:
-  finalize-v311-production:
-    name: V3.1.1 authoritative production decision
+  finalize-v311-canonical:
+    name: Authorize one canonical V3.1.1 production truth
     if: >-
       ${{ github.event_name == 'workflow_dispatch' ||
-          (github.event.workflow_run.conclusion == 'success' &&
-           (github.event.workflow_run.event == 'schedule' || github.event.workflow_run.event == 'workflow_dispatch')) }}
+          github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 20
     steps:
-      - name: Checkout frozen production code
+      - name: Checkout authority code
         uses: actions/checkout@v4
         with:
           ref: main
@@ -45,18 +44,18 @@ jobs:
           cache: pip
           cache-dependency-path: .github/requirements-ci.txt
 
-      - name: Install production dependencies
+      - name: Install authority dependencies
         run: |
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
-      - name: Resolve source discovery run
+      - name: Resolve authoritative source run
         id: source
         env:
           EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
-          MANUAL_RUN_ID: ${{ inputs.source_run_id }}
           WORKFLOW_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          MANUAL_RUN_ID: ${{ inputs.source_run_id }}
         run: |
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             RUN_ID="$MANUAL_RUN_ID"
@@ -68,212 +67,114 @@ jobs:
           test -n "$RUN_ID"
           echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
           echo "head_sha=$HEAD_SHA" >> "$GITHUB_OUTPUT"
-          echo "production_code_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "authority_code_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Download exact discovery artifact
+      - name: Download exact every-industry artifact
         uses: actions/download-artifact@v4
         with:
-          name: genge-all-a-production-report
+          name: genge-v31-every-industry-research
           path: incoming
           repository: ${{ github.repository }}
           run-id: ${{ steps.source.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Locate unique Top5 and same-run V3.1 evidence
-        id: candidate
+      - name: Locate unique native canonical snapshot
+        id: canonical
         run: |
           python - <<'PY'
           import os
           from pathlib import Path
 
-          matches = sorted(Path("incoming").rglob("daily_candidate_top5.csv"))
+          matches = [
+              path for path in Path("incoming").rglob("latest.json")
+              if path.parent.name == "canonical_snapshot"
+          ]
           if len(matches) != 1:
               raise SystemExit(
-                  f"expected exactly one daily_candidate_top5.csv in source artifact; found {len(matches)}"
+                  f"expected exactly one canonical_snapshot/latest.json; found {len(matches)}"
               )
-          source = matches[0]
-          evidence = source.parent / "real_world_signal_audit.csv"
-          if not evidence.exists():
-              raise SystemExit(
-                  "real_world_signal_audit.csv missing beside daily_candidate_top5.csv; "
-                  "refusing production without same-run V3.1 candidate evidence"
-              )
+          snapshot = matches[0]
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
-              out.write(f"source_csv={source}\n")
-              out.write(f"evidence_csv={evidence}\n")
-              out.write(f"source_dir={source.parent}\n")
-          print(f"source_candidate_csv={source}")
-          print(f"same_run_evidence_csv={evidence}")
+              out.write(f"snapshot={snapshot}\n")
+          print(f"canonical_snapshot={snapshot}")
           PY
 
-      - name: Resolve fresh confirmed holdings source
-        id: holdings
+      - name: Run canonical authority tests
+        run: |
+          python -m pytest -q \
+            tests/test_genge_canonical_snapshot.py \
+            tests/test_genge_canonical_authority.py
+
+      - name: Finalize canonical production authority
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.canonical_authority \
+            --snapshot "${{ steps.canonical.outputs.snapshot }}" \
+            --output-dir authoritative \
+            --expected-source-run-id "${{ steps.source.outputs.run_id }}" \
+            --source-workflow "GenGe V3.1.1 Every-Industry Research" \
+            --source-head-sha "${{ steps.source.outputs.head_sha }}" \
+            --finalizer-run-id "${GITHUB_RUN_ID}" \
+            --finalizer-code-sha "${{ steps.source.outputs.authority_code_sha }}"
+
+      - name: Validate sole-truth consumer contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          from src.strategies.genge_opportunity_discovery.canonical_authority import validate_authority
+          from src.strategies.genge_opportunity_discovery.canonical_snapshot import validate_snapshot
+
+          root = Path("authoritative")
+          snapshot = json.loads((root / "canonical_snapshot/latest.json").read_text(encoding="utf-8"))
+          authority = json.loads((root / "production_authority.json").read_text(encoding="utf-8"))
+          hourly = json.loads((root / "operating_views/hourly.json").read_text(encoding="utf-8"))
+          daily = json.loads((root / "operating_views/daily.json").read_text(encoding="utf-8"))
+
+          validate_snapshot(snapshot, expected_source_run_id="${{ steps.source.outputs.run_id }}")
+          validate_authority(authority, snapshot, hourly_view=hourly, daily_view=daily)
+          assert authority["canonical_snapshot_id"] == hourly["canonical_snapshot_id"] == daily["canonical_snapshot_id"]
+          assert authority["consumer_contract"]["canonical_is_only_formal_decision_truth"] is True
+          assert authority["consumer_contract"]["consumer_may_recompute_formal_action"] is False
+          assert authority["consumer_contract"]["overlay_may_overwrite_formal_action"] is False
+          print(json.dumps({
+              "authorized": authority["authorized"],
+              "snapshot_id": authority["canonical_snapshot_id"],
+              "source_run_id": authority["canonical_source_run_id"],
+              "upstream_run_id": authority["upstream_run_id"],
+              "latest_trade_date": authority["latest_trade_date"],
+              "hourly_mode": hourly["mode"],
+              "daily_mode": daily["mode"],
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Publish canonical authority summary
         run: |
           python - <<'PY'
           import json
           import os
-          from datetime import date
           from pathlib import Path
 
-          from src.strategies.genge_opportunity_discovery.confirmed_holdings_source import (
-              STABLE_HOLDINGS_PATH,
-              assess_confirmed_holdings_source,
-          )
-
-          assessment = assess_confirmed_holdings_source(
-              STABLE_HOLDINGS_PATH,
-              as_of=date.today(),
-          )
-          data = assessment.as_dict()
-          with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
-              out.write(f"enabled={'true' if assessment.enabled else 'false'}\n")
-              out.write(f"status={assessment.status}\n")
-              out.write(f"source={assessment.source}\n")
-              out.write(f"reason={assessment.reason}\n")
-              out.write(f"row_count={assessment.row_count}\n")
-              out.write(f"as_of={assessment.as_of}\n")
-          print(json.dumps(data, ensure_ascii=False))
-          PY
-
-      - name: Run authoritative V3.1.1 production bridge
-        env:
-          HOLDINGS_ENABLED: ${{ steps.holdings.outputs.enabled }}
-          HOLDINGS_SOURCE: ${{ steps.holdings.outputs.source }}
-          PRODUCTION_AS_OF: ${{ steps.holdings.outputs.as_of }}
-        run: |
-          ARGS=(
-            --source-csv "${{ steps.candidate.outputs.source_csv }}"
-            --evidence-csv "${{ steps.candidate.outputs.evidence_csv }}"
-            --output-dir v311_production
-            --as-of "$PRODUCTION_AS_OF"
-          )
-          if [ "$HOLDINGS_ENABLED" = "true" ]; then
-            ARGS+=(--holdings-md "$HOLDINGS_SOURCE")
-          fi
-          python -m src.strategies.genge_opportunity_discovery.v311_production_bridge "${ARGS[@]}"
-
-      - name: Validate production authority contract
-        env:
-          SOURCE_RUN_ID: ${{ steps.source.outputs.run_id }}
-          SOURCE_HEAD_SHA: ${{ steps.source.outputs.head_sha }}
-          PRODUCTION_CODE_SHA: ${{ steps.source.outputs.production_code_sha }}
-          HOLDINGS_ENABLED: ${{ steps.holdings.outputs.enabled }}
-          HOLDINGS_STATUS: ${{ steps.holdings.outputs.status }}
-          HOLDINGS_SOURCE: ${{ steps.holdings.outputs.source }}
-          HOLDINGS_REASON: ${{ steps.holdings.outputs.reason }}
-          HOLDINGS_ROW_COUNT: ${{ steps.holdings.outputs.row_count }}
-          PRODUCTION_AS_OF: ${{ steps.holdings.outputs.as_of }}
-        run: |
-          python - <<'PY'
-          import csv
-          import json
-          import os
-          from pathlib import Path
-
-          from src.strategies.genge_opportunity_discovery.production_model import (
-              ALLOWED_ACTIONS,
-              PRODUCTION_MODEL_VERSION,
-              PRODUCTION_POLICY_SOURCE,
-          )
-
-          root = Path("v311_production")
-          decisions = root / "production_decisions.csv"
-          summary_path = root / "production_decision_summary.json"
-          inputs = root / "v311_production_inputs.csv"
-          source_evidence = root / "v311_selected_source_evidence.csv"
-          required = (decisions, summary_path, inputs, source_evidence)
-          if any(not path.exists() for path in required):
-              raise SystemExit("V3.1.1 production outputs incomplete")
-
-          with decisions.open(encoding="utf-8") as handle:
-              rows = list(csv.DictReader(handle))
-          with source_evidence.open(encoding="utf-8") as handle:
-              evidence_rows = list(csv.DictReader(handle))
-          summary = json.loads(summary_path.read_text(encoding="utf-8"))
-          if not rows:
-              raise SystemExit("V3.1.1 production produced zero eligible rows")
-          candidate_evidence = [row for row in evidence_rows if row.get("v311_source_scope") == "CANDIDATE"]
-          if not candidate_evidence:
-              raise SystemExit("V3.1.1 selected candidate evidence set is empty")
-          if any(row.get("v311_same_run_evidence_joined") != "True" for row in candidate_evidence):
-              raise SystemExit("selected Top5 candidate missing same-run rich V3.1 evidence")
-
-          holdings_enabled = os.environ["HOLDINGS_ENABLED"] == "true"
-          holding_rows = [row for row in rows if row.get("decision_scope") == "HOLDING"]
-          if holdings_enabled and not holding_rows:
-              raise SystemExit("fresh confirmed holdings source enabled but no holding decisions were emitted")
-          if holdings_enabled and len(holding_rows) != int(os.environ["HOLDINGS_ROW_COUNT"]):
-              raise SystemExit("holding decision count does not match confirmed holdings source")
-          if not holdings_enabled and holding_rows:
-              raise SystemExit("holding decisions emitted without a fresh confirmed holdings source")
-
-          assert summary["row_count"] == len(rows)
-          assert summary["production_model_version"] == PRODUCTION_MODEL_VERSION
-          assert summary["production_policy_source"] == PRODUCTION_POLICY_SOURCE
-          assert summary["upstream_policy_reused_count"] == 0
-          for row in rows:
-              assert row["production_model_version"] == PRODUCTION_MODEL_VERSION
-              assert row["production_policy_source"] == PRODUCTION_POLICY_SOURCE
-              assert row["production_action"] in ALLOWED_ACTIONS
-              assert row["upstream_policy_reused"] == "False"
-              assert row["no_auto_trade"] == "True"
-
-          provenance = {
-              "source_workflow": "GenGe Opportunity Discovery",
-              "source_run_id": os.environ["SOURCE_RUN_ID"],
-              "source_head_sha": os.environ["SOURCE_HEAD_SHA"],
-              "production_code_sha": os.environ["PRODUCTION_CODE_SHA"],
-              "production_as_of": os.environ["PRODUCTION_AS_OF"],
-              "source_artifact": "genge-all-a-production-report",
-              "source_candidate_file": "daily_candidate_top5.csv",
-              "source_evidence_file": "real_world_signal_audit.csv",
-              "same_run_candidate_evidence_required": True,
-              "holdings_status": os.environ["HOLDINGS_STATUS"],
-              "holdings_source": os.environ["HOLDINGS_SOURCE"],
-              "holdings_reason": os.environ["HOLDINGS_REASON"],
-              "holding_decision_count": len(holding_rows),
-              "production_model_version": PRODUCTION_MODEL_VERSION,
-              "production_policy_source": PRODUCTION_POLICY_SOURCE,
-              "production_authority": "fresh_recompute_no_upstream_decision_reuse",
-              "no_auto_trade": True,
-          }
-          (root / "production_provenance.json").write_text(
-              json.dumps(provenance, ensure_ascii=False, indent=2), encoding="utf-8"
-          )
-          print(json.dumps(provenance, ensure_ascii=False))
-          PY
-
-      - name: Publish authoritative V3.1.1 summary
-        if: always()
-        env:
-          HOLDINGS_STATUS: ${{ steps.holdings.outputs.status }}
-          HOLDINGS_REASON: ${{ steps.holdings.outputs.reason }}
-        run: |
-          python - <<'PY'
-          import os
-          from pathlib import Path
-
+          authority = json.loads(Path("authoritative/production_authority.json").read_text(encoding="utf-8"))
+          snapshot = json.loads(Path("authoritative/canonical_snapshot/latest.json").read_text(encoding="utf-8"))
+          counts = snapshot.get("production", {}).get("action_counts", {})
           target = Path(os.environ["GITHUB_STEP_SUMMARY"])
-          report = Path("v311_production/production_decisions.md")
-          if report.exists():
-              content = report.read_text(encoding="utf-8")
-          else:
-              content = "# GenGe V3.1.1 Production\n\nProduction finalizer did not produce a decision report. Inspect this run before using any research signal.\n"
-          holdings = (
-              f"\n\n## Holdings authority\n"
-              f"- status: `{os.environ.get('HOLDINGS_STATUS', '')}`\n"
-              f"- reason: {os.environ.get('HOLDINGS_REASON', '')}\n"
-          )
-          with target.open("a", encoding="utf-8") as stream:
-              stream.write("# Authoritative Production Layer\n\n")
-              stream.write(content)
-              stream.write(holdings)
+          with target.open("a", encoding="utf-8") as out:
+              out.write("# GenGe V3.1.1 Canonical Production Authority\n\n")
+              out.write(f"- authorized: `{authority['authorized']}`\n")
+              out.write(f"- snapshot_id: `{authority['canonical_snapshot_id']}`\n")
+              out.write(f"- canonical source run: `{authority['canonical_source_run_id']}`\n")
+              out.write(f"- upstream discovery run: `{authority['upstream_run_id']}`\n")
+              out.write(f"- latest trade date: `{authority['latest_trade_date']}`\n")
+              out.write(f"- action counts: `{counts}`\n")
+              out.write("- formal decisions: canonical snapshot only\n")
+              out.write("- hourly/daily: same snapshot, different read-only jobs\n")
+              out.write("- overlays cannot overwrite a formal action\n")
           PY
 
-      - name: Upload V3.1.1 authoritative production artifact
+      - name: Upload authoritative canonical artifact
         uses: actions/upload-artifact@v4
-        if: always()
         with:
-          name: genge-v311-production-${{ steps.source.outputs.run_id }}
-          path: v311_production
+          name: genge-v311-authoritative-canonical-${{ steps.source.outputs.run_id }}
+          path: authoritative
           if-no-files-found: error
