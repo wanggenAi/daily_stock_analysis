@@ -139,7 +139,9 @@ jobs:
             tests/test_genge_canonical_authorized_consumer.py \
             tests/test_genge_canonical_holdings_reconciliation.py \
             tests/test_genge_candidate_lifecycle_state.py \
+            tests/test_genge_candidate_lifecycle_scope.py \
             tests/test_genge_candidate_lifecycle_persistence.py \
+            tests/test_genge_industry_valuation_lifecycle_memory.py \
             tests/test_v311_price_date_provenance.py
 
       - name: Finalize canonical production authority
@@ -208,6 +210,9 @@ jobs:
           lifecycle_summary = json.loads(
               (root / "candidate_lifecycle/summary.json").read_text(encoding="utf-8")
           )
+          lifecycle_events = json.loads(
+              (root / "candidate_lifecycle/snapshot_events.json").read_text(encoding="utf-8")
+          )
 
           authority = hourly_bundle["authority"]
           hourly = hourly_bundle["view"]
@@ -237,6 +242,13 @@ jobs:
           assert lifecycle_summary["canonical_snapshot_id"] == sid
           assert lifecycle_summary["discovery_is_filtered_by_lifecycle"] is False
 
+          meaningful_actions = {"BUY", "ADD", "REDUCE", "EXIT"}
+          for event in lifecycle_events:
+              if event.get("event") != "NEW":
+                  continue
+              if event.get("observed_scope") == "PRODUCTION_REUNDERWRITE":
+                  assert str(event.get("formal_action") or "").upper() in meaningful_actions, event
+
           assert authority["consumer_contract"]["one_formal_truth_per_production_cycle"] is True
           assert authority["consumer_contract"]["canonical_is_only_formal_decision_truth"] is True
           assert authority["consumer_contract"]["consumer_may_recompute_formal_action"] is False
@@ -256,6 +268,7 @@ jobs:
               "hourly_mode": hourly["mode"],
               "daily_mode": daily["mode"],
               "digest_verified": True,
+              "generic_hold_review_lifecycle_inflation_blocked": True,
           }, ensure_ascii=False, indent=2))
           PY
 
@@ -288,6 +301,7 @@ jobs:
               out.write(f"- candidate lifecycle new events: `{lifecycle['snapshot_event_count']}`\n")
               out.write(f"- action counts: `{counts}`\n")
               out.write("- canonical SHA256 and consumer views validated before publication\n")
+              out.write("- generic production-only HOLD_REVIEW rows cannot inflate durable lifecycle memory\n")
               out.write("- candidate lifecycle is downstream state; broad Discovery remains ledger-independent\n")
               out.write("- V31_CANDIDATE_LEDGER.md is a generated projection, not the lifecycle truth\n")
               out.write("- formal decisions: canonical snapshot only within this production cycle\n")
@@ -297,8 +311,6 @@ jobs:
           PY
 
       - name: Persist lifecycle JSON and generated ledger to main
-        env:
-          SNAPSHOT_ID: ${{ steps.source.outputs.run_id }}
         run: |
           cp authoritative/candidate_lifecycle/V31_CANDIDATE_LEDGER.md V31_CANDIDATE_LEDGER.md
           git config user.name "genge-v311-production-bot"
