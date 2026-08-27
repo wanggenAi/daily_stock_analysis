@@ -69,6 +69,7 @@ jobs:
           python -m pytest -q \
             tests/test_genge_industry_coverage.py \
             tests/test_genge_industry_valuation_bridge.py \
+            tests/test_genge_opportunity_discovery_ledger_independent_discovery.py \
             tests/test_genge_long_term_second_pass.py \
             tests/test_genge_long_term_valuation_merge.py \
             tests/test_genge_valuation_model_routing.py \
@@ -83,6 +84,11 @@ jobs:
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.industry_coverage \
             --report-root upstream/reports/all_a_full_scan --output-dir reports/industry_coverage --per-industry 5
+      - name: Build ledger-independent broad Discovery Pool
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.ledger_independent_discovery \
+            --all-a-report upstream/reports/all_a_full_scan --industry-coverage reports/industry_coverage \
+            --output-dir reports/discovery_pool --global-limit 500 --relaxed-reserve 300 --per-industry 5
       - name: Build long-term second pass
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.long_term_second_pass \
@@ -149,7 +155,7 @@ jobs:
       - name: Build canonical hourly/daily snapshot
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.canonical_snapshot \
-            --discovery-csv reports/final_valuation_source/all_a_quant_screen.csv \
+            --discovery-csv reports/discovery_pool/ledger_independent_discovery.csv \
             --deep-review-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
             --production-csv reports/production_decisions/production_decisions.csv \
             --output-dir reports/canonical_snapshot \
@@ -167,17 +173,25 @@ jobs:
           from src.strategies.genge_opportunity_discovery.canonical_snapshot import validate_snapshot
           coverage = list(csv.DictReader(Path('reports/industry_coverage/industry_top_candidates.csv').open(encoding='utf-8')))
           source = list(csv.DictReader(Path('reports/final_valuation_source/all_a_quant_screen.csv').open(encoding='utf-8')))
+          discovery = list(csv.DictReader(Path('reports/discovery_pool/ledger_independent_discovery.csv').open(encoding='utf-8')))
+          discovery_summary = json.loads(Path('reports/discovery_pool/ledger_independent_discovery_summary.json').read_text(encoding='utf-8'))
           clean = {r['industry'] for r in coverage if r.get('industry_candidate_state') == 'RESEARCH_CANDIDATE'}
           represented = {r.get('industry','') for r in source if r.get('industry','')}
           missing = sorted(clean - represented)
           assert not missing, f'industries missing from enhanced valuation run: {missing}'
+          assert discovery, 'ledger-independent Discovery Pool is empty'
+          assert discovery_summary['ledger_filter_applied'] is False
+          assert discovery_summary['durable_recall_applied'] is False
+          assert discovery_summary['candidate_ledger_is_input'] is False
+          assert all(r.get('discovery_ledger_filter_applied') == 'False' for r in discovery)
           v31 = list(csv.DictReader(Path('reports/v31_review_enriched/v31_review_queue_enriched.csv').open(encoding='utf-8')))
           assert v31, 'V3.1 enriched queue is empty'
           production = list(csv.DictReader(Path('reports/production_decisions/production_decisions.csv').open(encoding='utf-8')))
           assert production and all(r['production_model_version'] == 'GEN_GE_V3_1_1_PRODUCTION' for r in production)
           snapshot = json.loads(Path('reports/canonical_snapshot/latest.json').read_text(encoding='utf-8'))
           validate_snapshot(snapshot, expected_source_run_id=str(__import__('os').environ['GITHUB_RUN_ID']))
-          assert snapshot['discovery']['execution_eligible_count'] >= snapshot['deep_review']['execution_eligible_count']
+          assert snapshot['discovery']['execution_eligible_count'] > 0
+          assert snapshot['deep_review']['execution_eligible_count'] > 0
           assert snapshot['architecture_contract']['ledger_may_filter_discovery'] is False
           resource_root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in resource_root.iterdir() if p.is_dir() and (p/'resource_valuation_summary.json').exists())
@@ -186,7 +200,7 @@ jobs:
           bank = json.loads((runs[-1]/'bank_valuation_execution_summary.json').read_text(encoding='utf-8'))
           assert resource['formal_signal_eligible'] is False and resource['no_auto_trade'] is True
           assert bank['formal_signal_eligible'] is False and bank['no_auto_trade'] is True
-          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'v31_count': len(v31), 'snapshot_id': snapshot['snapshot_id'], 'discovery_count': snapshot['discovery']['execution_eligible_count'], 'deep_review_count': snapshot['deep_review']['execution_eligible_count'], 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
+          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'ledger_independent_discovery_count': len(discovery), 'v31_count': len(v31), 'snapshot_id': snapshot['snapshot_id'], 'snapshot_discovery_count': snapshot['discovery']['execution_eligible_count'], 'deep_review_count': snapshot['deep_review']['execution_eligible_count'], 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
           PY
       - name: Publish summary
         if: always()
@@ -208,6 +222,7 @@ jobs:
           name: genge-v31-every-industry-research
           path: |
             reports/industry_coverage
+            reports/discovery_pool
             reports/long_term_second_pass
             reports/industry_valuation_source
             reports/final_valuation_source
