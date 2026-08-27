@@ -12,7 +12,7 @@ import argparse
 import csv
 import hashlib
 import json
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
@@ -20,6 +20,8 @@ from .selection_framework_v31 import execution_universe_status
 
 SCHEMA_VERSION = "genge_v31_canonical_snapshot_v1"
 PRODUCTION_VERSION = "GEN_GE_V3_1_1_PRODUCTION"
+PRODUCTION_BRIDGE = "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT"
+BUY_ADD_ACTIONS = {"BUY", "ADD"}
 
 
 def _code(value: Any) -> str:
@@ -66,6 +68,22 @@ def _float(value: Any, default: float = float("-inf")) -> float:
         return default
 
 
+def _bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"1", "true", "yes", "y"}
+
+
+def _date(value: Any) -> date | None:
+    text = str(value or "").strip()
+    if len(text) < 10:
+        return None
+    try:
+        return date.fromisoformat(text[:10])
+    except ValueError:
+        return None
+
+
 def _eligible(row: Mapping[str, Any]) -> bool:
     explicit = str(row.get("v31_execution_universe_status") or "").strip()
     if explicit:
@@ -90,10 +108,16 @@ def _rank(row: Mapping[str, Any], fallback: int) -> int:
 def _latest_trade_date(rows: Iterable[Mapping[str, Any]]) -> str:
     values: list[str] = []
     for row in rows:
-        for field in ("latest_trade_date", "raw_latest_trade_date", "qfq_latest_trade_date", "trade_date"):
-            value = str(row.get(field) or "").strip()
-            if len(value) >= 10 and value[:10].count("-") == 2:
-                values.append(value[:10])
+        for field in (
+            "price_date",
+            "latest_trade_date",
+            "raw_latest_trade_date",
+            "qfq_latest_trade_date",
+            "trade_date",
+        ):
+            parsed = _date(row.get(field))
+            if parsed is not None:
+                values.append(parsed.isoformat())
     return max(values, default="")
 
 
@@ -137,12 +161,50 @@ def build_research_pool(
     return compact, len(eligible)
 
 
+def _validate_production_rows(rows: Iterable[Mapping[str, Any]]) -> None:
+    seen: set[str] = set()
+    for row in rows:
+        code = _code(row.get("code"))
+        if not code:
+            raise ValueError("canonical production row missing code")
+        if code in seen:
+            raise ValueError(f"canonical production duplicate code: {code}")
+        seen.add(code)
+        scope = str(row.get("decision_scope") or "").strip()
+        if scope not in {"CANDIDATE", "HOLDING"}:
+            raise ValueError(f"canonical production invalid scope for {code}: {scope}")
+        if str(row.get("production_model_version") or "").strip() != PRODUCTION_VERSION:
+            raise ValueError(f"canonical production version mismatch for {code}")
+        if str(row.get("v311_production_bridge") or "").strip() != PRODUCTION_BRIDGE:
+            raise ValueError(f"canonical production bridge authority mismatch for {code}")
+        if not _bool(row.get("strict_pit_refresh_applied")):
+            raise ValueError(f"canonical production strict-PIT refresh missing for {code}")
+        if _bool(row.get("upstream_policy_reused")):
+            raise ValueError(f"canonical production reused upstream policy for {code}")
+        if not _bool(row.get("no_auto_trade")):
+            raise ValueError(f"canonical production no-auto-trade contract missing for {code}")
+
+        action = str(row.get("production_action") or "").strip().upper()
+        if action in BUY_ADD_ACTIONS:
+            if str(row.get("v311_expectation_input_status") or "").strip() != "READY":
+                raise ValueError(f"canonical BUY/ADD lacks READY strict-PIT input for {code}")
+            if str(row.get("v311_input_error") or "").strip():
+                raise ValueError(f"canonical BUY/ADD has strict-PIT input error for {code}")
+            price_date = _date(row.get("price_date"))
+            decision_date = _date(row.get("decision_date"))
+            if price_date is None or decision_date is None or price_date > decision_date:
+                raise ValueError(f"canonical BUY/ADD price date is unverified for {code}")
+            if _float(row.get("current_price"), default=0.0) <= 0 and _float(row.get("source_current_price"), default=0.0) <= 0:
+                raise ValueError(f"canonical BUY/ADD price missing for {code}")
+
+
 def _compact_decision(row: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "code": _code(row.get("code")),
         "stock_name": row.get("stock_name") or "",
         "scope": row.get("decision_scope") or "",
         "action": row.get("production_action") or "",
+        "production_model_version": row.get("production_model_version") or "",
         "valuation_confidence": row.get("valuation_confidence") or "",
         "current_price": row.get("current_price") or row.get("source_current_price") or "",
         "neutral_value": row.get("neutral_value") or row.get("source_neutral_value") or "",
@@ -150,6 +212,15 @@ def _compact_decision(row: Mapping[str, Any]) -> dict[str, Any]:
         "reason_codes": row.get("reason_codes") or "",
         "hard_gate_failures": row.get("hard_gate_failures") or "",
         "hard_gate_unknowns": row.get("hard_gate_unknowns") or "",
+        "strict_pit_refresh_applied": _bool(row.get("strict_pit_refresh_applied")),
+        "v311_expectation_input_status": row.get("v311_expectation_input_status") or "",
+        "decision_date": row.get("decision_date") or "",
+        "price_date": row.get("price_date") or "",
+        "current_price_source": row.get("current_price_source") or "",
+        "v311_input_error": row.get("v311_input_error") or "",
+        "v311_production_bridge": row.get("v311_production_bridge") or "",
+        "upstream_policy_reused": _bool(row.get("upstream_policy_reused")),
+        "no_auto_trade": _bool(row.get("no_auto_trade")),
         "confirmed_quantity": row.get("confirmed_quantity") or "",
         "display_only_average_cost": row.get("display_only_average_cost") or "",
     }
@@ -172,6 +243,7 @@ def build_snapshot(
     discovery_list = [dict(row) for row in discovery_rows]
     deep_list = [dict(row) for row in deep_review_rows]
     production_list = [dict(row) for row in production_rows]
+    _validate_production_rows(production_list)
     discovery_pool, discovery_count = build_research_pool(discovery_list, limit=discovery_limit)
     deep_pool, deep_count = build_research_pool(deep_list, limit=deep_review_limit)
     candidate_decisions = [
@@ -184,7 +256,7 @@ def build_snapshot(
         for row in production_list
         if str(row.get("decision_scope") or "") == "HOLDING"
     ]
-    latest_trade_date = _latest_trade_date(discovery_list + deep_list)
+    latest_trade_date = _latest_trade_date(discovery_list + deep_list + production_list)
     generated = generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     hashes = dict(source_hashes or {})
     identity = {
@@ -208,6 +280,8 @@ def build_snapshot(
         "freshness_contract": {
             "latest_trade_date": latest_trade_date,
             "stale_or_unverified_price_may_promote_buy_add": False,
+            "formal_buy_add_requires_verified_price_date": True,
+            "production_rows_require_fresh_strict_pit_bridge": True,
             "sections_must_share_snapshot_id": True,
         },
         "architecture_contract": {
@@ -267,6 +341,37 @@ def validate_snapshot(
         raise ValueError("ledger must not filter discovery")
     if architecture.get("formal_buy_thresholds_changed") is not False:
         raise ValueError("canonical synchronization must not change Formal BUY thresholds")
+
+    production = snapshot.get("production") or {}
+    decisions = list(production.get("candidate_decisions") or []) + list(production.get("holding_decisions") or [])
+    seen: set[str] = set()
+    for row in decisions:
+        if not isinstance(row, Mapping):
+            raise ValueError("canonical production decision must be an object")
+        code = _code(row.get("code"))
+        if not code or code in seen:
+            raise ValueError(f"canonical production duplicate or missing code: {code}")
+        seen.add(code)
+        if row.get("production_model_version") != PRODUCTION_VERSION:
+            raise ValueError(f"canonical compact production version mismatch for {code}")
+        if row.get("v311_production_bridge") != PRODUCTION_BRIDGE:
+            raise ValueError(f"canonical compact bridge authority mismatch for {code}")
+        if row.get("strict_pit_refresh_applied") is not True:
+            raise ValueError(f"canonical compact strict-PIT refresh missing for {code}")
+        if row.get("upstream_policy_reused") is not False:
+            raise ValueError(f"canonical compact upstream policy reuse for {code}")
+        if row.get("no_auto_trade") is not True:
+            raise ValueError(f"canonical compact no-auto-trade contract missing for {code}")
+        action = str(row.get("action") or "").upper()
+        if action in BUY_ADD_ACTIONS:
+            if row.get("v311_expectation_input_status") != "READY" or row.get("v311_input_error"):
+                raise ValueError(f"canonical compact BUY/ADD strict-PIT input invalid for {code}")
+            price_date = _date(row.get("price_date"))
+            decision_date = _date(row.get("decision_date"))
+            if price_date is None or decision_date is None or price_date > decision_date:
+                raise ValueError(f"canonical compact BUY/ADD price date invalid for {code}")
+            if _float(row.get("current_price"), default=0.0) <= 0:
+                raise ValueError(f"canonical compact BUY/ADD price missing for {code}")
 
 
 def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
@@ -331,6 +436,7 @@ def write_snapshot(
         f"- discovery execution-eligible: {snapshot['discovery']['execution_eligible_count']}",
         f"- deep-review execution-eligible: {snapshot['deep_review']['execution_eligible_count']}",
         f"- production candidates / holdings: {snapshot['production']['candidate_count']} / {snapshot['production']['holding_count']}",
+        "- production rows are revalidated as fresh V3.1.1 strict-PIT bridge authority",
         "- ledger is downstream memory only and never filters discovery",
         "- Formal BUY/SELL thresholds are unchanged",
     ]
