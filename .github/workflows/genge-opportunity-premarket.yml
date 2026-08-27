@@ -10,8 +10,8 @@ on:
   push:
     branches: [main]
     paths:
-      # The initial merge of this dispatcher performs one production rehearsal.
-      # Later ordinary code pushes do not trigger this workflow.
+      # A dispatcher contract change performs one production rehearsal.
+      # Ordinary code pushes do not trigger this workflow.
       - ".github/workflows/genge-opportunity-premarket.yml"
 
 permissions:
@@ -45,6 +45,9 @@ jobs:
             echo "- target ref: main"
             echo "- intended Beijing run time: 06:00 Monday-Friday"
             echo "- production entrypoint: V3.1.1 strict-PIT production bridge"
+            echo "- canonical producer: the same authoritative one-shot run"
+            echo "- canonical outputs: ledger-independent Discovery + deep review + production decisions + Canonical Snapshot"
+            echo "- consumer contract: hourly monitoring and daily settlement share one canonical_snapshot_id"
             echo "- policy: frozen V3.1.1 / Round8-Round9 confidence gate / no auto trade"
             echo "- legacy GenGe Opportunity Discovery remains research-only upstream for Postscan Research"
           } >> "$GITHUB_STEP_SUMMARY"
