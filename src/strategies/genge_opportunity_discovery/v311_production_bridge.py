@@ -173,6 +173,98 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
+def _parse_iso_date(value: Any) -> date | None:
+    text = str(value or "").strip()
+    if len(text) < 10:
+        return None
+    try:
+        return date.fromisoformat(text[:10])
+    except ValueError:
+        return None
+
+
+def _source_price_dates(source_rows: Iterable[Mapping[str, Any]]) -> dict[str, date]:
+    """Return evidence-backed trade dates for upstream price observations."""
+    result: dict[str, date] = {}
+    for row in source_rows:
+        code = _code(row.get("code"))
+        if not code:
+            continue
+        for field in (
+            "price_date",
+            "raw_latest_trade_date",
+            "latest_trade_date",
+            "qfq_latest_trade_date",
+            "trade_date",
+            "data_date",
+        ):
+            parsed = _parse_iso_date(row.get(field))
+            if parsed is not None:
+                result[code] = parsed
+                break
+    return result
+
+
+def _invalidate_price_dependent_inputs(row: dict[str, Any], error: str) -> None:
+    """Remove price-dependent authority when observation time cannot be proven."""
+    row["v311_expectation_input_status"] = "HOLD_REVIEW_INPUT_INCOMPLETE"
+    row["v311_input_error"] = error
+    row["price_date"] = ""
+    # Keep financial-history evidence, but remove fields that could manufacture
+    # a price-dependent BUY/ADD/REDUCE/EXIT from an unverified observation.
+    for field in (
+        "v31_current_price",
+        "current_price",
+        "v31_market_implied_profit_cagr",
+        "market_implied_growth",
+        "v31_expectation_gap_pct",
+        "expectation_gap",
+        "price_to_neutral",
+    ):
+        row[field] = None
+
+
+def reconcile_current_price_provenance(
+    source_rows: Iterable[Mapping[str, Any]],
+    current_rows: Iterable[Mapping[str, Any]],
+    *,
+    as_of: date,
+) -> list[dict[str, Any]]:
+    """Repair or fail closed on price dates before production decisions.
+
+    The current strict-PIT extractor historically wrote ``decision_date`` into
+    ``price_date`` even when the reused upstream close belonged to the previous
+    trading session.  The authoritative bridge therefore resolves upstream
+    observations against their real source trade date. A price with no provable
+    observation date cannot drive a production price-dependent action.
+    """
+    source_dates = _source_price_dates(source_rows)
+    reconciled: list[dict[str, Any]] = []
+    for raw in current_rows:
+        row = dict(raw)
+        code = _code(row.get("code"))
+        source = str(row.get("current_price_source") or "").strip().upper()
+        has_price = _has_value(row.get("v31_current_price")) or _has_value(row.get("current_price"))
+        if not code or not has_price:
+            reconciled.append(row)
+            continue
+
+        if source.startswith("UPSTREAM_"):
+            observed = source_dates.get(code)
+            if observed is None:
+                _invalidate_price_dependent_inputs(row, "PRICE_DATE_UNVERIFIED")
+            elif observed > as_of:
+                _invalidate_price_dependent_inputs(row, "PRICE_DATE_AFTER_DECISION_DATE")
+            else:
+                row["price_date"] = observed.isoformat()
+        else:
+            # The legacy price loader returns only value/source, not the actual
+            # observation date. Do not trust its synthetic as-of date here.
+            _invalidate_price_dependent_inputs(row, "PRICE_DATE_UNVERIFIED")
+        reconciled.append(row)
+    return reconciled
+
+
 def run_bridge(
     source_csv: Path,
     output_dir: Path,
@@ -208,13 +300,23 @@ def run_bridge(
     _write_csv(selected_source_csv, source_rows)
 
     expectation_dir = output_dir / "expectation_inputs"
+    effective_as_of = as_of or date.today()
     current_rows = write_current_expectation_inputs(
         selected_source_csv,
         expectation_dir,
         codes_csv=codes_csv,
         holdings_md=holdings_md,
-        as_of=as_of,
+        as_of=effective_as_of,
     )
+    current_rows = reconcile_current_price_provenance(
+        source_rows,
+        current_rows,
+        as_of=effective_as_of,
+    )
+    # Persist the reconciled input surface so downstream audits inspect the
+    # exact rows that production consumed rather than the pre-reconciliation file.
+    _write_csv(expectation_dir / "v311_current_expectation_inputs.csv", current_rows)
+
     merged_rows = merge_source_and_current_rows(source_rows, current_rows)
     merged_csv = output_dir / "v311_production_inputs.csv"
     _write_csv(merged_csv, merged_rows)
