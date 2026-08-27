@@ -11,7 +11,32 @@ from src.strategies.genge_opportunity_discovery.canonical_operating_view import 
     build_operating_view,
     write_operating_views,
 )
-from src.strategies.genge_opportunity_discovery.canonical_snapshot import build_snapshot
+from src.strategies.genge_opportunity_discovery.canonical_snapshot import (
+    PRODUCTION_BRIDGE,
+    PRODUCTION_VERSION,
+    build_snapshot,
+)
+
+
+def _decision(code: str, scope: str, name: str, **extra) -> dict:
+    row = {
+        "code": code,
+        "stock_name": name,
+        "decision_scope": scope,
+        "production_action": "HOLD_REVIEW",
+        "production_model_version": PRODUCTION_VERSION,
+        "valuation_confidence": "INVALID",
+        "v311_production_bridge": PRODUCTION_BRIDGE,
+        "strict_pit_refresh_applied": True,
+        "v311_expectation_input_status": "HOLD_REVIEW_INPUT_INCOMPLETE",
+        "decision_date": "2026-08-27",
+        "price_date": "2026-08-26",
+        "v311_input_error": "INPUT_INCOMPLETE",
+        "upstream_policy_reused": False,
+        "no_auto_trade": True,
+    }
+    row.update(extra)
+    return row
 
 
 def _snapshot() -> dict:
@@ -41,21 +66,8 @@ def _snapshot() -> dict:
         }
     ]
     production = [
-        {
-            "code": "600001",
-            "stock_name": "Candidate A",
-            "decision_scope": "CANDIDATE",
-            "production_action": "HOLD_REVIEW",
-            "valuation_confidence": "INVALID",
-        },
-        {
-            "code": "600406",
-            "stock_name": "Holding A",
-            "decision_scope": "HOLDING",
-            "production_action": "HOLD_REVIEW",
-            "valuation_confidence": "INVALID",
-            "confirmed_quantity": "200",
-        },
+        _decision("600001", "CANDIDATE", "Candidate A"),
+        _decision("600406", "HOLDING", "Holding A", confirmed_quantity="200"),
     ]
     return build_snapshot(
         discovery,
