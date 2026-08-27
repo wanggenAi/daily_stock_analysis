@@ -1,0 +1,95 @@
+name: GenGe V3.1.1 Hotfix Smoke
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v311-hotfix-smoke.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  production-hotfix-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Download real 2026-08-27 postscan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-postscan-research
+          path: upstream
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: 33080408541
+      - name: Run focused hotfix tests
+        run: |
+          python -m pytest -q \
+            tests/test_genge_production_shortlist.py \
+            tests/test_v311_price_date_provenance.py \
+            tests/test_genge_production_model.py
+      - name: Build bounded shortlist from real artifact
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.production_shortlist \
+            --candidate-csv upstream/long_term_formal_buy/long_term_formal_buy_candidates.csv \
+            --evidence-csv upstream/final_valuation_source/all_a_quant_screen.csv \
+            --holdings-md CURRENT_HOLDINGS.md \
+            --output-dir reports/hotfix_shortlist
+      - name: Validate shortlist boundary
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          rows = list(csv.DictReader(Path('reports/hotfix_shortlist/production_shortlist.csv').open(encoding='utf-8')))
+          summary = json.loads(Path('reports/hotfix_shortlist/production_shortlist_summary.json').read_text(encoding='utf-8'))
+          assert len(rows) == 4, f'expected only 4 confirmed holdings; got {len(rows)}'
+          assert all(r['production_shortlist_scope'] == 'HOLDING' for r in rows)
+          assert summary['broad_candidate_count'] == 5
+          assert summary['shortlist_count'] == 4
+          assert summary['dated_same_run_price_count'] >= 3
+          assert summary['broad_research_rows_are_production_refresh_inputs'] is False
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          print('codes=', [r['code'] for r in rows])
+          PY
+      - name: Execute strict-PIT only for bounded shortlist
+        run: |
+          timeout 12m python -m src.strategies.genge_opportunity_discovery.v311_production_bridge \
+            --source-csv reports/hotfix_shortlist/production_shortlist.csv \
+            --holdings-md CURRENT_HOLDINGS.md \
+            --output-dir reports/hotfix_production
+      - name: Validate production completed
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+          rows = list(csv.DictReader(Path('reports/hotfix_production/production_decisions.csv').open(encoding='utf-8')))
+          assert len(rows) == 4, len(rows)
+          assert all(r['production_model_version'] == 'GEN_GE_V3_1_1_PRODUCTION' for r in rows)
+          print('production_rows=', len(rows))
+          for r in rows:
+              print(r['code'], r.get('stock_name',''), r.get('production_action',''), r.get('v311_expectation_input_status',''), r.get('current_price_source',''), r.get('price_date',''), r.get('v311_input_error',''))
+          summary = json.loads(Path('reports/hotfix_production/production_decision_summary.json').read_text(encoding='utf-8'))
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v311-hotfix-smoke
+          path: |
+            reports/hotfix_shortlist
+            reports/hotfix_production
+          if-no-files-found: warn
