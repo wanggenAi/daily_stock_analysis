@@ -1,0 +1,377 @@
+name: GenGe V3.1.1 Price-Date Fix Once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/genge-v311-price-date-fix-once.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  patch-test-dispatch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Apply focused price-date provenance patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('src/strategies/genge_opportunity_discovery/v311_current_expectation_inputs.py')
+          text = path.read_text(encoding='utf-8')
+
+          old = '''def current_inputs_from_panel(
+              code: str,
+              panel: pd.DataFrame,
+              *,
+              current_price: float | None,
+              as_of: date,
+              price_source: str,
+          ) -> dict[str, Any]:'''
+          new = '''def current_inputs_from_panel(
+              code: str,
+              panel: pd.DataFrame,
+              *,
+              current_price: float | None,
+              as_of: date,
+              price_source: str,
+              price_date: date | None = None,
+          ) -> dict[str, Any]:'''
+          assert old in text, 'current_inputs_from_panel signature changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          text = text.replace(
+              'return _invalid_row(code, current_price, as_of, price_source, "FINANCIAL_DATA_UNAVAILABLE")',
+              'return _invalid_row(code, current_price, as_of, price_source, "FINANCIAL_DATA_UNAVAILABLE", price_date=price_date)',
+              1,
+          )
+          text = text.replace(
+              'return _invalid_row(code, current_price, as_of, price_source, "NO_FINANCIAL_REPORT_AVAILABLE_AS_OF_DATE")',
+              'return _invalid_row(code, current_price, as_of, price_source, "NO_FINANCIAL_REPORT_AVAILABLE_AS_OF_DATE", price_date=price_date)',
+              1,
+          )
+
+          old = '''    price = _finite(current_price)
+              if price is None or price <= 0:
+                  implied, implied_status = np.nan, "INPUT_INCOMPLETE"
+              else:
+                  implied, implied_status = solve_market_implied_growth(
+                      float(price), float(normalized) if normalized is not None else np.nan
+                  )'''
+          new = '''    price = _finite(current_price)
+              price_date_error = ""
+              if price is not None and price > 0:
+                  if price_date is None:
+                      price_date_error = "PRICE_DATE_UNVERIFIED"
+                  elif price_date > as_of:
+                      price_date_error = "PRICE_DATE_AFTER_DECISION_DATE"
+              if price is None or price <= 0 or price_date_error:
+                  implied, implied_status = np.nan, "INPUT_INCOMPLETE"
+              else:
+                  implied, implied_status = solve_market_implied_growth(
+                      float(price), float(normalized) if normalized is not None else np.nan
+                  )'''
+          assert old in text, 'price readiness block changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          old = '''        "decision_date": as_of.isoformat(),
+                  "price_date": as_of.isoformat(),'''
+          new = '''        "decision_date": as_of.isoformat(),
+                  "price_date": price_date.isoformat() if price_date is not None else "",'''
+          assert old in text, 'READY price_date assignment changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          old = '''        "v311_input_error": "" if implied_status != "INPUT_INCOMPLETE" else "IMPLIED_GROWTH_INPUT_INCOMPLETE",'''
+          new = '''        "v311_input_error": (
+                      price_date_error
+                      if price_date_error
+                      else ("" if implied_status != "INPUT_INCOMPLETE" else "IMPLIED_GROWTH_INPUT_INCOMPLETE")
+                  ),'''
+          assert old in text, 'v311_input_error assignment changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          old = '''def _invalid_row(
+              code: str,
+              current_price: float | None,
+              as_of: date,
+              price_source: str,
+              error: str,
+          ) -> dict[str, Any]:'''
+          new = '''def _invalid_row(
+              code: str,
+              current_price: float | None,
+              as_of: date,
+              price_source: str,
+              error: str,
+              *,
+              price_date: date | None = None,
+          ) -> dict[str, Any]:'''
+          assert old in text, '_invalid_row signature changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          old = '''        "decision_date": as_of.isoformat(),
+                  "price_date": as_of.isoformat(),'''
+          new = '''        "decision_date": as_of.isoformat(),
+                  "price_date": price_date.isoformat() if price_date is not None else "",'''
+          assert old in text, 'invalid-row price_date assignment changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          old_fetch = re.search(
+              r'def fetch_latest_close\(code: str, \*, as_of: date\) -> tuple\[float \| None, str\]:\n.*?\n\ndef _source_price_map',
+              text,
+              flags=re.S,
+          )
+          assert old_fetch, 'fetch_latest_close/_source_price_map block not found'
+          replacement = '''def fetch_latest_close(code: str, *, as_of: date) -> tuple[float | None, str, date | None]:
+              import akshare as ak
+
+              start = (as_of - timedelta(days=30)).strftime("%Y%m%d")
+              end = as_of.strftime("%Y%m%d")
+              try:
+                  frame = ak.stock_zh_a_hist(
+                      symbol=_normalize_code(code),
+                      period="daily",
+                      start_date=start,
+                      end_date=end,
+                      adjust="qfq",
+                  )
+                  if frame is None or frame.empty:
+                      return None, "AKSHARE_QFQ_EMPTY", None
+                  date_column = "日期" if "日期" in frame.columns else "date"
+                  close_column = "收盘" if "收盘" in frame.columns else "close"
+                  if date_column not in frame.columns or close_column not in frame.columns:
+                      return None, "AKSHARE_QFQ_SCHEMA_MISMATCH", None
+                  local = frame[[date_column, close_column]].copy()
+                  local[date_column] = pd.to_datetime(local[date_column], errors="coerce").dt.date
+                  local[close_column] = pd.to_numeric(local[close_column], errors="coerce")
+                  local = local.dropna().loc[lambda x: x[date_column] <= as_of]
+                  if local.empty:
+                      return None, "AKSHARE_QFQ_NO_ASOF_PRICE", None
+                  latest = local.sort_values(date_column).iloc[-1]
+                  return float(latest[close_column]), "AKSHARE_QFQ_DAILY", latest[date_column]
+              except Exception as exc:  # network/provider boundary
+                  return None, f"AKSHARE_QFQ_ERROR:{type(exc).__name__}", None
+
+
+          def _parse_price_date(value: Any) -> date | None:
+              if value in (None, ""):
+                  return None
+              parsed = pd.to_datetime(value, errors="coerce")
+              if pd.isna(parsed):
+                  return None
+              return parsed.date()
+
+
+          def _source_price_observations(
+              rows: Iterable[Mapping[str, Any]], *, as_of: date
+          ) -> dict[str, tuple[float, date, str]]:
+              price_fields = ("raw_latest_close", "v31_current_price", "current_price", "close", "latest_close")
+              date_fields = ("price_date", "raw_latest_trade_date", "latest_trade_date", "trade_date", "date")
+              result: dict[str, tuple[float, date, str]] = {}
+              for row in rows:
+                  code = _normalize_code(row.get("code"))
+                  if not code:
+                      continue
+                  observed_date = next(
+                      (parsed for field in date_fields if (parsed := _parse_price_date(row.get(field))) is not None),
+                      None,
+                  )
+                  if observed_date is None or observed_date > as_of:
+                      continue
+                  for field in price_fields:
+                      value = _finite(row.get(field))
+                      if value is not None and value > 0:
+                          result[code] = (value, observed_date, f"UPSTREAM_{field.upper()}")
+                          break
+              return result
+
+
+def _source_price_map'''
+          text = text[:old_fetch.start()] + replacement + text[old_fetch.end():]
+
+          # Remove the now-obsolete legacy price-only map body in one bounded block.
+          text = re.sub(
+              r'def _source_price_map\(rows: Iterable\[Mapping\[str, Any\]\]\) -> dict\[str, float\]:\n.*?\n\ndef build_current_expectation_rows',
+              'def build_current_expectation_rows',
+              text,
+              count=1,
+              flags=re.S,
+          )
+
+          old = '''    source_rows = list(source_rows)
+              price_map = _source_price_map(source_rows)
+              rows: list[dict[str, Any]] = []
+              for code in dict.fromkeys(_normalize_code(value) for value in codes if _normalize_code(value)):
+                  price = price_map.get(code)
+                  price_source = "UPSTREAM_RAW_LATEST_CLOSE" if price is not None else ""
+                  if price is None:
+                      price, price_source = price_loader(code, as_of=as_of)'''
+          new = '''    source_rows = list(source_rows)
+              price_observations = _source_price_observations(source_rows, as_of=as_of)
+              rows: list[dict[str, Any]] = []
+              for code in dict.fromkeys(_normalize_code(value) for value in codes if _normalize_code(value)):
+                  observation = price_observations.get(code)
+                  if observation is not None:
+                      price, price_date, price_source = observation
+                  else:
+                      price, price_date, price_source = None, None, ""
+                      loaded = price_loader(code, as_of=as_of)
+                      if len(loaded) == 3:
+                          price, price_source, price_date = loaded
+                      else:
+                          price, price_source = loaded
+                          price_date = None'''
+          assert old in text, 'build_current_expectation_rows price block changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          old = '''                current_price=price,
+                      as_of=as_of,
+                      price_source=price_source,
+                  )'''
+          new = '''                current_price=price,
+                      as_of=as_of,
+                      price_source=price_source,
+                      price_date=price_date,
+                  )'''
+          assert old in text, 'current_inputs_from_panel call changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          old = '''                price_source,
+                      f"FINANCIAL_FETCH_ERROR:{type(exc).__name__}:{exc}",
+                  )'''
+          new = '''                price_source,
+                      f"FINANCIAL_FETCH_ERROR:{type(exc).__name__}:{exc}",
+                      price_date=price_date,
+                  )'''
+          assert old in text, '_invalid_row fetch-error call changed unexpectedly'
+          text = text.replace(old, new, 1)
+
+          path.write_text(text, encoding='utf-8')
+          PY
+
+      - name: Add focused regression tests
+        run: |
+          cat > tests/test_v311_price_date_provenance.py <<'PY'
+          from datetime import date
+
+          import pandas as pd
+
+          from src.strategies.genge_opportunity_discovery.v311_current_expectation_inputs import (
+              build_current_expectation_rows,
+              current_inputs_from_panel,
+          )
+
+
+          def _panel():
+              return pd.DataFrame([
+                  {
+                      "report_date": pd.Timestamp("2026-06-30"),
+                      "available_date": pd.Timestamp("2026-08-20"),
+                      "normalized_eps_round6": 1.0,
+                      "realistic_growth_round6": 0.05,
+                      "neutral_value_round6": 20.0,
+                  }
+              ])
+
+
+          def test_actual_trade_date_is_not_fabricated_as_decision_date():
+              row = current_inputs_from_panel(
+                  "600406",
+                  _panel(),
+                  current_price=20.0,
+                  as_of=date(2026, 8, 27),
+                  price_source="TEST",
+                  price_date=date(2026, 8, 26),
+              )
+              assert row["decision_date"] == "2026-08-27"
+              assert row["price_date"] == "2026-08-26"
+              assert row["v311_input_error"] != "PRICE_DATE_UNVERIFIED"
+
+
+          def test_price_without_verified_date_fails_closed():
+              row = current_inputs_from_panel(
+                  "600406",
+                  _panel(),
+                  current_price=20.0,
+                  as_of=date(2026, 8, 27),
+                  price_source="TEST",
+                  price_date=None,
+              )
+              assert row["price_date"] == ""
+              assert row["v311_expectation_input_status"] == "HOLD_REVIEW_INPUT_INCOMPLETE"
+              assert row["v311_input_error"] == "PRICE_DATE_UNVERIFIED"
+
+
+          def test_price_after_decision_date_fails_closed():
+              row = current_inputs_from_panel(
+                  "600406",
+                  _panel(),
+                  current_price=20.0,
+                  as_of=date(2026, 8, 27),
+                  price_source="TEST",
+                  price_date=date(2026, 8, 28),
+              )
+              assert row["v311_expectation_input_status"] == "HOLD_REVIEW_INPUT_INCOMPLETE"
+              assert row["v311_input_error"] == "PRICE_DATE_AFTER_DECISION_DATE"
+
+
+          def test_undated_upstream_price_is_not_silently_reused():
+              calls = []
+
+              def financial_loader(_code):
+                  return _panel()
+
+              def price_loader(code, *, as_of):
+                  calls.append((code, as_of))
+                  return 19.5, "LOADER", date(2026, 8, 26)
+
+              rows = build_current_expectation_rows(
+                  ["600406"],
+                  source_rows=[{"code": "600406", "raw_latest_close": 99.0}],
+                  as_of=date(2026, 8, 27),
+                  financial_loader=financial_loader,
+                  price_loader=price_loader,
+              )
+              assert calls
+              assert rows[0]["v31_current_price"] == 19.5
+              assert rows[0]["price_date"] == "2026-08-26"
+              assert rows[0]["current_price_source"] == "LOADER"
+          PY
+
+      - name: Run focused tests
+        run: |
+          python -m pip install -q pandas numpy pytest
+          pytest -q tests/test_v311_price_date_provenance.py
+
+      - name: Commit focused fix
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/strategies/genge_opportunity_discovery/v311_current_expectation_inputs.py tests/test_v311_price_date_provenance.py
+          git commit -m "Preserve real strict-PIT price dates"
+          git push origin HEAD:main
+
+      - name: Dispatch current-main production replay
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          sleep 3
+          gh workflow run genge-v31-industry-research.yml \
+            --repo "${{ github.repository }}" \
+            --ref main \
+            -f upstream_run_id=33027424135
