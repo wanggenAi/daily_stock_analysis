@@ -1,14 +1,50 @@
 # V31_CANDIDATE_LEDGER
 
-> Durable cross-session ledger for GenGe V3.1.1 Production candidates genuinely worth deeper research. Production version is `GEN_GE_V3_1_1_PRODUCTION`; LOW/INVALID valuation confidence must be HOLD_REVIEW.
+> Durable cross-session ledger for GenGe V3.1.1 Production candidates genuinely worth deeper research. Production version is `GEN_GE_V3_1_1_PRODUCTION`; LOW/INVALID valuation confidence must be HOLD_REVIEW. Manual deep-research discoveries may enter this ledger as WATCH/BUY_REVIEW, but they are **not** production Formal BUY until the frozen V3.1.1 evidence/decision chain independently promotes them.
 
 ## CURRENT DEEP RESEARCH QUEUE
 
 | Priority | Code | Name | Tier | Formal BUY | Latest verified price | Trade date | Why research now | Missing step before upgrade |
 | ---: | --- | --- | --- | --- | ---: | --- | --- | --- |
-| 1 | 603658 | 安图生物 | WAIT | NO | 34.17 | 2026-08-25 | Repeated execution-eligible deep-review name; H1 profit/cash flow weakened and the capacity-project change confirms slower IVD demand growth, homogeneous competition and procurement-price pressure. | Normalize sustainable earnings/cash conversion, audit reagent pull-through/installed-base moat and overseas offset, then complete Bear/Base/Bull reverse valuation against a newly verified exact close. |
+| 1 | 600312 | 平高电气 | WATCH / BUY_REVIEW | NO | 20.43 | 2026-08-26 | UHV/high-voltage switchgear has durable grid-demand and certification/project-experience barriers; 2026H1 profit +22.87% with gross margin +5.03ppt, while State Grid UHV/transmission wins, inventory and contract liabilities point to strong delivery backlog. Price is near the lower end of a conservative scenario range rather than a euphoric valuation. | Verify H2 delivery/collection conversion, separate sustainable margin improvement from temporary product-mix effects, then complete production-grade expectation-gap/downside/falsification review. |
+| 2 | 603658 | 安图生物 | WAIT | NO | 34.17 | 2026-08-25 | Repeated execution-eligible deep-review name; H1 profit/cash flow weakened and the capacity-project change confirms slower IVD demand growth, homogeneous competition and procurement-price pressure. | Normalize sustainable earnings/cash conversion, audit reagent pull-through/installed-base moat and overseas offset, then complete Bear/Base/Bull reverse valuation against a newly verified exact close. |
 
 ## Active candidate ledger
+
+### 600312 平高电气
+
+- **execution eligibility:** ELIGIBLE (Shanghai A share)
+- **first_seen:** 2026-08-27 manual V3.1 discovery expansion
+- **last_seen:** 2026-08-27 pre-open deep research
+- **seen_count:** 1
+- **source:** manual deep-research expansion from latest All-A / industry discovery layer plus fresh 2026H1 filings and 2026-08-26 market close
+- **current tier:** WATCH / BUY_REVIEW
+- **Formal BUY:** NO
+- **GenGe V3.1.1 production action:** NOT_YET_PROMOTED — manual deep research cannot bypass the production confidence/evidence gates
+- **valuation confidence:** MEDIUM — earnings and price are fresh; scenario valuation is conservative but H2 delivery/cash-conversion confirmation is still required
+- **latest verified close:** 20.43 CNY on 2026-08-26
+- **2026H1 earnings:** revenue 53.74亿 RMB, YoY -5.64%; attributable profit 8.17亿, +22.87%; recurring profit 7.98亿, +20.76%; gross margin 29.75%, +5.03ppt
+- **2026H1 cash flow:** operating cash flow -6.89亿 RMB, but Q2 operating cash flow returned to approximately +3.45亿. Negative H1 cash flow is currently more consistent with delivery-cycle working-capital build and faster supplier cash payment than with a collapse in customer collections: inventory rose to about 24.79亿 (+40.47% vs year-end), contract liabilities to about 21.71亿 (+25.5% vs year-end), while receivables increased only modestly from year-end.
+- **order / delivery evidence:** 2026H1 State Grid UHV + transmission/distribution project wins reported at about 64.6亿 RMB; elevated inventory and contract liabilities support a strong H2 delivery pipeline. High-voltage/UHV product mix improved in H1, especially 1000kV/750kV GIS deliveries.
+- **long-term demand logic:** SUPPORTED — UHV, backbone-grid reinforcement, renewable integration and new power-system investment remain durable multi-year demand drivers.
+- **moat / ASML test:** SUPPORTED_WITH_REVIEW — 72.5–1100kV GIS/GIL coverage, high-voltage engineering validation, State Grid procurement qualification, installed project experience and concentrated supplier structure create meaningful technical/certification/execution barriers. This is not an irreplaceable monopoly, but replacement is materially harder than in commodity electrical equipment.
+- **earnings-quality conclusion:** IMPROVING — profit and recurring profit grew >20%; margin expansion is partly product-mix (more high-voltage/UHV deliveries) and partly cost/efficiency improvement. Sustainability must be tested through H2 and 2027, so the full +5ppt gross-margin gain should not be blindly capitalized forever.
+- **working normalized 2026 profit:** Bear 13.5亿 / Base 14.5亿 / Bull 16.5亿 RMB. This is deliberately below the earlier aggressive 17亿 Base and broadly consistent with current broker forecasts clustered around ~13.8–15.1亿.
+- **working fair multiple:** Bear 18x / Base 22x / Bull 26x, reflecting grid-equipment durability and certification moat but also project-cycle, customer concentration, commodity-input and international-business risks.
+- **Bear/Base/Bull fair price:** approximately 17.9 / 23.5 / 31.6 CNY per share using ~13.57亿 shares.
+- **market expectation at 20.43:** current price is above Bear but below conservative Base; estimated Base upside is only mid-teens, materially less than the earlier rough 27.6 Base estimate. Therefore 20.43 is research-attractive but not a high-margin-of-safety Formal BUY.
+- **working entry framework:** 19.5–20.5 = BUY_REVIEW / possible first-entry research zone only after remaining gates pass; 18.0–19.5 = preferred entry zone if thesis unchanged; <18 = high-priority valuation review rather than automatic buy.
+- **working reduce framework:** >27–28 without earnings upgrades = re-audit expectation gap; ~30–32 without normalized profit rising above current Bull assumptions = potential REDUCE zone. Price alone does not trigger exit if earnings are upgraded.
+- **current blockers:** H2 order-to-revenue conversion not yet observed; H1 cash-flow deficit must continue normalizing; durability of the large gross-margin uplift must be separated from temporary delivery mix; production-grade implied expectations, downside and falsification checks are not yet complete.
+- **invalidation conditions:** material slowdown/cancellation in UHV/grid investment; sustained loss of State Grid high-voltage share; H2 inventory/contract liabilities fail to convert into revenue/cash; recurring margin falls back sharply without mix explanation; raw-material/competition pressure structurally compresses normalized profit below Bear assumptions; material product-quality or qualification loss.
+- **confidence:** MEDIUM-HIGH that the company deserves durable deep research; MEDIUM on valuation; HIGH that Formal BUY is not yet authorized.
+- **next deep-research action:** monitor H2 delivery and cash conversion, quantify 2027 order backlog and UHV tender share, stress-test margins at normalized product mix, and run production-compatible expectation-gap/downside/falsification review.
+
+#### Delta history
+
+- **2026-08-27 — NEW / MANUAL DISCOVERY PROMOTION:** added to the durable deep-research queue after expanding beyond the overly narrow final ledger. Deep dive resolved much of the H1 cash-flow concern as working-capital/delivery-cycle related and confirmed strong backlog signals, but also revised the earlier rough Base fair value down from ~27.6 to ~23.5 using more conservative normalized profit. Tier WATCH / BUY_REVIEW; Formal BUY = NO.
+
+---
 
 ### 603658 安图生物
 
