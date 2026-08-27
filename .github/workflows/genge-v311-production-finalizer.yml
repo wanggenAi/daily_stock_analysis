@@ -21,7 +21,7 @@ on:
           - "GenGe All-A V3.1.1 One Shot"
 
 permissions:
-  contents: read
+  contents: write
   actions: read
 
 concurrency:
@@ -45,6 +45,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -129,7 +130,7 @@ jobs:
           print(f"canonical_snapshot={snapshot}")
           PY
 
-      - name: Run canonical authority and consumer tests
+      - name: Run canonical authority, consumer, and lifecycle tests
         run: |
           python -m pytest -q \
             tests/test_genge_canonical_snapshot.py \
@@ -137,6 +138,8 @@ jobs:
             tests/test_genge_canonical_authority.py \
             tests/test_genge_canonical_authorized_consumer.py \
             tests/test_genge_canonical_holdings_reconciliation.py \
+            tests/test_genge_candidate_lifecycle_state.py \
+            tests/test_genge_candidate_lifecycle_persistence.py \
             tests/test_v311_price_date_provenance.py
 
       - name: Finalize canonical production authority
@@ -158,7 +161,28 @@ jobs:
             --holdings-md CURRENT_HOLDINGS.md \
             --output authoritative/holdings_reconciliation.json
 
-      - name: Validate sole-truth consumer contract
+      - name: Preserve pre-state-machine candidate research notes once
+        run: |
+          if [ ! -s data/opportunity_snapshots/candidate_lifecycle_state.json ] && \
+             [ -s V31_CANDIDATE_LEDGER.md ] && \
+             [ ! -e V31_CANDIDATE_RESEARCH_NOTES_LEGACY.md ]; then
+            cp V31_CANDIDATE_LEDGER.md V31_CANDIDATE_RESEARCH_NOTES_LEGACY.md
+          fi
+
+      - name: Apply finalized snapshot to durable candidate lifecycle
+        run: |
+          mkdir -p data/opportunity_snapshots authoritative/candidate_lifecycle
+          python -m src.strategies.genge_opportunity_discovery.candidate_lifecycle_persistence \
+            --snapshot authoritative/canonical_snapshot/latest.json \
+            --state data/opportunity_snapshots/candidate_lifecycle_state.json \
+            --legacy-ledger V31_CANDIDATE_LEDGER.md \
+            --projection authoritative/candidate_lifecycle/V31_CANDIDATE_LEDGER.md \
+            --events authoritative/candidate_lifecycle/snapshot_events.json \
+            --summary authoritative/candidate_lifecycle/summary.json
+          cp data/opportunity_snapshots/candidate_lifecycle_state.json \
+            authoritative/candidate_lifecycle/candidate_lifecycle_state.json
+
+      - name: Validate sole-truth consumer and lifecycle contract
         run: |
           python - <<'PY'
           import json
@@ -171,22 +195,31 @@ jobs:
               DAILY_SETTLEMENT,
               HOURLY_MONITOR,
           )
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+              LIFECYCLE_CONTRACT_VERSION,
+              load_state,
+          )
 
           root = Path("authoritative")
           hourly_bundle = load_authorized_view(root, mode=HOURLY_MONITOR)
           daily_bundle = load_authorized_view(root, mode=DAILY_SETTLEMENT)
           holdings = json.loads((root / "holdings_reconciliation.json").read_text(encoding="utf-8"))
+          lifecycle = load_state(Path("data/opportunity_snapshots/candidate_lifecycle_state.json"))
+          lifecycle_summary = json.loads(
+              (root / "candidate_lifecycle/summary.json").read_text(encoding="utf-8")
+          )
 
           authority = hourly_bundle["authority"]
           hourly = hourly_bundle["view"]
           daily = daily_bundle["view"]
+          sid = hourly_bundle["canonical_snapshot_id"]
 
-          assert hourly_bundle["canonical_snapshot_id"] == daily_bundle["canonical_snapshot_id"]
+          assert sid == daily_bundle["canonical_snapshot_id"]
           assert hourly_bundle["canonical_source_run_id"] == daily_bundle["canonical_source_run_id"]
           assert hourly_bundle["canonical_source_run_id"] == "${{ steps.source.outputs.run_id }}"
           assert hourly_bundle["source_kind"] == "${{ steps.source.outputs.source_kind }}"
           assert hourly_bundle["source_workflow"] == "${{ steps.source.outputs.workflow }}"
-          assert holdings["canonical_snapshot_id"] == hourly_bundle["canonical_snapshot_id"]
+          assert holdings["canonical_snapshot_id"] == sid
           assert holdings["canonical_source_run_id"] == hourly_bundle["canonical_source_run_id"]
           assert holdings["candidate_formal_actions_affected_by_holdings_mismatch"] is False
           if holdings["in_sync"]:
@@ -194,13 +227,23 @@ jobs:
           else:
               assert holdings["status"] == "HOLDINGS_OUT_OF_SYNC"
               assert holdings["formal_holding_actions_currently_usable"] is False
+
+          assert lifecycle["contract_version"] == LIFECYCLE_CONTRACT_VERSION
+          assert lifecycle["latest_applied_snapshot_id"] == sid
+          assert lifecycle["last_persisted_snapshot_id"] == sid
+          assert lifecycle["last_persisted_source_run_id"] == hourly_bundle["canonical_source_run_id"]
+          assert lifecycle["discovery_is_filtered_by_lifecycle"] is False
+          assert lifecycle["no_auto_trade"] is True
+          assert lifecycle_summary["canonical_snapshot_id"] == sid
+          assert lifecycle_summary["discovery_is_filtered_by_lifecycle"] is False
+
           assert authority["consumer_contract"]["one_formal_truth_per_production_cycle"] is True
           assert authority["consumer_contract"]["canonical_is_only_formal_decision_truth"] is True
           assert authority["consumer_contract"]["consumer_may_recompute_formal_action"] is False
           assert authority["consumer_contract"]["overlay_may_overwrite_formal_action"] is False
           print(json.dumps({
               "authorized": authority["authorized"],
-              "snapshot_id": hourly_bundle["canonical_snapshot_id"],
+              "snapshot_id": sid,
               "source_workflow": hourly_bundle["source_workflow"],
               "source_kind": hourly_bundle["source_kind"],
               "source_run_id": hourly_bundle["canonical_source_run_id"],
@@ -208,6 +251,8 @@ jobs:
               "latest_trade_date": hourly_bundle["latest_trade_date"],
               "holdings_status": holdings["status"],
               "holding_actions_usable": holdings["formal_holding_actions_currently_usable"],
+              "candidate_lifecycle_count": len(lifecycle["candidates"]),
+              "candidate_lifecycle_events": lifecycle_summary["snapshot_event_count"],
               "hourly_mode": hourly["mode"],
               "daily_mode": daily["mode"],
               "digest_verified": True,
@@ -224,6 +269,7 @@ jobs:
           authority = json.loads(Path("authoritative/production_authority.json").read_text(encoding="utf-8"))
           snapshot = json.loads(Path("authoritative/canonical_snapshot/latest.json").read_text(encoding="utf-8"))
           holdings = json.loads(Path("authoritative/holdings_reconciliation.json").read_text(encoding="utf-8"))
+          lifecycle = json.loads(Path("authoritative/candidate_lifecycle/summary.json").read_text(encoding="utf-8"))
           counts = snapshot.get("production", {}).get("action_counts", {})
           target = Path(os.environ["GITHUB_STEP_SUMMARY"])
           with target.open("a", encoding="utf-8") as out:
@@ -237,13 +283,43 @@ jobs:
               out.write(f"- latest trade date: `{authority['latest_trade_date']}`\n")
               out.write(f"- holdings reconciliation: `{holdings['status']}`\n")
               out.write(f"- holding Formal actions usable: `{holdings['formal_holding_actions_currently_usable']}`\n")
+              out.write(f"- candidate lifecycle active: `{lifecycle['active_count']}`\n")
+              out.write(f"- candidate lifecycle inactive: `{lifecycle['inactive_count']}`\n")
+              out.write(f"- candidate lifecycle new events: `{lifecycle['snapshot_event_count']}`\n")
               out.write(f"- action counts: `{counts}`\n")
               out.write("- canonical SHA256 and consumer views validated before publication\n")
+              out.write("- candidate lifecycle is downstream state; broad Discovery remains ledger-independent\n")
+              out.write("- V31_CANDIDATE_LEDGER.md is a generated projection, not the lifecycle truth\n")
               out.write("- formal decisions: canonical snapshot only within this production cycle\n")
               out.write("- holdings mismatch fails closed for holding actions only; candidate actions remain canonical\n")
               out.write("- hourly/daily: same snapshot, different read-only jobs\n")
               out.write("- overlays cannot overwrite a formal action\n")
           PY
+
+      - name: Persist lifecycle JSON and generated ledger to main
+        env:
+          SNAPSHOT_ID: ${{ steps.source.outputs.run_id }}
+        run: |
+          cp authoritative/candidate_lifecycle/V31_CANDIDATE_LEDGER.md V31_CANDIDATE_LEDGER.md
+          git config user.name "genge-v311-production-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          git add data/opportunity_snapshots/candidate_lifecycle_state.json V31_CANDIDATE_LEDGER.md
+          if [ -e V31_CANDIDATE_RESEARCH_NOTES_LEGACY.md ]; then
+            git add V31_CANDIDATE_RESEARCH_NOTES_LEGACY.md
+          fi
+          if git diff --cached --quiet; then
+            echo "candidate lifecycle already persisted for this snapshot"
+            exit 0
+          fi
+          CANONICAL_ID=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          print(json.loads(Path('authoritative/canonical_snapshot/latest.json').read_text(encoding='utf-8'))['snapshot_id'])
+          PY
+          )
+          git commit -m "Persist V3.1.1 candidate lifecycle ${CANONICAL_ID} [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
 
       - name: Upload authoritative canonical artifact
         uses: actions/upload-artifact@v4
