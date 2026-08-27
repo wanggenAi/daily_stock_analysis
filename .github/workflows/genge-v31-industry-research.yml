@@ -77,7 +77,8 @@ jobs:
             tests/test_genge_insurance_valuation_execution.py \
             tests/test_genge_resource_routing_v31.py \
             tests/test_genge_v31_execution_extensions.py \
-            tests/test_genge_production_model.py
+            tests/test_genge_production_model.py \
+            tests/test_genge_canonical_snapshot.py
       - name: Build every-industry Top 5 map
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.industry_coverage \
@@ -145,11 +146,25 @@ jobs:
             --candidate-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
             --holdings-md CURRENT_HOLDINGS.md \
             --output-dir reports/production_decisions
+      - name: Build canonical hourly/daily snapshot
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.canonical_snapshot \
+            --discovery-csv reports/final_valuation_source/all_a_quant_screen.csv \
+            --deep-review-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --production-csv reports/production_decisions/production_decisions.csv \
+            --output-dir reports/canonical_snapshot \
+            --source-kind every-industry \
+            --source-run-id "${GITHUB_RUN_ID}" \
+            --upstream-run-id "${UPSTREAM_RUN_ID}" \
+            --research-as-of "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            --discovery-limit 100 \
+            --deep-review-limit 50
       - name: Validate every-industry coverage and V3.1 contract
         run: |
           python - <<'PY'
           import csv, json
           from pathlib import Path
+          from src.strategies.genge_opportunity_discovery.canonical_snapshot import validate_snapshot
           coverage = list(csv.DictReader(Path('reports/industry_coverage/industry_top_candidates.csv').open(encoding='utf-8')))
           source = list(csv.DictReader(Path('reports/final_valuation_source/all_a_quant_screen.csv').open(encoding='utf-8')))
           clean = {r['industry'] for r in coverage if r.get('industry_candidate_state') == 'RESEARCH_CANDIDATE'}
@@ -160,6 +175,10 @@ jobs:
           assert v31, 'V3.1 enriched queue is empty'
           production = list(csv.DictReader(Path('reports/production_decisions/production_decisions.csv').open(encoding='utf-8')))
           assert production and all(r['production_model_version'] == 'GEN_GE_V3_1_1_PRODUCTION' for r in production)
+          snapshot = json.loads(Path('reports/canonical_snapshot/latest.json').read_text(encoding='utf-8'))
+          validate_snapshot(snapshot, expected_source_run_id=str(__import__('os').environ['GITHUB_RUN_ID']))
+          assert snapshot['discovery']['execution_eligible_count'] >= snapshot['deep_review']['execution_eligible_count']
+          assert snapshot['architecture_contract']['ledger_may_filter_discovery'] is False
           resource_root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in resource_root.iterdir() if p.is_dir() and (p/'resource_valuation_summary.json').exists())
           assert runs, 'resource valuation summary missing'
@@ -167,12 +186,13 @@ jobs:
           bank = json.loads((runs[-1]/'bank_valuation_execution_summary.json').read_text(encoding='utf-8'))
           assert resource['formal_signal_eligible'] is False and resource['no_auto_trade'] is True
           assert bank['formal_signal_eligible'] is False and bank['no_auto_trade'] is True
-          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'v31_count': len(v31), 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
+          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'v31_count': len(v31), 'snapshot_id': snapshot['snapshot_id'], 'discovery_count': snapshot['discovery']['execution_eligible_count'], 'deep_review_count': snapshot['deep_review']['execution_eligible_count'], 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
           PY
       - name: Publish summary
         if: always()
         run: |
           echo "## V3.1.1 Every-Industry Research" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/canonical_snapshot/latest.md ]; then cat reports/canonical_snapshot/latest.md >> "$GITHUB_STEP_SUMMARY"; fi
           if [ -f reports/v31_review/v31_review_queue.md ]; then cat reports/v31_review/v31_review_queue.md >> "$GITHUB_STEP_SUMMARY"; fi
           if [ -f reports/production_decisions/production_decisions.md ]; then cat reports/production_decisions/production_decisions.md >> "$GITHUB_STEP_SUMMARY"; fi
       - name: Save valuation cache
@@ -195,4 +215,5 @@ jobs:
             reports/v31_review
             reports/v31_review_enriched
             reports/production_decisions
+            reports/canonical_snapshot
           if-no-files-found: error
