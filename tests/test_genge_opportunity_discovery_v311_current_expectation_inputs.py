@@ -99,8 +99,10 @@ def test_current_sidecar_emits_validated_numeric_inputs_without_fake_qualitative
         current_price=neutral * 0.90,
         as_of=date(2026, 8, 26),
         price_source="FIXTURE",
+        price_date=date(2026, 8, 26),
     )
     assert row["v311_expectation_input_status"] == "READY"
+    assert row["price_date"] == "2026-08-26"
     assert row["v31_normalized_profit"] > 0
     assert 0 < row["v31_realistic_profit_cagr"] < 0.30
     assert row["v31_market_implied_profit_cagr"] >= 0
@@ -125,6 +127,7 @@ def test_generated_confidence_inputs_can_reach_high_or_medium_instead_of_all_inv
         current_price=neutral,
         as_of=date(2026, 8, 26),
         price_source="FIXTURE",
+        price_date=date(2026, 8, 26),
     )
     assessment = assess_valuation_confidence_v311(row)
     assert assessment.level in {ValuationConfidence.HIGH, ValuationConfidence.MEDIUM}
@@ -140,6 +143,7 @@ def test_asof_before_latest_notice_cannot_use_future_financial_row() -> None:
         current_price=30.0,
         as_of=date(2025, 12, 31),
         price_source="FIXTURE",
+        price_date=date(2025, 12, 31),
     )
     assert row["fund_available_date"] <= "2025-12-31"
     assert row["financial_report_date"] != "2025-12-31"
