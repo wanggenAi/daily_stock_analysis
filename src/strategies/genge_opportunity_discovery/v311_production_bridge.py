@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import json
 from datetime import date
 from pathlib import Path
 from typing import Any, Iterable, Mapping
@@ -190,12 +191,14 @@ def _source_price_dates(source_rows: Iterable[Mapping[str, Any]]) -> dict[str, d
         code = _code(row.get("code"))
         if not code:
             continue
+        # raw/qfq trade dates correspond most directly to the price fields that
+        # the strict-PIT extractor prefers. Generic price_date is only fallback.
         for field in (
-            "price_date",
             "raw_latest_trade_date",
-            "latest_trade_date",
             "qfq_latest_trade_date",
+            "latest_trade_date",
             "trade_date",
+            "price_date",
             "data_date",
         ):
             parsed = _parse_iso_date(row.get(field))
@@ -234,7 +237,7 @@ def reconcile_current_price_provenance(
 
     The current strict-PIT extractor historically wrote ``decision_date`` into
     ``price_date`` even when the reused upstream close belonged to the previous
-    trading session.  The authoritative bridge therefore resolves upstream
+    trading session. The authoritative bridge therefore resolves upstream
     observations against their real source trade date. A price with no provable
     observation date cannot drive a production price-dependent action.
     """
@@ -263,6 +266,38 @@ def reconcile_current_price_provenance(
             _invalidate_price_dependent_inputs(row, "PRICE_DATE_UNVERIFIED")
         reconciled.append(row)
     return reconciled
+
+
+def _rewrite_expectation_summary(output_dir: Path, rows: list[dict[str, Any]]) -> None:
+    summary_path = output_dir / "v311_current_expectation_summary.json"
+    if summary_path.exists():
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            summary = {}
+    else:
+        summary = {}
+    statuses = [str(row.get("v311_expectation_input_status") or "") for row in rows]
+    errors = [str(row.get("v311_input_error") or "") for row in rows]
+    summary.update(
+        {
+            "row_count": len(rows),
+            "ready_count": sum(status == "READY" for status in statuses),
+            "hold_review_input_count": sum(status != "READY" for status in statuses),
+            "price_provenance_reconciled": True,
+            "verified_price_date_count": sum(_parse_iso_date(row.get("price_date")) is not None for row in rows),
+            "unverified_price_date_count": sum(
+                bool(row.get("v31_current_price") or row.get("current_price"))
+                and _parse_iso_date(row.get("price_date")) is None
+                for row in rows
+            ),
+            "input_error_counts": {
+                error: errors.count(error)
+                for error in sorted({error for error in errors if error})
+            },
+        }
+    )
+    summary_path.write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def run_bridge(
@@ -313,9 +348,9 @@ def run_bridge(
         current_rows,
         as_of=effective_as_of,
     )
-    # Persist the reconciled input surface so downstream audits inspect the
-    # exact rows that production consumed rather than the pre-reconciliation file.
+    # Persist and summarize the exact reconciled surface that production consumes.
     _write_csv(expectation_dir / "v311_current_expectation_inputs.csv", current_rows)
+    _rewrite_expectation_summary(expectation_dir, current_rows)
 
     merged_rows = merge_source_and_current_rows(source_rows, current_rows)
     merged_csv = output_dir / "v311_production_inputs.csv"
