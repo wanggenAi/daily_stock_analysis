@@ -9,6 +9,9 @@ from src.strategies.genge_opportunity_discovery.canonical_authority import final
 from src.strategies.genge_opportunity_discovery.canonical_authorized_consumer import (
     load_authorized_view,
 )
+from src.strategies.genge_opportunity_discovery.canonical_holdings_reconciliation import (
+    write_reconciliation,
+)
 from src.strategies.genge_opportunity_discovery.canonical_operating_view import (
     DAILY_SETTLEMENT,
     HOURLY_MONITOR,
@@ -74,6 +77,15 @@ def _snapshot(*, source_run_id: str = "123", source_kind: str = "every-industry"
     )
 
 
+def _empty_holdings(path: Path) -> None:
+    path.write_text(
+        "# CURRENT_HOLDINGS\n\n"
+        "| Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |\n"
+        "| --- | --- | ---: | ---: | --- | --- |\n",
+        encoding="utf-8",
+    )
+
+
 def _finalize(tmp_path: Path, *, source_run_id: str = "123") -> Path:
     snapshot = _snapshot(source_run_id=source_run_id)
     source = tmp_path / f"snapshot-{source_run_id}.json"
@@ -90,6 +102,13 @@ def _finalize(tmp_path: Path, *, source_run_id: str = "123") -> Path:
         finalizer_code_sha="cafebabe",
         finalized_at="2026-08-27T03:30:00+00:00",
     )
+    holdings = tmp_path / f"holdings-{source_run_id}.md"
+    _empty_holdings(holdings)
+    write_reconciliation(
+        root / "canonical_snapshot" / "latest.json",
+        holdings,
+        root / "holdings_reconciliation.json",
+    )
     return root
 
 
@@ -102,6 +121,8 @@ def test_hourly_and_daily_load_from_same_finalized_truth(tmp_path: Path) -> None
     assert hourly["canonical_snapshot_id"] == daily["canonical_snapshot_id"]
     assert hourly["canonical_source_run_id"] == daily["canonical_source_run_id"] == "123"
     assert hourly["source_workflow"] == "GenGe V3.1.1 Every-Industry Research"
+    assert hourly["holdings_status"] == "HOLDINGS_IN_SYNC"
+    assert hourly["formal_holding_actions_currently_usable"] is True
     assert hourly["view"]["mode"] == HOURLY_MONITOR
     assert daily["view"]["mode"] == DAILY_SETTLEMENT
     assert hourly["view"]["consumer_contract"]["decision_recalculation_allowed"] is False
@@ -147,3 +168,22 @@ def test_consumer_rejects_missing_mode_view(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="missing required file"):
         load_authorized_view(root, mode=HOURLY_MONITOR)
+
+
+def test_consumer_rejects_missing_holdings_reconciliation(tmp_path: Path) -> None:
+    root = _finalize(tmp_path)
+    (root / "holdings_reconciliation.json").unlink()
+
+    with pytest.raises(ValueError, match="missing required file"):
+        load_authorized_view(root, mode=HOURLY_MONITOR)
+
+
+def test_consumer_rejects_holdings_reconciliation_from_other_snapshot(tmp_path: Path) -> None:
+    root_a = _finalize(tmp_path, source_run_id="123")
+    root_b = _finalize(tmp_path, source_run_id="124")
+    target = root_a / "holdings_reconciliation.json"
+    source = root_b / "holdings_reconciliation.json"
+    target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="holdings reconciliation snapshot mismatch"):
+        load_authorized_view(root_a, mode=DAILY_SETTLEMENT)
