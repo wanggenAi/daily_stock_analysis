@@ -13,8 +13,32 @@
 - Production version: `GEN_GE_V3_1_1_PRODUCTION`
 - Downloaded artifact hashes exactly match the durable projection for discovery/deep-review/production CSVs.
 - The source success run predates native canonical publishing and its artifact does **not** contain `reports/canonical_snapshot/latest.json` or the new ledger-independent `reports/discovery_pool/...` layer.
-- Current workflow code now requires both layers and publishes native canonical snapshots, but the latest relevant Every-Industry run `33031337070` was `skipped` by its authoritative-trigger condition. Therefore no newer successful native canonical artifact exists yet.
+- The last proven artifact therefore remains pre-native-canonical evidence.
 - Synchronization health: **DEGRADED_NATIVE_CANONICAL_NOT_YET_PROVEN**.
+
+## Production architecture convergence — code state 2026-08-27
+
+The target production authority is now `GenGe All-A V3.1.1 One Shot`.
+
+One authoritative run is required to produce, validate and upload all of these layers together:
+
+1. broad ledger-independent Discovery Pool;
+2. V3.1.1 deep-review state;
+3. strict-PIT V3.1.1 production candidate and holding decisions;
+4. one native Canonical Snapshot carrying a single `snapshot_id` across all sections;
+5. an `HOURLY_MONITOR` read-only operating view;
+6. a `DAILY_SETTLEMENT` read-only operating view.
+
+The operating-view contract is **same truth, different job**:
+
+- Hourly = incremental monitoring of all confirmed holdings plus canonical deep-review focus names.
+- Daily = full settlement/re-underwrite/lifecycle view.
+- Neither consumer may recalculate or mutate a canonical production action.
+- Fresh price/news overlays are allowed for research/monitoring, but a Formal action change requires a newly validated Canonical Snapshot.
+- The candidate ledger remains downstream memory only and may never cap/filter broad Discovery.
+- No V3.1.1 BUY/SELL threshold, ranking policy or confidence-gate threshold was changed by this architecture work.
+
+The legacy `GenGe Opportunity Discovery -> Postscan/Every-Industry` workflows remain temporarily available for research compatibility while the new one-shot native canonical artifact is still unproven. They are not the desired long-term production authority and must not be mixed with the one-shot snapshot to manufacture actions.
 
 ## Fail-closed consequence for the 2026-08-27 open session
 
@@ -45,18 +69,30 @@ Research overlay remains downstream of Discovery and never filters it:
 3. `600309 万华化学` — A1-QUALITY / WAIT_PRICE / Formal BUY NO; through-cycle segment valuation and explicit MOS required.
 4. `603993 洛阳钼业` — A1 / WAIT_PRICE / Formal BUY NO; prior preferred 17–18 research entry zone remains below the 8/26 close 19.59.
 5. `601899 紫金矿业` — A1 / WAIT_PRICE / Formal BUY NO; normalized copper/gold assumptions and MOS required.
-6. `601168 西部矿业` — A2 / WAIT_PRICE / Formal BUY NO; 8/26 rally lowered immediate odds and cycle normalization remains mandatory.
+6. `601168 西部矿业` — A2 / WAIT_PRICE / Formal BUY NO; 8/26 rally lowered immediate odds and copper-cycle normalization remains mandatory.
 7. `603658 安图生物` — WAIT / DOWNGRADED / Formal BUY NO; one more moat/normalized-earnings review before queue removal if A-grade economics cannot be re-established.
 
 No ledger `seen_count` is incremented merely by rereading the same canonical snapshot; candidate lifecycle deltas require genuinely new canonical/evidence state.
 
 ## Required next production proof
 
-The next authoritative `GenGe Opportunity Discovery` schedule/workflow-dispatch success must trigger `GenGe V3.1.1 Every-Industry Research` and successfully upload an artifact containing:
+The next successful authoritative `GenGe All-A V3.1.1 One Shot` run must upload one artifact containing at least:
 
 - `reports/discovery_pool/ledger_independent_discovery.csv`
 - `reports/v31_review_enriched/v31_review_queue_enriched.csv`
 - `reports/production_decisions/production_decisions.csv`
 - `reports/canonical_snapshot/latest.json`
+- `reports/operating_views/hourly.json`
+- `reports/operating_views/daily.json`
 
-Only after those sections validate under one new snapshot id may hourly/daily consumers promote a new same-snapshot action.
+Proof requirements:
+
+- focused safety tests including canonical snapshot and operating-view tests pass;
+- Discovery explicitly shows no ledger filter/durable recall applied;
+- all production rows are `GEN_GE_V3_1_1_PRODUCTION`, fresh bridge authority, `no_auto_trade=True`;
+- Discovery, deep review and production sections share exactly one `snapshot_id`;
+- hourly and daily views both reference that exact same `snapshot_id`;
+- hourly cannot recompute/mutate decisions; daily is the full settlement view;
+- all four confirmed holdings are present in the holding decision state.
+
+Until that proof exists, synchronization remains fail-closed and the prior canonical actions remain authoritative.
