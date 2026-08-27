@@ -107,6 +107,7 @@ def build_decisions(
         # provenance and stale/tampered artifacts must not control live output.
         payload = production_payload(merged)
         upstream_policy_matches = bool(not holding and _candidate_policy_matches_production(candidate))
+        strict_pit_status = str(merged.get("v311_expectation_input_status") or "").strip()
 
         action = payload["production_action"]
         if action not in ALLOWED_ACTIONS:
@@ -125,6 +126,21 @@ def build_decisions(
                 "source_expectation_gap": merged.get("v31_expectation_gap_pct") or "",
                 "source_neutral_value": merged.get("v31_neutral_value") or "",
                 "source_current_price": merged.get("v31_current_price") or merged.get("raw_latest_close") or "",
+                # Keep strict-PIT provenance visible all the way to the final
+                # production CSV so canonical/hourly/daily consumers can audit
+                # which filing period and availability date actually drove the
+                # action instead of merely trusting a fresh run timestamp.
+                "strict_pit_refresh_applied": bool(strict_pit_status),
+                "v311_expectation_input_status": strict_pit_status,
+                "decision_date": merged.get("decision_date") or "",
+                "price_date": merged.get("price_date") or "",
+                "fund_available_date": merged.get("fund_available_date") or "",
+                "financial_report_date": merged.get("financial_report_date") or "",
+                "current_price_source": merged.get("current_price_source") or "",
+                "v311_input_error": merged.get("v311_input_error") or "",
+                "v311_production_bridge": merged.get("v311_production_bridge") or "",
+                "v311_same_run_evidence_joined": merged.get("v311_same_run_evidence_joined") or False,
+                "v311_source_scope": merged.get("v311_source_scope") or "",
                 "upstream_policy_reused": False,
                 "upstream_policy_matches": upstream_policy_matches,
                 "confirmed_quantity": holding.get("confirmed_quantity") or "",
@@ -162,15 +178,19 @@ def write_reports(
         "valuation_confidence_reason_codes", "reason_codes", "normalized_earnings",
         "realistic_growth", "market_implied_growth", "expectation_gap", "neutral_value",
         "current_price", "price_to_neutral", "hard_gate_failures", "hard_gate_unknowns",
-        "upstream_policy_reused", "upstream_policy_matches", "confirmed_quantity",
-        "display_only_average_cost", "holding_evidence_date", "cost_basis_used_by_decision",
-        "production_model_frozen", "no_auto_trade",
+        "strict_pit_refresh_applied", "v311_expectation_input_status", "decision_date",
+        "price_date", "fund_available_date", "financial_report_date", "current_price_source",
+        "v311_input_error", "v311_production_bridge", "v311_same_run_evidence_joined",
+        "v311_source_scope", "upstream_policy_reused", "upstream_policy_matches",
+        "confirmed_quantity", "display_only_average_cost", "holding_evidence_date",
+        "cost_basis_used_by_decision", "production_model_frozen", "no_auto_trade",
     ]
     extras = sorted({key for row in rows for key in row if key not in preferred})
     with (output_dir / "production_decisions.csv").open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=preferred + extras, extrasaction="ignore")
         writer.writeheader()
         writer.writerows(rows)
+    strict_pit_count = sum(bool(row["strict_pit_refresh_applied"]) for row in rows)
     summary = {
         "production_model": PRODUCTION_MODEL_NAME,
         "production_model_version": PRODUCTION_MODEL_VERSION,
@@ -186,6 +206,11 @@ def write_reports(
         ),
         "upstream_policy_reused_count": 0,
         "upstream_policy_match_count": sum(bool(row["upstream_policy_matches"]) for row in rows),
+        "strict_pit_refresh_applied_count": strict_pit_count,
+        "strict_pit_refresh_complete": bool(rows) and strict_pit_count == len(rows),
+        "financial_report_dates": sorted(
+            {str(row.get("financial_report_date") or "") for row in rows if row.get("financial_report_date")}
+        ),
         "action_counts": {
             action: sum(row["production_action"] == action for row in rows)
             for action in sorted(ALLOWED_ACTIONS)
@@ -212,6 +237,9 @@ def write_reports(
                 f"## {row['code']} {row['stock_name']} - {row['production_action']}",
                 f"- scope: {row['decision_scope']}",
                 f"- valuation confidence: {row['valuation_confidence']}",
+                f"- strict-PIT input: {row['v311_expectation_input_status']}",
+                f"- financial report / available: {row['financial_report_date']} / {row['fund_available_date']}",
+                f"- price date / source: {row['price_date']} / {row['current_price_source']}",
                 f"- price / neutral: {row['price_to_neutral']}",
                 f"- reason codes: {row['reason_codes']}",
                 f"- upstream exact-policy label matches: {row['upstream_policy_matches']}",
