@@ -2,9 +2,9 @@
 
 The mapping layer is research metadata only. It merges current manually confirmed
 holdings with ACTIVE candidate lifecycle names, projects reviewed industry profiles
-into a CSV consumed by evidence collectors, and reports commodity/peer coverage.
-Missing mappings remain visible gaps; they are never guessed and never alter
-Formal actions.
+into a CSV consumed by evidence collectors, and reports applicability-aware
+commodity/peer coverage. Missing applicable mappings remain visible gaps; mappings
+are never guessed and never alter Formal actions.
 """
 from __future__ import annotations
 
@@ -46,6 +46,17 @@ def _active_candidates(path: Path) -> dict[str, str]:
     return result
 
 
+def _monitoring_state(profile: Mapping[str, Any], key: str, *, mapped: bool) -> str:
+    declared = str(profile.get(key) or "UNRESOLVED").strip().upper()
+    if declared == "NOT_APPLICABLE":
+        return "NOT_APPLICABLE"
+    if mapped:
+        return "MAPPED"
+    if declared in {"APPLICABLE", "APPLICABLE_UNMAPPED", "MAPPED"}:
+        return "APPLICABLE_UNMAPPED"
+    return "UNRESOLVED"
+
+
 def build(
     *,
     holdings_path: Path,
@@ -71,6 +82,8 @@ def build(
         industry_resolved = bool(industry and industry.upper() not in {"UNRESOLVED", "UNKNOWN"})
         commodity_mapped = bool(commodity.get(code))
         peer_mapped = code in peer_targets
+        commodity_state = _monitoring_state(profile, "commodity_monitoring", mapped=commodity_mapped)
+        peer_state = _monitoring_state(profile, "peer_monitoring", mapped=peer_mapped)
         scopes = []
         if code in holdings:
             scopes.append("HOLDING")
@@ -97,25 +110,35 @@ def build(
             "profile_status": profile.get("profile_status") or "MISSING",
             "industry": industry or None,
             "industry_mapped": industry_resolved,
-            "commodity_mapped": commodity_mapped,
-            "peer_mapped": peer_mapped,
+            "commodity_monitoring_state": commodity_state,
+            "commodity_mapped": commodity_state == "MAPPED",
+            "peer_monitoring_state": peer_state,
+            "peer_mapped": peer_state == "MAPPED",
         })
 
     total = len(securities)
+    commodity_applicable = [x for x in securities if x["commodity_monitoring_state"] in {"MAPPED", "APPLICABLE_UNMAPPED"}]
+    peer_applicable = [x for x in securities if x["peer_monitoring_state"] in {"MAPPED", "APPLICABLE_UNMAPPED"}]
     summary = {
-        "contract_version": "GEN_GE_RESEARCH_MAPPING_COVERAGE_V1",
+        "contract_version": "GEN_GE_RESEARCH_MAPPING_COVERAGE_V2",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "tracked_security_count": total,
         "holding_count": len(holdings),
         "active_candidate_count": len(candidates),
         "industry_mapped_count": sum(x["industry_mapped"] for x in securities),
-        "commodity_mapped_count": sum(x["commodity_mapped"] for x in securities),
-        "peer_mapped_count": sum(x["peer_mapped"] for x in securities),
         "industry_unmapped_codes": [x["code"] for x in securities if not x["industry_mapped"]],
-        "commodity_unmapped_codes": [x["code"] for x in securities if not x["commodity_mapped"]],
-        "peer_unmapped_codes": [x["code"] for x in securities if not x["peer_mapped"]],
+        "commodity_applicable_count": len(commodity_applicable),
+        "commodity_mapped_count": sum(x["commodity_monitoring_state"] == "MAPPED" for x in commodity_applicable),
+        "commodity_not_applicable_count": sum(x["commodity_monitoring_state"] == "NOT_APPLICABLE" for x in securities),
+        "commodity_unresolved_count": sum(x["commodity_monitoring_state"] == "UNRESOLVED" for x in securities),
+        "commodity_unmapped_codes": [x["code"] for x in commodity_applicable if x["commodity_monitoring_state"] == "APPLICABLE_UNMAPPED"],
+        "peer_applicable_count": len(peer_applicable),
+        "peer_mapped_count": sum(x["peer_monitoring_state"] == "MAPPED" for x in peer_applicable),
+        "peer_unresolved_count": sum(x["peer_monitoring_state"] == "UNRESOLVED" for x in securities),
+        "peer_unmapped_codes": [x["code"] for x in peer_applicable if x["peer_monitoring_state"] == "APPLICABLE_UNMAPPED"],
         "securities": securities,
-        "mapping_policy": "MISSING_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS",
+        "mapping_policy": "MISSING_APPLICABLE_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS",
+        "applicability_policy": "NOT_APPLICABLE_IS_NOT_A_COVERAGE_GAP",
         "formal_action_eligible": False,
         "no_auto_trade": True,
     }
