@@ -30,23 +30,7 @@ def _price_overlay():
 
 def test_new_negative_evidence_raises_reunderwrite_without_formal_action(tmp_path: Path):
     evidence_root = tmp_path / "evidence"
-    append_events(
-        evidence_root,
-        [
-            {
-                "code": "600312",
-                "observed_at": "2026-08-28T05:30:00Z",
-                "published_at": "2026-08-28T05:20:00Z",
-                "source": "fixture",
-                "source_ref": "fixture://bad",
-                "evidence_type": "REGULATORY_OR_POLICY",
-                "title": "立案调查公告",
-                "materiality": "HIGH",
-                "direction": "WEAKENING",
-                "thesis_link": "UNASSESSED",
-            }
-        ],
-    )
+    append_events(evidence_root, [{"code": "600312", "observed_at": "2026-08-28T05:30:00Z", "published_at": "2026-08-28T05:20:00Z", "source": "fixture", "source_ref": "fixture://bad", "evidence_type": "REGULATORY_OR_POLICY", "title": "立案调查公告", "materiality": "HIGH", "direction": "WEAKENING", "thesis_link": "UNASSESSED"}])
     state = build_state(_price_overlay(), evidence_root, tmp_path / "prices")
     row = state["rows"][0]
     assert row["formal_action"] == "WAIT"
@@ -57,25 +41,21 @@ def test_new_negative_evidence_raises_reunderwrite_without_formal_action(tmp_pat
     assert row["deep_review_priority"] == "RAISE"
 
 
+def test_attractive_plus_strengthening_evidence_raises_deep_review_only(tmp_path: Path):
+    evidence_root = tmp_path / "evidence"
+    append_events(evidence_root, [{"code": "600312", "observed_at": "2026-08-28T05:30:00Z", "published_at": "2026-08-28T05:20:00Z", "source": "fixture", "source_ref": "fixture://good", "evidence_type": "ORDER_OR_CONTRACT", "title": "重大合同公告", "materiality": "MEDIUM", "direction": "STRENGTHENING", "thesis_link": "demand"}])
+    state = build_state(_price_overlay(), evidence_root, tmp_path / "prices")
+    row = state["rows"][0]
+    assert row["thesis_status"] == "STRENGTHENING_RESEARCH_SIGNAL"
+    assert row["hourly_research_conclusion"] == "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD"
+    assert row["deep_review_priority"] == "RAISE"
+    assert row["formal_action"] == "WAIT"
+    assert row["formal_action_recomputed"] is False
+
+
 def test_low_materiality_weakening_is_visible_but_does_not_escalate_thesis(tmp_path: Path):
     evidence_root = tmp_path / "evidence"
-    append_events(
-        evidence_root,
-        [
-            {
-                "code": "600312",
-                "observed_at": "2026-08-28T05:30:00Z",
-                "published_at": "2026-08-28T05:20:00Z",
-                "source": "commodity_fixture",
-                "source_ref": "fixture://commodity",
-                "evidence_type": "COMMODITY_PRICE",
-                "title": "ordinary benchmark decline",
-                "materiality": "LOW",
-                "direction": "WEAKENING",
-                "thesis_link": "commodity:fixture",
-            }
-        ],
-    )
+    append_events(evidence_root, [{"code": "600312", "observed_at": "2026-08-28T05:30:00Z", "published_at": "2026-08-28T05:20:00Z", "source": "commodity_fixture", "source_ref": "fixture://commodity", "evidence_type": "COMMODITY_PRICE", "title": "ordinary benchmark decline", "materiality": "LOW", "direction": "WEAKENING", "thesis_link": "commodity:fixture"}])
     state = build_state(_price_overlay(), evidence_root, tmp_path / "prices")
     row = state["rows"][0]
     assert row["weakening_evidence_count_72h"] == 1
