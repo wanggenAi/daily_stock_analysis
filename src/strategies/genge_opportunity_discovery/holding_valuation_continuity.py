@@ -1,11 +1,17 @@
-"""Holding valuation-continuity guard for GenGe V3.1.1 production.
+"""Holding sell-rationale and valuation-continuity guard for GenGe V3.1.1.
 
-A valuation-driven reduction is not allowed to become a formal production sell
-merely because a fresh run produced a lower neutral value.  When an existing
-holding moves from a non-sell state into REDUCE/CORE_ONLY, production must prove
-valuation continuity or present material, auditable fundamental evidence that
-logically explains the re-underwrite.  Otherwise the action fails closed to
-HOLD_REVIEW in :mod:`production_model`.
+A formal REDUCE/CORE_ONLY must have a causal, auditable reason.  Production may
+not sell merely because one fresh run emitted a lower neutral value.  A
+valuation-driven sell is allowed only when a trustworthy prior holding baseline
+exists and either:
+
+1. intrinsic-value inputs are continuous and the current price is genuinely
+   overextended versus that stable value basis; or
+2. material, structured new evidence explains why the prior thesis/value basis
+   must be re-underwritten.
+
+Otherwise production fails closed to HOLD_REVIEW.  Hard-gate EXIT is outside
+this module and remains immediate.
 """
 from __future__ import annotations
 
@@ -19,9 +25,8 @@ SELL_ACTIONS = {"REDUCE_25", "REDUCE_50", "CORE_ONLY"}
 NON_SELL_ACTIONS = {"HOLD", "HOLD_NO_ADD", "HOLD_REVIEW", "BUY", "WAIT"}
 NEUTRAL_JUMP_THRESHOLD = 0.20
 NORMALIZED_EARNINGS_JUMP_THRESHOLD = 0.20
+MIN_STABLE_VALUE_OVEREXTENSION = 1.20
 
-# Only economically material evidence classes may override a discontinuity.
-# Free-form text by itself is deliberately insufficient.
 MATERIAL_EVIDENCE_TYPES = {
     "EARNINGS_POWER_DETERIORATION",
     "GUIDANCE_CUT",
@@ -60,7 +65,7 @@ def _code(v: Any):
 
 def load_state(path: Path = STATE_PATH):
     if not path.exists():
-        return {"contract_version": "V311_HOLDING_VALUATION_CONTINUITY_V2", "holdings": {}}
+        return {"contract_version": "V311_HOLDING_SELL_RATIONALE_V3", "holdings": {}}
     data = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(data.get("holdings"), dict):
         raise ValueError("invalid holding valuation continuity state")
@@ -68,7 +73,7 @@ def load_state(path: Path = STATE_PATH):
 
 
 def _material_override_evidence(data: Mapping[str, Any]) -> tuple[bool, tuple[str, ...]]:
-    """Require structured, material and auditable evidence to override review."""
+    """Only structured, material, thesis-linked evidence can justify re-underwrite."""
     evidence_id = str(data.get("valuation_continuity_evidence_id") or "").strip()
     evidence_at = str(data.get("valuation_continuity_evidence_observed_at") or "").strip()
     evidence_reason = str(data.get("valuation_continuity_evidence_reason") or "").strip()
@@ -89,63 +94,79 @@ def _material_override_evidence(data: Mapping[str, Any]) -> tuple[bool, tuple[st
         missing.append("SELL_EVIDENCE_NOT_MARKED_MATERIAL")
     if not thesis_link:
         missing.append("SELL_EVIDENCE_THESIS_LINK_MISSING")
-
-    # Require a non-trivial explanation.  A label such as "valuation lower" is
-    # not a causal reason and cannot authorize a sell transition.
     if evidence_reason and len(evidence_reason) < 20:
         missing.append("SELL_EVIDENCE_REASON_TOO_THIN")
-
     return not missing, tuple(missing)
 
 
-def continuity_review_required(data: Mapping[str, Any], action: str, *, path: Path = STATE_PATH):
+def sell_review_required(data: Mapping[str, Any], action: str, *, path: Path = STATE_PATH):
+    """Return whether a valuation-driven formal sell must fail closed to review.
+
+    The result includes explicit reason codes so every blocked or permitted
+    transition is explainable.  Stable-value overextension is a legitimate sell
+    reason; a one-run value collapse is not.
+    """
     if action not in SELL_ACTIONS:
         return False, ()
-    has_position = bool(data.get("v311_has_position") or data.get("v32_has_position"))
-    if not has_position:
+    if not bool(data.get("v311_has_position") or data.get("v32_has_position")):
         return False, ()
 
     code = _code(data.get("code"))
     prev = load_state(path).get("holdings", {}).get(code)
     if not prev:
-        # No trustworthy baseline means production cannot prove a HOLD->SELL
-        # transition is continuous; fail closed rather than invent continuity.
-        return True, ("VALUATION_CONTINUITY_BASELINE_MISSING",)
-
-    prev_action = str(prev.get("action") or "")
-    if prev_action not in NON_SELL_ACTIONS:
-        return False, ()
+        return True, ("SELL_RATIONALE_BASELINE_MISSING",)
 
     current_neutral = _finite(data.get("v31_neutral_value") or data.get("neutral_value"))
-    previous_neutral = _finite(prev.get("neutral_value"))
-    reasons = []
-    if previous_neutral is None or previous_neutral <= 0 or current_neutral is None or current_neutral <= 0:
-        reasons.append("VALUATION_CONTINUITY_BASELINE_INCOMPLETE")
-    else:
-        jump = abs(current_neutral / previous_neutral - 1.0)
-        if jump >= NEUTRAL_JUMP_THRESHOLD:
-            reasons.append("NEUTRAL_VALUE_DISCONTINUITY")
-
     current_norm = _finite(data.get("v31_normalized_profit") or data.get("normalized_earnings"))
+    current_price = _finite(
+        data.get("v31_current_price") or data.get("current_price") or data.get("raw_latest_close")
+    )
+    previous_neutral = _finite(prev.get("neutral_value"))
     previous_norm = _finite(prev.get("normalized_earnings"))
+
+    continuity_failures = []
+    if previous_neutral is None or previous_neutral <= 0 or current_neutral is None or current_neutral <= 0:
+        continuity_failures.append("VALUATION_CONTINUITY_BASELINE_INCOMPLETE")
+    else:
+        neutral_jump = abs(current_neutral / previous_neutral - 1.0)
+        if neutral_jump >= NEUTRAL_JUMP_THRESHOLD:
+            continuity_failures.append("NEUTRAL_VALUE_DISCONTINUITY")
+
     if previous_norm and current_norm:
         if abs(current_norm / previous_norm - 1.0) >= NORMALIZED_EARNINGS_JUMP_THRESHOLD:
-            reasons.append("NORMALIZED_EARNINGS_DISCONTINUITY")
+            continuity_failures.append("NORMALIZED_EARNINGS_DISCONTINUITY")
 
-    if not reasons:
-        return False, ()
+    # Any discontinuity requires genuinely material new evidence.  A fresh model
+    # output or a short free-text note is not enough.
+    if continuity_failures:
+        override_ok, override_failures = _material_override_evidence(data)
+        if override_ok:
+            return False, ("SELL_RATIONALE_MATERIAL_REUNDERWRITE_EVIDENCE",)
+        return True, tuple(["SELL_RATIONALE_NOT_PROVEN", *continuity_failures, *override_failures])
 
-    override_ok, override_failures = _material_override_evidence(data)
-    if override_ok:
-        return False, ()
+    # With a stable value basis, valuation itself can be a valid causal sell
+    # reason only when the market price is materially above that stable basis.
+    if current_price is None or current_price <= 0 or current_neutral is None or current_neutral <= 0:
+        return True, ("SELL_RATIONALE_PRICE_OR_VALUE_INVALID",)
+    price_to_neutral = current_price / current_neutral
+    if price_to_neutral < MIN_STABLE_VALUE_OVEREXTENSION:
+        return True, (
+            "SELL_RATIONALE_NOT_MATERIAL",
+            "STABLE_VALUE_OVEREXTENSION_BELOW_MINIMUM",
+        )
 
-    return True, tuple([*reasons, *override_failures])
+    return False, ("SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",)
+
+
+# Backward-compatible alias used by production_model.
+def continuity_review_required(data: Mapping[str, Any], action: str, *, path: Path = STATE_PATH):
+    return sell_review_required(data, action, path=path)
 
 
 def persist_from_snapshot(snapshot_path: Path, state_path: Path = STATE_PATH):
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     state = load_state(state_path)
-    state["contract_version"] = "V311_HOLDING_VALUATION_CONTINUITY_V2"
+    state["contract_version"] = "V311_HOLDING_SELL_RATIONALE_V3"
     holdings = state.setdefault("holdings", {})
     for row in snapshot.get("production", {}).get("holding_decisions", []):
         code = _code(row.get("code"))
@@ -155,7 +176,10 @@ def persist_from_snapshot(snapshot_path: Path, state_path: Path = STATE_PATH):
             "action": row.get("action"),
             "neutral_value": row.get("neutral_value"),
             "normalized_earnings": row.get("normalized_earnings"),
+            "current_price": row.get("current_price"),
+            "price_to_neutral": row.get("price_to_neutral"),
             "valuation_confidence": row.get("valuation_confidence"),
+            "reason_codes": row.get("reason_codes"),
             "canonical_snapshot_id": snapshot.get("snapshot_id"),
             "canonical_source_run_id": snapshot.get("source_run_id"),
             "decision_date": row.get("decision_date"),
