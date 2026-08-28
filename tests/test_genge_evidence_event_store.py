@@ -34,6 +34,20 @@ def test_normalization_is_research_only():
     assert event["formal_action_recomputed"] is False
     assert event["no_auto_trade"] is True
     assert event["evidence_id"].startswith("ev_")
+    assert event["published_at_adjusted"] is False
+
+
+def test_future_published_at_is_clamped_to_observation_time():
+    event = normalize_event(
+        _event(
+            observed_at="2026-08-28T13:40:42.626098+00:00",
+            published_at="2026-08-29T00:00:00+00:00",
+        )
+    )
+    assert event["published_at"] == "2026-08-28T13:40:42.626098+00:00"
+    assert event["published_at_adjusted"] is True
+    assert event["formal_action_eligible"] is False
+    assert event["no_auto_trade"] is True
 
 
 def test_append_is_idempotent_and_builds_index(tmp_path: Path):
