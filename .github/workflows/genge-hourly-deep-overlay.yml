@@ -86,13 +86,20 @@ jobs:
             tests/test_genge_evidence_event_store.py \
             tests/test_genge_hourly_research_state.py \
             tests/test_genge_industry_cycle_evidence_bridge.py \
-            tests/test_genge_commodity_price_evidence_collector.py
+            tests/test_genge_commodity_price_evidence_collector.py \
+            tests/test_genge_research_mapping_coverage.py
 
       - name: Build price/value hourly deep overlay
         run: |
           python -m src.strategies.genge_opportunity_discovery.hourly_deep_overlay \
             --authoritative-root incoming/authoritative \
             --output-root data/hourly_deep_overlay
+
+      - name: Build reviewed research mapping coverage
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+            --coverage-output data/research_mapping/coverage.json \
+            --industry-csv-output data/research_mapping/company_industry_map.csv
 
       - name: Collect public company announcement evidence
         continue-on-error: true
@@ -108,7 +115,7 @@ jobs:
           python -m src.strategies.genge_opportunity_discovery.industry_cycle_evidence_bridge \
             --hourly-overlay data/hourly_deep_overlay/latest.json \
             --industry-evidence data/user_supplied/industry_cycle_evidence.csv \
-            --company-evidence data/user_supplied/company_cycle_evidence.csv \
+            --company-evidence data/research_mapping/company_industry_map.csv \
             --evidence-root data/evidence_events \
             --status-output data/evidence_events/industry_collector_status.json
 
@@ -128,6 +135,8 @@ jobs:
             --collector-status data/evidence_events/collector_status.json \
             --industry-status data/evidence_events/industry_collector_status.json \
             --commodity-status data/evidence_events/commodity_collector_status.json \
+            --policy-status data/evidence_events/policy_collector_status.json \
+            --competition-status data/evidence_events/competition_collector_status.json \
             --output data/evidence_events/source_registry.json
 
       - name: Build evidence-aware hourly research state
@@ -146,6 +155,7 @@ jobs:
           price = json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))
           research = json.loads(Path('data/hourly_research_state/latest.json').read_text(encoding='utf-8'))
           registry = json.loads(Path('data/evidence_events/source_registry.json').read_text(encoding='utf-8'))
+          coverage = json.loads(Path('data/research_mapping/coverage.json').read_text(encoding='utf-8'))
           assert price['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
           assert price['formal_action_recomputed'] is False
           assert price['overlay_may_overwrite_formal_action'] is False
@@ -157,9 +167,9 @@ jobs:
           assert research['evidence_may_overwrite_formal_action'] is False
           assert research['no_auto_trade'] is True
           assert registry['formal_action_eligible'] is False
-          assert registry['registered_sources']['INDUSTRY_SUPPLY_DEMAND']['implemented'] is True
-          assert registry['registered_sources']['COMMODITY_PRICES']['implemented'] is True
           assert registry['coverage_semantics'] == 'CONNECTED_DOES_NOT_IMPLY_FRESH_OR_MAPPED'
+          assert coverage['formal_action_eligible'] is False
+          assert coverage['mapping_policy'] == 'MISSING_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS'
           assert research['canonical_snapshot_id'] == price['canonical_snapshot_id']
           assert research['canonical_source_run_id'] == price['canonical_source_run_id']
           PY
@@ -172,6 +182,7 @@ jobs:
             data/hourly_deep_overlay
             data/evidence_events
             data/hourly_research_state
+            data/research_mapping
           if-no-files-found: error
           retention-days: 30
 
@@ -180,7 +191,7 @@ jobs:
           set -euo pipefail
           git config user.name "genge-v311-hourly-overlay-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add data/hourly_deep_overlay data/evidence_events data/hourly_research_state
+          git add data/hourly_deep_overlay data/evidence_events data/hourly_research_state data/research_mapping
           if git diff --cached --quiet; then
             echo "No hourly research state change to persist"
             exit 0
@@ -202,8 +213,7 @@ jobs:
           echo "- finalizer run: ${{ steps.authority.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- authoritative artifact: ${{ steps.authority.outputs.artifact_name }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Formal actions are read-only and come only from finalized canonical" >> "$GITHUB_STEP_SUMMARY"
+          echo "- reviewed mapping coverage exposes unmapped holdings/candidates instead of guessing" >> "$GITHUB_STEP_SUMMARY"
           echo "- price/value history, company announcements, industry-cycle evidence, and commodity benchmarks are research overlays" >> "$GITHUB_STEP_SUMMARY"
-          echo "- industry source freshness is explicit; connected does not mean fresh" >> "$GITHUB_STEP_SUMMARY"
-          echo "- commodity benchmark connectivity is separate from evidence-backed security exposure mapping" >> "$GITHUB_STEP_SUMMARY"
           echo "- evidence may raise research/re-underwrite priority but cannot overwrite Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- tradeable scope: Shanghai/Shenzhen main boards only" >> "$GITHUB_STEP_SUMMARY"
