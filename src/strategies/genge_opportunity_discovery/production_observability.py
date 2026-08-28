@@ -1,8 +1,8 @@
 """Operational observability for the GenGe V3.1.1 production chain.
 
-This module reports freshness, identity consistency, workflow-produced state,
-durable-memory availability, and research mapping coverage. It does not calculate,
-recommend, or mutate investment actions.
+Reports freshness, identity consistency, durable-memory availability, mapping
+coverage, and the research-learning feedback loop. It never calculates or
+mutates Formal investment actions.
 """
 from __future__ import annotations
 
@@ -40,15 +40,12 @@ def _parse(value: Any) -> datetime | None:
 
 def _age_hours(value: Any, now: datetime) -> float | None:
     dt = _parse(value)
-    if dt is None:
-        return None
-    return round((now - dt).total_seconds() / 3600.0, 2)
+    return None if dt is None else round((now - dt).total_seconds() / 3600.0, 2)
 
 
 def _ratio(mapped: Any, total: Any) -> float | None:
     try:
-        total_i = int(total)
-        mapped_i = int(mapped)
+        total_i, mapped_i = int(total), int(mapped)
     except (TypeError, ValueError):
         return None
     return None if total_i <= 0 else round(mapped_i / total_i, 4)
@@ -66,25 +63,20 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
     lifecycle = _load(root / "data/opportunity_snapshots/candidate_lifecycle_state.json")
     continuity = _load(root / "data/opportunity_snapshots/holding_valuation_continuity_state.json")
     mapping = _load(root / "data/research_mapping/coverage.json")
+    priority = _load(root / "data/research_priority/latest.json")
+    price_value = _load(root / "data/price_value_history/summary.json")
+    outcomes = _load(root / "data/formal_decision_outcomes/latest.json")
 
-    snapshot_ids = {
-        str(x) for x in [
-            production.get("canonical_snapshot_id"),
-            hourly.get("canonical_snapshot_id"),
-            price.get("canonical_snapshot_id"),
-            lifecycle.get("latest_applied_snapshot_id"),
-            continuity.get("latest_applied_snapshot_id"),
-        ] if x
-    }
-    source_runs = {
-        str(x) for x in [
-            production.get("canonical_source_run_id"),
-            hourly.get("canonical_source_run_id"),
-            price.get("canonical_source_run_id"),
-            lifecycle.get("last_persisted_source_run_id"),
-            continuity.get("latest_applied_source_run_id"),
-        ] if x
-    }
+    snapshot_ids = {str(x) for x in [
+        production.get("canonical_snapshot_id"), hourly.get("canonical_snapshot_id"),
+        price.get("canonical_snapshot_id"), lifecycle.get("latest_applied_snapshot_id"),
+        continuity.get("latest_applied_snapshot_id"),
+    ] if x}
+    source_runs = {str(x) for x in [
+        production.get("canonical_source_run_id"), hourly.get("canonical_source_run_id"),
+        price.get("canonical_source_run_id"), lifecycle.get("last_persisted_source_run_id"),
+        continuity.get("latest_applied_source_run_id"),
+    ] if x}
 
     checks = {
         "canonical_snapshot_identity_consistent": len(snapshot_ids) <= 1 and bool(snapshot_ids),
@@ -96,15 +88,23 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
         "candidate_lifecycle_available": bool(lifecycle),
         "holding_continuity_available": bool(continuity),
         "transaction_projection_available": bool(transactions),
+        "research_priority_available": bool(priority),
+        "price_value_history_available": bool(price_value),
+        "formal_decision_outcomes_available": bool(outcomes),
+        "learning_layer_research_only": (
+            bool(priority) and priority.get("formal_action_eligible") is False
+            and priority.get("formal_action_recomputed") is False
+            and bool(outcomes) and outcomes.get("formal_action_eligible") is False
+            and outcomes.get("parameter_tuning_allowed") is False
+        ),
     }
     failed = sorted(k for k, passed in checks.items() if not passed)
-    health = "HEALTHY" if not failed else "DEGRADED"
     tracked = mapping.get("tracked_security_count")
 
     return {
-        "contract_version": "GEN_GE_V3_1_1_PRODUCTION_OBSERVABILITY_V3",
+        "contract_version": "GEN_GE_V3_1_1_PRODUCTION_OBSERVABILITY_V4",
         "generated_at": now.isoformat(),
-        "health": health,
+        "health": "HEALTHY" if not failed else "DEGRADED",
         "failed_checks": failed,
         "checks": checks,
         "canonical_snapshot_ids_seen": sorted(snapshot_ids),
@@ -116,6 +116,8 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
             "evidence_collector_age_hours": _age_hours(collector.get("generated_at") or collector.get("observed_at"), now),
             "mapping_coverage_age_hours": _age_hours(mapping.get("generated_at"), now),
             "source_registry_age_hours": _age_hours(source_registry.get("generated_at"), now),
+            "research_priority_age_hours": _age_hours(priority.get("generated_at"), now),
+            "formal_outcomes_age_hours": _age_hours(outcomes.get("generated_at"), now),
         },
         "coverage": {
             "hourly_workset_count": hourly.get("workset_count"),
@@ -125,6 +127,19 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
             "transaction_holding_count": transactions.get("holding_count"),
             "evidence_source_implemented_count": source_registry.get("implemented_source_count"),
             "evidence_source_planned_count": source_registry.get("planned_source_count"),
+        },
+        "research_learning": {
+            "available": bool(priority and price_value and outcomes),
+            "p0_count": priority.get("p0_count"),
+            "p1_count": priority.get("p1_count"),
+            "mapping_gap_count": priority.get("mapping_gap_count"),
+            "price_value_security_count": len(price_value.get("rows") or []),
+            "formal_outcome_record_count": outcomes.get("record_count"),
+            "observed_horizon_count": outcomes.get("observed_horizon_count"),
+            "pending_horizon_count": outcomes.get("pending_horizon_count"),
+            "parameter_tuning_allowed": False,
+            "priority_may_reorder_deep_review_only": True,
+            "priority_may_filter_broad_discovery": False,
         },
         "research_mapping": {
             "available": bool(mapping),
