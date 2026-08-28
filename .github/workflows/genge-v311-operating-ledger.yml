@@ -10,6 +10,18 @@ on:
         description: "Successful Production Finalizer run id"
         required: true
         type: string
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v311-operating-ledger.yml"
+      - "config/research_security_profiles.json"
+      - "config/commodity_research_benchmarks.json"
+      - "config/competition_peer_map.json"
+      - "config/industry_alias_map.yaml"
+      - "src/strategies/genge_opportunity_discovery/research_mapping_coverage.py"
+      - "src/strategies/genge_opportunity_discovery/production_observability.py"
+      - "tests/test_genge_research_mapping_coverage.py"
+      - "tests/test_genge_production_observability.py"
 
 permissions:
   contents: write
@@ -27,6 +39,7 @@ jobs:
   persist-operating-ledger:
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -39,23 +52,46 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Install operating-ledger test dependency
+        run: python -m pip install --disable-pip-version-check -q pytest
+
       - name: Resolve Finalizer run id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "FINALIZER_RUN_ID=${{ inputs.finalizer_run_id }}" >> "$GITHUB_ENV"
-          else
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
             echo "FINALIZER_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
+          else
+            runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
+            run_ids=$(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
+            found=""
+            for run_id in $run_ids; do
+              artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+              if printf '%s' "$artifacts" | jq -e '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))' >/dev/null; then
+                echo "FINALIZER_RUN_ID=${run_id}" >> "$GITHUB_ENV"
+                found=1
+                break
+              fi
+            done
+            if [ -z "$found" ]; then
+              echo "No successful non-expired authoritative Finalizer artifact found" >&2
+              exit 1
+            fi
           fi
 
       - name: Download finalized authoritative artifact
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+          set -euo pipefail
           mkdir -p finalized
           gh run download "$FINALIZER_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir finalized
           SNAPSHOT=$(find finalized -path '*/canonical_snapshot/latest.json' -print -quit)
-          AUTH_ROOT=$(dirname "$(dirname "$SNAPSHOT")")
           test -n "$SNAPSHOT"
+          AUTH_ROOT=$(dirname "$(dirname "$SNAPSHOT")")
           test -f "$AUTH_ROOT/production_authority.json"
           echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
           echo "AUTH_ROOT=$AUTH_ROOT" >> "$GITHUB_ENV"
@@ -121,6 +157,7 @@ jobs:
 
       - name: Persist operating state to main
         run: |
+          set -euo pipefail
           git config user.name "genge-v311-production-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
           git add \
