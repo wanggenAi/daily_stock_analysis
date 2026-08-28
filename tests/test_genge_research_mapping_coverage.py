@@ -21,7 +21,31 @@ def test_mapping_coverage_reports_gaps_without_guessing(tmp_path: Path):
     assert payload["industry_mapped_count"] == 2
     assert "001316" in payload["industry_unmapped_codes"]
     assert payload["commodity_mapped_count"] == 1
+    assert payload["commodity_partial_mapped_count"] == 0
     assert payload["peer_mapped_count"] == 1
+    assert payload["mapping_policy"] == "MISSING_APPLICABLE_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS"
     assert payload["formal_action_eligible"] is False
     assert payload["no_auto_trade"] is True
     assert {row["code"] for row in rows} == {"600406", "601899"}
+
+
+def test_partial_commodity_mapping_is_connected_but_remains_visible_gap(tmp_path: Path):
+    holdings = tmp_path / "CURRENT_HOLDINGS.md"
+    holdings.write_text("", encoding="utf-8")
+    lifecycle = tmp_path / "lifecycle.json"
+    lifecycle.write_text(json.dumps({"candidates": {"601020": {"code": "601020", "stock_name": "华钰矿业", "lifecycle_state": "ACTIVE"}}}), encoding="utf-8")
+    profiles = tmp_path / "profiles.json"
+    profiles.write_text(json.dumps({"profiles": {"601020": {"name": "华钰矿业", "industry": "有色", "profile_status": "REVIEWED", "commodity_monitoring": "PARTIAL_MAPPED", "peer_monitoring": "APPLICABLE_UNMAPPED"}}}), encoding="utf-8")
+    commodity = tmp_path / "commodity.json"
+    commodity.write_text(json.dumps({"security_exposures": {"601020": [{"benchmark_id": "GOLD"}]}}), encoding="utf-8")
+    peers = tmp_path / "peers.json"
+    peers.write_text(json.dumps({"mappings": []}), encoding="utf-8")
+    payload, _ = build(holdings_path=holdings, lifecycle_path=lifecycle, profiles_path=profiles, commodity_path=commodity, peer_path=peers)
+    security = payload["securities"][0]
+    assert security["commodity_monitoring_state"] == "PARTIAL_MAPPED"
+    assert security["commodity_mapped"] is True
+    assert security["commodity_fully_mapped"] is False
+    assert payload["commodity_connected_count"] == 1
+    assert payload["commodity_partial_mapped_count"] == 1
+    assert payload["commodity_partial_mapped_codes"] == ["601020"]
+    assert payload["partial_mapping_policy"] == "PARTIAL_MAPPED_IS_CONNECTED_BUT_REMAINS_A_VISIBLE_RESEARCH_GAP"
