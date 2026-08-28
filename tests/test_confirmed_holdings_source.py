@@ -28,7 +28,7 @@ def test_missing_holdings_source_is_not_enabled(tmp_path) -> None:
     )
 
     assert assessment.enabled is False
-    assert assessment.status == "HOLDINGS_NOT_EVALUATED_NO_FRESH_SOURCE"
+    assert assessment.status == "HOLDINGS_NOT_EVALUATED_NO_CONFIRMED_SOURCE"
 
 
 def test_same_day_positive_confirmed_holdings_are_enabled(tmp_path) -> None:
@@ -38,18 +38,19 @@ def test_same_day_positive_confirmed_holdings_are_enabled(tmp_path) -> None:
     assessment = assess_confirmed_holdings_source(path, as_of=date(2026, 8, 27))
 
     assert assessment.enabled is True
-    assert assessment.status == "HOLDINGS_EVALUATED_FRESH_CONFIRMED_SOURCE"
+    assert assessment.status == "HOLDINGS_EVALUATED_DURABLE_CONFIRMED_SOURCE"
     assert assessment.row_count == 1
 
 
-def test_previous_day_holdings_are_rejected_as_stale(tmp_path) -> None:
+def test_previous_day_holdings_remain_durably_confirmed(tmp_path) -> None:
     path = tmp_path / "holdings.md"
     _write_holdings(path, evidence_date="2026-08-26")
 
     assessment = assess_confirmed_holdings_source(path, as_of=date(2026, 8, 27))
 
-    assert assessment.enabled is False
-    assert assessment.status == "HOLDINGS_NOT_EVALUATED_STALE_SOURCE"
+    assert assessment.enabled is True
+    assert assessment.status == "HOLDINGS_EVALUATED_DURABLE_CONFIRMED_SOURCE"
+    assert assessment.row_count == 1
 
 
 def test_zero_or_negative_quantity_is_rejected(tmp_path) -> None:
