@@ -1,7 +1,57 @@
 {
-  "contract_version": "GEN_GE_COMPETITION_PEER_MAP_V1",
-  "description": "Research-only, evidence-gated peer mappings. Do not infer competitors from industry labels or names. Add mappings only after company filings or other reviewed evidence supports the competitive relationship.",
-  "mappings": [],
+  "contract_version": "GEN_GE_COMPETITION_PEER_MAP_V2",
+  "description": "Research-only, evidence-gated peer mappings. These are peer-context relationships, not automatic claims that products are fully substitutable. Competitive events remain UNKNOWN-direction until re-underwritten.",
+  "mappings": [
+    {
+      "target_code": "603993",
+      "target_name": "洛阳钼业",
+      "peer_code": "601899",
+      "peer_name": "紫金矿业",
+      "relationship": "GLOBAL_DIVERSIFIED_MINING_COPPER_PEER_CONTEXT",
+      "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/|https://www.zijinmining.com/about/about_us.htm"
+    },
+    {
+      "target_code": "601899",
+      "target_name": "紫金矿业",
+      "peer_code": "603993",
+      "peer_name": "洛阳钼业",
+      "relationship": "GLOBAL_DIVERSIFIED_MINING_COPPER_PEER_CONTEXT",
+      "evidence_ref": "https://www.zijinmining.com/about/about_us.htm|https://www.cmoc.com/html/AboutUs/Introduce/"
+    },
+    {
+      "target_code": "601899",
+      "target_name": "紫金矿业",
+      "peer_code": "601168",
+      "peer_name": "西部矿业",
+      "relationship": "COPPER_MINING_PEER_CONTEXT",
+      "evidence_ref": "https://www.zijinmining.com/about/about_us.htm|https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf"
+    },
+    {
+      "target_code": "601168",
+      "target_name": "西部矿业",
+      "peer_code": "601899",
+      "peer_name": "紫金矿业",
+      "relationship": "COPPER_MINING_PEER_CONTEXT",
+      "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf|https://www.zijinmining.com/about/about_us.htm"
+    },
+    {
+      "target_code": "600406",
+      "target_name": "国电南瑞",
+      "peer_code": "600312",
+      "peer_name": "平高电气",
+      "relationship": "GRID_EQUIPMENT_VALUE_CHAIN_PEER_CONTEXT",
+      "evidence_ref": "CURRENT_HOLDINGS.md|data/opportunity_snapshots/candidate_lifecycle_state.json"
+    },
+    {
+      "target_code": "600312",
+      "target_name": "平高电气",
+      "peer_code": "600406",
+      "peer_name": "国电南瑞",
+      "relationship": "GRID_EQUIPMENT_VALUE_CHAIN_PEER_CONTEXT",
+      "evidence_ref": "data/opportunity_snapshots/candidate_lifecycle_state.json|CURRENT_HOLDINGS.md"
+    }
+  ],
+  "mapping_semantics": "PEER_CONTEXT_DOES_NOT_IMPLY_DIRECT_PRODUCT_SUBSTITUTABILITY",
   "formal_action_eligible": false,
   "no_auto_trade": true
 }
