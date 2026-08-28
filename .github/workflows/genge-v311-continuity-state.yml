@@ -1,0 +1,53 @@
+name: GenGe V3.1.1 Holding Valuation Continuity State
+
+on:
+  workflow_run:
+    workflows: ["GenGe V3.1.1 Production Finalizer"]
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-v311-holding-continuity-state
+  cancel-in-progress: false
+
+jobs:
+  persist:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download finalized authoritative artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          mkdir -p finalized
+          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir finalized
+      - name: Persist holding continuity state
+        run: |
+          SNAPSHOT=$(find finalized -path '*/canonical_snapshot/latest.json' -print -quit)
+          test -n "$SNAPSHOT"
+          python - <<'PY' "$SNAPSHOT"
+          import sys
+          from pathlib import Path
+          from src.strategies.genge_opportunity_discovery.holding_valuation_continuity import persist_from_snapshot
+          persist_from_snapshot(Path(sys.argv[1]))
+          PY
+      - name: Commit durable continuity state
+        run: |
+          git config user.name "genge-v311-production-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          git add data/opportunity_snapshots/holding_valuation_continuity_state.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Persist V3.1.1 holding valuation continuity [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
