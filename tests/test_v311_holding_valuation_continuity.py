@@ -23,8 +23,19 @@ def test_large_neutral_jump_fails_to_review_without_evidence(tmp_path: Path):
 def test_evidence_bound_override_allows_sell(tmp_path: Path):
     state=tmp_path/'state.json'
     state.write_text(json.dumps({'holdings':{'600406':{'action':'HOLD','neutral_value':24.0}}}),encoding='utf-8')
-    required,_=continuity_review_required({'code':'600406','v311_has_position':True,'v31_neutral_value':17.0,'valuation_continuity_evidence_id':'filing-1','valuation_continuity_evidence_observed_at':'2026-08-28T00:00:00Z','valuation_continuity_evidence_reason':'new audited earnings materially reset normalized profit'},'REDUCE_25',path=state)
+    required,reasons=continuity_review_required({
+        'code':'600406',
+        'v311_has_position':True,
+        'v31_neutral_value':17.0,
+        'valuation_continuity_evidence_id':'filing-1',
+        'valuation_continuity_evidence_observed_at':'2026-08-28T00:00:00Z',
+        'valuation_continuity_evidence_reason':'new audited earnings materially reset normalized profit',
+        'valuation_continuity_evidence_type':'EARNINGS_POWER_DETERIORATION',
+        'valuation_continuity_evidence_material':True,
+        'valuation_continuity_thesis_link':'audited earnings directly impair the prior normalized-earnings valuation thesis',
+    },'REDUCE_25',path=state)
     assert required is False
+    assert 'SELL_RATIONALE_MATERIAL_REUNDERWRITE_EVIDENCE' in reasons
 
 
 def test_hard_exit_is_not_intercepted(tmp_path: Path):
