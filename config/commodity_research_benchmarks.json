@@ -1,6 +1,6 @@
 {
-  "contract_version": "GEN_GE_COMMODITY_RESEARCH_BENCHMARKS_V2",
-  "description": "Public market benchmarks for research observability only. Security exposure mappings are explicit and evidence-backed; benchmark moves never create or mutate Formal actions or canonical value anchors.",
+  "contract_version": "GEN_GE_COMMODITY_RESEARCH_BENCHMARKS_V3",
+  "description": "Public market benchmarks for research observability only. Security exposure mappings are explicit and evidence-backed; benchmark moves never create or mutate Formal actions or canonical value anchors. A mapped security may still have explicitly documented unrepresented commodities when no reliable benchmark is configured.",
   "provider": "stooq_public_daily",
   "benchmarks": {
     "COPPER": {"label": "Copper", "symbol": "hg.f"},
@@ -22,6 +22,10 @@
     "601168": [
       {"benchmark_id": "COPPER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf"},
       {"benchmark_id": "SILVER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf"}
+    ],
+    "601020": [
+      {"benchmark_id": "GOLD", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.huayumining.com/"},
+      {"benchmark_id": "SILVER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.huayumining.com/About.aspx?ClassID=50"}
     ],
     "000426": [
       {"benchmark_id": "SILVER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "data/opportunity_snapshots/candidate_lifecycle_state.json"}
