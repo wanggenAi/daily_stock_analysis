@@ -157,7 +157,10 @@ jobs:
           set -euo pipefail
           git config user.name "genge-v311-evidence-slow-lane-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add data/evidence_events data/research_mapping
+          # These runtime state directories are intentionally gitignored for normal
+          # development. The production bot is the only writer allowed to persist
+          # its reviewed outputs, so force-add only these explicit paths.
+          git add -f data/evidence_events data/research_mapping
           if git diff --cached --quiet; then
             echo "No slow-lane evidence change to persist"
             exit 0
