@@ -79,8 +79,12 @@ jobs:
           test -f incoming/authoritative/candidate_lifecycle/candidate_lifecycle_state.json
           test -f incoming/authoritative/candidate_lifecycle/summary.json
 
-      - name: Run hourly overlay contract tests
-        run: python -m pytest -q tests/test_genge_hourly_deep_overlay.py
+      - name: Run hourly overlay and evidence contract tests
+        run: |
+          python -m pytest -q \
+            tests/test_genge_hourly_deep_overlay.py \
+            tests/test_genge_evidence_event_store.py \
+            tests/test_genge_hourly_research_state.py
 
       - name: Build price/value hourly deep overlay
         run: |
@@ -88,45 +92,73 @@ jobs:
             --authoritative-root incoming/authoritative \
             --output-root data/hourly_deep_overlay
 
-      - name: Validate overlay remains research-only
+      - name: Collect public company announcement evidence
+        continue-on-error: true
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.hourly_evidence_collector \
+            --hourly-overlay data/hourly_deep_overlay/latest.json \
+            --evidence-root data/evidence_events \
+            --status-output data/evidence_events/collector_status.json \
+            --lookback-hours 72
+
+      - name: Build evidence-aware hourly research state
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.hourly_research_state \
+            --price-overlay data/hourly_deep_overlay/latest.json \
+            --price-history-root data/hourly_deep_overlay \
+            --evidence-root data/evidence_events \
+            --output-root data/hourly_research_state
+
+      - name: Validate overlays remain research-only
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
-          payload = json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))
-          assert payload['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
-          assert payload['formal_action_recomputed'] is False
-          assert payload['overlay_may_overwrite_formal_action'] is False
-          assert payload['price_overlay_is_formal_buy'] is False
-          assert payload['tradeable_scope'] == 'SHANGHAI_SHENZHEN_MAINBOARD_ONLY'
-          assert payload['canonical_snapshot_id']
-          assert payload['canonical_source_run_id']
+          price = json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))
+          research = json.loads(Path('data/hourly_research_state/latest.json').read_text(encoding='utf-8'))
+          assert price['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert price['formal_action_recomputed'] is False
+          assert price['overlay_may_overwrite_formal_action'] is False
+          assert price['price_overlay_is_formal_buy'] is False
+          assert price['tradeable_scope'] == 'SHANGHAI_SHENZHEN_MAINBOARD_ONLY'
+          assert research['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert research['formal_action_recomputed'] is False
+          assert research['overlay_may_overwrite_formal_action'] is False
+          assert research['evidence_may_overwrite_formal_action'] is False
+          assert research['no_auto_trade'] is True
+          assert research['canonical_snapshot_id'] == price['canonical_snapshot_id']
+          assert research['canonical_source_run_id'] == price['canonical_source_run_id']
           print(json.dumps({
-              'canonical_snapshot_id': payload['canonical_snapshot_id'],
-              'canonical_source_run_id': payload['canonical_source_run_id'],
-              'workset_count': payload['workset_count'],
-              'holding_count': payload['holding_count'],
-              'price_attractive_research_lead_count': payload['price_attractive_research_lead_count'],
+              'canonical_snapshot_id': price['canonical_snapshot_id'],
+              'canonical_source_run_id': price['canonical_source_run_id'],
+              'workset_count': research['workset_count'],
+              'holding_count': price['holding_count'],
+              'price_attractive_research_lead_count': research['price_attractive_research_lead_count'],
+              'reunderwrite_lead_count': research['reunderwrite_lead_count'],
+              'raise_count': research['raise_count'],
           }, ensure_ascii=False, indent=2))
           PY
 
-      - name: Upload hourly deep overlay artifact
+      - name: Upload hourly research artifacts
         uses: actions/upload-artifact@v4
         with:
           name: genge-v311-hourly-deep-overlay-${{ github.run_id }}
-          path: data/hourly_deep_overlay
+          path: |
+            data/hourly_deep_overlay
+            data/evidence_events
+            data/hourly_research_state
           if-no-files-found: error
           retention-days: 30
 
-      - name: Persist hourly overlay history to main
+      - name: Persist hourly research history to main
         run: |
           set -euo pipefail
           git config user.name "genge-v311-hourly-overlay-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add data/hourly_deep_overlay
+          git add data/hourly_deep_overlay data/evidence_events data/hourly_research_state
           if git diff --cached --quiet; then
-            echo "No hourly overlay change to persist"
+            echo "No hourly research state change to persist"
             exit 0
           fi
           sid=$(python - <<'PY'
@@ -135,7 +167,7 @@ jobs:
           print(json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))['canonical_snapshot_id'])
           PY
           )
-          git commit -m "Persist V3.1.1 hourly deep overlay ${sid} [skip ci]"
+          git commit -m "Persist V3.1.1 hourly research state ${sid} [skip ci]"
           git pull --rebase origin main
           git push origin HEAD:main
 
@@ -146,5 +178,8 @@ jobs:
           echo "- finalizer run: ${{ steps.authority.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- authoritative artifact: ${{ steps.authority.outputs.artifact_name }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Formal actions are read-only and come only from finalized canonical" >> "$GITHUB_STEP_SUMMARY"
-          echo "- hourly overlay persists current price, value anchor, price/value ratio, margin-of-safety direction, and Deep Review priority" >> "$GITHUB_STEP_SUMMARY"
+          echo "- hourly price layer persists price/value ratio and margin-of-safety direction" >> "$GITHUB_STEP_SUMMARY"
+          echo "- research evidence layer ingests public company announcement metadata into an idempotent durable event store" >> "$GITHUB_STEP_SUMMARY"
+          echo "- evidence may raise Deep Review/re-underwrite priority but cannot overwrite Formal actions" >> "$GITHUB_STEP_SUMMARY"
+          echo "- hourly research state tracks repeated price-attractive observations across persisted history" >> "$GITHUB_STEP_SUMMARY"
           echo "- tradeable scope: Shanghai/Shenzhen main boards only" >> "$GITHUB_STEP_SUMMARY"
