@@ -1,6 +1,6 @@
 {
-  "contract_version": "GEN_GE_COMMODITY_RESEARCH_BENCHMARKS_V1",
-  "description": "Public market benchmarks for research observability only. Security exposure mappings must be evidence-backed before they are added; benchmark moves never create or mutate Formal actions.",
+  "contract_version": "GEN_GE_COMMODITY_RESEARCH_BENCHMARKS_V2",
+  "description": "Public market benchmarks for research observability only. Security exposure mappings are explicit and evidence-backed; benchmark moves never create or mutate Formal actions or canonical value anchors.",
   "provider": "stooq_public_daily",
   "benchmarks": {
     "COPPER": {"label": "Copper", "symbol": "hg.f"},
@@ -9,7 +9,24 @@
     "CRUDE_OIL": {"label": "Crude Oil", "symbol": "cl.f"},
     "NATURAL_GAS": {"label": "Natural Gas", "symbol": "ng.f"}
   },
-  "security_exposures": {},
+  "security_exposures": {
+    "603993": [
+      {"benchmark_id": "COPPER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/"},
+      {"benchmark_id": "GOLD", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/"}
+    ],
+    "601899": [
+      {"benchmark_id": "COPPER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.zijinmining.com/about/about_us.htm"},
+      {"benchmark_id": "GOLD", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.zijinmining.com/about/about_us.htm"},
+      {"benchmark_id": "SILVER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.zijinmining.com/about/about_us.htm"}
+    ],
+    "601168": [
+      {"benchmark_id": "COPPER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf"},
+      {"benchmark_id": "SILVER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf"}
+    ],
+    "000426": [
+      {"benchmark_id": "SILVER", "exposure_direction": "PRODUCER_POSITIVE", "evidence_ref": "data/opportunity_snapshots/candidate_lifecycle_state.json"}
+    ]
+  },
   "formal_action_eligible": false,
   "automatic_promotion_allowed": false,
   "no_auto_trade": true
