@@ -65,6 +65,14 @@ def normalize_event(event: Mapping[str, Any], *, observed_at: str | None = None)
     if not observed:
         raise ValueError("evidence observed_at must be ISO-8601")
     published = _iso(event.get("published_at")) or observed
+    published_at_adjusted = False
+    if datetime.fromisoformat(published) > datetime.fromisoformat(observed):
+        # Upstream exchange feeds can occasionally expose a next-calendar-day label
+        # before that timestamp is actually observable. Research freshness must never
+        # be driven by evidence from the future, so fail safe at the common store boundary.
+        published = observed
+        published_at_adjusted = True
+
     direction = str(event.get("direction") or "UNKNOWN").strip().upper()
     materiality = str(event.get("materiality") or "UNKNOWN").strip().upper()
     if direction not in ALLOWED_DIRECTIONS:
@@ -79,6 +87,7 @@ def normalize_event(event: Mapping[str, Any], *, observed_at: str | None = None)
         "name": str(event.get("name") or "").strip(),
         "observed_at": observed,
         "published_at": published,
+        "published_at_adjusted": published_at_adjusted,
         "source": source,
         "source_ref": str(event.get("source_ref") or event.get("url") or "").strip(),
         "evidence_type": str(event.get("evidence_type") or "OTHER").strip().upper(),
