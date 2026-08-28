@@ -169,7 +169,8 @@ jobs:
           assert registry['formal_action_eligible'] is False
           assert registry['coverage_semantics'] == 'CONNECTED_DOES_NOT_IMPLY_FRESH_OR_MAPPED'
           assert coverage['formal_action_eligible'] is False
-          assert coverage['mapping_policy'] == 'MISSING_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS'
+          assert coverage['mapping_policy'] == 'MISSING_APPLICABLE_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS'
+          assert coverage['applicability_policy'] == 'NOT_APPLICABLE_IS_NOT_A_COVERAGE_GAP'
           assert research['canonical_snapshot_id'] == price['canonical_snapshot_id']
           assert research['canonical_source_run_id'] == price['canonical_source_run_id']
           PY
@@ -213,7 +214,7 @@ jobs:
           echo "- finalizer run: ${{ steps.authority.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- authoritative artifact: ${{ steps.authority.outputs.artifact_name }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Formal actions are read-only and come only from finalized canonical" >> "$GITHUB_STEP_SUMMARY"
-          echo "- reviewed mapping coverage exposes unmapped holdings/candidates instead of guessing" >> "$GITHUB_STEP_SUMMARY"
+          echo "- reviewed mapping coverage is applicability-aware and exposes genuine gaps instead of guessing" >> "$GITHUB_STEP_SUMMARY"
           echo "- price/value history, company announcements, industry-cycle evidence, and commodity benchmarks are research overlays" >> "$GITHUB_STEP_SUMMARY"
           echo "- evidence may raise research/re-underwrite priority but cannot overwrite Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- tradeable scope: Shanghai/Shenzhen main boards only" >> "$GITHUB_STEP_SUMMARY"
