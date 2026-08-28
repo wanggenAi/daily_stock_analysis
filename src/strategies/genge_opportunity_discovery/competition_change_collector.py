@@ -1,8 +1,10 @@
 """Evidence-gated competitive-change collector for GenGe research.
 
 The collector never guesses peers from industry labels. It only consumes explicit,
-reviewed peer mappings and already-persisted peer Evidence Events. Competitive
-signals are research-only and cannot change Formal actions.
+reviewed peer mappings and already-persisted primary/first-order peer Evidence
+Events. Derived COMPETITIVE_CHANGE events are never allowed to feed another
+competitive event, preventing reciprocal peer mappings from creating evidence
+echoes. Competitive signals are research-only and cannot change Formal actions.
 """
 from __future__ import annotations
 
@@ -13,6 +15,9 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .evidence_event_store import append_events, recent_for_code
+
+DERIVED_EVIDENCE_TYPES = {"COMPETITIVE_CHANGE"}
+DERIVED_SOURCES = {"competition_peer_event_bridge"}
 
 
 def _load(path: Path) -> Any:
@@ -34,6 +39,12 @@ def _parse_ts(value: Any) -> datetime | None:
     return dt.astimezone(timezone.utc)
 
 
+def _is_primary_peer_evidence(event: Mapping[str, Any]) -> bool:
+    evidence_type = str(event.get("evidence_type") or "").strip().upper()
+    source = str(event.get("source") or "").strip()
+    return evidence_type not in DERIVED_EVIDENCE_TYPES and source not in DERIVED_SOURCES
+
+
 def collect(
     *,
     peer_map: Mapping[str, Any],
@@ -47,6 +58,7 @@ def collect(
     events: list[dict[str, Any]] = []
     mapped_targets: set[str] = set()
     mapped_peers: set[str] = set()
+    recursive_events_skipped = 0
 
     for mapping in mappings:
         target = str(mapping.get("target_code") or "").zfill(6)
@@ -57,6 +69,9 @@ def collect(
         mapped_targets.add(target)
         mapped_peers.add(peer)
         for peer_event in recent_for_code(evidence_root, peer, limit=50):
+            if not _is_primary_peer_evidence(peer_event):
+                recursive_events_skipped += 1
+                continue
             published = _parse_ts(peer_event.get("published_at"))
             if published is None or published < cutoff:
                 continue
@@ -88,6 +103,8 @@ def collect(
         "mapped_target_count": len(mapped_targets),
         "mapped_peer_count": len(mapped_peers),
         "event_candidate_count": len(events),
+        "recursive_derived_events_skipped": recursive_events_skipped,
+        "derived_evidence_recursion_allowed": False,
         "formal_action_eligible": False,
         "no_auto_trade": True,
     }
