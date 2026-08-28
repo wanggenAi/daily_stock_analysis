@@ -24,3 +24,14 @@ def test_mapping_gap_is_visible_not_guessed():
     assert set(row["mapping_gaps"]) == {"COMMODITY", "PEER"}
     assert "MAPPING_GAP" in row["reason_codes"]
     assert row["formal_action_eligible"] is False
+
+
+def test_partial_mapping_remains_visible_without_losing_connected_status():
+    hourly = {"rows": []}
+    lifecycle = {"candidates": {"601020": {"stock_name": "华钰矿业", "research_tier": "PENDING"}}}
+    coverage = {"securities": [{"code": "601020", "name": "华钰矿业", "scopes": ["ACTIVE_CANDIDATE"], "industry_mapped": True, "commodity_monitoring_state": "PARTIAL_MAPPED", "peer_monitoring_state": "APPLICABLE_UNMAPPED"}]}
+    payload = build_queue(hourly, lifecycle, coverage)
+    row = payload["queue"][0]
+    assert set(row["mapping_gaps"]) == {"COMMODITY_PARTIAL", "PEER"}
+    assert payload["partial_mapping_gap_count"] == 1
+    assert row["formal_action_eligible"] is False
