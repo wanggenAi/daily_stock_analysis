@@ -1,8 +1,4 @@
-"""Build evidence-source coverage metadata for GenGe research observability.
-
-Coverage metadata distinguishes 'no evidence observed' from 'source unavailable'.
-It is research infrastructure only and has no authority over Formal actions.
-"""
+"""Build evidence-source coverage metadata for GenGe research observability."""
 from __future__ import annotations
 
 import argparse
@@ -37,6 +33,8 @@ def build(
     collector_status: Path | None = None,
     industry_status: Path | None = None,
     commodity_status: Path | None = None,
+    policy_status: Path | None = None,
+    competition_status: Path | None = None,
 ) -> dict[str, Any]:
     events = load_events(root)
     by_source: dict[str, dict[str, Any]] = {}
@@ -51,30 +49,37 @@ def build(
         if published > item["latest_published_at"]:
             item["latest_published_at"] = published
 
-    sources = {}
-    for source, item in sorted(by_source.items()):
-        sources[source] = {
+    observed_sources = {
+        source: {
             "event_count": item["event_count"],
             "security_count": len(item["security_codes"]),
             "latest_published_at": item["latest_published_at"],
         }
+        for source, item in sorted(by_source.items())
+    }
 
     company = _load(collector_status)
     industry = _load(industry_status)
     commodity = _load(commodity_status)
+    policy = _load(policy_status)
+    competition = _load(competition_status)
     company_state, company_at = _registered_status(company)
     industry_state, industry_at = _registered_status(industry, fallback="NOT_RUN")
     commodity_state, commodity_at = _registered_status(commodity, fallback="NOT_RUN")
+    policy_state, policy_at = _registered_status(policy, fallback="NOT_RUN")
+    competition_state, competition_at = _registered_status(competition, fallback="NOT_RUN")
 
     registered = {
         "COMPANY_ANNOUNCEMENTS": {
             "implemented": True,
+            "lane": "HOURLY_FAST",
             "collector": "hourly_evidence_collector",
             "last_status": company_state,
             "last_generated_at": company_at,
         },
         "INDUSTRY_SUPPLY_DEMAND": {
             "implemented": True,
+            "lane": "HOURLY_FAST_PLUS_SLOW_OFFICIAL",
             "collector": "industry_cycle_evidence_bridge",
             "last_status": industry_state,
             "last_generated_at": industry_at,
@@ -84,6 +89,7 @@ def build(
         },
         "COMMODITY_PRICES": {
             "implemented": True,
+            "lane": "HOURLY_FAST",
             "collector": "commodity_price_evidence_collector",
             "last_status": commodity_state,
             "last_generated_at": commodity_at,
@@ -91,18 +97,36 @@ def build(
             "mapping_status": commodity.get("mapping_status"),
             "mapped_workset_security_count": commodity.get("mapped_workset_security_count"),
         },
-        "COMPETITIVE_CHANGE": {"implemented": False, "collector": None, "last_status": "NOT_CONNECTED"},
-        "REGULATORY_POLICY": {"implemented": False, "collector": None, "last_status": "NOT_CONNECTED"},
+        "REGULATORY_POLICY": {
+            "implemented": True,
+            "lane": "EVIDENCE_SLOW",
+            "collector": "regulatory_policy_evidence_collector",
+            "last_status": policy_state,
+            "last_generated_at": policy_at,
+            "mapped_security_count": policy.get("mapped_security_count"),
+            "fetch_failures": policy.get("fetch_failures", []),
+        },
+        "COMPETITIVE_CHANGE": {
+            "implemented": True,
+            "lane": "EVIDENCE_SLOW",
+            "collector": "competition_change_collector",
+            "last_status": competition_state,
+            "last_generated_at": competition_at,
+            "mapping_count": competition.get("mapping_count"),
+            "mapped_target_count": competition.get("mapped_target_count"),
+            "mapping_is_evidence_gated": True,
+        },
     }
     return {
-        "contract_version": "GEN_GE_EVIDENCE_SOURCE_REGISTRY_V2",
+        "contract_version": "GEN_GE_EVIDENCE_SOURCE_REGISTRY_V3",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "registered_sources": registered,
-        "observed_sources": sources,
+        "observed_sources": observed_sources,
         "event_count": len(events),
         "implemented_source_count": sum(bool(v.get("implemented")) for v in registered.values()),
         "planned_source_count": sum(not bool(v.get("implemented")) for v in registered.values()),
         "coverage_semantics": "CONNECTED_DOES_NOT_IMPLY_FRESH_OR_MAPPED",
+        "lane_semantics": "FAST_LANE_MUST_NOT_DEPEND_ON_SLOW_LANE_SUCCESS",
         "formal_action_eligible": False,
         "no_auto_trade": True,
     }
@@ -114,6 +138,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--collector-status", type=Path, default=Path("data/evidence_events/collector_status.json"))
     parser.add_argument("--industry-status", type=Path, default=Path("data/evidence_events/industry_collector_status.json"))
     parser.add_argument("--commodity-status", type=Path, default=Path("data/evidence_events/commodity_collector_status.json"))
+    parser.add_argument("--policy-status", type=Path, default=Path("data/evidence_events/policy_collector_status.json"))
+    parser.add_argument("--competition-status", type=Path, default=Path("data/evidence_events/competition_collector_status.json"))
     parser.add_argument("--output", type=Path, default=Path("data/evidence_events/source_registry.json"))
     args = parser.parse_args(argv)
     payload = build(
@@ -121,6 +147,8 @@ def main(argv: list[str] | None = None) -> int:
         collector_status=args.collector_status,
         industry_status=args.industry_status,
         commodity_status=args.commodity_status,
+        policy_status=args.policy_status,
+        competition_status=args.competition_status,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
