@@ -1,14 +1,16 @@
 {
   "canonical_snapshot_ids_seen": [
-    "49ee3ff5a6c2aba01bc4"
+    "49ee3ff5a6c2aba01bc4",
+    "da95a1dbc8943ab56c38"
   ],
   "canonical_source_run_ids_seen": [
-    "33169866113"
+    "33169866113",
+    "33180829359"
   ],
   "checks": {
     "candidate_lifecycle_available": true,
-    "canonical_snapshot_identity_consistent": true,
-    "canonical_source_run_identity_consistent": true,
+    "canonical_snapshot_identity_consistent": false,
+    "canonical_source_run_identity_consistent": false,
     "evidence_index_available": true,
     "formal_decision_outcomes_available": true,
     "holding_continuity_available": true,
@@ -22,7 +24,7 @@
   },
   "contract_version": "GEN_GE_V3_1_1_PRODUCTION_OBSERVABILITY_V4",
   "coverage": {
-    "candidate_count": 70,
+    "candidate_count": 72,
     "evidence_event_count": 233,
     "evidence_security_count": 44,
     "evidence_source_implemented_count": 5,
@@ -30,20 +32,23 @@
     "hourly_workset_count": 54,
     "transaction_holding_count": 4
   },
-  "failed_checks": [],
+  "failed_checks": [
+    "canonical_snapshot_identity_consistent",
+    "canonical_source_run_identity_consistent"
+  ],
   "formal_action_recomputed": false,
   "freshness": {
-    "evidence_collector_age_hours": 0.84,
-    "evidence_index_age_hours": 0.4,
-    "formal_outcomes_age_hours": 0.0,
-    "hourly_price_age_hours": 0.9,
-    "hourly_research_age_hours": 0.9,
-    "mapping_coverage_age_hours": 0.01,
-    "research_priority_age_hours": 0.0,
-    "source_registry_age_hours": 0.4
+    "evidence_collector_age_hours": 1.44,
+    "evidence_index_age_hours": 1.0,
+    "formal_outcomes_age_hours": 0.6,
+    "hourly_price_age_hours": 1.51,
+    "hourly_research_age_hours": 1.51,
+    "mapping_coverage_age_hours": 0.0,
+    "research_priority_age_hours": 0.6,
+    "source_registry_age_hours": 1.0
   },
-  "generated_at": "2026-08-28T14:04:43.310359+00:00",
-  "health": "HEALTHY",
+  "generated_at": "2026-08-28T14:40:52.227370+00:00",
+  "health": "DEGRADED",
   "no_auto_trade": true,
   "research_learning": {
     "available": true,
