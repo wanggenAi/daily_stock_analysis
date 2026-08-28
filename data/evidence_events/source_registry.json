@@ -1,0 +1,66 @@
+{
+  "contract_version": "GEN_GE_EVIDENCE_SOURCE_REGISTRY_V3",
+  "coverage_semantics": "CONNECTED_DOES_NOT_IMPLY_FRESH_OR_MAPPED",
+  "event_count": 2,
+  "formal_action_eligible": false,
+  "generated_at": "2026-08-28T12:35:38.883640+00:00",
+  "implemented_source_count": 5,
+  "lane_semantics": "FAST_LANE_MUST_NOT_DEPEND_ON_SLOW_LANE_SUCCESS",
+  "no_auto_trade": true,
+  "observed_sources": {
+    "peer_official_material_event": {
+      "event_count": 2,
+      "latest_published_at": "2025-12-31T00:00:00+00:00",
+      "security_count": 2
+    }
+  },
+  "planned_source_count": 0,
+  "registered_sources": {
+    "COMMODITY_PRICES": {
+      "collector": "commodity_price_evidence_collector",
+      "implemented": true,
+      "lane": "HOURLY_FAST",
+      "last_generated_at": null,
+      "last_status": "NOT_RUN",
+      "latest_market_date": null,
+      "mapped_workset_security_count": null,
+      "mapping_status": null
+    },
+    "COMPANY_ANNOUNCEMENTS": {
+      "collector": "hourly_evidence_collector",
+      "implemented": true,
+      "lane": "HOURLY_FAST",
+      "last_generated_at": null,
+      "last_status": "UNKNOWN"
+    },
+    "COMPETITIVE_CHANGE": {
+      "collector": "competition_change_collector",
+      "implemented": true,
+      "lane": "EVIDENCE_SLOW",
+      "last_generated_at": "2026-08-28T12:35:38.396134+00:00",
+      "last_status": "CONNECTED_NO_RECENT_PEER_EVENTS",
+      "mapped_target_count": 5,
+      "mapping_count": 6,
+      "mapping_is_evidence_gated": true
+    },
+    "INDUSTRY_SUPPLY_DEMAND": {
+      "collector": "industry_cycle_evidence_bridge",
+      "freshness_is_explicit": true,
+      "implemented": true,
+      "lane": "HOURLY_FAST_PLUS_SLOW_OFFICIAL",
+      "last_generated_at": null,
+      "last_status": "NOT_RUN",
+      "latest_source_date": null,
+      "mapped_security_count": null
+    },
+    "REGULATORY_POLICY": {
+      "collector": "regulatory_policy_evidence_collector",
+      "fetch_failures": [],
+      "implemented": true,
+      "lane": "EVIDENCE_SLOW",
+      "last_generated_at": "2026-08-28T12:35:01.918228+00:00",
+      "last_status": "NO_PERSISTED_HOURLY_WORKSET",
+      "mapped_security_count": null
+    }
+  }
+}
