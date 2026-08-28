@@ -55,7 +55,7 @@ jobs:
       - name: Install operating-ledger test harness
         run: |
           python -m pip install --disable-pip-version-check -q \
-            pytest anyio fastapi httpx starlette
+            pandas pytest anyio fastapi httpx starlette
 
       - name: Resolve Finalizer run id
         env:
