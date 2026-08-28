@@ -53,7 +53,7 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check -q \
             "requests>=2.31.0" "beautifulsoup4>=4.12.0" "PyYAML>=6.0" "pypdf>=5.0.0" \
-            pytest anyio fastapi httpx starlette
+            pandas pytest anyio fastapi httpx starlette
 
       - name: Run slow-lane contract tests
         run: |
