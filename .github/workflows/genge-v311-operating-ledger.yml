@@ -66,7 +66,8 @@ jobs:
             tests/test_genge_transaction_ledger.py \
             tests/test_genge_evidence_event_store.py \
             tests/test_genge_hourly_research_state.py \
-            tests/test_genge_production_observability.py
+            tests/test_genge_production_observability.py \
+            tests/test_genge_research_mapping_coverage.py
 
       - name: Append immutable Formal Decision history
         run: |
@@ -80,6 +81,12 @@ jobs:
           python -m src.strategies.genge_opportunity_discovery.transaction_ledger \
             --ledger data/transactions/ledger.jsonl \
             --output data/transactions/holdings_projection.json
+
+      - name: Build reviewed research mapping coverage
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+            --coverage-output data/research_mapping/coverage.json \
+            --industry-csv-output data/research_mapping/company_industry_map.csv
 
       - name: Build production health dashboard
         run: |
@@ -95,16 +102,20 @@ jobs:
             --root . \
             --output data/production_observability/latest.json
 
-      - name: Assert transaction ledger remains parallel until migration
+      - name: Assert parallel-state boundaries
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
           p = json.loads(Path('data/transactions/holdings_projection.json').read_text(encoding='utf-8'))
+          m = json.loads(Path('data/research_mapping/coverage.json').read_text(encoding='utf-8'))
           assert p['production_source_of_truth'] is False
           assert p['migration_required_before_production_use'] is True
           assert p['no_auto_trade'] is True
           assert p['holding_count'] >= 0
+          assert m['formal_action_eligible'] is False
+          assert m['no_auto_trade'] is True
+          assert m['mapping_policy'] == 'MISSING_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS'
           PY
 
       - name: Persist operating state to main
@@ -114,6 +125,7 @@ jobs:
           git add \
             data/formal_decision_history \
             data/transactions/holdings_projection.json \
+            data/research_mapping \
             data/production_status/latest.json \
             data/production_observability/latest.json \
             PRODUCTION_STATUS.md
@@ -139,5 +151,6 @@ jobs:
             data/production_observability
             data/formal_decision_history
             data/transactions/holdings_projection.json
+            data/research_mapping
           if-no-files-found: warn
           retention-days: 30
