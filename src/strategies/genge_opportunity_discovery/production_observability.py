@@ -99,10 +99,10 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
     }
     failed = sorted(k for k, passed in checks.items() if not passed)
     health = "HEALTHY" if not failed else "DEGRADED"
-    total_mapped = mapping.get("tracked_security_count")
+    tracked = mapping.get("tracked_security_count")
 
     return {
-        "contract_version": "GEN_GE_V3_1_1_PRODUCTION_OBSERVABILITY_V2",
+        "contract_version": "GEN_GE_V3_1_1_PRODUCTION_OBSERVABILITY_V3",
         "generated_at": now.isoformat(),
         "health": health,
         "failed_checks": failed,
@@ -128,17 +128,23 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
         },
         "research_mapping": {
             "available": bool(mapping),
-            "tracked_security_count": total_mapped,
+            "tracked_security_count": tracked,
             "industry_mapped_count": mapping.get("industry_mapped_count"),
-            "industry_coverage_ratio": _ratio(mapping.get("industry_mapped_count"), total_mapped),
+            "industry_coverage_ratio": _ratio(mapping.get("industry_mapped_count"), tracked),
+            "commodity_applicable_count": mapping.get("commodity_applicable_count"),
             "commodity_mapped_count": mapping.get("commodity_mapped_count"),
-            "commodity_coverage_ratio": _ratio(mapping.get("commodity_mapped_count"), total_mapped),
+            "commodity_coverage_ratio": _ratio(mapping.get("commodity_mapped_count"), mapping.get("commodity_applicable_count")),
+            "commodity_not_applicable_count": mapping.get("commodity_not_applicable_count"),
+            "commodity_unresolved_count": mapping.get("commodity_unresolved_count"),
+            "peer_applicable_count": mapping.get("peer_applicable_count"),
             "peer_mapped_count": mapping.get("peer_mapped_count"),
-            "peer_coverage_ratio": _ratio(mapping.get("peer_mapped_count"), total_mapped),
+            "peer_coverage_ratio": _ratio(mapping.get("peer_mapped_count"), mapping.get("peer_applicable_count")),
+            "peer_unresolved_count": mapping.get("peer_unresolved_count"),
             "industry_unmapped_codes": mapping.get("industry_unmapped_codes", []),
             "commodity_unmapped_codes": mapping.get("commodity_unmapped_codes", []),
             "peer_unmapped_codes": mapping.get("peer_unmapped_codes", []),
             "missing_mapping_is_not_inferred": True,
+            "not_applicable_is_not_gap": True,
         },
         "formal_action_recomputed": False,
         "no_auto_trade": True,
