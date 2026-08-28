@@ -115,7 +115,8 @@ jobs:
           assert p['holding_count'] >= 0
           assert m['formal_action_eligible'] is False
           assert m['no_auto_trade'] is True
-          assert m['mapping_policy'] == 'MISSING_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS'
+          assert m['mapping_policy'] == 'MISSING_APPLICABLE_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS'
+          assert m['applicability_policy'] == 'NOT_APPLICABLE_IS_NOT_A_COVERAGE_GAP'
           PY
 
       - name: Persist operating state to main
