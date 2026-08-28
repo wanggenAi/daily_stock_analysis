@@ -1,0 +1,150 @@
+name: GenGe V3.1.1 Hourly Deep Overlay
+
+on:
+  schedule:
+    # Beijing 09:05-16:05 on weekdays (UTC 01:05-08:05).
+    - cron: "5 1-8 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-v311-hourly-deep-overlay
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  persist-hourly-deep-overlay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Locate latest successful authoritative Finalizer artifact
+        id: authority
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          runs=$(gh api -X GET "repos/${repo}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
+          run_ids=$(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
+          found=""
+          for run_id in $run_ids; do
+            artifacts=$(gh api -X GET "repos/${repo}/actions/runs/${run_id}/artifacts?per_page=100")
+            row=$(printf '%s' "$artifacts" | jq -r '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-"))) | [.id,.name] | @tsv' | head -n1)
+            if [ -n "$row" ]; then
+              artifact_id=$(printf '%s' "$row" | cut -f1)
+              artifact_name=$(printf '%s' "$row" | cut -f2)
+              found=1
+              echo "finalizer_run_id=${run_id}" >> "$GITHUB_OUTPUT"
+              echo "artifact_id=${artifact_id}" >> "$GITHUB_OUTPUT"
+              echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
+              break
+            fi
+          done
+          if [ -z "$found" ]; then
+            echo "No successful non-expired authoritative canonical artifact found" >&2
+            exit 1
+          fi
+
+      - name: Download exact authoritative canonical artifact
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ARTIFACT_ID: ${{ steps.authority.outputs.artifact_id }}
+        run: |
+          set -euo pipefail
+          mkdir -p incoming
+          gh api -H "Accept: application/vnd.github+json" \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > authoritative.zip
+          unzip -q authoritative.zip -d incoming
+          test -f incoming/authoritative/production_authority.json
+          test -f incoming/authoritative/canonical_snapshot/latest.json
+          test -f incoming/authoritative/operating_views/hourly.json
+          test -f incoming/authoritative/holdings_reconciliation.json
+          test -f incoming/authoritative/candidate_lifecycle/candidate_lifecycle_state.json
+          test -f incoming/authoritative/candidate_lifecycle/summary.json
+
+      - name: Run hourly overlay contract tests
+        run: python -m pytest -q tests/test_genge_hourly_deep_overlay.py
+
+      - name: Build price/value hourly deep overlay
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.hourly_deep_overlay \
+            --authoritative-root incoming/authoritative \
+            --output-root data/hourly_deep_overlay
+
+      - name: Validate overlay remains research-only
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))
+          assert payload['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert payload['formal_action_recomputed'] is False
+          assert payload['overlay_may_overwrite_formal_action'] is False
+          assert payload['price_overlay_is_formal_buy'] is False
+          assert payload['tradeable_scope'] == 'SHANGHAI_SHENZHEN_MAINBOARD_ONLY'
+          assert payload['canonical_snapshot_id']
+          assert payload['canonical_source_run_id']
+          print(json.dumps({
+              'canonical_snapshot_id': payload['canonical_snapshot_id'],
+              'canonical_source_run_id': payload['canonical_source_run_id'],
+              'workset_count': payload['workset_count'],
+              'holding_count': payload['holding_count'],
+              'price_attractive_research_lead_count': payload['price_attractive_research_lead_count'],
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload hourly deep overlay artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v311-hourly-deep-overlay-${{ github.run_id }}
+          path: data/hourly_deep_overlay
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Persist hourly overlay history to main
+        run: |
+          set -euo pipefail
+          git config user.name "genge-v311-hourly-overlay-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          git add data/hourly_deep_overlay
+          if git diff --cached --quiet; then
+            echo "No hourly overlay change to persist"
+            exit 0
+          fi
+          sid=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          print(json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))['canonical_snapshot_id'])
+          PY
+          )
+          git commit -m "Persist V3.1.1 hourly deep overlay ${sid} [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Publish summary
+        if: always()
+        run: |
+          echo "# GenGe V3.1.1 Hourly Deep Overlay" >> "$GITHUB_STEP_SUMMARY"
+          echo "- finalizer run: ${{ steps.authority.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- authoritative artifact: ${{ steps.authority.outputs.artifact_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Formal actions are read-only and come only from finalized canonical" >> "$GITHUB_STEP_SUMMARY"
+          echo "- hourly overlay persists current price, value anchor, price/value ratio, margin-of-safety direction, and Deep Review priority" >> "$GITHUB_STEP_SUMMARY"
+          echo "- tradeable scope: Shanghai/Shenzhen main boards only" >> "$GITHUB_STEP_SUMMARY"
