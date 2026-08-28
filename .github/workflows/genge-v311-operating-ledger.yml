@@ -25,9 +25,11 @@ on:
       - "src/strategies/genge_opportunity_discovery/transaction_ledger.py"
       - "src/strategies/genge_opportunity_discovery/research_mapping_coverage.py"
       - "src/strategies/genge_opportunity_discovery/production_observability.py"
+      - "src/strategies/genge_opportunity_discovery/production_status_dashboard.py"
       - "tests/test_genge_transaction_ledger.py"
       - "tests/test_genge_research_mapping_coverage.py"
       - "tests/test_genge_production_observability.py"
+      - "tests/test_genge_production_status_dashboard.py"
 
 permissions:
   contents: write
@@ -112,6 +114,7 @@ jobs:
             tests/test_genge_evidence_event_store.py \
             tests/test_genge_hourly_research_state.py \
             tests/test_genge_production_observability.py \
+            tests/test_genge_production_status_dashboard.py \
             tests/test_genge_research_mapping_coverage.py
 
       - name: Append immutable Formal Decision history
@@ -137,6 +140,7 @@ jobs:
         run: |
           python -m src.strategies.genge_opportunity_discovery.production_status_dashboard \
             --authoritative-root "$AUTH_ROOT" \
+            --state-root . \
             --main-sha "$(git rev-parse HEAD)" \
             --json-output data/production_status/latest.json \
             --md-output PRODUCTION_STATUS.md
@@ -154,6 +158,7 @@ jobs:
           from pathlib import Path
           p = json.loads(Path('data/transactions/holdings_projection.json').read_text(encoding='utf-8'))
           m = json.loads(Path('data/research_mapping/coverage.json').read_text(encoding='utf-8'))
+          s = json.loads(Path('data/production_status/latest.json').read_text(encoding='utf-8'))
           assert p['production_source_of_truth'] is False
           assert p['migration_required_before_production_use'] is True
           assert p['no_auto_trade'] is True
@@ -162,6 +167,8 @@ jobs:
           assert m['no_auto_trade'] is True
           assert m['mapping_policy'] == 'MISSING_APPLICABLE_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS'
           assert m['applicability_policy'] == 'NOT_APPLICABLE_IS_NOT_A_COVERAGE_GAP'
+          assert s['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert s['research_learning']['parameter_tuning_allowed'] is False
           PY
 
       - name: Persist operating state to main
@@ -169,9 +176,6 @@ jobs:
           set -euo pipefail
           git config user.name "genge-v311-production-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          # Runtime state is intentionally gitignored for normal development.
-          # Force-add only the explicit production-owned state paths; keep the
-          # repository-wide ignore policy unchanged.
           git add -f \
             data/formal_decision_history \
             data/transactions/holdings_projection.json \
