@@ -3,8 +3,8 @@
 The mapping layer is research metadata only. It merges current manually confirmed
 holdings with ACTIVE candidate lifecycle names, projects reviewed industry profiles
 into a CSV consumed by evidence collectors, and reports applicability-aware
-commodity/peer coverage. Missing applicable mappings remain visible gaps; mappings
-are never guessed and never alter Formal actions.
+commodity/peer coverage. Missing or partial applicable mappings remain visible
+gaps; mappings are never guessed and never alter Formal actions.
 """
 from __future__ import annotations
 
@@ -50,9 +50,11 @@ def _monitoring_state(profile: Mapping[str, Any], key: str, *, mapped: bool) -> 
     declared = str(profile.get(key) or "UNRESOLVED").strip().upper()
     if declared == "NOT_APPLICABLE":
         return "NOT_APPLICABLE"
+    if declared == "PARTIAL_MAPPED" and mapped:
+        return "PARTIAL_MAPPED"
     if mapped:
         return "MAPPED"
-    if declared in {"APPLICABLE", "APPLICABLE_UNMAPPED", "MAPPED"}:
+    if declared in {"APPLICABLE", "APPLICABLE_UNMAPPED", "MAPPED", "PARTIAL_MAPPED"}:
         return "APPLICABLE_UNMAPPED"
     return "UNRESOLVED"
 
@@ -111,16 +113,17 @@ def build(
             "industry": industry or None,
             "industry_mapped": industry_resolved,
             "commodity_monitoring_state": commodity_state,
-            "commodity_mapped": commodity_state == "MAPPED",
+            "commodity_mapped": commodity_state in {"MAPPED", "PARTIAL_MAPPED"},
+            "commodity_fully_mapped": commodity_state == "MAPPED",
             "peer_monitoring_state": peer_state,
             "peer_mapped": peer_state == "MAPPED",
         })
 
     total = len(securities)
-    commodity_applicable = [x for x in securities if x["commodity_monitoring_state"] in {"MAPPED", "APPLICABLE_UNMAPPED"}]
+    commodity_applicable = [x for x in securities if x["commodity_monitoring_state"] in {"MAPPED", "PARTIAL_MAPPED", "APPLICABLE_UNMAPPED"}]
     peer_applicable = [x for x in securities if x["peer_monitoring_state"] in {"MAPPED", "APPLICABLE_UNMAPPED"}]
     summary = {
-        "contract_version": "GEN_GE_RESEARCH_MAPPING_COVERAGE_V2",
+        "contract_version": "GEN_GE_RESEARCH_MAPPING_COVERAGE_V3",
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "tracked_security_count": total,
         "holding_count": len(holdings),
@@ -129,15 +132,18 @@ def build(
         "industry_unmapped_codes": [x["code"] for x in securities if not x["industry_mapped"]],
         "commodity_applicable_count": len(commodity_applicable),
         "commodity_mapped_count": sum(x["commodity_monitoring_state"] == "MAPPED" for x in commodity_applicable),
+        "commodity_partial_mapped_count": sum(x["commodity_monitoring_state"] == "PARTIAL_MAPPED" for x in commodity_applicable),
+        "commodity_connected_count": sum(x["commodity_monitoring_state"] in {"MAPPED", "PARTIAL_MAPPED"} for x in commodity_applicable),
         "commodity_not_applicable_count": sum(x["commodity_monitoring_state"] == "NOT_APPLICABLE" for x in securities),
         "commodity_unresolved_count": sum(x["commodity_monitoring_state"] == "UNRESOLVED" for x in securities),
         "commodity_unmapped_codes": [x["code"] for x in commodity_applicable if x["commodity_monitoring_state"] == "APPLICABLE_UNMAPPED"],
+        "commodity_partial_mapped_codes": [x["code"] for x in commodity_applicable if x["commodity_monitoring_state"] == "PARTIAL_MAPPED"],
         "peer_applicable_count": len(peer_applicable),
         "peer_mapped_count": sum(x["peer_monitoring_state"] == "MAPPED" for x in peer_applicable),
         "peer_unresolved_count": sum(x["peer_monitoring_state"] == "UNRESOLVED" for x in securities),
         "peer_unmapped_codes": [x["code"] for x in peer_applicable if x["peer_monitoring_state"] == "APPLICABLE_UNMAPPED"],
         "securities": securities,
-        "mapping_policy": "MISSING_APPLICABLE_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS",
+        "mapping_policy": "MISSING_OR_PARTIAL_APPLICABLE_MAPPING_IS_A_VISIBLE_RESEARCH_GAP_NOT_A_GUESS",
         "applicability_policy": "NOT_APPLICABLE_IS_NOT_A_COVERAGE_GAP",
         "formal_action_eligible": False,
         "no_auto_trade": True,
