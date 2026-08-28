@@ -213,7 +213,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--valuation-root", type=Path, required=True)
     parser.add_argument("--all-a-report-root", type=Path, required=True)
     parser.add_argument("--output-dir", type=Path, required=True)
-    parser.add_argument("--priority-json", type=Path)
+    parser.add_argument("--priority-json", type=Path, default=Path("data/research_priority/latest.json"))
     parser.add_argument("--limit", type=int, default=100)
     args = parser.parse_args(argv)
     rows = write_report(args.valuation_root, args.all_a_report_root, args.output_dir, priority_json=args.priority_json, limit=args.limit)
