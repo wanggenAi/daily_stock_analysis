@@ -33,6 +33,14 @@ def _decimal(value: Any) -> Decimal:
     return result
 
 
+def _plain_decimal(value: Decimal) -> str:
+    """Serialize Decimal without exponent notation while trimming spare zeros."""
+    text = format(value, "f")
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    return text or "0"
+
+
 def normalize_transaction(raw: Mapping[str, Any]) -> dict[str, Any]:
     event = str(raw.get("event") or raw.get("side") or "").strip().upper()
     code = _code(raw.get("code"))
@@ -51,8 +59,8 @@ def normalize_transaction(raw: Mapping[str, Any]) -> dict[str, Any]:
         "event": event,
         "code": code,
         "name": str(raw.get("name") or "").strip(),
-        "quantity": str(quantity),
-        "price": str(price),
+        "quantity": _plain_decimal(quantity),
+        "price": _plain_decimal(price),
         "trade_date": trade_date,
         "evidence_source": evidence_source,
         "confirmed_at": str(raw.get("confirmed_at") or datetime.now(timezone.utc).isoformat()),
@@ -105,8 +113,8 @@ def project_holdings(rows: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, A
         result[code] = {
             "code": code,
             "name": names.get(code, ""),
-            "confirmed_quantity": str(quantity[code].normalize()),
-            "average_cost": str(avg.quantize(Decimal("0.0001"))),
+            "confirmed_quantity": _plain_decimal(quantity[code]),
+            "average_cost": format(avg.quantize(Decimal("0.0001")), "f"),
             "source": "TRANSACTION_LEDGER_PROJECTION",
         }
     return result
