@@ -14,8 +14,13 @@ from tests.test_genge_opportunity_discovery_selection_framework_v311 import comp
 def test_existing_genge_ci_covers_v311_production_wiring() -> None:
     payload = production_payload(complete_v311_row(current=150.0))
     assert PRODUCTION_MODEL_VERSION == "GEN_GE_V3_1_1_PRODUCTION"
-    assert payload["production_action"] == "REDUCE_50"
-    assert payload["production_sell_contract"] == "V31_IMMEDIATE_VALUATION_LADDER"
+    assert payload["production_action"] == "HOLD_REVIEW"
+    assert payload["production_sell_contract"] == (
+        "V31_SELL_LADDER_WITH_EXPLICIT_RATIONALE_AND_CONTINUITY_REVIEW"
+    )
+    assert "SELL_RATIONALE_BASELINE_MISSING" in payload["reason_codes"]
+    assert payload["formal_sell_requires_explicit_rationale"] is True
+    assert payload["formal_sell_mechanical_valuation_only_forbidden"] is True
     assert payload["production_policy_source"] == PRODUCTION_POLICY_SOURCE
     assert payload["v32_sell_confirmation_enabled"] is False
     assert V32_SELL_CONFIRMATION_ENABLED is False
@@ -38,10 +43,13 @@ def test_production_hard_gate_still_overrides_invalid_confidence() -> None:
     assert payload["production_target_position_fraction"] == 0.0
 
 
-def test_production_cost_basis_never_changes_sell() -> None:
+def test_production_cost_basis_never_changes_sell_review() -> None:
     first = complete_v311_row(current=180.0)
     first["personal_cost_basis"] = 10.0
     second = dict(first)
     second["personal_cost_basis"] = 300.0
-    assert production_payload(first)["production_action"] == "CORE_ONLY"
-    assert production_payload(second)["production_action"] == "CORE_ONLY"
+    first_payload = production_payload(first)
+    second_payload = production_payload(second)
+    assert first_payload["production_action"] == "HOLD_REVIEW"
+    assert second_payload["production_action"] == "HOLD_REVIEW"
+    assert first_payload["reason_codes"] == second_payload["reason_codes"]
