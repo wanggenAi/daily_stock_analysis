@@ -1,8 +1,9 @@
 """Evaluate forward market outcomes of immutable Formal decisions.
 
-This is an audit/learning layer only. It never changes V3.1.1 thresholds or
-Formal actions. Horizons are measured in distinct persisted hourly observation
-trading dates after the decision date; insufficient history remains PENDING.
+Audit/learning only. It never changes V3.1.1 thresholds or Formal actions.
+Horizons use distinct persisted trading dates after the decision date. Grouped
+statistics become eligible for *human review* only after a minimum sample size;
+automatic parameter tuning remains permanently disabled here.
 """
 from __future__ import annotations
 
@@ -12,10 +13,12 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from decimal import Decimal, InvalidOperation
 from pathlib import Path
+from statistics import median
 from typing import Any
 
-CONTRACT_VERSION = "GEN_GE_FORMAL_DECISION_OUTCOMES_V1"
+CONTRACT_VERSION = "GEN_GE_FORMAL_DECISION_OUTCOMES_V2"
 HORIZONS = (5, 20, 60)
+MIN_HUMAN_REVIEW_SAMPLE = 20
 
 
 def _dec(value: Any) -> Decimal | None:
@@ -41,8 +44,6 @@ def load_history(path: Path) -> list[dict[str, Any]]:
 
 def load_daily_prices(root: Path) -> dict[str, dict[str, Decimal]]:
     by_code: dict[str, dict[str, Decimal]] = defaultdict(dict)
-    # Last persisted observation of each date wins, approximating the latest
-    # available price for that trading date without inventing missing closes.
     for path in sorted(root.glob("????-??-??/*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
@@ -57,6 +58,37 @@ def load_daily_prices(root: Path) -> dict[str, dict[str, Decimal]]:
             if code and price is not None:
                 by_code[code][date] = price
     return by_code
+
+
+def _group_statistics(rows: list[dict[str, Any]]) -> dict[str, Any]:
+    buckets: dict[tuple[str, str], list[Decimal]] = defaultdict(list)
+    for row in rows:
+        action = str(row.get("formal_action") or "UNKNOWN")
+        for horizon, value in (row.get("horizons") or {}).items():
+            if value.get("status") != "OBSERVED":
+                continue
+            try:
+                ret = Decimal(str(value.get("return")))
+            except (InvalidOperation, ValueError, TypeError):
+                continue
+            buckets[(action, horizon)].append(ret)
+    result: dict[str, Any] = {}
+    ready = 0
+    for (action, horizon), values in sorted(buckets.items()):
+        sample_count = len(values)
+        mean_value = sum(values, Decimal("0")) / Decimal(sample_count)
+        median_value = Decimal(str(median(values)))
+        status = "READY_FOR_HUMAN_REVIEW" if sample_count >= MIN_HUMAN_REVIEW_SAMPLE else "INSUFFICIENT_SAMPLE"
+        if status == "READY_FOR_HUMAN_REVIEW":
+            ready += 1
+        result.setdefault(action, {})[horizon] = {
+            "sample_count": sample_count,
+            "mean_return": str(mean_value.quantize(Decimal("0.000001"))),
+            "median_return": str(median_value.quantize(Decimal("0.000001"))),
+            "review_readiness": status,
+            "minimum_sample_for_human_review": MIN_HUMAN_REVIEW_SAMPLE,
+        }
+    return {"by_formal_action": result, "ready_bucket_count": ready}
 
 
 def evaluate(records: list[dict[str, Any]], daily_prices: dict[str, dict[str, Decimal]]) -> dict[str, Any]:
@@ -94,16 +126,24 @@ def evaluate(records: list[dict[str, Any]], daily_prices: dict[str, dict[str, De
             "reason_codes": record.get("reason_codes"),
             "horizons": horizons,
         })
+    grouped = _group_statistics(out)
+    observed = sum(v.get("status") == "OBSERVED" for r in out for v in r["horizons"].values())
+    pending = sum(v.get("status") == "PENDING" for r in out for v in r["horizons"].values())
     return {
         "contract_version": CONTRACT_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "horizons_trading_days": list(HORIZONS),
         "record_count": len(out),
-        "observed_horizon_count": sum(v.get("status") == "OBSERVED" for r in out for v in r["horizons"].values()),
-        "pending_horizon_count": sum(v.get("status") == "PENDING" for r in out for v in r["horizons"].values()),
+        "observed_horizon_count": observed,
+        "pending_horizon_count": pending,
+        "group_statistics": grouped["by_formal_action"],
+        "parameter_review_ready_bucket_count": grouped["ready_bucket_count"],
+        "minimum_sample_for_human_parameter_review": MIN_HUMAN_REVIEW_SAMPLE,
+        "human_parameter_review_allowed_when_sample_ready": True,
         "formal_action_recomputed": False,
         "formal_action_eligible": False,
         "parameter_tuning_allowed": False,
+        "automatic_parameter_tuning_allowed": False,
         "no_auto_trade": True,
         "records": out,
     }
@@ -118,7 +158,13 @@ def main(argv: list[str] | None = None) -> int:
     payload = evaluate(load_history(args.history), load_daily_prices(args.price_history_root))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({"record_count": payload["record_count"], "observed_horizon_count": payload["observed_horizon_count"], "pending_horizon_count": payload["pending_horizon_count"]}, ensure_ascii=False))
+    print(json.dumps({
+        "record_count": payload["record_count"],
+        "observed_horizon_count": payload["observed_horizon_count"],
+        "pending_horizon_count": payload["pending_horizon_count"],
+        "parameter_review_ready_bucket_count": payload["parameter_review_ready_bucket_count"],
+        "parameter_tuning_allowed": False,
+    }, ensure_ascii=False))
     return 0
 
 
