@@ -5,6 +5,26 @@ on:
     # Beijing 09:05-16:05 on weekdays (UTC 01:05-08:05).
     - cron: "5 1-8 * * 1-5"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-hourly-deep-overlay.yml"
+      - "config/research_security_profiles.json"
+      - "config/commodity_research_benchmarks.json"
+      - "config/industry_alias_map.yaml"
+      - "src/strategies/genge_opportunity_discovery/hourly_deep_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/hourly_evidence_collector.py"
+      - "src/strategies/genge_opportunity_discovery/hourly_research_state.py"
+      - "src/strategies/genge_opportunity_discovery/industry_cycle_evidence_bridge.py"
+      - "src/strategies/genge_opportunity_discovery/commodity_price_evidence_collector.py"
+      - "src/strategies/genge_opportunity_discovery/evidence_source_registry.py"
+      - "src/strategies/genge_opportunity_discovery/research_mapping_coverage.py"
+      - "tests/test_genge_hourly_deep_overlay.py"
+      - "tests/test_genge_evidence_event_store.py"
+      - "tests/test_genge_hourly_research_state.py"
+      - "tests/test_genge_industry_cycle_evidence_bridge.py"
+      - "tests/test_genge_commodity_price_evidence_collector.py"
+      - "tests/test_genge_research_mapping_coverage.py"
 
 permissions:
   contents: write
@@ -33,6 +53,12 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+
+      - name: Install hourly research dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -q \
+            "requests>=2.31.0" "beautifulsoup4>=4.12.0" "PyYAML>=6.0" "pypdf>=5.0.0" \
+            pandas pytest anyio fastapi httpx starlette
 
       - name: Locate latest successful authoritative Finalizer artifact
         id: authority
@@ -192,7 +218,9 @@ jobs:
           set -euo pipefail
           git config user.name "genge-v311-hourly-overlay-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add data/hourly_deep_overlay data/evidence_events data/hourly_research_state data/research_mapping
+          # Runtime research state is intentionally gitignored for ordinary
+          # development. Force-add only the explicit production-owned paths.
+          git add -f data/hourly_deep_overlay data/evidence_events data/hourly_research_state data/research_mapping
           if git diff --cached --quiet; then
             echo "No hourly research state change to persist"
             exit 0
