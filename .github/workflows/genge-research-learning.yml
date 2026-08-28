@@ -1,0 +1,119 @@
+name: GenGe V3.1.1 Research Learning
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Hourly Deep Overlay"
+      - "GenGe V3.1.1 Operating Ledger"
+    types: [completed]
+  schedule:
+    # Beijing 17:15 on weekdays.
+    - cron: "15 9 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+concurrency:
+  group: genge-v311-research-learning
+  cancel-in-progress: false
+
+jobs:
+  build-learning-state:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install research-learning test harness
+        run: |
+          python -m pip install --disable-pip-version-check -q \
+            pandas pytest anyio fastapi httpx starlette PyYAML requests beautifulsoup4 pypdf
+
+      - name: Run learning contract tests
+        run: |
+          python -m pytest -q \
+            tests/test_genge_hourly_research_state.py \
+            tests/test_genge_research_priority_router.py \
+            tests/test_genge_price_value_history_summary.py \
+            tests/test_genge_formal_decision_outcomes.py
+
+      - name: Build Price Value persistence summary
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.price_value_history_summary \
+            --history-root data/hourly_deep_overlay \
+            --output data/price_value_history/summary.json
+
+      - name: Build Deep Review and mapping priority queue
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.research_priority_router \
+            --hourly data/hourly_research_state/latest.json \
+            --lifecycle data/opportunity_snapshots/candidate_lifecycle_state.json \
+            --coverage data/research_mapping/coverage.json \
+            --output data/research_priority/latest.json
+
+      - name: Evaluate 5 20 60 trading-day Formal decision outcomes
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.formal_decision_outcomes \
+            --history data/formal_decision_history/history.jsonl \
+            --price-history-root data/hourly_deep_overlay \
+            --output data/formal_decision_outcomes/latest.json
+
+      - name: Assert learning layer cannot change Formal actions or tune V3.1.1
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          q = json.loads(Path('data/research_priority/latest.json').read_text(encoding='utf-8'))
+          p = json.loads(Path('data/price_value_history/summary.json').read_text(encoding='utf-8'))
+          o = json.loads(Path('data/formal_decision_outcomes/latest.json').read_text(encoding='utf-8'))
+          assert q['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert q['formal_action_recomputed'] is False
+          assert q['formal_action_eligible'] is False
+          assert q['no_auto_trade'] is True
+          assert p['formal_action_recomputed'] is False
+          assert p['formal_action_eligible'] is False
+          assert o['formal_action_recomputed'] is False
+          assert o['formal_action_eligible'] is False
+          assert o['parameter_tuning_allowed'] is False
+          assert o['no_auto_trade'] is True
+          PY
+
+      - name: Upload research learning artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v311-research-learning-${{ github.run_id }}
+          path: |
+            data/research_priority
+            data/price_value_history
+            data/formal_decision_outcomes
+          if-no-files-found: error
+          retention-days: 60
+
+      - name: Persist research learning state to main
+        run: |
+          set -euo pipefail
+          git config user.name "genge-v311-research-learning-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          git add -f data/research_priority data/price_value_history data/formal_decision_outcomes
+          if git diff --cached --quiet; then
+            echo "No learning state change to persist"
+            exit 0
+          fi
+          git commit -m "Persist V3.1.1 research learning state [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
