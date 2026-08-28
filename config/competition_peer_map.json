@@ -1,5 +1,5 @@
 {
-  "contract_version": "GEN_GE_COMPETITION_PEER_MAP_V2",
+  "contract_version": "GEN_GE_COMPETITION_PEER_MAP_V3",
   "description": "Research-only, evidence-gated peer mappings. These are peer-context relationships, not automatic claims that products are fully substitutable. Competitive events remain UNKNOWN-direction until re-underwritten.",
   "mappings": [
     {
@@ -49,6 +49,38 @@
       "peer_name": "国电南瑞",
       "relationship": "GRID_EQUIPMENT_VALUE_CHAIN_PEER_CONTEXT",
       "evidence_ref": "data/opportunity_snapshots/candidate_lifecycle_state.json|CURRENT_HOLDINGS.md"
+    },
+    {
+      "target_code": "600276",
+      "target_name": "恒瑞医药",
+      "peer_code": "600196",
+      "peer_name": "复星医药",
+      "relationship": "INNOVATIVE_PHARMA_PIPELINE_PEER_CONTEXT",
+      "evidence_ref": "https://www.hengrui.com/about/survey.html|https://www.fosunpharma.com/about/"
+    },
+    {
+      "target_code": "600196",
+      "target_name": "复星医药",
+      "peer_code": "600276",
+      "peer_name": "恒瑞医药",
+      "relationship": "INNOVATIVE_PHARMA_PIPELINE_PEER_CONTEXT",
+      "evidence_ref": "https://www.fosunpharma.com/about/|https://www.hengrui.com/about/survey.html"
+    },
+    {
+      "target_code": "603369",
+      "target_name": "今世缘",
+      "peer_code": "002304",
+      "peer_name": "洋河股份",
+      "relationship": "JIANGSU_BAIJIU_MARKET_PEER_CONTEXT",
+      "evidence_ref": "https://www.jinshiyuan.com.cn/|https://www.chinayanghe.com/about/yanghe/jtjj/"
+    },
+    {
+      "target_code": "002304",
+      "target_name": "洋河股份",
+      "peer_code": "603369",
+      "peer_name": "今世缘",
+      "relationship": "JIANGSU_BAIJIU_MARKET_PEER_CONTEXT",
+      "evidence_ref": "https://www.chinayanghe.com/about/yanghe/jtjj/|https://www.jinshiyuan.com.cn/"
     }
   ],
   "mapping_semantics": "PEER_CONTEXT_DOES_NOT_IMPLY_DIRECT_PRODUCT_SUBSTITUTABILITY",
