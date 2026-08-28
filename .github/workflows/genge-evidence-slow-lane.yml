@@ -6,6 +6,21 @@ on:
     # deliberately decoupled from the hourly market heartbeat.
     - cron: "35 0,4,8 * * 1-5"
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-evidence-slow-lane.yml"
+      - "config/research_security_profiles.json"
+      - "config/competition_peer_map.json"
+      - "config/industry_alias_map.yaml"
+      - "src/strategies/genge_opportunity_discovery/research_mapping_coverage.py"
+      - "src/strategies/genge_opportunity_discovery/regulatory_policy_evidence_collector.py"
+      - "src/strategies/genge_opportunity_discovery/competition_peer_evidence_feeder.py"
+      - "src/strategies/genge_opportunity_discovery/competition_change_collector.py"
+      - "src/strategies/genge_opportunity_discovery/evidence_source_registry.py"
+      - "tests/test_genge_slow_lane_evidence.py"
+      - "tests/test_genge_competition_peer_evidence_feeder.py"
+      - "tests/test_genge_research_mapping_coverage.py"
 
 permissions:
   contents: write
