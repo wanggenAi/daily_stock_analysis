@@ -305,7 +305,7 @@ def _render_candidate_detail(row: Mapping[str, Any]) -> list[str]:
     if row.get("legacy_imported"):
         lines.append("- **legacy migration:** imported once from the pre-state-machine Markdown ledger")
         lines.append(
-            f"- **legacy seen_count (audit only):** {int(row.get('legacy_seen_count_imported') or 0)}"
+            f"- legacy seen_count (audit only): {int(row.get('legacy_seen_count_imported') or 0)}"
         )
     lines.extend(["", "#### Delta history"])
     if history:
