@@ -21,7 +21,7 @@ env:
 jobs:
   persist-hourly-deep-overlay:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -84,7 +84,9 @@ jobs:
           python -m pytest -q \
             tests/test_genge_hourly_deep_overlay.py \
             tests/test_genge_evidence_event_store.py \
-            tests/test_genge_hourly_research_state.py
+            tests/test_genge_hourly_research_state.py \
+            tests/test_genge_industry_cycle_evidence_bridge.py \
+            tests/test_genge_commodity_price_evidence_collector.py
 
       - name: Build price/value hourly deep overlay
         run: |
@@ -101,11 +103,31 @@ jobs:
             --status-output data/evidence_events/collector_status.json \
             --lookback-hours 72
 
+      - name: Bridge audited industry supply-demand evidence
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.industry_cycle_evidence_bridge \
+            --hourly-overlay data/hourly_deep_overlay/latest.json \
+            --industry-evidence data/user_supplied/industry_cycle_evidence.csv \
+            --company-evidence data/user_supplied/company_cycle_evidence.csv \
+            --evidence-root data/evidence_events \
+            --status-output data/evidence_events/industry_collector_status.json
+
+      - name: Collect public commodity benchmark evidence
+        continue-on-error: true
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.commodity_price_evidence_collector \
+            --hourly-overlay data/hourly_deep_overlay/latest.json \
+            --config config/commodity_research_benchmarks.json \
+            --evidence-root data/evidence_events \
+            --status-output data/evidence_events/commodity_collector_status.json
+
       - name: Build evidence source coverage registry
         run: |
           python -m src.strategies.genge_opportunity_discovery.evidence_source_registry \
             --evidence-root data/evidence_events \
             --collector-status data/evidence_events/collector_status.json \
+            --industry-status data/evidence_events/industry_collector_status.json \
+            --commodity-status data/evidence_events/commodity_collector_status.json \
             --output data/evidence_events/source_registry.json
 
       - name: Build evidence-aware hourly research state
@@ -135,6 +157,9 @@ jobs:
           assert research['evidence_may_overwrite_formal_action'] is False
           assert research['no_auto_trade'] is True
           assert registry['formal_action_eligible'] is False
+          assert registry['registered_sources']['INDUSTRY_SUPPLY_DEMAND']['implemented'] is True
+          assert registry['registered_sources']['COMMODITY_PRICES']['implemented'] is True
+          assert registry['coverage_semantics'] == 'CONNECTED_DOES_NOT_IMPLY_FRESH_OR_MAPPED'
           assert research['canonical_snapshot_id'] == price['canonical_snapshot_id']
           assert research['canonical_source_run_id'] == price['canonical_source_run_id']
           PY
@@ -177,7 +202,8 @@ jobs:
           echo "- finalizer run: ${{ steps.authority.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- authoritative artifact: ${{ steps.authority.outputs.artifact_name }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Formal actions are read-only and come only from finalized canonical" >> "$GITHUB_STEP_SUMMARY"
-          echo "- hourly price layer persists price/value ratio and margin-of-safety direction" >> "$GITHUB_STEP_SUMMARY"
-          echo "- evidence source registry distinguishes observed coverage from not-yet-connected source classes" >> "$GITHUB_STEP_SUMMARY"
+          echo "- price/value history, company announcements, industry-cycle evidence, and commodity benchmarks are research overlays" >> "$GITHUB_STEP_SUMMARY"
+          echo "- industry source freshness is explicit; connected does not mean fresh" >> "$GITHUB_STEP_SUMMARY"
+          echo "- commodity benchmark connectivity is separate from evidence-backed security exposure mapping" >> "$GITHUB_STEP_SUMMARY"
           echo "- evidence may raise research/re-underwrite priority but cannot overwrite Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- tradeable scope: Shanghai/Shenzhen main boards only" >> "$GITHUB_STEP_SUMMARY"
