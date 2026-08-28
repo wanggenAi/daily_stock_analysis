@@ -1,13 +1,18 @@
 {
   "contract_version": "GEN_GE_EVIDENCE_SOURCE_REGISTRY_V3",
   "coverage_semantics": "CONNECTED_DOES_NOT_IMPLY_FRESH_OR_MAPPED",
-  "event_count": 220,
+  "event_count": 233,
   "formal_action_eligible": false,
-  "generated_at": "2026-08-28T13:14:29.748797+00:00",
+  "generated_at": "2026-08-28T13:40:43.212372+00:00",
   "implemented_source_count": 5,
   "lane_semantics": "FAST_LANE_MUST_NOT_DEPEND_ON_SLOW_LANE_SUCCESS",
   "no_auto_trade": true,
   "observed_sources": {
+    "competition_peer_event_bridge": {
+      "event_count": 13,
+      "latest_published_at": "2026-08-29T00:00:00+00:00",
+      "security_count": 2
+    },
     "eastmoney_announcement": {
       "event_count": 218,
       "latest_published_at": "2026-08-29T00:00:00+00:00",
@@ -42,10 +47,10 @@
       "collector": "competition_change_collector",
       "implemented": true,
       "lane": "EVIDENCE_SLOW",
-      "last_generated_at": "2026-08-28T12:35:38.396134+00:00",
-      "last_status": "CONNECTED_NO_RECENT_PEER_EVENTS",
-      "mapped_target_count": 5,
-      "mapping_count": 6,
+      "last_generated_at": "2026-08-28T13:40:42.626098+00:00",
+      "last_status": "CONNECTED_WITH_PEER_EVENTS",
+      "mapped_target_count": 9,
+      "mapping_count": 10,
       "mapping_is_evidence_gated": true
     },
     "INDUSTRY_SUPPLY_DEMAND": {
@@ -63,9 +68,9 @@
       "fetch_failures": [],
       "implemented": true,
       "lane": "EVIDENCE_SLOW",
-      "last_generated_at": "2026-08-28T12:35:01.918228+00:00",
-      "last_status": "NO_PERSISTED_HOURLY_WORKSET",
-      "mapped_security_count": null
+      "last_generated_at": "2026-08-28T13:38:44.315293+00:00",
+      "last_status": "CONNECTED_NO_MATCHING_RECENT_POLICY_EVENTS",
+      "mapped_security_count": 7
     }
   }
 }
