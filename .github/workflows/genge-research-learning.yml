@@ -2,12 +2,13 @@ name: GenGe V3.1.1 Research Learning
 
 on:
   workflow_run:
+    # Hourly state is persisted first, which triggers Operating Ledger; learning
+    # follows the successful Ledger so we do not run twice for the same hour.
     workflows:
-      - "GenGe V3.1.1 Hourly Deep Overlay"
       - "GenGe V3.1.1 Operating Ledger"
     types: [completed]
   schedule:
-    # Beijing 17:15 on weekdays.
+    # Beijing 17:15 on weekdays: end-of-day learning/outcome refresh.
     - cron: "15 9 * * 1-5"
   workflow_dispatch:
   push:
@@ -19,11 +20,13 @@ on:
       - "src/strategies/genge_opportunity_discovery/formal_decision_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/hourly_research_state.py"
       - "src/strategies/genge_opportunity_discovery/v31_review_queue.py"
+      - "src/strategies/genge_opportunity_discovery/production_observability.py"
       - "tests/test_genge_research_priority_router.py"
       - "tests/test_genge_price_value_history_summary.py"
       - "tests/test_genge_formal_decision_outcomes.py"
       - "tests/test_genge_hourly_research_state.py"
       - "tests/test_genge_v31_review_priority_order.py"
+      - "tests/test_genge_production_observability.py"
 
 permissions:
   contents: write
@@ -65,7 +68,8 @@ jobs:
             tests/test_genge_research_priority_router.py \
             tests/test_genge_price_value_history_summary.py \
             tests/test_genge_formal_decision_outcomes.py \
-            tests/test_genge_v31_review_priority_order.py
+            tests/test_genge_v31_review_priority_order.py \
+            tests/test_genge_production_observability.py
 
       - name: Build Price Value persistence summary
         run: |
@@ -88,6 +92,12 @@ jobs:
             --price-history-root data/hourly_deep_overlay \
             --output data/formal_decision_outcomes/latest.json
 
+      - name: Rebuild production observability with learning state
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.production_observability \
+            --root . \
+            --output data/production_observability/latest.json
+
       - name: Assert learning layer cannot change Formal actions or tune V3.1.1
         run: |
           python - <<'PY'
@@ -96,6 +106,7 @@ jobs:
           q = json.loads(Path('data/research_priority/latest.json').read_text(encoding='utf-8'))
           p = json.loads(Path('data/price_value_history/summary.json').read_text(encoding='utf-8'))
           o = json.loads(Path('data/formal_decision_outcomes/latest.json').read_text(encoding='utf-8'))
+          health = json.loads(Path('data/production_observability/latest.json').read_text(encoding='utf-8'))
           assert q['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
           assert q['formal_action_recomputed'] is False
           assert q['formal_action_eligible'] is False
@@ -106,6 +117,10 @@ jobs:
           assert o['formal_action_eligible'] is False
           assert o['parameter_tuning_allowed'] is False
           assert o['no_auto_trade'] is True
+          assert health['checks']['research_priority_available'] is True
+          assert health['checks']['price_value_history_available'] is True
+          assert health['checks']['formal_decision_outcomes_available'] is True
+          assert health['checks']['learning_layer_research_only'] is True
           PY
 
       - name: Upload research learning artifact
@@ -116,6 +131,7 @@ jobs:
             data/research_priority
             data/price_value_history
             data/formal_decision_outcomes
+            data/production_observability/latest.json
           if-no-files-found: error
           retention-days: 60
 
@@ -124,7 +140,11 @@ jobs:
           set -euo pipefail
           git config user.name "genge-v311-research-learning-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add -f data/research_priority data/price_value_history data/formal_decision_outcomes
+          git add -f \
+            data/research_priority \
+            data/price_value_history \
+            data/formal_decision_outcomes \
+            data/production_observability/latest.json
           if git diff --cached --quiet; then
             echo "No learning state change to persist"
             exit 0
