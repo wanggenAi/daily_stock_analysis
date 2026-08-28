@@ -11,7 +11,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_RESEARCH_PRIORITY_ROUTER_V1"
+CONTRACT_VERSION = "GEN_GE_RESEARCH_PRIORITY_ROUTER_V2"
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -58,8 +58,8 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
             reasons.append("HIGH_RESEARCH_TIER")
         conclusion = str(h.get("hourly_research_conclusion") or "")
         thesis = str(h.get("thesis_status") or "")
-        if conclusion == "PRICE_ATTRACTIVE_RESEARCH_LEAD":
-            score += 35; reasons.append("PRICE_ATTRACTIVE_RESEARCH_LEAD")
+        if conclusion in {"PRICE_ATTRACTIVE_RESEARCH_LEAD", "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD"}:
+            score += 35; reasons.append(conclusion)
         if conclusion == "NEW_EVIDENCE_REUNDERWRITE_LEAD" or thesis == "REUNDERWRITE_REQUIRED":
             score += 45; reasons.append("REUNDERWRITE_REQUIRED")
         elif thesis in {"WEAKENING_RESEARCH_SIGNAL", "MIXED_NEW_EVIDENCE"}:
@@ -70,8 +70,11 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
         mapping_gaps: list[str] = []
         if not c.get("industry_mapped"):
             mapping_gaps.append("INDUSTRY")
-        if c.get("commodity_monitoring_state") == "APPLICABLE_UNMAPPED":
+        commodity_state = str(c.get("commodity_monitoring_state") or "")
+        if commodity_state == "APPLICABLE_UNMAPPED":
             mapping_gaps.append("COMMODITY")
+        elif commodity_state == "PARTIAL_MAPPED":
+            mapping_gaps.append("COMMODITY_PARTIAL")
         if c.get("peer_monitoring_state") == "APPLICABLE_UNMAPPED":
             mapping_gaps.append("PEER")
         if mapping_gaps:
@@ -113,6 +116,7 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
         "p0_count": sum(r["priority"] == "P0" for r in queue),
         "p1_count": sum(r["priority"] == "P1" for r in queue),
         "mapping_gap_count": sum(bool(r["mapping_gaps"]) for r in queue),
+        "partial_mapping_gap_count": sum("COMMODITY_PARTIAL" in r["mapping_gaps"] for r in queue),
         "queue": queue,
     }
 
@@ -127,7 +131,7 @@ def main(argv: list[str] | None = None) -> int:
     payload = build_queue(_load(args.hourly), _load(args.lifecycle), _load(args.coverage))
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({k: payload[k] for k in ("queue_count", "p0_count", "p1_count", "mapping_gap_count")}, ensure_ascii=False))
+    print(json.dumps({k: payload[k] for k in ("queue_count", "p0_count", "p1_count", "mapping_gap_count", "partial_mapping_gap_count")}, ensure_ascii=False))
     return 0
 
 
