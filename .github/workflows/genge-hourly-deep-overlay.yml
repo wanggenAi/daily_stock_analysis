@@ -101,6 +101,13 @@ jobs:
             --status-output data/evidence_events/collector_status.json \
             --lookback-hours 72
 
+      - name: Build evidence source coverage registry
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.evidence_source_registry \
+            --evidence-root data/evidence_events \
+            --collector-status data/evidence_events/collector_status.json \
+            --output data/evidence_events/source_registry.json
+
       - name: Build evidence-aware hourly research state
         run: |
           python -m src.strategies.genge_opportunity_discovery.hourly_research_state \
@@ -114,9 +121,9 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
           price = json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))
           research = json.loads(Path('data/hourly_research_state/latest.json').read_text(encoding='utf-8'))
+          registry = json.loads(Path('data/evidence_events/source_registry.json').read_text(encoding='utf-8'))
           assert price['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
           assert price['formal_action_recomputed'] is False
           assert price['overlay_may_overwrite_formal_action'] is False
@@ -127,17 +134,9 @@ jobs:
           assert research['overlay_may_overwrite_formal_action'] is False
           assert research['evidence_may_overwrite_formal_action'] is False
           assert research['no_auto_trade'] is True
+          assert registry['formal_action_eligible'] is False
           assert research['canonical_snapshot_id'] == price['canonical_snapshot_id']
           assert research['canonical_source_run_id'] == price['canonical_source_run_id']
-          print(json.dumps({
-              'canonical_snapshot_id': price['canonical_snapshot_id'],
-              'canonical_source_run_id': price['canonical_source_run_id'],
-              'workset_count': research['workset_count'],
-              'holding_count': price['holding_count'],
-              'price_attractive_research_lead_count': research['price_attractive_research_lead_count'],
-              'reunderwrite_lead_count': research['reunderwrite_lead_count'],
-              'raise_count': research['raise_count'],
-          }, ensure_ascii=False, indent=2))
           PY
 
       - name: Upload hourly research artifacts
@@ -179,7 +178,6 @@ jobs:
           echo "- authoritative artifact: ${{ steps.authority.outputs.artifact_name }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Formal actions are read-only and come only from finalized canonical" >> "$GITHUB_STEP_SUMMARY"
           echo "- hourly price layer persists price/value ratio and margin-of-safety direction" >> "$GITHUB_STEP_SUMMARY"
-          echo "- research evidence layer ingests public company announcement metadata into an idempotent durable event store" >> "$GITHUB_STEP_SUMMARY"
-          echo "- evidence may raise Deep Review/re-underwrite priority but cannot overwrite Formal actions" >> "$GITHUB_STEP_SUMMARY"
-          echo "- hourly research state tracks repeated price-attractive observations across persisted history" >> "$GITHUB_STEP_SUMMARY"
+          echo "- evidence source registry distinguishes observed coverage from not-yet-connected source classes" >> "$GITHUB_STEP_SUMMARY"
+          echo "- evidence may raise research/re-underwrite priority but cannot overwrite Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- tradeable scope: Shanghai/Shenzhen main boards only" >> "$GITHUB_STEP_SUMMARY"
