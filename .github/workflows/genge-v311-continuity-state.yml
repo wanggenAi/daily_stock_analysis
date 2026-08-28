@@ -37,10 +37,20 @@ jobs:
           SNAPSHOT=$(find finalized -path '*/canonical_snapshot/latest.json' -print -quit)
           test -n "$SNAPSHOT"
           python - <<'PY' "$SNAPSHOT"
+          import importlib.util
           import sys
           from pathlib import Path
-          from src.strategies.genge_opportunity_discovery.holding_valuation_continuity import persist_from_snapshot
-          persist_from_snapshot(Path(sys.argv[1]))
+
+          # Load the continuity module directly instead of importing the package.
+          # The package __init__ imports the full research pipeline (and pandas),
+          # while this persistence step intentionally depends on stdlib only.
+          module_path = Path("src/strategies/genge_opportunity_discovery/holding_valuation_continuity.py")
+          spec = importlib.util.spec_from_file_location("genge_holding_valuation_continuity", module_path)
+          if spec is None or spec.loader is None:
+              raise RuntimeError(f"cannot load continuity module: {module_path}")
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          module.persist_from_snapshot(Path(sys.argv[1]))
           PY
       - name: Commit durable continuity state
         run: |
