@@ -65,7 +65,8 @@ jobs:
           python -m pytest -q \
             tests/test_genge_transaction_ledger.py \
             tests/test_genge_evidence_event_store.py \
-            tests/test_genge_hourly_research_state.py
+            tests/test_genge_hourly_research_state.py \
+            tests/test_genge_production_observability.py
 
       - name: Append immutable Formal Decision history
         run: |
@@ -88,6 +89,12 @@ jobs:
             --json-output data/production_status/latest.json \
             --md-output PRODUCTION_STATUS.md
 
+      - name: Build production observability snapshot
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.production_observability \
+            --root . \
+            --output data/production_observability/latest.json
+
       - name: Assert transaction ledger remains parallel until migration
         run: |
           python - <<'PY'
@@ -108,6 +115,7 @@ jobs:
             data/formal_decision_history \
             data/transactions/holdings_projection.json \
             data/production_status/latest.json \
+            data/production_observability/latest.json \
             PRODUCTION_STATUS.md
           if git diff --cached --quiet; then exit 0; fi
           sid=$(python - <<'PY'
@@ -128,6 +136,7 @@ jobs:
           path: |
             PRODUCTION_STATUS.md
             data/production_status
+            data/production_observability
             data/formal_decision_history
             data/transactions/holdings_projection.json
           if-no-files-found: warn
