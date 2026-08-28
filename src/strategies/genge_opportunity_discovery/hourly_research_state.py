@@ -74,24 +74,37 @@ def load_price_history(root: Path) -> dict[str, list[dict[str, Any]]]:
 
 def _evidence_summary(events: list[dict[str, Any]], *, now: datetime) -> dict[str, Any]:
     cutoff = now - timedelta(hours=72)
-    recent = [e for e in events if (_parse_ts(e.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff]
+    recent = [
+        e for e in events
+        if (_parse_ts(e.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff
+    ]
     weakening = [e for e in recent if e.get("direction") == "WEAKENING"]
     strengthening = [e for e in recent if e.get("direction") == "STRENGTHENING"]
     high = [e for e in recent if e.get("materiality") == "HIGH"]
-    if any(e in weakening for e in high):
+    material_weakening = [e for e in weakening if e.get("materiality") in {"HIGH", "MEDIUM"}]
+    material_strengthening = [e for e in strengthening if e.get("materiality") in {"HIGH", "MEDIUM"}]
+    high_weakening = [e for e in material_weakening if e.get("materiality") == "HIGH"]
+
+    # Low-materiality market noise remains visible in latest_evidence/counts but
+    # cannot by itself manufacture a thesis weakening/re-underwrite escalation.
+    if high_weakening:
         thesis = "REUNDERWRITE_REQUIRED"
-    elif weakening and not strengthening:
+    elif material_weakening and not material_strengthening:
         thesis = "WEAKENING_RESEARCH_SIGNAL"
-    elif strengthening and not weakening:
+    elif material_strengthening and not material_weakening:
         thesis = "STRENGTHENING_RESEARCH_SIGNAL"
-    elif weakening and strengthening:
+    elif material_weakening and material_strengthening:
         thesis = "MIXED_NEW_EVIDENCE"
+    elif recent:
+        thesis = "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"
     else:
         thesis = "NO_NEW_MATERIAL_EVIDENCE"
     return {
         "recent_evidence_count_72h": len(recent),
         "weakening_evidence_count_72h": len(weakening),
         "strengthening_evidence_count_72h": len(strengthening),
+        "material_weakening_evidence_count_72h": len(material_weakening),
+        "material_strengthening_evidence_count_72h": len(material_strengthening),
         "high_materiality_evidence_count_72h": len(high),
         "thesis_status": thesis,
         "latest_evidence": recent[:5],
@@ -122,7 +135,10 @@ def build_state(price_overlay: Mapping[str, Any], evidence_root: Path, price_his
         if evidence["thesis_status"] in {"REUNDERWRITE_REQUIRED", "WEAKENING_RESEARCH_SIGNAL", "MIXED_NEW_EVIDENCE"}:
             priority = "RAISE"
             conclusion = "NEW_EVIDENCE_REUNDERWRITE_LEAD"
-        elif row.get("price_evidence_status") == "PRICE_GATE_PASS_RESEARCH_ONLY" and evidence["thesis_status"] == "NO_NEW_MATERIAL_EVIDENCE":
+        elif (
+            row.get("price_evidence_status") == "PRICE_GATE_PASS_RESEARCH_ONLY"
+            and evidence["thesis_status"] in {"NO_NEW_MATERIAL_EVIDENCE", "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"}
+        ):
             conclusion = "PRICE_ATTRACTIVE_RESEARCH_LEAD"
 
         rows.append(
