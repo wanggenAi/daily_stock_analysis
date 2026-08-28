@@ -21,7 +21,7 @@ env:
 jobs:
   collect-slow-evidence:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 25
     steps:
       - name: Checkout main
         uses: actions/checkout@v4
@@ -37,11 +37,21 @@ jobs:
       - name: Install slow-lane dependencies
         run: |
           python -m pip install --disable-pip-version-check -q \
-            "requests>=2.31.0" "beautifulsoup4>=4.12.0" "PyYAML>=6.0" pytest
+            "requests>=2.31.0" "beautifulsoup4>=4.12.0" "PyYAML>=6.0" "pypdf>=5.0.0" pytest
 
       - name: Run slow-lane contract tests
         run: |
-          python -m pytest -q tests/test_genge_slow_lane_evidence.py tests/test_genge_evidence_event_store.py
+          python -m pytest -q \
+            tests/test_genge_slow_lane_evidence.py \
+            tests/test_genge_evidence_event_store.py \
+            tests/test_genge_research_mapping_coverage.py \
+            tests/test_genge_competition_peer_evidence_feeder.py
+
+      - name: Build reviewed research mapping coverage
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+            --coverage-output data/research_mapping/coverage.json \
+            --industry-csv-output data/research_mapping/company_industry_map.csv
 
       - name: Collect official regulatory policy evidence
         continue-on-error: true
@@ -49,7 +59,7 @@ jobs:
           if [ -f data/hourly_deep_overlay/latest.json ]; then
             python -m src.strategies.genge_opportunity_discovery.regulatory_policy_evidence_collector \
               --hourly-overlay data/hourly_deep_overlay/latest.json \
-              --company-cycle-evidence data/user_supplied/company_cycle_evidence.csv \
+              --company-cycle-evidence data/research_mapping/company_industry_map.csv \
               --industry-alias-map config/industry_alias_map.yaml \
               --evidence-root data/evidence_events \
               --status-output data/evidence_events/policy_collector_status.json
@@ -68,6 +78,15 @@ jobs:
           }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
           fi
+
+      - name: Feed official peer material events
+        continue-on-error: true
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.competition_peer_evidence_feeder \
+            --peer-map config/competition_peer_map.json \
+            --cache-dir data/evidence_cache/competition_peers \
+            --evidence-root data/evidence_events \
+            --status-output data/evidence_events/competition_peer_feeder_status.json
 
       - name: Collect evidence-gated competitive change context
         run: |
@@ -94,6 +113,7 @@ jobs:
           import json
           from pathlib import Path
           registry = json.loads(Path('data/evidence_events/source_registry.json').read_text(encoding='utf-8'))
+          coverage = json.loads(Path('data/research_mapping/coverage.json').read_text(encoding='utf-8'))
           assert registry['contract_version'] == 'GEN_GE_EVIDENCE_SOURCE_REGISTRY_V3'
           assert registry['formal_action_eligible'] is False
           assert registry['no_auto_trade'] is True
@@ -102,13 +122,17 @@ jobs:
           assert registry['registered_sources']['COMPETITIVE_CHANGE']['implemented'] is True
           assert registry['registered_sources']['REGULATORY_POLICY']['lane'] == 'EVIDENCE_SLOW'
           assert registry['registered_sources']['COMPETITIVE_CHANGE']['mapping_is_evidence_gated'] is True
+          assert coverage['formal_action_eligible'] is False
+          assert coverage['no_auto_trade'] is True
           PY
 
       - name: Upload slow-lane evidence artifact
         uses: actions/upload-artifact@v4
         with:
           name: genge-v311-evidence-slow-lane-${{ github.run_id }}
-          path: data/evidence_events
+          path: |
+            data/evidence_events
+            data/research_mapping
           if-no-files-found: error
           retention-days: 30
 
@@ -117,7 +141,7 @@ jobs:
           set -euo pipefail
           git config user.name "genge-v311-evidence-slow-lane-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add data/evidence_events
+          git add data/evidence_events data/research_mapping
           if git diff --cached --quiet; then
             echo "No slow-lane evidence change to persist"
             exit 0
@@ -131,6 +155,7 @@ jobs:
         run: |
           echo "# GenGe V3.1.1 Evidence Slow Lane" >> "$GITHUB_STEP_SUMMARY"
           echo "- official regulatory/policy evidence is collected outside the hourly fast lane" >> "$GITHUB_STEP_SUMMARY"
-          echo "- competitive change requires explicit reviewed peer mappings; no industry-label guessing" >> "$GITHUB_STEP_SUMMARY"
+          echo "- reviewed mapping coverage exposes unmapped holdings/candidates instead of guessing" >> "$GITHUB_STEP_SUMMARY"
+          echo "- explicit peer mappings receive their own official material-event feed before competition bridging" >> "$GITHUB_STEP_SUMMARY"
           echo "- slow-lane fetch failures cannot block or mutate Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- all outputs are research-only Evidence Events" >> "$GITHUB_STEP_SUMMARY"
