@@ -17,7 +17,7 @@ from zoneinfo import ZoneInfo
 from .evidence_event_store import recent_for_code
 
 BEIJING = ZoneInfo("Asia/Shanghai")
-CONTRACT_VERSION = "GEN_GE_V3_1_1_HOURLY_RESEARCH_STATE_V1"
+CONTRACT_VERSION = "GEN_GE_V3_1_1_HOURLY_RESEARCH_STATE_V2"
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -56,17 +56,15 @@ def load_price_history(root: Path) -> dict[str, list[dict[str, Any]]]:
             code = str(row.get("code") or "").zfill(6)
             if not code:
                 continue
-            history[code].append(
-                {
-                    "generated_at": generated_at,
-                    "canonical_snapshot_id": payload.get("canonical_snapshot_id"),
-                    "price": row.get("latest_price"),
-                    "validated_value_anchor": row.get("validated_value_anchor"),
-                    "price_to_value": row.get("price_to_value"),
-                    "margin_of_safety": row.get("margin_of_safety"),
-                    "price_evidence_status": row.get("price_evidence_status"),
-                }
-            )
+            history[code].append({
+                "generated_at": generated_at,
+                "canonical_snapshot_id": payload.get("canonical_snapshot_id"),
+                "price": row.get("latest_price"),
+                "validated_value_anchor": row.get("validated_value_anchor"),
+                "price_to_value": row.get("price_to_value"),
+                "margin_of_safety": row.get("margin_of_safety"),
+                "price_evidence_status": row.get("price_evidence_status"),
+            })
     for rows in history.values():
         rows.sort(key=lambda r: str(r.get("generated_at") or ""))
     return history
@@ -74,19 +72,13 @@ def load_price_history(root: Path) -> dict[str, list[dict[str, Any]]]:
 
 def _evidence_summary(events: list[dict[str, Any]], *, now: datetime) -> dict[str, Any]:
     cutoff = now - timedelta(hours=72)
-    recent = [
-        e for e in events
-        if (_parse_ts(e.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff
-    ]
+    recent = [e for e in events if (_parse_ts(e.get("published_at")) or datetime.min.replace(tzinfo=timezone.utc)) >= cutoff]
     weakening = [e for e in recent if e.get("direction") == "WEAKENING"]
     strengthening = [e for e in recent if e.get("direction") == "STRENGTHENING"]
     high = [e for e in recent if e.get("materiality") == "HIGH"]
     material_weakening = [e for e in weakening if e.get("materiality") in {"HIGH", "MEDIUM"}]
     material_strengthening = [e for e in strengthening if e.get("materiality") in {"HIGH", "MEDIUM"}]
     high_weakening = [e for e in material_weakening if e.get("materiality") == "HIGH"]
-
-    # Low-materiality market noise remains visible in latest_evidence/counts but
-    # cannot by itself manufacture a thesis weakening/re-underwrite escalation.
     if high_weakening:
         thesis = "REUNDERWRITE_REQUIRED"
     elif material_weakening and not material_strengthening:
@@ -129,36 +121,33 @@ def build_state(price_overlay: Mapping[str, Any], evidence_root: Path, price_his
             else:
                 break
         distinct_days = len({str(r.get("generated_at") or "")[:10] for r in attractive})
-
         priority = str(row.get("deep_review_priority") or "KEEP")
         conclusion = str(row.get("hourly_research_conclusion") or "FORMAL_ACTION_UNCHANGED")
-        if evidence["thesis_status"] in {"REUNDERWRITE_REQUIRED", "WEAKENING_RESEARCH_SIGNAL", "MIXED_NEW_EVIDENCE"}:
+        thesis = evidence["thesis_status"]
+        price_attractive = row.get("price_evidence_status") == "PRICE_GATE_PASS_RESEARCH_ONLY"
+        if thesis in {"REUNDERWRITE_REQUIRED", "WEAKENING_RESEARCH_SIGNAL", "MIXED_NEW_EVIDENCE"}:
             priority = "RAISE"
             conclusion = "NEW_EVIDENCE_REUNDERWRITE_LEAD"
-        elif (
-            row.get("price_evidence_status") == "PRICE_GATE_PASS_RESEARCH_ONLY"
-            and evidence["thesis_status"] in {"NO_NEW_MATERIAL_EVIDENCE", "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"}
-        ):
+        elif price_attractive and thesis == "STRENGTHENING_RESEARCH_SIGNAL":
+            priority = "RAISE"
+            conclusion = "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD"
+        elif price_attractive and thesis in {"NO_NEW_MATERIAL_EVIDENCE", "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"}:
             conclusion = "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-
-        rows.append(
-            {
-                **row,
-                **evidence,
-                "price_history_observation_count": len(observations),
-                "price_attractive_observation_count": len(attractive),
-                "price_attractive_consecutive_observations": consecutive,
-                "price_attractive_distinct_days": distinct_days,
-                "deep_review_priority": priority,
-                "hourly_research_conclusion": conclusion,
-                "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-                "formal_action_recomputed": False,
-                "overlay_may_overwrite_formal_action": False,
-                "evidence_may_overwrite_formal_action": False,
-                "no_auto_trade": True,
-            }
-        )
-
+        rows.append({
+            **row,
+            **evidence,
+            "price_history_observation_count": len(observations),
+            "price_attractive_observation_count": len(attractive),
+            "price_attractive_consecutive_observations": consecutive,
+            "price_attractive_distinct_days": distinct_days,
+            "deep_review_priority": priority,
+            "hourly_research_conclusion": conclusion,
+            "formal_action_source": "FINALIZED_CANONICAL_ONLY",
+            "formal_action_recomputed": False,
+            "overlay_may_overwrite_formal_action": False,
+            "evidence_may_overwrite_formal_action": False,
+            "no_auto_trade": True,
+        })
     return {
         "contract_version": CONTRACT_VERSION,
         "generated_at": now.isoformat(),
@@ -174,13 +163,13 @@ def build_state(price_overlay: Mapping[str, Any], evidence_root: Path, price_his
         "raise_count": sum(r.get("deep_review_priority") == "RAISE" for r in rows),
         "reunderwrite_lead_count": sum(r.get("hourly_research_conclusion") == "NEW_EVIDENCE_REUNDERWRITE_LEAD" for r in rows),
         "price_attractive_research_lead_count": sum(r.get("hourly_research_conclusion") == "PRICE_ATTRACTIVE_RESEARCH_LEAD" for r in rows),
+        "price_attractive_strengthening_lead_count": sum(r.get("hourly_research_conclusion") == "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD" for r in rows),
         "rows": rows,
     }
 
 
 def persist(payload: Mapping[str, Any], root: Path) -> tuple[Path, Path]:
-    stamp = _parse_ts(payload.get("generated_at")) or datetime.now(timezone.utc)
-    stamp = stamp.astimezone(BEIJING)
+    stamp = (_parse_ts(payload.get("generated_at")) or datetime.now(timezone.utc)).astimezone(BEIJING)
     history = root / stamp.strftime("%Y-%m-%d") / f"{stamp:%H}.json"
     latest = root / "latest.json"
     history.parent.mkdir(parents=True, exist_ok=True)
@@ -199,15 +188,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     payload = build_state(_load(args.price_overlay), args.evidence_root, args.price_history_root)
     latest, history = persist(payload, args.output_root)
-    print(json.dumps({
-        "canonical_snapshot_id": payload["canonical_snapshot_id"],
-        "workset_count": payload["workset_count"],
-        "raise_count": payload["raise_count"],
-        "reunderwrite_lead_count": payload["reunderwrite_lead_count"],
-        "latest": str(latest),
-        "history": str(history),
-        "formal_action_recomputed": False,
-    }, ensure_ascii=False, indent=2))
+    print(json.dumps({"canonical_snapshot_id": payload["canonical_snapshot_id"], "workset_count": payload["workset_count"], "raise_count": payload["raise_count"], "reunderwrite_lead_count": payload["reunderwrite_lead_count"], "latest": str(latest), "history": str(history), "formal_action_recomputed": False}, ensure_ascii=False, indent=2))
     return 0
 
 
