@@ -91,19 +91,20 @@ jobs:
       - name: Download exact authoritative canonical artifact
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ARTIFACT_ID: ${{ steps.authority.outputs.artifact_id }}
+          FINALIZER_RUN_ID: ${{ steps.authority.outputs.finalizer_run_id }}
         run: |
           set -euo pipefail
           mkdir -p incoming
-          gh api -H "Accept: application/vnd.github+json" \
-            "repos/${GITHUB_REPOSITORY}/actions/artifacts/${ARTIFACT_ID}/zip" > authoritative.zip
-          unzip -q authoritative.zip -d incoming
-          test -f incoming/authoritative/production_authority.json
-          test -f incoming/authoritative/canonical_snapshot/latest.json
-          test -f incoming/authoritative/operating_views/hourly.json
-          test -f incoming/authoritative/holdings_reconciliation.json
-          test -f incoming/authoritative/candidate_lifecycle/candidate_lifecycle_state.json
-          test -f incoming/authoritative/candidate_lifecycle/summary.json
+          gh run download "$FINALIZER_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir incoming
+          SNAPSHOT=$(find incoming -path '*/canonical_snapshot/latest.json' -print -quit)
+          test -n "$SNAPSHOT"
+          AUTH_ROOT=$(dirname "$(dirname "$SNAPSHOT")")
+          test -f "$AUTH_ROOT/production_authority.json"
+          test -f "$AUTH_ROOT/operating_views/hourly.json"
+          test -f "$AUTH_ROOT/holdings_reconciliation.json"
+          test -f "$AUTH_ROOT/candidate_lifecycle/candidate_lifecycle_state.json"
+          test -f "$AUTH_ROOT/candidate_lifecycle/summary.json"
+          echo "AUTH_ROOT=$AUTH_ROOT" >> "$GITHUB_ENV"
 
       - name: Run hourly overlay and evidence contract tests
         run: |
@@ -118,7 +119,7 @@ jobs:
       - name: Build price/value hourly deep overlay
         run: |
           python -m src.strategies.genge_opportunity_discovery.hourly_deep_overlay \
-            --authoritative-root incoming/authoritative \
+            --authoritative-root "$AUTH_ROOT" \
             --output-root data/hourly_deep_overlay
 
       - name: Build reviewed research mapping coverage
