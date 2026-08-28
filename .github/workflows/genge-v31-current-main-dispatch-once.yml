@@ -15,14 +15,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Dispatch current-main Every-Industry replay
+      - name: Dispatch Finalizer for completed refreshed Every-Industry run
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh workflow run genge-v31-industry-research.yml \
+          gh workflow run genge-v311-production-finalizer.yml \
             --repo "${{ github.repository }}" \
             --ref main \
-            -f upstream_run_id=33027424135
-          echo "Dispatched current main against authoritative All-A upstream run 33027424135."
+            -f source_run_id=33134227778 \
+            -f source_workflow="GenGe V3.1.1 Every-Industry Research"
+          echo "Dispatched production Finalizer for successful Every-Industry run 33134227778."
 
-# Refresh dispatch marker: 2026-08-28 sell-rationale/valuation-continuity production refresh.
+# Finalizer dispatch marker: 2026-08-28 refreshed production cycle.
