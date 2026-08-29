@@ -144,8 +144,11 @@ jobs:
         run: |
           python -m src.strategies.genge_opportunity_discovery.v31_resource_scenario_merge --v31-dir reports/v31_review --resource-root reports/valuation_research_queue --output-dir reports/v31_review_enriched
       - name: Build GenGe V3.1.1 strict-PIT production candidate and holding decisions
+        env:
+          GENGE_V311_PIT_WORKERS: "12"
         run: |
-          python -m src.strategies.genge_opportunity_discovery.v311_production_bridge \
+          PYTHONUNBUFFERED=1 timeout --signal=TERM 75m \
+          python -m src.strategies.genge_opportunity_discovery.v311_production_bridge_parallel \
             --source-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
             --holdings-md CURRENT_HOLDINGS.md \
             --output-dir reports/production_decisions
