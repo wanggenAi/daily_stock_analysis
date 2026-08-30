@@ -61,46 +61,50 @@ jobs:
           python -m pip install --disable-pip-version-check -q \
             pandas pytest anyio fastapi httpx starlette PyYAML requests beautifulsoup4 pypdf
 
-      - name: Run learning contract tests
+      - name: Build and persist learning state with optimistic replay
         run: |
-          python -m pytest -q \
-            tests/test_genge_hourly_research_state.py \
-            tests/test_genge_research_priority_router.py \
-            tests/test_genge_price_value_history_summary.py \
-            tests/test_genge_formal_decision_outcomes.py \
-            tests/test_genge_v31_review_priority_order.py \
-            tests/test_genge_production_observability.py
+          set -euo pipefail
+          git config user.name "genge-v311-research-learning-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
 
-      - name: Build Price Value persistence summary
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.price_value_history_summary \
-            --history-root data/hourly_deep_overlay \
-            --output data/price_value_history/summary.json
+          for attempt in 1 2 3 4; do
+            echo "research-learning replay attempt ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fdx -- \
+              data/research_priority \
+              data/price_value_history \
+              data/formal_decision_outcomes \
+              data/production_observability
 
-      - name: Build Deep Review and mapping priority queue
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.research_priority_router \
-            --hourly data/hourly_research_state/latest.json \
-            --lifecycle data/opportunity_snapshots/candidate_lifecycle_state.json \
-            --coverage data/research_mapping/coverage.json \
-            --output data/research_priority/latest.json
+            python -m pytest -q \
+              tests/test_genge_hourly_research_state.py \
+              tests/test_genge_research_priority_router.py \
+              tests/test_genge_price_value_history_summary.py \
+              tests/test_genge_formal_decision_outcomes.py \
+              tests/test_genge_v31_review_priority_order.py \
+              tests/test_genge_production_observability.py
 
-      - name: Evaluate 5 20 60 trading-day Formal decision outcomes
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.formal_decision_outcomes \
-            --history data/formal_decision_history/history.jsonl \
-            --price-history-root data/hourly_deep_overlay \
-            --output data/formal_decision_outcomes/latest.json
+            python -m src.strategies.genge_opportunity_discovery.price_value_history_summary \
+              --history-root data/hourly_deep_overlay \
+              --output data/price_value_history/summary.json
 
-      - name: Rebuild production observability with learning state
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.production_observability \
-            --root . \
-            --output data/production_observability/latest.json
+            python -m src.strategies.genge_opportunity_discovery.research_priority_router \
+              --hourly data/hourly_research_state/latest.json \
+              --lifecycle data/opportunity_snapshots/candidate_lifecycle_state.json \
+              --coverage data/research_mapping/coverage.json \
+              --output data/research_priority/latest.json
 
-      - name: Assert learning layer cannot change Formal actions or tune V3.1.1
-        run: |
-          python - <<'PY'
+            python -m src.strategies.genge_opportunity_discovery.formal_decision_outcomes \
+              --history data/formal_decision_history/history.jsonl \
+              --price-history-root data/hourly_deep_overlay \
+              --output data/formal_decision_outcomes/latest.json
+
+            python -m src.strategies.genge_opportunity_discovery.production_observability \
+              --root . \
+              --output data/production_observability/latest.json
+
+            python - <<'PY'
           import json
           from pathlib import Path
           q = json.loads(Path('data/research_priority/latest.json').read_text(encoding='utf-8'))
@@ -123,7 +127,27 @@ jobs:
           assert health['checks']['learning_layer_research_only'] is True
           PY
 
+            git add -f \
+              data/research_priority \
+              data/price_value_history \
+              data/formal_decision_outcomes \
+              data/production_observability/latest.json
+            if git diff --cached --quiet; then
+              echo "No learning state change to persist"
+              exit 0
+            fi
+            git commit -m "Persist V3.1.1 research learning state [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push race detected; replaying learning state from newest origin/main" >&2
+          done
+
+          echo "research-learning persistence failed after 4 optimistic replay attempts" >&2
+          exit 1
+
       - name: Upload research learning artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: genge-v311-research-learning-${{ github.run_id }}
@@ -132,23 +156,13 @@ jobs:
             data/price_value_history
             data/formal_decision_outcomes
             data/production_observability/latest.json
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 60
 
-      - name: Persist research learning state to main
+      - name: Publish summary
+        if: always()
         run: |
-          set -euo pipefail
-          git config user.name "genge-v311-research-learning-bot"
-          git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add -f \
-            data/research_priority \
-            data/price_value_history \
-            data/formal_decision_outcomes \
-            data/production_observability/latest.json
-          if git diff --cached --quiet; then
-            echo "No learning state change to persist"
-            exit 0
-          fi
-          git commit -m "Persist V3.1.1 research learning state [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
+          echo "# GenGe V3.1.1 Research Learning" >> "$GITHUB_STEP_SUMMARY"
+          echo "- persistence: optimistic replay on newest main" >> "$GITHUB_STEP_SUMMARY"
+          echo "- learning outputs remain research-only and cannot change Formal actions" >> "$GITHUB_STEP_SUMMARY"
+          echo "- automatic V3.1.1 parameter tuning remains disabled" >> "$GITHUB_STEP_SUMMARY"
