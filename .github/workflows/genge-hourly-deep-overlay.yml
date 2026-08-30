@@ -12,6 +12,7 @@ on:
       - "config/research_security_profiles.json"
       - "config/commodity_research_benchmarks.json"
       - "config/industry_alias_map.yaml"
+      - "src/genge_v311_persistence_order.py"
       - "src/strategies/genge_opportunity_discovery/hourly_deep_overlay.py"
       - "src/strategies/genge_opportunity_discovery/hourly_evidence_collector.py"
       - "src/strategies/genge_opportunity_discovery/hourly_research_state.py"
@@ -25,6 +26,7 @@ on:
       - "tests/test_genge_industry_cycle_evidence_bridge.py"
       - "tests/test_genge_commodity_price_evidence_collector.py"
       - "tests/test_genge_research_mapping_coverage.py"
+      - "tests/test_genge_v311_monotonic_persistence.py"
 
 permissions:
   contents: write
@@ -104,79 +106,99 @@ jobs:
           test -f "$AUTH_ROOT/holdings_reconciliation.json"
           test -f "$AUTH_ROOT/candidate_lifecycle/candidate_lifecycle_state.json"
           test -f "$AUTH_ROOT/candidate_lifecycle/summary.json"
+          echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
           echo "AUTH_ROOT=$AUTH_ROOT" >> "$GITHUB_ENV"
 
-      - name: Run hourly overlay and evidence contract tests
+      - name: Persist hourly research with optimistic replay
         run: |
-          python -m pytest -q \
-            tests/test_genge_hourly_deep_overlay.py \
-            tests/test_genge_evidence_event_store.py \
-            tests/test_genge_hourly_research_state.py \
-            tests/test_genge_industry_cycle_evidence_bridge.py \
-            tests/test_genge_commodity_price_evidence_collector.py \
-            tests/test_genge_research_mapping_coverage.py
+          set -euo pipefail
+          git config user.name "genge-v311-hourly-overlay-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
 
-      - name: Build price/value hourly deep overlay
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.hourly_deep_overlay \
-            --authoritative-root "$AUTH_ROOT" \
-            --output-root data/hourly_deep_overlay
+          for attempt in 1 2 3 4; do
+            echo "hourly replay attempt ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fdx -- data/hourly_deep_overlay data/evidence_events data/hourly_research_state data/research_mapping
 
-      - name: Build reviewed research mapping coverage
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
-            --coverage-output data/research_mapping/coverage.json \
-            --industry-csv-output data/research_mapping/company_industry_map.csv
+            # Fail closed if the selected Finalizer is older than durable hourly state.
+            # SAME is allowed because prices/evidence can legitimately refresh while
+            # Formal authority stays on the same Canonical snapshot.
+            order=$(python - <<'PY'
+          import json, os
+          from pathlib import Path
+          from src.genge_v311_persistence_order import classify_persistence_order
 
-      - name: Collect public company announcement evidence
-        continue-on-error: true
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.hourly_evidence_collector \
-            --hourly-overlay data/hourly_deep_overlay/latest.json \
-            --evidence-root data/evidence_events \
-            --status-output data/evidence_events/collector_status.json \
-            --lookback-hours 72
+          incoming = json.loads(Path(os.environ['SNAPSHOT']).read_text(encoding='utf-8'))
+          current_path = Path('data/hourly_deep_overlay/latest.json')
+          current = json.loads(current_path.read_text(encoding='utf-8')) if current_path.is_file() else {}
+          result = classify_persistence_order(
+              incoming_snapshot_id=incoming.get('snapshot_id'),
+              incoming_source_run_id=incoming.get('source_run_id'),
+              current_snapshot_id=current.get('canonical_snapshot_id'),
+              current_source_run_id=current.get('canonical_source_run_id'),
+          )
+          print(result.value)
+          PY
+            )
+            echo "hourly canonical persistence order: ${order}"
+            if [ "$order" = "STALE" ]; then
+              echo "selected Finalizer is older than durable hourly state; safe no-op"
+              exit 0
+            fi
 
-      - name: Bridge audited industry supply-demand evidence
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.industry_cycle_evidence_bridge \
-            --hourly-overlay data/hourly_deep_overlay/latest.json \
-            --industry-evidence data/user_supplied/industry_cycle_evidence.csv \
-            --company-evidence data/research_mapping/company_industry_map.csv \
-            --evidence-root data/evidence_events \
-            --status-output data/evidence_events/industry_collector_status.json
+            python -m pytest -q \
+              tests/test_genge_hourly_deep_overlay.py \
+              tests/test_genge_evidence_event_store.py \
+              tests/test_genge_hourly_research_state.py \
+              tests/test_genge_industry_cycle_evidence_bridge.py \
+              tests/test_genge_commodity_price_evidence_collector.py \
+              tests/test_genge_research_mapping_coverage.py \
+              tests/test_genge_v311_monotonic_persistence.py
 
-      - name: Collect public commodity benchmark evidence
-        continue-on-error: true
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.commodity_price_evidence_collector \
-            --hourly-overlay data/hourly_deep_overlay/latest.json \
-            --config config/commodity_research_benchmarks.json \
-            --evidence-root data/evidence_events \
-            --status-output data/evidence_events/commodity_collector_status.json
+            python -m src.strategies.genge_opportunity_discovery.hourly_deep_overlay \
+              --authoritative-root "$AUTH_ROOT" \
+              --output-root data/hourly_deep_overlay
 
-      - name: Build evidence source coverage registry
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.evidence_source_registry \
-            --evidence-root data/evidence_events \
-            --collector-status data/evidence_events/collector_status.json \
-            --industry-status data/evidence_events/industry_collector_status.json \
-            --commodity-status data/evidence_events/commodity_collector_status.json \
-            --policy-status data/evidence_events/policy_collector_status.json \
-            --competition-status data/evidence_events/competition_collector_status.json \
-            --output data/evidence_events/source_registry.json
+            python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+              --coverage-output data/research_mapping/coverage.json \
+              --industry-csv-output data/research_mapping/company_industry_map.csv
 
-      - name: Build evidence-aware hourly research state
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.hourly_research_state \
-            --price-overlay data/hourly_deep_overlay/latest.json \
-            --price-history-root data/hourly_deep_overlay \
-            --evidence-root data/evidence_events \
-            --output-root data/hourly_research_state
+            python -m src.strategies.genge_opportunity_discovery.hourly_evidence_collector \
+              --hourly-overlay data/hourly_deep_overlay/latest.json \
+              --evidence-root data/evidence_events \
+              --status-output data/evidence_events/collector_status.json \
+              --lookback-hours 72 || echo "company announcement collector degraded; preserving fail-soft research semantics" >&2
 
-      - name: Validate overlays remain research-only
-        run: |
-          python - <<'PY'
+            python -m src.strategies.genge_opportunity_discovery.industry_cycle_evidence_bridge \
+              --hourly-overlay data/hourly_deep_overlay/latest.json \
+              --industry-evidence data/user_supplied/industry_cycle_evidence.csv \
+              --company-evidence data/research_mapping/company_industry_map.csv \
+              --evidence-root data/evidence_events \
+              --status-output data/evidence_events/industry_collector_status.json
+
+            python -m src.strategies.genge_opportunity_discovery.commodity_price_evidence_collector \
+              --hourly-overlay data/hourly_deep_overlay/latest.json \
+              --config config/commodity_research_benchmarks.json \
+              --evidence-root data/evidence_events \
+              --status-output data/evidence_events/commodity_collector_status.json || echo "commodity collector degraded; preserving fail-soft research semantics" >&2
+
+            python -m src.strategies.genge_opportunity_discovery.evidence_source_registry \
+              --evidence-root data/evidence_events \
+              --collector-status data/evidence_events/collector_status.json \
+              --industry-status data/evidence_events/industry_collector_status.json \
+              --commodity-status data/evidence_events/commodity_collector_status.json \
+              --policy-status data/evidence_events/policy_collector_status.json \
+              --competition-status data/evidence_events/competition_collector_status.json \
+              --output data/evidence_events/source_registry.json
+
+            python -m src.strategies.genge_opportunity_discovery.hourly_research_state \
+              --price-overlay data/hourly_deep_overlay/latest.json \
+              --price-history-root data/hourly_deep_overlay \
+              --evidence-root data/evidence_events \
+              --output-root data/hourly_research_state
+
+            python - <<'PY'
           import json
           from pathlib import Path
           price = json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))
@@ -202,7 +224,29 @@ jobs:
           assert research['canonical_source_run_id'] == price['canonical_source_run_id']
           PY
 
+            git add -f data/hourly_deep_overlay data/evidence_events data/hourly_research_state data/research_mapping
+            if git diff --cached --quiet; then
+              echo "No hourly research state change to persist"
+              exit 0
+            fi
+            sid=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          print(json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))['canonical_snapshot_id'])
+          PY
+            )
+            git commit -m "Persist V3.1.1 hourly research state ${sid} [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push race detected; replaying hourly derived state from newest origin/main" >&2
+          done
+
+          echo "hourly research persistence failed after 4 optimistic replay attempts" >&2
+          exit 1
+
       - name: Upload hourly research artifacts
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: genge-v311-hourly-deep-overlay-${{ github.run_id }}
@@ -211,30 +255,8 @@ jobs:
             data/evidence_events
             data/hourly_research_state
             data/research_mapping
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
-
-      - name: Persist hourly research history to main
-        run: |
-          set -euo pipefail
-          git config user.name "genge-v311-hourly-overlay-bot"
-          git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          # Runtime research state is intentionally gitignored for ordinary
-          # development. Force-add only the explicit production-owned paths.
-          git add -f data/hourly_deep_overlay data/evidence_events data/hourly_research_state data/research_mapping
-          if git diff --cached --quiet; then
-            echo "No hourly research state change to persist"
-            exit 0
-          fi
-          sid=$(python - <<'PY'
-          import json
-          from pathlib import Path
-          print(json.loads(Path('data/hourly_deep_overlay/latest.json').read_text(encoding='utf-8'))['canonical_snapshot_id'])
-          PY
-          )
-          git commit -m "Persist V3.1.1 hourly research state ${sid} [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
 
       - name: Publish summary
         if: always()
@@ -242,6 +264,7 @@ jobs:
           echo "# GenGe V3.1.1 Hourly Deep Overlay" >> "$GITHUB_STEP_SUMMARY"
           echo "- finalizer run: ${{ steps.authority.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- authoritative artifact: ${{ steps.authority.outputs.artifact_name }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- persistence: optimistic replay on newest main; stale authority is a safe no-op" >> "$GITHUB_STEP_SUMMARY"
           echo "- Formal actions are read-only and come only from finalized canonical" >> "$GITHUB_STEP_SUMMARY"
           echo "- reviewed mapping coverage is applicability-aware and exposes genuine gaps instead of guessing" >> "$GITHUB_STEP_SUMMARY"
           echo "- price/value history, company announcements, industry-cycle evidence, and commodity benchmarks are research overlays" >> "$GITHUB_STEP_SUMMARY"
