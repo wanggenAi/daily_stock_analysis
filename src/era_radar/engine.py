@@ -82,6 +82,18 @@ def _dedupe(evidence: Iterable[EvidenceSignal]) -> list[EvidenceSignal]:
     return sorted(best.values(), key=lambda x: (x.family, x.source_key, x.evidence_id))
 
 
+def _is_causal_confirmation(item: EvidenceSignal) -> bool:
+    if item.direction == 0 or item.quality < 0.5:
+        return False
+    if item.family != "FINANCIAL_CAPITAL":
+        return True
+    # Pure price/flow/crowding evidence is temperature, never causal confirmation.
+    return any(
+        component not in {"financial_crowding", "evidence_quality"} and abs(exposure) > 0
+        for component, exposure in item.components.items()
+    )
+
+
 def score_trend(trend_id: str, evidence: Iterable[EvidenceSignal]) -> TrendSnapshot:
     items = _dedupe(evidence)
     totals = {name: 50.0 for name in COMPONENTS}
@@ -125,16 +137,17 @@ def score_trend(trend_id: str, evidence: Iterable[EvidenceSignal]) -> TrendSnaps
     # Crowding is temperature/risk. It cannot upgrade a trend.
     cyclical = _clamp(cyclical_raw - max(0.0, components["financial_crowding"] - 70.0) * 0.35)
 
-    families = {item.family for item in items if item.direction != 0 and item.quality >= 0.5}
+    all_families = {item.family for item in items if item.direction != 0 and item.quality >= 0.5}
+    confirming_families = {item.family for item in items if _is_causal_confirmation(item)}
     quality = components["evidence_quality"]
-    breadth_factor = min(1.0, len(families) / 4.0)
+    breadth_factor = min(1.0, len(confirming_families) / 4.0)
     confidence = _clamp((0.45 * structural + 0.30 * industrial + 0.25 * quality) * breadth_factor)
 
     # Policy headlines alone are explicitly insufficient for confirmation.
-    if families == {"POLICY_CAPITAL"}:
+    if confirming_families == {"POLICY_CAPITAL"}:
         confidence = min(confidence, 39.0)
 
-    if confidence >= 72 and structural >= 65 and industrial >= 60 and len(families) >= 3:
+    if confidence >= 72 and structural >= 65 and industrial >= 60 and len(confirming_families) >= 3:
         lifecycle = "CONFIRMED"
     elif confidence >= 58 and industrial >= 60:
         lifecycle = "ACCELERATING"
@@ -154,6 +167,6 @@ def score_trend(trend_id: str, evidence: Iterable[EvidenceSignal]) -> TrendSnaps
         cyclical_score=cyclical,
         confidence_score=confidence,
         lifecycle=lifecycle,
-        independent_families=len(families),
+        independent_families=len(all_families),
         evidence_count=len(items),
     )
