@@ -2,7 +2,7 @@ name: GenGe V3.1.1 Evidence Slow Lane
 
 on:
   schedule:
-    # Heavy policy/competition evidence stays continuously fresh at a 4-hour cadence.
+    # Heavy policy/competition evidence stays continuously fresh every four hours, including premarket.
     # GitHub cron is UTC; this cadence is timezone-independent.
     - cron: "35 */4 * * *"
   workflow_dispatch:
