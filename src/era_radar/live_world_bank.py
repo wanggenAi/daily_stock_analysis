@@ -1,8 +1,8 @@
 """Live World Bank structural evidence collector for Era Radar.
 
-Uses the public World Bank V2 Indicators API. This adapter is deliberately narrow:
-only explicitly registered indicators with deterministic transforms may enter Radar evidence.
-Network/data failures raise and therefore cannot silently mutate durable Radar truth.
+Uses the public World Bank V2 Indicators API. Only explicitly registered indicators with
+deterministic transforms may enter Radar evidence. Network/data failures raise and therefore
+cannot silently mutate durable Radar truth.
 """
 
 from __future__ import annotations
@@ -40,14 +40,16 @@ INDICATORS = (
 )
 
 
-def _iso_now() -> str:
+def iso_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def _fetch_json(url: str, *, timeout: float = 20.0) -> object:
+    if not url.startswith(f"{API_ROOT}/"):
+        raise ValueError("live World Bank collector refuses non-World-Bank URL")
     request = Request(url, headers={"User-Agent": "daily-stock-analysis-era-radar/1.0"})
     try:
-        with urlopen(request, timeout=timeout) as response:  # noqa: S310 - fixed HTTPS API root
+        with urlopen(request, timeout=timeout) as response:  # noqa: S310 - allowlisted HTTPS root above
             if response.status != 200:
                 raise RuntimeError(f"World Bank HTTP {response.status}")
             return json.loads(response.read().decode("utf-8"))
@@ -82,7 +84,7 @@ def _trend_strength(points: list[tuple[int, float]], spec: IndicatorSpec) -> tup
     scale = max(abs(first), 1e-9)
     relative = (last - first) / scale
     signed = spec.direction_when_rising if relative > 0 else -spec.direction_when_rising if relative < 0 else 0
-    # Saturating transform: prevents a single macro series from manufacturing certainty.
+    # Saturating transform: a single macro series cannot manufacture certainty.
     strength = min(0.85, 0.35 + min(abs(relative), 0.50)) if signed else 0.20
     return signed, round(strength, 4)
 
@@ -90,18 +92,16 @@ def _trend_strength(points: list[tuple[int, float]], spec: IndicatorSpec) -> tup
 class WorldBankChinaStructuralCollector:
     source_id = "world_bank"
 
-    def __init__(self, *, fetcher: Callable[[str], object] = _fetch_json):
+    def __init__(self, *, fetcher: Callable[[str], object] = _fetch_json, clock: Callable[[], str] = iso_now):
         self.fetcher = fetcher
+        self.clock = clock
 
     def collect(self, research_as_of: str):
-        retrieved_at = _iso_now()
-        if retrieved_at > research_as_of:
-            # Scheduled production must set research_as_of at/after actual retrieval time.
-            retrieved_at = research_as_of
+        del research_as_of  # Final cutoff is assigned after live collection completes.
         for spec in INDICATORS:
             points = _series(spec.code, fetcher=self.fetcher)
             direction, strength = _trend_strength(points, spec)
-            latest_year, latest_value = points[-1]
+            latest_year, _latest_value = points[-1]
             source_url = f"{API_ROOT}/country/CHN/indicator/{spec.code}?format=json"
             yield RawObservation(
                 evidence_id=f"wb:{spec.code}:{latest_year}",
@@ -113,7 +113,7 @@ class WorldBankChinaStructuralCollector:
                 source_url=source_url,
                 observed_at=f"{latest_year}-12-31T23:59:59Z",
                 published_at=None,
-                retrieved_at=retrieved_at,
+                retrieved_at=self.clock(),
                 freshness="FRESH",
                 direction=direction,
                 strength=strength,
