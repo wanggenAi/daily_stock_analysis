@@ -99,9 +99,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Do not create parallel Deep Review storms. Any active Every-Industry
-          # production run will itself reach Production Finalizer, so retry this
-          # exact signal on the next Learning heartbeat instead.
+          # Avoid parallel Deep Review storms. An active Every-Industry run will
+          # itself reach Production Finalizer, so retry this exact signal on the
+          # next Learning heartbeat instead of overlapping it.
           industry_runs=$(gh api -X GET \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?per_page=30")
           active_industry=$(printf '%s' "$industry_runs" | jq '[
@@ -118,11 +118,10 @@ jobs:
             exit 0
           fi
 
-          # Fast path: hourly signals only concern securities already present in
-          # the current research/Canonical workset. Reuse the newest successful
+          # Fast path: hourly signals concern securities already present in the
+          # current research/Canonical workset. Reuse the newest successful,
           # non-expired All-A production artifact and immediately execute the
-          # existing full V3.1 Every-Industry Deep Review. This avoids waiting
-          # for another expensive All-A discovery pass before re-underwriting.
+          # existing full V3.1 Every-Industry Deep Review.
           discovery_runs=$(gh api -X GET \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?status=success&per_page=30")
           upstream_run_id=""
@@ -151,9 +150,10 @@ jobs:
             dispatch_path="FAST_EXISTING_DISCOVERY_TO_FULL_V31_REVIEW"
           else
             # Fail-safe fallback: if no validated All-A artifact is available,
-            # start the normal production Discovery chain instead of weakening
-            # provenance or fabricating a Deep Review input.
-            discovery_active=$(printf '%s' "$discovery_runs" | jq '[
+            # start normal production Discovery rather than weakening provenance.
+            all_discovery_runs=$(gh api -X GET \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?per_page=30")
+            discovery_active=$(printf '%s' "$all_discovery_runs" | jq '[
               .workflow_runs[]
               | select((.event == "schedule" or .event == "workflow_dispatch")
                        and (.status == "queued" or .status == "in_progress"))
