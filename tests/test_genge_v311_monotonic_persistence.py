@@ -167,7 +167,7 @@ def test_holding_continuity_rejects_unordered_legacy_baseline(tmp_path):
     assert state_path.read_bytes() == before
 
 
-def test_formal_history_keeps_immutable_old_records_without_regressing_latest(tmp_path):
+def test_formal_history_keeps_backfill_counts_without_regressing_latest(tmp_path):
     history_path = tmp_path / "history.jsonl"
     summary_path = tmp_path / "latest_summary.json"
     snap100 = tmp_path / "snap100.json"
@@ -184,18 +184,36 @@ def test_formal_history_keeps_immutable_old_records_without_regressing_latest(tm
     latest_before = json.loads(summary_path.read_text(encoding="utf-8"))
     assert latest_before["canonical_snapshot_id"] == "snap-101"
     assert latest_before["canonical_source_run_id"] == "101"
+    assert latest_before["total_record_count"] == 2
 
     stale_result = formal.append_snapshot(stale99, history_path, summary_path)
     latest_after = json.loads(summary_path.read_text(encoding="utf-8"))
     assert stale_result["persistence_order"] == "STALE"
-    assert stale_result["latest_summary_updated"] is False
-    assert latest_after == latest_before
+    assert stale_result["latest_summary_updated"] is True
+    assert stale_result["latest_pointer_advanced"] is False
+    assert latest_after["canonical_snapshot_id"] == "snap-101"
+    assert latest_after["canonical_source_run_id"] == "101"
+    assert latest_after["total_record_count"] == 3
+    assert latest_after["added_record_count"] == 1
+    assert latest_after["last_history_append_snapshot_id"] == "snap-099"
+    assert latest_after["last_history_append_source_run_id"] == "99"
+    assert latest_after["latest_pointer_advanced"] is False
     history = [json.loads(line) for line in history_path.read_text(encoding="utf-8").splitlines()]
     assert {row["canonical_snapshot_id"] for row in history} == {
         "snap-099",
         "snap-100",
         "snap-101",
     }
+
+    # Re-delivering the same stale run is now a complete idempotent no-op.
+    before_duplicate_history = history_path.read_bytes()
+    before_duplicate_summary = summary_path.read_bytes()
+    duplicate_result = formal.append_snapshot(stale99, history_path, summary_path)
+    assert duplicate_result["persistence_order"] == "STALE"
+    assert duplicate_result["added_record_count"] == 0
+    assert duplicate_result["latest_summary_updated"] is False
+    assert history_path.read_bytes() == before_duplicate_history
+    assert summary_path.read_bytes() == before_duplicate_summary
 
     before_history = history_path.read_bytes()
     before_summary = summary_path.read_bytes()
