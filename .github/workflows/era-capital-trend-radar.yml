@@ -54,6 +54,40 @@ jobs:
           assert len(evidence['records']) == evidence['evidence_count'] > 0
           PY
 
+  live-source-smoke:
+    name: Era Radar World Bank live smoke
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Fetch real China structural evidence
+        run: |
+          rm -rf .era-radar-live-smoke
+          python tools/run_era_radar_live.py --output-dir .era-radar-live-smoke | tee .era-radar-live-smoke-result.json
+          test -f .era-radar-live-smoke/latest.json
+          test -f .era-radar-live-smoke/trend_lifecycle_state.json
+          python - <<'PY'
+          import json
+          p=json.load(open('.era-radar-live-smoke/latest.json'))
+          assert p['formal_trading_authority'] is False
+          assert p['no_auto_trade'] is True
+          assert p['evidence_count'] > 0
+          PY
+      - name: Upload live smoke evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: era-radar-live-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .era-radar-live-smoke-result.json
+            .era-radar-live-smoke/
+          if-no-files-found: error
+          retention-days: 14
+
   live-production:
     name: Era Radar live production
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
@@ -74,14 +108,13 @@ jobs:
           pip install -r .github/requirements-ci.txt
           pytest -q tests/test_era_radar_*.py
       - name: Collect live evidence and build durable Radar truth
-        id: radar
         shell: bash
         run: |
           set +e
-          python tools/run_era_radar_live.py --output-dir data/era_radar | tee /tmp/era-radar-live.json
+          python tools/run_era_radar_live.py --output-dir data/era_radar | tee .era-radar-live-result.json
           rc=${PIPESTATUS[0]}
           set -e
-          cat /tmp/era-radar-live.json
+          cat .era-radar-live-result.json
           if [ "$rc" -eq 2 ]; then
             echo 'Live collector failed closed; durable truth was not changed.' >&2
             exit 1
@@ -99,7 +132,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet -- data/era_radar; then
+          if [ -z "$(git status --porcelain -- data/era_radar)" ]; then
             echo 'No semantic evidence change; nothing to persist.'
             exit 0
           fi
@@ -112,7 +145,11 @@ jobs:
               exit 0
             fi
             git fetch origin main
-            git rebase origin/main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo 'Concurrent same-state conflict; refusing stale Radar persistence.' >&2
+              exit 1
+            fi
           done
           echo 'Unable to persist Era Radar state after bounded retries' >&2
           exit 1
@@ -122,7 +159,7 @@ jobs:
         with:
           name: era-radar-live-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            /tmp/era-radar-live.json
+            .era-radar-live-result.json
             data/era_radar/
           if-no-files-found: warn
           retention-days: 30
