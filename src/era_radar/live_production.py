@@ -71,7 +71,10 @@ def _semantic_rows(records: Iterable[EvidenceRecord]) -> list[dict]:
     rows = []
     for item in records:
         row = asdict(item)
+        # Acquisition/observation clock is provenance, not semantic identity. Collectors must
+        # version source_key/evidence_id when the underlying source content changes.
         row.pop("retrieved_at", None)
+        row.pop("observed_at", None)
         rows.append(row)
     rows.sort(key=lambda row: row["evidence_id"])
     return rows
