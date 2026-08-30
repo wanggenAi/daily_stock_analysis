@@ -1,0 +1,152 @@
+name: GenGe V3.1.1 Event-Driven Deep Review
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Research Learning"
+    types: [completed]
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v311-event-driven-deep-review.yml"
+      - "src/strategies/genge_opportunity_discovery/event_driven_deep_review_trigger.py"
+      - "tests/test_genge_event_driven_deep_review_trigger.py"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-v311-event-driven-deep-review
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  evaluate-and-dispatch:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install trigger test harness
+        run: |
+          python -m pip install --disable-pip-version-check -q \
+            pytest anyio fastapi httpx starlette
+
+      - name: Validate event-driven trigger contract
+        run: |
+          python -m pytest -q tests/test_genge_event_driven_deep_review_trigger.py
+
+      - name: Build event-driven Deep Review decision
+        id: decision
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.event_driven_deep_review_trigger \
+            --priority data/research_priority/latest.json \
+            --hourly data/hourly_research_state/latest.json \
+            --output reports/event_driven_deep_review/decision.json
+
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          d = json.loads(Path('reports/event_driven_deep_review/decision.json').read_text(encoding='utf-8'))
+          assert d['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert d['formal_action_recomputed'] is False
+          assert d['formal_action_eligible'] is False
+          assert d['direct_formal_action_change_allowed'] is False
+          assert d['no_auto_trade'] is True
+          with Path(os.environ['GITHUB_OUTPUT']).open('a', encoding='utf-8') as out:
+              out.write(f"dispatch_required={str(bool(d['dispatch_required'])).lower()}\n")
+              out.write(f"signal_digest={d['signal_digest']}\n")
+              out.write(f"trigger_codes={','.join(d['trigger_codes'])}\n")
+          PY
+
+      - name: Restore exact-signal dispatch marker
+        id: dedupe
+        if: steps.decision.outputs.dispatch_required == 'true'
+        uses: actions/cache/restore@v4
+        with:
+          path: .event-driven-deep-review-cache
+          key: genge-v311-event-deep-review-${{ steps.decision.outputs.signal_digest }}
+
+      - name: Dispatch full production Deep Review chain
+        id: dispatch
+        if: >-
+          steps.decision.outputs.dispatch_required == 'true' &&
+          steps.dedupe.outputs.cache-hit != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          runs=$(gh api -X GET \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?per_page=30")
+          active=$(printf '%s' "$runs" | jq '[
+            .workflow_runs[]
+            | select((.event == "schedule" or .event == "workflow_dispatch")
+                     and (.status == "queued" or .status == "in_progress"))
+          ] | length')
+
+          if [ "$active" -gt 0 ]; then
+            echo "A production Opportunity Discovery cycle is already active; defer this signal to the next research-learning heartbeat."
+            echo "dispatched=false" >> "$GITHUB_OUTPUT"
+            echo "deferred=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          gh workflow run genge-opportunity-discovery.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f run_legacy_report=false
+
+          mkdir -p .event-driven-deep-review-cache
+          cp reports/event_driven_deep_review/decision.json \
+            .event-driven-deep-review-cache/decision.json
+          echo "dispatched=true" >> "$GITHUB_OUTPUT"
+          echo "deferred=false" >> "$GITHUB_OUTPUT"
+
+      - name: Save exact-signal dispatch marker
+        if: steps.dispatch.outputs.dispatched == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: .event-driven-deep-review-cache
+          key: genge-v311-event-deep-review-${{ steps.decision.outputs.signal_digest }}
+
+      - name: Upload trigger decision
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v311-event-driven-deep-review-${{ github.run_id }}
+          path: reports/event_driven_deep_review/decision.json
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish event-driven summary
+        if: always()
+        run: |
+          echo "# GenGe V3.1.1 Event-Driven Deep Review" >> "$GITHUB_STEP_SUMMARY"
+          echo "- trigger codes: \`${{ steps.decision.outputs.trigger_codes }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- signal digest: \`${{ steps.decision.outputs.signal_digest }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- duplicate signal cache hit: \`${{ steps.dedupe.outputs.cache-hit }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- production dispatch: \`${{ steps.dispatch.outputs.dispatched }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- deferred because an authorized production scan is already active: \`${{ steps.dispatch.outputs.deferred }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- downstream: Opportunity Discovery -> Every-Industry Research -> Production Finalizer" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Hourly/Learning remain research-only and can never authorize a Formal action" >> "$GITHUB_STEP_SUMMARY"
