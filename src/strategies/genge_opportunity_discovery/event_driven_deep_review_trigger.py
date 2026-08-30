@@ -1,8 +1,8 @@
 """Select event-driven V3.1.1 Deep Review triggers without changing Formal actions.
 
-This module only decides whether fresh research signals justify launching the
-existing production Opportunity Discovery -> Every-Industry -> Finalizer chain.
-It never computes or mutates BUY/ADD/HOLD/REDUCE/EXIT decisions itself.
+This module decides whether fresh research signals justify launching the existing
+V3.1.1 production Deep Review pipeline. It never computes or mutates
+BUY/ADD/HOLD/REDUCE/EXIT decisions itself.
 """
 from __future__ import annotations
 
@@ -12,9 +12,9 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V1"
+CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V2"
 FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
-DOWNSTREAM_WORKFLOW = "genge-opportunity-discovery.yml"
+DOWNSTREAM_WORKFLOW = "genge-v31-industry-research.yml"
 
 URGENT_CONCLUSIONS = {
     "PRICE_ATTRACTIVE_RESEARCH_LEAD",
@@ -41,10 +41,14 @@ def _require_research_only_contract(payload: Mapping[str, Any], *, label: str) -
         raise ValueError(f"{label}: research layer cannot be formal-action eligible")
 
 
-def _evidence_ids(hourly_row: Mapping[str, Any]) -> list[str]:
+def _material_evidence_ids(hourly_row: Mapping[str, Any]) -> list[str]:
     values: list[str] = []
     for item in hourly_row.get("latest_evidence") or []:
         if not isinstance(item, Mapping):
+            continue
+        if str(item.get("materiality") or "").upper() not in {"HIGH", "MEDIUM"}:
+            continue
+        if str(item.get("direction") or "").upper() not in {"WEAKENING", "STRENGTHENING"}:
             continue
         evidence_id = str(item.get("evidence_id") or "").strip()
         if evidence_id:
@@ -74,17 +78,17 @@ def _trigger_reasons(priority_row: Mapping[str, Any]) -> list[str]:
         selected.append("REUNDERWRITE_REQUIRED")
     if priority in {"P0", "P1"} and "MATERIAL_EVIDENCE_CHANGE" in reasons:
         selected.append("MATERIAL_EVIDENCE_CHANGE")
-    if priority == "P0" and "HOURLY_PRIORITY_RAISE" in reasons:
-        selected.append("P0_HOURLY_PRIORITY_RAISE")
     return sorted(set(selected))
 
 
 def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> dict[str, Any]:
-    """Return an auditable research-only dispatch decision.
+    """Return an auditable research-only Deep Review dispatch decision.
 
-    Holdings and rows that already have a Formal action are excluded. A trigger
-    launches the existing full production pipeline; it does not authorize any
-    action directly.
+    Holdings are eligible when they have a genuinely urgent signal because money
+    is already at risk. Merely being a holding, merely being P0, or merely having
+    HOURLY_PRIORITY_RAISE is not enough. External candidates use the same urgent
+    signal bar. Any resulting Formal action still has to come from the existing
+    Every-Industry -> Production Finalizer authority chain.
     """
 
     _require_research_only_contract(priority, label="research_priority")
@@ -109,21 +113,25 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
         code = str(row.get("code") or "").zfill(6)
         if not code.strip("0"):
             continue
-        reason_codes = {str(x) for x in (row.get("reason_codes") or [])}
-        if "CURRENT_HOLDING" in reason_codes:
-            continue
-        if str(row.get("formal_action") or "").strip():
-            continue
 
         trigger_reasons = _trigger_reasons(row)
         if not trigger_reasons:
             continue
 
+        reason_codes = {str(x) for x in (row.get("reason_codes") or [])}
         hourly_row = hourly_rows.get(code) or {}
         conclusion = str(row.get("hourly_research_conclusion") or "")
+        material_evidence_ids = _material_evidence_ids(hourly_row)
+        signal_counts = {
+            "high_materiality_evidence_count_72h": int(hourly_row.get("high_materiality_evidence_count_72h") or 0),
+            "material_weakening_evidence_count_72h": int(hourly_row.get("material_weakening_evidence_count_72h") or 0),
+            "material_strengthening_evidence_count_72h": int(hourly_row.get("material_strengthening_evidence_count_72h") or 0),
+        }
         trigger = {
             "code": code,
             "name": str(row.get("name") or hourly_row.get("name") or ""),
+            "is_current_holding": "CURRENT_HOLDING" in reason_codes,
+            "existing_formal_action": str(row.get("formal_action") or ""),
             "priority": str(row.get("priority") or ""),
             "priority_score": int(row.get("priority_score") or 0),
             "research_tier": str(row.get("research_tier") or ""),
@@ -131,19 +139,21 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
             "hourly_research_conclusion": conclusion,
             "price_evidence_status": str(hourly_row.get("price_evidence_status") or ""),
             "trigger_reasons": trigger_reasons,
-            "latest_evidence_ids": _evidence_ids(hourly_row),
+            "material_evidence_ids": material_evidence_ids,
+            "signal_counts": signal_counts,
             "price_signal_date": _price_signal_date(hourly_row, conclusion),
         }
         triggers.append(trigger)
         digest_rows.append(
             {
                 "code": trigger["code"],
-                "priority": trigger["priority"],
+                "is_current_holding": trigger["is_current_holding"],
                 "thesis_status": trigger["thesis_status"],
                 "hourly_research_conclusion": trigger["hourly_research_conclusion"],
                 "price_evidence_status": trigger["price_evidence_status"],
                 "trigger_reasons": trigger["trigger_reasons"],
-                "latest_evidence_ids": trigger["latest_evidence_ids"],
+                "material_evidence_ids": trigger["material_evidence_ids"],
+                "signal_counts": trigger["signal_counts"],
                 "price_signal_date": trigger["price_signal_date"],
             }
         )
@@ -162,10 +172,12 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
         "dispatch_required": bool(triggers),
         "signal_digest": signal_digest,
         "trigger_count": len(triggers),
+        "holding_trigger_count": sum(bool(row["is_current_holding"]) for row in triggers),
+        "external_trigger_count": sum(not bool(row["is_current_holding"]) for row in triggers),
         "trigger_codes": [row["code"] for row in triggers],
         "triggers": triggers,
         "downstream_workflow": DOWNSTREAM_WORKFLOW,
-        "downstream_semantics": "FULL_PRODUCTION_RESCAN_THEN_EXISTING_CANONICAL_FINALIZER",
+        "downstream_semantics": "EXISTING_V31_FULL_DEEP_REVIEW_THEN_PRODUCTION_FINALIZER",
         "formal_action_source": FORMAL_ACTION_SOURCE,
         "formal_action_recomputed": False,
         "formal_action_eligible": False,
@@ -188,6 +200,8 @@ def main(argv: list[str] | None = None) -> int:
         "dispatch_required": decision["dispatch_required"],
         "signal_digest": decision["signal_digest"],
         "trigger_codes": decision["trigger_codes"],
+        "holding_trigger_count": decision["holding_trigger_count"],
+        "external_trigger_count": decision["external_trigger_count"],
     }, ensure_ascii=False))
     return 0
 
