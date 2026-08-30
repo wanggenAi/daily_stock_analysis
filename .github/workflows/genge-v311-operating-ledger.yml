@@ -2,7 +2,10 @@ name: GenGe V3.1.1 Operating Ledger
 
 on:
   workflow_run:
-    workflows: ["GenGe V3.1.1 Production Finalizer"]
+    workflows:
+      - "GenGe V3.1.1 Production Finalizer"
+      - "GenGe V3.1.1 Hourly Deep Overlay"
+      - "GenGe V3.1.1 Evidence Slow Lane"
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -76,7 +79,7 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "FINALIZER_RUN_ID=${{ inputs.finalizer_run_id }}" >> "$GITHUB_ENV"
-          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+          elif [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.name }}" = "GenGe V3.1.1 Production Finalizer" ]; then
             echo "FINALIZER_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
           else
             runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
