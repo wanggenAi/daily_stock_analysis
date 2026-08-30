@@ -27,14 +27,18 @@ def test_collector_to_discovery_to_persistence_is_end_to_end(tmp_path):
     assert priorities["grid_modernization"] == "NORMAL"
 
     snapshot = build_snapshot(records, AS_OF)
-    result = persist_snapshot(snapshot, tmp_path)
+    result = persist_snapshot(snapshot, tmp_path, records)
     assert result["status"] == "PERSISTED"
     assert json.loads((tmp_path / "latest.json").read_text())["formal_trading_authority"] is False
+    evidence = json.loads((tmp_path / "evidence" / f"{snapshot.snapshot_id}.json").read_text())
+    assert evidence["evidence_count"] == len(records)
+    assert evidence["formal_trading_authority"] is False
+    assert {row["trend_id"] for row in evidence["records"]} == {item.trend_id for item in snapshot.trends}
     assert (tmp_path / "ERA_CAPITAL_TREND_RADAR.md").exists()
     state = load_lifecycle(tmp_path / "trend_lifecycle_state.json")
     assert set(state) == {item.trend_id for item in snapshot.trends}
 
-    second = persist_snapshot(snapshot, tmp_path)
+    second = persist_snapshot(snapshot, tmp_path, records)
     assert second["status"] == "ALREADY_PERSISTED"
     assert all(item["event"] == "NOOP" for item in second["events"])
 
@@ -74,7 +78,7 @@ def test_financial_hype_does_not_become_high_priority():
 def test_persistence_rejects_older_snapshot(tmp_path):
     records = collect_all([JsonObservationCollector(FIXTURE)], AS_OF)
     newer = build_snapshot(records, AS_OF)
-    persist_snapshot(newer, tmp_path)
+    persist_snapshot(newer, tmp_path, records)
     older = build_snapshot(records, "2026-08-30T00:30:00Z")
     with pytest.raises(ValueError, match="out-of-order"):
-        persist_snapshot(older, tmp_path)
+        persist_snapshot(older, tmp_path, records)
