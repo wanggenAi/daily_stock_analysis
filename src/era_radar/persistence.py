@@ -10,11 +10,14 @@ import os
 import tempfile
 from dataclasses import asdict
 from pathlib import Path
+from typing import Iterable
 
+from .evidence import EvidenceRecord
 from .lifecycle import LifecycleRecord, apply_lifecycle
 from .pipeline import RadarSnapshot, render_markdown
 
 SCHEMA = "ERA_RADAR_LIFECYCLE_V1"
+EVIDENCE_SCHEMA = "ERA_RADAR_EVIDENCE_BUNDLE_V1"
 
 
 def _atomic_text(path: Path, text: str) -> None:
@@ -48,7 +51,25 @@ def load_lifecycle(path: str | Path) -> dict[str, LifecycleRecord]:
     return result
 
 
-def persist_snapshot(snapshot: RadarSnapshot, output_dir: str | Path) -> dict:
+def _evidence_bundle(snapshot: RadarSnapshot, records: Iterable[EvidenceRecord]) -> dict:
+    rows = [asdict(record) for record in records]
+    rows.sort(key=lambda row: (row["trend_id"], row["family"], row["source_key"], row["evidence_id"]))
+    return {
+        "schema_version": EVIDENCE_SCHEMA,
+        "snapshot_id": snapshot.snapshot_id,
+        "research_as_of": snapshot.research_as_of,
+        "formal_trading_authority": False,
+        "no_auto_trade": True,
+        "evidence_count": len(rows),
+        "records": rows,
+    }
+
+
+def persist_snapshot(
+    snapshot: RadarSnapshot,
+    output_dir: str | Path,
+    evidence_records: Iterable[EvidenceRecord] | None = None,
+) -> dict:
     root = Path(output_dir)
     state_path = root / "trend_lifecycle_state.json"
     current = load_lifecycle(state_path)
@@ -75,11 +96,24 @@ def persist_snapshot(snapshot: RadarSnapshot, output_dir: str | Path) -> dict:
     status = "ALREADY_PERSISTED" if duplicate else "PERSISTED"
     if not duplicate:
         _atomic_json(root / "history" / f"{snapshot.snapshot_id}.json", snapshot.to_dict())
-        _atomic_json(root / "evidence" / f"{snapshot.snapshot_id}.json", {
-            "snapshot_id": snapshot.snapshot_id,
-            "research_as_of": snapshot.research_as_of,
-            "note": "Evidence bundle is supplied by collectors; snapshot stores scored machine truth.",
-        })
+        if evidence_records is not None:
+            _atomic_json(
+                root / "evidence" / f"{snapshot.snapshot_id}.json",
+                _evidence_bundle(snapshot, evidence_records),
+            )
+        else:
+            _atomic_json(
+                root / "evidence" / f"{snapshot.snapshot_id}.json",
+                {
+                    "schema_version": EVIDENCE_SCHEMA,
+                    "snapshot_id": snapshot.snapshot_id,
+                    "research_as_of": snapshot.research_as_of,
+                    "formal_trading_authority": False,
+                    "no_auto_trade": True,
+                    "evidence_count": 0,
+                    "records": [],
+                },
+            )
         state_payload = {
             "schema_version": SCHEMA,
             "latest_snapshot_id": snapshot.snapshot_id,
