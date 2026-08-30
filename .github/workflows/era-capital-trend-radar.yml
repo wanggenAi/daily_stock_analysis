@@ -1,0 +1,65 @@
+name: Era Capital Trend Radar
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 0,6,12,18 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: era-capital-trend-radar-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deterministic-radar:
+    name: Era Radar deterministic gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Run focused Era Radar tests
+        run: |
+          python -m pip install pytest
+          pytest -q \
+            tests/test_era_radar_engine.py \
+            tests/test_era_radar_evidence.py \
+            tests/test_era_radar_lifecycle.py \
+            tests/test_era_radar_handoff.py \
+            tests/test_era_radar_pipeline.py \
+            tests/test_era_radar_end_to_end.py
+      - name: Run auditable collector replay
+        run: |
+          rm -rf .era-radar-artifact
+          python tools/run_era_radar.py \
+            --observations tests/fixtures/era_radar_observations.json \
+            --research-as-of 2026-08-30T01:00:00Z \
+            --output-dir .era-radar-artifact
+          test -f .era-radar-artifact/latest.json
+          test -f .era-radar-artifact/trend_lifecycle_state.json
+          test -f .era-radar-artifact/ERA_CAPITAL_TREND_RADAR.md
+      - name: Assert research-only authority
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('.era-radar-artifact/latest.json'))
+          assert p['formal_trading_authority'] is False
+          assert p['no_auto_trade'] is True
+          PY
+      - name: Upload Radar replay artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: era-radar-replay-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .era-radar-artifact/
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 14
+
+# This V1 schedule is an auditable deterministic replay gate, not a claim that live
+# official-source collectors are already production-authoritative. Live collectors are
+# plugged into the same normalized observation contract only after source-specific PIT tests.
