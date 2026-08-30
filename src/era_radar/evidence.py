@@ -63,7 +63,7 @@ class EvidenceRecord:
         for field, value in (("observed_at", observed), ("retrieved_at", retrieved), ("published_at", published)):
             if value is not None and value > cutoff:
                 raise ValueError(f"PIT violation: {field} is after research_as_of")
-        if published is not None and observed > retrieved:
+        if observed > retrieved:
             raise ValueError("observed_at cannot be after retrieved_at")
         if published is not None and published > retrieved:
             raise ValueError("published_at cannot be after retrieved_at")
