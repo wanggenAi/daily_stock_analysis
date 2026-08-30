@@ -1,7 +1,8 @@
 """Live World Bank structural evidence collector for Era Radar.
 
 Uses the public World Bank V2 Indicators API. Only explicitly registered indicators with
-deterministic transforms may enter Radar evidence. Forecast observations are excluded.
+deterministic transforms may enter Radar evidence. Forecast observations are excluded and
+older macro observations receive lower freshness/quality instead of being mislabeled fresh.
 """
 
 from __future__ import annotations
@@ -94,6 +95,18 @@ def _trend_strength(points: list[tuple[int, float]], spec: IndicatorSpec) -> tup
     return signed, round(strength, 4)
 
 
+def _freshness(latest_year: int, retrieved_at: str) -> tuple[str, float] | None:
+    current_year = int(retrieved_at[:4])
+    age = current_year - latest_year
+    if age < 0:
+        raise ValueError("World Bank observation year is in the future")
+    if age <= 2:
+        return "FRESH", 0.82
+    if age <= 5:
+        return "UNKNOWN", 0.68
+    return None
+
+
 class WorldBankChinaStructuralCollector:
     source_id = "world_bank"
 
@@ -107,6 +120,11 @@ class WorldBankChinaStructuralCollector:
             points = _series(spec.code, fetcher=self.fetcher)
             direction, strength = _trend_strength(points, spec)
             latest_year, _latest_value = points[-1]
+            retrieved_at = self.clock()
+            freshness = _freshness(latest_year, retrieved_at)
+            if freshness is None:
+                continue
+            freshness_label, quality = freshness
             digest = _series_digest(points)
             source_url = f"{API_ROOT}/country/CHN/indicator/{spec.code}?format=json"
             yield RawObservation(
@@ -119,10 +137,10 @@ class WorldBankChinaStructuralCollector:
                 source_url=source_url,
                 observed_at=f"{latest_year}-12-31T23:59:59Z",
                 published_at=None,
-                retrieved_at=self.clock(),
-                freshness="FRESH",
+                retrieved_at=retrieved_at,
+                freshness=freshness_label,
                 direction=direction,
                 strength=strength,
-                quality=0.82,
+                quality=quality,
                 components={spec.component: 1.0, "global_confirmation": 0.7, "evidence_quality": 0.8},
             )
