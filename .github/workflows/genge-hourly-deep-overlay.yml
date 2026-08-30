@@ -4,6 +4,10 @@ on:
   schedule:
     # Beijing 09:05-16:05 on weekdays (UTC 01:05-08:05).
     - cron: "5 1-8 * * 1-5"
+    # Weekends have no A-share price formation, but news, announcements, policy,
+    # industry and commodity evidence still move. Refresh the research overlay
+    # hourly around the clock without allowing it to overwrite Formal actions.
+    - cron: "5 * * * 0,6"
   workflow_dispatch:
   push:
     branches: [main]
