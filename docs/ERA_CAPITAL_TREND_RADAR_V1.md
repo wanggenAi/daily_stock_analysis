@@ -1,6 +1,6 @@
 # Era & Capital Trend Radar V1
 
-Status: DESIGN CONTRACT
+Status: IMPLEMENTATION CONTRACT
 
 ## Purpose
 
@@ -41,52 +41,20 @@ A trend is not a hot theme. A trend requires multi-source causal evidence.
 
 The Radar tracks six evidence families:
 
-1. POLICY_CAPITAL
-   - national plans and policy direction
-   - fiscal expenditure / special funds
-   - central/local government implementation
-   - SOE capital expenditure and procurement
-
-2. INDUSTRIAL_CAPITAL
-   - capacity expansion
-   - equipment procurement
-   - R&D expenditure
-   - M&A and strategic investment
-   - hiring / project construction / order growth
-
-3. FINANCIAL_CAPITAL
-   - sector market activity and institutional allocation
-   - ETF/fund flows when PIT-safe data is available
-   - financing / IPO / VC / PE evidence
-   - valuation and crowding changes
-
-4. REAL_DEMAND
-   - sales / orders / utilization
-   - inventory and price signals
-   - exports/imports
-   - penetration/adoption
-   - supply-demand gaps
-
-5. TECHNOLOGY
-   - cost curves
-   - technical breakthroughs
-   - substitution risk
-   - bottlenecks and enabling technologies
-
-6. GLOBAL_STRUCTURE
-   - trade and supply-chain relocation
-   - energy/resource constraints
-   - demographic changes
-   - major-economy industrial policy
-   - geopolitical supply-chain effects, treated as evidence rather than prediction
+1. POLICY_CAPITAL — policy direction, fiscal implementation, SOE capital expenditure and procurement.
+2. INDUSTRIAL_CAPITAL — capacity, equipment, R&D, M&A, hiring, projects and orders.
+3. FINANCIAL_CAPITAL — market allocation, financing and crowding; price/flow alone is never causal confirmation.
+4. REAL_DEMAND — sales, orders, utilization, inventory, prices, trade, penetration and supply-demand gaps.
+5. TECHNOLOGY — cost curves, breakthroughs, substitution, bottlenecks and enabling technologies.
+6. GLOBAL_STRUCTURE — demographics, trade, energy/resources, supply chains and major-economy industrial policy.
 
 ## Three horizons
 
 Every trend is scored independently on three horizons:
 
-- STRUCTURAL: 10-20 years. Question: what will society/economy need?
-- INDUSTRIAL: 3-10 years. Question: where can sustained real capital expenditure and profit pools form?
-- CYCLICAL: 6-36 months. Question: is the long-term thesis currently entering an earnings/ordering acceleration phase?
+- STRUCTURAL: 10-20 years — what will society/economy need?
+- INDUSTRIAL: 3-10 years — where can sustained real capex and profit pools form?
+- CYCLICAL: 6-36 months — is the long-term thesis currently entering an earnings/orders acceleration phase?
 
 Do not collapse these horizons into one score. A structurally strong industry can be cyclically weak or financially overcrowded.
 
@@ -102,33 +70,21 @@ Machine states:
 - WEAKENING
 - FALSIFIED
 
-Events:
-
-- NEW
-- RESEEN
-- STRENGTHENED
-- WEAKENED
-- CROWDING_INCREASED
-- CROWDING_EASED
-- HORIZON_CHANGED
-- FALSIFIED
-- REACTIVATION_REVIEW_REQUIRED
-
-Rules:
+Lifecycle rules:
 
 - absence from one scan MUST NOT automatically falsify a trend
 - FALSIFIED trends MUST NOT auto-reactivate
 - same evidence snapshot replay MUST be idempotent
 - out-of-order evidence snapshots fail closed
-- evidence must carry source, observed_at, published_at when available, retrieved_at and freshness classification
-- low-quality duplicated news must not create multiple independent confirmations
+- evidence carries source, observed_at, published_at when available, retrieved_at and freshness
+- duplicated publications do not create independent confirmation
 
 ## Causal chain
 
 For every high-priority trend the system must be able to render:
 
 STRUCTURAL_DRIVER
--> POLICY_RESPONSE (optional; policy is not required for every valid trend)
+-> POLICY_RESPONSE (optional)
 -> REAL_DEMAND
 -> CAPITAL_EXPENDITURE
 -> SUPPLY_CHAIN_BOTTLENECKS
@@ -139,21 +95,15 @@ STRUCTURAL_DRIVER
 
 A broken causal link reduces confidence. Policy headlines alone cannot establish a trend.
 
-## Example: ageing / longevity economy
+## Examples are fixtures, not conclusions
 
-The system should be capable of deriving, rather than hard-coding, a thesis such as:
+Ageing/longevity is only one test example. The same engine must derive unrelated hypotheses such as grid modernization, compute/power infrastructure, resource constraints, advanced manufacturing, changing consumer structures, or a trend unknown when this code was written. Topic names never determine scores.
 
-population ageing
--> increasing chronic-care, rehabilitation, assisted-living and productivity needs
--> policy/fiscal/insurance responses
--> real spending and capacity formation
--> differentiated profit pools across healthcare, devices, insurance, rehabilitation, automation and elder services
-
-It must then distinguish social importance from investability. An elder-care service may have strong demand but poor returns; a medical-device link may have stronger margins and barriers. The Radar therefore ranks industry-chain profit pools, not merely themes.
+The system must also distinguish social importance from investability. A socially necessary industry can have weak returns, while a narrow enabling link can have stronger economics and barriers.
 
 ## Scoring contract
 
-Each trend snapshot records 0-100 component scores:
+Each trend records 0-100 components:
 
 - structural_demand
 - policy_commitment
@@ -166,20 +116,20 @@ Each trend snapshot records 0-100 component scores:
 - financial_crowding
 - evidence_quality
 
-Derived scores:
+Derived outputs:
 
 - structural_score
 - industrial_score
 - cyclical_score
 - confidence_score
 
-`financial_crowding` is a risk/temperature measure, not a positive contribution by default.
+`financial_crowding` is temperature/risk. Pure financial crowding MUST NOT increase causal evidence breadth or structural confidence.
 
-No score may be emitted without an evidence bundle and a deterministic scoring explanation.
+## PIT and provenance
 
-## Required machine outputs
+Every admitted evidence record must identify its source and PIT timestamps. Future information and stale evidence fail closed. Only registered source classes can cross the normalization boundary. Exact normalized evidence used for a persisted snapshot is saved with that snapshot for audit/replay.
 
-Planned durable outputs:
+## Durable machine truth
 
 - `data/era_radar/latest.json`
 - `data/era_radar/trend_lifecycle_state.json`
@@ -190,11 +140,19 @@ Human projection:
 
 - `ERA_CAPITAL_TREND_RADAR.md`
 
-The Markdown file is projection only. JSON is machine truth.
+Markdown is projection only. JSON is machine truth.
+
+## Collector and discovery boundary
+
+V1 defines an industry-agnostic collector protocol plus a deterministic JSON observation adapter. Source-specific adapters emit normalized observations with topic keys, source identity, PIT timestamps, direction, quality and component exposures.
+
+Discovery groups observations into hypotheses without using the topic label as evidence. Financial-market attention alone produces only a WATCH hypothesis; causal evidence must come from real demand, industrial capital, technology, policy and/or global structure.
+
+The JSON collector format is the replay format for CI and historical audits.
 
 ## Daily human view
 
-The report should lead with the economy/era, not ticker symbols:
+The report is organized around the economy/era, not ticker symbols:
 
 1. Top structural trends
 2. New/emerging trends
@@ -204,66 +162,57 @@ The report should lead with the economy/era, not ticker symbols:
 6. Policy-capital changes
 7. Industrial-capital changes
 8. Real-demand changes
-9. Key bottlenecks / profit pools
+9. Key bottlenecks/profit pools
 10. Shanghai/Shenzhen A-share research mapping
-11. What changed since the previous snapshot
+11. What changed since the prior snapshot
 12. Counter-evidence and uncertainty
 
 ## Investment handoff
 
-Radar may emit `RESEARCH_HANDOFF` records only when:
+Radar may emit research-only handoffs when trend confidence, causal profit pool, provenance/freshness and Shanghai/Shenzhen A-share eligibility are satisfied.
 
-- trend confidence clears the research threshold
-- a causal profit pool is identified
-- the company is in the user's tradable Shanghai/Shenzhen A-share universe for actionable research
-- provenance/freshness requirements are satisfied
+A handoff is NOT BUY. V3.1.1 independently re-underwrites moat, earnings, valuation, margin of safety and timing.
 
-A handoff is NOT BUY. It only enters Broad Discovery / Deep Review prioritization. V3.1.1 independently re-underwrites company moat, earnings, valuation, margin of safety and timing.
-
-Conceptual investment chain:
+Conceptual chain:
 
 RIGHT_TREND x RIGHT_COMPANY x RIGHT_PRICE x RIGHT_TIMING
 
-The Radar is primarily responsible for RIGHT_TREND and industry-chain mapping. It must not impersonate the downstream decision kernel.
+Radar is responsible primarily for RIGHT_TREND and industry-chain mapping. It cannot impersonate the downstream Formal decision kernel.
 
 ## Anti-bias requirements
 
-- no hard-coded conclusion that an industry is a future winner
+- no hard-coded future winners
 - no inference from stock-price appreciation alone
 - no policy-headline = investable-industry shortcut
-- explicitly search for counter-evidence
+- explicitly preserve/search counter-evidence
 - separate social necessity from corporate profitability
 - separate structural direction from current cycle
 - separate capital attention from valuation attractiveness
-- preserve negative/neutral evidence
 
 ## V1 acceptance criteria
 
-V1 implementation is complete only when automated tests prove:
+Automated tests must prove:
 
-1. deterministic scoring from a frozen evidence fixture
+1. deterministic scoring from frozen evidence
 2. independent three-horizon scores
 3. lifecycle idempotency on duplicate snapshot
 4. fail-closed out-of-order replay
 5. no auto-reactivation after FALSIFIED
-6. duplicated evidence does not double-count confirmation
+6. duplicate evidence does not double-count confirmation
 7. counter-evidence can downgrade a trend
-8. crowding cannot by itself upgrade structural confidence
-9. policy-only evidence cannot create CONFIRMED trend
-10. A-share mapping produces research handoff, never Formal action
-11. existing V3.1.1 model/gates remain byte-for-byte unaffected by the feature PR unless an explicitly reviewed adapter is added
-12. fixture includes ageing/longevity but the expected result is derived from evidence, not hard-coded by industry name
+8. crowding cannot upgrade structural confidence
+9. policy-only evidence cannot create CONFIRMED
+10. A-share mapping is research-only, never Formal action
+11. V3.1.1 model/trading/PIT gates are not relaxed
+12. ageing/longevity result is derived from evidence, not its name
+13. unregistered sources fail closed
+14. persisted snapshots contain auditable evidence bundles
+15. CLI replay generates deterministic machine truth and human projection
 
-## Rollout
+## V1 production boundary
 
-Phase 1: contract + schema + deterministic engine + fixtures/tests.
+The scheduled workflow is an auditable deterministic replay/regression gate. It is NOT a claim that all live official-source adapters are already production-authoritative. Each live adapter must separately prove parsing, PIT timestamps, provenance, source quality and failure semantics before its output is admitted to durable Radar truth.
 
-Phase 2: evidence collectors with PIT/provenance/freshness and source-quality controls.
-
-Phase 3: trend lifecycle persistence and daily report projection.
-
-Phase 4: read-only research handoff into Broad Discovery / V3.1.1 Deep Review.
-
-Phase 5: production scheduling, observability, replay validation and longitudinal calibration against realized industry fundamentals.
+This is deliberate fail-closed staging: the intelligence architecture, lifecycle, persistence and research-only authority boundary can ship before any unproven live parser is allowed to influence research truth.
 
 The feature does not receive Formal trading authority in any phase.
