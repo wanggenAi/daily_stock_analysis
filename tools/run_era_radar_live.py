@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from src.era_radar.live_miit import MiitPolicyCollector  # noqa: E402
 from src.era_radar.live_production import run_live_production  # noqa: E402
 from src.era_radar.live_world_bank import WorldBankChinaStructuralCollector  # noqa: E402
 
@@ -22,7 +23,7 @@ def main() -> int:
     args = parser.parse_args()
 
     result = run_live_production(
-        [WorldBankChinaStructuralCollector()],
+        [WorldBankChinaStructuralCollector(), MiitPolicyCollector()],
         output_dir=args.output_dir,
     )
     print(json.dumps(result, ensure_ascii=False, sort_keys=True))
