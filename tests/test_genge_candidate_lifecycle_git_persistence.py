@@ -178,14 +178,42 @@ def test_rejected_push_discards_stale_generation_and_replays(
 ) -> None:
     repo, remote = _init_remote(tmp_path)
     authoritative = tmp_path / "authoritative"
+    baseline = _snapshot("199", "2026-08-27T09:00:00+00:00")
     snapshot = _snapshot("200", "2026-08-27T10:00:00+00:00")
+    baseline_path = _write_snapshot(tmp_path, baseline, "baseline.json")
     snapshot_path = _write_snapshot(tmp_path, snapshot, "snapshot.json")
+
+    baseline_result = publish_candidate_lifecycle_with_replay(
+        snapshot_path=baseline_path,
+        authoritative_dir=authoritative,
+        repo_root=repo,
+        max_attempts=2,
+    )
+    assert baseline_result["status"] == "PERSISTED"
+
     real_push = git_persistence._push_worktree
     calls = {"count": 0}
 
     def reject_once(worktree: Path, remote_name: str, branch: str) -> bool:
         calls["count"] += 1
         if calls["count"] == 1:
+            competitor = tmp_path / "competitor"
+            _run(tmp_path, "git", "clone", str(remote), str(competitor))
+            _run(competitor, "git", "config", "user.name", "competitor")
+            _run(competitor, "git", "config", "user.email", "competitor@example.com")
+            state_path = competitor / "data/opportunity_snapshots/candidate_lifecycle_state.json"
+            state = json.loads(state_path.read_text(encoding="utf-8"))
+            candidate = state["candidates"]["600312"]
+            assert candidate["seen_count"] == 1
+            candidate["seen_count"] = 7
+            candidate["concurrent_writer_marker"] = "preserve-me"
+            state_path.write_text(
+                json.dumps(state, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            _run(competitor, "git", "add", str(state_path.relative_to(competitor)))
+            _run(competitor, "git", "commit", "-m", "concurrent lifecycle update")
+            _run(competitor, "git", "push", "origin", "HEAD:main")
             return False
         return real_push(worktree, remote_name, branch)
 
@@ -206,4 +234,5 @@ def test_rejected_push_discards_stale_generation_and_replays(
     assert result["attempt"] == 2
     assert result["replay_on_conflict"] is True
     assert state["latest_applied_snapshot_id"] == snapshot["snapshot_id"]
-    assert state["candidates"]["600312"]["seen_count"] == 1
+    assert state["candidates"]["600312"]["seen_count"] == 8
+    assert state["candidates"]["600312"]["concurrent_writer_marker"] == "preserve-me"
