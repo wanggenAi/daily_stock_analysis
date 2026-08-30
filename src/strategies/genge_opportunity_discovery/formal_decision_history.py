@@ -102,8 +102,8 @@ def _durable_identity(
         if sid in (None, ""):
             raise ValueError("formal decision latest summary has no Canonical snapshot identity")
 
-        # Legacy V1 summaries did not store source_run_id.  The immutable records
-        # already do.  Only a unique matching run id is a safe migration source.
+        # Legacy V1 summaries did not store source_run_id. The immutable records
+        # already do. Only a unique matching run id is a safe migration source.
         matching_runs = {
             str(row.get("canonical_source_run_id") or "")
             for row in existing
@@ -164,7 +164,14 @@ def append_snapshot(snapshot_path: Path, history_path: Path, summary_path: Path)
                 out.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
 
     total = len(existing) + len(added)
-    latest_updated = order is not PersistenceOrder.STALE
+    legacy_summary_needs_run_id = bool(summary) and summary.get("canonical_source_run_id") in (
+        None,
+        "",
+    )
+    latest_updated = order in {PersistenceOrder.INITIAL, PersistenceOrder.NEWER} or (
+        order is PersistenceOrder.SAME
+        and (bool(added) or not summary or legacy_summary_needs_run_id)
+    )
     if latest_updated:
         latest_summary = {
             "contract_version": CONTRACT_VERSION,
