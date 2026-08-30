@@ -4,6 +4,19 @@ on:
   workflow_run:
     workflows: ["GenGe V3.1.1 Production Finalizer"]
     types: [completed]
+  workflow_dispatch:
+    inputs:
+      finalizer_run_id:
+        description: "Successful Production Finalizer run id"
+        required: true
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v311-continuity-state.yml"
+      - "src/genge_v311_persistence_order.py"
+      - "src/strategies/genge_opportunity_discovery/holding_valuation_continuity.py"
+      - "tests/test_genge_v311_monotonic_persistence.py"
 
 permissions:
   contents: write
@@ -15,8 +28,12 @@ concurrency:
 
 jobs:
   persist:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
@@ -25,25 +42,62 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Install persistence test harness
+        run: python -m pip install --disable-pip-version-check -q pytest
+      - name: Resolve Finalizer run id
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "FINALIZER_RUN_ID=${{ inputs.finalizer_run_id }}" >> "$GITHUB_ENV"
+          elif [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "FINALIZER_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
+          else
+            runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
+            run_ids=$(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
+            found=""
+            for run_id in $run_ids; do
+              artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+              if printf '%s' "$artifacts" | jq -e '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))' >/dev/null; then
+                echo "FINALIZER_RUN_ID=${run_id}" >> "$GITHUB_ENV"
+                found=1
+                break
+              fi
+            done
+            if [ -z "$found" ]; then
+              echo "No successful non-expired authoritative Finalizer artifact found" >&2
+              exit 1
+            fi
+          fi
       - name: Download finalized authoritative artifact
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
+          set -euo pipefail
           mkdir -p finalized
-          gh run download "$RUN_ID" --repo "$GITHUB_REPOSITORY" --dir finalized
-      - name: Persist holding continuity state
-        run: |
+          gh run download "$FINALIZER_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir finalized
           SNAPSHOT=$(find finalized -path '*/canonical_snapshot/latest.json' -print -quit)
           test -n "$SNAPSHOT"
-          python - <<'PY' "$SNAPSHOT"
+          echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
+      - name: Run monotonic persistence regression gate
+        run: python -m pytest -q tests/test_genge_v311_monotonic_persistence.py
+      - name: Persist holding continuity with optimistic replay
+        run: |
+          set -euo pipefail
+          git config user.name "genge-v311-production-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+
+          for attempt in 1 2 3 4; do
+            echo "holding continuity replay attempt ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+
+            python - <<'PY' "$SNAPSHOT"
           import importlib.util
           import sys
           from pathlib import Path
 
-          # Load the continuity module directly instead of importing the package.
-          # The package __init__ imports the full research pipeline (and pandas),
-          # while this persistence step intentionally depends on stdlib only.
           module_path = Path("src/strategies/genge_opportunity_discovery/holding_valuation_continuity.py")
           spec = importlib.util.spec_from_file_location("genge_holding_valuation_continuity", module_path)
           if spec is None or spec.loader is None:
@@ -52,12 +106,18 @@ jobs:
           spec.loader.exec_module(module)
           module.persist_from_snapshot(Path(sys.argv[1]))
           PY
-      - name: Commit durable continuity state
-        run: |
-          git config user.name "genge-v311-production-bot"
-          git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add data/opportunity_snapshots/holding_valuation_continuity_state.json
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Persist V3.1.1 holding valuation continuity [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
+
+            git add data/opportunity_snapshots/holding_valuation_continuity_state.json
+            if git diff --cached --quiet; then
+              echo "holding continuity already current or incoming Finalizer is stale"
+              exit 0
+            fi
+            git commit -m "Persist V3.1.1 holding valuation continuity [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push race detected; replaying from newest origin/main" >&2
+          done
+
+          echo "holding continuity persistence failed after 4 optimistic replay attempts" >&2
+          exit 1
