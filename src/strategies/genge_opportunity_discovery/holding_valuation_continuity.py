@@ -20,6 +20,8 @@ import math
 from pathlib import Path
 from typing import Any, Mapping
 
+from src.genge_v311_persistence_order import PersistenceOrder, classify_persistence_order
+
 STATE_PATH = Path("data/opportunity_snapshots/holding_valuation_continuity_state.json")
 SELL_ACTIONS = {"REDUCE_25", "REDUCE_50", "CORE_ONLY"}
 NON_SELL_ACTIONS = {"HOLD", "HOLD_NO_ADD", "HOLD_REVIEW", "BUY", "WAIT"}
@@ -164,8 +166,31 @@ def continuity_review_required(data: Mapping[str, Any], action: str, *, path: Pa
 
 
 def persist_from_snapshot(snapshot_path: Path, state_path: Path = STATE_PATH):
+    """Persist only if the authorized snapshot does not move durable state backward."""
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    if not isinstance(snapshot, dict):
+        raise ValueError("canonical snapshot must be an object")
+    state_exists = state_path.is_file()
     state = load_state(state_path)
+
+    current_sid = state.get("latest_applied_snapshot_id")
+    current_run = state.get("latest_applied_source_run_id")
+    if state_exists and (current_sid in (None, "") and current_run in (None, "")):
+        # A pre-monotonic state containing baselines but no durable Canonical
+        # identity cannot safely be treated as empty.  Fail closed rather than
+        # silently assigning it an arbitrary order.
+        if state.get("holdings"):
+            raise ValueError("holding continuity state has baselines but no durable Canonical identity")
+
+    order = classify_persistence_order(
+        incoming_snapshot_id=snapshot.get("snapshot_id"),
+        incoming_source_run_id=snapshot.get("source_run_id"),
+        current_snapshot_id=current_sid,
+        current_source_run_id=current_run,
+    )
+    if order in {PersistenceOrder.SAME, PersistenceOrder.STALE}:
+        return state
+
     state["contract_version"] = "V311_HOLDING_SELL_RATIONALE_V3"
     holdings = state.setdefault("holdings", {})
     for row in snapshot.get("production", {}).get("holding_decisions", []):
@@ -181,11 +206,11 @@ def persist_from_snapshot(snapshot_path: Path, state_path: Path = STATE_PATH):
             "valuation_confidence": row.get("valuation_confidence"),
             "reason_codes": row.get("reason_codes"),
             "canonical_snapshot_id": snapshot.get("snapshot_id"),
-            "canonical_source_run_id": snapshot.get("source_run_id"),
+            "canonical_source_run_id": str(snapshot.get("source_run_id")),
             "decision_date": row.get("decision_date"),
         }
     state["latest_applied_snapshot_id"] = snapshot.get("snapshot_id")
-    state["latest_applied_source_run_id"] = snapshot.get("source_run_id")
+    state["latest_applied_source_run_id"] = str(snapshot.get("source_run_id"))
     state["no_auto_trade"] = True
     state_path.parent.mkdir(parents=True, exist_ok=True)
     state_path.write_text(json.dumps(state, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
