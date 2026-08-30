@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from src.genge_v311_persistence_order import PersistenceOrder, classify_persistence_order
+
 
 def _load(path: Path, *, required: bool = True) -> dict[str, Any]:
     if not path.is_file():
@@ -115,6 +117,32 @@ def render_md(status: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
+def persist_status(status: dict[str, Any], json_output: Path, md_output: Path) -> dict[str, Any]:
+    """Write dashboard only when its Canonical authority is not older than durable latest.
+
+    SAME is intentionally writable because research-learning projections and code-drift
+    metadata may legitimately refresh while Formal Truth remains the same. STALE never
+    overwrites either the machine-readable or human-readable latest projection.
+    """
+    current = _load(json_output, required=False)
+    order = classify_persistence_order(
+        incoming_snapshot_id=status.get("canonical_snapshot_id"),
+        incoming_source_run_id=status.get("canonical_source_run_id"),
+        current_snapshot_id=current.get("canonical_snapshot_id") if current else None,
+        current_source_run_id=current.get("canonical_source_run_id") if current else None,
+    )
+    if order is PersistenceOrder.STALE:
+        return current
+
+    json_output.parent.mkdir(parents=True, exist_ok=True)
+    json_output.write_text(
+        json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    md_output.write_text(render_md(status), encoding="utf-8")
+    return status
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--authoritative-root", type=Path, required=True)
@@ -124,10 +152,8 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--md-output", type=Path, default=Path("PRODUCTION_STATUS.md"))
     args = p.parse_args(argv)
     status = build(args.authoritative_root, main_sha=args.main_sha, state_root=args.state_root)
-    args.json_output.parent.mkdir(parents=True, exist_ok=True)
-    args.json_output.write_text(json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    args.md_output.write_text(render_md(status), encoding="utf-8")
-    print(json.dumps(status, ensure_ascii=False, indent=2))
+    persisted = persist_status(status, args.json_output, args.md_output)
+    print(json.dumps(persisted, ensure_ascii=False, indent=2))
     return 0
 
 
