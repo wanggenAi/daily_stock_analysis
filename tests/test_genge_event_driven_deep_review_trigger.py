@@ -7,6 +7,14 @@ import pytest
 from src.strategies.genge_opportunity_discovery.event_driven_deep_review_trigger import build_decision
 
 
+def _material_event(evidence_id: str = "ev-new-1", direction: str = "WEAKENING") -> dict:
+    return {
+        "evidence_id": evidence_id,
+        "materiality": "HIGH",
+        "direction": direction,
+    }
+
+
 def _hourly() -> dict:
     return {
         "canonical_snapshot_id": "snap-1",
@@ -21,11 +29,14 @@ def _hourly() -> dict:
                 "formal_action": "",
                 "deep_review_priority": "RAISE",
                 "hourly_research_conclusion": "NEW_EVIDENCE_REUNDERWRITE_LEAD",
-                "thesis_status": "WEAKENING_RESEARCH_SIGNAL",
+                "thesis_status": "REUNDERWRITE_REQUIRED",
                 "price_evidence_status": "PRICE_GATE_NOT_MET",
                 "latest_price": 18.5,
                 "latest_price_observed_at": "2026-08-31T09:45:00+08:00",
-                "latest_evidence": [{"evidence_id": "ev-new-1"}],
+                "high_materiality_evidence_count_72h": 1,
+                "material_weakening_evidence_count_72h": 1,
+                "material_strengthening_evidence_count_72h": 0,
+                "latest_evidence": [_material_event()],
             }
         ],
     }
@@ -45,7 +56,7 @@ def _priority() -> dict:
                 "priority": "P0",
                 "priority_score": 75,
                 "research_tier": "PENDING",
-                "thesis_status": "WEAKENING_RESEARCH_SIGNAL",
+                "thesis_status": "REUNDERWRITE_REQUIRED",
                 "hourly_research_conclusion": "NEW_EVIDENCE_REUNDERWRITE_LEAD",
                 "reason_codes": ["REUNDERWRITE_REQUIRED", "HOURLY_PRIORITY_RAISE"],
                 "formal_action": "",
@@ -54,27 +65,85 @@ def _priority() -> dict:
     }
 
 
-def test_external_p0_reunderwrite_triggers_full_production_rescan() -> None:
+def _make_holding(priority: dict, formal_action: str = "HOLD_REVIEW") -> None:
+    priority["queue"][0]["reason_codes"].append("CURRENT_HOLDING")
+    priority["queue"][0]["formal_action"] = formal_action
+
+
+def test_external_reunderwrite_triggers_existing_full_v31_deep_review() -> None:
     decision = build_decision(_priority(), _hourly())
     assert decision["dispatch_required"] is True
     assert decision["trigger_codes"] == ["601020"]
+    assert decision["holding_trigger_count"] == 0
+    assert decision["external_trigger_count"] == 1
     assert decision["signal_digest"]
-    assert decision["downstream_semantics"] == "FULL_PRODUCTION_RESCAN_THEN_EXISTING_CANONICAL_FINALIZER"
+    assert decision["downstream_semantics"] == "EXISTING_V31_FULL_DEEP_REVIEW_THEN_PRODUCTION_FINALIZER"
     assert decision["formal_action_eligible"] is False
     assert decision["direct_formal_action_change_allowed"] is False
     assert decision["no_auto_trade"] is True
 
 
-def test_current_holding_is_never_event_dispatch_trigger() -> None:
+def test_holding_reunderwrite_signal_triggers_immediate_deep_review() -> None:
     priority = _priority()
-    priority["queue"][0]["reason_codes"].append("CURRENT_HOLDING")
-    priority["queue"][0]["formal_action"] = "HOLD_REVIEW"
+    _make_holding(priority)
     decision = build_decision(priority, _hourly())
+    assert decision["dispatch_required"] is True
+    assert decision["trigger_codes"] == ["601020"]
+    assert decision["holding_trigger_count"] == 1
+    assert decision["external_trigger_count"] == 0
+    assert decision["triggers"][0]["is_current_holding"] is True
+    assert decision["triggers"][0]["existing_formal_action"] == "HOLD_REVIEW"
+
+
+def test_ordinary_holding_p0_raise_does_not_trigger() -> None:
+    priority = _priority()
+    hourly = _hourly()
+    _make_holding(priority, formal_action="REDUCE_25")
+    priority["queue"][0].update(
+        priority="P0",
+        priority_score=70,
+        thesis_status="STRENGTHENING_RESEARCH_SIGNAL",
+        hourly_research_conclusion="FORMAL_ACTION_UNCHANGED",
+        reason_codes=["CURRENT_HOLDING", "HOURLY_PRIORITY_RAISE"],
+    )
+    hourly["rows"][0].update(
+        thesis_status="STRENGTHENING_RESEARCH_SIGNAL",
+        hourly_research_conclusion="FORMAL_ACTION_UNCHANGED",
+        high_materiality_evidence_count_72h=0,
+        material_weakening_evidence_count_72h=0,
+        material_strengthening_evidence_count_72h=1,
+        latest_evidence=[{"evidence_id": "ev-medium", "materiality": "MEDIUM", "direction": "STRENGTHENING"}],
+    )
+    decision = build_decision(priority, hourly)
     assert decision["dispatch_required"] is False
-    assert decision["trigger_codes"] == []
 
 
-def test_price_attractive_signal_triggers_even_when_priority_is_not_p0() -> None:
+def test_holding_price_attractive_signal_triggers_add_review() -> None:
+    priority = _priority()
+    hourly = _hourly()
+    _make_holding(priority, formal_action="HOLD_NO_ADD")
+    priority["queue"][0].update(
+        priority="P1",
+        priority_score=55,
+        thesis_status="NO_NEW_MATERIAL_EVIDENCE",
+        hourly_research_conclusion="PRICE_ATTRACTIVE_RESEARCH_LEAD",
+        reason_codes=["CURRENT_HOLDING", "PRICE_ATTRACTIVE_RESEARCH_LEAD"],
+    )
+    hourly["rows"][0].update(
+        thesis_status="NO_NEW_MATERIAL_EVIDENCE",
+        hourly_research_conclusion="PRICE_ATTRACTIVE_RESEARCH_LEAD",
+        price_evidence_status="PRICE_GATE_PASS_RESEARCH_ONLY",
+        high_materiality_evidence_count_72h=0,
+        material_weakening_evidence_count_72h=0,
+        material_strengthening_evidence_count_72h=0,
+        latest_evidence=[],
+    )
+    decision = build_decision(priority, hourly)
+    assert decision["dispatch_required"] is True
+    assert decision["holding_trigger_count"] == 1
+
+
+def test_price_attractive_external_signal_triggers_even_when_priority_is_not_p0() -> None:
     priority = _priority()
     hourly = _hourly()
     priority["queue"][0].update(
@@ -88,6 +157,9 @@ def test_price_attractive_signal_triggers_even_when_priority_is_not_p0() -> None
         hourly_research_conclusion="PRICE_ATTRACTIVE_RESEARCH_LEAD",
         thesis_status="NO_NEW_MATERIAL_EVIDENCE",
         price_evidence_status="PRICE_GATE_PASS_RESEARCH_ONLY",
+        high_materiality_evidence_count_72h=0,
+        material_weakening_evidence_count_72h=0,
+        material_strengthening_evidence_count_72h=0,
         latest_evidence=[],
     )
     decision = build_decision(priority, hourly)
@@ -109,6 +181,9 @@ def test_intraday_price_change_does_not_change_price_signal_digest() -> None:
         hourly_research_conclusion="PRICE_ATTRACTIVE_RESEARCH_LEAD",
         thesis_status="NO_NEW_MATERIAL_EVIDENCE",
         price_evidence_status="PRICE_GATE_PASS_RESEARCH_ONLY",
+        high_materiality_evidence_count_72h=0,
+        material_weakening_evidence_count_72h=0,
+        material_strengthening_evidence_count_72h=0,
         latest_evidence=[],
     )
     first = build_decision(priority, hourly)
@@ -133,6 +208,9 @@ def test_new_trade_day_changes_price_signal_digest() -> None:
         hourly_research_conclusion="PRICE_ATTRACTIVE_RESEARCH_LEAD",
         thesis_status="NO_NEW_MATERIAL_EVIDENCE",
         price_evidence_status="PRICE_GATE_PASS_RESEARCH_ONLY",
+        high_materiality_evidence_count_72h=0,
+        material_weakening_evidence_count_72h=0,
+        material_strengthening_evidence_count_72h=0,
         latest_evidence=[],
     )
     first = build_decision(priority, hourly)
@@ -142,20 +220,33 @@ def test_new_trade_day_changes_price_signal_digest() -> None:
     assert first["signal_digest"] != second["signal_digest"]
 
 
-def test_new_evidence_id_changes_signal_digest() -> None:
+def test_low_neutral_evidence_does_not_retrigger_same_material_signal() -> None:
     first = build_decision(_priority(), _hourly())
     hourly2 = _hourly()
-    hourly2["rows"][0]["latest_evidence"].append({"evidence_id": "ev-new-2"})
+    hourly2["rows"][0]["latest_evidence"].insert(
+        0,
+        {"evidence_id": "ev-low-neutral", "materiality": "LOW", "direction": "NEUTRAL"},
+    )
+    second = build_decision(_priority(), hourly2)
+    assert first["signal_digest"] == second["signal_digest"]
+
+
+def test_new_material_evidence_changes_signal_digest() -> None:
+    first = build_decision(_priority(), _hourly())
+    hourly2 = _hourly()
+    hourly2["rows"][0]["latest_evidence"].append(_material_event("ev-new-2"))
+    hourly2["rows"][0]["high_materiality_evidence_count_72h"] = 2
+    hourly2["rows"][0]["material_weakening_evidence_count_72h"] = 2
     second = build_decision(_priority(), hourly2)
     assert first["signal_digest"] != second["signal_digest"]
 
 
-def test_neutral_p2_raise_does_not_launch_expensive_full_scan() -> None:
+def test_neutral_p0_raise_does_not_launch_expensive_deep_review() -> None:
     priority = _priority()
     hourly = _hourly()
     priority["queue"][0].update(
-        priority="P2",
-        priority_score=25,
+        priority="P0",
+        priority_score=75,
         thesis_status="NO_NEW_MATERIAL_EVIDENCE",
         hourly_research_conclusion="FORMAL_ACTION_UNCHANGED",
         reason_codes=["HOURLY_PRIORITY_RAISE", "MAPPING_GAP"],
@@ -163,10 +254,31 @@ def test_neutral_p2_raise_does_not_launch_expensive_full_scan() -> None:
     hourly["rows"][0].update(
         hourly_research_conclusion="FORMAL_ACTION_UNCHANGED",
         thesis_status="NO_NEW_MATERIAL_EVIDENCE",
+        high_materiality_evidence_count_72h=0,
+        material_weakening_evidence_count_72h=0,
+        material_strengthening_evidence_count_72h=0,
         latest_evidence=[],
     )
     decision = build_decision(priority, hourly)
     assert decision["dispatch_required"] is False
+
+
+def test_p0_material_evidence_change_triggers_without_reunderwrite_label() -> None:
+    priority = _priority()
+    hourly = _hourly()
+    priority["queue"][0].update(
+        priority="P0",
+        thesis_status="MIXED_NEW_EVIDENCE",
+        hourly_research_conclusion="FORMAL_ACTION_UNCHANGED",
+        reason_codes=["MATERIAL_EVIDENCE_CHANGE"],
+    )
+    hourly["rows"][0].update(
+        thesis_status="MIXED_NEW_EVIDENCE",
+        hourly_research_conclusion="FORMAL_ACTION_UNCHANGED",
+        material_strengthening_evidence_count_72h=1,
+    )
+    decision = build_decision(priority, hourly)
+    assert decision["dispatch_required"] is True
 
 
 def test_canonical_identity_mismatch_fails_closed() -> None:
