@@ -43,13 +43,21 @@ jobs:
           test -f .era-radar-artifact/latest.json
           test -f .era-radar-artifact/trend_lifecycle_state.json
           test -f .era-radar-artifact/ERA_CAPITAL_TREND_RADAR.md
-      - name: Assert research-only authority
+          test "$(find .era-radar-artifact/evidence -name '*.json' | wc -l | tr -d ' ')" = "1"
+      - name: Assert research-only authority and evidence auditability
         run: |
           python - <<'PY'
+          import glob
           import json
           p=json.load(open('.era-radar-artifact/latest.json'))
           assert p['formal_trading_authority'] is False
           assert p['no_auto_trade'] is True
+          files=glob.glob('.era-radar-artifact/evidence/*.json')
+          assert len(files) == 1
+          evidence=json.load(open(files[0]))
+          assert evidence['formal_trading_authority'] is False
+          assert evidence['evidence_count'] > 0
+          assert len(evidence['records']) == evidence['evidence_count']
           PY
       - name: Upload Radar replay artifact
         uses: actions/upload-artifact@v4
