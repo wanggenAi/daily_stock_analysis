@@ -2,6 +2,12 @@ name: Era Capital Trend Radar
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/era_radar/**'
+      - 'tools/run_era_radar*.py'
+      - '.github/workflows/era-capital-trend-radar.yml'
   pull_request:
     paths:
       - 'src/era_radar/**'
@@ -55,7 +61,7 @@ jobs:
           PY
 
   live-source-smoke:
-    name: Era Radar World Bank live smoke
+    name: Era Radar live-source smoke
     if: github.event_name == 'pull_request'
     permissions:
       contents: read
@@ -65,9 +71,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Fetch real China structural evidence
+      - name: Fetch real China structural, policy and demand evidence
         run: |
-          rm -rf .era-radar-live-smoke
+          rm -rf .era-radar-live-smoke .era-radar-live-smoke-result.json
           python tools/run_era_radar_live.py --output-dir .era-radar-live-smoke | tee .era-radar-live-smoke-result.json
           test -f .era-radar-live-smoke/latest.json
           test -f .era-radar-live-smoke/trend_lifecycle_state.json
@@ -85,6 +91,7 @@ jobs:
           path: |
             .era-radar-live-smoke-result.json
             .era-radar-live-smoke/
+          include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
 
@@ -161,5 +168,6 @@ jobs:
           path: |
             .era-radar-live-result.json
             data/era_radar/
+          include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
