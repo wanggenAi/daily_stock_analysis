@@ -55,32 +55,37 @@ jobs:
             "requests>=2.31.0" "beautifulsoup4>=4.12.0" "PyYAML>=6.0" "pypdf>=5.0.0" \
             pandas pytest anyio fastapi httpx starlette
 
-      - name: Run slow-lane contract tests
+      - name: Collect and persist slow-lane evidence with optimistic replay
         run: |
-          python -m pytest -q \
-            tests/test_genge_slow_lane_evidence.py \
-            tests/test_genge_evidence_event_store.py \
-            tests/test_genge_research_mapping_coverage.py \
-            tests/test_genge_competition_peer_evidence_feeder.py
+          set -euo pipefail
+          git config user.name "genge-v311-evidence-slow-lane-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
 
-      - name: Build reviewed research mapping coverage
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
-            --coverage-output data/research_mapping/coverage.json \
-            --industry-csv-output data/research_mapping/company_industry_map.csv
+          for attempt in 1 2 3 4; do
+            echo "slow-lane replay attempt ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fdx -- data/evidence_events data/research_mapping
 
-      - name: Collect official regulatory policy evidence
-        continue-on-error: true
-        run: |
-          if [ -f data/hourly_deep_overlay/latest.json ]; then
-            python -m src.strategies.genge_opportunity_discovery.regulatory_policy_evidence_collector \
-              --hourly-overlay data/hourly_deep_overlay/latest.json \
-              --company-cycle-evidence data/research_mapping/company_industry_map.csv \
-              --industry-alias-map config/industry_alias_map.yaml \
-              --evidence-root data/evidence_events \
-              --status-output data/evidence_events/policy_collector_status.json
-          else
-            python - <<'PY'
+            python -m pytest -q \
+              tests/test_genge_slow_lane_evidence.py \
+              tests/test_genge_evidence_event_store.py \
+              tests/test_genge_research_mapping_coverage.py \
+              tests/test_genge_competition_peer_evidence_feeder.py
+
+            python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+              --coverage-output data/research_mapping/coverage.json \
+              --industry-csv-output data/research_mapping/company_industry_map.csv
+
+            if [ -f data/hourly_deep_overlay/latest.json ]; then
+              python -m src.strategies.genge_opportunity_discovery.regulatory_policy_evidence_collector \
+                --hourly-overlay data/hourly_deep_overlay/latest.json \
+                --company-cycle-evidence data/research_mapping/company_industry_map.csv \
+                --industry-alias-map config/industry_alias_map.yaml \
+                --evidence-root data/evidence_events \
+                --status-output data/evidence_events/policy_collector_status.json || echo "policy collector degraded; preserving fail-soft research semantics" >&2
+            else
+              python - <<'PY'
           import json
           from datetime import datetime, timezone
           from pathlib import Path
@@ -93,39 +98,30 @@ jobs:
               'no_auto_trade': True,
           }, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
-          fi
+            fi
 
-      - name: Feed official peer material events
-        continue-on-error: true
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.competition_peer_evidence_feeder \
-            --peer-map config/competition_peer_map.json \
-            --cache-dir data/evidence_cache/competition_peers \
-            --evidence-root data/evidence_events \
-            --status-output data/evidence_events/competition_peer_feeder_status.json
+            python -m src.strategies.genge_opportunity_discovery.competition_peer_evidence_feeder \
+              --peer-map config/competition_peer_map.json \
+              --cache-dir data/evidence_cache/competition_peers \
+              --evidence-root data/evidence_events \
+              --status-output data/evidence_events/competition_peer_feeder_status.json || echo "peer evidence feeder degraded; preserving fail-soft research semantics" >&2
 
-      - name: Collect evidence-gated competitive change context
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.competition_change_collector \
-            --peer-map config/competition_peer_map.json \
-            --evidence-root data/evidence_events \
-            --status-output data/evidence_events/competition_collector_status.json \
-            --lookback-hours 168
+            python -m src.strategies.genge_opportunity_discovery.competition_change_collector \
+              --peer-map config/competition_peer_map.json \
+              --evidence-root data/evidence_events \
+              --status-output data/evidence_events/competition_collector_status.json \
+              --lookback-hours 168
 
-      - name: Rebuild evidence source registry
-        run: |
-          python -m src.strategies.genge_opportunity_discovery.evidence_source_registry \
-            --evidence-root data/evidence_events \
-            --collector-status data/evidence_events/collector_status.json \
-            --industry-status data/evidence_events/industry_collector_status.json \
-            --commodity-status data/evidence_events/commodity_collector_status.json \
-            --policy-status data/evidence_events/policy_collector_status.json \
-            --competition-status data/evidence_events/competition_collector_status.json \
-            --output data/evidence_events/source_registry.json
+            python -m src.strategies.genge_opportunity_discovery.evidence_source_registry \
+              --evidence-root data/evidence_events \
+              --collector-status data/evidence_events/collector_status.json \
+              --industry-status data/evidence_events/industry_collector_status.json \
+              --commodity-status data/evidence_events/commodity_collector_status.json \
+              --policy-status data/evidence_events/policy_collector_status.json \
+              --competition-status data/evidence_events/competition_collector_status.json \
+              --output data/evidence_events/source_registry.json
 
-      - name: Validate slow lane cannot become production authority
-        run: |
-          python - <<'PY'
+            python - <<'PY'
           import json
           from pathlib import Path
           registry = json.loads(Path('data/evidence_events/source_registry.json').read_text(encoding='utf-8'))
@@ -142,37 +138,37 @@ jobs:
           assert coverage['no_auto_trade'] is True
           PY
 
+            git add -f data/evidence_events data/research_mapping
+            if git diff --cached --quiet; then
+              echo "No slow-lane evidence change to persist"
+              exit 0
+            fi
+            git commit -m "Persist V3.1.1 slow-lane evidence [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push race detected; replaying slow-lane evidence from newest origin/main" >&2
+          done
+
+          echo "slow-lane persistence failed after 4 optimistic replay attempts" >&2
+          exit 1
+
       - name: Upload slow-lane evidence artifact
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: genge-v311-evidence-slow-lane-${{ github.run_id }}
           path: |
             data/evidence_events
             data/research_mapping
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
-
-      - name: Persist slow-lane evidence to main
-        run: |
-          set -euo pipefail
-          git config user.name "genge-v311-evidence-slow-lane-bot"
-          git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          # These runtime state directories are intentionally gitignored for normal
-          # development. The production bot is the only writer allowed to persist
-          # its reviewed outputs, so force-add only these explicit paths.
-          git add -f data/evidence_events data/research_mapping
-          if git diff --cached --quiet; then
-            echo "No slow-lane evidence change to persist"
-            exit 0
-          fi
-          git commit -m "Persist V3.1.1 slow-lane evidence [skip ci]"
-          git pull --rebase origin main
-          git push origin HEAD:main
 
       - name: Publish summary
         if: always()
         run: |
           echo "# GenGe V3.1.1 Evidence Slow Lane" >> "$GITHUB_STEP_SUMMARY"
+          echo "- persistence: optimistic replay on newest main" >> "$GITHUB_STEP_SUMMARY"
           echo "- official regulatory/policy evidence is collected outside the hourly fast lane" >> "$GITHUB_STEP_SUMMARY"
           echo "- reviewed mapping coverage exposes unmapped holdings/candidates instead of guessing" >> "$GITHUB_STEP_SUMMARY"
           echo "- explicit peer mappings receive their own official material-event feed before competition bridging" >> "$GITHUB_STEP_SUMMARY"
