@@ -2,14 +2,9 @@ name: GenGe V3.1.1 Hourly Deep Overlay
 
 on:
   schedule:
-    # Beijing 09:05-16:05 on weekdays (UTC 01:05-08:05).
-    - cron: "5 1-8 * * 1-5"
-    # GitHub cron uses UTC. These two ranges together cover every Beijing
-    # Saturday/Sunday hour at :05 without leaking into Beijing Monday morning.
-    # Beijing Sat/Sun 00:05-07:05 == UTC Fri/Sat 16:05-23:05.
-    - cron: "5 16-23 * * 5,6"
-    # Beijing Sat/Sun 08:05-23:05 == UTC Sat/Sun 00:05-15:05.
-    - cron: "5 0-15 * * 0,6"
+    # Research/evidence must stay fresh continuously, including weekday premarket.
+    # GitHub cron is UTC; hourly cadence is timezone-independent.
+    - cron: "5 * * * *"
   workflow_dispatch:
   push:
     branches: [main]
