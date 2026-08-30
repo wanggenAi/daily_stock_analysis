@@ -28,7 +28,7 @@ def main() -> int:
     records = collect_all([JsonObservationCollector(args.observations)], args.research_as_of)
     hypotheses = discover_hypotheses(records)
     snapshot = build_snapshot(records, args.research_as_of)
-    result = persist_snapshot(snapshot, args.output_dir)
+    result = persist_snapshot(snapshot, args.output_dir, records)
     payload = {
         **result,
         "formal_trading_authority": False,
