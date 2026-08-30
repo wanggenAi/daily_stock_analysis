@@ -199,6 +199,9 @@ def test_rejected_push_discards_stale_generation_and_replays(
         if calls["count"] == 1:
             competitor = tmp_path / "competitor"
             _run(tmp_path, "git", "clone", str(remote), str(competitor))
+            # The bare test remote's symbolic HEAD is not guaranteed to follow the
+            # renamed main branch, so explicitly check out the branch under test.
+            _run(competitor, "git", "checkout", "-B", "main", "origin/main")
             _run(competitor, "git", "config", "user.name", "competitor")
             _run(competitor, "git", "config", "user.email", "competitor@example.com")
             state_path = competitor / "data/opportunity_snapshots/candidate_lifecycle_state.json"
