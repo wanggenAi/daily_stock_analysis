@@ -5,6 +5,10 @@ on:
     # Beijing 08:35, 12:35, 16:35 on weekdays. Heavy evidence collection is
     # deliberately decoupled from the hourly market heartbeat.
     - cron: "35 0,4,8 * * 1-5"
+    # Weekends still produce regulatory, policy and competitive evidence.
+    # Keep the slow lane decoupled from the hourly fast lane while limiting
+    # weekend evidence staleness to roughly four hours.
+    - cron: "35 */4 * * 0,6"
   workflow_dispatch:
   push:
     branches: [main]
