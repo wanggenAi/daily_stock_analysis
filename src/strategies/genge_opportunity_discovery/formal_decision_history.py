@@ -8,6 +8,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+from src.genge_v311_persistence_order import (
+    PersistenceOrder,
+    canonical_run_id,
+    canonical_snapshot_id,
+    classify_persistence_order,
+)
+
 CONTRACT_VERSION = "GEN_GE_V3_1_1_FORMAL_DECISION_HISTORY_V1"
 
 
@@ -22,10 +29,8 @@ def _record_id(snapshot_id: str, scope: str, code: str) -> str:
 
 
 def records_from_snapshot(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
-    sid = str(snapshot.get("snapshot_id") or "")
-    source_run_id = str(snapshot.get("source_run_id") or "")
-    if not sid or not source_run_id:
-        raise ValueError("canonical snapshot identity missing")
+    sid = canonical_snapshot_id(snapshot.get("snapshot_id"))
+    source_run_id = str(canonical_run_id(snapshot.get("source_run_id")))
     production = snapshot.get("production") or {}
     records: list[dict[str, Any]] = []
     for scope, key in (("CANDIDATE", "candidate_decisions"), ("HOLDING", "holding_decisions")):
@@ -62,33 +67,132 @@ def records_from_snapshot(snapshot: Mapping[str, Any]) -> list[dict[str, Any]]:
     return records
 
 
-def append_snapshot(snapshot_path: Path, history_path: Path) -> dict[str, Any]:
+def _load_history(history_path: Path) -> list[dict[str, Any]]:
+    existing: list[dict[str, Any]] = []
+    if not history_path.is_file():
+        return existing
+    for line_number, line in enumerate(history_path.read_text(encoding="utf-8").splitlines(), start=1):
+        if not line.strip():
+            continue
+        row = json.loads(line)
+        if not isinstance(row, dict):
+            raise ValueError(f"formal decision history line {line_number} must be an object")
+        existing.append(row)
+    return existing
+
+
+def _load_summary(summary_path: Path) -> dict[str, Any]:
+    if not summary_path.is_file():
+        return {}
+    data = json.loads(summary_path.read_text(encoding="utf-8"))
+    if not isinstance(data, dict):
+        raise ValueError("formal decision latest summary must be an object")
+    return data
+
+
+def _durable_identity(
+    summary: Mapping[str, Any], existing: list[dict[str, Any]]
+) -> tuple[str | None, str | None]:
+    """Resolve current latest identity, migrating the V1 summary without guessing."""
+    if summary:
+        sid = summary.get("canonical_snapshot_id")
+        run_id = summary.get("canonical_source_run_id")
+        if run_id not in (None, ""):
+            return str(sid or ""), str(run_id)
+        if sid in (None, ""):
+            raise ValueError("formal decision latest summary has no Canonical snapshot identity")
+
+        # Legacy V1 summaries did not store source_run_id.  The immutable records
+        # already do.  Only a unique matching run id is a safe migration source.
+        matching_runs = {
+            str(row.get("canonical_source_run_id") or "")
+            for row in existing
+            if str(row.get("canonical_snapshot_id") or "") == str(sid)
+        }
+        matching_runs.discard("")
+        if len(matching_runs) != 1:
+            raise ValueError(
+                "cannot uniquely recover latest Formal Decision source_run_id from immutable history"
+            )
+        recovered = next(iter(matching_runs))
+        canonical_run_id(recovered, field="history.canonical_source_run_id")
+        return str(sid), recovered
+
+    if not existing:
+        return None, None
+
+    identities: dict[int, set[str]] = {}
+    for row in existing:
+        sid = canonical_snapshot_id(
+            row.get("canonical_snapshot_id"), field="history.canonical_snapshot_id"
+        )
+        run_id = canonical_run_id(
+            row.get("canonical_source_run_id"), field="history.canonical_source_run_id"
+        )
+        identities.setdefault(run_id, set()).add(sid)
+    latest_run = max(identities)
+    latest_sids = identities[latest_run]
+    if len(latest_sids) != 1:
+        raise ValueError("latest Formal Decision run maps to multiple Canonical snapshot ids")
+    return next(iter(latest_sids)), str(latest_run)
+
+
+def append_snapshot(snapshot_path: Path, history_path: Path, summary_path: Path) -> dict[str, Any]:
+    """Append immutable records while keeping the durable latest pointer monotonic."""
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     if not isinstance(snapshot, dict):
         raise ValueError("canonical snapshot must be an object")
+    sid = canonical_snapshot_id(snapshot.get("snapshot_id"))
+    run_id = str(canonical_run_id(snapshot.get("source_run_id")))
     incoming = records_from_snapshot(snapshot)
-    existing: list[dict[str, Any]] = []
-    ids: set[str] = set()
-    if history_path.is_file():
-        for line in history_path.read_text(encoding="utf-8").splitlines():
-            if not line.strip():
-                continue
-            row = json.loads(line)
-            if isinstance(row, dict):
-                existing.append(row)
-                ids.add(str(row.get("record_id") or ""))
+    existing = _load_history(history_path)
+    summary = _load_summary(summary_path)
+    current_sid, current_run = _durable_identity(summary, existing)
+    order = classify_persistence_order(
+        incoming_snapshot_id=sid,
+        incoming_source_run_id=run_id,
+        current_snapshot_id=current_sid,
+        current_source_run_id=current_run,
+    )
+
+    ids = {str(row.get("record_id") or "") for row in existing}
     added = [row for row in incoming if row["record_id"] not in ids]
     history_path.parent.mkdir(parents=True, exist_ok=True)
     if added:
         with history_path.open("a", encoding="utf-8") as out:
             for row in added:
                 out.write(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n")
+
+    total = len(existing) + len(added)
+    latest_updated = order is not PersistenceOrder.STALE
+    if latest_updated:
+        latest_summary = {
+            "contract_version": CONTRACT_VERSION,
+            "canonical_snapshot_id": sid,
+            "canonical_source_run_id": run_id,
+            "added_record_count": len(added),
+            "total_record_count": total,
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "no_auto_trade": True,
+        }
+        summary_path.parent.mkdir(parents=True, exist_ok=True)
+        summary_path.write_text(
+            json.dumps(latest_summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+    else:
+        latest_summary = dict(summary)
+
     return {
         "contract_version": CONTRACT_VERSION,
-        "canonical_snapshot_id": snapshot.get("snapshot_id"),
+        "incoming_canonical_snapshot_id": sid,
+        "incoming_canonical_source_run_id": run_id,
+        "persistence_order": order.value,
         "added_record_count": len(added),
-        "total_record_count": len(existing) + len(added),
-        "generated_at": datetime.now(timezone.utc).isoformat(),
+        "total_record_count": total,
+        "latest_summary_updated": latest_updated,
+        "latest_canonical_snapshot_id": latest_summary.get("canonical_snapshot_id"),
+        "latest_canonical_source_run_id": latest_summary.get("canonical_source_run_id") or current_run,
         "no_auto_trade": True,
     }
 
@@ -99,10 +203,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--history", type=Path, default=Path("data/formal_decision_history/history.jsonl"))
     parser.add_argument("--summary", type=Path, default=Path("data/formal_decision_history/latest_summary.json"))
     args = parser.parse_args(argv)
-    summary = append_snapshot(args.snapshot, args.history)
-    args.summary.parent.mkdir(parents=True, exist_ok=True)
-    args.summary.write_text(json.dumps(summary, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps(summary, ensure_ascii=False, indent=2))
+    result = append_snapshot(args.snapshot, args.history, args.summary)
+    print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 
 
