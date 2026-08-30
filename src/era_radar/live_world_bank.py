@@ -35,7 +35,7 @@ INDICATORS = (
     IndicatorSpec("SP.URB.TOTL.IN.ZS", "urbanization_services", "structural_demand", 1),
     IndicatorSpec("GB.XPD.RSDV.GD.ZS", "research_intensity", "technology_enablement", 1),
     IndicatorSpec("NV.IND.MANF.ZS", "advanced_manufacturing", "industrial_capex", 1),
-    IndicatorSpec("IT.NET.USER.ZS", "digitalization", "technology_enablement", 1),
+    IndicatorSpec("IT.NET.USER.ZS", "digital_infrastructure", "technology_enablement", 1),
     IndicatorSpec("EG.ELC.ACCS.ZS", "electrification_infrastructure", "structural_demand", 1),
 )
 
