@@ -25,6 +25,24 @@ def test_world_bank_live_collector_is_deterministic_and_pit_safe():
     assert {item.topic_keys[0] for item in rows} == {item.trend_id for item in INDICATORS}
 
 
+def test_world_bank_forecast_row_is_excluded_from_observed_truth():
+    def fetcher(_url):
+        rows = [{"date": str(year), "value": float(year - 2000)} for year in range(2018, 2026)]
+        rows.insert(0, {"date": "2027", "value": 9999.0, "obs_status": "F"})
+        return [{"page": 1}, rows]
+
+    collector = WorldBankChinaStructuralCollector(fetcher=fetcher, clock=lambda: "2026-08-30T10:00:00Z")
+    rows = list(collector.collect(AS_OF))
+    assert len(rows) == len(INDICATORS)
+    assert all(":2025:" in item.evidence_id for item in rows)
+    assert all(item.observed_at.startswith("2025-") for item in rows)
+
+
+def test_digital_structural_driver_joins_digital_infrastructure_topic():
+    internet = next(item for item in INDICATORS if item.code == "IT.NET.USER.ZS")
+    assert internet.trend_id == "digital_infrastructure"
+
+
 def test_live_production_persists_only_after_complete_success(tmp_path, monkeypatch):
     monkeypatch.setattr("src.era_radar.live_production.iso_now", lambda: AS_OF)
     collector = WorldBankChinaStructuralCollector(fetcher=lambda _url: wb_payload("x"), clock=lambda: "2026-08-30T10:00:00Z")
