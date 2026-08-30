@@ -12,9 +12,10 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V2"
+CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V3"
 FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 DOWNSTREAM_WORKFLOW = "genge-v31-industry-research.yml"
+HOLDING_SIGNIFICANT_MOVE_PCT = 3.0  # Mirrors the existing hourly RAISE threshold.
 
 URGENT_CONCLUSIONS = {
     "PRICE_ATTRACTIVE_RESEARCH_LEAD",
@@ -56,14 +57,36 @@ def _material_evidence_ids(hourly_row: Mapping[str, Any]) -> list[str]:
     return sorted(set(values))
 
 
+def _observed_date(hourly_row: Mapping[str, Any]) -> str | None:
+    observed = str(hourly_row.get("latest_price_observed_at") or "")
+    return observed[:10] if len(observed) >= 10 else None
+
+
 def _price_signal_date(hourly_row: Mapping[str, Any], conclusion: str) -> str | None:
     if conclusion not in {
         "PRICE_ATTRACTIVE_RESEARCH_LEAD",
         "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD",
     }:
         return None
-    observed = str(hourly_row.get("latest_price_observed_at") or "")
-    return observed[:10] if len(observed) >= 10 else None
+    return _observed_date(hourly_row)
+
+
+def _holding_move_bucket(hourly_row: Mapping[str, Any]) -> str | None:
+    try:
+        change_pct = float(hourly_row.get("latest_change_pct"))
+    except (TypeError, ValueError):
+        return None
+    magnitude = abs(change_pct)
+    if magnitude < HOLDING_SIGNIFICANT_MOVE_PCT:
+        return None
+    direction = "UP" if change_pct > 0 else "DOWN"
+    if magnitude < 5.0:
+        band = "3_TO_5"
+    elif magnitude < 8.0:
+        band = "5_TO_8"
+    else:
+        band = "8_PLUS"
+    return f"{direction}_{band}"
 
 
 def _trigger_reasons(priority_row: Mapping[str, Any]) -> list[str]:
@@ -86,8 +109,10 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
 
     Holdings are eligible when they have a genuinely urgent signal because money
     is already at risk. Merely being a holding, merely being P0, or merely having
-    HOURLY_PRIORITY_RAISE is not enough. External candidates use the same urgent
-    signal bar. Any resulting Formal action still has to come from the existing
+    HOURLY_PRIORITY_RAISE is not enough. A holding can additionally trigger on
+    the existing >=3% significant-move research threshold, but the signal is
+    bucketed (3-5%, 5-8%, >=8%) so ordinary intraday noise cannot launch a review
+    every hour. Any resulting Formal action still has to come from the existing
     Every-Industry -> Production Finalizer authority chain.
     """
 
@@ -114,12 +139,17 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
         if not code.strip("0"):
             continue
 
+        reason_codes = {str(x) for x in (row.get("reason_codes") or [])}
+        is_current_holding = "CURRENT_HOLDING" in reason_codes
+        hourly_row = hourly_rows.get(code) or {}
         trigger_reasons = _trigger_reasons(row)
+        holding_move_bucket = _holding_move_bucket(hourly_row) if is_current_holding else None
+        if holding_move_bucket:
+            trigger_reasons.append("SIGNIFICANT_HOLDING_PRICE_MOVE")
+        trigger_reasons = sorted(set(trigger_reasons))
         if not trigger_reasons:
             continue
 
-        reason_codes = {str(x) for x in (row.get("reason_codes") or [])}
-        hourly_row = hourly_rows.get(code) or {}
         conclusion = str(row.get("hourly_research_conclusion") or "")
         material_evidence_ids = _material_evidence_ids(hourly_row)
         signal_counts = {
@@ -130,7 +160,7 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
         trigger = {
             "code": code,
             "name": str(row.get("name") or hourly_row.get("name") or ""),
-            "is_current_holding": "CURRENT_HOLDING" in reason_codes,
+            "is_current_holding": is_current_holding,
             "existing_formal_action": str(row.get("formal_action") or ""),
             "priority": str(row.get("priority") or ""),
             "priority_score": int(row.get("priority_score") or 0),
@@ -138,6 +168,9 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
             "thesis_status": str(row.get("thesis_status") or ""),
             "hourly_research_conclusion": conclusion,
             "price_evidence_status": str(hourly_row.get("price_evidence_status") or ""),
+            "latest_change_pct": hourly_row.get("latest_change_pct"),
+            "holding_move_bucket": holding_move_bucket,
+            "holding_move_signal_date": _observed_date(hourly_row) if holding_move_bucket else None,
             "trigger_reasons": trigger_reasons,
             "material_evidence_ids": material_evidence_ids,
             "signal_counts": signal_counts,
@@ -151,6 +184,8 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
                 "thesis_status": trigger["thesis_status"],
                 "hourly_research_conclusion": trigger["hourly_research_conclusion"],
                 "price_evidence_status": trigger["price_evidence_status"],
+                "holding_move_bucket": trigger["holding_move_bucket"],
+                "holding_move_signal_date": trigger["holding_move_signal_date"],
                 "trigger_reasons": trigger["trigger_reasons"],
                 "material_evidence_ids": trigger["material_evidence_ids"],
                 "signal_counts": trigger["signal_counts"],
