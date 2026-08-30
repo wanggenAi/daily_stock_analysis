@@ -168,18 +168,36 @@ def append_snapshot(snapshot_path: Path, history_path: Path, summary_path: Path)
         None,
         "",
     )
-    latest_updated = order in {PersistenceOrder.INITIAL, PersistenceOrder.NEWER} or (
-        order is PersistenceOrder.SAME
-        and (bool(added) or not summary or legacy_summary_needs_run_id)
+    pointer_advanced = order in {PersistenceOrder.INITIAL, PersistenceOrder.NEWER}
+    summary_updated = (
+        pointer_advanced
+        or (
+            order is PersistenceOrder.SAME
+            and (bool(added) or not summary or legacy_summary_needs_run_id)
+        )
+        # A late authorized cycle may backfill immutable audit rows. The Formal
+        # latest pointer must not move backward, but aggregate history counts must
+        # still describe the durable file after the append.
+        or (order is PersistenceOrder.STALE and bool(added))
     )
-    if latest_updated:
+
+    if summary_updated:
+        if order is PersistenceOrder.STALE:
+            if current_sid is None or current_run is None:
+                raise ValueError("stale Formal Decision backfill has no durable latest identity")
+            latest_sid, latest_run = current_sid, current_run
+        else:
+            latest_sid, latest_run = sid, run_id
         latest_summary = {
             "contract_version": CONTRACT_VERSION,
-            "canonical_snapshot_id": sid,
-            "canonical_source_run_id": run_id,
+            "canonical_snapshot_id": latest_sid,
+            "canonical_source_run_id": latest_run,
             "added_record_count": len(added),
             "total_record_count": total,
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "last_history_append_snapshot_id": sid,
+            "last_history_append_source_run_id": run_id,
+            "latest_pointer_advanced": pointer_advanced,
             "no_auto_trade": True,
         }
         summary_path.parent.mkdir(parents=True, exist_ok=True)
@@ -197,7 +215,8 @@ def append_snapshot(snapshot_path: Path, history_path: Path, summary_path: Path)
         "persistence_order": order.value,
         "added_record_count": len(added),
         "total_record_count": total,
-        "latest_summary_updated": latest_updated,
+        "latest_summary_updated": summary_updated,
+        "latest_pointer_advanced": pointer_advanced,
         "latest_canonical_snapshot_id": latest_summary.get("canonical_snapshot_id"),
         "latest_canonical_source_run_id": latest_summary.get("canonical_source_run_id") or current_run,
         "no_auto_trade": True,
