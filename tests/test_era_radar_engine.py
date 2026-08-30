@@ -54,7 +54,7 @@ def test_crowding_cannot_upgrade_structural_confidence():
     normal = score_trend("x", base)
     crowded = score_trend("x", base + [sig("flow", "FINANCIAL_CAPITAL", "flow-series", financial_crowding=1)])
     assert crowded.structural_score == normal.structural_score
-    assert crowded.confidence_score <= normal.confidence_score + 10
+    assert crowded.confidence_score == normal.confidence_score
     assert crowded.cyclical_score <= normal.cyclical_score
 
 
