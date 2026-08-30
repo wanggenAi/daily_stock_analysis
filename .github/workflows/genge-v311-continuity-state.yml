@@ -80,8 +80,6 @@ jobs:
           SNAPSHOT=$(find finalized -path '*/canonical_snapshot/latest.json' -print -quit)
           test -n "$SNAPSHOT"
           echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
-      - name: Run monotonic persistence regression gate
-        run: python -m pytest -q tests/test_genge_v311_monotonic_persistence.py
       - name: Persist holding continuity with optimistic replay
         run: |
           set -euo pipefail
@@ -92,6 +90,9 @@ jobs:
             echo "holding continuity replay attempt ${attempt}/4"
             git fetch origin main
             git reset --hard origin/main
+
+            # Test the exact main revision used by this replay attempt.
+            python -m pytest -q tests/test_genge_v311_monotonic_persistence.py
 
             python - <<'PY' "$SNAPSHOT"
           import importlib.util
