@@ -150,8 +150,32 @@ def test_missing_holding_valuation_is_safe_review() -> None:
 
 def test_parse_current_holdings_contract() -> None:
     path = Path(__file__).resolve().parents[1] / "CURRENT_HOLDINGS.md"
+    text = path.read_text(encoding="utf-8")
     holdings = read_holdings_markdown(path)
-    assert {row["code"] for row in holdings} >= {"603369", "001316", "600276", "600406"}
+    parsed_codes = {row["code"] for row in holdings}
+
+    confirmed_section = text.split("## Confirmed holdings", 1)[1].split("\n## ", 1)[0]
+    confirmed_codes = {
+        cells[1].strip()
+        for line in confirmed_section.splitlines()
+        if line.startswith("|")
+        for cells in [line.split("|")]
+        if len(cells) > 2 and cells[1].strip().isdigit() and len(cells[1].strip()) == 6
+    }
+    closed_section = text.split("## Recently closed positions", 1)[1].split("\n## ", 1)[0]
+    closed_codes = {
+        cells[1].strip()
+        for line in closed_section.splitlines()
+        if line.startswith("|")
+        for cells in [line.split("|")]
+        if len(cells) > 2 and cells[1].strip().isdigit() and len(cells[1].strip()) == 6
+    }
+
+    assert parsed_codes == confirmed_codes
+    assert parsed_codes.isdisjoint(closed_codes)
+    assert len(parsed_codes) == len(holdings)
+    assert all(len(row["code"]) == 6 and row["code"].isdigit() for row in holdings)
+    assert all(float(row["confirmed_quantity"]) > 0 for row in holdings)
 
 
 def test_scanner_recomputes_candidate_even_with_exact_policy_source() -> None:
