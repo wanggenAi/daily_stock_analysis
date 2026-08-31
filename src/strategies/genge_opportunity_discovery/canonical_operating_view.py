@@ -14,6 +14,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -23,6 +25,8 @@ OPERATING_VIEW_CONTRACT_VERSION = "GEN_GE_V31_CANONICAL_OPERATING_VIEW_V1"
 HOURLY_MONITOR = "HOURLY_MONITOR"
 DAILY_SETTLEMENT = "DAILY_SETTLEMENT"
 _ALLOWED_MODES = {HOURLY_MONITOR, DAILY_SETTLEMENT}
+_A_SHARE_STANDARD_LOT = 100
+_REDUCE_ACTION_RE = re.compile(r"^REDUCE_(\d+(?:\.\d+)?)$")
 
 
 def _code(value: Any) -> str:
@@ -36,6 +40,113 @@ def _code(value: Any) -> str:
             text = text[len(prefix):]
             break
     return text.zfill(6) if text.isdigit() else text
+
+
+def _positive_integer(value: Any) -> int | None:
+    try:
+        parsed = Decimal(str(value or "").strip())
+    except (InvalidOperation, ValueError):
+        return None
+    if not parsed.is_finite() or parsed <= 0 or parsed != parsed.to_integral_value():
+        return None
+    return int(parsed)
+
+
+def _sell_quantity_is_legal_for_a_share(*, holding_quantity: int, sell_quantity: int) -> bool:
+    """Validate one manual A-share sell quantity without changing the Formal action."""
+    if sell_quantity <= 0 or sell_quantity > holding_quantity:
+        return False
+    if sell_quantity % _A_SHARE_STANDARD_LOT == 0:
+        return True
+    odd_lot = holding_quantity % _A_SHARE_STANDARD_LOT
+    return odd_lot != 0 and sell_quantity % _A_SHARE_STANDARD_LOT == odd_lot
+
+
+def _manual_execution_advisory(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Project lot-size feasibility only; never create or mutate a Formal action/order."""
+    action = str(row.get("action") or row.get("production_action") or "").strip().upper()
+    base = {
+        "advisory_only": True,
+        "no_auto_trade": True,
+        "broker_order_created": False,
+        "formal_action": action,
+        "lot_size": _A_SHARE_STANDARD_LOT,
+    }
+    if action not in {"EXIT"} and not action.startswith("REDUCE"):
+        return {**base, "status": "NOT_APPLICABLE"}
+
+    holding_quantity = _positive_integer(row.get("confirmed_quantity"))
+    if holding_quantity is None:
+        return {
+            **base,
+            "status": "BLOCKED_INPUT_INCOMPLETE",
+            "reason": "CONFIRMED_QUANTITY_REQUIRED_FOR_MANUAL_EXECUTION",
+        }
+
+    if action == "EXIT":
+        return {
+            **base,
+            "status": "MANUAL_ORDER_EXECUTABLE",
+            "holding_quantity": holding_quantity,
+            "intended_sell_quantity": holding_quantity,
+            "manual_sell_quantity": holding_quantity,
+            "reason": "FULL_POSITION_EXIT_IS_SINGLE_MANUAL_SELL",
+        }
+
+    match = _REDUCE_ACTION_RE.fullmatch(action)
+    if match is None:
+        return {
+            **base,
+            "status": "BLOCKED_ACTION_FORMAT",
+            "holding_quantity": holding_quantity,
+            "reason": "REDUCE_ACTION_REQUIRES_EXPLICIT_PERCENTAGE",
+        }
+
+    percentage = Decimal(match.group(1))
+    if percentage <= 0 or percentage >= 100:
+        return {
+            **base,
+            "status": "BLOCKED_ACTION_FORMAT",
+            "holding_quantity": holding_quantity,
+            "reduce_percentage": str(percentage),
+            "reason": "REDUCE_PERCENTAGE_MUST_BE_BETWEEN_0_AND_100",
+        }
+
+    intended = Decimal(holding_quantity) * percentage / Decimal(100)
+    if intended != intended.to_integral_value():
+        return {
+            **base,
+            "status": "BLOCKED_NON_INTEGER_SHARE_TARGET",
+            "holding_quantity": holding_quantity,
+            "reduce_percentage": str(percentage),
+            "intended_sell_quantity": str(intended.normalize()),
+            "reason": "FORMAL_REDUCTION_DOES_NOT_MAP_TO_WHOLE_SHARES",
+        }
+
+    intended_quantity = int(intended)
+    if not _sell_quantity_is_legal_for_a_share(
+        holding_quantity=holding_quantity,
+        sell_quantity=intended_quantity,
+    ):
+        return {
+            **base,
+            "status": "BLOCKED_LOT_SIZE_CONFLICT",
+            "holding_quantity": holding_quantity,
+            "reduce_percentage": str(percentage),
+            "intended_sell_quantity": intended_quantity,
+            "manual_sell_quantity": None,
+            "reason": "DO_NOT_ROUND_FORMAL_REDUCTION_TO_A_DIFFERENT_POSITION_CHANGE",
+        }
+
+    return {
+        **base,
+        "status": "MANUAL_ORDER_EXECUTABLE",
+        "holding_quantity": holding_quantity,
+        "reduce_percentage": str(percentage),
+        "intended_sell_quantity": intended_quantity,
+        "manual_sell_quantity": intended_quantity,
+        "reason": "FORMAL_REDUCTION_MAPS_TO_ONE_LEGAL_MANUAL_SELL_QUANTITY",
+    }
 
 
 def _decision_index(snapshot: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
@@ -75,7 +186,11 @@ def build_operating_view(snapshot: Mapping[str, Any], *, mode: str) -> dict[str,
 
     snapshot_id = str(snapshot["snapshot_id"])
     production = snapshot.get("production") or {}
-    holdings = [dict(row) for row in (production.get("holding_decisions") or [])]
+    holdings = []
+    for raw in production.get("holding_decisions") or []:
+        row = dict(raw)
+        row["manual_execution_advisory"] = _manual_execution_advisory(row)
+        holdings.append(row)
     candidates = [dict(row) for row in (production.get("candidate_decisions") or [])]
     discovery = [dict(row) for row in ((snapshot.get("discovery") or {}).get("rows") or [])]
     deep_review = [dict(row) for row in ((snapshot.get("deep_review") or {}).get("rows") or [])]
@@ -100,6 +215,8 @@ def build_operating_view(snapshot: Mapping[str, Any], *, mode: str) -> dict[str,
             "formal_action_change_requires_new_validated_canonical_snapshot": True,
             "candidate_ledger_may_filter_broad_discovery": False,
             "production_threshold_change_allowed": False,
+            "manual_execution_advisory_may_mutate_formal_action": False,
+            "manual_execution_advisory_may_create_broker_order": False,
         },
     }
 
