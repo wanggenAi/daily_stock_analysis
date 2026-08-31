@@ -4,18 +4,33 @@
 
 ## Confirmed holdings
 
-Snapshot basis: user-provided broker position screenshots from 2026-08-25. Quantities and average costs below are treated as confirmed until the user reports a new buy/sell or provides a newer position screenshot.
+Snapshot basis: user-provided broker position screenshot from 2026-08-31 09:55 CST, after the confirmed sale of all 100 shares of `600276 恒瑞医药`. Quantities and average costs below are treated as confirmed until the user reports a new buy/sell or provides a newer position screenshot.
 
 | Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |
 | --- | --- | ---: | ---: | --- | --- |
-| 603369 | 今世缘 | 300 | 29.5003 | HELD | 2026-08-25 |
-| 001316 | 润贝航科 | 200 | 26.0955 | HELD | 2026-08-25 |
-| 600276 | 恒瑞医药 | 100 | 46.4115 | HELD | 2026-08-25 |
-| 600406 | 国电南瑞 | 200 | 23.1258 | HELD | 2026-08-25 |
+| 603369 | 今世缘 | 300 | 29.5003 | HELD | 2026-08-31 |
+| 001316 | 润贝航科 | 200 | 26.0950 | HELD | 2026-08-31 |
+| 600406 | 国电南瑞 | 200 | 23.1253 | HELD | 2026-08-31 |
+
+## Recently closed positions
+
+| Code | Name | Previous quantity | Previous average cost (CNY) | Exit evidence | Status | Evidence date |
+| --- | --- | ---: | ---: | --- | --- | --- |
+| 600276 | 恒瑞医药 | 100 | 46.4105 | Broker position screenshot shows quantity 0 and latest displayed transaction/market reference 46.5800 after user explicitly confirmed the sale | CLOSED | 2026-08-31 |
+
+> `600276 恒瑞医药` is no longer a current holding. Historical canonical decisions remain historical facts only and must not be projected onto the current portfolio. The next holdings reconciliation / finalized production cycle must consume the current 0-share state and must not manufacture a new Formal Action for the closed position.
 
 ## Daily review contract
 
 Every trading-day holding review must refresh price, filings/material events, industry drivers, hard-logic status and valuation evidence. Production version `GEN_GE_V3_1_1_PRODUCTION` requires LOW/INVALID valuation confidence to return HOLD_REVIEW and keeps Hard Gate FAIL -> EXIT. Never infer a transaction from price movement or a prior plan.
+
+## Latest manual holdings update — 2026-08-31 09:55 CST
+
+- `603369 今世缘`: 300 shares, average cost 29.5003 CNY, still held.
+- `001316 润贝航科`: 200 shares, average cost 26.0950 CNY, still held.
+- `600406 国电南瑞`: 200 shares, average cost 23.1253 CNY, still held.
+- `600276 恒瑞医药`: 100 -> 0 shares. User explicitly confirmed the sale; broker screenshot at 09:55 CST shows quantity 0 and displayed 46.5800 reference. Position is CLOSED.
+- This manual portfolio update changes holdings state only. It does **not** alter the GenGe V3.1.1 frozen production contract, Confidence Gate, Hard Gate, BUY/SELL thresholds, SELL rationale gate, canonical authority, or no-auto-trade policy.
 
 ## Latest hourly risk review — 2026-08-26 20:09 CST
 
@@ -28,6 +43,7 @@ Every trading-day holding review must refresh price, filings/material events, in
 
 ## Change history
 
+- 2026-08-31 09:55 CST: updated from the latest broker-position evidence. `600276 恒瑞医药` was explicitly sold by the user and is now 0 shares / CLOSED. Current holdings are `603369 今世缘` 300, `001316 润贝航科` 200, and `600406 国电南瑞` 200. Also refreshed the displayed average costs from the latest screenshot.
 - 2026-08-26 20:09 CST: refreshed all four confirmed holdings. Accepted same-day closes for 今世缘/恒瑞医药/国电南瑞; 润贝航科 exact close remained unavailable from independently accepted sources. No new REDUCE/EXIT or thesis invalidation.
 - 2026-08-26 16:06 CST: hourly opportunity + holdings-risk refresh found no new REDUCE/EXIT trigger; price-dependent actions failed closed because a clean 2026-08-26 closing-price set was not independently accepted.
 - 2026-08-26: GenGe V3.1.1 current-date dry-run returned HOLD_REVIEW / Confidence INVALID for all four confirmed holdings because refreshed normalized earnings, realistic/implied growth and neutral value were incomplete; no cost-basis or mechanical valuation sell was emitted.
