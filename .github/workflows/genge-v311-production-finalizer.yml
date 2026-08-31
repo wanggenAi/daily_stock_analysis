@@ -62,6 +62,7 @@ jobs:
       - name: Resolve authoritative source run
         id: source
         env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
           WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
           WORKFLOW_NAME: ${{ github.event.workflow_run.name }}
@@ -69,16 +70,29 @@ jobs:
           MANUAL_RUN_ID: ${{ inputs.source_run_id }}
           MANUAL_WORKFLOW: ${{ inputs.source_workflow }}
         run: |
+          set -euo pipefail
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             RUN_ID="$MANUAL_RUN_ID"
             SOURCE_WORKFLOW="$MANUAL_WORKFLOW"
-            HEAD_SHA="manual-source-run"
+            # Manual dispatch must preserve the producer's real Git identity.
+            # Resolve it from the exact completed producer run instead of using
+            # a sentinel such as "manual-source-run".
+            RUN_JSON=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
+            HEAD_SHA=$(printf '%s' "$RUN_JSON" | jq -r '.head_sha // empty')
+            ACTUAL_WORKFLOW=$(printf '%s' "$RUN_JSON" | jq -r '.name // empty')
+            CONCLUSION=$(printf '%s' "$RUN_JSON" | jq -r '.conclusion // empty')
+            test "$CONCLUSION" = "success"
+            test "$ACTUAL_WORKFLOW" = "$SOURCE_WORKFLOW"
           else
             RUN_ID="$WORKFLOW_RUN_ID"
             SOURCE_WORKFLOW="$WORKFLOW_NAME"
             HEAD_SHA="$WORKFLOW_HEAD_SHA"
           fi
           test -n "$RUN_ID"
+          test -n "$HEAD_SHA"
+          printf '%s' "$HEAD_SHA" | grep -Eq '^[0-9a-fA-F]{40}$'
+          git cat-file -e "${HEAD_SHA}^{commit}"
+          git merge-base --is-ancestor "$HEAD_SHA" origin/main
           case "$SOURCE_WORKFLOW" in
             "GenGe V3.1.1 Every-Industry Research")
               ARTIFACT_NAME="genge-v31-every-industry-research"
@@ -115,15 +129,9 @@ jobs:
           python - <<'PY'
           import os
           from pathlib import Path
-
-          matches = [
-              path for path in Path("incoming").rglob("latest.json")
-              if path.parent.name == "canonical_snapshot"
-          ]
+          matches = [path for path in Path("incoming").rglob("latest.json") if path.parent.name == "canonical_snapshot"]
           if len(matches) != 1:
-              raise SystemExit(
-                  f"expected exactly one canonical_snapshot/latest.json; found {len(matches)}"
-              )
+              raise SystemExit(f"expected exactly one canonical_snapshot/latest.json; found {len(matches)}")
           snapshot = matches[0]
           with Path(os.environ["GITHUB_OUTPUT"]).open("a", encoding="utf-8") as out:
               out.write(f"snapshot={snapshot}\n")
@@ -179,44 +187,28 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
-          from src.strategies.genge_opportunity_discovery.canonical_authorized_consumer import (
-              load_authorized_view,
-          )
-          from src.strategies.genge_opportunity_discovery.canonical_operating_view import (
-              DAILY_SETTLEMENT,
-              HOURLY_MONITOR,
-          )
-          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
-              LIFECYCLE_CONTRACT_VERSION,
-              load_state,
-          )
-
+          from src.strategies.genge_opportunity_discovery.canonical_authorized_consumer import load_authorized_view
+          from src.strategies.genge_opportunity_discovery.canonical_operating_view import DAILY_SETTLEMENT, HOURLY_MONITOR
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import LIFECYCLE_CONTRACT_VERSION, load_state
           root = Path("authoritative")
           hourly_bundle = load_authorized_view(root, mode=HOURLY_MONITOR)
           daily_bundle = load_authorized_view(root, mode=DAILY_SETTLEMENT)
           holdings = json.loads((root / "holdings_reconciliation.json").read_text(encoding="utf-8"))
           lifecycle = load_state(root / "candidate_lifecycle/candidate_lifecycle_state.json")
-          lifecycle_summary = json.loads(
-              (root / "candidate_lifecycle/summary.json").read_text(encoding="utf-8")
-          )
-          lifecycle_events = json.loads(
-              (root / "candidate_lifecycle/snapshot_events.json").read_text(encoding="utf-8")
-          )
-          replay = json.loads(
-              (root / "candidate_lifecycle/persistence_replay.json").read_text(encoding="utf-8")
-          )
-
+          lifecycle_summary = json.loads((root / "candidate_lifecycle/summary.json").read_text(encoding="utf-8"))
+          lifecycle_events = json.loads((root / "candidate_lifecycle/snapshot_events.json").read_text(encoding="utf-8"))
+          replay = json.loads((root / "candidate_lifecycle/persistence_replay.json").read_text(encoding="utf-8"))
           authority = hourly_bundle["authority"]
           hourly = hourly_bundle["view"]
           daily = daily_bundle["view"]
           sid = hourly_bundle["canonical_snapshot_id"]
-
           assert sid == daily_bundle["canonical_snapshot_id"]
           assert hourly_bundle["canonical_source_run_id"] == daily_bundle["canonical_source_run_id"]
           assert hourly_bundle["canonical_source_run_id"] == "${{ steps.source.outputs.run_id }}"
           assert hourly_bundle["source_kind"] == "${{ steps.source.outputs.source_kind }}"
           assert hourly_bundle["source_workflow"] == "${{ steps.source.outputs.workflow }}"
+          assert authority["source_head_sha"] == "${{ steps.source.outputs.head_sha }}"
+          assert len(authority["source_head_sha"]) == 40
           assert holdings["canonical_snapshot_id"] == sid
           assert holdings["canonical_source_run_id"] == hourly_bundle["canonical_source_run_id"]
           assert holdings["candidate_formal_actions_affected_by_holdings_mismatch"] is False
@@ -225,7 +217,6 @@ jobs:
           else:
               assert holdings["status"] == "HOLDINGS_OUT_OF_SYNC"
               assert holdings["formal_holding_actions_currently_usable"] is False
-
           assert lifecycle["contract_version"] == LIFECYCLE_CONTRACT_VERSION
           assert lifecycle["latest_applied_snapshot_id"] == sid
           assert lifecycle["last_persisted_snapshot_id"] == sid
@@ -241,61 +232,36 @@ jobs:
           assert replay["status"] in {"PERSISTED", "ALREADY_PERSISTED"}
           assert replay["replay_on_conflict"] is True
           assert replay["persisted_commit_sha"]
-
           meaningful_actions = {"BUY", "ADD", "REDUCE", "EXIT"}
           for event in lifecycle_events:
-              if event.get("event") != "NEW":
-                  continue
-              if event.get("observed_scope") == "PRODUCTION_REUNDERWRITE":
+              if event.get("event") == "NEW" and event.get("observed_scope") == "PRODUCTION_REUNDERWRITE":
                   assert str(event.get("formal_action") or "").upper() in meaningful_actions, event
-
           assert authority["consumer_contract"]["one_formal_truth_per_production_cycle"] is True
           assert authority["consumer_contract"]["canonical_is_only_formal_decision_truth"] is True
           assert authority["consumer_contract"]["consumer_may_recompute_formal_action"] is False
           assert authority["consumer_contract"]["overlay_may_overwrite_formal_action"] is False
-          print(json.dumps({
-              "authorized": authority["authorized"],
-              "snapshot_id": sid,
-              "source_workflow": hourly_bundle["source_workflow"],
-              "source_kind": hourly_bundle["source_kind"],
-              "source_run_id": hourly_bundle["canonical_source_run_id"],
-              "upstream_run_id": authority["upstream_run_id"],
-              "latest_trade_date": hourly_bundle["latest_trade_date"],
-              "holdings_status": holdings["status"],
-              "holding_actions_usable": holdings["formal_holding_actions_currently_usable"],
-              "candidate_lifecycle_count": len(lifecycle["candidates"]),
-              "candidate_lifecycle_events": lifecycle_summary["snapshot_event_count"],
-              "lifecycle_persistence": replay["status"],
-              "lifecycle_persistence_attempt": replay["attempt"],
-              "lifecycle_persisted_commit_sha": replay["persisted_commit_sha"],
-              "hourly_mode": hourly["mode"],
-              "daily_mode": daily["mode"],
-              "digest_verified": True,
-              "generic_hold_review_lifecycle_inflation_blocked": True,
-          }, ensure_ascii=False, indent=2))
+          print(json.dumps({"authorized": authority["authorized"], "snapshot_id": sid, "source_workflow": hourly_bundle["source_workflow"], "source_kind": hourly_bundle["source_kind"], "source_run_id": hourly_bundle["canonical_source_run_id"], "source_head_sha": authority["source_head_sha"], "upstream_run_id": authority["upstream_run_id"], "latest_trade_date": hourly_bundle["latest_trade_date"], "holdings_status": holdings["status"], "holding_actions_usable": holdings["formal_holding_actions_currently_usable"], "candidate_lifecycle_count": len(lifecycle["candidates"]), "candidate_lifecycle_events": lifecycle_summary["snapshot_event_count"], "lifecycle_persistence": replay["status"], "lifecycle_persistence_attempt": replay["attempt"], "lifecycle_persisted_commit_sha": replay["persisted_commit_sha"], "hourly_mode": hourly["mode"], "daily_mode": daily["mode"], "digest_verified": True, "source_sha_verified": True, "generic_hold_review_lifecycle_inflation_blocked": True}, ensure_ascii=False, indent=2))
           PY
 
       - name: Publish canonical authority summary
         run: |
           python - <<'PY'
-          import json
-          import os
+          import json, os
           from pathlib import Path
-
           authority = json.loads(Path("authoritative/production_authority.json").read_text(encoding="utf-8"))
           snapshot = json.loads(Path("authoritative/canonical_snapshot/latest.json").read_text(encoding="utf-8"))
           holdings = json.loads(Path("authoritative/holdings_reconciliation.json").read_text(encoding="utf-8"))
           lifecycle = json.loads(Path("authoritative/candidate_lifecycle/summary.json").read_text(encoding="utf-8"))
           replay = json.loads(Path("authoritative/candidate_lifecycle/persistence_replay.json").read_text(encoding="utf-8"))
           counts = snapshot.get("production", {}).get("action_counts", {})
-          target = Path(os.environ["GITHUB_STEP_SUMMARY"])
-          with target.open("a", encoding="utf-8") as out:
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as out:
               out.write("# GenGe V3.1.1 Canonical Production Authority\n\n")
               out.write(f"- authorized: `{authority['authorized']}`\n")
               out.write(f"- snapshot_id: `{authority['canonical_snapshot_id']}`\n")
               out.write(f"- source workflow: `{authority['source_workflow']}`\n")
               out.write(f"- source kind: `{authority['canonical_source_kind']}`\n")
               out.write(f"- canonical source run: `{authority['canonical_source_run_id']}`\n")
+              out.write(f"- source head SHA: `{authority['source_head_sha']}`\n")
               out.write(f"- upstream run: `{authority['upstream_run_id']}`\n")
               out.write(f"- latest trade date: `{authority['latest_trade_date']}`\n")
               out.write(f"- holdings reconciliation: `{holdings['status']}`\n")
@@ -306,7 +272,7 @@ jobs:
               out.write(f"- lifecycle persistence: `{replay['status']}` attempt `{replay['attempt']}`\n")
               out.write(f"- lifecycle persisted commit: `{replay['persisted_commit_sha']}`\n")
               out.write(f"- action counts: `{counts}`\n")
-              out.write("- canonical SHA256 and consumer views validated before publication\n")
+              out.write("- canonical SHA256, producer Git SHA, and consumer views validated before publication\n")
               out.write("- lifecycle persistence uses optimistic replay from latest main; stale state is never rebased over a concurrent writer\n")
               out.write("- generic production-only HOLD_REVIEW rows cannot inflate durable lifecycle memory\n")
               out.write("- candidate lifecycle is downstream state; broad Discovery remains ledger-independent\n")
