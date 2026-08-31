@@ -38,6 +38,12 @@ def test_handoff_preserves_formal_authority_and_refresh_order() -> None:
     assert finalizer < continuity < hourly < ledger
 
 
+def test_handoff_dispatch_parser_emits_only_the_resolved_run_id() -> None:
+    text = _text(HANDOFF_WORKFLOW)
+    assert 'gh workflow run "$workflow" --repo "$GITHUB_REPOSITORY" --ref main "$@" >/dev/null' in text
+    assert 'printf \'%s\\n\' "$run_id"' in text
+
+
 def test_handoff_fails_closed_on_required_artifacts_and_failed_runs() -> None:
     text = _text(HANDOFF_WORKFLOW)
     assert 'if [ "$conclusion" != "success" ]' in text
