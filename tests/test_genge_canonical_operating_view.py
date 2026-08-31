@@ -39,7 +39,7 @@ def _decision(code: str, scope: str, name: str, **extra) -> dict:
     return row
 
 
-def _snapshot() -> dict:
+def _snapshot(*, holding_action: str = "HOLD_REVIEW", holding_quantity: str = "200") -> dict:
     discovery = [
         {
             "code": "600001",
@@ -67,7 +67,13 @@ def _snapshot() -> dict:
     ]
     production = [
         _decision("600001", "CANDIDATE", "Candidate A"),
-        _decision("600406", "HOLDING", "Holding A", confirmed_quantity="200"),
+        _decision(
+            "600406",
+            "HOLDING",
+            "Holding A",
+            confirmed_quantity=holding_quantity,
+            production_action=holding_action,
+        ),
     ]
     return build_snapshot(
         discovery,
@@ -90,9 +96,52 @@ def test_hourly_view_uses_same_truth_without_recomputing_actions() -> None:
     assert view["consumer_contract"]["decision_recalculation_allowed"] is False
     assert view["consumer_contract"]["decision_mutation_allowed"] is False
     assert view["consumer_contract"]["formal_action_change_requires_new_validated_canonical_snapshot"] is True
+    assert view["consumer_contract"]["manual_execution_advisory_may_mutate_formal_action"] is False
+    assert view["consumer_contract"]["manual_execution_advisory_may_create_broker_order"] is False
     assert [row["code"] for row in view["holding_decisions"]] == ["600406"]
+    assert view["holding_decisions"][0]["manual_execution_advisory"]["status"] == "NOT_APPLICABLE"
     assert view["focus_candidates"][0]["code"] == "600001"
     assert view["focus_candidates"][0]["canonical_decision"]["action"] == "HOLD_REVIEW"
+
+
+def test_manual_execution_advisory_blocks_reduce_25_that_would_require_50_share_sale() -> None:
+    snapshot = _snapshot(holding_action="REDUCE_25", holding_quantity="200")
+    view = build_operating_view(snapshot, mode=HOURLY_MONITOR)
+
+    canonical_row = snapshot["production"]["holding_decisions"][0]
+    view_row = view["holding_decisions"][0]
+    advisory = view_row["manual_execution_advisory"]
+
+    assert canonical_row["action"] == "REDUCE_25"
+    assert "manual_execution_advisory" not in canonical_row
+    assert view_row["action"] == "REDUCE_25"
+    assert advisory["status"] == "BLOCKED_LOT_SIZE_CONFLICT"
+    assert advisory["intended_sell_quantity"] == 50
+    assert advisory["manual_sell_quantity"] is None
+    assert advisory["broker_order_created"] is False
+    assert advisory["no_auto_trade"] is True
+
+
+def test_manual_execution_advisory_allows_exact_round_lot_reduction() -> None:
+    snapshot = _snapshot(holding_action="REDUCE_25", holding_quantity="400")
+    view = build_operating_view(snapshot, mode=DAILY_SETTLEMENT)
+
+    advisory = view["holding_decisions"][0]["manual_execution_advisory"]
+    assert advisory["status"] == "MANUAL_ORDER_EXECUTABLE"
+    assert advisory["intended_sell_quantity"] == 100
+    assert advisory["manual_sell_quantity"] == 100
+    assert advisory["broker_order_created"] is False
+
+
+def test_manual_execution_advisory_allows_full_odd_lot_exit() -> None:
+    snapshot = _snapshot(holding_action="EXIT", holding_quantity="99")
+    view = build_operating_view(snapshot, mode=HOURLY_MONITOR)
+
+    advisory = view["holding_decisions"][0]["manual_execution_advisory"]
+    assert advisory["status"] == "MANUAL_ORDER_EXECUTABLE"
+    assert advisory["intended_sell_quantity"] == 99
+    assert advisory["manual_sell_quantity"] == 99
+    assert advisory["broker_order_created"] is False
 
 
 def test_daily_view_is_full_settlement_over_same_snapshot() -> None:
