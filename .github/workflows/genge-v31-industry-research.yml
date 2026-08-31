@@ -10,10 +10,15 @@ on:
         description: "Completed GenGe Opportunity Discovery production run id"
         required: true
         type: string
+      explicit_finalizer:
+        description: "Explicitly dispatch Production Finalizer after successful research"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 concurrency:
   group: genge-v31-industry-${{ github.event.workflow_run.id || inputs.upstream_run_id || github.run_id }}
@@ -260,3 +265,13 @@ jobs:
             reports/production_decisions
             reports/canonical_snapshot
           if-no-files-found: error
+      - name: Explicitly dispatch Production Finalizer for event-driven chain
+        if: ${{ success() && github.event_name == 'workflow_dispatch' && inputs.explicit_finalizer }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-v311-production-finalizer.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f source_run_id="${GITHUB_RUN_ID}" \
+            -f source_workflow="GenGe V3.1.1 Every-Industry Research"
