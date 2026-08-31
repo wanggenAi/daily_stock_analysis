@@ -210,7 +210,8 @@ jobs:
             gh workflow run genge-v31-industry-research.yml \
               --repo "$GITHUB_REPOSITORY" \
               --ref main \
-              -f upstream_run_id="$upstream_run_id"
+              -f upstream_run_id="$upstream_run_id" \
+              -f explicit_finalizer=true
             dispatch_path="FAST_EXISTING_DISCOVERY_TO_FULL_V31_REVIEW"
           else
             # Fail-safe fallback: if no validated All-A artifact is available,
