@@ -113,7 +113,7 @@ jobs:
             shift 2
             local not_before
             not_before=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-            gh workflow run "$workflow" --repo "$GITHUB_REPOSITORY" --ref main "$@"
+            gh workflow run "$workflow" --repo "$GITHUB_REPOSITORY" --ref main "$@" >/dev/null
             find_bot_dispatch_run "$workflow" "$not_before" "$expected_name"
           }
 
