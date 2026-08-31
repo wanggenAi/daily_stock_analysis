@@ -1,14 +1,16 @@
 {
   "canonical_snapshot_ids_seen": [
-    "64b8bed22d01d4d8a124"
+    "64b8bed22d01d4d8a124",
+    "6e7f48316bd20ec9a20c"
   ],
   "canonical_source_run_ids_seen": [
-    "33344144023"
+    "33344144023",
+    "33347512004"
   ],
   "checks": {
     "candidate_lifecycle_available": true,
-    "canonical_snapshot_identity_consistent": true,
-    "canonical_source_run_identity_consistent": true,
+    "canonical_snapshot_identity_consistent": false,
+    "canonical_source_run_identity_consistent": false,
     "evidence_index_available": true,
     "formal_decision_outcomes_available": true,
     "holding_continuity_available": true,
@@ -30,20 +32,23 @@
     "hourly_workset_count": 51,
     "transaction_holding_count": 4
   },
-  "failed_checks": [],
+  "failed_checks": [
+    "canonical_snapshot_identity_consistent",
+    "canonical_source_run_identity_consistent"
+  ],
   "formal_action_recomputed": false,
   "freshness": {
-    "evidence_collector_age_hours": 0.02,
-    "evidence_index_age_hours": 0.02,
-    "formal_outcomes_age_hours": 0.0,
-    "hourly_price_age_hours": 0.04,
-    "hourly_research_age_hours": 0.04,
-    "mapping_coverage_age_hours": 0.01,
-    "research_priority_age_hours": 0.0,
-    "source_registry_age_hours": 0.02
+    "evidence_collector_age_hours": 0.14,
+    "evidence_index_age_hours": 0.14,
+    "formal_outcomes_age_hours": 0.12,
+    "hourly_price_age_hours": 0.16,
+    "hourly_research_age_hours": 0.16,
+    "mapping_coverage_age_hours": 0.0,
+    "research_priority_age_hours": 0.12,
+    "source_registry_age_hours": 0.14
   },
-  "generated_at": "2026-08-31T01:23:34.493527+00:00",
-  "health": "HEALTHY",
+  "generated_at": "2026-08-31T01:30:46.572107+00:00",
+  "health": "DEGRADED",
   "no_auto_trade": true,
   "research_learning": {
     "available": true,
