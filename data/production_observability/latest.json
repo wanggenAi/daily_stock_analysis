@@ -1,14 +1,16 @@
 {
   "canonical_snapshot_ids_seen": [
+    "06812c3c038590179116",
     "1f306a33343e6d741c6f"
   ],
   "canonical_source_run_ids_seen": [
-    "33372361993"
+    "33372361993",
+    "33377052116"
   ],
   "checks": {
     "candidate_lifecycle_available": true,
-    "canonical_snapshot_identity_consistent": true,
-    "canonical_source_run_identity_consistent": true,
+    "canonical_snapshot_identity_consistent": false,
+    "canonical_source_run_identity_consistent": false,
     "evidence_index_available": true,
     "formal_decision_outcomes_available": true,
     "holding_continuity_available": true,
@@ -30,20 +32,23 @@
     "hourly_workset_count": 51,
     "transaction_holding_count": 4
   },
-  "failed_checks": [],
+  "failed_checks": [
+    "canonical_snapshot_identity_consistent",
+    "canonical_source_run_identity_consistent"
+  ],
   "formal_action_recomputed": false,
   "freshness": {
-    "evidence_collector_age_hours": 0.02,
-    "evidence_index_age_hours": 0.02,
-    "formal_outcomes_age_hours": 0.0,
-    "hourly_price_age_hours": 0.05,
-    "hourly_research_age_hours": 0.05,
-    "mapping_coverage_age_hours": 0.01,
-    "research_priority_age_hours": 0.0,
-    "source_registry_age_hours": 0.02
+    "evidence_collector_age_hours": 0.85,
+    "evidence_index_age_hours": 0.85,
+    "formal_outcomes_age_hours": 0.83,
+    "hourly_price_age_hours": 0.88,
+    "hourly_research_age_hours": 0.88,
+    "mapping_coverage_age_hours": 0.0,
+    "research_priority_age_hours": 0.83,
+    "source_registry_age_hours": 0.85
   },
-  "generated_at": "2026-08-31T08:39:15.449762+00:00",
-  "health": "HEALTHY",
+  "generated_at": "2026-08-31T09:28:47.709841+00:00",
+  "health": "DEGRADED",
   "no_auto_trade": true,
   "research_learning": {
     "available": true,
