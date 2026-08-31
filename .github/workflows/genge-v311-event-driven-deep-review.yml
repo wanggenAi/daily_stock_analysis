@@ -83,19 +83,29 @@ jobs:
               out.write(f"external_trigger_count={d['external_trigger_count']}\n")
           PY
 
-      - name: Restore exact-signal dispatch marker
+      - name: Check durable exact-signal dispatch marker
         id: dedupe
         if: steps.decision.outputs.dispatch_required == 'true'
-        uses: actions/cache/restore@v4
-        with:
-          path: .event-driven-deep-review-cache
-          key: genge-v311-event-deep-review-${{ steps.decision.outputs.signal_digest }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          marker_name="genge-v311-event-deep-review-marker-${{ steps.decision.outputs.signal_digest }}"
+          marker_count=$(gh api -X GET \
+            "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${marker_name}&per_page=10" \
+            --jq '[.artifacts[] | select(.expired == false)] | length')
+          if [ "$marker_count" -gt 0 ]; then
+            echo "marker_hit=true" >> "$GITHUB_OUTPUT"
+            echo "Durable exact-signal marker already exists; skip duplicate production dispatch."
+          else
+            echo "marker_hit=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Dispatch immediate production Deep Review
         id: dispatch
         if: >-
           steps.decision.outputs.dispatch_required == 'true' &&
-          steps.dedupe.outputs.cache-hit != 'true'
+          steps.dedupe.outputs.marker_hit != 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -175,20 +185,22 @@ jobs:
             dispatch_path="FULL_DISCOVERY_FALLBACK"
           fi
 
-          mkdir -p .event-driven-deep-review-cache
+          mkdir -p .event-driven-deep-review-marker
           cp reports/event_driven_deep_review/decision.json \
-            .event-driven-deep-review-cache/decision.json
+            .event-driven-deep-review-marker/decision.json
           echo "dispatched=true" >> "$GITHUB_OUTPUT"
           echo "deferred=false" >> "$GITHUB_OUTPUT"
           echo "dispatch_path=${dispatch_path}" >> "$GITHUB_OUTPUT"
           echo "upstream_run_id=${upstream_run_id}" >> "$GITHUB_OUTPUT"
 
-      - name: Save exact-signal dispatch marker
+      - name: Save durable exact-signal dispatch marker
         if: steps.dispatch.outputs.dispatched == 'true'
-        uses: actions/cache/save@v4
+        uses: actions/upload-artifact@v4
         with:
-          path: .event-driven-deep-review-cache
-          key: genge-v311-event-deep-review-${{ steps.decision.outputs.signal_digest }}
+          name: genge-v311-event-deep-review-marker-${{ steps.decision.outputs.signal_digest }}
+          path: .event-driven-deep-review-marker/decision.json
+          if-no-files-found: error
+          retention-days: 90
 
       - name: Upload trigger decision
         if: always()
@@ -207,7 +219,7 @@ jobs:
           echo "- holding triggers: \`${{ steps.decision.outputs.holding_trigger_count }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- external triggers: \`${{ steps.decision.outputs.external_trigger_count }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- signal digest: \`${{ steps.decision.outputs.signal_digest }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- duplicate signal cache hit: \`${{ steps.dedupe.outputs.cache-hit }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- duplicate signal durable marker hit: \`${{ steps.dedupe.outputs.marker_hit }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- production dispatch: \`${{ steps.dispatch.outputs.dispatched }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- dispatch path: \`${{ steps.dispatch.outputs.dispatch_path }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- reused All-A upstream run: \`${{ steps.dispatch.outputs.upstream_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
