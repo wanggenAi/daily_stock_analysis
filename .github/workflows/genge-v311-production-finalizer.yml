@@ -160,6 +160,7 @@ jobs:
         run: |
           python -m pytest -q \
             tests/test_genge_actions_provenance.py \
+            tests/test_genge_production_finalizer_workflow.py \
             tests/test_genge_canonical_snapshot.py \
             tests/test_genge_canonical_operating_view.py \
             tests/test_genge_canonical_authority.py \
@@ -205,6 +206,7 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           from src.strategies.genge_opportunity_discovery.canonical_authorized_consumer import load_authorized_view
           from src.strategies.genge_opportunity_discovery.canonical_operating_view import DAILY_SETTLEMENT, HOURLY_MONITOR
@@ -228,7 +230,7 @@ jobs:
           assert hourly_bundle["source_workflow"] == "${{ steps.source.outputs.workflow }}"
           assert authority["source_head_sha"] == "${{ steps.source.outputs.head_sha }}"
           assert len(authority["source_head_sha"]) == 40
-          assert authority["finalizer_run_id"] == "${GITHUB_RUN_ID}"
+          assert authority["finalizer_run_id"] == os.environ["GITHUB_RUN_ID"]
           assert len(authority["finalizer_code_sha"]) == 40
           assert holdings["canonical_snapshot_id"] == sid
           assert holdings["canonical_source_run_id"] == hourly_bundle["canonical_source_run_id"]
