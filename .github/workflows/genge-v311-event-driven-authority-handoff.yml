@@ -1,0 +1,182 @@
+name: GenGe V3.1.1 Event-Driven Authority Handoff
+
+run-name: >-
+  GenGe V3.1.1 Event-Driven Authority Handoff / ${{
+    inputs.discovery_run_id || 'fresh-discovery'
+  }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      discovery_run_id:
+        description: "Optional successful Opportunity Discovery run with non-expired All-A production artifact"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-v311-event-driven-authority-handoff
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  complete-authority-chain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Complete event-driven production authority chain
+        id: handoff
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REUSABLE_DISCOVERY_RUN_ID: ${{ inputs.discovery_run_id }}
+        run: |
+          set -euo pipefail
+
+          wait_run() {
+            local run_id="$1"
+            local expected_name="$2"
+            local max_attempts="${3:-180}"
+            for ((attempt=1; attempt<=max_attempts; attempt++)); do
+              payload=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+              name=$(printf '%s' "$payload" | jq -r '.name')
+              status=$(printf '%s' "$payload" | jq -r '.status')
+              conclusion=$(printf '%s' "$payload" | jq -r '.conclusion // ""')
+              if [ "$name" != "$expected_name" ]; then
+                echo "run ${run_id} is ${name}, expected ${expected_name}" >&2
+                exit 1
+              fi
+              if [ "$status" = "completed" ]; then
+                if [ "$conclusion" != "success" ]; then
+                  echo "${expected_name} run ${run_id} completed with ${conclusion}" >&2
+                  exit 1
+                fi
+                return 0
+              fi
+              sleep 10
+            done
+            echo "timed out waiting for ${expected_name} run ${run_id}" >&2
+            exit 1
+          }
+
+          find_bot_dispatch_run() {
+            local workflow="$1"
+            local not_before="$2"
+            local expected_name="$3"
+            local max_attempts="${4:-30}"
+            local run_id=""
+            for ((attempt=1; attempt<=max_attempts; attempt++)); do
+              runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs?event=workflow_dispatch&per_page=30")
+              run_id=$(printf '%s' "$runs" | jq -r --arg not_before "$not_before" --arg expected_name "$expected_name" '
+                [ .workflow_runs[]
+                  | select(.created_at >= $not_before)
+                  | select(.head_branch == "main")
+                  | select(.actor.login == "github-actions[bot]")
+                  | select(.name == $expected_name)
+                ]
+                | sort_by(.created_at, .id)
+                | first
+                | .id // empty')
+              if [ -n "$run_id" ]; then
+                printf '%s\n' "$run_id"
+                return 0
+              fi
+              sleep 2
+            done
+            echo "could not resolve dispatched ${expected_name} run after ${not_before}" >&2
+            exit 1
+          }
+
+          require_artifact() {
+            local run_id="$1"
+            local artifact_name="$2"
+            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+            count=$(printf '%s' "$artifacts" | jq -r --arg artifact_name "$artifact_name" '[
+              .artifacts[]
+              | select(.name == $artifact_name and .expired == false)
+            ] | length')
+            if [ "$count" -ne 1 ]; then
+              echo "expected exactly one non-expired ${artifact_name} artifact on run ${run_id}; found ${count}" >&2
+              exit 1
+            fi
+          }
+
+          dispatch_and_resolve() {
+            local workflow="$1"
+            local expected_name="$2"
+            shift 2
+            local not_before
+            not_before=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+            gh workflow run "$workflow" --repo "$GITHUB_REPOSITORY" --ref main "$@" >/dev/null
+            find_bot_dispatch_run "$workflow" "$not_before" "$expected_name"
+          }
+
+          discovery_run_id="${REUSABLE_DISCOVERY_RUN_ID}"
+          if [ -n "$discovery_run_id" ]; then
+            wait_run "$discovery_run_id" "GenGe Opportunity Discovery" 3
+            require_artifact "$discovery_run_id" "genge-all-a-production-report"
+            discovery_path="REUSED_SUCCESSFUL_DISCOVERY"
+          else
+            discovery_run_id=$(dispatch_and_resolve \
+              genge-opportunity-discovery.yml \
+              "GenGe Opportunity Discovery" \
+              -f run_legacy_report=false)
+            wait_run "$discovery_run_id" "GenGe Opportunity Discovery" 900
+            require_artifact "$discovery_run_id" "genge-all-a-production-report"
+            discovery_path="EVENT_DRIVEN_DISCOVERY_FALLBACK"
+          fi
+
+          industry_run_id=$(dispatch_and_resolve \
+            genge-v31-industry-research.yml \
+            "GenGe V3.1.1 Every-Industry Research" \
+            -f upstream_run_id="$discovery_run_id" \
+            -f explicit_finalizer=false)
+          wait_run "$industry_run_id" "GenGe V3.1.1 Every-Industry Research" 900
+          require_artifact "$industry_run_id" "genge-v31-every-industry-research"
+
+          finalizer_run_id=$(dispatch_and_resolve \
+            genge-v311-production-finalizer.yml \
+            "GenGe V3.1.1 Production Finalizer" \
+            -f source_run_id="$industry_run_id" \
+            -f source_workflow="GenGe V3.1.1 Every-Industry Research")
+          wait_run "$finalizer_run_id" "GenGe V3.1.1 Production Finalizer" 180
+          require_artifact "$finalizer_run_id" "genge-v311-authoritative-canonical-${industry_run_id}"
+
+          consumer_name="GenGe V3.1.1 Authority Consumer Handoff / ${finalizer_run_id}"
+          consumer_handoff_run_id=$(dispatch_and_resolve \
+            genge-v311-authority-consumer-handoff.yml \
+            "$consumer_name" \
+            -f finalizer_run_id="$finalizer_run_id")
+          wait_run "$consumer_handoff_run_id" "$consumer_name" 420
+
+          {
+            echo "discovery_run_id=${discovery_run_id}"
+            echo "industry_run_id=${industry_run_id}"
+            echo "finalizer_run_id=${finalizer_run_id}"
+            echo "consumer_handoff_run_id=${consumer_handoff_run_id}"
+            echo "discovery_path=${discovery_path}"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Publish authority handoff summary
+        if: always()
+        run: |
+          echo "# GenGe V3.1.1 Event-Driven Authority Handoff" >> "$GITHUB_STEP_SUMMARY"
+          echo "- discovery path: \`${{ steps.handoff.outputs.discovery_path }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- discovery run: \`${{ steps.handoff.outputs.discovery_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Every-Industry run: \`${{ steps.handoff.outputs.industry_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Production Finalizer run: \`${{ steps.handoff.outputs.finalizer_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Authority Consumer Handoff run: \`${{ steps.handoff.outputs.consumer_handoff_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- downstream order: Finalizer -> exact Authority Consumer Handoff -> Continuity -> Hourly -> Operating Ledger" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Formal actions remain authorized only by Production Finalizer" >> "$GITHUB_STEP_SUMMARY"
+          echo "- no auto trade" >> "$GITHUB_STEP_SUMMARY"
