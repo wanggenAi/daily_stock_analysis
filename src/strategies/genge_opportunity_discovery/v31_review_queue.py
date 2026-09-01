@@ -15,7 +15,7 @@ from typing import Any, Iterable, Mapping
 from src.strategies.genge_opportunity_discovery import selection_framework_v31
 
 DISCLAIMER = "仅用于公开数据研究与人工复核，不构成买入或卖出建议，不应自动交易。"
-POLICY_VERSION = "v31_deep_review_queue_v2_priority_order_only"
+POLICY_VERSION = "v31_deep_review_queue_v3_specialized_completion_passthrough"
 
 JUDGEMENT_FIELDS = (
     "v31_predictability_status", "v31_long_term_demand_status", "v31_moat_status",
@@ -131,7 +131,10 @@ def build_review_rows(
         code = _code(raw.get("code"))
         plan = dict(plan_map.get(code) or {})
         priority = dict(priority_map.get(code) or {})
-        row: dict[str, Any] = {
+        completion = str(raw.get("valuation_strategy_completion_status") or "NOT_APPLICABLE")
+        followup = str(raw.get("valuation_strategy_followup_reason") or "")
+        row: dict[str, Any] = dict(raw)
+        row.update({
             "v31_review_rank": len(rows) + 1,
             "code": code,
             "stock_name": raw.get("stock_name") or plan.get("stock_name") or "",
@@ -152,14 +155,16 @@ def build_review_rows(
             "v31_current_price": plan.get("raw_latest_close") or "",
             "v31_normalized_profit": raw.get("normalized_core_operating_profit") or "",
             "v31_normalized_profit_method": raw.get("earnings_normalization_method") or "",
+            "v31_valuation_completion_status": completion,
+            "v31_valuation_followup_reason": followup,
             "v31_review_status": "RESEARCH_REQUIRED",
-            "v31_review_evidence_urls": "",
+            "v31_review_evidence_urls": raw.get("insurance_evidence_source_url") or raw.get("resource_nav_evidence_urls") or "",
             "formal_signal_eligible": False,
             "automatic_promotion_allowed": False,
             "no_auto_trade": True,
             "review_policy_version": POLICY_VERSION,
             "disclaimer": DISCLAIMER,
-        }
+        })
         for field in JUDGEMENT_FIELDS:
             row[field] = ""
         row.update(selection_framework_v31.assess_v31(row).as_dict())
@@ -177,7 +182,7 @@ def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path
         "v31_review_rank", "code", "stock_name", "industry", "valuation_research_rank", "valuation_source_channel", "quant_score",
         "research_priority", "research_priority_score", "research_priority_reason_codes", "research_priority_mapping_gaps", "research_priority_is_ordering_only",
         "valuation_diagnostic_status", "financial_review_status", "earnings_quality_score_source", "earnings_quality_confidence_source",
-        "required_profit_growth_vs_reference_source", *PREFILL_FIELDS, *JUDGEMENT_FIELDS,
+        "required_profit_growth_vs_reference_source", "v31_valuation_completion_status", "v31_valuation_followup_reason", *PREFILL_FIELDS, *JUDGEMENT_FIELDS,
         "v31_hard_gates_passed", "v31_hard_gate_failures", "v31_hard_gate_unknowns", "v31_score_total", "v31_score_complete",
         "v31_a_eligible", "v31_buy_ready", "v31_blockers", "v31_review_status", "v31_review_evidence_urls",
         "formal_signal_eligible", "automatic_promotion_allowed", "no_auto_trade", "review_policy_version", "disclaimer",
@@ -189,6 +194,9 @@ def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path
     summary = {
         "candidate_count": len(rows),
         "research_required_count": sum(row.get("v31_review_status") == "RESEARCH_REQUIRED" for row in rows),
+        "valuation_strategy_unfinished_count": sum(row.get("v31_valuation_completion_status") == "UNFINISHED" for row in rows),
+        "valuation_strategy_completed_no_anchor_count": sum(row.get("v31_valuation_completion_status") == "COMPLETED_NO_ANCHOR" for row in rows),
+        "valuation_strategy_completed_with_anchor_count": sum(row.get("v31_valuation_completion_status") == "COMPLETED_WITH_REFERENCE_ANCHOR" for row in rows),
         "priority_input_available": bool(priority_map),
         "priority_reorders_deep_review_only": True,
         "priority_may_filter_broad_discovery": False,
@@ -198,12 +206,12 @@ def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
         "policy_version": POLICY_VERSION,
-        "semantics": "broad recall remains independent; persisted research priority only reorders evidence-backed V3.1 deep-review handoff",
+        "semantics": "broad recall remains independent; specialized completion facts pass through for evidence-aware deep review only",
     }
     (output_dir / "v31_review_queue_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    lines = ["# Frozen V3.1 Deep Review Queue", "", "Broad recall is never filtered by research priority. Priority only orders this deep-review handoff.", "", f"- queued: {len(rows)}", f"- priority input available: {bool(priority_map)}", "- automatic qualitative gate inference: disabled", "- automatic promotion/trading: disabled", ""]
+    lines = ["# Frozen V3.1 Deep Review Queue", "", "Broad recall is never filtered by research priority. Priority only orders this deep-review handoff.", "", f"- queued: {len(rows)}", f"- priority input available: {bool(priority_map)}", f"- specialized unfinished: {summary['valuation_strategy_unfinished_count']}", f"- specialized completed with anchor: {summary['valuation_strategy_completed_with_anchor_count']}", "- automatic qualitative gate inference: disabled", "- automatic promotion/trading: disabled", ""]
     for row in rows[:50]:
-        lines.append(f"- #{row['v31_review_rank']} {row['code']} {row['stock_name']} | {row['industry']} | priority={row['research_priority'] or '-'}:{row['research_priority_score']} | valuation_rank={row['valuation_research_rank']} | gate_unknowns={row['v31_hard_gate_unknowns']}")
+        lines.append(f"- #{row['v31_review_rank']} {row['code']} {row['stock_name']} | {row['industry']} | priority={row['research_priority'] or '-'}:{row['research_priority_score']} | valuation={row['v31_valuation_completion_status']} | gate_unknowns={row['v31_hard_gate_unknowns']}")
     (output_dir / "v31_review_queue.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return rows
 
