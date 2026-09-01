@@ -108,6 +108,21 @@ jobs:
             exit 1
           }
 
+          find_success_or_active_named_run() {
+            local workflow="$1"
+            local expected_name="$2"
+            runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs?per_page=50")
+            printf '%s' "$runs" | jq -r --arg expected_name "$expected_name" '
+              [ .workflow_runs[]
+                | select(.head_branch == "main")
+                | select(.name == $expected_name)
+                | select(.status == "queued" or .status == "in_progress" or (.status == "completed" and .conclusion == "success"))
+              ]
+              | sort_by(.created_at, .id)
+              | last
+              | .id // empty'
+          }
+
           require_artifact() {
             local run_id="$1"
             local artifact_name="$2"
@@ -172,10 +187,25 @@ jobs:
           require_artifact "$finalizer_run_id" "genge-v311-authoritative-canonical-${industry_run_id}"
 
           consumer_name="GenGe V3.1.1 Authority Consumer Handoff / ${finalizer_run_id}"
-          consumer_handoff_run_id=$(dispatch_and_resolve \
-            genge-v311-authority-consumer-handoff.yml \
-            "$consumer_name" \
-            -f finalizer_run_id="$finalizer_run_id")
+          consumer_handoff_run_id=""
+          consumer_dispatch_path=""
+          for _ in $(seq 1 10); do
+            consumer_handoff_run_id=$(find_success_or_active_named_run \
+              genge-v311-authority-consumer-handoff.yml \
+              "$consumer_name")
+            if [ -n "$consumer_handoff_run_id" ]; then
+              consumer_dispatch_path="REUSED_AUTOMATIC_CONSUMER_HANDOFF"
+              break
+            fi
+            sleep 2
+          done
+          if [ -z "$consumer_handoff_run_id" ]; then
+            consumer_handoff_run_id=$(dispatch_and_resolve \
+              genge-v311-authority-consumer-handoff.yml \
+              "$consumer_name" \
+              -f finalizer_run_id="$finalizer_run_id")
+            consumer_dispatch_path="EXPLICIT_CONSUMER_HANDOFF"
+          fi
           wait_run "$consumer_handoff_run_id" "$consumer_name" 420
 
           {
@@ -183,6 +213,7 @@ jobs:
             echo "industry_run_id=${industry_run_id}"
             echo "finalizer_run_id=${finalizer_run_id}"
             echo "consumer_handoff_run_id=${consumer_handoff_run_id}"
+            echo "consumer_dispatch_path=${consumer_dispatch_path}"
             echo "discovery_path=${discovery_path}"
           } >> "$GITHUB_OUTPUT"
 
@@ -195,6 +226,8 @@ jobs:
           echo "- Every-Industry run: \`${{ steps.handoff.outputs.industry_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Production Finalizer run: \`${{ steps.handoff.outputs.finalizer_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Authority Consumer Handoff run: \`${{ steps.handoff.outputs.consumer_handoff_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- consumer handoff path: \`${{ steps.handoff.outputs.consumer_dispatch_path }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- downstream order: Finalizer -> exact Authority Consumer Handoff -> Continuity -> Hourly -> Operating Ledger" >> "$GITHUB_STEP_SUMMARY"
+          echo "- automatic consumer handoff is reused when present; explicit dispatch is fallback only" >> "$GITHUB_STEP_SUMMARY"
           echo "- Formal actions remain authorized only by Production Finalizer" >> "$GITHUB_STEP_SUMMARY"
           echo "- no auto trade" >> "$GITHUB_STEP_SUMMARY"
