@@ -4,6 +4,14 @@ GitHub Actions workflow run IDs and job IDs are both decimal integers, so format
 checks alone cannot distinguish their namespaces. Production therefore validates
 persisted run identities against the Actions *workflow-runs* REST endpoint before
 canonical authority is published.
+
+The canonical producer has two supported provenance shapes:
+
+* Every-Industry Research is downstream of a successful GenGe Opportunity
+  Discovery workflow run and stores that numeric workflow-run ID.
+* The self-contained All-A One Shot has no external upstream workflow and stores
+  the explicit ``self:<source_run_id>`` reference. That sentinel is valid only
+  when it points back to the exact canonical source run.
 """
 from __future__ import annotations
 
@@ -16,6 +24,11 @@ from urllib.request import Request, urlopen
 
 _RUN_ID_RE = re.compile(r"^[1-9][0-9]*$")
 _SHA_RE = re.compile(r"^[0-9a-fA-F]{40}$")
+
+EVERY_INDUSTRY_WORKFLOW = "GenGe V3.1.1 Every-Industry Research"
+ONE_SHOT_WORKFLOW = "GenGe All-A V3.1.1 One Shot"
+OPPORTUNITY_DISCOVERY_WORKFLOW = "GenGe Opportunity Discovery"
+FINALIZER_WORKFLOW = "GenGe V3.1.1 Production Finalizer"
 
 
 def require_actions_run_id(value: object, *, field: str = "run_id") -> str:
@@ -30,6 +43,29 @@ def require_git_sha(value: object, *, field: str) -> str:
     if not _SHA_RE.fullmatch(sha):
         raise ValueError(f"{field} must be a full 40-hex Git commit SHA")
     return sha.lower()
+
+
+def require_upstream_run_ref(
+    value: object,
+    *,
+    source_run_id: object,
+    source_workflow: str,
+) -> str:
+    """Validate the producer-specific upstream identity without namespace ambiguity."""
+    source_id = require_actions_run_id(source_run_id, field="source_run_id")
+    workflow = str(source_workflow or "").strip()
+    upstream = str(value or "").strip()
+
+    if workflow == ONE_SHOT_WORKFLOW:
+        expected = f"self:{source_id}"
+        if upstream != expected:
+            raise ValueError(
+                "One Shot upstream provenance must be the exact self:<source_run_id> reference"
+            )
+        return expected
+    if workflow == EVERY_INDUSTRY_WORKFLOW:
+        return require_actions_run_id(upstream, field="upstream_run_id")
+    raise ValueError(f"unsupported canonical source workflow for upstream provenance: {workflow!r}")
 
 
 def _github_api_get(url: str, token: str) -> Mapping[str, Any]:
@@ -108,26 +144,44 @@ def validate_production_provenance(
     source_head_sha: str,
     upstream_run_id: object,
     finalizer_run_id: object,
-    finalizer_workflow: str = "GenGe V3.1.1 Production Finalizer",
+    finalizer_workflow: str = FINALIZER_WORKFLOW,
     api_get: Callable[[str, str], Mapping[str, Any]] | None = None,
 ) -> None:
     """Validate source, upstream, and current Finalizer run identities."""
+    normalized_source_id = require_actions_run_id(source_run_id, field="source_run_id")
+    normalized_upstream = require_upstream_run_ref(
+        upstream_run_id,
+        source_run_id=normalized_source_id,
+        source_workflow=source_workflow,
+    )
+
     validate_actions_run(
         repository,
-        source_run_id,
+        normalized_source_id,
         token,
         expected_workflow=source_workflow,
         expected_head_sha=source_head_sha,
         require_success=True,
         api_get=api_get,
     )
-    validate_actions_run(
-        repository,
-        upstream_run_id,
-        token,
-        require_success=True,
-        api_get=api_get,
-    )
+
+    if source_workflow == EVERY_INDUSTRY_WORKFLOW:
+        # Every-Industry may only consume the exact workflow-run namespace used
+        # by GenGe Opportunity Discovery. A random successful Actions run is not
+        # acceptable upstream provenance.
+        validate_actions_run(
+            repository,
+            normalized_upstream,
+            token,
+            expected_workflow=OPPORTUNITY_DISCOVERY_WORKFLOW,
+            require_success=True,
+            api_get=api_get,
+        )
+    elif source_workflow != ONE_SHOT_WORKFLOW:
+        # require_upstream_run_ref already rejects this; retain an explicit
+        # defensive branch in case future refactoring changes that helper.
+        raise ValueError(f"unsupported canonical source workflow: {source_workflow!r}")
+
     # The current Finalizer is normally still in_progress, so existence and
     # workflow identity are authoritative; conclusion cannot yet be "success".
     validate_actions_run(
@@ -149,7 +203,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--source-head-sha", required=True)
     parser.add_argument("--upstream-run-id", required=True)
     parser.add_argument("--finalizer-run-id", required=True)
-    parser.add_argument("--finalizer-workflow", default="GenGe V3.1.1 Production Finalizer")
+    parser.add_argument("--finalizer-workflow", default=FINALIZER_WORKFLOW)
     args = parser.parse_args(argv)
     validate_production_provenance(
         repository=args.repository,
