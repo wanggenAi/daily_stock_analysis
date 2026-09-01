@@ -199,6 +199,26 @@ def test_hints_disabled_preserves_request_shape_and_input_object():
     assert result.disabled_reason == "hints_disabled"
 
 
+def test_caller_prompt_cache_key_is_stripped_without_verified_capture():
+    original = {
+        "model": "openai/gpt-4o",
+        "messages": [{"role": "user", "content": "hello"}],
+        "prompt_cache_key": "session-a",
+    }
+    before = copy.deepcopy(original)
+
+    result = apply_prompt_cache_hints(
+        original,
+        ProviderCacheRouteContext(model="openai/gpt-4o", provider="openai"),
+        _config(llm_prompt_cache_hints_enabled=False),
+    )
+
+    assert "prompt_cache_key" not in result.call_kwargs
+    assert original == before
+    assert not result.hint_applied
+    assert result.disabled_reason == "hints_disabled"
+
+
 def test_openai_doc_only_caps_do_not_emit_prompt_cache_key_until_verified():
     original = {"model": "openai/gpt-4o", "messages": [{"role": "user", "content": "hello"}]}
 
@@ -320,12 +340,15 @@ def test_litellm_openai_prompt_cache_key_is_not_passed_through_without_verified_
         import json
         import threading
         from http.server import BaseHTTPRequestHandler, HTTPServer
+        from types import SimpleNamespace
 
         try:
             import litellm
         except ModuleNotFoundError:
             print("LITELLM_MISSING")
             raise SystemExit(77)
+
+        from src.llm.provider_cache import ProviderCacheRouteContext, apply_prompt_cache_hints
 
         captured = {}
         request_seen = threading.Event()
@@ -367,15 +390,31 @@ def test_litellm_openai_prompt_cache_key_is_not_passed_through_without_verified_
         thread = threading.Thread(target=server.serve_forever, daemon=True)
         thread.start()
         try:
+            governed = apply_prompt_cache_hints(
+                {
+                    "model": "openai/test-model",
+                    "messages": [{"role": "user", "content": "hello"}],
+                    "prompt_cache_key": "cache-key",
+                },
+                ProviderCacheRouteContext(
+                    model="openai/test-model",
+                    provider="openai",
+                    api_surface="chat_completions",
+                ),
+                SimpleNamespace(
+                    llm_prompt_cache_hints_enabled=False,
+                    llm_prompt_cache_diagnostics_level="off",
+                ),
+            ).call_kwargs
+            if "prompt_cache_key" in governed:
+                raise AssertionError("provider boundary retained an unverified prompt_cache_key")
             litellm.completion(
-                model="openai/test-model",
                 api_base=f"http://127.0.0.1:{server.server_port}/v1",
                 api_key="sk-test",
-                messages=[{"role": "user", "content": "hello"}],
-                prompt_cache_key="cache-key",
                 max_tokens=1,
                 timeout=5,
                 num_retries=0,
+                **governed,
             )
             if not request_seen.wait(timeout=10):
                 raise AssertionError("LiteLLM did not send request to local capture server")

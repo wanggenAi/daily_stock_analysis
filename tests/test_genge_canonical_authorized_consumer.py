@@ -23,6 +23,10 @@ from src.strategies.genge_opportunity_discovery.canonical_snapshot import (
 )
 
 
+SOURCE_HEAD_SHA = "0123456789abcdef0123456789abcdef01234567"
+FINALIZER_CODE_SHA = "89abcdef0123456789abcdef0123456789abcdef"
+
+
 def _snapshot(*, source_run_id: str = "123", source_kind: str = "every-industry") -> dict:
     discovery = [
         {
@@ -66,7 +70,7 @@ def _snapshot(*, source_run_id: str = "123", source_kind: str = "every-industry"
         production,
         source_kind=source_kind,
         source_run_id=source_run_id,
-        upstream_run_id=f"upstream:{source_run_id}",
+        upstream_run_id=str(int(source_run_id) + 1000),
         generated_at="2026-08-27T03:00:00+00:00",
         research_as_of="2026-08-27T03:00:00+00:00",
         source_hashes={
@@ -97,9 +101,9 @@ def _finalize(tmp_path: Path, *, source_run_id: str = "123") -> Path:
         expected_source_run_id=source_run_id,
         source_workflow="GenGe V3.1.1 Every-Industry Research",
         expected_source_kind="every-industry",
-        source_head_sha="deadbeef",
-        finalizer_run_id=f"finalizer:{source_run_id}",
-        finalizer_code_sha="cafebabe",
+        source_head_sha=SOURCE_HEAD_SHA,
+        finalizer_run_id=str(int(source_run_id) + 2000),
+        finalizer_code_sha=FINALIZER_CODE_SHA,
         finalized_at="2026-08-27T03:30:00+00:00",
     )
     holdings = tmp_path / f"holdings-{source_run_id}.md"
