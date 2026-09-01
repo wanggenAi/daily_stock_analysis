@@ -13,17 +13,77 @@ permissions:
 jobs:
   dispatch-current-main:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 65
     steps:
-      - name: Dispatch Finalizer for completed refreshed Every-Industry run
+      - name: Complete fresh post-merge production consumer chain
         env:
           GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          FINALIZER_RUN_ID: "33483034857"
+        shell: bash
         run: |
-          gh workflow run genge-v311-production-finalizer.yml \
-            --repo "${{ github.repository }}" \
-            --ref main \
-            -f source_run_id=33134227778 \
-            -f source_workflow="GenGe V3.1.1 Every-Industry Research"
-          echo "Dispatched production Finalizer for successful Every-Industry run 33134227778."
+          set -euo pipefail
 
-# Finalizer dispatch marker: 2026-08-28 refreshed production cycle.
+          dispatch_and_wait() {
+            local workflow="$1"
+            shift
+            local before=""
+            local run_id=""
+            local candidate=""
+
+            before="$(gh run list \
+              --repo "$REPO" \
+              --workflow "$workflow" \
+              --event workflow_dispatch \
+              --limit 20 \
+              --json databaseId \
+              --jq '.[].databaseId' | tr '\n' ' ')"
+
+            gh workflow run "$workflow" --repo "$REPO" --ref main "$@"
+
+            for _ in $(seq 1 60); do
+              while IFS= read -r candidate; do
+                [ -n "$candidate" ] || continue
+                if ! grep -qw "$candidate" <<<"$before"; then
+                  run_id="$candidate"
+                  break
+                fi
+              done < <(gh run list \
+                --repo "$REPO" \
+                --workflow "$workflow" \
+                --event workflow_dispatch \
+                --limit 20 \
+                --json databaseId \
+                --jq '.[].databaseId')
+
+              [ -n "$run_id" ] && break
+              sleep 2
+            done
+
+            if [ -z "$run_id" ]; then
+              echo "Unable to resolve dispatched run for $workflow" >&2
+              exit 1
+            fi
+
+            echo "Dispatched $workflow as run $run_id"
+            echo "- $workflow: $run_id" >> "$GITHUB_STEP_SUMMARY"
+            gh run watch "$run_id" --repo "$REPO" --exit-status --interval 5
+          }
+
+          echo "# GenGe V3.1.1 post-merge production closure" >> "$GITHUB_STEP_SUMMARY"
+          echo "- authoritative Finalizer: $FINALIZER_RUN_ID" >> "$GITHUB_STEP_SUMMARY"
+
+          dispatch_and_wait genge-v311-continuity-state.yml \
+            -f finalizer_run_id="$FINALIZER_RUN_ID"
+
+          dispatch_and_wait genge-hourly-deep-overlay.yml
+
+          # Keep the ledger serialized behind the completed hourly surface. Its
+          # promotion barrier independently requires the exact Canonical
+          # snapshot/source-run identity before Production Status can advance.
+          dispatch_and_wait genge-v311-operating-ledger.yml \
+            -f finalizer_run_id="$FINALIZER_RUN_ID"
+
+          echo "Fresh post-merge production consumer chain completed successfully."
+
+# Closure dispatch marker: 2026-09-01 Finalizer 33483034857 / snapshot 7a46089fcc6708d6bbc7.
