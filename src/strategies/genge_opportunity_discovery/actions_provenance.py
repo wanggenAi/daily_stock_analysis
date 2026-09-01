@@ -145,9 +145,16 @@ def validate_production_provenance(
     upstream_run_id: object,
     finalizer_run_id: object,
     finalizer_workflow: str = FINALIZER_WORKFLOW,
+    finalizer_require_success: bool = False,
     api_get: Callable[[str, str], Mapping[str, Any]] | None = None,
 ) -> None:
-    """Validate source, upstream, and current Finalizer run identities."""
+    """Validate source, upstream, and Finalizer run identities.
+
+    During the Finalizer itself ``finalizer_require_success`` is false because the
+    current run is necessarily still in progress. Downstream consumers of a
+    persisted authoritative artifact must pass true so a failed/cancelled run can
+    never be replayed as production authority.
+    """
     normalized_source_id = require_actions_run_id(source_run_id, field="source_run_id")
     normalized_upstream = require_upstream_run_ref(
         upstream_run_id,
@@ -182,14 +189,12 @@ def validate_production_provenance(
         # defensive branch in case future refactoring changes that helper.
         raise ValueError(f"unsupported canonical source workflow: {source_workflow!r}")
 
-    # The current Finalizer is normally still in_progress, so existence and
-    # workflow identity are authoritative; conclusion cannot yet be "success".
     validate_actions_run(
         repository,
         finalizer_run_id,
         token,
         expected_workflow=finalizer_workflow,
-        require_success=False,
+        require_success=finalizer_require_success,
         api_get=api_get,
     )
 
@@ -204,6 +209,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--upstream-run-id", required=True)
     parser.add_argument("--finalizer-run-id", required=True)
     parser.add_argument("--finalizer-workflow", default=FINALIZER_WORKFLOW)
+    parser.add_argument("--require-finalizer-success", action="store_true")
     args = parser.parse_args(argv)
     validate_production_provenance(
         repository=args.repository,
@@ -214,6 +220,7 @@ def main(argv: list[str] | None = None) -> int:
         upstream_run_id=args.upstream_run_id,
         finalizer_run_id=args.finalizer_run_id,
         finalizer_workflow=args.finalizer_workflow,
+        finalizer_require_success=args.require_finalizer_success,
     )
     print("GitHub Actions provenance: VALID")
     return 0
