@@ -1,0 +1,171 @@
+name: GenGe V3.1.1 Authority Consumer Handoff
+
+run-name: >-
+  GenGe V3.1.1 Authority Consumer Handoff / ${{
+    github.event_name == 'workflow_run' && github.event.workflow_run.id ||
+    inputs.finalizer_run_id ||
+    'latest-authorized-smoke'
+  }}
+
+on:
+  workflow_run:
+    workflows: ["GenGe V3.1.1 Production Finalizer"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      finalizer_run_id:
+        description: "Successful Production Finalizer run id; omit to smoke-test newest authorized Finalizer"
+        required: false
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v311-authority-consumer-handoff.yml"
+      - ".github/workflows/genge-hourly-deep-overlay.yml"
+      - ".github/workflows/genge-v311-continuity-state.yml"
+      - ".github/workflows/genge-v311-operating-ledger.yml"
+      - "tests/test_genge_authority_consumer_handoff_workflow.py"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: >-
+    genge-v311-authority-consumer-handoff-${{
+      github.event_name == 'workflow_run' && github.event.workflow_run.id ||
+      inputs.finalizer_run_id ||
+      'latest-authorized-smoke'
+    }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  close-authority-consumers:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Resolve and validate exact Finalizer authority
+        id: authority
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_FINALIZER_RUN_ID: ${{ inputs.finalizer_run_id }}
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            finalizer_run_id="${{ github.event.workflow_run.id }}"
+          elif [ -n "${REQUESTED_FINALIZER_RUN_ID:-}" ]; then
+            finalizer_run_id="$REQUESTED_FINALIZER_RUN_ID"
+          else
+            runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
+            finalizer_run_id=""
+            while IFS= read -r candidate; do
+              test -n "$candidate" || continue
+              artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100")
+              if printf '%s' "$artifacts" | jq -e '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))' >/dev/null; then
+                finalizer_run_id="$candidate"
+                break
+              fi
+            done < <(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
+          fi
+          test -n "$finalizer_run_id" || { echo "No successful authoritative Production Finalizer run available" >&2; exit 1; }
+          run=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${finalizer_run_id}")
+          workflow_path=$(printf '%s' "$run" | jq -r '.path // empty')
+          conclusion=$(printf '%s' "$run" | jq -r '.conclusion // empty')
+          test "$workflow_path" = ".github/workflows/genge-v311-production-finalizer.yml" || { echo "Run ${finalizer_run_id} is not Production Finalizer: ${workflow_path}" >&2; exit 1; }
+          test "$conclusion" = "success" || { echo "Production Finalizer ${finalizer_run_id} is not successful: ${conclusion}" >&2; exit 1; }
+          artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${finalizer_run_id}/artifacts?per_page=100")
+          authoritative_count=$(printf '%s' "$artifacts" | jq '[.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))] | length')
+          test "$authoritative_count" -ge 1 || { echo "Finalizer ${finalizer_run_id} has no non-expired authoritative Canonical artifact" >&2; exit 1; }
+          echo "finalizer_run_id=${finalizer_run_id}" >> "$GITHUB_OUTPUT"
+          echo "FINALIZER_RUN_ID=${finalizer_run_id}" >> "$GITHUB_ENV"
+
+      - name: Dispatch exact consumers and wait for successful closure
+        id: consumers
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          dispatch_and_wait() {
+            local workflow_file="$1"
+            local label="$2"
+            local max_attempts=4
+            for attempt in $(seq 1 "$max_attempts"); do
+              echo "${label}: exact dispatch attempt ${attempt}/${max_attempts} for Finalizer ${FINALIZER_RUN_ID}"
+              before_max=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/runs?event=workflow_dispatch&per_page=30" --jq '[.workflow_runs[].id] | max // 0')
+              gh workflow run "$workflow_file" --repo "$GITHUB_REPOSITORY" --ref main -f finalizer_run_id="$FINALIZER_RUN_ID"
+              child_run_id=""
+              for _ in $(seq 1 30); do
+                child_run_id=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/runs?event=workflow_dispatch&per_page=30" --jq ".workflow_runs | map(select(.id > ${before_max})) | sort_by(.id) | first | .id // empty")
+                [ -n "$child_run_id" ] && break
+                sleep 2
+              done
+              [ -n "$child_run_id" ] || { echo "${label}: could not resolve dispatched run id" >&2; continue; }
+              echo "${label}: watching run ${child_run_id}"
+              conclusion=""
+              for _ in $(seq 1 180); do
+                child=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${child_run_id}")
+                status=$(printf '%s' "$child" | jq -r '.status')
+                conclusion=$(printf '%s' "$child" | jq -r '.conclusion // empty')
+                [ "$status" = "completed" ] && break
+                sleep 5
+              done
+              if [ "$conclusion" = "success" ]; then
+                printf '%s=%s\n' "$label" "$child_run_id" >> "$GITHUB_OUTPUT"
+                return 0
+              fi
+              if [ "$conclusion" = "cancelled" ]; then
+                sleep 3
+                continue
+              fi
+              echo "${label}: run ${child_run_id} concluded ${conclusion:-timeout}; fail closed" >&2
+              return 1
+            done
+            echo "${label}: unable to obtain a successful exact consumer run" >&2
+            return 1
+          }
+          dispatch_and_wait "genge-v311-continuity-state.yml" "continuity_run_id"
+          dispatch_and_wait "genge-hourly-deep-overlay.yml" "hourly_overlay_run_id"
+          dispatch_and_wait "genge-v311-operating-ledger.yml" "operating_ledger_run_id"
+
+      - name: Verify durable consumer identities match the exact Finalizer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CONTINUITY_RUN_ID: ${{ steps.consumers.outputs.continuity_run_id }}
+          HOURLY_OVERLAY_RUN_ID: ${{ steps.consumers.outputs.hourly_overlay_run_id }}
+          OPERATING_LEDGER_RUN_ID: ${{ steps.consumers.outputs.operating_ledger_run_id }}
+        run: |
+          set -euo pipefail
+          test -n "$CONTINUITY_RUN_ID"
+          test -n "$HOURLY_OVERLAY_RUN_ID"
+          test -n "$OPERATING_LEDGER_RUN_ID"
+          for pair in "continuity:${CONTINUITY_RUN_ID}" "hourly:${HOURLY_OVERLAY_RUN_ID}" "ledger:${OPERATING_LEDGER_RUN_ID}"; do
+            label=${pair%%:*}
+            run_id=${pair##*:}
+            gh run view "$run_id" --repo "$GITHUB_REPOSITORY" --log > "${label}.log"
+            grep -F "$FINALIZER_RUN_ID" "${label}.log" >/dev/null || { echo "${label} run ${run_id} does not prove exact Finalizer ${FINALIZER_RUN_ID}" >&2; exit 1; }
+          done
+
+      - name: Publish handoff acceptance summary
+        if: always()
+        run: |
+          echo "# GenGe V3.1.1 Authority Consumer Handoff" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact Finalizer: \`${{ steps.authority.outputs.finalizer_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- continuity run: \`${{ steps.consumers.outputs.continuity_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- hourly overlay run: \`${{ steps.consumers.outputs.hourly_overlay_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- operating ledger run: \`${{ steps.consumers.outputs.operating_ledger_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact consumer identity is verified from child logs" >> "$GITHUB_STEP_SUMMARY"
+          echo "- no consumer may recompute or overwrite Canonical Formal actions" >> "$GITHUB_STEP_SUMMARY"
+          echo "- no auto trade" >> "$GITHUB_STEP_SUMMARY"
