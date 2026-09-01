@@ -512,6 +512,10 @@ def apply_prompt_cache_hints(
 ) -> PromptCacheHintResult:
     """Return request kwargs with safe provider-specific cache hints applied."""
     new_kwargs = copy.deepcopy(dict(call_kwargs))
+    # Fail closed at our provider boundary: caller-supplied cache routing keys are
+    # never trusted. A verified capability may re-add a project-generated HMAC
+    # below, but dependency-specific pass-through behavior cannot bypass policy.
+    new_kwargs.pop("prompt_cache_key", None)
     caps = resolve_provider_cache_caps(route_context)
     diagnostics_level = normalize_prompt_cache_diagnostics_level(
         getattr(config, "llm_prompt_cache_diagnostics_level", "off")
