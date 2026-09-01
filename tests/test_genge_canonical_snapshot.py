@@ -172,3 +172,60 @@ def test_duplicate_production_code_fails_closed() -> None:
             source_kind="test",
             source_run_id="1",
         )
+
+
+def test_specialized_valuation_evidence_survives_canonical_compaction() -> None:
+    specialized = {
+        "code": "601318",
+        "stock_name": "中国平安",
+        "v31_review_rank": "1",
+        "v31_execution_universe_status": "EXECUTION_ELIGIBLE",
+        "valuation_primary_strategy_id": "insurance_appraisal",
+        "valuation_strategy_evidence_status": "EVIDENCE_VALID",
+        "valuation_strategy_model_status": "MODEL_EXECUTED",
+        "valuation_strategy_anchor_status": "ANCHOR_AVAILABLE",
+        "valuation_strategy_completion_status": "COMPLETED_WITH_ANCHOR",
+        "valuation_reference_anchor_kind": "embedded_value_per_share",
+        "valuation_reference_anchor_per_share": "83.07",
+        "insurance_input_known_at": "2026-03-26",
+        "insurance_input_evidence_as_of": "2025-12-31",
+        "insurance_evidence_status": "VALID",
+        "insurance_evidence_source_name": "Ping An 2025 Annual Report",
+        "insurance_evidence_source_url": "https://group.pingan.com/",
+        "insurance_embedded_value_cny_million": "1504288",
+        "insurance_embedded_value_per_share": "83.07",
+        "insurance_normalized_annual_nbv_cny_million": "36897",
+        "insurance_model_executed": True,
+        "insurance_model_execution_state": "EXECUTED_WITH_ANCHOR",
+        "insurance_model_status": "OK",
+    }
+    production = _production_row(
+        code="601318",
+        scope="HOLDING",
+        action="HOLD_REVIEW",
+        stock_name="中国平安",
+        **{key: value for key, value in specialized.items() if key not in {"code", "stock_name"}},
+    )
+
+    snapshot = build_snapshot(
+        discovery_rows=[],
+        deep_review_rows=[specialized],
+        production_rows=[production],
+        source_kind="test",
+        source_run_id="specialized-1",
+        generated_at="2026-09-02T00:00:00+00:00",
+    )
+
+    deep = snapshot["deep_review"]["rows"][0]
+    holding = snapshot["production"]["holding_decisions"][0]
+    for row in (deep, holding):
+        assert row["valuation_primary_strategy_id"] == "insurance_appraisal"
+        assert row["valuation_strategy_completion_status"] == "COMPLETED_WITH_ANCHOR"
+        assert row["valuation_reference_anchor_per_share"] == "83.07"
+        assert row["insurance_input_known_at"] == "2026-03-26"
+        assert row["insurance_input_evidence_as_of"] == "2025-12-31"
+        assert row["insurance_evidence_source_name"] == "Ping An 2025 Annual Report"
+        assert row["insurance_embedded_value_cny_million"] == "1504288"
+        assert row["insurance_normalized_annual_nbv_cny_million"] == "36897"
+        assert row["insurance_model_executed"] is True
+        assert row["insurance_model_execution_state"] == "EXECUTED_WITH_ANCHOR"

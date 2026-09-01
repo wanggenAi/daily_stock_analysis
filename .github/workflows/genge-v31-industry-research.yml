@@ -81,6 +81,7 @@ jobs:
             tests/test_genge_resource_asset_valuation.py \
             tests/test_genge_specialized_valuation_execution.py \
             tests/test_genge_insurance_valuation_execution.py \
+            tests/test_genge_specialized_valuation_authoritative_merge.py \
             tests/test_genge_resource_routing_v31.py \
             tests/test_genge_v31_execution_extensions.py \
             tests/test_genge_production_model.py \
@@ -143,6 +144,10 @@ jobs:
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.resource_valuation_execution \
             --report-root reports/valuation_research_queue --input-config config/resource_asset_inputs.yaml
+      - name: Merge specialized valuation evidence into authoritative research rows
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.specialized_valuation_authoritative_merge \
+            --report-root reports/valuation_research_queue
       - name: Build frozen V3.1 deep-review queue
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v31_review_queue \
@@ -228,11 +233,16 @@ jobs:
           resource_root = Path('reports/valuation_research_queue')
           runs = sorted(p for p in resource_root.iterdir() if p.is_dir() and (p/'resource_valuation_summary.json').exists())
           assert runs, 'resource valuation summary missing'
-          resource = json.loads((runs[-1]/'resource_valuation_summary.json').read_text(encoding='utf-8'))
-          bank = json.loads((runs[-1]/'bank_valuation_execution_summary.json').read_text(encoding='utf-8'))
+          run_dir = runs[-1]
+          resource = json.loads((run_dir/'resource_valuation_summary.json').read_text(encoding='utf-8'))
+          bank = json.loads((run_dir/'bank_valuation_execution_summary.json').read_text(encoding='utf-8'))
+          merged = json.loads((run_dir/'specialized_valuation_authoritative_merge_summary.json').read_text(encoding='utf-8'))
+          assert 'insurance_valuation_execution.csv' in merged['sidecars_used']
+          assert 'valuation_research_resource_nav.csv' in merged['sidecars_used']
           assert resource['formal_signal_eligible'] is False and resource['no_auto_trade'] is True
           assert bank['formal_signal_eligible'] is False and bank['no_auto_trade'] is True
-          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'ledger_independent_discovery_count': len(discovery), 'v31_count': len(v31), 'production_shortlist_count': len(shortlist), 'dated_same_run_price_count': shortlist_summary['dated_same_run_price_count'], 'provider_fallback_required_count': shortlist_summary['provider_fallback_required_count'], 'snapshot_id': snapshot['snapshot_id'], 'snapshot_discovery_count': snapshot['discovery']['execution_eligible_count'], 'deep_review_count': snapshot['deep_review']['execution_eligible_count'], 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
+          assert merged['formal_signal_eligible'] is False and merged['no_auto_trade'] is True
+          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'ledger_independent_discovery_count': len(discovery), 'v31_count': len(v31), 'production_shortlist_count': len(shortlist), 'dated_same_run_price_count': shortlist_summary['dated_same_run_price_count'], 'provider_fallback_required_count': shortlist_summary['provider_fallback_required_count'], 'snapshot_id': snapshot['snapshot_id'], 'snapshot_discovery_count': snapshot['discovery']['execution_eligible_count'], 'deep_review_count': snapshot['deep_review']['execution_eligible_count'], 'specialized_merge': merged, 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
           PY
       - name: Publish summary
         if: always()
