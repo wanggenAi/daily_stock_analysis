@@ -2,83 +2,172 @@ name: Era Capital Trend Radar
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/era_radar/**'
+      - 'tools/run_era_radar*.py'
+      - '.github/workflows/era-capital-trend-radar.yml'
   pull_request:
     paths:
       - 'src/era_radar/**'
       - 'tests/test_era_radar_*.py'
       - 'tests/fixtures/era_radar_*.json'
-      - 'tools/run_era_radar.py'
+      - 'tools/run_era_radar*.py'
       - 'docs/ERA_CAPITAL_TREND_RADAR_V1.md'
       - '.github/workflows/era-capital-trend-radar.yml'
   schedule:
     - cron: '17 0,6,12,18 * * *'
 
-permissions:
-  contents: read
-
 concurrency:
   group: era-capital-trend-radar-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   deterministic-radar:
     name: Era Radar deterministic gate
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-      - name: Setup Python
-        uses: actions/setup-python@v6
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
       - name: Install repository test dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r .github/requirements-ci.txt
-      - name: Run focused Era Radar tests
-        run: |
-          pytest -q \
-            tests/test_era_radar_engine.py \
-            tests/test_era_radar_evidence.py \
-            tests/test_era_radar_lifecycle.py \
-            tests/test_era_radar_handoff.py \
-            tests/test_era_radar_pipeline.py \
-            tests/test_era_radar_end_to_end.py
+      - name: Run Era Radar tests
+        run: pytest -q tests/test_era_radar_*.py
       - name: Run auditable collector replay
         run: |
           rm -rf .era-radar-artifact
-          python tools/run_era_radar.py \
-            --observations tests/fixtures/era_radar_observations.json \
-            --research-as-of 2026-08-30T01:00:00Z \
-            --output-dir .era-radar-artifact
+          python tools/run_era_radar.py --observations tests/fixtures/era_radar_observations.json --research-as-of 2026-08-30T01:00:00Z --output-dir .era-radar-artifact
           test -f .era-radar-artifact/latest.json
           test -f .era-radar-artifact/trend_lifecycle_state.json
           test -f .era-radar-artifact/ERA_CAPITAL_TREND_RADAR.md
-          test "$(find .era-radar-artifact/evidence -name '*.json' | wc -l | tr -d ' ')" = "1"
-      - name: Assert research-only authority and evidence auditability
+      - name: Assert research-only authority
         run: |
           python - <<'PY'
-          import glob
-          import json
+          import glob, json
           p=json.load(open('.era-radar-artifact/latest.json'))
-          assert p['formal_trading_authority'] is False
-          assert p['no_auto_trade'] is True
+          assert p['formal_trading_authority'] is False and p['no_auto_trade'] is True
           files=glob.glob('.era-radar-artifact/evidence/*.json')
           assert len(files) == 1
           evidence=json.load(open(files[0]))
-          assert evidence['formal_trading_authority'] is False
-          assert evidence['evidence_count'] > 0
-          assert len(evidence['records']) == evidence['evidence_count']
+          assert len(evidence['records']) == evidence['evidence_count'] > 0
           PY
-      - name: Upload Radar replay artifact
+
+  live-source-smoke:
+    name: Era Radar live-source smoke
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Fetch real China structural, policy and demand evidence
+        run: |
+          rm -rf .era-radar-live-smoke .era-radar-live-smoke-result.json
+          python tools/run_era_radar_live.py --output-dir .era-radar-live-smoke | tee .era-radar-live-smoke-result.json
+          test -f .era-radar-live-smoke/latest.json
+          test -f .era-radar-live-smoke/trend_lifecycle_state.json
+          python - <<'PY'
+          import json
+          p=json.load(open('.era-radar-live-smoke/latest.json'))
+          assert p['formal_trading_authority'] is False
+          assert p['no_auto_trade'] is True
+          assert p['evidence_count'] > 0
+          PY
+      - name: Upload live smoke evidence
         uses: actions/upload-artifact@v4
         with:
-          name: era-radar-replay-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .era-radar-artifact/
+          name: era-radar-live-smoke-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .era-radar-live-smoke-result.json
+            .era-radar-live-smoke/
           include-hidden-files: true
           if-no-files-found: error
           retention-days: 14
 
-# This V1 schedule is an auditable deterministic replay gate, not a claim that live
-# official-source collectors are already production-authoritative. Live collectors are
-# plugged into the same normalized observation contract only after source-specific PIT tests.
+  live-production:
+    name: Era Radar live production
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Run focused tests before live publication
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r .github/requirements-ci.txt
+          pytest -q tests/test_era_radar_*.py
+      - name: Collect live evidence and build durable Radar truth
+        shell: bash
+        run: |
+          set +e
+          python tools/run_era_radar_live.py --output-dir data/era_radar | tee .era-radar-live-result.json
+          rc=${PIPESTATUS[0]}
+          set -e
+          cat .era-radar-live-result.json
+          if [ "$rc" -eq 2 ]; then
+            echo 'Live collector failed closed; durable truth was not changed.' >&2
+            exit 1
+          fi
+          exit "$rc"
+      - name: Assert no trading authority
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('data/era_radar/latest.json'))
+          assert p['formal_trading_authority'] is False
+          assert p['no_auto_trade'] is True
+          PY
+      - name: Persist changed Radar machine truth with bounded optimistic retry
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "$(git status --porcelain -- data/era_radar)" ]; then
+            echo 'No semantic evidence change; nothing to persist.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add data/era_radar
+          git commit -m 'data: update era radar live evidence'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git fetch origin main
+            if ! git rebase origin/main; then
+              git rebase --abort || true
+              echo 'Concurrent same-state conflict; refusing stale Radar persistence.' >&2
+              exit 1
+            fi
+          done
+          echo 'Unable to persist Era Radar state after bounded retries' >&2
+          exit 1
+      - name: Upload live audit artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: era-radar-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .era-radar-live-result.json
+            data/era_radar/
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30

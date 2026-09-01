@@ -22,6 +22,7 @@ DEFAULT_SOURCE_REGISTRY = (
     SourceSpec("china_state_council", "POLICY_CAPITAL", "OFFICIAL", "CN", "State Council policy and implementation documents"),
     SourceSpec("ndrc", "POLICY_CAPITAL", "OFFICIAL", "CN", "NDRC plans, approvals and industrial policy"),
     SourceSpec("miit", "POLICY_CAPITAL", "OFFICIAL", "CN", "MIIT industrial policy, standards and sector plans"),
+    SourceSpec("miit_statistics", "REAL_DEMAND", "OFFICIAL", "CN", "MIIT official industrial operation statistics and demand indicators"),
     SourceSpec("mof", "POLICY_CAPITAL", "OFFICIAL", "CN", "Ministry of Finance expenditure and fiscal support evidence"),
     SourceSpec("pbc", "FINANCIAL_CAPITAL", "OFFICIAL", "CN", "PBOC aggregate financing and monetary/credit structure"),
     SourceSpec("stats_cn", "REAL_DEMAND", "OFFICIAL", "CN", "National Bureau of Statistics demand, output, population and investment series"),
