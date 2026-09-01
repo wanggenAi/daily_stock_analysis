@@ -5,6 +5,11 @@ Broad discovery, deep review and production decisions remain separate layers, bu
 all are stamped with one snapshot id/source run so downstream consumers cannot
 silently mix results from different runs. The durable candidate ledger is
 intentionally not an input: it is downstream memory and must never cap discovery.
+
+Specialized valuation evidence is provenance, not a second decision engine.  Its
+evidence/model/anchor/completion fields are preserved in compact Canonical rows
+so downstream holdings and candidate lifecycle consumers can distinguish an
+unfinished model from an executed model without weakening any Formal gate.
 """
 from __future__ import annotations
 
@@ -22,6 +27,54 @@ SCHEMA_VERSION = "genge_v31_canonical_snapshot_v1"
 PRODUCTION_VERSION = "GEN_GE_V3_1_1_PRODUCTION"
 PRODUCTION_BRIDGE = "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT"
 BUY_ADD_ACTIONS = {"BUY", "ADD"}
+
+SPECIALIZED_CANONICAL_FIELDS = (
+    "valuation_primary_strategy_id",
+    "valuation_strategy_evidence_status",
+    "valuation_strategy_model_status",
+    "valuation_strategy_anchor_status",
+    "valuation_strategy_completion_status",
+    "valuation_strategy_followup_reason",
+    "valuation_reference_anchor_kind",
+    "valuation_reference_anchor_cny_million",
+    "valuation_reference_anchor_per_share",
+    "insurance_input_id",
+    "insurance_input_known_at",
+    "insurance_input_evidence_as_of",
+    "insurance_input_report_year",
+    "insurance_evidence_status",
+    "insurance_evidence_freshness_days",
+    "insurance_evidence_max_age_days",
+    "insurance_evidence_source_name",
+    "insurance_evidence_source_url",
+    "insurance_evidence_refs",
+    "insurance_embedded_value_cny_million",
+    "insurance_embedded_value_per_share",
+    "insurance_normalized_annual_nbv_cny_million",
+    "insurance_market_cap_date",
+    "insurance_market_cap_provider",
+    "insurance_current_p_ev",
+    "insurance_reference_discount_to_ev",
+    "insurance_implied_nbv_franchise_multiple",
+    "insurance_model_executed",
+    "insurance_model_execution_state",
+    "insurance_model_status",
+    "resource_nav_executed",
+    "resource_nav_status",
+    "resource_nav_input_as_of",
+    "resource_nav_evidence_urls",
+    "resource_nav_extreme_stress_per_share",
+    "resource_nav_bear_per_share",
+    "resource_nav_base_per_share",
+    "resource_nav_bull_per_share",
+    "resource_nav_base_margin_of_safety",
+    "bank_model_executed",
+    "bank_model_state",
+    "bank_fair_pb",
+    "specialized_model_executed",
+    "specialized_model_execution_state",
+    "specialized_fair_pb",
+)
 
 
 def _code(value: Any) -> str:
@@ -121,8 +174,17 @@ def _latest_trade_date(rows: Iterable[Mapping[str, Any]]) -> str:
     return max(values, default="")
 
 
+def _specialized_payload(row: Mapping[str, Any]) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    for field in SPECIALIZED_CANONICAL_FIELDS:
+        value = row.get(field)
+        if value is not None and str(value).strip() != "":
+            payload[field] = value
+    return payload
+
+
 def _compact_research(row: Mapping[str, Any], rank: int) -> dict[str, Any]:
-    return {
+    compact = {
         "rank": rank,
         "code": _code(row.get("code")),
         "stock_name": row.get("stock_name") or row.get("name") or "",
@@ -137,6 +199,8 @@ def _compact_research(row: Mapping[str, Any], rank: int) -> dict[str, Any]:
         "hard_blockers": row.get("v31_blockers") or row.get("source_hard_blockers") or row.get("hard_blockers") or "",
         "source_channel": row.get("valuation_source_channel") or row.get("master_source") or "",
     }
+    compact.update(_specialized_payload(row))
+    return compact
 
 
 def build_research_pool(
@@ -199,7 +263,7 @@ def _validate_production_rows(rows: Iterable[Mapping[str, Any]]) -> None:
 
 
 def _compact_decision(row: Mapping[str, Any]) -> dict[str, Any]:
-    return {
+    compact = {
         "code": _code(row.get("code")),
         "stock_name": row.get("stock_name") or "",
         "scope": row.get("decision_scope") or "",
@@ -224,6 +288,8 @@ def _compact_decision(row: Mapping[str, Any]) -> dict[str, Any]:
         "confirmed_quantity": row.get("confirmed_quantity") or "",
         "display_only_average_cost": row.get("display_only_average_cost") or "",
     }
+    compact.update(_specialized_payload(row))
+    return compact
 
 
 def build_snapshot(
@@ -289,6 +355,7 @@ def build_snapshot(
             "ledger_may_filter_discovery": False,
             "formal_buy_thresholds_changed": False,
             "candidate_ledger_is_downstream_memory_only": True,
+            "specialized_valuation_evidence_preserved": True,
         },
         "discovery": {
             "snapshot_id": snapshot_id,
@@ -436,6 +503,7 @@ def write_snapshot(
         f"- discovery execution-eligible: {snapshot['discovery']['execution_eligible_count']}",
         f"- deep-review execution-eligible: {snapshot['deep_review']['execution_eligible_count']}",
         f"- production candidates / holdings: {snapshot['production']['candidate_count']} / {snapshot['production']['holding_count']}",
+        "- specialized valuation evidence/model/anchor/completion is preserved when present",
         "- production rows are revalidated as fresh V3.1.1 strict-PIT bridge authority",
         "- ledger is downstream memory only and never filters discovery",
         "- Formal BUY/SELL thresholds are unchanged",

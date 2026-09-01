@@ -1,9 +1,30 @@
-version: 1
+version: 2
 description: >-
   Reviewed point-in-time annual embedded-value inputs for insurance reverse
-  appraisal research. Values are CNY million. Scope must be compatible with the
-  listed issuer; ambiguous group/SOTP scope remains intentionally absent.
+  appraisal research. Values are CNY million. Records are strategy-generic and
+  are consumed only after known_at and while inside the freshness window.
+default_max_age_days: 365
 inputs:
+  - input_id: 601318-2025-annual-group-ev-nbv
+    code: "601318"
+    stock_name: 中国平安
+    known_at: "2026-03-26"
+    evidence_as_of: "2025-12-31"
+    report_year: 2025
+    currency: CNY
+    unit: million
+    embedded_value: 1504288
+    embedded_value_per_share: 83.07
+    normalized_annual_nbv: 36897
+    embedded_value_scope: insurance_group
+    nbv_scope: life_health_one_year_new_business
+    confidence: HIGH
+    source_name: Ping An Insurance Group 2025 Annual Report
+    source_url: "https://pagroup.pingan.com/resource/pingan/IR-Docs/2026/pingan-ar25-report.pdf"
+    evidence_refs:
+      - ping-an-2025-annual-report-analysis-of-embedded-value
+      - ping-an-2025-annual-results-2026-03-26
+
   - input_id: 601628-2025-annual-ev-nbv
     code: "601628"
     stock_name: 中国人寿
