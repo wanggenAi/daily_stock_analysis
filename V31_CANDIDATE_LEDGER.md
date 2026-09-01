@@ -8,11 +8,11 @@
 
 - projection_version: `GEN_GE_V31_CANDIDATE_LEDGER_PROJECTION_V1`
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
-- latest_applied_snapshot_id: `666e3ac94dae521793d7`
-- latest_research_as_of: `2026-09-01T01:22:32Z`
+- latest_applied_snapshot_id: `889732dfc3c95bf8c0ec`
+- latest_research_as_of: `2026-09-01T05:39:40Z`
 - active_candidates: 72
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 4150
+- lifecycle_event_count: 4200
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -22,77 +22,77 @@
 | Code | Name | Tier | Seen | Last Formal Action | Valuation Confidence | Last Snapshot | Last Event |
 | --- | --- | --- | ---: | --- | --- | --- | --- |
 | 603416 | 信捷电气 | WATCH / NEW | 0 |  | LOW-MEDIUM — fresh price and H1 filing evidence are available, but normalized valuation is not complete | LEGACY_IMPORT | LEGACY_IMPORT |
-| 000096 | 广聚能源 | PENDING | 72 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 000415 | 渤海租赁 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 000426 | 兴业银锡 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 000504 | 南华生物 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 000526 | 学大教育 | PENDING | 81 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 000096 | 广聚能源 | PENDING | 73 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 000415 | 渤海租赁 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 000426 | 兴业银锡 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 000504 | 南华生物 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 000526 | 学大教育 | PENDING | 82 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 000557 | 西部创业 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
-| 000596 | 古井贡酒 | PENDING | 21 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 000682 | 东方电子 | PENDING | 41 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 000703 | 恒逸石化 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 000596 | 古井贡酒 | PENDING | 22 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 000682 | 东方电子 | PENDING | 42 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 000703 | 恒逸石化 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 000768 | 中航西飞 | PENDING | 11 |  |  | 3ea881ad523c9ce6a06e | RESEEN |
-| 000783 | 长江证券 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 000833 | 粤桂股份 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 001309 | 德明利 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 001316 | 润贝航科 | PENDING | 73 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 000783 | 长江证券 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 000833 | 粤桂股份 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 001309 | 德明利 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 001316 | 润贝航科 | PENDING | 74 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 002073 | 软控股份 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
 | 002215 | 诺 普 信 | PENDING | 10 |  |  | 49ee3ff5a6c2aba01bc4 | RESEEN |
-| 002352 | 顺丰控股 | PENDING | 41 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 002420 | 毅昌科技 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 002468 | 申通快递 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 002494 | 华斯股份 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 002530 | 金财互联 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 002537 | 海联金汇 | PENDING | 72 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 002352 | 顺丰控股 | PENDING | 42 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 002420 | 毅昌科技 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 002468 | 申通快递 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 002494 | 华斯股份 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 002530 | 金财互联 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 002537 | 海联金汇 | PENDING | 73 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 002582 | 好想你 | PENDING | 61 |  |  | 6bc0038077fc1b197230 | RESEEN |
-| 002612 | 朗姿股份 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 002612 | 朗姿股份 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 002758 | 浙农股份 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
-| 002811 | 郑中设计 | PENDING | 81 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 002842 | 翔鹭钨业 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 002996 | 顺博合金 | PENDING | 81 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 003039 | 顺控发展 | PENDING | 81 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 002811 | 郑中设计 | PENDING | 82 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 002842 | 翔鹭钨业 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 002996 | 顺博合金 | PENDING | 82 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 003039 | 顺控发展 | PENDING | 82 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 600009 | 上海机场 | PENDING | 11 |  |  | 3ea881ad523c9ce6a06e | RESEEN |
-| 600095 | 湘财股份 | PENDING | 72 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 600095 | 湘财股份 | PENDING | 73 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 600221 | 海航控股 | PENDING | 12 |  |  | 49ee3ff5a6c2aba01bc4 | RESEEN |
-| 600276 | 恒瑞医药 | PENDING | 71 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 600309 | 万华化学 | PENDING | 71 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 600276 | 恒瑞医药 | PENDING | 72 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 600309 | 万华化学 | PENDING | 72 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 600312 | 平高电气 | PENDING | 42 |  |  | de3613a4e1d7fb666c32 | RESEEN |
-| 600318 | 新力金融 | PENDING | 41 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 600338 | 西藏珠峰 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 600318 | 新力金融 | PENDING | 42 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 600338 | 西藏珠峰 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 600351 | 亚宝药业 | PENDING | 11 |  |  | 3ea881ad523c9ce6a06e | RESEEN |
-| 600406 | 国电南瑞 | PENDING | 71 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 600406 | 国电南瑞 | PENDING | 72 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 600523 | 贵航股份 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
 | 600547 | 山东黄金 | PENDING | 11 |  |  | 3ea881ad523c9ce6a06e | RESEEN |
-| 600661 | 昂立教育 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 600754 | 锦江酒店 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 600812 | 华北制药 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 600816 | 建元信托 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 600958 | 东方证券 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 600961 | 株冶集团 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 600661 | 昂立教育 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 600754 | 锦江酒店 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 600812 | 华北制药 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 600816 | 建元信托 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 600958 | 东方证券 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 600961 | 株冶集团 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 601007 | 金陵饭店 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
-| 601020 | 华钰矿业 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 601069 | 西部黄金 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 601111 | 中国国航 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 601020 | 华钰矿业 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 601069 | 西部黄金 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 601111 | 中国国航 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 601168 | 西部矿业 | PENDING | 42 |  |  | de3613a4e1d7fb666c32 | RESEEN |
 | 601336 | 新华保险 | PENDING | 12 |  |  | 49ee3ff5a6c2aba01bc4 | RESEEN |
-| 601375 | 中原证券 | PENDING | 81 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 601601 | 中国太保 | PENDING | 41 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 601628 | 中国人寿 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 601808 | 中海油服 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 601816 | 京沪高铁 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 601375 | 中原证券 | PENDING | 82 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 601601 | 中国太保 | PENDING | 42 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 601628 | 中国人寿 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 601808 | 中海油服 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 601816 | 京沪高铁 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 601899 | 紫金矿业 | PENDING | 42 |  |  | de3613a4e1d7fb666c32 | RESEEN |
-| 601965 | 中国汽研 | PENDING | 81 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 603038 | 华立股份 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 603098 | 森特股份 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 601965 | 中国汽研 | PENDING | 82 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 603038 | 华立股份 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 603098 | 森特股份 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 603198 | 迎驾贡酒 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
 | 603268 | 松发股份 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
-| 603605 | 珀莱雅 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 603605 | 珀莱雅 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 603658 | 安图生物 | PENDING | 42 |  |  | de3613a4e1d7fb666c32 | RESEEN |
 | 603899 | 晨光股份 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
-| 603939 | 益丰药房 | PENDING | 39 |  |  | 666e3ac94dae521793d7 | RESEEN |
-| 603986 | 兆易创新 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 603939 | 益丰药房 | PENDING | 40 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
+| 603986 | 兆易创新 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 | 603993 | 洛阳钼业 | PENDING | 42 |  |  | de3613a4e1d7fb666c32 | RESEEN |
-| 605116 | 奥锐特 | PENDING | 83 |  |  | 666e3ac94dae521793d7 | RESEEN |
+| 605116 | 奥锐特 | PENDING | 84 |  |  | 889732dfc3c95bf8c0ec | RESEEN |
 
 ### 603416 信捷电气
 
@@ -114,15 +114,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 72
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 73
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -132,20 +131,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000415 渤海租赁
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -155,20 +154,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000426 兴业银锡
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -178,20 +177,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000504 南华生物
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -201,20 +200,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000526 学大教育
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 81
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 82
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -224,6 +223,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000557 西部创业
 
@@ -244,15 +244,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 21
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 22
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -262,20 +261,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000682 东方电子
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 41
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 42
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -285,20 +284,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000703 恒逸石化
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -308,6 +307,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000768 中航西飞
 
@@ -336,15 +336,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -354,20 +353,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 000833 粤桂股份
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -377,20 +376,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 001309 德明利
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -400,20 +399,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 001316 润贝航科
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 73
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 74
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -423,6 +422,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002073 软控股份
 
@@ -466,15 +466,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 41
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 42
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -484,20 +483,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002420 毅昌科技
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -507,20 +506,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002468 申通快递
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -530,20 +529,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002494 华斯股份
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -553,20 +552,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002530 金财互联
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -576,20 +575,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002537 海联金汇
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 72
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 73
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -599,6 +598,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002582 好想你
 
@@ -627,15 +627,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -645,6 +644,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002758 浙农股份
 
@@ -665,15 +665,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 81
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 82
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -683,20 +682,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002842 翔鹭钨业
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -706,20 +705,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 002996 顺博合金
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 81
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 82
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -729,20 +728,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 003039 顺控发展
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 81
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 82
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -752,6 +751,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600009 上海机场
 
@@ -780,15 +780,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 72
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 73
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -798,6 +797,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600221 海航控股
 
@@ -826,15 +826,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 71
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 72
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -844,14 +843,15 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600309 万华化学
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 71
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 72
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
@@ -859,7 +859,6 @@
 - legacy seen_count (audit only): 1
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -869,6 +868,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600312 平高电气
 
@@ -899,15 +899,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 41
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 42
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -917,20 +916,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600338 西藏珠峰
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -940,6 +939,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600351 亚宝药业
 
@@ -968,15 +968,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 71
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 72
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -986,6 +985,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600523 贵航股份
 
@@ -1029,15 +1029,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1047,20 +1046,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600754 锦江酒店
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1070,20 +1069,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600812 华北制药
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1093,20 +1092,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600816 建元信托
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1116,20 +1115,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600958 东方证券
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1139,20 +1138,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 600961 株冶集团
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1162,6 +1161,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601007 金陵饭店
 
@@ -1182,15 +1182,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1200,20 +1199,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601069 西部黄金
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1223,20 +1222,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601111 中国国航
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1246,6 +1245,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601168 西部矿业
 
@@ -1299,15 +1299,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 81
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 82
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1317,20 +1316,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601601 中国太保
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 41
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 42
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1340,20 +1339,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601628 中国人寿
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1363,20 +1362,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601808 中海油服
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1386,20 +1385,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601816 京沪高铁
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1409,6 +1408,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 601899 紫金矿业
 
@@ -1439,15 +1439,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 81
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 82
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1457,20 +1456,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 603038 华立股份
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1480,20 +1479,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 603098 森特股份
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1503,6 +1502,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 603198 迎驾贡酒
 
@@ -1538,15 +1538,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1556,6 +1555,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 603658 安图生物
 
@@ -1601,15 +1601,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 39
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 40
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1619,20 +1618,20 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 603986 兆易创新
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1642,6 +1641,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ### 603993 洛阳钼业
 
@@ -1672,15 +1672,14 @@
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
-- **seen_count:** 83
-- **last_seen_snapshot_id:** 666e3ac94dae521793d7
-- **last_seen_source_run_id:** 33458260995
+- **seen_count:** 84
+- **last_seen_snapshot_id:** 889732dfc3c95bf8c0ec
+- **last_seen_source_run_id:** 33474206855
 - **last Formal action:** 
 - **valuation confidence:** 
 - **last lifecycle event:** RESEEN
 
 #### Delta history
-- 2026-08-31T12:28:49Z — **RESEEN**; snapshot `fa6535d64867ed9c4ba5`
 - 2026-08-31T16:28:06Z — **RESEEN**; snapshot `dac655e0b5ce3352c85a`
 - 2026-08-31T17:08:25Z — **RESEEN**; snapshot `23bcd811e8844486d3e0`
 - 2026-08-31T18:12:51Z — **RESEEN**; snapshot `3e61ac2a2752d647e473`
@@ -1690,6 +1689,7 @@
 - 2026-09-01T00:49:48Z — **RESEEN**; snapshot `9afb4df99a803abd451f`
 - 2026-09-01T00:52:45Z — **RESEEN**; snapshot `fe05d761c4c56b095399`
 - 2026-09-01T01:22:32Z — **RESEEN**; snapshot `666e3ac94dae521793d7`
+- 2026-09-01T05:39:40Z — **RESEEN**; snapshot `889732dfc3c95bf8c0ec`
 
 ## Archived / INVALIDATED candidate ledger
 
