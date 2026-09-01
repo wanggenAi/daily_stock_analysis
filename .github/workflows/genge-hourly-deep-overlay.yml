@@ -10,6 +10,11 @@ on:
     # GitHub cron is UTC; hourly cadence is timezone-independent.
     - cron: "5 * * * *"
   workflow_dispatch:
+    inputs:
+      finalizer_run_id:
+        description: "Successful Production Finalizer run id; omit to use newest authoritative Finalizer"
+        required: false
+        type: string
   push:
     branches: [main]
     paths:
@@ -75,29 +80,57 @@ jobs:
             "requests>=2.31.0" "beautifulsoup4>=4.12.0" "PyYAML>=6.0" "pypdf>=5.0.0" \
             pandas pytest anyio fastapi httpx starlette
 
-      - name: Locate latest successful authoritative Finalizer artifact
+      - name: Locate exact successful authoritative Finalizer artifact
         id: authority
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_FINALIZER_RUN_ID: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.id || inputs.finalizer_run_id }}
         run: |
           set -euo pipefail
           repo="${GITHUB_REPOSITORY}"
-          runs=$(gh api -X GET "repos/${repo}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
-          run_ids=$(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
           found=""
-          for run_id in $run_ids; do
+
+          validate_and_select() {
+            local run_id="$1"
+            local run workflow_path conclusion artifacts row artifact_id artifact_name
+            run=$(gh api -X GET "repos/${repo}/actions/runs/${run_id}")
+            workflow_path=$(printf '%s' "$run" | jq -r '.path // empty')
+            conclusion=$(printf '%s' "$run" | jq -r '.conclusion // empty')
+            if [ "$workflow_path" != ".github/workflows/genge-v311-production-finalizer.yml" ]; then
+              echo "Run ${run_id} is not Production Finalizer: ${workflow_path}" >&2
+              return 1
+            fi
+            if [ "$conclusion" != "success" ]; then
+              echo "Production Finalizer ${run_id} is not successful: ${conclusion}" >&2
+              return 1
+            fi
             artifacts=$(gh api -X GET "repos/${repo}/actions/runs/${run_id}/artifacts?per_page=100")
             row=$(printf '%s' "$artifacts" | jq -r '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-"))) | [.id,.name] | @tsv' | head -n1)
-            if [ -n "$row" ]; then
-              artifact_id=$(printf '%s' "$row" | cut -f1)
-              artifact_name=$(printf '%s' "$row" | cut -f2)
-              found=1
-              echo "finalizer_run_id=${run_id}" >> "$GITHUB_OUTPUT"
-              echo "artifact_id=${artifact_id}" >> "$GITHUB_OUTPUT"
-              echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
-              break
+            if [ -z "$row" ]; then
+              echo "Production Finalizer ${run_id} has no non-expired authoritative canonical artifact" >&2
+              return 1
             fi
-          done
+            artifact_id=$(printf '%s' "$row" | cut -f1)
+            artifact_name=$(printf '%s' "$row" | cut -f2)
+            echo "finalizer_run_id=${run_id}" >> "$GITHUB_OUTPUT"
+            echo "artifact_id=${artifact_id}" >> "$GITHUB_OUTPUT"
+            echo "artifact_name=${artifact_name}" >> "$GITHUB_OUTPUT"
+            found=1
+            return 0
+          }
+
+          if [ -n "${REQUESTED_FINALIZER_RUN_ID:-}" ]; then
+            validate_and_select "$REQUESTED_FINALIZER_RUN_ID" || exit 1
+          else
+            runs=$(gh api -X GET "repos/${repo}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
+            run_ids=$(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
+            for run_id in $run_ids; do
+              if validate_and_select "$run_id"; then
+                break
+              fi
+            done
+          fi
+
           if [ -z "$found" ]; then
             echo "No successful non-expired authoritative canonical artifact found" >&2
             exit 1
