@@ -21,6 +21,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+from .actions_provenance import (
+    EVERY_INDUSTRY_WORKFLOW,
+    ONE_SHOT_WORKFLOW,
+    require_actions_run_id,
+    require_git_sha,
+    require_upstream_run_ref,
+)
 from .canonical_operating_view import (
     DAILY_SETTLEMENT,
     HOURLY_MONITOR,
@@ -35,6 +42,10 @@ AUTHORIZED_SOURCE_KINDS = frozenset(
         "GenGe All-A V3.1.1 One Shot",
     }
 )
+SOURCE_WORKFLOW_BY_KIND = {
+    "every-industry": EVERY_INDUSTRY_WORKFLOW,
+    "GenGe All-A V3.1.1 One Shot": ONE_SHOT_WORKFLOW,
+}
 
 
 def _sha256(path: Path) -> str:
@@ -50,6 +61,18 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"expected JSON object: {path}")
     return payload
+
+
+def _require_source_workflow(source_kind: str, source_workflow: object) -> str:
+    expected = SOURCE_WORKFLOW_BY_KIND.get(source_kind)
+    if expected is None:
+        raise ValueError(f"production authority rejects source_kind={source_kind!r}")
+    workflow = str(source_workflow or "").strip()
+    if workflow != expected:
+        raise ValueError(
+            f"production authority workflow/source kind mismatch: expected {expected!r}, got {workflow!r}"
+        )
+    return workflow
 
 
 def validate_authority(
@@ -71,12 +94,39 @@ def validate_authority(
     snapshot_id = str(snapshot.get("snapshot_id") or "")
     if authority.get("canonical_snapshot_id") != snapshot_id:
         raise ValueError("canonical authority snapshot mismatch")
-    if str(authority.get("canonical_source_run_id") or "") != str(snapshot.get("source_run_id") or ""):
+    canonical_source_run_id = require_actions_run_id(
+        authority.get("canonical_source_run_id"), field="canonical_source_run_id"
+    )
+    snapshot_source_run_id = require_actions_run_id(
+        snapshot.get("source_run_id"), field="snapshot_source_run_id"
+    )
+    if canonical_source_run_id != snapshot_source_run_id:
         raise ValueError("canonical authority source run mismatch")
-    if str(authority.get("upstream_run_id") or "") != str(snapshot.get("upstream_run_id") or ""):
-        raise ValueError("canonical authority upstream run mismatch")
-    if str(authority.get("canonical_source_kind") or "") != str(snapshot.get("source_kind") or ""):
+
+    canonical_source_kind = str(authority.get("canonical_source_kind") or "")
+    snapshot_source_kind = str(snapshot.get("source_kind") or "")
+    if canonical_source_kind != snapshot_source_kind:
         raise ValueError("canonical authority source kind mismatch")
+    source_workflow = _require_source_workflow(
+        canonical_source_kind, authority.get("source_workflow")
+    )
+
+    authority_upstream_run_id = require_upstream_run_ref(
+        authority.get("upstream_run_id"),
+        source_run_id=canonical_source_run_id,
+        source_workflow=source_workflow,
+    )
+    snapshot_upstream_run_id = require_upstream_run_ref(
+        snapshot.get("upstream_run_id"),
+        source_run_id=snapshot_source_run_id,
+        source_workflow=source_workflow,
+    )
+    if authority_upstream_run_id != snapshot_upstream_run_id:
+        raise ValueError("canonical authority upstream run mismatch")
+
+    require_git_sha(authority.get("source_head_sha"), field="source_head_sha")
+    require_actions_run_id(authority.get("finalizer_run_id"), field="finalizer_run_id")
+    require_git_sha(authority.get("finalizer_code_sha"), field="finalizer_code_sha")
 
     consumer_contract = authority.get("consumer_contract") or {}
     if consumer_contract.get("canonical_is_only_formal_decision_truth") is not True:
@@ -110,8 +160,11 @@ def finalize_canonical(
     finalized_at: str | None = None,
 ) -> dict[str, Path]:
     """Authenticate a canonical snapshot without recomputing any investment decision."""
+    expected_source_run_id = require_actions_run_id(
+        expected_source_run_id, field="expected_source_run_id"
+    )
     snapshot = _load_json(snapshot_path)
-    validate_snapshot(snapshot, expected_source_run_id=str(expected_source_run_id))
+    validate_snapshot(snapshot, expected_source_run_id=expected_source_run_id)
 
     source_kind = str(snapshot.get("source_kind") or "")
     if source_kind not in AUTHORIZED_SOURCE_KINDS:
@@ -123,10 +176,18 @@ def finalize_canonical(
         raise ValueError(
             f"production authority source kind mismatch: expected {expected_source_kind!r}, got {source_kind!r}"
         )
-    if not str(snapshot.get("upstream_run_id") or "").strip():
-        raise ValueError("production authority requires an upstream discovery run id")
+    source_workflow = _require_source_workflow(source_kind, source_workflow)
+    upstream_run_id = require_upstream_run_ref(
+        snapshot.get("upstream_run_id"),
+        source_run_id=expected_source_run_id,
+        source_workflow=source_workflow,
+    )
     if not str(snapshot.get("latest_trade_date") or "").strip():
         raise ValueError("production authority requires a canonical latest_trade_date")
+
+    source_head_sha = require_git_sha(source_head_sha, field="source_head_sha")
+    finalizer_run_id = require_actions_run_id(finalizer_run_id, field="finalizer_run_id")
+    finalizer_code_sha = require_git_sha(finalizer_code_sha, field="finalizer_code_sha")
 
     source_hashes = snapshot.get("source_hashes") or {}
     if not isinstance(source_hashes, Mapping) or not source_hashes:
@@ -155,12 +216,12 @@ def finalize_canonical(
         "canonical_snapshot_id": str(snapshot["snapshot_id"]),
         "canonical_sha256": _sha256(canonical_copy),
         "canonical_source_kind": source_kind,
-        "canonical_source_run_id": str(snapshot.get("source_run_id") or ""),
-        "upstream_run_id": str(snapshot.get("upstream_run_id") or ""),
-        "source_workflow": str(source_workflow),
-        "source_head_sha": str(source_head_sha or ""),
-        "finalizer_run_id": str(finalizer_run_id or ""),
-        "finalizer_code_sha": str(finalizer_code_sha or ""),
+        "canonical_source_run_id": expected_source_run_id,
+        "upstream_run_id": upstream_run_id,
+        "source_workflow": source_workflow,
+        "source_head_sha": source_head_sha,
+        "finalizer_run_id": finalizer_run_id,
+        "finalizer_code_sha": finalizer_code_sha,
         "production_version": str(snapshot.get("production_version") or ""),
         "latest_trade_date": str(snapshot.get("latest_trade_date") or ""),
         "research_as_of": str(snapshot.get("research_as_of") or ""),
@@ -198,9 +259,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--expected-source-run-id", required=True)
     parser.add_argument("--source-workflow", required=True)
     parser.add_argument("--expected-source-kind", default="")
-    parser.add_argument("--source-head-sha", default="")
-    parser.add_argument("--finalizer-run-id", default="")
-    parser.add_argument("--finalizer-code-sha", default="")
+    parser.add_argument("--source-head-sha", required=True)
+    parser.add_argument("--finalizer-run-id", required=True)
+    parser.add_argument("--finalizer-code-sha", required=True)
     args = parser.parse_args(argv)
     outputs = finalize_canonical(
         args.snapshot,

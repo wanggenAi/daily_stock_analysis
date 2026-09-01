@@ -74,9 +74,6 @@ jobs:
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             RUN_ID="$MANUAL_RUN_ID"
             SOURCE_WORKFLOW="$MANUAL_WORKFLOW"
-            # Manual dispatch must preserve the producer's real Git identity.
-            # Resolve it from the exact completed producer run instead of using
-            # a sentinel such as "manual-source-run".
             RUN_JSON=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
             HEAD_SHA=$(printf '%s' "$RUN_JSON" | jq -r '.head_sha // empty')
             ACTUAL_WORKFLOW=$(printf '%s' "$RUN_JSON" | jq -r '.name // empty')
@@ -138,9 +135,31 @@ jobs:
           print(f"canonical_snapshot={snapshot}")
           PY
 
+      - name: Validate exact GitHub Actions provenance namespaces
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          UPSTREAM_RUN_ID=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path("${{ steps.canonical.outputs.snapshot }}").read_text(encoding="utf-8"))
+          print(payload.get("upstream_run_id") or "")
+          PY
+          )
+          python -m src.strategies.genge_opportunity_discovery.actions_provenance \
+            --repository "${GITHUB_REPOSITORY}" \
+            --token "${GH_TOKEN}" \
+            --source-run-id "${{ steps.source.outputs.run_id }}" \
+            --source-workflow "${{ steps.source.outputs.workflow }}" \
+            --source-head-sha "${{ steps.source.outputs.head_sha }}" \
+            --upstream-run-id "${UPSTREAM_RUN_ID}" \
+            --finalizer-run-id "${GITHUB_RUN_ID}"
+
       - name: Run canonical authority, consumer, and lifecycle tests
         run: |
           python -m pytest -q \
+            tests/test_genge_actions_provenance.py \
             tests/test_genge_canonical_snapshot.py \
             tests/test_genge_canonical_operating_view.py \
             tests/test_genge_canonical_authority.py \
@@ -209,6 +228,8 @@ jobs:
           assert hourly_bundle["source_workflow"] == "${{ steps.source.outputs.workflow }}"
           assert authority["source_head_sha"] == "${{ steps.source.outputs.head_sha }}"
           assert len(authority["source_head_sha"]) == 40
+          assert authority["finalizer_run_id"] == "${GITHUB_RUN_ID}"
+          assert len(authority["finalizer_code_sha"]) == 40
           assert holdings["canonical_snapshot_id"] == sid
           assert holdings["canonical_source_run_id"] == hourly_bundle["canonical_source_run_id"]
           assert holdings["candidate_formal_actions_affected_by_holdings_mismatch"] is False
@@ -240,7 +261,7 @@ jobs:
           assert authority["consumer_contract"]["canonical_is_only_formal_decision_truth"] is True
           assert authority["consumer_contract"]["consumer_may_recompute_formal_action"] is False
           assert authority["consumer_contract"]["overlay_may_overwrite_formal_action"] is False
-          print(json.dumps({"authorized": authority["authorized"], "snapshot_id": sid, "source_workflow": hourly_bundle["source_workflow"], "source_kind": hourly_bundle["source_kind"], "source_run_id": hourly_bundle["canonical_source_run_id"], "source_head_sha": authority["source_head_sha"], "upstream_run_id": authority["upstream_run_id"], "latest_trade_date": hourly_bundle["latest_trade_date"], "holdings_status": holdings["status"], "holding_actions_usable": holdings["formal_holding_actions_currently_usable"], "candidate_lifecycle_count": len(lifecycle["candidates"]), "candidate_lifecycle_events": lifecycle_summary["snapshot_event_count"], "lifecycle_persistence": replay["status"], "lifecycle_persistence_attempt": replay["attempt"], "lifecycle_persisted_commit_sha": replay["persisted_commit_sha"], "hourly_mode": hourly["mode"], "daily_mode": daily["mode"], "digest_verified": True, "source_sha_verified": True, "generic_hold_review_lifecycle_inflation_blocked": True}, ensure_ascii=False, indent=2))
+          print(json.dumps({"authorized": authority["authorized"], "snapshot_id": sid, "source_workflow": hourly_bundle["source_workflow"], "source_kind": hourly_bundle["source_kind"], "source_run_id": hourly_bundle["canonical_source_run_id"], "source_head_sha": authority["source_head_sha"], "upstream_run_id": authority["upstream_run_id"], "finalizer_run_id": authority["finalizer_run_id"], "finalizer_code_sha": authority["finalizer_code_sha"], "latest_trade_date": hourly_bundle["latest_trade_date"], "holdings_status": holdings["status"], "holding_actions_usable": holdings["formal_holding_actions_currently_usable"], "candidate_lifecycle_count": len(lifecycle["candidates"]), "candidate_lifecycle_events": lifecycle_summary["snapshot_event_count"], "lifecycle_persistence": replay["status"], "lifecycle_persistence_attempt": replay["attempt"], "lifecycle_persisted_commit_sha": replay["persisted_commit_sha"], "hourly_mode": hourly["mode"], "daily_mode": daily["mode"], "digest_verified": True, "source_sha_verified": True, "actions_provenance_verified": True, "generic_hold_review_lifecycle_inflation_blocked": True}, ensure_ascii=False, indent=2))
           PY
 
       - name: Publish canonical authority summary
@@ -263,6 +284,8 @@ jobs:
               out.write(f"- canonical source run: `{authority['canonical_source_run_id']}`\n")
               out.write(f"- source head SHA: `{authority['source_head_sha']}`\n")
               out.write(f"- upstream run: `{authority['upstream_run_id']}`\n")
+              out.write(f"- finalizer run: `{authority['finalizer_run_id']}`\n")
+              out.write(f"- finalizer code SHA: `{authority['finalizer_code_sha']}`\n")
               out.write(f"- latest trade date: `{authority['latest_trade_date']}`\n")
               out.write(f"- holdings reconciliation: `{holdings['status']}`\n")
               out.write(f"- holding Formal actions usable: `{holdings['formal_holding_actions_currently_usable']}`\n")
@@ -272,6 +295,7 @@ jobs:
               out.write(f"- lifecycle persistence: `{replay['status']}` attempt `{replay['attempt']}`\n")
               out.write(f"- lifecycle persisted commit: `{replay['persisted_commit_sha']}`\n")
               out.write(f"- action counts: `{counts}`\n")
+              out.write("- source/upstream/finalizer identities validated in the GitHub Actions workflow-run namespace\n")
               out.write("- canonical SHA256, producer Git SHA, and consumer views validated before publication\n")
               out.write("- lifecycle persistence uses optimistic replay from latest main; stale state is never rebased over a concurrent writer\n")
               out.write("- generic production-only HOLD_REVIEW rows cannot inflate durable lifecycle memory\n")

@@ -28,11 +28,16 @@ on:
       - "data/evidence_events/**"
       - "data/research_mapping/**"
       - "src/genge_v311_persistence_order.py"
+      - "src/strategies/genge_opportunity_discovery/actions_provenance.py"
+      - "src/strategies/genge_opportunity_discovery/authoritative_artifact_provenance.py"
+      - "src/strategies/genge_opportunity_discovery/canonical_authority.py"
       - "src/strategies/genge_opportunity_discovery/formal_decision_history.py"
       - "src/strategies/genge_opportunity_discovery/transaction_ledger.py"
       - "src/strategies/genge_opportunity_discovery/research_mapping_coverage.py"
       - "src/strategies/genge_opportunity_discovery/production_observability.py"
       - "src/strategies/genge_opportunity_discovery/production_status_dashboard.py"
+      - "tests/test_genge_actions_provenance.py"
+      - "tests/test_genge_authoritative_artifact_provenance.py"
       - "tests/test_genge_transaction_ledger.py"
       - "tests/test_genge_research_mapping_coverage.py"
       - "tests/test_genge_production_observability.py"
@@ -110,8 +115,21 @@ jobs:
           test -n "$SNAPSHOT"
           AUTH_ROOT=$(dirname "$(dirname "$SNAPSHOT")")
           test -f "$AUTH_ROOT/production_authority.json"
+          test -f "$AUTH_ROOT/operating_views/hourly.json"
+          test -f "$AUTH_ROOT/operating_views/daily.json"
           echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
           echo "AUTH_ROOT=$AUTH_ROOT" >> "$GITHUB_ENV"
+
+      - name: Validate downloaded Finalizer authority
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.authoritative_artifact_provenance \
+            --authoritative-root "$AUTH_ROOT" \
+            --repository "$GITHUB_REPOSITORY" \
+            --token "$GH_TOKEN" \
+            --expected-finalizer-run-id "$FINALIZER_RUN_ID"
 
       - name: Persist operating state with optimistic replay
         run: |
@@ -153,6 +171,8 @@ jobs:
             # attempt will use to generate state. A rejected push causes a fresh
             # fetch/reset/test/rebuild rather than rebasing generated files.
             python -m pytest -q \
+              tests/test_genge_actions_provenance.py \
+              tests/test_genge_authoritative_artifact_provenance.py \
               tests/test_genge_transaction_ledger.py \
               tests/test_genge_evidence_event_store.py \
               tests/test_genge_hourly_research_state.py \
