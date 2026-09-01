@@ -2,8 +2,10 @@ name: GenGe V3.1.1 Operating Ledger
 
 on:
   workflow_run:
+    # Canonical promotion is serialized through Hourly Deep Overlay. The ledger
+    # must not advance Production Status directly from a newer Finalizer while
+    # the current research/price surfaces still reference the prior Canonical.
     workflows:
-      - "GenGe V3.1.1 Production Finalizer"
       - "GenGe V3.1.1 Hourly Deep Overlay"
       - "GenGe V3.1.1 Evidence Slow Lane"
     types: [completed]
@@ -79,8 +81,6 @@ jobs:
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             echo "FINALIZER_RUN_ID=${{ inputs.finalizer_run_id }}" >> "$GITHUB_ENV"
-          elif [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.name }}" = "GenGe V3.1.1 Production Finalizer" ]; then
-            echo "FINALIZER_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
           else
             runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=30")
             run_ids=$(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id')
@@ -123,6 +123,31 @@ jobs:
             echo "operating ledger replay attempt ${attempt}/4"
             git fetch origin main
             git reset --hard origin/main
+
+            # Promotion barrier: Production Status may advance to a new Canonical
+            # only after the durable hourly price/research surface has caught up
+            # to that exact finalized snapshot. A mismatch is a safe no-op, not a
+            # reason to publish split Formal identities.
+            promotion_state=$(python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          incoming = json.loads(Path(os.environ['SNAPSHOT']).read_text(encoding='utf-8'))
+          overlay_path = Path('data/hourly_deep_overlay/latest.json')
+          if not overlay_path.is_file():
+              print('NOT_READY')
+              raise SystemExit(0)
+          overlay = json.loads(overlay_path.read_text(encoding='utf-8'))
+          same_snapshot = str(incoming.get('snapshot_id') or '') == str(overlay.get('canonical_snapshot_id') or '')
+          same_run = str(incoming.get('source_run_id') or '') == str(overlay.get('canonical_source_run_id') or '')
+          print('READY' if same_snapshot and same_run else 'NOT_READY')
+          PY
+            )
+            echo "canonical promotion barrier: ${promotion_state}"
+            if [ "$promotion_state" != "READY" ]; then
+              echo "hourly overlay has not caught up to selected Finalizer; safe no-op"
+              exit 0
+            fi
 
             # The persistence gate runs against the exact main revision that this
             # attempt will use to generate state. A rejected push causes a fresh
@@ -167,6 +192,7 @@ jobs:
           p = json.loads(Path('data/transactions/holdings_projection.json').read_text(encoding='utf-8'))
           m = json.loads(Path('data/research_mapping/coverage.json').read_text(encoding='utf-8'))
           s = json.loads(Path('data/production_status/latest.json').read_text(encoding='utf-8'))
+          h = json.loads(Path('data/production_observability/latest.json').read_text(encoding='utf-8'))
           assert p['production_source_of_truth'] is False
           assert p['migration_required_before_production_use'] is True
           assert p['no_auto_trade'] is True
@@ -177,6 +203,8 @@ jobs:
           assert m['applicability_policy'] == 'NOT_APPLICABLE_IS_NOT_A_COVERAGE_GAP'
           assert s['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
           assert s['research_learning']['parameter_tuning_allowed'] is False
+          assert h['checks']['canonical_snapshot_identity_consistent'] is True
+          assert h['checks']['canonical_source_run_identity_consistent'] is True
           PY
 
             git add -f \
