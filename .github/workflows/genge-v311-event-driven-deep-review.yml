@@ -10,8 +10,10 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/genge-v311-event-driven-deep-review.yml"
+      - ".github/workflows/genge-v311-event-driven-authority-handoff.yml"
       - "src/strategies/genge_opportunity_discovery/event_driven_deep_review_trigger.py"
       - "tests/test_genge_event_driven_deep_review_trigger.py"
+      - "tests/test_genge_event_driven_authority_handoff.py"
 
 permissions:
   contents: read
@@ -51,9 +53,11 @@ jobs:
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
-      - name: Validate event-driven trigger contract
+      - name: Validate event-driven trigger and authority-handoff contracts
         run: |
-          python -m pytest -q tests/test_genge_event_driven_deep_review_trigger.py
+          python -m pytest -q \
+            tests/test_genge_event_driven_deep_review_trigger.py \
+            tests/test_genge_event_driven_authority_handoff.py
 
       - name: Build event-driven Deep Review decision
         id: decision
@@ -102,17 +106,30 @@ jobs:
             exit 0
           fi
 
-          # A marker is only an attempted dispatch. Exact-signal completion means
-          # the successful Every-Industry source run has itself reached an
-          # authoritative Canonical artifact. Research success without finalization
-          # is repaired by dispatching the existing successful source run directly
-          # to Production Finalizer; it must not force another heavy research cycle.
           industry_runs=$(gh api -X GET \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?per_page=50")
+          handoff_runs=$(gh api -X GET \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-event-driven-authority-handoff.yml/runs?event=workflow_dispatch&per_page=50")
 
           while IFS=$'\t' read -r marker_created marker_head_sha; do
             test -n "$marker_created" || continue
             test -n "$marker_head_sha" || continue
+
+            active_handoff=$(printf '%s' "$handoff_runs" | jq \
+              --arg created "$marker_created" \
+              --arg sha "$marker_head_sha" \
+              '[.workflow_runs[]
+                | select(.head_sha == $sha
+                         and .created_at >= $created
+                         and (.status == "queued" or .status == "in_progress"))
+              ] | length')
+            if [ "$active_handoff" -gt 0 ]; then
+              echo "marker_hit=true" >> "$GITHUB_OUTPUT"
+              echo "marker_state=authority_handoff_active" >> "$GITHUB_OUTPUT"
+              echo "finalizer_repair_source_run_id=" >> "$GITHUB_OUTPUT"
+              echo "Exact-signal authority handoff is still active; skip duplicate heavy research."
+              exit 0
+            fi
 
             success_run_id=$(printf '%s' "$industry_runs" | jq -r \
               --arg created "$marker_created" \
@@ -150,15 +167,14 @@ jobs:
                 exit 0
               fi
 
-              gh workflow run genge-v311-production-finalizer.yml \
+              gh workflow run genge-v311-event-driven-authority-handoff.yml \
                 --repo "$GITHUB_REPOSITORY" \
                 --ref main \
-                -f source_run_id="$success_run_id" \
-                -f source_workflow="GenGe V3.1.1 Every-Industry Research"
+                -f industry_run_id="$success_run_id"
               echo "marker_hit=true" >> "$GITHUB_OUTPUT"
-              echo "marker_state=finalizer_repair_dispatched" >> "$GITHUB_OUTPUT"
+              echo "marker_state=authority_repair_dispatched" >> "$GITHUB_OUTPUT"
               echo "finalizer_repair_source_run_id=${success_run_id}" >> "$GITHUB_OUTPUT"
-              echo "Successful research lacked Authorized Canonical; dispatched Production Finalizer repair for source run ${success_run_id}."
+              echo "Successful research lacked complete authority closure; dispatched Finalizer + consumer repair for source run ${success_run_id}."
               exit 0
             fi
 
@@ -187,9 +203,9 @@ jobs:
           echo "marker_hit=false" >> "$GITHUB_OUTPUT"
           echo "marker_state=retryable_failed_or_abandoned" >> "$GITHUB_OUTPUT"
           echo "finalizer_repair_source_run_id=" >> "$GITHUB_OUTPUT"
-          echo "Prior exact-signal dispatch marker exists but no matching successful/active Every-Industry run remains; allow retry."
+          echo "Prior exact-signal dispatch marker exists but no matching successful/active authority chain remains; allow retry."
 
-      - name: Dispatch immediate production Deep Review
+      - name: Dispatch explicit event-driven authority chain
         id: dispatch
         if: >-
           steps.decision.outputs.dispatch_required == 'true' &&
@@ -199,9 +215,21 @@ jobs:
         run: |
           set -euo pipefail
 
-          # Avoid parallel Deep Review storms. An active Every-Industry run will
-          # itself reach Production Finalizer, so retry this exact signal on the
-          # next Learning heartbeat instead of overlapping it.
+          handoff_runs=$(gh api -X GET \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-event-driven-authority-handoff.yml/runs?per_page=20")
+          active_handoff=$(printf '%s' "$handoff_runs" | jq '[
+            .workflow_runs[]
+            | select(.status == "queued" or .status == "in_progress")
+          ] | length')
+          if [ "$active_handoff" -gt 0 ]; then
+            echo "An event-driven authority handoff is already active; defer this signal."
+            echo "dispatched=false" >> "$GITHUB_OUTPUT"
+            echo "deferred=true" >> "$GITHUB_OUTPUT"
+            echo "dispatch_path=ACTIVE_AUTHORITY_HANDOFF_DEFER" >> "$GITHUB_OUTPUT"
+            echo "upstream_run_id=" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           industry_runs=$(gh api -X GET \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?per_page=30")
           active_industry=$(printf '%s' "$industry_runs" | jq '[
@@ -210,7 +238,7 @@ jobs:
                      and (.status == "queued" or .status == "in_progress"))
           ] | length')
           if [ "$active_industry" -gt 0 ]; then
-            echo "A production Every-Industry Deep Review is already active; defer this signal to the next research-learning heartbeat."
+            echo "A production Every-Industry Deep Review is already active; defer this signal."
             echo "dispatched=false" >> "$GITHUB_OUTPUT"
             echo "deferred=true" >> "$GITHUB_OUTPUT"
             echo "dispatch_path=ACTIVE_DEEP_REVIEW_DEFER" >> "$GITHUB_OUTPUT"
@@ -218,10 +246,6 @@ jobs:
             exit 0
           fi
 
-          # Fast path: hourly signals concern securities already present in the
-          # current research/Canonical workset. Reuse the newest successful,
-          # non-expired All-A production artifact and immediately execute the
-          # existing full V3.1 Every-Industry Deep Review.
           discovery_runs=$(gh api -X GET \
             "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?status=success&per_page=30")
           upstream_run_id=""
@@ -243,15 +267,12 @@ jobs:
             | .id')
 
           if [ -n "$upstream_run_id" ]; then
-            gh workflow run genge-v31-industry-research.yml \
+            gh workflow run genge-v311-event-driven-authority-handoff.yml \
               --repo "$GITHUB_REPOSITORY" \
               --ref main \
-              -f upstream_run_id="$upstream_run_id" \
-              -f explicit_finalizer=true
-            dispatch_path="FAST_EXISTING_DISCOVERY_TO_FULL_V31_REVIEW"
+              -f discovery_run_id="$upstream_run_id"
+            dispatch_path="REUSE_DISCOVERY_THEN_FULL_AUTHORITY_CHAIN"
           else
-            # Fail-safe fallback: if no validated All-A artifact is available,
-            # start normal production Discovery rather than weakening provenance.
             all_discovery_runs=$(gh api -X GET \
               "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?per_page=30")
             discovery_active=$(printf '%s' "$all_discovery_runs" | jq '[
@@ -267,11 +288,10 @@ jobs:
               echo "upstream_run_id=" >> "$GITHUB_OUTPUT"
               exit 0
             fi
-            gh workflow run genge-opportunity-discovery.yml \
+            gh workflow run genge-v311-event-driven-authority-handoff.yml \
               --repo "$GITHUB_REPOSITORY" \
-              --ref main \
-              -f run_legacy_report=false
-            dispatch_path="FULL_DISCOVERY_FALLBACK"
+              --ref main
+            dispatch_path="FULL_DISCOVERY_AND_AUTHORITY_FALLBACK"
           fi
 
           mkdir -p .event-driven-deep-review-marker
@@ -314,9 +334,9 @@ jobs:
           echo "- production dispatch: \`${{ steps.dispatch.outputs.dispatched }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- dispatch path: \`${{ steps.dispatch.outputs.dispatch_path }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- reused All-A upstream run: \`${{ steps.dispatch.outputs.upstream_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- deferred because another production research cycle is already active: \`${{ steps.dispatch.outputs.deferred }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- downstream authority: Every-Industry Research -> Production Finalizer" >> "$GITHUB_STEP_SUMMARY"
-          echo "- exact-signal completion requires an authoritative Canonical artifact, not research success alone" >> "$GITHUB_STEP_SUMMARY"
+          echo "- deferred because another production research/authority cycle is active: \`${{ steps.dispatch.outputs.deferred }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- downstream authority: Discovery -> Every-Industry -> Production Finalizer -> exact Authority Consumer Handoff" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact-signal completion requires an authoritative Canonical artifact and completed consumer closure" >> "$GITHUB_STEP_SUMMARY"
           echo "- failed/cancelled exact-signal dispatches are retryable; successful-but-unfinalized research is repaired without restarting heavy research" >> "$GITHUB_STEP_SUMMARY"
           echo "- holdings and external candidates share the urgent-signal trigger bar; ordinary holding priority alone does not trigger" >> "$GITHUB_STEP_SUMMARY"
           echo "- Hourly/Learning remain research-only and can never authorize a Formal action" >> "$GITHUB_STEP_SUMMARY"
