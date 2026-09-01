@@ -46,6 +46,16 @@ def test_handoff_closes_upstream_authority_then_reuses_verified_consumer_handoff
     assert industry < finalizer < consumers
 
 
+def test_handoff_reuses_automatic_consumer_before_explicit_fallback() -> None:
+    text = _text(HANDOFF_WORKFLOW)
+    lookup = text.index("find_success_or_active_named_run")
+    reuse = text.index("REUSED_AUTOMATIC_CONSUMER_HANDOFF")
+    explicit = text.index("EXPLICIT_CONSUMER_HANDOFF")
+    assert lookup < reuse < explicit
+    assert "for _ in $(seq 1 10)" in text
+    assert "automatic consumer handoff is reused when present" in text
+
+
 def test_event_handoff_does_not_duplicate_verified_downstream_consumer_orchestration() -> None:
     text = _text(HANDOFF_WORKFLOW)
     assert "genge-v311-continuity-state.yml" not in text
