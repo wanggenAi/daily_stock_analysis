@@ -66,10 +66,16 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
         l = life.get(code) or {}
         c = coverage_rows.get(code) or {}
         h = hourly_rows.get(code) or {}
-        scopes = set(c.get("scopes") or [])
         reasons: list[str] = []
         score = 0
-        is_current_holding = "HOLDING" in scopes
+
+        # Current-holding identity is an operational fact, not a research-mapping
+        # attribute. Mapping coverage intentionally persists across holding/candidate
+        # lifecycle changes, so its historical HOLDING scope must never project a
+        # closed position back into CURRENT_HOLDING. The current hourly state is
+        # produced from the reconciled current portfolio and is therefore the only
+        # authority used by this research-only router for holding priority.
+        is_current_holding = str(h.get("scope") or "").upper() == "HOLDING"
         if is_current_holding:
             score += 50; reasons.append("CURRENT_HOLDING")
         tier = str(l.get("research_tier") or "")
