@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+import subprocess
+import sys
+
 import pytest
 
 from src.strategies.genge_opportunity_discovery.actions_provenance import (
@@ -21,6 +24,15 @@ def _run(run_id: int, *, name: str = "Producer", sha: str = "a" * 40, conclusion
         "head_sha": sha,
         "conclusion": conclusion,
     }
+
+
+def test_provenance_import_does_not_eager_load_discovery_pipeline() -> None:
+    code = """
+import sys
+import src.strategies.genge_opportunity_discovery.actions_provenance  # noqa: F401
+assert 'src.strategies.genge_opportunity_discovery.pipeline' not in sys.modules
+"""
+    subprocess.run([sys.executable, "-c", code], check=True)
 
 
 def test_run_id_must_be_positive_decimal_actions_identity() -> None:
