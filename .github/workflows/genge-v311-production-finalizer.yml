@@ -228,7 +228,7 @@ jobs:
           assert hourly_bundle["source_workflow"] == "${{ steps.source.outputs.workflow }}"
           assert authority["source_head_sha"] == "${{ steps.source.outputs.head_sha }}"
           assert len(authority["source_head_sha"]) == 40
-          assert authority["finalizer_run_id"] == "${GITHUB_RUN_ID}"
+          assert authority["finalizer_run_id"] == "${{ github.run_id }}"
           assert len(authority["finalizer_code_sha"]) == 40
           assert holdings["canonical_snapshot_id"] == sid
           assert holdings["canonical_source_run_id"] == hourly_bundle["canonical_source_run_id"]
