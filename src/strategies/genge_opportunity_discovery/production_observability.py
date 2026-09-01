@@ -51,6 +51,11 @@ def _ratio(mapped: Any, total: Any) -> float | None:
     return None if total_i <= 0 else round(mapped_i / total_i, 4)
 
 
+def _identity_set(*values: Any) -> set[str]:
+    """Return normalized, non-empty identity values."""
+    return {str(value) for value in values if value}
+
+
 def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
     now = now or datetime.now(timezone.utc)
     production = _load(root / "data/production_status/latest.json")
@@ -67,20 +72,35 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
     price_value = _load(root / "data/price_value_history/summary.json")
     outcomes = _load(root / "data/formal_decision_outcomes/latest.json")
 
-    snapshot_ids = {str(x) for x in [
-        production.get("canonical_snapshot_id"), hourly.get("canonical_snapshot_id"),
-        price.get("canonical_snapshot_id"), lifecycle.get("latest_applied_snapshot_id"),
+    # Current Formal Truth is exposed by the current production status and the
+    # current research/price overlays that explicitly declare
+    # FINALIZED_CANONICAL_ONLY. Candidate lifecycle and holding continuity are
+    # durable derived memories: on a semantic NOOP they may intentionally retain
+    # the last snapshot that materially changed their state. Mixing those
+    # historical identities into the current Formal identity set creates a false
+    # DEGRADED state even when all current Formal surfaces agree.
+    active_snapshot_ids = _identity_set(
+        production.get("canonical_snapshot_id"),
+        hourly.get("canonical_snapshot_id"),
+        price.get("canonical_snapshot_id"),
+    )
+    active_source_runs = _identity_set(
+        production.get("canonical_source_run_id"),
+        hourly.get("canonical_source_run_id"),
+        price.get("canonical_source_run_id"),
+    )
+    derived_snapshot_ids = _identity_set(
+        lifecycle.get("latest_applied_snapshot_id"),
         continuity.get("latest_applied_snapshot_id"),
-    ] if x}
-    source_runs = {str(x) for x in [
-        production.get("canonical_source_run_id"), hourly.get("canonical_source_run_id"),
-        price.get("canonical_source_run_id"), lifecycle.get("last_persisted_source_run_id"),
+    )
+    derived_source_runs = _identity_set(
+        lifecycle.get("last_persisted_source_run_id"),
         continuity.get("latest_applied_source_run_id"),
-    ] if x}
+    )
 
     checks = {
-        "canonical_snapshot_identity_consistent": len(snapshot_ids) <= 1 and bool(snapshot_ids),
-        "canonical_source_run_identity_consistent": len(source_runs) <= 1 and bool(source_runs),
+        "canonical_snapshot_identity_consistent": len(active_snapshot_ids) == 1,
+        "canonical_source_run_identity_consistent": len(active_source_runs) == 1,
         "production_status_available": bool(production),
         "hourly_research_available": bool(hourly),
         "hourly_price_overlay_available": bool(price),
@@ -107,8 +127,13 @@ def build(root: Path, *, now: datetime | None = None) -> dict[str, Any]:
         "health": "HEALTHY" if not failed else "DEGRADED",
         "failed_checks": failed,
         "checks": checks,
-        "canonical_snapshot_ids_seen": sorted(snapshot_ids),
-        "canonical_source_run_ids_seen": sorted(source_runs),
+        # Preserve the existing fields as the current Formal identity view.
+        "canonical_snapshot_ids_seen": sorted(active_snapshot_ids),
+        "canonical_source_run_ids_seen": sorted(active_source_runs),
+        # Derived state identities are audit evidence only; they are not allowed
+        # to become a second Formal Truth for the current production cycle.
+        "derived_state_snapshot_ids_seen": sorted(derived_snapshot_ids),
+        "derived_state_source_run_ids_seen": sorted(derived_source_runs),
         "freshness": {
             "hourly_research_age_hours": _age_hours(hourly.get("generated_at"), now),
             "hourly_price_age_hours": _age_hours(price.get("generated_at"), now),
