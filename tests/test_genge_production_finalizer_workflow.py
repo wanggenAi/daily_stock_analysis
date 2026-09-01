@@ -10,7 +10,7 @@ def test_finalizer_sole_truth_validation_uses_runtime_github_run_id() -> None:
     workflow = FINALIZER_WORKFLOW.read_text(encoding="utf-8")
 
     assert 'assert authority["finalizer_run_id"] == "${GITHUB_RUN_ID}"' not in workflow
-    assert 'assert authority["finalizer_run_id"] == os.environ["GITHUB_RUN_ID"]' in workflow
+    assert 'assert authority["finalizer_run_id"] == "${{ github.run_id }}"' in workflow
 
 
 def test_finalizer_keeps_exact_run_identity_validation() -> None:
