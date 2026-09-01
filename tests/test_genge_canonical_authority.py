@@ -16,6 +16,9 @@ from src.strategies.genge_opportunity_discovery.canonical_snapshot import (
     build_snapshot,
 )
 
+SOURCE_SHA = "a" * 40
+FINALIZER_SHA = "b" * 40
+
 
 def _snapshot(*, source_kind: str = "every-industry") -> dict:
     discovery = [
@@ -71,22 +74,26 @@ def _snapshot(*, source_kind: str = "every-industry") -> dict:
     )
 
 
+def _finalize(source: Path, output: Path, **overrides):
+    kwargs = {
+        "expected_source_run_id": "123",
+        "source_workflow": "GenGe V3.1.1 Every-Industry Research",
+        "expected_source_kind": "every-industry",
+        "source_head_sha": SOURCE_SHA,
+        "finalizer_run_id": "789",
+        "finalizer_code_sha": FINALIZER_SHA,
+        "finalized_at": "2026-08-27T03:30:00+00:00",
+    }
+    kwargs.update(overrides)
+    return finalize_canonical(source, output, **kwargs)
+
+
 def test_finalize_canonical_publishes_one_truth_for_both_consumers(tmp_path: Path) -> None:
     snapshot = _snapshot()
     source = tmp_path / "latest.json"
     source.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
 
-    outputs = finalize_canonical(
-        source,
-        tmp_path / "authorized",
-        expected_source_run_id="123",
-        source_workflow="GenGe V3.1.1 Every-Industry Research",
-        expected_source_kind="every-industry",
-        source_head_sha="deadbeef",
-        finalizer_run_id="789",
-        finalizer_code_sha="cafebabe",
-        finalized_at="2026-08-27T03:30:00+00:00",
-    )
+    outputs = _finalize(source, tmp_path / "authorized")
 
     authority = json.loads(outputs["authority"].read_text(encoding="utf-8"))
     hourly = json.loads(outputs["hourly"].read_text(encoding="utf-8"))
@@ -96,6 +103,11 @@ def test_finalize_canonical_publishes_one_truth_for_both_consumers(tmp_path: Pat
     assert authority["contract_version"] == AUTHORITY_CONTRACT_VERSION
     assert authority["authorized"] is True
     assert authority["canonical_snapshot_id"] == snapshot["snapshot_id"]
+    assert authority["canonical_source_run_id"] == "123"
+    assert authority["upstream_run_id"] == "456"
+    assert authority["source_head_sha"] == SOURCE_SHA
+    assert authority["finalizer_run_id"] == "789"
+    assert authority["finalizer_code_sha"] == FINALIZER_SHA
     assert hourly["canonical_snapshot_id"] == snapshot["snapshot_id"]
     assert daily["canonical_snapshot_id"] == snapshot["snapshot_id"]
     assert copied == snapshot
@@ -111,10 +123,9 @@ def test_finalize_canonical_accepts_authoritative_premarket_one_shot(tmp_path: P
     source = tmp_path / "latest.json"
     source.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
 
-    outputs = finalize_canonical(
+    outputs = _finalize(
         source,
         tmp_path / "authorized",
-        expected_source_run_id="123",
         source_workflow="GenGe All-A V3.1.1 One Shot",
         expected_source_kind="GenGe All-A V3.1.1 One Shot",
     )
@@ -128,12 +139,7 @@ def test_finalize_canonical_rejects_wrong_source_run(tmp_path: Path) -> None:
     source.write_text(json.dumps(_snapshot(), ensure_ascii=False), encoding="utf-8")
 
     with pytest.raises(ValueError, match="source run mismatch"):
-        finalize_canonical(
-            source,
-            tmp_path / "authorized",
-            expected_source_run_id="999",
-            source_workflow="GenGe V3.1.1 Every-Industry Research",
-        )
+        _finalize(source, tmp_path / "authorized", expected_source_run_id="999")
 
 
 def test_finalize_canonical_rejects_non_authoritative_source_kind(tmp_path: Path) -> None:
@@ -142,11 +148,11 @@ def test_finalize_canonical_rejects_non_authoritative_source_kind(tmp_path: Path
     source.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
 
     with pytest.raises(ValueError, match="rejects source_kind"):
-        finalize_canonical(
+        _finalize(
             source,
             tmp_path / "authorized",
-            expected_source_run_id="123",
             source_workflow="Untrusted Research Workflow",
+            expected_source_kind="",
         )
 
 
@@ -155,10 +161,52 @@ def test_finalize_canonical_rejects_workflow_source_kind_mismatch(tmp_path: Path
     source.write_text(json.dumps(_snapshot(), ensure_ascii=False), encoding="utf-8")
 
     with pytest.raises(ValueError, match="source kind mismatch"):
-        finalize_canonical(
+        _finalize(
             source,
             tmp_path / "authorized",
-            expected_source_run_id="123",
             source_workflow="GenGe All-A V3.1.1 One Shot",
             expected_source_kind="GenGe All-A V3.1.1 One Shot",
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "message"),
+    [
+        ("expected_source_run_id", "job-123", "workflow run id"),
+        ("source_head_sha", "deadbeef", "40-hex"),
+        ("finalizer_run_id", "0", "workflow run id"),
+        ("finalizer_code_sha", "cafebabe", "40-hex"),
+    ],
+)
+def test_finalize_canonical_rejects_malformed_provenance(
+    tmp_path: Path, field: str, value: str, message: str
+) -> None:
+    source = tmp_path / "latest.json"
+    source.write_text(json.dumps(_snapshot(), ensure_ascii=False), encoding="utf-8")
+
+    with pytest.raises(ValueError, match=message):
+        _finalize(source, tmp_path / "authorized", **{field: value})
+
+
+def test_validate_authority_rejects_tampered_finalizer_run_id(tmp_path: Path) -> None:
+    snapshot = _snapshot()
+    source = tmp_path / "latest.json"
+    source.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
+    outputs = _finalize(source, tmp_path / "authorized")
+    authority = json.loads(outputs["authority"].read_text(encoding="utf-8"))
+    authority["finalizer_run_id"] = "not-a-run"
+
+    with pytest.raises(ValueError, match="workflow run id"):
+        validate_authority(authority, snapshot)
+
+
+def test_validate_authority_rejects_cross_run_source_identity(tmp_path: Path) -> None:
+    snapshot = _snapshot()
+    source = tmp_path / "latest.json"
+    source.write_text(json.dumps(snapshot, ensure_ascii=False), encoding="utf-8")
+    outputs = _finalize(source, tmp_path / "authorized")
+    authority = json.loads(outputs["authority"].read_text(encoding="utf-8"))
+    authority["canonical_source_run_id"] = "999"
+
+    with pytest.raises(ValueError, match="source run mismatch"):
+        validate_authority(authority, snapshot)
