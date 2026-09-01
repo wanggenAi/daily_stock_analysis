@@ -21,7 +21,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
-from .actions_provenance import require_actions_run_id, require_git_sha
+from .actions_provenance import (
+    EVERY_INDUSTRY_WORKFLOW,
+    ONE_SHOT_WORKFLOW,
+    require_actions_run_id,
+    require_git_sha,
+    require_upstream_run_ref,
+)
 from .canonical_operating_view import (
     DAILY_SETTLEMENT,
     HOURLY_MONITOR,
@@ -36,6 +42,10 @@ AUTHORIZED_SOURCE_KINDS = frozenset(
         "GenGe All-A V3.1.1 One Shot",
     }
 )
+SOURCE_WORKFLOW_BY_KIND = {
+    "every-industry": EVERY_INDUSTRY_WORKFLOW,
+    "GenGe All-A V3.1.1 One Shot": ONE_SHOT_WORKFLOW,
+}
 
 
 def _sha256(path: Path) -> str:
@@ -51,6 +61,18 @@ def _load_json(path: Path) -> dict[str, Any]:
     if not isinstance(payload, dict):
         raise ValueError(f"expected JSON object: {path}")
     return payload
+
+
+def _require_source_workflow(source_kind: str, source_workflow: object) -> str:
+    expected = SOURCE_WORKFLOW_BY_KIND.get(source_kind)
+    if expected is None:
+        raise ValueError(f"production authority rejects source_kind={source_kind!r}")
+    workflow = str(source_workflow or "").strip()
+    if workflow != expected:
+        raise ValueError(
+            f"production authority workflow/source kind mismatch: expected {expected!r}, got {workflow!r}"
+        )
+    return workflow
 
 
 def validate_authority(
@@ -80,16 +102,27 @@ def validate_authority(
     )
     if canonical_source_run_id != snapshot_source_run_id:
         raise ValueError("canonical authority source run mismatch")
-    authority_upstream_run_id = require_actions_run_id(
-        authority.get("upstream_run_id"), field="upstream_run_id"
+
+    canonical_source_kind = str(authority.get("canonical_source_kind") or "")
+    snapshot_source_kind = str(snapshot.get("source_kind") or "")
+    if canonical_source_kind != snapshot_source_kind:
+        raise ValueError("canonical authority source kind mismatch")
+    source_workflow = _require_source_workflow(
+        canonical_source_kind, authority.get("source_workflow")
     )
-    snapshot_upstream_run_id = require_actions_run_id(
-        snapshot.get("upstream_run_id"), field="snapshot_upstream_run_id"
+
+    authority_upstream_run_id = require_upstream_run_ref(
+        authority.get("upstream_run_id"),
+        source_run_id=canonical_source_run_id,
+        source_workflow=source_workflow,
+    )
+    snapshot_upstream_run_id = require_upstream_run_ref(
+        snapshot.get("upstream_run_id"),
+        source_run_id=snapshot_source_run_id,
+        source_workflow=source_workflow,
     )
     if authority_upstream_run_id != snapshot_upstream_run_id:
         raise ValueError("canonical authority upstream run mismatch")
-    if str(authority.get("canonical_source_kind") or "") != str(snapshot.get("source_kind") or ""):
-        raise ValueError("canonical authority source kind mismatch")
 
     require_git_sha(authority.get("source_head_sha"), field="source_head_sha")
     require_actions_run_id(authority.get("finalizer_run_id"), field="finalizer_run_id")
@@ -143,8 +176,11 @@ def finalize_canonical(
         raise ValueError(
             f"production authority source kind mismatch: expected {expected_source_kind!r}, got {source_kind!r}"
         )
-    upstream_run_id = require_actions_run_id(
-        snapshot.get("upstream_run_id"), field="upstream_run_id"
+    source_workflow = _require_source_workflow(source_kind, source_workflow)
+    upstream_run_id = require_upstream_run_ref(
+        snapshot.get("upstream_run_id"),
+        source_run_id=expected_source_run_id,
+        source_workflow=source_workflow,
     )
     if not str(snapshot.get("latest_trade_date") or "").strip():
         raise ValueError("production authority requires a canonical latest_trade_date")
@@ -182,7 +218,7 @@ def finalize_canonical(
         "canonical_source_kind": source_kind,
         "canonical_source_run_id": expected_source_run_id,
         "upstream_run_id": upstream_run_id,
-        "source_workflow": str(source_workflow),
+        "source_workflow": source_workflow,
         "source_head_sha": source_head_sha,
         "finalizer_run_id": finalizer_run_id,
         "finalizer_code_sha": finalizer_code_sha,
