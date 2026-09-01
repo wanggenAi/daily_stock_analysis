@@ -1,13 +1,13 @@
 # GenGe V3.1.1 Production Status
 
 - Health: **HEALTHY**
-- Main SHA: `2f95c7dfd27c9a79a90f8dbedd9ad326a09f82cf`
-- Canonical source SHA: `e5c15e2c226965724a8574e317d69e30e8b6bbf4`
+- Main SHA: `70314f1d41c4df0df329e0a8d8f4b11077521118`
+- Canonical source SHA: `4635ac735c280cc0a2ca8e8c64b03caea4cae624`
 - Drift: `CODE_DRIFT_MAIN_ADVANCED`
-- Canonical snapshot: `ee6fe5597581f9c16843`
-- Source run: `33518650197`
+- Canonical snapshot: `16123c4ee4383d7a8ec8`
+- Source run: `33528830585`
 - Source workflow: `GenGe V3.1.1 Every-Industry Research`
-- Latest trade date: `2026-08-31`
+- Latest trade date: `2026-09-01`
 - Holdings: `HOLDINGS_IN_SYNC`
 - Holding Formal actions usable: `True`
 - Candidate lifecycle active: `73`
