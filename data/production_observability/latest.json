@@ -1,14 +1,16 @@
 {
   "canonical_snapshot_ids_seen": [
+    "00502e7fa87a258476f9",
     "4044a6fe7de9c9c22c87"
   ],
   "canonical_source_run_ids_seen": [
-    "33442400758"
+    "33442400758",
+    "33443934707"
   ],
   "checks": {
     "candidate_lifecycle_available": true,
-    "canonical_snapshot_identity_consistent": true,
-    "canonical_source_run_identity_consistent": true,
+    "canonical_snapshot_identity_consistent": false,
+    "canonical_source_run_identity_consistent": false,
     "evidence_index_available": true,
     "formal_decision_outcomes_available": true,
     "holding_continuity_available": true,
@@ -38,20 +40,23 @@
     "33423469210",
     "33443934707"
   ],
-  "failed_checks": [],
+  "failed_checks": [
+    "canonical_snapshot_identity_consistent",
+    "canonical_source_run_identity_consistent"
+  ],
   "formal_action_recomputed": false,
   "freshness": {
-    "evidence_collector_age_hours": 2.73,
-    "evidence_index_age_hours": 2.73,
+    "evidence_collector_age_hours": 2.74,
+    "evidence_index_age_hours": 2.74,
     "formal_outcomes_age_hours": 0.0,
     "hourly_price_age_hours": 2.76,
     "hourly_research_age_hours": 2.76,
-    "mapping_coverage_age_hours": 2.72,
+    "mapping_coverage_age_hours": 0.0,
     "research_priority_age_hours": 0.0,
     "source_registry_age_hours": 2.73
   },
-  "generated_at": "2026-09-01T00:39:16.675446+00:00",
-  "health": "HEALTHY",
+  "generated_at": "2026-09-01T00:39:24.209166+00:00",
+  "health": "DEGRADED",
   "no_auto_trade": true,
   "research_learning": {
     "available": true,
