@@ -11,7 +11,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_RESEARCH_PRIORITY_ROUTER_V2"
+CONTRACT_VERSION = "GEN_GE_RESEARCH_PRIORITY_ROUTER_V3"
+STRUCTURAL_REUNDERWRITE_PRICE_STATUSES = {"VALUE_ANCHOR_UNAVAILABLE"}
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -36,6 +37,25 @@ def _tier_score(tier: str) -> int:
     return 5
 
 
+def _requires_structural_reunderwrite(*, is_current_holding: bool, hourly_row: Mapping[str, Any]) -> bool:
+    """Return whether a holding's finalized Canonical lacks a usable value anchor.
+
+    HOLD_REVIEW is already a finalized Canonical action, not a research action. If
+    that holding also exposes VALUE_ANCHOR_UNAVAILABLE with no validated anchor,
+    price-only hourly research cannot resolve the condition. Route it back through
+    the existing full Deep Review -> Production Finalizer authority chain instead
+    of silently leaving the holding in a non-actionable review state.
+    """
+
+    if not is_current_holding:
+        return False
+    if str(hourly_row.get("formal_action") or "") != "HOLD_REVIEW":
+        return False
+    if str(hourly_row.get("price_evidence_status") or "") not in STRUCTURAL_REUNDERWRITE_PRICE_STATUSES:
+        return False
+    return hourly_row.get("validated_value_anchor") is None
+
+
 def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverage: Mapping[str, Any]) -> dict[str, Any]:
     life = lifecycle.get("candidates") or {}
     coverage_rows = {str(r.get("code") or "").zfill(6): r for r in (coverage.get("securities") or []) if isinstance(r, Mapping)}
@@ -49,7 +69,8 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
         scopes = set(c.get("scopes") or [])
         reasons: list[str] = []
         score = 0
-        if "HOLDING" in scopes:
+        is_current_holding = "HOLDING" in scopes
+        if is_current_holding:
             score += 50; reasons.append("CURRENT_HOLDING")
         tier = str(l.get("research_tier") or "")
         ts = _tier_score(tier)
@@ -58,10 +79,16 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
             reasons.append("HIGH_RESEARCH_TIER")
         conclusion = str(h.get("hourly_research_conclusion") or "")
         thesis = str(h.get("thesis_status") or "")
+        structural_reunderwrite = _requires_structural_reunderwrite(
+            is_current_holding=is_current_holding,
+            hourly_row=h,
+        )
         if conclusion in {"PRICE_ATTRACTIVE_RESEARCH_LEAD", "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD"}:
             score += 35; reasons.append(conclusion)
-        if conclusion == "NEW_EVIDENCE_REUNDERWRITE_LEAD" or thesis == "REUNDERWRITE_REQUIRED":
+        if conclusion == "NEW_EVIDENCE_REUNDERWRITE_LEAD" or thesis == "REUNDERWRITE_REQUIRED" or structural_reunderwrite:
             score += 45; reasons.append("REUNDERWRITE_REQUIRED")
+            if structural_reunderwrite:
+                reasons.append("VALUE_ANCHOR_REUNDERWRITE_REQUIRED")
         elif thesis in {"WEAKENING_RESEARCH_SIGNAL", "MIXED_NEW_EVIDENCE"}:
             score += 25; reasons.append("MATERIAL_EVIDENCE_CHANGE")
         if str(h.get("deep_review_priority") or "") == "RAISE":
