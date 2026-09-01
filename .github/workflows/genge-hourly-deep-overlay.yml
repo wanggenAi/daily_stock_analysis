@@ -1,6 +1,10 @@
 name: GenGe V3.1.1 Hourly Deep Overlay
 
 on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Production Finalizer"
+    types: [completed]
   schedule:
     # Research/evidence must stay fresh continuously, including weekday overnight and premarket.
     # GitHub cron is UTC; hourly cadence is timezone-independent.
@@ -43,6 +47,9 @@ env:
 
 jobs:
   persist-hourly-deep-overlay:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
