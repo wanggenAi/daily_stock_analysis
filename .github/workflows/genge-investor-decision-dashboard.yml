@@ -107,7 +107,7 @@ jobs:
           artifact_name=""
           for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id'); do
             artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
-            row=$(printf '%s' "$artifacts" | jq -r '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-"))) | [.name] | @tsv' | head -n1)
+            row=$(printf '%s' "$artifacts" | jq -r '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-"))) | .name' | head -n1)
             if [ -n "$row" ]; then
               selected="$run_id"
               artifact_name="$row"
@@ -122,7 +122,11 @@ jobs:
           authority=$(find incoming-authority -name production_authority.json -print -quit)
           test -n "$canonical"
           test -n "$authority"
-          python - <<'PY'
+          echo "CANONICAL=$canonical" >> "$GITHUB_ENV"
+          echo "AUTHORITY=$authority" >> "$GITHUB_ENV"
+          echo "FINALIZER_RUN_ID=$selected" >> "$GITHUB_ENV"
+          echo "AUTHORITY_ARTIFACT=$artifact_name" >> "$GITHUB_ENV"
+          CANONICAL="$canonical" AUTHORITY="$authority" python - <<'PY'
           import json, os
           from pathlib import Path
           authority = json.loads(Path(os.environ['AUTHORITY']).read_text(encoding='utf-8'))
@@ -131,21 +135,6 @@ jobs:
           assert authority['canonical_snapshot_id'] == canonical['snapshot_id']
           assert str(authority['canonical_source_run_id']) == str(canonical['source_run_id'])
           PY
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          AUTHORITY: ${{ env.AUTHORITY }}
-          CANONICAL: ${{ env.CANONICAL }}
-
-      - name: Export authority paths
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          canonical=$(find incoming-authority -path '*/canonical_snapshot/latest.json' -print -quit)
-          authority=$(find incoming-authority -name production_authority.json -print -quit)
-          test -n "$canonical" && test -n "$authority"
-          echo "CANONICAL=$canonical" >> "$GITHUB_ENV"
-          echo "AUTHORITY=$authority" >> "$GITHUB_ENV"
 
       - name: Download latest full-A market and industry context
         env:
