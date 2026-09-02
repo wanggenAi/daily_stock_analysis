@@ -1,0 +1,259 @@
+name: GenGe Investor Event Closure
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe Investor Decision Brief"
+      - "GenGe V3.1.1 Production Finalizer"
+    types: [completed]
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-investor-event-closure.yml"
+      - "src/strategies/genge_opportunity_discovery/investor_event_closure.py"
+      - "tests/test_genge_investor_event_closure.py"
+  pull_request:
+    paths:
+      - ".github/workflows/genge-investor-event-closure.yml"
+      - "src/strategies/genge_opportunity_discovery/investor_event_closure.py"
+      - "tests/test_genge_investor_event_closure.py"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: genge-investor-event-closure
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  closure-contract:
+    name: Event closure contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
+      - name: Test explicit investor closure
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+          python -m pytest -q tests/test_genge_investor_event_closure.py
+
+  refresh-dashboard-after-finalizer:
+    name: Refresh dashboard after Finalizer
+    if: >-
+      github.event_name == 'workflow_run' &&
+      github.event.workflow_run.name == 'GenGe V3.1.1 Production Finalizer' &&
+      github.event.workflow_run.conclusion == 'success'
+    needs: closure-contract
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch investor brief against newest Canonical
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-investor-decision-dashboard.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+
+  project-event-closure:
+    name: Publish explicit deep-review result
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event_name == 'workflow_run' &&
+       github.event.workflow_run.name == 'GenGe Investor Decision Brief' &&
+       github.event.workflow_run.conclusion == 'success')
+    needs: closure-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve latest durable event signal and exact authority closure
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/genge-event-closure
+          mkdir -p /tmp/genge-event-closure/event /tmp/genge-event-closure/authority
+
+          event_runs=$(gh api -X GET \
+            "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-event-driven-deep-review.yml/runs?status=success&per_page=30")
+          event_run_id=""
+          for candidate in $(printf '%s' "$event_runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id'); do
+            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100")
+            count=$(printf '%s' "$artifacts" | jq '[.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-event-driven-deep-review-")))] | length')
+            if [ "$count" -gt 0 ]; then
+              event_run_id="$candidate"
+              break
+            fi
+          done
+
+          if [ -z "$event_run_id" ]; then
+            printf '%s\n' '{"status":"NO_EVENT_TRIGGER"}' > /tmp/genge-event-closure/closure.json
+            : > /tmp/genge-event-closure/event/decision.json
+            echo "EVENT_DECISION=" >> "$GITHUB_ENV"
+            echo "EVENT_CLOSURE=/tmp/genge-event-closure/closure.json" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          gh run download "$event_run_id" --repo "$GITHUB_REPOSITORY" --dir /tmp/genge-event-closure/event
+          event_file=$(find /tmp/genge-event-closure/event -name decision.json -print -quit)
+          test -n "$event_file"
+          echo "EVENT_DECISION=$event_file" >> "$GITHUB_ENV"
+
+          dispatch_required=$(jq -r '.dispatch_required // false' "$event_file")
+          if [ "$dispatch_required" != "true" ]; then
+            jq -n --arg event_run_id "$event_run_id" \
+              '{status:"NO_EVENT_TRIGGER",event_run_id:$event_run_id}' \
+              > /tmp/genge-event-closure/closure.json
+            echo "EVENT_CLOSURE=/tmp/genge-event-closure/closure.json" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          digest=$(jq -r '.signal_digest' "$event_file")
+          marker_name="genge-v311-event-deep-review-marker-${digest}"
+          markers=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${marker_name}&per_page=30")
+          marker_row=$(printf '%s' "$markers" | jq -r '
+            [.artifacts[] | select(.expired == false)]
+            | sort_by(.created_at)
+            | last
+            | [(.created_at // ""), (.workflow_run.head_sha // "")]
+            | @tsv')
+          marker_created=$(printf '%s' "$marker_row" | cut -f1)
+          marker_head_sha=$(printf '%s' "$marker_row" | cut -f2)
+
+          industry_runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?per_page=100")
+          success_run_id=""
+          active_run_id=""
+          if [ -n "$marker_created" ] && [ -n "$marker_head_sha" ]; then
+            success_run_id=$(printf '%s' "$industry_runs" | jq -r \
+              --arg created "$marker_created" --arg sha "$marker_head_sha" '
+              [.workflow_runs[]
+               | select((.event == "workflow_dispatch" or .event == "workflow_run")
+                        and .head_sha == $sha and .created_at >= $created
+                        and .conclusion == "success")]
+              | sort_by(.created_at) | last | .id // empty')
+            active_run_id=$(printf '%s' "$industry_runs" | jq -r \
+              --arg created "$marker_created" --arg sha "$marker_head_sha" '
+              [.workflow_runs[]
+               | select((.event == "workflow_dispatch" or .event == "workflow_run")
+                        and .head_sha == $sha and .created_at >= $created
+                        and (.status == "queued" or .status == "in_progress"))]
+              | sort_by(.created_at) | last | .id // empty')
+          fi
+
+          status="EVENT_TRIGGERED_RUNNING"
+          finalizer_run_id=""
+          finalized_snapshot_id=""
+          if [ -n "$success_run_id" ]; then
+            authoritative_name="genge-v311-authoritative-canonical-${success_run_id}"
+            auth=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${authoritative_name}&per_page=20")
+            finalizer_run_id=$(printf '%s' "$auth" | jq -r '
+              [.artifacts[] | select(.expired == false)] | sort_by(.created_at) | last | .workflow_run.id // empty')
+            if [ -n "$finalizer_run_id" ]; then
+              status="EVENT_TRIGGERED_FINALIZED"
+              gh run download "$finalizer_run_id" --repo "$GITHUB_REPOSITORY" \
+                --name "$authoritative_name" --dir /tmp/genge-event-closure/authority
+              canonical=$(find /tmp/genge-event-closure/authority \( -path '*/canonical_snapshot/latest.json' -o -path '*/authoritative/canonical_snapshot/latest.json' \) -print -quit)
+              if [ -n "$canonical" ] && [ -s "$canonical" ]; then
+                finalized_snapshot_id=$(jq -r '.snapshot_id // empty' "$canonical")
+              fi
+            fi
+          fi
+
+          if [ "$status" != "EVENT_TRIGGERED_FINALIZED" ] && [ -z "$active_run_id" ]; then
+            handoffs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-event-driven-authority-handoff.yml/runs?per_page=50")
+            handoff_active=$(printf '%s' "$handoffs" | jq \
+              --arg created "${marker_created:-1970-01-01T00:00:00Z}" \
+              '[.workflow_runs[] | select(.created_at >= $created and (.status == "queued" or .status == "in_progress"))] | length')
+            finalizers=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?per_page=50")
+            finalizer_active=$(printf '%s' "$finalizers" | jq '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress")] | length')
+            if [ "$handoff_active" -eq 0 ] && [ "$finalizer_active" -eq 0 ] && [ -n "$marker_created" ]; then
+              status="EVENT_TRIGGER_FAILED"
+            fi
+          fi
+
+          jq -n \
+            --arg status "$status" \
+            --arg event_run_id "$event_run_id" \
+            --arg research_run_id "$success_run_id" \
+            --arg finalizer_run_id "$finalizer_run_id" \
+            --arg snapshot_id "$finalized_snapshot_id" \
+            '{status:$status,event_run_id:$event_run_id,event_research_source_run_id:$research_run_id,event_finalizer_run_id:$finalizer_run_id,event_finalized_snapshot_id:$snapshot_id}' \
+            > /tmp/genge-event-closure/closure.json
+          echo "EVENT_CLOSURE=/tmp/genge-event-closure/closure.json" >> "$GITHUB_ENV"
+          cat /tmp/genge-event-closure/closure.json
+
+      - name: Project closure into investor-facing result
+        run: |
+          set -euo pipefail
+          args=(
+            --dashboard-json data/investor_decision_dashboard/latest.json
+            --dashboard-markdown INVESTOR_DECISION_DASHBOARD.md
+            --event-closure "$EVENT_CLOSURE"
+          )
+          if [ -s data/hourly_deep_overlay/latest.json ]; then
+            args+=(--hourly data/hourly_deep_overlay/latest.json)
+          fi
+          if [ -n "${EVENT_DECISION:-}" ] && [ -s "$EVENT_DECISION" ]; then
+            args+=(--event-decision "$EVENT_DECISION")
+          fi
+          python -m src.strategies.genge_opportunity_discovery.investor_event_closure "${args[@]}"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('data/investor_decision_dashboard/latest.json').read_text(encoding='utf-8'))
+          c=p['event_deep_review_closure']
+          assert p['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert p['formal_action_recomputed'] is False
+          assert p['no_auto_trade'] is True
+          assert c['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert c['formal_action_recomputed'] is False
+          assert c['no_auto_trade'] is True
+          valid={'RAISE_ONLY','EVENT_TRIGGERED_RUNNING','EVENT_TRIGGERED_FINALIZED','EVENT_TRIGGERED_NO_CHANGE','EVENT_TRIGGER_FAILED'}
+          assert all(row['event_result_state'] in valid for row in c['rows'])
+          PY
+
+      - name: Persist explicit event closure
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git config user.name "genge-event-closure-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          git add -f data/investor_decision_dashboard/latest.json
+          git add INVESTOR_DECISION_DASHBOARD.md
+          if git diff --cached --quiet; then
+            echo "Explicit event closure already current"
+            exit 0
+          fi
+          git commit -m "Persist explicit event deep-review closure [skip ci]"
+          git push origin HEAD:main
+
+      - name: Publish closure summary
+        if: always()
+        run: |
+          if [ -f INVESTOR_DECISION_DASHBOARD.md ]; then
+            cat INVESTOR_DECISION_DASHBOARD.md >> "$GITHUB_STEP_SUMMARY"
+          fi
