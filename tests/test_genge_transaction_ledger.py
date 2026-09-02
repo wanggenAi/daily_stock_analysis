@@ -1,6 +1,8 @@
+from pathlib import Path
+
 import pytest
 
-from src.strategies.genge_opportunity_discovery.transaction_ledger import project_holdings
+from src.strategies.genge_opportunity_discovery.transaction_ledger import load_ledger, project_holdings
 
 
 def _tx(txid, event, qty, price):
@@ -70,3 +72,18 @@ def test_zero_quantity_is_only_allowed_for_position_snapshot():
 def test_positive_position_snapshot_requires_average_cost():
     with pytest.raises(ValueError, match="positive average_cost"):
         project_holdings([_snapshot("bad-snapshot", "601318", "中国平安", 300, 0)])
+
+
+def test_repository_ledger_projection_matches_confirmed_current_holdings():
+    holdings = project_holdings(load_ledger(Path("data/transactions/ledger.jsonl")))
+    assert set(holdings) == {"001316", "600406", "601318", "603993"}
+    assert holdings["001316"]["confirmed_quantity"] == "200"
+    assert holdings["001316"]["average_cost"] == "26.0950"
+    assert holdings["600406"]["confirmed_quantity"] == "200"
+    assert holdings["600406"]["average_cost"] == "23.1253"
+    assert holdings["601318"]["confirmed_quantity"] == "300"
+    assert holdings["601318"]["average_cost"] == "57.1676"
+    assert holdings["603993"]["confirmed_quantity"] == "600"
+    assert holdings["603993"]["average_cost"] == "19.1087"
+    assert "603369" not in holdings
+    assert "600276" not in holdings
