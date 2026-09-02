@@ -146,10 +146,51 @@ jobs:
                 "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${authoritative_name}&per_page=10")
               authoritative_count=$(printf '%s' "$authoritative" | jq '[.artifacts[] | select(.expired == false)] | length')
               if [ "$authoritative_count" -gt 0 ]; then
+                finalizer_run_id=$(printf '%s' "$authoritative" | jq -r '
+                  [.artifacts[] | select(.expired == false)]
+                  | sort_by(.created_at)
+                  | last
+                  | .workflow_run.id // empty')
+                test -n "$finalizer_run_id" || { echo "Authorized Canonical artifact has no owning Finalizer run id" >&2; exit 1; }
+
+                consumer_runs=$(gh api -X GET \
+                  "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-authority-consumer-handoff.yml/runs?per_page=50")
+                expected_consumer_title="GenGe V3.1.1 Authority Consumer Handoff / ${finalizer_run_id}"
+                consumer_success=$(printf '%s' "$consumer_runs" | jq \
+                  --arg title "$expected_consumer_title" \
+                  '[.workflow_runs[]
+                    | select(.display_title == $title and .conclusion == "success")
+                  ] | length')
+                if [ "$consumer_success" -gt 0 ]; then
+                  echo "marker_hit=true" >> "$GITHUB_OUTPUT"
+                  echo "marker_state=downstream_finalized" >> "$GITHUB_OUTPUT"
+                  echo "finalizer_repair_source_run_id=" >> "$GITHUB_OUTPUT"
+                  echo "Exact signal already produced an Authorized Canonical and completed exact consumer closure."
+                  exit 0
+                fi
+
+                consumer_active=$(printf '%s' "$consumer_runs" | jq \
+                  --arg title "$expected_consumer_title" \
+                  '[.workflow_runs[]
+                    | select(.display_title == $title
+                             and (.status == "queued" or .status == "in_progress"))
+                  ] | length')
+                if [ "$consumer_active" -gt 0 ]; then
+                  echo "marker_hit=true" >> "$GITHUB_OUTPUT"
+                  echo "marker_state=consumer_handoff_active" >> "$GITHUB_OUTPUT"
+                  echo "finalizer_repair_source_run_id=" >> "$GITHUB_OUTPUT"
+                  echo "Authorized Canonical exists and its exact consumer handoff is still active."
+                  exit 0
+                fi
+
+                gh workflow run genge-v311-authority-consumer-handoff.yml \
+                  --repo "$GITHUB_REPOSITORY" \
+                  --ref main \
+                  -f finalizer_run_id="$finalizer_run_id"
                 echo "marker_hit=true" >> "$GITHUB_OUTPUT"
-                echo "marker_state=downstream_finalized" >> "$GITHUB_OUTPUT"
+                echo "marker_state=consumer_repair_dispatched" >> "$GITHUB_OUTPUT"
                 echo "finalizer_repair_source_run_id=" >> "$GITHUB_OUTPUT"
-                echo "Exact signal already produced an Authorized Canonical; skip duplicate heavy research."
+                echo "Authorized Canonical existed without completed exact consumer closure; dispatched consumer-only repair for Finalizer ${finalizer_run_id}."
                 exit 0
               fi
 
@@ -337,6 +378,7 @@ jobs:
           echo "- deferred because another production research/authority cycle is active: \`${{ steps.dispatch.outputs.deferred }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- downstream authority: Discovery -> Every-Industry -> Production Finalizer -> exact Authority Consumer Handoff" >> "$GITHUB_STEP_SUMMARY"
           echo "- exact-signal completion requires an authoritative Canonical artifact and completed consumer closure" >> "$GITHUB_STEP_SUMMARY"
+          echo "- an Authorized Canonical without completed exact consumer closure triggers consumer-only repair; it does not repeat Discovery, Every-Industry, or Finalizer" >> "$GITHUB_STEP_SUMMARY"
           echo "- failed/cancelled exact-signal dispatches are retryable; successful-but-unfinalized research is repaired without restarting heavy research" >> "$GITHUB_STEP_SUMMARY"
           echo "- holdings and external candidates share the urgent-signal trigger bar; ordinary holding priority alone does not trigger" >> "$GITHUB_STEP_SUMMARY"
           echo "- Hourly/Learning remain research-only and can never authorize a Formal action" >> "$GITHUB_STEP_SUMMARY"

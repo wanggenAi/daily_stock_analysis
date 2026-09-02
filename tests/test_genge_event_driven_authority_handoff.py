@@ -29,6 +29,19 @@ def test_successful_research_repair_does_not_repeat_heavy_research() -> None:
     assert "without restarting heavy research" in text
 
 
+def test_authoritative_canonical_dedupe_requires_exact_consumer_closure() -> None:
+    text = _text(EVENT_WORKFLOW)
+    assert ".workflow_run.id // empty" in text
+    assert "expected_consumer_title" in text
+    assert 'select(.display_title == $title and .conclusion == "success")' in text
+    assert "consumer_handoff_active" in text
+    assert "consumer_repair_dispatched" in text
+    assert "genge-v311-authority-consumer-handoff.yml" in text
+    assert '-f finalizer_run_id="$finalizer_run_id"' in text
+    assert "Authorized Canonical and completed exact consumer closure" in text
+    assert "consumer-only repair" in text
+
+
 def test_handoff_closes_upstream_authority_then_reuses_verified_consumer_handoff() -> None:
     text = _text(HANDOFF_WORKFLOW)
     assert "actions: write" in text
