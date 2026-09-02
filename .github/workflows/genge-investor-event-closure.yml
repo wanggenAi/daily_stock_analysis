@@ -7,6 +7,12 @@ on:
       - "GenGe V3.1.1 Production Finalizer"
     types: [completed]
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-investor-event-closure.yml"
+      - "src/strategies/genge_opportunity_discovery/investor_event_closure.py"
+      - "tests/test_genge_investor_event_closure.py"
   pull_request:
     paths:
       - ".github/workflows/genge-investor-event-closure.yml"
@@ -34,9 +40,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+          cache-dependency-path: .github/requirements-ci.txt
       - name: Test explicit investor closure
         run: |
-          python -m pip install --disable-pip-version-check pytest
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
           python -m pytest -q tests/test_genge_investor_event_closure.py
 
   refresh-dashboard-after-finalizer:
@@ -61,6 +70,7 @@ jobs:
     name: Publish explicit deep-review result
     if: >-
       github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
       (github.event_name == 'workflow_run' &&
        github.event.workflow_run.name == 'GenGe Investor Decision Brief' &&
        github.event.workflow_run.conclusion == 'success')
