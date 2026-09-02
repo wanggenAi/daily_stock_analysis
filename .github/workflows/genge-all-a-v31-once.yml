@@ -150,6 +150,7 @@ jobs:
           PYTHONUNBUFFERED=1 timeout --signal=TERM 75m \
           python -m src.strategies.genge_opportunity_discovery.v311_production_bridge_parallel \
             --source-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --evidence-csv reports/final_valuation_source/all_a_quant_screen.csv \
             --holdings-md CURRENT_HOLDINGS.md \
             --output-dir reports/production_decisions
       - name: Build native canonical V3.1.1 snapshot
