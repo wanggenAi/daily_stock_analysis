@@ -137,6 +137,9 @@ jobs:
       - name: Execute four-scenario resource NAV
         run: |
           python -m src.strategies.genge_opportunity_discovery.resource_valuation_execution --report-root reports/valuation_research_queue --input-config config/resource_asset_inputs.yaml
+      - name: Merge specialized valuation facts into authoritative research
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.specialized_valuation_authoritative_merge --report-root reports/valuation_research_queue
       - name: Build frozen V3.1 queue
         run: |
           python -m src.strategies.genge_opportunity_discovery.v31_review_queue --valuation-root reports/valuation_research_queue --all-a-report-root reports/all_a_full_scan --output-dir reports/v31_review --limit 500
