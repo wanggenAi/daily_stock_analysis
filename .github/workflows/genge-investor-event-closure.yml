@@ -35,7 +35,9 @@ jobs:
         with:
           python-version: "3.11"
       - name: Test explicit investor closure
-        run: python -m pytest -q tests/test_genge_investor_event_closure.py
+        run: |
+          python -m pip install --disable-pip-version-check pytest
+          python -m pytest -q tests/test_genge_investor_event_closure.py
 
   refresh-dashboard-after-finalizer:
     name: Refresh dashboard after Finalizer
@@ -162,7 +164,7 @@ jobs:
               status="EVENT_TRIGGERED_FINALIZED"
               gh run download "$finalizer_run_id" --repo "$GITHUB_REPOSITORY" \
                 --name "$authoritative_name" --dir /tmp/genge-event-closure/authority
-              canonical=$(find /tmp/genge-event-closure/authority -path '*/canonical_snapshot/latest.json' -o -path '*/authoritative/canonical_snapshot/latest.json' | head -n1)
+              canonical=$(find /tmp/genge-event-closure/authority \( -path '*/canonical_snapshot/latest.json' -o -path '*/authoritative/canonical_snapshot/latest.json' \) -print -quit)
               if [ -n "$canonical" ] && [ -s "$canonical" ]; then
                 finalized_snapshot_id=$(jq -r '.snapshot_id // empty' "$canonical")
               fi
@@ -223,7 +225,7 @@ jobs:
           assert all(row['event_result_state'] in valid for row in c['rows'])
           PY
 
-      - name: Persist explicit event closure with optimistic replay
+      - name: Persist explicit event closure
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
