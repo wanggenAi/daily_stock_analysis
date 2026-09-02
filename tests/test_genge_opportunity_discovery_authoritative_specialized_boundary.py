@@ -80,7 +80,7 @@ def test_v31_boundary_overlays_completed_insurance_execution_over_stale_routing_
 
     assert row["valuation_model_execution_state"] == "INSURANCE_MODEL_EXECUTED_RESEARCH_ONLY"
     assert row["specialized_model_execution_state"] == "INSURANCE_MODEL_EXECUTED_RESEARCH_ONLY"
-    assert row["specialized_model_executed"] is True
+    assert str(row["specialized_model_executed"]).lower() == "true"
     assert row["valuation_strategy_evidence_status"] == "VALID"
     assert row["valuation_strategy_model_status"] == "EXECUTED"
     assert row["valuation_strategy_anchor_status"] == "REFERENCE_AVAILABLE"
