@@ -1,0 +1,549 @@
+{
+  "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V1",
+  "mode": "PRODUCTION_REFRESH",
+  "generated_at": "2026-09-02T02:03:47+00:00",
+  "canonical_snapshot_id": "0ce745e28c08e85a3398",
+  "canonical_source_run_id": "33540263162",
+  "latest_trade_date": "2026-09-01",
+  "formal_action_source": "FINALIZED_CANONICAL_ONLY",
+  "formal_action_recomputed": false,
+  "no_auto_trade": true,
+  "headline": "1只持仓需要减仓/退出处理；存在需要重点复核的持仓",
+  "decision_summary": {
+    "holding_count": 4,
+    "formal_action_counts": {
+      "HOLD": 1,
+      "HOLD_REVIEW": 2,
+      "REDUCE_25": 1
+    },
+    "formal_candidate_buy_add_count": 0,
+    "priority_research_count": 12
+  },
+  "stock_portfolio": {
+    "status": "CONFIRMED",
+    "rows": [
+      {
+        "code": "600406",
+        "name": "国电南瑞",
+        "quantity": 200,
+        "average_cost": 23.1253,
+        "current_price": 22.92,
+        "pnl_pct": -0.89,
+        "neutral_value": 17.457807170543802,
+        "margin_of_safety": -0.3129,
+        "formal_action": "REDUCE_25",
+        "investor_action": "减仓25%",
+        "valuation_confidence": "HIGH",
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+        "hard_gate_failures": "",
+        "hard_gate_unknowns": "",
+        "price_date": "2026-09-01",
+        "decision_date": "2026-09-01"
+      },
+      {
+        "code": "001316",
+        "name": "润贝航科",
+        "quantity": 200,
+        "average_cost": 26.095,
+        "current_price": 26.88,
+        "pnl_pct": 3.01,
+        "neutral_value": 49.36957125214809,
+        "margin_of_safety": 0.4555,
+        "formal_action": "HOLD_REVIEW",
+        "investor_action": "持有观察",
+        "valuation_confidence": "LOW",
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+        "hard_gate_failures": "",
+        "hard_gate_unknowns": "",
+        "price_date": "2026-09-01",
+        "decision_date": "2026-09-01"
+      },
+      {
+        "code": "601318",
+        "name": "中国平安",
+        "quantity": 300,
+        "average_cost": 57.1676,
+        "current_price": 57.23,
+        "pnl_pct": 0.11,
+        "neutral_value": null,
+        "margin_of_safety": null,
+        "formal_action": "HOLD_REVIEW",
+        "investor_action": "持有观察",
+        "valuation_confidence": "INVALID",
+        "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
+        "hard_gate_failures": "",
+        "hard_gate_unknowns": "",
+        "price_date": "2026-09-01",
+        "decision_date": "2026-09-01"
+      },
+      {
+        "code": "603993",
+        "name": "洛阳钼业",
+        "quantity": 600,
+        "average_cost": 19.1087,
+        "current_price": 19.06,
+        "pnl_pct": -0.25,
+        "neutral_value": 28.12766979232306,
+        "margin_of_safety": 0.3224,
+        "formal_action": "HOLD",
+        "investor_action": "继续持有",
+        "valuation_confidence": "HIGH",
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "hard_gate_failures": "",
+        "hard_gate_unknowns": "",
+        "price_date": "2026-09-01",
+        "decision_date": "2026-09-01"
+      }
+    ]
+  },
+  "fund_portfolio": {
+    "status": "LATEST_HOLDINGS_NOT_PERSISTED",
+    "rows": [],
+    "message": "仓库尚无最新确认基金持仓；不从旧聊天或旧截图猜测，需最新持仓证据后再给补/减/卖决策。"
+  },
+  "market": {
+    "as_of_date": "2026-09-01",
+    "status": "YELLOW",
+    "score": 55.7,
+    "allow_new_buy": true,
+    "position_multiplier": 0.5,
+    "advance_ratio": 0.597,
+    "median_return_1d_pct": 0.5192,
+    "above_ma20_ratio": 0.6292,
+    "above_ma60_ratio": 0.6032,
+    "distribution_ratio": 0.0287,
+    "limit_up_count": 77,
+    "limit_down_count": 0,
+    "external_risk_level": "LOW",
+    "risk_reasons": [],
+    "data_quality": "OK"
+  },
+  "capital_direction": {
+    "direct_fund_flow_available": false,
+    "direct_fund_flow_claimed": false,
+    "method": "MARKET_BEHAVIOR_PROXY_PRICE_VOLUME_BREADTH",
+    "explanation": "不把厂商标签“主力净流入”当成交易真相；用行业涨跌广度、均值收益、MA参与度和派发比例判断资金/风险偏好正在集中到哪里。",
+    "strongest_industries": [
+      {
+        "industry": "A01农业",
+        "status": "STRONG",
+        "score": 100.0,
+        "sample_count": 8,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 6.0383,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "A02林业",
+        "status": "STRONG",
+        "score": 100.0,
+        "sample_count": 2,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 6.7213,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "A05农、林、牧、渔专业及辅助性活动",
+        "status": "STRONG",
+        "score": 100.0,
+        "sample_count": 6,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 10.0137,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "N76水利管理业",
+        "status": "STRONG",
+        "score": 98.69,
+        "sample_count": 1,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 3.7313,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "A04渔业",
+        "status": "STRONG",
+        "score": 96.8,
+        "sample_count": 6,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 3.0987,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "O81机动车、电子产品和日用产品修理业",
+        "status": "STRONG",
+        "score": 96.34,
+        "sample_count": 1,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 2.947,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "H62餐饮业",
+        "status": "STRONG",
+        "score": 95.17,
+        "sample_count": 3,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 2.5581,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "R89体育",
+        "status": "STRONG",
+        "score": 95.08,
+        "sample_count": 2,
+        "advance_ratio": 1.0,
+        "median_return_1d_pct": 2.5278,
+        "above_ma20_ratio": 1.0,
+        "distribution_ratio": 0.0
+      }
+    ],
+    "weakest_industries": [
+      {
+        "industry": "E49建筑安装业",
+        "status": "CRISIS",
+        "score": 24.15,
+        "sample_count": 5,
+        "advance_ratio": 0.0,
+        "median_return_1d_pct": -2.782,
+        "above_ma20_ratio": 0.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "C43金属制品、机械和设备修理业",
+        "status": "WEAK",
+        "score": 29.83,
+        "sample_count": 2,
+        "advance_ratio": 0.0,
+        "median_return_1d_pct": -0.8902,
+        "above_ma20_ratio": 0.0,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "B06煤炭开采和洗选业",
+        "status": "CRISIS",
+        "score": 34.92,
+        "sample_count": 25,
+        "advance_ratio": 0.12,
+        "median_return_1d_pct": -2.3004,
+        "above_ma20_ratio": 0.92,
+        "distribution_ratio": 0.48
+      },
+      {
+        "industry": "M73研究和试验发展",
+        "status": "WEAK",
+        "score": 41.46,
+        "sample_count": 29,
+        "advance_ratio": 0.3793,
+        "median_return_1d_pct": -0.9677,
+        "above_ma20_ratio": 0.069,
+        "distribution_ratio": 0.0345
+      },
+      {
+        "industry": "B10非金属矿采选业",
+        "status": "WEAK",
+        "score": 42.22,
+        "sample_count": 2,
+        "advance_ratio": 0.0,
+        "median_return_1d_pct": -0.9256,
+        "above_ma20_ratio": 0.5,
+        "distribution_ratio": 0.0
+      },
+      {
+        "industry": "E50建筑装饰、装修和其他建筑业",
+        "status": "WEAK",
+        "score": 43.35,
+        "sample_count": 18,
+        "advance_ratio": 0.2778,
+        "median_return_1d_pct": -1.5867,
+        "above_ma20_ratio": 0.6111,
+        "distribution_ratio": 0.2222
+      },
+      {
+        "industry": "B09有色金属矿采选业",
+        "status": "NEUTRAL",
+        "score": 49.56,
+        "sample_count": 26,
+        "advance_ratio": 0.2308,
+        "median_return_1d_pct": -1.2882,
+        "above_ma20_ratio": 0.6154,
+        "distribution_ratio": 0.0385
+      },
+      {
+        "industry": "C39计算机、通信和其他电子设备制造业",
+        "status": "NEUTRAL",
+        "score": 49.59,
+        "sample_count": 577,
+        "advance_ratio": 0.3085,
+        "median_return_1d_pct": -1.3348,
+        "above_ma20_ratio": 0.5234,
+        "distribution_ratio": 0.0347
+      }
+    ]
+  },
+  "structural_trends": {
+    "live_macro_social_radar_authoritative": false,
+    "basis": "CURRENT_CANONICAL_RESEARCH_AND_HOURLY_EVIDENCE",
+    "message": "这里展示当前产业/公司研究信号，不把尚未接入实时官方采集的 Era Radar 回放数据冒充实时社会趋势。",
+    "research_concentration": [
+      {
+        "industry": "B09有色金属矿采选业",
+        "deep_review_count": 5
+      },
+      {
+        "industry": "J67资本市场服务",
+        "deep_review_count": 4
+      },
+      {
+        "industry": "J68保险业",
+        "deep_review_count": 3
+      },
+      {
+        "industry": "F51批发业",
+        "deep_review_count": 2
+      },
+      {
+        "industry": "I65软件和信息技术服务业",
+        "deep_review_count": 2
+      },
+      {
+        "industry": "C26化学原料和化学制品制造业",
+        "deep_review_count": 2
+      },
+      {
+        "industry": "C39计算机、通信和其他电子设备制造业",
+        "deep_review_count": 2
+      },
+      {
+        "industry": "C32有色金属冶炼和压延加工业",
+        "deep_review_count": 2
+      }
+    ],
+    "strengthening_signals": [
+      {
+        "code": "603605",
+        "name": "珀莱雅",
+        "priority": "P2",
+        "signal": "STRENGTHENING_RESEARCH_SIGNAL"
+      },
+      {
+        "code": "603986",
+        "name": "兆易创新",
+        "priority": "P2",
+        "signal": "STRENGTHENING_RESEARCH_SIGNAL"
+      },
+      {
+        "code": "000783",
+        "name": "长江证券",
+        "priority": "P3",
+        "signal": "STRENGTHENING_RESEARCH_SIGNAL"
+      },
+      {
+        "code": "603939",
+        "name": "益丰药房",
+        "priority": "P3",
+        "signal": "STRENGTHENING_RESEARCH_SIGNAL"
+      }
+    ]
+  },
+  "opportunities": [
+    {
+      "rank": 5,
+      "code": "002612",
+      "name": "朗姿股份",
+      "industry": "C18纺织服装、服饰业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 6,
+      "code": "002537",
+      "name": "海联金汇",
+      "industry": "C36汽车制造业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 7,
+      "code": "603605",
+      "name": "珀莱雅",
+      "industry": "C26化学原料和化学制品制造业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 8,
+      "code": "600095",
+      "name": "湘财股份",
+      "industry": "J67资本市场服务",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 9,
+      "code": "603986",
+      "name": "兆易创新",
+      "industry": "C39计算机、通信和其他电子设备制造业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 10,
+      "code": "001309",
+      "name": "德明利",
+      "industry": "C39计算机、通信和其他电子设备制造业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 11,
+      "code": "002842",
+      "name": "翔鹭钨业",
+      "industry": "C32有色金属冶炼和压延加工业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 12,
+      "code": "000526",
+      "name": "学大教育",
+      "industry": "P83教育",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 13,
+      "code": "003039",
+      "name": "顺控发展",
+      "industry": "D46水的生产和供应业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 14,
+      "code": "600318",
+      "name": "新力金融",
+      "industry": "J66货币金融服务",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 15,
+      "code": "601601",
+      "name": "中国太保",
+      "industry": "J68保险业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": null,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    },
+    {
+      "rank": 16,
+      "code": "000596",
+      "name": "古井贡酒",
+      "industry": "C15酒、饮料和精制茶制造业",
+      "tier": "RESEARCH_CANDIDATE",
+      "formal_action": "",
+      "current_price": 100.88,
+      "valuation_confidence": "",
+      "candidate_class": "PENDING",
+      "hard_blockers": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase",
+      "reason_codes": "",
+      "why_not_buy_yet": "hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase"
+    }
+  ],
+  "event_review": {
+    "triggered": false,
+    "status": "NO_EVENT_CONTEXT"
+  },
+  "hourly_context": {
+    "available": true,
+    "canonical_snapshot_id": "0ce745e28c08e85a3398",
+    "research_as_of": "2026-09-01T17:55:54Z",
+    "formal_action_recomputed": false
+  },
+  "presentation_contract": {
+    "investor_first": true,
+    "section_order": [
+      "stock_portfolio",
+      "fund_portfolio",
+      "market",
+      "capital_direction",
+      "structural_trends",
+      "opportunities",
+      "event_review"
+    ],
+    "engineering_details_are_secondary": true
+  }
+}
