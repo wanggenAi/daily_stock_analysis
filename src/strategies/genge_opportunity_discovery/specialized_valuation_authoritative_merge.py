@@ -1,11 +1,9 @@
-"""Merge specialized valuation sidecars back into the authoritative research CSV.
+"""Merge specialized valuation sidecars into the authoritative research CSV.
 
-Each executor is intentionally research-only and fail-closed.  This bridge makes
-its evidence/model/anchor/completion facts visible to downstream V3.1 review,
-Canonical snapshots and holding/candidate lifecycle without changing ranking or
-Formal decision thresholds.
+Executors remain research-only and fail closed. This bridge makes the selected
+strategy's final evidence/model/anchor/completion state authoritative for V3.1
+and Canonical consumers without changing rankings, thresholds or Formal Action.
 """
-
 from __future__ import annotations
 
 import argparse
@@ -31,6 +29,9 @@ SIDE_CARS = (
     ("valuation_research_resource_nav.csv", ("resource_nav_",)),
 )
 
+BANK_STRATEGY_IDS = {"bank_residual_income", "bank_book_value"}
+GENERAL_REVERSE_STRATEGY_ID = "general_reverse_earnings"
+
 
 def _code(value: Any) -> str:
     text = str(value or "").strip().upper()
@@ -50,7 +51,7 @@ def _truthy(value: Any) -> bool:
 
 
 def _present(value: Any) -> bool:
-    return str(value or "").strip() not in {"", "none", "nan", "null"}
+    return str(value or "").strip().lower() not in {"", "none", "nan", "null"}
 
 
 def _read(path: Path) -> tuple[list[str], list[dict[str, Any]]]:
@@ -67,73 +68,117 @@ def _merge_allowed(target: dict[str, Any], source: Mapping[str, Any], prefixes: 
             target[key] = value
 
 
-def _normalize_completion(row: dict[str, Any]) -> None:
+def _canonicalize_selected_execution(row: dict[str, Any]) -> None:
+    """Replace stale routing placeholders with the selected executor's final facts."""
     strategy = str(row.get("valuation_primary_strategy_id") or "").strip()
-    evidence = "NOT_APPLICABLE"
-    model = "NOT_APPLICABLE"
-    anchor = "NOT_APPLICABLE"
-    completion = "NOT_APPLICABLE"
-    followup = ""
+    executed: bool | None = None
+    state = status = reason = next_action = ""
 
     if strategy == "insurance_embedded_value":
-        evidence = str(row.get("valuation_evidence_status") or "INVALID")
-        model = str(row.get("valuation_model_status") or "NOT_EXECUTED")
-        anchor = str(row.get("valuation_anchor_status") or "UNAVAILABLE")
-        completion = str(row.get("valuation_completion_status") or "UNFINISHED")
-        if completion == "UNFINISHED":
-            followup = "VALUATION_STRATEGY_UNFINISHED"
-        elif completion == "COMPLETED_NO_ANCHOR":
-            followup = "VALUATION_STRATEGY_COMPLETED_NO_ANCHOR"
+        executed = _truthy(row.get("insurance_model_executed"))
+        state = str(row.get("insurance_model_execution_state") or "")
+        status = str(row.get("insurance_model_status") or "")
+        reason = str(row.get("insurance_model_execution_reason") or status)
+        next_action = str(row.get("insurance_model_next_action") or "")
+    elif strategy in BANK_STRATEGY_IDS:
+        executed = _truthy(row.get("bank_model_executed"))
+        state = str(row.get("bank_model_state") or "")
+        status = str(row.get("bank_model_status") or "")
+        reason = status
+        next_action = str(row.get("bank_next_action") or "")
     elif strategy == "resource_asset_nav":
+        executed = _truthy(row.get("resource_nav_executed"))
+        status = str(row.get("resource_nav_status") or "")
+        state = (
+            "RESOURCE_NAV_EXECUTED_RESEARCH_ONLY"
+            if executed and status == "OK"
+            else "SPECIALIZED_MODEL_SELECTED_INPUTS_REQUIRED"
+        )
+        reason = status
+        next_action = str(row.get("resource_nav_next_action") or "")
+    elif strategy == "capital_markets_cycle":
+        executed = _truthy(row.get("specialized_model_executed"))
+        state = str(row.get("specialized_model_execution_state") or "")
+        status = str(row.get("specialized_model_status") or "")
+        reason = str(row.get("specialized_model_execution_reason") or status)
+        next_action = str(row.get("specialized_model_next_action") or "")
+
+    if executed is None:
+        return
+
+    row.update(
+        {
+            "specialized_model_executed": executed,
+            "specialized_model_execution_state": state,
+            "specialized_model_status": status,
+            "specialized_model_execution_reason": reason,
+            "specialized_model_next_action": next_action,
+            "valuation_model_execution_state": state,
+            "valuation_model_next_action": next_action,
+        }
+    )
+
+
+def _completion_tuple(row: Mapping[str, Any]) -> tuple[str, str, str, str]:
+    strategy = str(row.get("valuation_primary_strategy_id") or "").strip()
+
+    if strategy == "insurance_embedded_value":
+        return (
+            str(row.get("valuation_evidence_status") or "INVALID"),
+            str(row.get("valuation_model_status") or "NOT_EXECUTED"),
+            str(row.get("valuation_anchor_status") or "UNAVAILABLE"),
+            str(row.get("valuation_completion_status") or "UNFINISHED"),
+        )
+
+    if strategy == "resource_asset_nav":
         status = str(row.get("resource_nav_status") or "")
         executed = _truthy(row.get("resource_nav_executed"))
         has_anchor = _present(row.get("resource_nav_base_per_share")) or _present(row.get("resource_nav_base_value"))
         evidence = "VALID" if executed else ("STALE" if status == "RESOURCE_INPUT_STALE" else "MISSING")
-        model = "EXECUTED" if executed else "NOT_EXECUTED"
-        anchor = "REFERENCE_AVAILABLE" if has_anchor else "UNAVAILABLE"
-        completion = (
-            "COMPLETED_WITH_REFERENCE_ANCHOR" if executed and has_anchor
-            else "COMPLETED_NO_ANCHOR" if executed
-            else "UNFINISHED"
-        )
-        followup = (
-            "VALUATION_STRATEGY_UNFINISHED" if completion == "UNFINISHED"
-            else "VALUATION_STRATEGY_COMPLETED_NO_ANCHOR" if completion == "COMPLETED_NO_ANCHOR"
-            else ""
-        )
-    elif strategy == "bank_book_value":
-        executed = _truthy(row.get("bank_model_executed"))
-        has_anchor = _present(row.get("bank_fair_pb"))
-        evidence = "VALID" if executed else "INCOMPLETE"
-        model = "EXECUTED" if executed else "NOT_EXECUTED"
-        anchor = "REFERENCE_AVAILABLE" if has_anchor else "UNAVAILABLE"
-        completion = (
-            "COMPLETED_WITH_REFERENCE_ANCHOR" if executed and has_anchor
-            else "COMPLETED_NO_ANCHOR" if executed
-            else "UNFINISHED"
-        )
-        followup = (
-            "VALUATION_STRATEGY_UNFINISHED" if completion == "UNFINISHED"
-            else "VALUATION_STRATEGY_COMPLETED_NO_ANCHOR" if completion == "COMPLETED_NO_ANCHOR"
-            else ""
-        )
-    elif strategy == "capital_markets_cycle":
-        executed = _truthy(row.get("specialized_model_executed"))
-        has_anchor = _present(row.get("specialized_fair_pb"))
-        evidence = "VALID" if executed else "INCOMPLETE"
-        model = "EXECUTED" if executed else "NOT_EXECUTED"
-        anchor = "REFERENCE_AVAILABLE" if has_anchor else "UNAVAILABLE"
-        completion = (
-            "COMPLETED_WITH_REFERENCE_ANCHOR" if executed and has_anchor
-            else "COMPLETED_NO_ANCHOR" if executed
-            else "UNFINISHED"
-        )
-        followup = (
-            "VALUATION_STRATEGY_UNFINISHED" if completion == "UNFINISHED"
-            else "VALUATION_STRATEGY_COMPLETED_NO_ANCHOR" if completion == "COMPLETED_NO_ANCHOR"
-            else ""
+        return (
+            evidence,
+            "EXECUTED" if executed else "NOT_EXECUTED",
+            "REFERENCE_AVAILABLE" if has_anchor else "UNAVAILABLE",
+            "COMPLETED_WITH_REFERENCE_ANCHOR" if executed and has_anchor else "COMPLETED_NO_ANCHOR" if executed else "UNFINISHED",
         )
 
+    if strategy in BANK_STRATEGY_IDS:
+        executed = _truthy(row.get("bank_model_executed"))
+        has_anchor = _present(row.get("bank_fair_pb"))
+        return (
+            "VALID" if executed else "INCOMPLETE",
+            "EXECUTED" if executed else "NOT_EXECUTED",
+            "REFERENCE_AVAILABLE" if has_anchor else "UNAVAILABLE",
+            "COMPLETED_WITH_REFERENCE_ANCHOR" if executed and has_anchor else "COMPLETED_NO_ANCHOR" if executed else "UNFINISHED",
+        )
+
+    if strategy == "capital_markets_cycle":
+        executed = _truthy(row.get("specialized_model_executed"))
+        has_anchor = _present(row.get("specialized_fair_pb"))
+        return (
+            "VALID" if executed else "INCOMPLETE",
+            "EXECUTED" if executed else "NOT_EXECUTED",
+            "REFERENCE_AVAILABLE" if has_anchor else "UNAVAILABLE",
+            "COMPLETED_WITH_REFERENCE_ANCHOR" if executed and has_anchor else "COMPLETED_NO_ANCHOR" if executed else "UNFINISHED",
+        )
+
+    if strategy and strategy != GENERAL_REVERSE_STRATEGY_ID:
+        state = str(row.get("specialized_model_execution_state") or row.get("valuation_model_execution_state") or "")
+        if "INPUTS_REQUIRED" in state or "NOT_EXECUTED" in state:
+            return ("INCOMPLETE", "NOT_EXECUTED", "UNAVAILABLE", "UNFINISHED")
+
+    return ("NOT_APPLICABLE", "NOT_APPLICABLE", "NOT_APPLICABLE", "NOT_APPLICABLE")
+
+
+def _normalize_completion(row: dict[str, Any]) -> None:
+    evidence, model, anchor, completion = _completion_tuple(row)
+    followup = (
+        "VALUATION_STRATEGY_UNFINISHED"
+        if completion == "UNFINISHED"
+        else "VALUATION_STRATEGY_COMPLETED_NO_ANCHOR"
+        if completion == "COMPLETED_NO_ANCHOR"
+        else ""
+    )
     row.update(
         {
             "valuation_strategy_evidence_status": evidence,
@@ -176,6 +221,7 @@ def merge_report(report_root: Path) -> dict[str, Any]:
                 _merge_allowed(target, source, prefixes)
 
     for row in base_rows:
+        _canonicalize_selected_execution(row)
         _normalize_completion(row)
         row["formal_signal_eligible"] = False
         row["automatic_promotion_allowed"] = False
@@ -194,16 +240,9 @@ def merge_report(report_root: Path) -> dict[str, Any]:
     summary = {
         "row_count": len(base_rows),
         "sidecars_used": sidecars_used,
-        "unfinished_count": sum(
-            row.get("valuation_strategy_completion_status") == "UNFINISHED" for row in base_rows
-        ),
-        "completed_with_anchor_count": sum(
-            row.get("valuation_strategy_completion_status") == "COMPLETED_WITH_REFERENCE_ANCHOR"
-            for row in base_rows
-        ),
-        "completed_no_anchor_count": sum(
-            row.get("valuation_strategy_completion_status") == "COMPLETED_NO_ANCHOR" for row in base_rows
-        ),
+        "unfinished_count": sum(row.get("valuation_strategy_completion_status") == "UNFINISHED" for row in base_rows),
+        "completed_with_anchor_count": sum(row.get("valuation_strategy_completion_status") == "COMPLETED_WITH_REFERENCE_ANCHOR" for row in base_rows),
+        "completed_no_anchor_count": sum(row.get("valuation_strategy_completion_status") == "COMPLETED_NO_ANCHOR" for row in base_rows),
         "formal_signal_eligible": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
