@@ -1,0 +1,268 @@
+name: GenGe Investor Decision Brief
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Hourly Deep Overlay"
+      - "GenGe V3.1.1 Event-Driven Deep Review"
+    types: [completed]
+  schedule:
+    # Weekday post-close investor settlement, 16:20 China Standard Time.
+    - cron: "20 8 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-investor-decision-dashboard.yml"
+      - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
+      - "CURRENT_HOLDINGS.md"
+      - "CURRENT_FUNDS.md"
+      - "data/hourly_deep_overlay/**"
+      - "data/research_priority/**"
+  pull_request:
+    paths:
+      - ".github/workflows/genge-investor-decision-dashboard.yml"
+      - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
+      - "CURRENT_FUNDS.md"
+      - "tests/test_genge_investor_decision_dashboard.py"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-investor-decision-dashboard
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  dashboard-contract:
+    name: Investor dashboard contract
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Test investor-facing decision contract
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+          python -m pytest -q tests/test_genge_investor_decision_dashboard.py
+
+  publish-investor-brief:
+    name: Publish investor decision brief
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    needs: dashboard-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve investor brief mode
+        id: mode
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          mode="MANUAL"
+          if [ "$EVENT_NAME" = "schedule" ]; then
+            mode="DAILY"
+          elif [ "$EVENT_NAME" = "push" ]; then
+            mode="PRODUCTION_REFRESH"
+          elif [ "$EVENT_NAME" = "workflow_run" ]; then
+            case "$TRIGGER_WORKFLOW" in
+              "GenGe V3.1.1 Hourly Deep Overlay") mode="HOURLY" ;;
+              "GenGe V3.1.1 Event-Driven Deep Review") mode="EVENT" ;;
+              *) mode="FOLLOWUP" ;;
+            esac
+          fi
+          echo "mode=$mode" >> "$GITHUB_OUTPUT"
+          echo "trigger_run_id=${TRIGGER_RUN_ID:-}" >> "$GITHUB_OUTPUT"
+          echo "trigger_workflow=${TRIGGER_WORKFLOW:-}" >> "$GITHUB_OUTPUT"
+
+      - name: Locate latest successful authorized Canonical
+        id: authority
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=40")
+          selected=""
+          artifact_name=""
+          for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id'); do
+            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+            row=$(printf '%s' "$artifacts" | jq -r '.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-"))) | .name' | head -n1)
+            if [ -n "$row" ]; then
+              selected="$run_id"
+              artifact_name="$row"
+              break
+            fi
+          done
+          test -n "$selected"
+          rm -rf incoming-authority
+          mkdir -p incoming-authority
+          gh run download "$selected" --repo "$GITHUB_REPOSITORY" --dir incoming-authority
+          canonical=$(find incoming-authority -path '*/canonical_snapshot/latest.json' -print -quit)
+          authority=$(find incoming-authority -name production_authority.json -print -quit)
+          test -n "$canonical"
+          test -n "$authority"
+          echo "CANONICAL=$canonical" >> "$GITHUB_ENV"
+          echo "AUTHORITY=$authority" >> "$GITHUB_ENV"
+          echo "FINALIZER_RUN_ID=$selected" >> "$GITHUB_ENV"
+          echo "AUTHORITY_ARTIFACT=$artifact_name" >> "$GITHUB_ENV"
+          CANONICAL="$canonical" AUTHORITY="$authority" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          authority = json.loads(Path(os.environ['AUTHORITY']).read_text(encoding='utf-8'))
+          canonical = json.loads(Path(os.environ['CANONICAL']).read_text(encoding='utf-8'))
+          assert authority['authorized'] is True
+          assert authority['canonical_snapshot_id'] == canonical['snapshot_id']
+          assert str(authority['canonical_source_run_id']) == str(canonical['source_run_id'])
+          PY
+
+      - name: Download latest full-A market and industry context
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rm -rf incoming-market
+          mkdir -p incoming-market
+          selected=""
+          runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?status=success&per_page=40")
+          for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select((.event == "schedule" or .event == "workflow_dispatch") and .conclusion == "success") | .id'); do
+            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+            count=$(printf '%s' "$artifacts" | jq '[.artifacts[] | select(.expired == false and .name == "genge-all-a-production-report")] | length')
+            if [ "$count" -gt 0 ]; then
+              selected="$run_id"
+              break
+            fi
+          done
+          if [ -n "$selected" ]; then
+            gh run download "$selected" --repo "$GITHUB_REPOSITORY" --dir incoming-market || true
+          fi
+          market=$(find incoming-market -name market_regime.json -print -quit || true)
+          industries=$(find incoming-market -name industry_regimes.csv -print -quit || true)
+          echo "MARKET_REGIME=${market}" >> "$GITHUB_ENV"
+          echo "INDUSTRY_REGIMES=${industries}" >> "$GITHUB_ENV"
+          echo "MARKET_CONTEXT_RUN_ID=${selected}" >> "$GITHUB_ENV"
+
+      - name: Download event trigger context when applicable
+        if: steps.mode.outputs.mode == 'EVENT'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TRIGGER_RUN_ID: ${{ steps.mode.outputs.trigger_run_id }}
+        run: |
+          set -euo pipefail
+          rm -rf incoming-event
+          mkdir -p incoming-event
+          if [ -n "${TRIGGER_RUN_ID:-}" ]; then
+            gh run download "$TRIGGER_RUN_ID" --repo "$GITHUB_REPOSITORY" --dir incoming-event || true
+          fi
+          event_file=$(find incoming-event -name decision.json -print -quit || true)
+          echo "EVENT_DECISION=${event_file}" >> "$GITHUB_ENV"
+
+      - name: Build and persist investor-first dashboard with optimistic replay
+        env:
+          MODE: ${{ steps.mode.outputs.mode }}
+        run: |
+          set -euo pipefail
+          git config user.name "genge-investor-brief-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+
+          for attempt in 1 2 3 4; do
+            echo "investor brief replay attempt ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+
+            args=(
+              --canonical "$CANONICAL"
+              --holdings CURRENT_HOLDINGS.md
+              --funds CURRENT_FUNDS.md
+              --json-output data/investor_decision_dashboard/latest.json
+              --markdown-output INVESTOR_DECISION_DASHBOARD.md
+              --mode "$MODE"
+            )
+            if [ -s data/hourly_deep_overlay/latest.json ]; then
+              args+=(--hourly data/hourly_deep_overlay/latest.json)
+            fi
+            if [ -s data/research_priority/latest.json ]; then
+              args+=(--research-priority data/research_priority/latest.json)
+            fi
+            if [ -n "${MARKET_REGIME:-}" ] && [ -s "$MARKET_REGIME" ]; then
+              args+=(--market-regime "$MARKET_REGIME")
+            fi
+            if [ -n "${INDUSTRY_REGIMES:-}" ] && [ -s "$INDUSTRY_REGIMES" ]; then
+              args+=(--industry-regimes "$INDUSTRY_REGIMES")
+            fi
+            if [ -n "${EVENT_DECISION:-}" ] && [ -s "$EVENT_DECISION" ]; then
+              args+=(--event-decision "$EVENT_DECISION")
+            fi
+
+            python -m src.strategies.genge_opportunity_discovery.investor_decision_dashboard "${args[@]}"
+
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('data/investor_decision_dashboard/latest.json').read_text(encoding='utf-8'))
+          assert p['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert p['formal_action_recomputed'] is False
+          assert p['no_auto_trade'] is True
+          assert p['presentation_contract']['investor_first'] is True
+          assert p['capital_direction']['direct_fund_flow_claimed'] is False
+          assert p['stock_portfolio']['status'] in {'CONFIRMED','NO_CONFIRMED_HOLDINGS'}
+          PY
+
+            git add -f data/investor_decision_dashboard/latest.json
+            git add INVESTOR_DECISION_DASHBOARD.md
+            if git diff --cached --quiet; then
+              echo "Investor dashboard already current"
+              break
+            fi
+            git commit -m "Persist investor decision brief [skip ci]"
+            if git push origin HEAD:main; then
+              break
+            fi
+            if [ "$attempt" -eq 4 ]; then
+              echo "investor dashboard persistence failed after replay attempts" >&2
+              exit 1
+            fi
+            echo "push race detected; rebuilding investor brief from newest main" >&2
+          done
+
+      - name: Publish investor decision summary
+        if: always()
+        run: |
+          if [ -f INVESTOR_DECISION_DASHBOARD.md ]; then
+            cat INVESTOR_DECISION_DASHBOARD.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "# 投资决策驾驶舱" >> "$GITHUB_STEP_SUMMARY"
+            echo "本轮未生成可用的投资者摘要；请查看失败步骤。" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload investor decision artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-investor-decision-brief-${{ github.run_id }}
+          path: |
+            INVESTOR_DECISION_DASHBOARD.md
+            data/investor_decision_dashboard/latest.json
+          if-no-files-found: warn
+          retention-days: 30
