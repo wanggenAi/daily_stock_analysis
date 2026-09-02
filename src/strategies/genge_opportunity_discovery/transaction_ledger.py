@@ -3,6 +3,10 @@
 This module is initially parallel to CURRENT_HOLDINGS.md. Production authority is
 not switched automatically. A migration must first prove that the ledger-derived
 projection exactly reconciles with manually confirmed holdings.
+
+POSITION_SNAPSHOT is a reconciliation event, not an executed trade. It records a
+confirmed position quantity and average-cost basis from explicit holdings evidence
+without inventing a BUY/SELL execution price.
 """
 from __future__ import annotations
 
@@ -15,7 +19,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 CONTRACT_VERSION = "GEN_GE_TRANSACTION_LEDGER_V1"
-EVENTS = {"OPENING_POSITION", "BUY", "SELL"}
+EVENTS = {"OPENING_POSITION", "BUY", "SELL", "POSITION_SNAPSHOT"}
 
 
 def _code(value: Any) -> str:
@@ -46,25 +50,42 @@ def normalize_transaction(raw: Mapping[str, Any]) -> dict[str, Any]:
     code = _code(raw.get("code"))
     transaction_id = str(raw.get("transaction_id") or raw.get("trade_id") or "").strip()
     evidence_source = str(raw.get("evidence_source") or "").strip()
-    trade_date = str(raw.get("trade_date") or "").strip()
-    if event not in EVENTS or not code or not transaction_id or not evidence_source or not trade_date:
-        raise ValueError("transaction requires event, code, transaction_id, trade_date and evidence_source")
+    date_value = str(raw.get("trade_date") or raw.get("effective_date") or "").strip()
+    if event not in EVENTS or not code or not transaction_id or not evidence_source or not date_value:
+        raise ValueError(
+            "ledger event requires event, code, transaction_id, trade_date/effective_date and evidence_source"
+        )
+
     quantity = _decimal(raw.get("quantity"))
-    price = _decimal(raw.get("price"))
-    if quantity <= 0:
-        raise ValueError("transaction quantity must be positive")
-    return {
+    common = {
         "contract_version": CONTRACT_VERSION,
         "transaction_id": transaction_id,
         "event": event,
         "code": code,
         "name": str(raw.get("name") or "").strip(),
         "quantity": _plain_decimal(quantity),
-        "price": _plain_decimal(price),
-        "trade_date": trade_date,
         "evidence_source": evidence_source,
         "confirmed_at": str(raw.get("confirmed_at") or datetime.now(timezone.utc).isoformat()),
         "no_auto_trade": True,
+    }
+
+    if event == "POSITION_SNAPSHOT":
+        average_cost = _decimal(raw.get("average_cost", raw.get("price", 0)))
+        if quantity > 0 and average_cost <= 0:
+            raise ValueError("positive position snapshot requires positive average_cost")
+        return {
+            **common,
+            "average_cost": _plain_decimal(average_cost),
+            "effective_date": date_value,
+        }
+
+    if quantity <= 0:
+        raise ValueError("transaction quantity must be positive")
+    price = _decimal(raw.get("price"))
+    return {
+        **common,
+        "price": _plain_decimal(price),
+        "trade_date": date_value,
     }
 
 
@@ -93,6 +114,13 @@ def project_holdings(rows: Iterable[Mapping[str, Any]]) -> dict[str, dict[str, A
         code = row["code"]
         names[code] = row.get("name") or names.get(code, "")
         qty = _decimal(row["quantity"])
+
+        if row["event"] == "POSITION_SNAPSHOT":
+            average_cost = _decimal(row["average_cost"])
+            quantity[code] = qty
+            cost_value[code] = qty * average_cost
+            continue
+
         price = _decimal(row["price"])
         if row["event"] in {"OPENING_POSITION", "BUY"}:
             quantity[code] += qty
