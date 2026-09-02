@@ -1,9 +1,9 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V1",
-  "mode": "DAILY",
-  "generated_at": "2026-09-02T12:48:52+00:00",
-  "canonical_snapshot_id": "161c7f0e074ee6c0360d",
-  "canonical_source_run_id": "33615111019",
+  "mode": "EVENT",
+  "generated_at": "2026-09-02T13:39:56+00:00",
+  "canonical_snapshot_id": "162ab174c1d5a99a6911",
+  "canonical_source_run_id": "33633075879",
   "latest_trade_date": "2026-09-01",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
@@ -328,6 +328,12 @@
     ],
     "strengthening_signals": [
       {
+        "code": "000415",
+        "name": "渤海租赁",
+        "priority": "P2",
+        "signal": "STRENGTHENING_RESEARCH_SIGNAL"
+      },
+      {
         "code": "000783",
         "name": "长江证券",
         "priority": "P2",
@@ -530,13 +536,23 @@
     }
   ],
   "event_review": {
-    "triggered": false,
-    "status": "NO_EVENT_CONTEXT"
+    "triggered": true,
+    "trigger_codes": [
+      "001316",
+      "601318",
+      "603993"
+    ],
+    "holding_trigger_count": 3,
+    "external_trigger_count": 0,
+    "trigger_reasons": [],
+    "signal_digest": "50e42746f4ceacb5405ddb6d668b164f925dd1e207022933a0068ce741a485bc",
+    "formal_action_recomputed": false,
+    "formal_action_source": "FINALIZED_CANONICAL_ONLY"
   },
   "hourly_context": {
     "available": true,
-    "canonical_snapshot_id": "161c7f0e074ee6c0360d",
-    "research_as_of": "2026-09-02T09:40:46Z",
+    "canonical_snapshot_id": "162ab174c1d5a99a6911",
+    "research_as_of": "2026-09-02T13:04:24Z",
     "formal_action_recomputed": false
   },
   "presentation_contract": {
