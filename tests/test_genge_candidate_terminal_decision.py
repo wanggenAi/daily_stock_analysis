@@ -4,7 +4,7 @@ from src.strategies.genge_opportunity_discovery.candidate_terminal_decision impo
 )
 
 
-def _complete_v31(code="603369"):
+def _master(code="000415"):
     return {
         "code": code,
         "stock_name": "Sample",
@@ -40,11 +40,11 @@ def _complete_v31(code="603369"):
         "v31_market_implied_profit_cagr": 0.06,
         "v31_realistic_profit_cagr": 0.14,
         "v31_expectation_gap_pct": 0.08,
-        "v31_expectation_gap_thesis": "market underestimates durable earnings growth",
+        "v31_expectation_gap_thesis": "durable expectation gap",
         "v31_risk_adjusted_3y_cagr": 0.17,
         "v31_potential_max_fundamental_loss_pct": 0.20,
-        "v31_why_can_buy": "stable moat, cash earnings and valuation margin",
-        "v31_strongest_bear_case": "growth runway or incremental ROIC may disappoint",
+        "v31_why_can_buy": "moat and valuation",
+        "v31_strongest_bear_case": "growth may disappoint",
         "v31_falsification_status": "PASS",
         "v31_margin_of_safety_status": "PASS",
         "v31_cagr_attractiveness_status": "PASS",
@@ -54,105 +54,126 @@ def _complete_v31(code="603369"):
     }
 
 
-def test_buy_can_only_mirror_already_authorized_formal_buy():
-    row = _complete_v31()
-    row.update(
-        {
-            "long_term_formal_buy_eligible": True,
-            "v31_buy_ready": True,
-            "production_action": "BUY",
-        }
+def _formal(code="000415"):
+    return {
+        "code": code,
+        "long_term_formal_buy_eligible": "True",
+        "v31_buy_ready": "True",
+    }
+
+
+def _production(action, code="000415", **overrides):
+    row = {
+        "code": code,
+        "decision_scope": "CANDIDATE",
+        "production_action": action,
+        "valuation_confidence": "HIGH",
+        "production_model_frozen": "True",
+        "formal_buy_max_price_to_neutral": "0.8",
+        "reason_codes": "",
+    }
+    row.update(overrides)
+    return row
+
+
+def test_buy_only_mirrors_formal_and_frozen_production_buy():
+    row = terminalize_candidate(_master(), _formal(), _production("BUY"))
+    assert row["terminal_decision"] == "BUY"
+    assert row["terminal_formal_buy_authorized"] is True
+    assert row["decision_authority"] == "RESEARCH_TERMINAL_VIEW"
+    assert row["no_auto_trade"] is True
+
+
+def test_production_buy_without_formal_authority_is_rejected():
+    row = terminalize_candidate(_master(), {}, _production("BUY"))
+    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_formal_buy_authorized"] is False
+
+
+def test_high_confidence_price_only_wait_uses_frozen_080_ceiling():
+    row = terminalize_candidate(
+        _master(),
+        _formal(),
+        _production(
+            "WAIT",
+            reason_codes="CORE_POOL_CONFERS_NO_BUY_PRIVILEGE;BUY_MARGIN_OF_SAFETY_INSUFFICIENT;PRICE_TOO_CLOSE_TO_BASE_VALUE",
+            neutral_value="10",
+            current_price="9",
+        ),
     )
-    result = terminalize_candidate(row)
-    assert result["terminal_decision"] == "BUY"
-    assert result["terminal_reason_class"] == "FORMAL_BUY_READY"
-    assert result["terminal_formal_buy_authorized"] is True
-    assert result["decision_authority"] == "RESEARCH_TERMINAL_VIEW"
-    assert result["formal_signal_eligible"] is False
-    assert result["automatic_promotion_allowed"] is False
-    assert result["no_auto_trade"] is True
+    assert row["terminal_decision"] == "WAIT_PRICE"
+    assert row["wait_price_max"] == 8.0
+    assert row["formal_buy_max_price_to_neutral"] == 0.8
+    assert row["wait_price_semantics"] == "frozen_formal_buy_ceiling"
 
 
-def test_complete_candidate_with_only_margin_failure_becomes_wait_price():
-    row = _complete_v31()
-    row["v31_margin_of_safety_status"] = "FAIL"
-    result = terminalize_candidate(row)
-    assert result["terminal_decision"] == "WAIT_PRICE"
-    assert result["terminal_reason_class"] == "PRICE_OR_RETURN_NOT_ATTRACTIVE"
-    assert result["terminal_evidence_complete"] is True
-    assert result["wait_price_reference"] == 51.0
-    assert result["wait_price_reference_source"] == "v31_staged_buy_reference_band_diagnostic"
-    assert result["research_reference_ceiling_semantics"] == "diagnostic_only_not_formal_buy_gate"
-    assert result["terminal_formal_buy_authorized"] is False
-
-
-def test_existing_entry_high_is_preferred_as_wait_reference():
-    row = _complete_v31()
-    row["v31_market_position_status"] = "FAIL"
-    row["entry_high"] = "44.5"
-    result = terminalize_candidate(row)
-    assert result["terminal_decision"] == "WAIT_PRICE"
-    assert result["wait_price_reference"] == 44.5
-    assert result["wait_price_reference_source"] == "existing_entry_high"
-
-
-def test_unknown_hard_gate_is_reject_evidence_insufficient_not_wait_price():
-    row = _complete_v31()
-    row.pop("v31_moat_status")
-    result = terminalize_candidate(row)
-    assert result["terminal_decision"] == "REJECT"
-    assert result["terminal_reason_class"] == "EVIDENCE_INSUFFICIENT"
-    assert "hard_gate_unknown:moat" in result["terminal_reason_codes"]
-    assert result["terminal_retryable_next_cycle"] is True
-
-
-def test_failed_hard_gate_is_reject_and_not_retryable_price_wait():
-    row = _complete_v31()
-    row["v31_long_term_demand_status"] = "STRUCTURAL_DECLINE"
-    result = terminalize_candidate(row)
-    assert result["terminal_decision"] == "REJECT"
-    assert result["terminal_reason_class"] == "HARD_GATE_FAILED"
-    assert "hard_gate_failed:long_term_demand" in result["terminal_reason_codes"]
-    assert result["terminal_retryable_next_cycle"] is False
-
-
-def test_non_price_buy_condition_failure_never_becomes_wait_price():
-    row = _complete_v31()
-    row["v31_portfolio_exposure_status"] = "FAIL"
-    result = terminalize_candidate(row)
-    assert result["terminal_decision"] == "REJECT"
-    assert result["terminal_reason_class"] == "NON_PRICE_BUY_CONDITION_FAILED"
-    assert "buy_condition_failed:portfolio_exposure_acceptable" in result["terminal_reason_codes"]
-
-
-def test_buy_ready_research_cannot_self_promote_without_formal_authority():
-    result = terminalize_candidate(_complete_v31())
-    assert result["v31_buy_ready"] is True
-    assert result["terminal_decision"] == "REJECT"
-    assert result["terminal_reason_class"] == "FORMAL_BUY_NOT_AUTHORIZED"
-    assert result["terminal_formal_buy_authorized"] is False
-
-
-def test_all_master_rows_end_in_exactly_one_terminal_state():
-    buy = _complete_v31("603369")
-    buy.update(
-        {
-            "long_term_formal_buy_eligible": "True",
-            "v31_buy_ready": "True",
-            "production_action": "BUY",
-            "master_research_rank": "2",
-        }
+def test_low_confidence_wait_is_reject_not_wait_price():
+    row = terminalize_candidate(
+        _master(),
+        _formal(),
+        _production(
+            "WAIT",
+            valuation_confidence="LOW",
+            reason_codes="BUY_VALUATION_CONFIDENCE_NOT_HIGH",
+            neutral_value="10",
+            current_price="9",
+        ),
     )
-    wait = _complete_v31("000001")
-    wait["v31_cagr_attractiveness_status"] = "FAIL"
-    wait["master_research_rank"] = "1"
-    reject = _complete_v31("600000")
-    reject.pop("v31_predictability_status")
-    reject["master_research_rank"] = "3"
+    assert row["terminal_decision"] == "REJECT"
 
-    rows = build_terminal_rows([reject, buy, wait, dict(wait)])
+
+def test_unknown_hard_gate_is_terminal_evidence_reject():
+    master = _master()
+    master.pop("v31_moat_status")
+    row = terminalize_candidate(master, _formal(), _production("WAIT"))
+    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_reason_class"] == "EVIDENCE_INSUFFICIENT"
+    assert "hard_gate_unknown:moat" in row["terminal_reason_codes"]
+
+
+def test_hard_gate_failure_is_terminal_reject():
+    master = _master()
+    master["v31_long_term_demand_status"] = "STRUCTURAL_DECLINE"
+    row = terminalize_candidate(master, _formal(), _production("WAIT"))
+    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_reason_class"] == "HARD_GATE_FAILED"
+    assert row["terminal_retryable_next_cycle"] is False
+
+
+def test_master_candidate_outside_strict_formal_review_is_not_left_in_limbo():
+    row = terminalize_candidate(_master(), None, None)
+    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_reason_class"] == "FORMAL_REVIEW_NOT_PROVEN"
+    assert row["terminal_full_review_attempted"] is True
+
+
+def test_research_only_board_is_terminal_reject():
+    row = terminalize_candidate(_master("688281"), None, None)
+    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_reason_class"] == "EXECUTION_UNIVERSE_RESEARCH_ONLY"
+
+
+def test_every_master_row_gets_exactly_one_terminal_state_and_duplicates_collapse():
+    master_buy = _master("000415")
+    master_wait = _master("000783")
+    master_wait["master_research_rank"] = "2"
+    master_reject = _master("600000")
+    master_reject["master_research_rank"] = "3"
+    rows = build_terminal_rows(
+        [master_reject, master_buy, master_wait, dict(master_wait)],
+        [_formal("000415"), _formal("000783")],
+        [
+            _production("BUY", "000415"),
+            _production(
+                "WAIT",
+                "000783",
+                reason_codes="PRICE_TOO_CLOSE_TO_BASE_VALUE",
+                neutral_value="12.5",
+                current_price="11",
+            ),
+        ],
+    )
     assert len(rows) == 3
-    assert {row["terminal_decision"] for row in rows} == {"BUY", "WAIT_PRICE", "REJECT"}
     assert [row["terminal_decision"] for row in rows] == ["BUY", "WAIT_PRICE", "REJECT"]
+    assert all(row["terminal_decision"] in {"BUY", "WAIT_PRICE", "REJECT"} for row in rows)
     assert all(row["no_auto_trade"] is True for row in rows)
-    assert all(row["decision_authority"] == "RESEARCH_TERMINAL_VIEW" for row in rows)
