@@ -11,6 +11,7 @@ from contextlib import redirect_stderr, redirect_stdout
 from dataclasses import dataclass, field
 import io
 from pathlib import Path
+import time
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import pandas as pd
@@ -34,6 +35,8 @@ FINANCIAL_COLUMNS = (
 # flow in the total-cash-flow field, omit the direct ratio, or divide Sina's
 # already dimensionless OCF/net-profit ratio by 100. Never reuse them.
 FINANCIAL_CACHE_KIND = "financial_v4_cashflow_units_ratio_semantics"
+PROVIDER_RETRY_ATTEMPTS = 3
+PROVIDER_RETRY_BACKOFF_SECONDS = 0.25
 
 
 @dataclass
@@ -142,6 +145,115 @@ def _quiet_call(fn):
         return fn()
 
 
+def _retry_frame_call(
+    fn,
+    normalizer,
+    *,
+    label: str,
+    errors: List[str],
+    attempts: int = PROVIDER_RETRY_ATTEMPTS,
+) -> pd.DataFrame:
+    """Return the first non-empty normalized provider frame after bounded retries."""
+
+    last = pd.DataFrame()
+    total_attempts = max(1, int(attempts))
+    for attempt in range(1, total_attempts + 1):
+        try:
+            raw = _quiet_call(fn)
+            normalized = normalizer(raw)
+        except Exception as exc:
+            errors.append(f"{label}:attempt_{attempt}:{type(exc).__name__}")
+        else:
+            if normalized is not None and not normalized.empty:
+                return normalized
+            last = normalized if isinstance(normalized, pd.DataFrame) else pd.DataFrame()
+            errors.append(f"{label}:attempt_{attempt}:field_unavailable")
+        if attempt < total_attempts:
+            time.sleep(PROVIDER_RETRY_BACKOFF_SECONDS * attempt)
+    return last
+
+
+def _financial_frame_has_core_amounts(frame: Optional[pd.DataFrame]) -> bool:
+    if frame is None or frame.empty:
+        return False
+    if "net_profit" not in frame.columns or "operating_cash_flow" not in frame.columns:
+        return False
+    local = frame.copy()
+    local["report_date"] = pd.to_datetime(local.get("report_date"), errors="coerce")
+    local = local.dropna(subset=["report_date"]).sort_values("report_date")
+    if local.empty:
+        return False
+    latest = local.iloc[-1]
+    return bool(
+        _safe_float(latest.get("net_profit")) is not None
+        and _safe_float(latest.get("operating_cash_flow")) is not None
+    )
+
+
+def _merge_financial_frames(*frames: Optional[pd.DataFrame]) -> pd.DataFrame:
+    """Merge reported financial evidence without fabricating missing values.
+
+    Source order is authoritative for ordinary fields. Disclosure date is the
+    maximum known date across the components used for a report period so PIT
+    selection cannot use a combined row before every contributing statement was
+    public.
+    """
+
+    parts: List[pd.DataFrame] = []
+    for priority, frame in enumerate(frames):
+        normalized = _normalize_financial_frame(frame)
+        if normalized.empty:
+            continue
+        local = normalized.copy()
+        local["_source_priority"] = priority
+        local = local.dropna(axis="columns", how="all")
+        parts.append(local)
+    if not parts:
+        return pd.DataFrame(columns=FINANCIAL_COLUMNS)
+
+    combined = pd.concat(parts, ignore_index=True).reindex(
+        columns=[*FINANCIAL_COLUMNS, "_source_priority"]
+    )
+    rows: List[Dict[str, Any]] = []
+    numeric_columns = (
+        "debt_ratio",
+        "net_profit",
+        "recurring_profit",
+        "operating_cash_flow",
+        "operating_cash_flow_per_share",
+        "roe",
+        "gross_margin",
+    )
+    for report_date, group in combined.groupby("report_date", sort=True):
+        group = group.sort_values("_source_priority", kind="stable")
+        row: Dict[str, Any] = {"report_date": report_date}
+        disclosures = pd.to_datetime(group["disclosure_date"], errors="coerce").dropna()
+        row["disclosure_date"] = disclosures.max().date() if not disclosures.empty else None
+        for column in numeric_columns:
+            value = None
+            for candidate in group[column].tolist():
+                parsed = _safe_float(candidate)
+                if parsed is not None:
+                    value = parsed
+                    break
+            row[column] = value
+
+        row["cash_conversion_ratio"] = None
+        row["cash_conversion_ratio_basis"] = ""
+        for _, source_row in group.iterrows():
+            parsed_ratio = _safe_float(source_row.get("cash_conversion_ratio"))
+            if parsed_ratio is None:
+                continue
+            row["cash_conversion_ratio"] = parsed_ratio
+            row["cash_conversion_ratio_basis"] = str(
+                source_row.get("cash_conversion_ratio_basis") or ""
+            )
+            break
+        rows.append(row)
+
+    return pd.DataFrame(rows, columns=FINANCIAL_COLUMNS).reset_index(drop=True)
+
+
 class PublicFundamentalLoader:
     """Load public A-share valuation/financial frames with optional cache."""
 
@@ -189,22 +301,20 @@ class PublicFundamentalLoader:
             "总市值": "market_cap",
         }
         for indicator, target_column in indicator_map.items():
-            try:
-                raw_df = _quiet_call(
-                    lambda indicator=indicator: ak.stock_zh_valuation_baidu(
-                        symbol=normalize_code(code),
-                        indicator=indicator,
-                        period=period,
-                    )
-                )
-            except Exception as exc:
-                errors.append(f"stock_zh_valuation_baidu:{indicator}:{type(exc).__name__}")
-                continue
-            normalized = _normalize_baidu_valuation(raw_df, target_column)
-            if normalized is not None and not normalized.empty:
+            normalized = _retry_frame_call(
+                lambda indicator=indicator: ak.stock_zh_valuation_baidu(
+                    symbol=normalize_code(code),
+                    indicator=indicator,
+                    period=period,
+                ),
+                lambda raw, target_column=target_column: _normalize_baidu_valuation(
+                    raw, target_column
+                ),
+                label=f"stock_zh_valuation_baidu:{indicator}",
+                errors=errors,
+            )
+            if not normalized.empty:
                 frames.append(normalized)
-            else:
-                errors.append(f"stock_zh_valuation_baidu:{indicator}:field_unavailable")
 
         if not frames:
             return None, "none", errors or ["valuation_provider_unavailable"], False
@@ -221,7 +331,9 @@ class PublicFundamentalLoader:
     def load_financial(self, code: str, *, years: int) -> Tuple[Optional[pd.DataFrame], str, List[str], bool]:
         cached = _read_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code)
         if cached is not None:
-            return _normalize_financial_frame(cached), "cache", [], True
+            normalized_cache = _normalize_financial_frame(cached)
+            if _financial_frame_has_core_amounts(normalized_cache):
+                return normalized_cache, "cache", [], True
 
         errors: List[str] = []
         try:
@@ -230,23 +342,59 @@ class PublicFundamentalLoader:
             return None, "none", [f"import_akshare:{type(exc).__name__}"], False
 
         start_year = max(1990, pd.Timestamp.today().year - int(years) - 2)
-        raw_df = None
-        provider = "none"
-        try:
-            raw_df = _quiet_call(
-                lambda: ak.stock_financial_analysis_indicator(
-                    symbol=normalize_code(code),
-                    start_year=str(start_year),
-                )
-            )
-            provider = "akshare.stock_financial_analysis_indicator"
-        except Exception as exc:
-            errors.append(f"stock_financial_analysis_indicator:{type(exc).__name__}")
+        primary = _retry_frame_call(
+            lambda: ak.stock_financial_analysis_indicator(
+                symbol=normalize_code(code),
+                start_year=str(start_year),
+            ),
+            _normalize_financial_frame,
+            label="stock_financial_analysis_indicator",
+            errors=errors,
+        )
+        provider = "akshare.stock_financial_analysis_indicator" if not primary.empty else "none"
 
-        normalized = _normalize_financial_frame(raw_df)
+        # The indicator endpoint can be non-empty while containing only ratios or
+        # per-share cash flow. If it lacks reported net-profit and total OCF
+        # amounts, recover them from the separate Eastmoney income/cash-flow
+        # statements. These are public reported values, not synthesized values.
+        statement_bundle = pd.DataFrame(columns=FINANCIAL_COLUMNS)
+        if not _financial_frame_has_core_amounts(primary):
+            symbol = market_symbol(code)
+            statement_frames: List[pd.DataFrame] = []
+            for function_name in (
+                "stock_profit_sheet_by_report_em",
+                "stock_cash_flow_sheet_by_report_em",
+            ):
+                function = getattr(ak, function_name, None)
+                if function is None:
+                    errors.append(f"{function_name}:provider_function_unavailable")
+                    continue
+                statement = _retry_frame_call(
+                    lambda function=function: function(symbol=symbol),
+                    _normalize_financial_frame,
+                    label=function_name,
+                    errors=errors,
+                )
+                if not statement.empty:
+                    statement_frames.append(statement)
+            statement_bundle = _merge_financial_frames(*statement_frames)
+
+        normalized = _merge_financial_frames(primary, statement_bundle)
         if normalized.empty:
             return None, "none", errors or ["financial_provider_unavailable"], False
-        _write_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code, normalized)
+        if not statement_bundle.empty:
+            provider = (
+                "akshare.stock_financial_analysis_indicator+akshare.eastmoney_statements"
+                if not primary.empty
+                else "akshare.eastmoney_statements"
+            )
+        # A ratios-only/one-statement partial result remains useful evidence for
+        # this cycle, but must not become a sticky cache hit that suppresses
+        # recovery in the next cycle.
+        if _financial_frame_has_core_amounts(normalized):
+            _write_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code, normalized)
+        else:
+            errors.append("financial_core_amounts_incomplete_after_recovery")
         return normalized, provider, errors, False
 
 
@@ -284,17 +432,20 @@ def _normalize_financial_frame(df: Optional[pd.DataFrame]) -> pd.DataFrame:
         return pd.DataFrame(columns=FINANCIAL_COLUMNS)
     local = df.copy()
     report_col = (
-        _first_column(local.columns, ("日期", "报告期", "REPORT_DATE", "report_date"))
+        _first_column(local.columns, ("日期", "报告期", "报告日", "REPORT_DATE", "report_date"))
         or _first_column(local.columns, ("date",))
     )
     if report_col is None:
         return pd.DataFrame(columns=FINANCIAL_COLUMNS)
 
-    disclosure_col = _first_column(local.columns, ("NOTICE_DATE", "公告日期", "披露日期", "disclosure_date"))
+    disclosure_col = _first_column(
+        local.columns,
+        ("NOTICE_DATE", "公告日期", "披露日期", "更新日期", "disclosure_date"),
+    )
     debt_col = _first_column(local.columns, ("资产负债率", "DEBT", "debt_ratio"))
     net_profit_col = _first_column(
         local.columns,
-        ("净利润", "归母净利润", "PARENT_NETPROFIT", "NETPROFIT"),
+        ("净利润", "归母净利润", "PARENT_NETPROFIT", "NETPROFIT", "net_profit"),
         ("率", "同比", "增长率", "每股", "扣除非经常性", "扣非"),
     )
     recurring_profit_col = _first_column(

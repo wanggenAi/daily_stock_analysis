@@ -17,6 +17,7 @@ import argparse
 import csv
 import json
 import math
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from datetime import date
@@ -25,7 +26,10 @@ from typing import Any, Iterable, Mapping
 
 import pandas as pd
 
-from src.strategies.genge_cycle_bottom.fundamentals import PublicFundamentalLoader
+from src.strategies.genge_cycle_bottom.fundamentals import (
+    FundamentalFetchResult,
+    PublicFundamentalLoader,
+)
 from src.strategies.genge_opportunity_discovery.fundamental_valuation import normalize_core_earnings
 
 
@@ -33,6 +37,8 @@ DISCLAIMER = "仅用于公开数据研究排序和人工复核，不构成买入
 DEFAULT_RESEARCH_LIMIT = 80
 DEFAULT_RELAXED_RESERVE = 20
 DEFAULT_FINANCIAL_REVIEW_LIMIT = 30
+EVIDENCE_RECOVERY_ATTEMPTS = 3
+EVIDENCE_RECOVERY_BACKOFF_SECONDS = 0.25
 RELAXABLE_TECHNICAL_BLOCKERS = frozenset(
     {"price_too_high", "board_5d_abnormal_move", "board_10d_abnormal_move"}
 )
@@ -51,6 +57,10 @@ OUTPUT_COLUMNS = [
     "quant_rank",
     "quant_score",
     "source_hard_blockers",
+    "valuation_provider",
+    "valuation_provider_errors",
+    "financial_provider",
+    "financial_provider_errors",
     "current_pe",
     "historical_median_pe_reference",
     "historical_pe_sample_count",
@@ -401,20 +411,127 @@ def _load_many(
     )
     results: dict[str, Any] = {}
 
-    def load_one(code: str):
-        return loader.load(
-            code,
-            years=years,
-            fetch_valuation=fetch_valuation,
-            fetch_financial=fetch_financial,
-        )
+    def frame_available(frame: pd.DataFrame | None) -> bool:
+        return isinstance(frame, pd.DataFrame) and not frame.empty
+
+    def append_errors(
+        target: FundamentalFetchResult,
+        component: str,
+        errors: Iterable[str],
+    ) -> None:
+        bucket = target.provider_errors.setdefault(component, [])
+        for error in errors:
+            text = str(error).strip()
+            if text and text not in bucket:
+                bucket.append(text)
+
+    def merge_attempt(
+        best: FundamentalFetchResult,
+        attempt: Any,
+        *,
+        need_valuation: bool,
+        need_financial: bool,
+        attempt_number: int,
+    ) -> None:
+        for component, requested, frame_name, provider_name in (
+            ("valuation", need_valuation, "valuation_df", "valuation_provider"),
+            ("financial", need_financial, "financial_df", "financial_provider"),
+        ):
+            if not requested:
+                continue
+            provider_errors = getattr(attempt, "provider_errors", {}) or {}
+            append_errors(best, component, provider_errors.get(component, []))
+            frame = getattr(attempt, frame_name, None)
+            if frame_available(frame):
+                # A component that has recovered is frozen in ``best`` and is
+                # never requested again in later attempts.
+                setattr(best, frame_name, frame)
+                setattr(best, provider_name, getattr(attempt, provider_name, "none"))
+                cache_hits = getattr(attempt, "cache_hits", {}) or {}
+                if component in cache_hits:
+                    best.cache_hits[component] = cache_hits[component]
+            else:
+                append_errors(
+                    best,
+                    component,
+                    [f"research_loader:attempt_{attempt_number}:empty_result"],
+                )
+
+    def load_one(code: str) -> FundamentalFetchResult:
+        """Recover requested evidence without repeating successful components."""
+
+        best = FundamentalFetchResult()
+        need_valuation = bool(fetch_valuation)
+        need_financial = bool(fetch_financial)
+
+        for attempt_number in range(1, EVIDENCE_RECOVERY_ATTEMPTS + 1):
+            if not need_valuation and not need_financial:
+                break
+            try:
+                attempt = loader.load(
+                    code,
+                    years=years,
+                    fetch_valuation=need_valuation,
+                    fetch_financial=need_financial,
+                )
+                required_attributes = []
+                if need_valuation:
+                    required_attributes.append("valuation_df")
+                if need_financial:
+                    required_attributes.append("financial_df")
+                if attempt is None or any(
+                    not hasattr(attempt, name) for name in required_attributes
+                ):
+                    raise TypeError(
+                        f"unexpected fundamental result: {type(attempt).__name__}"
+                    )
+            except Exception as exc:
+                marker = (
+                    f"research_loader:attempt_{attempt_number}:"
+                    f"{type(exc).__name__}"
+                )
+                if need_valuation:
+                    append_errors(best, "valuation", [marker])
+                if need_financial:
+                    append_errors(best, "financial", [marker])
+            else:
+                merge_attempt(
+                    best,
+                    attempt,
+                    need_valuation=need_valuation,
+                    need_financial=need_financial,
+                    attempt_number=attempt_number,
+                )
+                need_valuation = need_valuation and not frame_available(
+                    best.valuation_df
+                )
+                need_financial = need_financial and not frame_available(
+                    best.financial_df
+                )
+
+            if (
+                (need_valuation or need_financial)
+                and attempt_number < EVIDENCE_RECOVERY_ATTEMPTS
+            ):
+                time.sleep(EVIDENCE_RECOVERY_BACKOFF_SECONDS * attempt_number)
+
+        if need_valuation:
+            append_errors(
+                best,
+                "valuation",
+                ["research_loader:recovery_exhausted:valuation_unavailable"],
+            )
+        if need_financial:
+            append_errors(
+                best,
+                "financial",
+                ["research_loader:recovery_exhausted:financial_unavailable"],
+            )
+        return best
 
     if max_workers <= 1:
         for code in normalized:
-            try:
-                results[code] = load_one(code)
-            except Exception as exc:
-                results[code] = exc
+            results[code] = load_one(code)
         return results
 
     with ThreadPoolExecutor(max_workers=max(1, int(max_workers))) as executor:
@@ -424,7 +541,16 @@ def _load_many(
             try:
                 results[code] = future.result()
             except Exception as exc:
-                results[code] = exc
+                # ``load_one`` is expected to contain provider failures, but
+                # keep the fan-out boundary fail-closed if an unexpected
+                # executor/runtime exception escapes.
+                failed = FundamentalFetchResult()
+                marker = f"research_loader:executor:{type(exc).__name__}"
+                if fetch_valuation:
+                    failed.provider_errors["valuation"] = [marker]
+                if fetch_financial:
+                    failed.provider_errors["financial"] = [marker]
+                results[code] = failed
     return results
 
 
@@ -453,6 +579,10 @@ def _base_row(
             or source.get("hard_reject_blockers")
             or ""
         ),
+        "valuation_provider": "none",
+        "valuation_provider_errors": "",
+        "financial_provider": "none",
+        "financial_provider_errors": "",
         "current_pe": pe_diag.current_pe,
         "historical_median_pe_reference": pe_diag.reference_median_pe,
         "historical_pe_sample_count": pe_diag.sample_count,
@@ -572,7 +702,13 @@ def build_valuation_research_rows(
             as_of=as_of,
             minimum_history_samples=minimum_pe_samples,
         )
-        provisional.append(_base_row(source, pe_diag))
+        base_row = _base_row(source, pe_diag)
+        if isinstance(fetched, FundamentalFetchResult):
+            base_row["valuation_provider"] = fetched.valuation_provider
+            base_row["valuation_provider_errors"] = ";".join(
+                fetched.provider_errors.get("valuation", [])
+            )
+        provisional.append(base_row)
 
     provisional.sort(key=_rank_key)
     financial_codes = [
@@ -600,7 +736,13 @@ def build_valuation_research_rows(
         financial_frame = (
             None if isinstance(fetched, Exception) or fetched is None else fetched.financial_df
         )
-        reviewed.append(_add_financial_review(row, financial_frame, as_of=as_of))
+        reviewed_row = _add_financial_review(row, financial_frame, as_of=as_of)
+        if isinstance(fetched, FundamentalFetchResult):
+            reviewed_row["financial_provider"] = fetched.financial_provider
+            reviewed_row["financial_provider_errors"] = ";".join(
+                fetched.provider_errors.get("financial", [])
+            )
+        reviewed.append(reviewed_row)
 
     reviewed.sort(key=_rank_key)
     for rank, row in enumerate(reviewed, 1):
