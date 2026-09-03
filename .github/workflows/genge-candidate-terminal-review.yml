@@ -1,6 +1,12 @@
 name: GenGe Candidate Terminal Review
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
+      - "tests/test_genge_candidate_terminal_decision.py"
+      - ".github/workflows/genge-candidate-terminal-review.yml"
   pull_request:
     paths:
       - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
@@ -46,6 +52,7 @@ jobs:
   terminalize:
     needs: terminal-contract-tests
     if: >-
+      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'workflow_run' &&
@@ -62,15 +69,22 @@ jobs:
           python-version: "3.11"
       - name: Resolve upstream postscan run
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
             upstream="${{ github.event.workflow_run.id }}"
-          else
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             upstream="${{ inputs.upstream_run_id }}"
+          else
+            upstream="$(gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-postscan-research.yml/runs?branch=main&status=completed&per_page=20" \
+              --jq '.workflow_runs[0].id')"
           fi
-          [[ "$upstream" =~ ^[0-9]+$ ]] || { echo "invalid upstream_run_id=$upstream" >&2; exit 1; }
+          [[ "$upstream" =~ ^[0-9]+$ ]] || { echo "invalid or unavailable upstream_run_id=$upstream" >&2; exit 1; }
           echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
+          echo "postscan run: $upstream"
       - name: Download postscan research artifact
         uses: actions/download-artifact@v4
         with:
