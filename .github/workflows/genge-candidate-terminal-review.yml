@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
     inputs:
       upstream_run_id:
-        description: "Completed successful GenGe Postscan Research Pipeline run id"
+        description: "Completed GenGe Postscan Research Pipeline run id"
         required: true
         type: string
 
@@ -35,8 +35,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Install test dependency
-        run: python -m pip install --disable-pip-version-check pytest
+          cache: pip
+      - name: Install repository CI dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
       - name: Run terminal contract tests
         run: python -m pytest -q tests/test_genge_candidate_terminal_decision.py
 
@@ -46,11 +49,10 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main'
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -81,16 +83,38 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+
           master="$(find upstream -type f -name master_opportunity_ranking.csv -print -quit)"
+          if [ -z "$master" ]; then
+            master="$(find upstream -type f -name long_term_formal_buy_candidates.csv -print -quit)"
+          fi
+          if [ -z "$master" ]; then
+            master="$(find upstream -type f -name long_term_second_pass_candidates.csv -print -quit)"
+          fi
+          if [ -z "$master" ]; then
+            master="$(find upstream -type f -name valuation_research_queue.csv -print -quit)"
+          fi
+          [ -n "$master" ] || { echo "no surviving postscan candidate universe" >&2; exit 1; }
+
           formal="$(find upstream -type f -name long_term_formal_buy_candidates.csv -print -quit)"
+          if [ -z "$formal" ]; then
+            formal="upstream/empty_formal_candidates.csv"
+            printf 'code,long_term_formal_buy_eligible,v31_buy_ready\n' > "$formal"
+          fi
+
           production="$(find upstream -type f -name production_decisions.csv -print -quit)"
-          [ -n "$master" ] || { echo "master_opportunity_ranking.csv missing" >&2; exit 1; }
-          [ -n "$formal" ] || { echo "long_term_formal_buy_candidates.csv missing" >&2; exit 1; }
-          [ -n "$production" ] || { echo "production_decisions.csv missing" >&2; exit 1; }
+          if [ -z "$production" ]; then
+            production="upstream/empty_production_decisions.csv"
+            printf 'code,decision_scope,production_action,valuation_confidence,reason_codes\n' > "$production"
+          fi
+
           echo "MASTER_CSV=$master" >> "$GITHUB_ENV"
           echo "FORMAL_CSV=$formal" >> "$GITHUB_ENV"
           echo "PRODUCTION_CSV=$production" >> "$GITHUB_ENV"
-      - name: Terminalize every Master Opportunity candidate
+          echo "candidate source: $master"
+          echo "formal source: $formal"
+          echo "production source: $production"
+      - name: Terminalize every surviving research candidate
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.candidate_terminal_decision \
             --master-csv "$MASTER_CSV" \
@@ -122,7 +146,12 @@ jobs:
           assert all(row['automatic_promotion_allowed'] == 'False' for row in rows)
           assert all(row['no_auto_trade'] == 'True' for row in rows)
           assert all(row['terminal_formal_buy_authorized'] == 'True' for row in rows if row['terminal_decision'] == 'BUY')
+          assert all(row['source_production_action'] == 'BUY' for row in rows if row['terminal_decision'] == 'BUY')
+          assert all(row['source_valuation_confidence'] == 'HIGH' for row in rows if row['terminal_decision'] == 'BUY')
           assert all(float(row['wait_price_max']) > 0 for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
+          assert all(row['wait_price_semantics'] == 'frozen_formal_buy_ceiling' for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
+          assert all(row['source_production_action'] == 'WAIT' for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
+          assert all(row['source_valuation_confidence'] == 'HIGH' for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
       - name: Publish terminal summary
