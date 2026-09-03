@@ -5,12 +5,16 @@ on:
     branches: [main]
     paths:
       - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
+      - "src/strategies/genge_cycle_bottom/fundamentals.py"
       - "tests/test_genge_candidate_terminal_decision.py"
+      - "tests/test_genge_fundamental_recovery.py"
       - ".github/workflows/genge-candidate-terminal-review.yml"
   pull_request:
     paths:
       - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
+      - "src/strategies/genge_cycle_bottom/fundamentals.py"
       - "tests/test_genge_candidate_terminal_decision.py"
+      - "tests/test_genge_fundamental_recovery.py"
       - ".github/workflows/genge-candidate-terminal-review.yml"
   workflow_run:
     workflows: ["GenGe Postscan Research Pipeline"]
@@ -46,8 +50,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
-      - name: Run terminal contract tests
-        run: python -m pytest -q tests/test_genge_candidate_terminal_decision.py
+      - name: Run terminal and evidence-recovery contract tests
+        run: >-
+          python -m pytest -q
+          tests/test_genge_candidate_terminal_decision.py
+          tests/test_genge_fundamental_recovery.py
+          tests/test_genge_valuation_research_report.py
 
   terminalize:
     needs: terminal-contract-tests
@@ -168,6 +176,12 @@ jobs:
           assert all(row['source_valuation_confidence'] == 'HIGH' for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
+      - name: Print terminal decisions to run log
+        if: always()
+        run: |
+          if [ -f reports/candidate_terminal_decision/candidate_terminal_decisions.md ]; then
+            cat reports/candidate_terminal_decision/candidate_terminal_decisions.md
+          fi
       - name: Publish terminal summary
         if: always()
         run: |
