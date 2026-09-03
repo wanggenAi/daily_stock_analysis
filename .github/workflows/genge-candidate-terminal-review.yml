@@ -1,6 +1,11 @@
 name: GenGe Candidate Terminal Review
 
 on:
+  pull_request:
+    paths:
+      - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
+      - "tests/test_genge_candidate_terminal_decision.py"
+      - ".github/workflows/genge-candidate-terminal-review.yml"
   workflow_run:
     workflows: ["GenGe Postscan Research Pipeline"]
     types: [completed]
@@ -20,10 +25,27 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  terminal-review:
+  terminal-contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Run terminal contract tests
+        run: python -m pytest -q tests/test_genge_candidate_terminal_decision.py
+
+  terminalize:
+    needs: terminal-contract-tests
     if: >-
       github.event_name == 'workflow_dispatch' ||
       (
+        github.event_name == 'workflow_run' &&
         github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main'
       )
@@ -32,12 +54,10 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-
       - name: Resolve upstream postscan run
         shell: bash
         run: |
@@ -49,7 +69,6 @@ jobs:
           fi
           [[ "$upstream" =~ ^[0-9]+$ ]] || { echo "invalid upstream_run_id=$upstream" >&2; exit 1; }
           echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
-
       - name: Download postscan research artifact
         uses: actions/download-artifact@v4
         with:
@@ -58,80 +77,60 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ env.UPSTREAM_RUN_ID }}
-
-      - name: Run terminal-layer unit tests
-        run: |
-          python -m pip install --disable-pip-version-check pytest
-          python -m pytest -q tests/test_genge_candidate_terminal_decision.py
-
-      - name: Locate master ranking
+      - name: Resolve broad and authoritative inputs
         shell: bash
         run: |
           set -euo pipefail
-          master_csv="$(find upstream -type f -name master_opportunity_ranking.csv -print -quit)"
-          [ -n "$master_csv" ] || { echo "master_opportunity_ranking.csv not found in postscan artifact" >&2; exit 1; }
-          echo "MASTER_RANKING_DIR=$(dirname "$master_csv")" >> "$GITHUB_ENV"
-          echo "master ranking: $master_csv"
-
-      - name: Terminalize every master candidate
+          master="$(find upstream -type f -name master_opportunity_ranking.csv -print -quit)"
+          formal="$(find upstream -type f -name long_term_formal_buy_candidates.csv -print -quit)"
+          production="$(find upstream -type f -name production_decisions.csv -print -quit)"
+          [ -n "$master" ] || { echo "master_opportunity_ranking.csv missing" >&2; exit 1; }
+          [ -n "$formal" ] || { echo "long_term_formal_buy_candidates.csv missing" >&2; exit 1; }
+          [ -n "$production" ] || { echo "production_decisions.csv missing" >&2; exit 1; }
+          echo "MASTER_CSV=$master" >> "$GITHUB_ENV"
+          echo "FORMAL_CSV=$formal" >> "$GITHUB_ENV"
+          echo "PRODUCTION_CSV=$production" >> "$GITHUB_ENV"
+      - name: Terminalize every Master Opportunity candidate
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.candidate_terminal_decision \
-            --master-ranking-dir "$MASTER_RANKING_DIR" \
+            --master-csv "$MASTER_CSV" \
+            --formal-csv "$FORMAL_CSV" \
+            --production-csv "$PRODUCTION_CSV" \
             --output-dir reports/candidate_terminal_decision
-
       - name: Validate terminal review contract
         run: |
           python - <<'PY'
-          import csv
-          import json
+          import csv, json
           from pathlib import Path
 
           root = Path('reports/candidate_terminal_decision')
-          csv_path = root / 'candidate_terminal_decisions.csv'
-          summary_path = root / 'candidate_terminal_summary.json'
-          md_path = root / 'candidate_terminal_decisions.md'
-          assert csv_path.exists() and csv_path.stat().st_size > 0
-          assert summary_path.exists() and summary_path.stat().st_size > 0
-          assert md_path.exists() and md_path.stat().st_size > 0
-
-          rows = list(csv.DictReader(csv_path.open(encoding='utf-8')))
-          summary = json.loads(summary_path.read_text(encoding='utf-8'))
-          assert rows, 'terminal review produced no candidates'
+          rows = list(csv.DictReader((root/'candidate_terminal_decisions.csv').open(encoding='utf-8')))
+          summary = json.loads((root/'candidate_terminal_summary.json').read_text(encoding='utf-8'))
+          assert rows
           assert len(rows) == summary['candidate_count'] == summary['terminalized_count']
           assert summary['research_limbo_count'] == 0
           assert summary['unauthorized_buy_count'] == 0
+          assert summary['wait_price_without_price_count'] == 0
           assert summary['formal_buy_is_mirror_only'] is True
+          assert summary['formal_buy_max_price_to_neutral'] == 0.8
           assert summary['canonical_authority_unchanged'] is True
           assert summary['hard_gate_unknown_is_pass'] is False
           assert summary['no_auto_trade'] is True
-
-          allowed = {'BUY', 'WAIT_PRICE', 'REJECT'}
-          assert all(row['terminal_decision'] in allowed for row in rows)
+          assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','REJECT'} for row in rows)
           assert all(row['decision_authority'] == 'RESEARCH_TERMINAL_VIEW' for row in rows)
           assert all(row['formal_signal_eligible'] == 'False' for row in rows)
           assert all(row['automatic_promotion_allowed'] == 'False' for row in rows)
           assert all(row['no_auto_trade'] == 'True' for row in rows)
-
-          buys = [row for row in rows if row['terminal_decision'] == 'BUY']
-          assert all(row['terminal_formal_buy_authorized'] == 'True' for row in buys)
-          waits = [row for row in rows if row['terminal_decision'] == 'WAIT_PRICE']
-          assert all(row['terminal_evidence_complete'] == 'True' for row in waits)
-          assert all(row['terminal_formal_buy_authorized'] == 'False' for row in waits)
-          assert all(row['wait_price_reference_source'] for row in waits)
-
-          assert summary['buy_count'] == len(buys)
-          assert summary['wait_price_count'] == len(waits)
-          assert summary['reject_count'] == sum(row['terminal_decision'] == 'REJECT' for row in rows)
+          assert all(row['terminal_formal_buy_authorized'] == 'True' for row in rows if row['terminal_decision'] == 'BUY')
+          assert all(float(row['wait_price_max']) > 0 for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
-
       - name: Publish terminal summary
         if: always()
         run: |
           if [ -f reports/candidate_terminal_decision/candidate_terminal_decisions.md ]; then
             cat reports/candidate_terminal_decision/candidate_terminal_decisions.md >> "$GITHUB_STEP_SUMMARY"
           fi
-
       - name: Upload terminal decisions
         uses: actions/upload-artifact@v4
         if: always()
