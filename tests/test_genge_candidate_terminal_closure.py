@@ -132,6 +132,7 @@ def test_report_summary_enforces_terminal_contract(tmp_path: Path):
                 "code", "stock_name", "decision_scope", "production_action",
                 "valuation_confidence", "production_model_frozen", "reason_codes",
                 "formal_buy_max_price_to_neutral", "neutral_value", "current_price",
+                "no_auto_trade",
             ],
         )
         writer.writeheader()
