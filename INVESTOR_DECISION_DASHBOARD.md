@@ -5,7 +5,7 @@
 ## 1. 今天市场怎么样
 
 - 市场状态：**YELLOW**；是否允许新买：**True**；仓位倍率：**0.50**
-- 上涨家数比例：**22.16%**；数据质量：**OK**
+- 上涨家数比例：**36.66%**；数据质量：**OK**
 
 - 盘中执行价覆盖：**0只**；最新行情时间：**—**；正式动作仍来自冻结 Canonical，盘中价只用于当前盈亏与人工下单价格/股数。
 
@@ -44,7 +44,7 @@
 
 ## 7. 当前强势方向（辅助，不代替BUY权限）
 
-E47房屋建筑业(STRONG)、C41其他制造业(STRONG)、N78公共设施管理业(STRONG)、D45燃气生产和供应业(STRONG)、R88文化艺术业(STRONG)、C19皮革、毛皮、羽毛及其制品和制鞋业(STRONG)、G59装卸搬运和仓储业(STRONG)、C37铁路、船舶、航空航天和其他运输设备制造业(STRONG)
+O81机动车、电子产品和日用产品修理业(STRONG)、J68保险业(STRONG)、G55水上运输业(STRONG)、J67资本市场服务(STRONG)、B09有色金属矿采选业(STRONG)、G56航空运输业(STRONG)、B07石油和天然气开采业(STRONG)、E47房屋建筑业(STRONG)
 
 ## 8. 其他已确认资产
 
@@ -56,24 +56,3 @@ E47房屋建筑业(STRONG)、C41其他制造业(STRONG)、N78公共设施管理�
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 7. 事件深算闭环：到底算完没有
-
-- 总状态：**EVENT_TRIGGERED_FINALIZED**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
-- 事件深算生产 run：`33758733546`；Finalizer：`33760830612`。
-
-| 股票 | 闭环状态 | 正式结果 | 为什么没有BUY/ADD / 结果解释 |
-|---|---|---|---|
-| 润贝航科 001316 | **EVENT_TRIGGERED_NO_CHANGE** | **HOLD_REVIEW** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 海航控股 600221 | **EVENT_TRIGGERED_NO_CHANGE** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 中国平安 601318 | **EVENT_TRIGGERED_NO_CHANGE** | **HOLD_REVIEW** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 洛阳钼业 603993 | **EVENT_TRIGGERED_NO_CHANGE** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 000426 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 000783 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 002811 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 003039 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 国电南瑞 600406 | **RAISE_ONLY** | **REDUCE_25** | 当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。 |
-| 600661 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601020 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601601 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 603038 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
