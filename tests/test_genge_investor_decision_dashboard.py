@@ -1,69 +1,27 @@
 import pytest
 
-from src.strategies.genge_opportunity_discovery.investor_decision_dashboard import (
-    build_dashboard,
-    render_markdown,
-)
+from src.strategies.genge_opportunity_discovery.investor_decision_dashboard import build_dashboard, render_markdown
 
 
-def _decision(code: str, name: str, scope: str, action: str, price: float, value: float):
+def _decision(code, name, scope, action, price, value=60.0):
     return {
-        "code": code,
-        "stock_name": name,
-        "scope": scope,
-        "action": action,
-        "current_price": price,
-        "neutral_value": value,
-        "valuation_confidence": "HIGH",
-        "reason_codes": "TEST_REASON",
-        "hard_gate_failures": "",
-        "hard_gate_unknowns": "",
-        "price_date": "2026-09-01",
-        "decision_date": "2026-09-01",
-        "v311_production_bridge": "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT",
+        "code": code, "stock_name": name, "scope": scope, "action": action,
+        "current_price": price, "neutral_value": value, "valuation_confidence": "HIGH",
+        "reason_codes": "TEST", "v311_production_bridge": "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT",
         "no_auto_trade": True,
     }
 
 
 def _canonical():
     return {
-        "snapshot_id": "snapshot-1",
-        "source_run_id": "12345",
-        "latest_trade_date": "2026-09-01",
+        "snapshot_id": "snapshot-1", "source_run_id": "12345", "latest_trade_date": "2026-09-03",
         "production": {
             "holding_decisions": [
-                _decision("600406", "国电南瑞", "HOLDING", "REDUCE_25", 22.92, 17.46),
-                _decision("603993", "洛阳钼业", "HOLDING", "HOLD", 19.06, 28.13),
-                _decision("001316", "润贝航科", "HOLDING", "HOLD_REVIEW", 26.88, 49.37),
-                _decision("601318", "中国平安", "HOLDING", "HOLD_REVIEW", 57.23, 0.0),
+                _decision("601318", "中国平安", "HOLDING", "ADD", 58.0, 80.0),
+                _decision("603993", "洛阳钼业", "HOLDING", "HOLD", 19.0, 28.0),
             ],
-            "candidate_decisions": [],
+            "candidate_decisions": [_decision("600036", "招商银行", "CANDIDATE", "BUY", 41.0, 55.0)],
         },
-        "deep_review": {
-            "rows": [
-                {
-                    "rank": 1,
-                    "code": "603986",
-                    "stock_name": "兆易创新",
-                    "industry": "半导体",
-                    "candidate_class": "A1",
-                    "valuation_confidence": "HIGH",
-                    "current_price": "150",
-                    "hard_blockers": "",
-                },
-                {
-                    "rank": 2,
-                    "code": "601020",
-                    "stock_name": "华钰矿业",
-                    "industry": "有色",
-                    "candidate_class": "B",
-                    "valuation_confidence": "MEDIUM",
-                    "current_price": "20",
-                    "hard_blockers": "valuation_wait",
-                },
-            ]
-        },
-        "discovery": {"rows": []},
     }
 
 
@@ -71,86 +29,92 @@ def _holdings():
     return {
         "601318": {"code": "601318", "name": "中国平安", "quantity": 300, "average_cost": 57.1676},
         "603993": {"code": "603993", "name": "洛阳钼业", "quantity": 600, "average_cost": 19.1087},
-        "001316": {"code": "001316", "name": "润贝航科", "quantity": 200, "average_cost": 26.0950},
-        "600406": {"code": "600406", "name": "国电南瑞", "quantity": 200, "average_cost": 23.1253},
     }
 
 
-def test_dashboard_is_investor_first_without_recomputing_formal_actions():
-    payload = build_dashboard(
-        canonical=_canonical(),
-        holdings=_holdings(),
-        funds=[],
-        market_regime={
-            "as_of_date": "2026-09-01",
-            "status": "YELLOW",
-            "score": 54.2,
-            "allow_new_buy": True,
-            "position_multiplier": 0.5,
-            "advance_ratio": 0.47,
-            "above_ma20_ratio": 0.52,
-            "above_ma60_ratio": 0.49,
-            "distribution_ratio": 0.10,
-            "external_risk_level": "LOW",
-            "risk_reasons": [],
-            "data_quality": "OK",
-        },
-        industry_regimes=[
-            {"industry": "半导体", "status": "STRONG", "score": "82", "sample_count": "35", "advance_ratio": "0.72", "above_ma20_ratio": "0.75", "distribution_ratio": "0.05"},
-            {"industry": "有色", "status": "STRONG", "score": "76", "sample_count": "28", "advance_ratio": "0.66", "above_ma20_ratio": "0.70", "distribution_ratio": "0.08"},
-        ],
-        research_priority={
-            "queue": [
-                {"code": "603986", "name": "兆易创新", "priority": "P2", "thesis_status": "STRENGTHENING_RESEARCH_SIGNAL"}
-            ]
-        },
-        mode="DAILY",
-        generated_at="2026-09-02T01:00:00+00:00",
-    )
+def _capital():
+    return {
+        "status": "USER_CONFIRMED_FLOOR", "planning_cash_cny": 70000.0, "as_of": "2026-09-03T12:17:00+08:00",
+        "planner": {"max_deployment_ratio": 0.70, "max_single_name_ratio_of_available_cash": 0.20,
+                    "max_names": 5, "first_tranche_ratio": 0.50, "second_tranche_discount_pct": 0.02},
+        "no_auto_trade": True,
+    }
 
+
+def _terminal():
+    common = {"decision_authority": "RESEARCH_TERMINAL_VIEW", "no_auto_trade": "True"}
+    return [
+        {**common, "master_research_rank": "1", "code": "600036", "stock_name": "招商银行",
+         "terminal_decision": "BUY", "terminal_current_price": "41", "terminal_formal_buy_authorized": "True",
+         "source_valuation_confidence": "HIGH", "v31_neutral_value": "55", "formal_buy_max_price_to_neutral": "0.8"},
+        {**common, "master_research_rank": "2", "code": "601899", "stock_name": "紫金矿业",
+         "terminal_decision": "WAIT_PRICE", "terminal_current_price": "34", "wait_price_max": "32",
+         "terminal_formal_buy_authorized": "False", "source_valuation_confidence": "HIGH"},
+        {**common, "master_research_rank": "3", "code": "603986", "stock_name": "兆易创新",
+         "terminal_decision": "REJECT", "terminal_formal_buy_authorized": "False"},
+    ]
+
+
+def test_dashboard_allocates_only_authorized_actions_and_preserves_wait_price():
+    payload = build_dashboard(
+        canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=_terminal(),
+        market_regime={"status": "GREEN", "allow_new_buy": True, "position_multiplier": 1.0,
+                       "advance_ratio": 0.55, "data_quality": "OK"},
+        industry_regimes=[{"industry": "银行", "status": "STRONG", "score": "80"}], mode="DAILY",
+        generated_at="2026-09-03T04:30:00+00:00",
+    )
     assert payload["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
     assert payload["formal_action_recomputed"] is False
     assert payload["no_auto_trade"] is True
-    assert payload["presentation_contract"]["investor_first"] is True
-    assert payload["decision_summary"]["formal_action_counts"] == {
-        "HOLD": 1,
-        "HOLD_REVIEW": 2,
-        "REDUCE_25": 1,
-    }
-    assert payload["stock_portfolio"]["rows"][0]["code"] == "600406"
-    assert payload["stock_portfolio"]["rows"][0]["formal_action"] == "REDUCE_25"
-    assert payload["stock_portfolio"]["rows"][0]["investor_action"] == "减仓25%"
-    assert payload["fund_portfolio"]["status"] == "LATEST_HOLDINGS_NOT_PERSISTED"
-    assert payload["market"]["status"] == "YELLOW"
-    assert payload["capital_direction"]["strongest_industries"][0]["industry"] == "半导体"
-    assert payload["capital_direction"]["direct_fund_flow_claimed"] is False
-    assert payload["opportunities"][0]["code"] == "603986"
-    assert payload["opportunities"][0]["tier"] == "NEAR_BUY_RESEARCH"
-    assert payload["structural_trends"]["strengthening_signals"][0]["code"] == "603986"
+    assert [x["code"] for x in payload["terminal_opportunities"]["buy_now"]] == ["600036"]
+    assert [x["code"] for x in payload["terminal_opportunities"]["wait_price"]] == ["601899"]
+    assert payload["terminal_opportunities"]["reject_count"] == 1
+
+    ops = payload["capital_deployment"]["operations"]
+    assert {x["code"] for x in ops} == {"601318", "600036"}
+    assert all(x["authorization_proven"] for x in ops)
+    assert all(x["planned_shares"] % 100 == 0 for x in ops)
+    assert all(x["automatic_order_allowed"] is False for x in ops)
+    assert payload["capital_deployment"]["planned_immediate_cash_cny"] <= payload["capital_deployment"]["deployment_budget_cny"] <= 49000.0
+    assert payload["capital_deployment"]["cash_after_immediate_plan_cny"] >= 0
+
+    waits = payload["capital_deployment"]["wait_price_reservations"]
+    assert waits[0]["code"] == "601899"
+    assert waits[0]["first_entry_max_price"] == 32.0
+    assert waits[0]["immediate_execution_eligible"] is False
+    assert "603986" not in {x["code"] for x in payload["final_operation_table"]}
 
 
-def test_dashboard_rejects_non_production_decision_authority():
+def test_unauthorized_terminal_buy_is_suppressed_not_promoted():
+    rows = _terminal()
+    rows[0]["terminal_formal_buy_authorized"] = "False"
+    payload = build_dashboard(canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=rows)
+    assert payload["terminal_opportunities"]["buy_now"] == []
+    assert payload["data_health"]["terminal_unauthorized_buy_suppressed"] == 1
+    assert "600036" not in {x["code"] for x in payload["capital_deployment"]["operations"]}
+
+
+def test_market_block_can_only_reduce_deployment_not_create_signal():
+    payload = build_dashboard(canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=_terminal(),
+                              market_regime={"status": "RED", "allow_new_buy": False, "position_multiplier": 0.0})
+    assert payload["capital_deployment"]["deployment_budget_cny"] == 0
+    assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0
+    assert payload["terminal_opportunities"]["buy_now"][0]["code"] == "600036"
+
+
+def test_dashboard_rejects_bad_authority_and_renders_investor_first_order():
     canonical = _canonical()
     canonical["production"]["holding_decisions"][0]["no_auto_trade"] = False
     with pytest.raises(ValueError, match="no-auto-trade"):
         build_dashboard(canonical=canonical, holdings=_holdings(), funds=[])
 
-
-def test_rendered_dashboard_leads_with_decisions_not_engineering_status():
-    payload = build_dashboard(
-        canonical=_canonical(),
-        holdings=_holdings(),
-        funds=[],
-        mode="HOURLY",
-        generated_at="2026-09-02T01:00:00+00:00",
-    )
+    payload = build_dashboard(canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=_terminal())
     text = render_markdown(payload)
-    assert text.startswith("# 投资决策驾驶舱")
-    assert "## 1. 我的股票：现在该怎么做" in text
-    assert "减仓25%" in text
-    assert "## 2. 我的基金" in text
-    assert "## 3. 市场现在是什么状态" in text
-    assert "## 4. 钱往哪里走" in text
-    assert "## 5. 产业 / 社会发展趋势" in text
-    assert "## 6. 全市场机会：哪些值得继续盯" in text
-    assert "## 7. 事件触发 / 深算变化" in text
+    sections = ["## 1. 今天市场怎么样", "## 2. 我的持仓怎么办", "## 3. 今天能直接买什么",
+                "## 4. WAIT_PRICE：跌到多少钱再买", "## 5. 资金怎么花", "## 6. 最终操作表",
+                "## 9. 系统状态（最后看）"]
+    positions = [text.index(x) for x in sections]
+    assert positions == sorted(positions)
+    assert payload["presentation_contract"]["section_order"][:6] == [
+        "market", "stock_portfolio", "terminal_buy_now", "terminal_wait_price", "capital_deployment", "final_operation_table"
+    ]
