@@ -2,7 +2,9 @@
 
 Research priority may reorder the deep-review handoff, but it never filters
 Broad Discovery, infers qualitative gates, promotes candidates, or changes any
-V3.1/V3.1.1 Formal decision threshold.
+V3.1/V3.1.1 Formal decision threshold. Specialized execution sidecars are
+merged authoritatively at this consumer boundary so no production workflow can
+accidentally feed stale routing placeholders into V3.1.
 """
 from __future__ import annotations
 
@@ -13,9 +15,12 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from src.strategies.genge_opportunity_discovery import selection_framework_v31
+from src.strategies.genge_opportunity_discovery.specialized_valuation_authoritative_merge import (
+    merge_report as merge_specialized_valuation_report,
+)
 
 DISCLAIMER = "仅用于公开数据研究与人工复核，不构成买入或卖出建议，不应自动交易。"
-POLICY_VERSION = "v31_deep_review_queue_v3_specialized_completion_passthrough"
+POLICY_VERSION = "v31_deep_review_queue_v4_authoritative_specialized_boundary"
 
 JUDGEMENT_FIELDS = (
     "v31_predictability_status", "v31_long_term_demand_status", "v31_moat_status",
@@ -173,6 +178,10 @@ def build_review_rows(
 
 
 def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path, *, priority_json: Path | None = None, limit: int = 100) -> list[dict[str, Any]]:
+    # Mandatory consumer-boundary merge: downstream V3.1 must never read stale
+    # routing placeholders when a selected specialized executor already produced
+    # auditable final evidence/model/anchor facts.
+    merge_specialized_valuation_report(valuation_root)
     valuation_dir = _latest_valuation_dir(valuation_root)
     all_a_dir = _latest_all_a_dir(all_a_report_root)
     priority_map = load_priority_map(priority_json)
@@ -206,10 +215,11 @@ def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
         "policy_version": POLICY_VERSION,
-        "semantics": "broad recall remains independent; specialized completion facts pass through for evidence-aware deep review only",
+        "specialized_execution_merge_enforced_at_v31_boundary": True,
+        "semantics": "broad recall remains independent; authoritative specialized completion facts pass through for evidence-aware deep review only",
     }
     (output_dir / "v31_review_queue_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=2), encoding="utf-8")
-    lines = ["# Frozen V3.1 Deep Review Queue", "", "Broad recall is never filtered by research priority. Priority only orders this deep-review handoff.", "", f"- queued: {len(rows)}", f"- priority input available: {bool(priority_map)}", f"- specialized unfinished: {summary['valuation_strategy_unfinished_count']}", f"- specialized completed with anchor: {summary['valuation_strategy_completed_with_anchor_count']}", "- automatic qualitative gate inference: disabled", "- automatic promotion/trading: disabled", ""]
+    lines = ["# Frozen V3.1 Deep Review Queue", "", "Broad recall is never filtered by research priority. Priority only orders this deep-review handoff.", "", f"- queued: {len(rows)}", f"- priority input available: {bool(priority_map)}", f"- specialized unfinished: {summary['valuation_strategy_unfinished_count']}", f"- specialized completed with anchor: {summary['valuation_strategy_completed_with_anchor_count']}", "- authoritative specialized merge at V3.1 boundary: enabled", "- automatic qualitative gate inference: disabled", "- automatic promotion/trading: disabled", ""]
     for row in rows[:50]:
         lines.append(f"- #{row['v31_review_rank']} {row['code']} {row['stock_name']} | {row['industry']} | priority={row['research_priority'] or '-'}:{row['research_priority_score']} | valuation={row['v31_valuation_completion_status']} | gate_unknowns={row['v31_hard_gate_unknowns']}")
     (output_dir / "v31_review_queue.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
