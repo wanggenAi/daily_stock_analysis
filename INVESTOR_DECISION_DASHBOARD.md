@@ -66,27 +66,9 @@
 | 华钰矿业 601020 | B09有色金属矿采选业 | RESEARCH_CANDIDATE | — | — | hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase |
 | 万华化学 600309 | C26化学原料和化学制品制造业 | RESEARCH_CANDIDATE | — | — | hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity;a_class_not_proven;v31_score_incomplete;scenario_valuation_incomplete;implied_expectation_incomplete;expectation_gap_incomplete;risk_adjusted_3y_cagr_incomplete;downside_analysis_incomplete;falsification_incomplete;buy_condition_failed:all_hard_logic_gates;buy_condition_failed:clear_margin_of_safety;buy_condition_failed:attractive_risk_adjusted_3y_cagr;buy_condition_failed:pessimistic_loss_tolerable;buy_condition_failed:portfolio_exposure_acceptable;buy_condition_failed:market_position_not_extreme_chase |
 
-## 7. 事件深算闭环：到底算完没有
+## 7. 事件触发 / 深算变化
 
-- 总状态：**EVENT_TRIGGERED_FINALIZED**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
-- 事件深算生产 run：`33633075879`；Finalizer：`33633568684`。
-
-| 股票 | 闭环状态 | 正式结果 | 为什么没有BUY/ADD / 结果解释 |
-|---|---|---|---|
-| 润贝航科 001316 | **EVENT_TRIGGERED_NO_CHANGE** | **HOLD_REVIEW** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 中国平安 601318 | **EVENT_TRIGGERED_NO_CHANGE** | **HOLD_REVIEW** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 洛阳钼业 603993 | **EVENT_TRIGGERED_NO_CHANGE** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 渤海租赁 000415 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 兴业银锡 000426 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 古井贡酒 000596 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 长江证券 000783 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 粤桂股份 000833 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 朗姿股份 002612 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 郑中设计 002811 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 翔鹭钨业 002842 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 顺控发展 003039 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 新力金融 600318 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 国电南瑞 600406 | **RAISE_ONLY** | **REDUCE_25** | 当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。 |
+- 当前没有需要单独展示的事件触发上下文。
 
 ---
 技术运行、artifact、SHA、persistence 等工程信息不作为投资者首页内容；只有在影响数据可信度时才升级成风险提示。
