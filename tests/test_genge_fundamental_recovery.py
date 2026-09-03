@@ -113,7 +113,7 @@ class FundamentalRecoveryTest(unittest.TestCase):
         ):
             loader = PublicFundamentalLoader(Path(tmp))
             frame, provider, errors, cache_hit = loader.load_financial("600519", years=5)
-            cache_file = Path(tmp) / FINANCIAL_CACHE_KIND / "600519.csv"
+            cache_exists = (Path(tmp) / FINANCIAL_CACHE_KIND / "600519.csv").exists()
 
         self.assertFalse(cache_hit)
         self.assertEqual(errors, [])
@@ -125,7 +125,7 @@ class FundamentalRecoveryTest(unittest.TestCase):
         self.assertEqual(float(row["operating_cash_flow"]), 88.0)
         self.assertEqual(float(row["debt_ratio"]), 31.0)
         self.assertEqual(str(row["disclosure_date"]), "2026-08-22")
-        self.assertTrue(cache_file.exists())
+        self.assertTrue(cache_exists)
 
         pit_row, pit_method = _financial_pit_row(frame, as_of=date(2026, 8, 21))
         self.assertEqual(pit_row, {})
