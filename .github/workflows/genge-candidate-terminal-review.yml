@@ -9,6 +9,7 @@ on:
       - "src/strategies/genge_opportunity_discovery/valuation_research_long_term_runner.py"
       - "src/strategies/genge_cycle_bottom/fundamentals.py"
       - "tests/test_genge_candidate_terminal_decision.py"
+      - "tests/test_genge_candidate_terminal_workflow.py"
       - "tests/test_genge_fundamental_recovery.py"
       - "tests/test_genge_valuation_research_report.py"
       - "tests/test_genge_valuation_research_long_term_runner.py"
@@ -20,6 +21,7 @@ on:
       - "src/strategies/genge_opportunity_discovery/valuation_research_long_term_runner.py"
       - "src/strategies/genge_cycle_bottom/fundamentals.py"
       - "tests/test_genge_candidate_terminal_decision.py"
+      - "tests/test_genge_candidate_terminal_workflow.py"
       - "tests/test_genge_fundamental_recovery.py"
       - "tests/test_genge_valuation_research_report.py"
       - "tests/test_genge_valuation_research_long_term_runner.py"
@@ -62,6 +64,7 @@ jobs:
         run: >-
           python -m pytest -q
           tests/test_genge_candidate_terminal_decision.py
+          tests/test_genge_candidate_terminal_workflow.py
           tests/test_genge_fundamental_recovery.py
           tests/test_genge_valuation_research_report.py
           tests/test_genge_valuation_research_long_term_runner.py
@@ -90,16 +93,46 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          preferred=""
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            upstream="${{ github.event.workflow_run.id }}"
+            preferred="${{ github.event.workflow_run.id }}"
           elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            upstream="${{ inputs.upstream_run_id }}"
-          else
-            upstream="$(gh api \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-postscan-research.yml/runs?branch=main&status=completed&per_page=20" \
-              --jq '.workflow_runs[0].id')"
+            preferred="${{ inputs.upstream_run_id }}"
           fi
-          [[ "$upstream" =~ ^[0-9]+$ ]] || { echo "invalid or unavailable upstream_run_id=$upstream" >&2; exit 1; }
+
+          mapfile -t completed_runs < <(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-postscan-research.yml/runs?branch=main&status=completed&per_page=20" \
+              --jq '.workflow_runs[].id'
+          )
+          candidates=()
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
+            candidates+=("$preferred")
+          fi
+          for candidate in "${completed_runs[@]}"; do
+            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then
+              candidates+=("$candidate")
+            fi
+          done
+
+          upstream=""
+          for candidate in "${candidates[@]}"; do
+            artifact_id="$(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                --jq '[.artifacts[] | select(.name == "genge-postscan-research" and .expired == false)][0].id // empty'
+            )"
+            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+              upstream="$candidate"
+              echo "selected postscan run $candidate with artifact $artifact_id"
+              break
+            fi
+            echo "skip postscan run $candidate: usable genge-postscan-research artifact not found"
+          done
+
+          [[ "$upstream" =~ ^[0-9]+$ ]] || {
+            echo "no completed main postscan run has a usable genge-postscan-research artifact" >&2
+            exit 1
+          }
           echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
           echo "postscan run: $upstream"
       - name: Download postscan research artifact
