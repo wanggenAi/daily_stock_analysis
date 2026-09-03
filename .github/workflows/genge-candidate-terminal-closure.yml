@@ -1,0 +1,149 @@
+name: GenGe Candidate Terminal Closure
+
+on:
+  pull_request:
+    paths:
+      - "src/strategies/genge_opportunity_discovery/candidate_terminal_closure.py"
+      - "tests/test_genge_candidate_terminal_closure.py"
+      - ".github/workflows/genge-candidate-terminal-closure.yml"
+  workflow_run:
+    workflows: ["GenGe Postscan Research Pipeline"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      postscan_run_id:
+        description: "Completed GenGe Postscan Research Pipeline run id"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: genge-candidate-terminal-${{ github.event.workflow_run.id || inputs.postscan_run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  terminal-contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Run terminal closure contract tests
+        run: |
+          python -m pytest -q tests/test_genge_candidate_terminal_closure.py
+
+  terminalize:
+    needs: terminal-contract-tests
+    if: github.event_name == 'workflow_run' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Resolve postscan run id
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "POSTSCAN_RUN_ID=${{ github.event.workflow_run.id }}" >> "$GITHUB_ENV"
+          else
+            echo "POSTSCAN_RUN_ID=${{ inputs.postscan_run_id }}" >> "$GITHUB_ENV"
+          fi
+
+      - name: Download postscan research artifact even when upstream concluded non-success
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-postscan-research
+          path: postscan
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ env.POSTSCAN_RUN_ID }}
+
+      - name: Resolve authoritative candidate inputs
+        run: |
+          FORMAL_CSV="$(find postscan -type f -name long_term_formal_buy_candidates.csv -print -quit)"
+          PRODUCTION_CSV="$(find postscan -type f -name production_decisions.csv -print -quit)"
+          test -n "$FORMAL_CSV" || { echo "long_term_formal_buy_candidates.csv missing"; exit 1; }
+          if [ -z "$PRODUCTION_CSV" ]; then
+            PRODUCTION_CSV="postscan/empty_production_decisions.csv"
+            printf 'code,decision_scope,production_action\n' > "$PRODUCTION_CSV"
+          fi
+          echo "FORMAL_CSV=$FORMAL_CSV" >> "$GITHUB_ENV"
+          echo "PRODUCTION_CSV=$PRODUCTION_CSV" >> "$GITHUB_ENV"
+
+      - name: Force every deep-research candidate to a terminal current-cycle result
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.candidate_terminal_closure \
+            --formal-csv "$FORMAL_CSV" \
+            --production-csv "$PRODUCTION_CSV" \
+            --output-dir reports/candidate_terminal_closure
+
+      - name: Validate no candidate remains parked in an intermediate state
+        run: |
+          python - <<'PY'
+          import csv, json
+          from pathlib import Path
+
+          root = Path('reports/candidate_terminal_closure')
+          rows = list(csv.DictReader((root/'candidate_terminal_decisions.csv').open(encoding='utf-8')))
+          summary = json.loads((root/'candidate_terminal_summary.json').read_text(encoding='utf-8'))
+          allowed = {'BUY', 'WAIT_PRICE', 'REJECT'}
+          assert all(row['terminal_candidate_state'] in allowed for row in rows)
+          assert summary['non_terminal_count'] == 0
+          assert summary['wait_price_without_price_count'] == 0
+          assert summary['formal_buy_mirrored_only'] is True
+          assert summary['new_trade_authority_created'] is False
+          assert summary['canonical_authority_preserved'] is True
+          assert summary['no_auto_trade'] is True
+          if rows:
+              assert summary['terminality_contract_satisfied'] is True
+          for row in rows:
+              if row['terminal_candidate_state'] == 'BUY':
+                  assert row['source_production_action'] == 'BUY'
+                  assert row['valuation_confidence'] == 'HIGH'
+              if row['terminal_candidate_state'] == 'WAIT_PRICE':
+                  assert float(row['wait_price_max']) > 0
+                  assert row['source_production_action'] == 'WAIT'
+                  assert row['valuation_confidence'] == 'HIGH'
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Publish terminal candidate results
+        if: always()
+        run: |
+          if [ -f reports/candidate_terminal_closure/candidate_terminal_decisions.md ]; then
+            cat reports/candidate_terminal_closure/candidate_terminal_decisions.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload terminal candidate decisions
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: genge-candidate-terminal-decisions
+          path: reports/candidate_terminal_closure
+          if-no-files-found: error
