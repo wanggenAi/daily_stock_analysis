@@ -12,15 +12,196 @@ import pandas as pd
 
 from src.strategies.genge_cycle_bottom.fundamentals import (
     FINANCIAL_CACHE_KIND,
+    FundamentalFetchResult,
     PublicFundamentalLoader,
     _normalize_financial_frame,
 )
 from src.strategies.genge_opportunity_discovery.valuation_research_report import (
     _financial_pit_row,
+    _load_many,
+    build_valuation_research_rows,
 )
 
 
+class _SequencedLoader:
+    def __init__(self, outcomes):
+        self.outcomes = list(outcomes)
+        self.calls = []
+
+    def load(self, code, *, years, fetch_valuation, fetch_financial):
+        self.calls.append((code, years, fetch_valuation, fetch_financial))
+        outcome = self.outcomes.pop(0)
+        if isinstance(outcome, Exception):
+            raise outcome
+        return outcome
+
+
 class FundamentalRecoveryTest(unittest.TestCase):
+    @staticmethod
+    def _valuation_frame():
+        return pd.DataFrame(
+            {
+                "date": ["2026-08-13", "2026-08-14", "2026-08-15"],
+                "pe": [20.0, 20.0, 22.0],
+            }
+        )
+
+    @staticmethod
+    def _financial_frame():
+        return pd.DataFrame(
+            {
+                "report_date": ["2026-06-30"],
+                "disclosure_date": ["2026-08-10"],
+                "net_profit": [100.0],
+                "operating_cash_flow": [90.0],
+            }
+        )
+
+    def test_research_loader_retries_exception_then_recovers(self):
+        loader = _SequencedLoader(
+            [
+                ConnectionError("transient"),
+                FundamentalFetchResult(valuation_df=self._valuation_frame()),
+            ]
+        )
+        with patch(
+            "src.strategies.genge_opportunity_discovery.valuation_research_report.time.sleep",
+            return_value=None,
+        ):
+            result = _load_many(
+                loader,
+                ["600519"],
+                years=5,
+                fetch_valuation=True,
+                fetch_financial=False,
+                max_workers=1,
+            )["600519"]
+
+        self.assertIsNotNone(result.valuation_df)
+        self.assertEqual(len(loader.calls), 2)
+        self.assertIn(
+            "research_loader:attempt_1:ConnectionError",
+            result.provider_errors["valuation"],
+        )
+
+    def test_research_loader_combines_partial_recovery_without_refetching_success(self):
+        loader = _SequencedLoader(
+            [
+                FundamentalFetchResult(),
+                FundamentalFetchResult(valuation_df=self._valuation_frame()),
+                FundamentalFetchResult(financial_df=self._financial_frame()),
+            ]
+        )
+        with patch(
+            "src.strategies.genge_opportunity_discovery.valuation_research_report.time.sleep",
+            return_value=None,
+        ):
+            result = _load_many(
+                loader,
+                ["600519"],
+                years=5,
+                fetch_valuation=True,
+                fetch_financial=True,
+                max_workers=1,
+            )["600519"]
+
+        self.assertIsNotNone(result.valuation_df)
+        self.assertIsNotNone(result.financial_df)
+        self.assertEqual(
+            loader.calls,
+            [
+                ("600519", 5, True, True),
+                ("600519", 5, True, True),
+                ("600519", 5, False, True),
+            ],
+        )
+
+    def test_research_loader_does_not_repeat_first_success(self):
+        loader = _SequencedLoader(
+            [FundamentalFetchResult(valuation_df=self._valuation_frame())]
+        )
+        result = _load_many(
+            loader,
+            ["600519"],
+            years=5,
+            fetch_valuation=True,
+            fetch_financial=False,
+            max_workers=1,
+        )["600519"]
+
+        self.assertIsNotNone(result.valuation_df)
+        self.assertEqual(loader.calls, [("600519", 5, True, False)])
+
+    def test_research_loader_exhaustion_is_explicit_and_never_synthetic(self):
+        loader = _SequencedLoader([FundamentalFetchResult() for _ in range(3)])
+        with patch(
+            "src.strategies.genge_opportunity_discovery.valuation_research_report.time.sleep",
+            return_value=None,
+        ):
+            result = _load_many(
+                loader,
+                ["000001"],
+                years=5,
+                fetch_valuation=True,
+                fetch_financial=True,
+                max_workers=1,
+            )["000001"]
+
+        self.assertIsNone(result.valuation_df)
+        self.assertIsNone(result.financial_df)
+        self.assertEqual(len(loader.calls), 3)
+        self.assertIn(
+            "research_loader:recovery_exhausted:valuation_unavailable",
+            result.provider_errors["valuation"],
+        )
+        self.assertIn(
+            "research_loader:recovery_exhausted:financial_unavailable",
+            result.provider_errors["financial"],
+        )
+        self.assertFalse(
+            any(
+                "synthetic" in error.lower()
+                for errors in result.provider_errors.values()
+                for error in errors
+            )
+        )
+
+    def test_recovered_valuation_continues_research_instead_of_early_missing_reject(self):
+        loader = _SequencedLoader(
+            [
+                FundamentalFetchResult(valuation_df=pd.DataFrame()),
+                FundamentalFetchResult(valuation_df=self._valuation_frame()),
+                FundamentalFetchResult(financial_df=self._financial_frame()),
+            ]
+        )
+        with patch(
+            "src.strategies.genge_opportunity_discovery.valuation_research_report.time.sleep",
+            return_value=None,
+        ):
+            rows = build_valuation_research_rows(
+                [
+                    {
+                        "code": "600519",
+                        "stock_name": "贵州茅台",
+                        "quant_status": "PRIORITY_RESEARCH",
+                        "quant_rank": 1,
+                        "quant_score": 90,
+                    }
+                ],
+                as_of=date(2026, 8, 15),
+                loader=loader,
+                minimum_pe_samples=1,
+                max_workers=1,
+            )
+
+        self.assertEqual(rows[0]["valuation_diagnostic_status"], "OK")
+        self.assertEqual(rows[0]["financial_review_status"], "OK")
+        self.assertEqual(rows[0]["earnings_point_in_time_method"], "DISCLOSURE_DATE_PIT")
+        self.assertIn(
+            "research_loader:attempt_1:empty_result",
+            rows[0]["valuation_provider_errors"],
+        )
+
     def test_normalized_cache_preserves_canonical_net_profit(self):
         frame = pd.DataFrame(
             {

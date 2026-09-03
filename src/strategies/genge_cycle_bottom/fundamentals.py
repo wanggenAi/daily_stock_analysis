@@ -160,10 +160,10 @@ def _retry_frame_call(
     for attempt in range(1, total_attempts + 1):
         try:
             raw = _quiet_call(fn)
+            normalized = normalizer(raw)
         except Exception as exc:
             errors.append(f"{label}:attempt_{attempt}:{type(exc).__name__}")
         else:
-            normalized = normalizer(raw)
             if normalized is not None and not normalized.empty:
                 return normalized
             last = normalized if isinstance(normalized, pd.DataFrame) else pd.DataFrame()
@@ -178,9 +178,16 @@ def _financial_frame_has_core_amounts(frame: Optional[pd.DataFrame]) -> bool:
         return False
     if "net_profit" not in frame.columns or "operating_cash_flow" not in frame.columns:
         return False
-    net_profit = pd.to_numeric(frame["net_profit"], errors="coerce")
-    operating_cash = pd.to_numeric(frame["operating_cash_flow"], errors="coerce")
-    return bool((net_profit.notna() & operating_cash.notna()).any())
+    local = frame.copy()
+    local["report_date"] = pd.to_datetime(local.get("report_date"), errors="coerce")
+    local = local.dropna(subset=["report_date"]).sort_values("report_date")
+    if local.empty:
+        return False
+    latest = local.iloc[-1]
+    return bool(
+        _safe_float(latest.get("net_profit")) is not None
+        and _safe_float(latest.get("operating_cash_flow")) is not None
+    )
 
 
 def _merge_financial_frames(*frames: Optional[pd.DataFrame]) -> pd.DataFrame:
@@ -199,11 +206,14 @@ def _merge_financial_frames(*frames: Optional[pd.DataFrame]) -> pd.DataFrame:
             continue
         local = normalized.copy()
         local["_source_priority"] = priority
+        local = local.dropna(axis="columns", how="all")
         parts.append(local)
     if not parts:
         return pd.DataFrame(columns=FINANCIAL_COLUMNS)
 
-    combined = pd.concat(parts, ignore_index=True)
+    combined = pd.concat(parts, ignore_index=True).reindex(
+        columns=[*FINANCIAL_COLUMNS, "_source_priority"]
+    )
     rows: List[Dict[str, Any]] = []
     numeric_columns = (
         "debt_ratio",
@@ -297,12 +307,9 @@ class PublicFundamentalLoader:
                     indicator=indicator,
                     period=period,
                 ),
-                lambda raw, target_column=target_column: (
-                    _normalize_baidu_valuation(raw, target_column)
-                    or pd.DataFrame()
-                )
-                if not isinstance(_normalize_baidu_valuation(raw, target_column), pd.DataFrame)
-                else _normalize_baidu_valuation(raw, target_column),
+                lambda raw, target_column=target_column: _normalize_baidu_valuation(
+                    raw, target_column
+                ),
                 label=f"stock_zh_valuation_baidu:{indicator}",
                 errors=errors,
             )
@@ -324,7 +331,9 @@ class PublicFundamentalLoader:
     def load_financial(self, code: str, *, years: int) -> Tuple[Optional[pd.DataFrame], str, List[str], bool]:
         cached = _read_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code)
         if cached is not None:
-            return _normalize_financial_frame(cached), "cache", [], True
+            normalized_cache = _normalize_financial_frame(cached)
+            if _financial_frame_has_core_amounts(normalized_cache):
+                return normalized_cache, "cache", [], True
 
         errors: List[str] = []
         try:
@@ -379,7 +388,13 @@ class PublicFundamentalLoader:
                 if not primary.empty
                 else "akshare.eastmoney_statements"
             )
-        _write_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code, normalized)
+        # A ratios-only/one-statement partial result remains useful evidence for
+        # this cycle, but must not become a sticky cache hit that suppresses
+        # recovery in the next cycle.
+        if _financial_frame_has_core_amounts(normalized):
+            _write_cache(self.cache_dir, FINANCIAL_CACHE_KIND, code, normalized)
+        else:
+            errors.append("financial_core_amounts_incomplete_after_recovery")
         return normalized, provider, errors, False
 
 

@@ -193,7 +193,16 @@ def _build_valuation_research_rows(
             as_of=as_of,
             minimum_history_samples=minimum_pe_samples,
         )
-        provisional.append(_base_row(source, pe_diag))
+        base_row = _base_row(source, pe_diag)
+        if fetched is not None and not isinstance(fetched, Exception):
+            base_row["valuation_provider"] = getattr(
+                fetched, "valuation_provider", "none"
+            )
+            provider_errors = getattr(fetched, "provider_errors", {}) or {}
+            base_row["valuation_provider_errors"] = ";".join(
+                provider_errors.get("valuation", [])
+            )
+        provisional.append(base_row)
 
     provisional.sort(key=_rank_key)
     budget = max(0, int(financial_review_limit))
@@ -231,7 +240,16 @@ def _build_valuation_research_rows(
         financial_frame = (
             None if isinstance(fetched, Exception) or fetched is None else fetched.financial_df
         )
-        reviewed.append(_add_financial_review(row, financial_frame, as_of=as_of))
+        reviewed_row = _add_financial_review(row, financial_frame, as_of=as_of)
+        if fetched is not None and not isinstance(fetched, Exception):
+            reviewed_row["financial_provider"] = getattr(
+                fetched, "financial_provider", "none"
+            )
+            provider_errors = getattr(fetched, "provider_errors", {}) or {}
+            reviewed_row["financial_provider_errors"] = ";".join(
+                provider_errors.get("financial", [])
+            )
+        reviewed.append(reviewed_row)
 
     reviewed.sort(key=_rank_key)
     for rank, row in enumerate(reviewed, 1):

@@ -1,6 +1,9 @@
+import csv
+
 from src.strategies.genge_opportunity_discovery.candidate_terminal_decision import (
     build_terminal_rows,
     terminalize_candidate,
+    write_report,
 )
 
 
@@ -177,3 +180,51 @@ def test_every_master_row_gets_exactly_one_terminal_state_and_duplicates_collaps
     assert [row["terminal_decision"] for row in rows] == ["BUY", "WAIT_PRICE", "REJECT"]
     assert all(row["terminal_decision"] in {"BUY", "WAIT_PRICE", "REJECT"} for row in rows)
     assert all(row["no_auto_trade"] is True for row in rows)
+
+
+def test_terminal_report_exposes_actionable_fields_in_plain_job_log_source(tmp_path):
+    master_csv = tmp_path / "master.csv"
+    formal_csv = tmp_path / "formal.csv"
+    production_csv = tmp_path / "production.csv"
+    output_dir = tmp_path / "out"
+
+    for path, rows in (
+        (master_csv, [_master()]),
+        (formal_csv, [_formal()]),
+        (
+            production_csv,
+            [
+                _production(
+                    "WAIT",
+                    reason_codes="PRICE_TOO_CLOSE_TO_BASE_VALUE",
+                    neutral_value="10",
+                    current_price="9",
+                )
+            ],
+        ),
+    ):
+        with path.open("w", encoding="utf-8", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+            writer.writeheader()
+            writer.writerows(rows)
+
+    write_report(master_csv, formal_csv, production_csv, output_dir)
+    text = (output_dir / "candidate_terminal_decisions.md").read_text(
+        encoding="utf-8"
+    )
+    assert "decision=WAIT_PRICE" in text
+    assert "current_price=9.0" in text
+    assert "wait_price_max=8.0" in text
+    assert "reason=HIGH_CONFIDENCE_PRICE_ONLY_BLOCK" in text
+    assert "provider_errors=none" in text
+    assert "retryable=True" in text
+    assert "authority=RESEARCH_TERMINAL_VIEW" in text
+
+
+def test_evidence_exhaustion_is_retryable_reject_not_unknown_pass():
+    master = _master()
+    master.pop("v31_moat_status")
+    row = terminalize_candidate(master, _formal(), _production("WAIT"))
+    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_retryable_next_cycle"] is True
+    assert row["terminal_formal_buy_authorized"] is False

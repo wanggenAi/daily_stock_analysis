@@ -363,8 +363,29 @@ def write_report(master_csv: Path, formal_csv: Path, production_csv: Path, outpu
         "- BUY authority: mirror of existing Formal BUY + frozen Production BUY only", "",
     ]
     for index, row in enumerate(rows, 1):
-        price = f" | wait <= {row['wait_price_max']}" if row["terminal_decision"] == "WAIT_PRICE" else ""
-        lines.append(f"{index}. {row['code']} {row.get('stock_name','')} | {row['terminal_decision']} | {row['terminal_reason_class']} | {row['terminal_reason_codes']}{price}")
+        current_price = row.get("terminal_current_price")
+        current_text = current_price if _float(current_price) is not None else "NA"
+        wait_price = row.get("wait_price_max")
+        wait_text = wait_price if _float(wait_price) is not None else "NA"
+        reason_codes = row.get("terminal_reason_codes") or "none"
+        provider_errors = " || ".join(
+            str(value).strip()
+            for value in (
+                row.get("valuation_provider_errors"),
+                row.get("financial_provider_errors"),
+            )
+            if str(value or "").strip()
+        ) or "none"
+        lines.append(
+            f"{index}. {row['code']} {row.get('stock_name', '')}"
+            f" | decision={row['terminal_decision']}"
+            f" | current_price={current_text}"
+            f" | wait_price_max={wait_text}"
+            f" | reason={row['terminal_reason_class']}:{reason_codes}"
+            f" | provider_errors={provider_errors}"
+            f" | retryable={row['terminal_retryable_next_cycle']}"
+            f" | authority={row['decision_authority']}"
+        )
     (output_dir / "candidate_terminal_decisions.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return rows
 

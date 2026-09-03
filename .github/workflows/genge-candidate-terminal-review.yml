@@ -5,16 +5,24 @@ on:
     branches: [main]
     paths:
       - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
+      - "src/strategies/genge_opportunity_discovery/valuation_research_report.py"
+      - "src/strategies/genge_opportunity_discovery/valuation_research_long_term_runner.py"
       - "src/strategies/genge_cycle_bottom/fundamentals.py"
       - "tests/test_genge_candidate_terminal_decision.py"
       - "tests/test_genge_fundamental_recovery.py"
+      - "tests/test_genge_valuation_research_report.py"
+      - "tests/test_genge_valuation_research_long_term_runner.py"
       - ".github/workflows/genge-candidate-terminal-review.yml"
   pull_request:
     paths:
       - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
+      - "src/strategies/genge_opportunity_discovery/valuation_research_report.py"
+      - "src/strategies/genge_opportunity_discovery/valuation_research_long_term_runner.py"
       - "src/strategies/genge_cycle_bottom/fundamentals.py"
       - "tests/test_genge_candidate_terminal_decision.py"
       - "tests/test_genge_fundamental_recovery.py"
+      - "tests/test_genge_valuation_research_report.py"
+      - "tests/test_genge_valuation_research_long_term_runner.py"
       - ".github/workflows/genge-candidate-terminal-review.yml"
   workflow_run:
     workflows: ["GenGe Postscan Research Pipeline"]
@@ -56,6 +64,7 @@ jobs:
           tests/test_genge_candidate_terminal_decision.py
           tests/test_genge_fundamental_recovery.py
           tests/test_genge_valuation_research_report.py
+          tests/test_genge_valuation_research_long_term_runner.py
 
   terminalize:
     needs: terminal-contract-tests
