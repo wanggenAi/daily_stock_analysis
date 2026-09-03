@@ -31,6 +31,7 @@ on:
       - "CURRENT_CAPITAL.json"
       - "tests/test_genge_investor_decision_dashboard.py"
       - "tests/test_genge_investor_live_execution_overlay.py"
+      - "tests/test_genge_investor_dashboard_workflow_contract.py"
 
 permissions:
   contents: write
@@ -59,7 +60,8 @@ jobs:
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
           python -m pytest -q \
             tests/test_genge_investor_decision_dashboard.py \
-            tests/test_genge_investor_live_execution_overlay.py
+            tests/test_genge_investor_live_execution_overlay.py \
+            tests/test_genge_investor_dashboard_workflow_contract.py
 
   publish-investor-brief:
     name: Publish investor decision brief
@@ -154,19 +156,32 @@ jobs:
           echo "TERMINAL_SUMMARY=${summary}" >> "$GITHUB_ENV"
           echo "TERMINAL_RUN_ID=${selected}" >> "$GITHUB_ENV"
 
-      - name: Download latest full-A market context
+      - name: Download latest usable full-A market context
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           rm -rf incoming-market; mkdir incoming-market
           selected=""
-          runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?status=success&per_page=40")
-          for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select((.event == "schedule" or .event == "workflow_dispatch") and .conclusion == "success") | .id'); do
+          artifact_id=""
+          # Do not filter by current run status. A scheduled run may be in a new
+          # attempt while its previous successful attempt still has a valid,
+          # non-expired production artifact. Prefer the newest usable artifact.
+          runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?per_page=60")
+          for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.event == "schedule" or .event == "workflow_dispatch") | .id'); do
             artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
-            if [ "$(printf '%s' "$artifacts" | jq '[.artifacts[] | select(.expired == false and .name == "genge-all-a-production-report")] | length')" -gt 0 ]; then selected="$run_id"; break; fi
+            artifact_id=$(printf '%s' "$artifacts" | jq -r '[.artifacts[] | select(.expired == false and .name == "genge-all-a-production-report")] | sort_by(.created_at) | reverse | .[0].id // empty')
+            if [ -n "$artifact_id" ]; then
+              selected="$run_id"
+              break
+            fi
           done
-          [ -z "$selected" ] || gh run download "$selected" --repo "$GITHUB_REPOSITORY" --dir incoming-market
+          if [ -n "$artifact_id" ]; then
+            gh api -H "Accept: application/vnd.github+json" "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > incoming-market.zip
+            unzip -q incoming-market.zip -d incoming-market
+          fi
+          echo "MARKET_RUN_ID=${selected}" >> "$GITHUB_ENV"
+          echo "MARKET_ARTIFACT_ID=${artifact_id}" >> "$GITHUB_ENV"
           echo "MARKET_REGIME=$(find incoming-market -name market_regime.json -print -quit || true)" >> "$GITHUB_ENV"
           echo "INDUSTRY_REGIMES=$(find incoming-market -name industry_regimes.csv -print -quit || true)" >> "$GITHUB_ENV"
 
