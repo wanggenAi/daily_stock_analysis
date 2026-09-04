@@ -28,6 +28,14 @@ data/decision_outcomes/summary.json
 
 The repository intentionally does **not** seed historical execution rows. Existing holdings, cost basis, screenshots, inferred fills, or current prices are not silently converted into executions.
 
+## Automatic finalized-decision observation
+
+`GenGe V3.1.1 Decision Outcome Observer` runs only after a successful `GenGe V3.1.1 Production Finalizer` (or an explicit manual replay of a successful Finalizer run). Before importing anything it downloads the authoritative artifact from that exact Finalizer run and validates the authority/canonical/hourly/holdings/lifecycle identity chain, including authorization, production version, Finalizer run id, canonical snapshot id, canonical source run id, canonical SHA256, source hashes, latest trade date, research timestamp, and no-auto-trade contract.
+
+Only after that validation does it append canonical decision observations to `data/decision_outcomes/decision_events.jsonl`. Persistence uses optimistic replay from the latest `main`: a non-fast-forward push discards the generated attempt, fetches the new remote state, and re-imports the same canonical snapshot. This preserves concurrent durable writers and keeps repeated observation of the same snapshot idempotent.
+
+The automatic observer never creates or modifies `execution_events.jsonl`. A Formal BUY/ADD/REDUCE/EXIT is evidence that the system made a decision; it is not evidence that the user executed it. Real executions must still be supplied explicitly.
+
 ## Usage
 
 Import a finalized canonical snapshot projection:
@@ -36,6 +44,14 @@ Import a finalized canonical snapshot projection:
 python scripts/decision_outcome_evaluator.py import-canonical \
   --canonical authoritative/canonical_snapshot/latest.json \
   --decisions data/decision_outcomes/decision_events.jsonl
+```
+
+Persist that finalized observation to the latest durable `main` with optimistic replay:
+
+```bash
+python -m scripts.decision_outcome_git_persistence \
+  --canonical authoritative/canonical_snapshot/latest.json \
+  --repo-root . --remote origin --branch main
 ```
 
 Record a real execution only after it is explicitly known:
@@ -77,6 +93,8 @@ These milestones are evaluation checkpoints, not permission to optimize the froz
 
 - Re-importing an identical canonical snapshot adds zero decision events.
 - Canonical payloads are deep-copied/checked and never mutated.
+- Automatic observation requires one fully validated authoritative Finalizer artifact.
+- Durable decision-event persistence replays from the latest remote branch after a rejected push.
 - Executions are caller-supplied facts and remain separate from decisions.
 - Selling more shares than the explicit execution ledger has bought fails closed instead of inferring inventory from holdings.
 - No broker connection and no automatic trading are introduced.
