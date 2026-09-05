@@ -143,21 +143,21 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: near-buy-input
 
-      - name: Validate Recovery input
+      - name: Validate Recovery input from actual Near-BUY overlay
         shell: bash
         run: |
           set -euo pipefail
-          test -s near-buy-input/near_buy_evidence_recovery.csv
+          test -s near-buy-input/near_buy_research_overlay.csv
           python - <<'PY'
           import csv
           from pathlib import Path
-          rows = list(csv.DictReader(Path('near-buy-input/near_buy_evidence_recovery.csv').open(encoding='utf-8')))
-          assert all(row.get('research_opportunity_state') == 'EVIDENCE_RECOVERY_PRIORITY' for row in rows)
-          assert all(not row.get('v31_hard_gate_failures') for row in rows)
-          assert all(not row.get('confirmed_negative_items') for row in rows)
-          assert all(not row.get('conflicted_evidence_items') for row in rows)
-          assert all(str(row.get('evidence_recovery_starter_allowed')).lower() in {'', 'false', '0', 'no'} for row in rows)
-          print(f'validated recovery rows={len(rows)}; zero is a healthy no-op')
+          rows = list(csv.DictReader(Path('near-buy-input/near_buy_research_overlay.csv').open(encoding='utf-8')))
+          recovery = [row for row in rows if row.get('research_opportunity_state') == 'EVIDENCE_RECOVERY_PRIORITY']
+          assert all(not row.get('v31_hard_gate_failures') for row in recovery)
+          assert all(not row.get('confirmed_negative_items') for row in recovery)
+          assert all(not row.get('conflicted_evidence_items') for row in recovery)
+          assert all(str(row.get('evidence_recovery_starter_allowed')).lower() in {'', 'false', '0', 'no'} for row in recovery)
+          print(f'validated overlay rows={len(rows)} recovery rows={len(recovery)}; zero recovery is a healthy no-op')
           PY
 
       - name: Collect targeted public evidence and build review packets
@@ -166,7 +166,7 @@ jobs:
           set -euo pipefail
           set +e
           python -m src.strategies.genge_opportunity_discovery.near_buy_evidence_recovery \
-            --recovery-csv near-buy-input/near_buy_evidence_recovery.csv \
+            --recovery-csv near-buy-input/near_buy_research_overlay.csv \
             --output-dir near-buy-evidence-recovery \
             --cache-dir .cache/near-buy-evidence-recovery \
             --as-of "$(date +%F)" \
@@ -210,6 +210,7 @@ jobs:
           assert priority['threshold_changes_allowed'] is False
           assert priority['automatic_gate_inference_allowed'] is False
           assert priority['formal_action_eligible'] is False
+          assert priority['formal_action_recomputed'] is False
           assert priority['automatic_promotion_allowed'] is False
           assert priority['starter_position_allowed'] is False
           assert priority['no_auto_trade'] is True
@@ -241,6 +242,7 @@ jobs:
         run: |
           echo "# GenGe Near-BUY Evidence Recovery" >> "$GITHUB_STEP_SUMMARY"
           echo "- source Near-BUY run: ${UPSTREAM_RUN_ID:-unresolved}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- source CSV: near_buy_research_overlay.csv (Recovery rows filtered by research_opportunity_state)" >> "$GITHUB_STEP_SUMMARY"
           echo "- targeted public evidence only; qualitative V3.1 judgement remains explicit/unresolved" >> "$GITHUB_STEP_SUMMARY"
           echo "- Recovery priority changes research order only; thresholds/Formal/Canonical are unchanged" >> "$GITHUB_STEP_SUMMARY"
           if [ -f near-buy-evidence-recovery/recovery_summary.json ]; then
