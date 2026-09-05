@@ -26,7 +26,13 @@ jobs:
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
       - name: Apply recovery patch
-        run: python scripts/temp_apply_near_buy_recovery.py
+        run: |
+          python scripts/temp_apply_near_buy_recovery.py
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('tests/test_genge_near_buy_research_overlay.py')
+          path.write_text(path.read_text(encoding='utf-8').rstrip() + '\n', encoding='utf-8')
+          PY
       - name: Verify targeted contract
         run: |
           python -m py_compile scripts/near_buy_research_overlay.py
