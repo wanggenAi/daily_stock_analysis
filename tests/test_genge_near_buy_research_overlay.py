@@ -169,3 +169,98 @@ def test_forward_5_10_20_60_metrics_and_drawdown_aggregate_correctly():
     assert result["production_semantics_mutated"] is False
     assert result["canonical_authority_unchanged"] is True
     assert result["no_auto_trade"] is True
+
+
+def _missing_recovery_row(**overrides):
+    row = _row(
+        terminal_reason_codes="hard_gate_unknown:predictability;hard_gate_unknown:long_term_demand;hard_gate_unknown:moat;hard_gate_unknown:financial_safety;hard_gate_unknown:earnings_authenticity",
+        source_production_reason_codes="",
+        v31_candidate_class="PENDING",
+        v31_score_total="",
+        v31_hard_gate_unknowns="predictability;long_term_demand;moat;financial_safety;earnings_authenticity",
+        v31_score_complete="False",
+        v31_normalized_profit_ready="False",
+        v31_scenario_valuation_ready="False",
+        v31_implied_expectation_ready="False",
+        v31_expectation_gap_ready="False",
+        v31_risk_adjusted_cagr_ready="False",
+        v31_downside_ready="False",
+        v31_falsification_ready="False",
+        financial_review_status="OK",
+        valuation_diagnostic_status="OK",
+        quant_status="PRIORITY_RESEARCH",
+        long_term_second_pass_status="",
+    )
+    row.update(overrides)
+    return row
+
+
+def test_missing_hard_gate_evidence_is_recovery_priority_not_near_buy():
+    result = classify_terminal_row(_missing_recovery_row())
+    assert result["research_opportunity_state"] == "EVIDENCE_RECOVERY_PRIORITY"
+    assert result["evidence_recovery_priority_tier"] == "B"
+    assert result["near_buy_evidence_state"] == "MISSING"
+    assert result["starter_position_advisory_allowed"] is False
+    assert result["evidence_recovery_starter_allowed"] is False
+    assert result["automatic_promotion_allowed"] is False
+
+
+def test_completed_non_exit_second_pass_gets_recovery_tier_a_only():
+    result = classify_terminal_row(
+        _missing_recovery_row(
+            long_term_second_pass_status="PASSED_ALL_NON_EXIT_PROFILE_HARD_GATES",
+            quant_status="SECONDARY_RESEARCH",
+        )
+    )
+    assert result["research_opportunity_state"] == "EVIDENCE_RECOVERY_PRIORITY"
+    assert result["evidence_recovery_priority_tier"] == "A"
+    assert result["starter_position_advisory_allowed"] is False
+
+
+def test_secondary_research_gets_recovery_tier_c():
+    result = classify_terminal_row(_missing_recovery_row(quant_status="SECONDARY_RESEARCH"))
+    assert result["evidence_recovery_priority_tier"] == "C"
+
+
+def test_recovery_rejects_negative_conflicted_or_non_execution_rows():
+    negative = classify_terminal_row(_missing_recovery_row(source_production_reason_codes="FUNDAMENTAL_BREAK"))
+    conflicted = classify_terminal_row(_missing_recovery_row(financial_provider_errors="source_mismatch"))
+    blocked = classify_terminal_row(_missing_recovery_row(v31_execution_universe_status="RESEARCH_ONLY"))
+    assert negative["research_opportunity_state"] == "NONE"
+    assert conflicted["research_opportunity_state"] == "NONE"
+    assert blocked["research_opportunity_state"] == "NONE"
+
+
+def test_overlay_orders_near_buy_then_recovery_a_b_c_then_none():
+    near = _row(code="001316", v31_score_total="82")
+    rec_a = _missing_recovery_row(code="600001", master_research_rank="2", long_term_second_pass_status="PASSED_ALL_NON_EXIT_PROFILE_HARD_GATES")
+    rec_b = _missing_recovery_row(code="600002", master_research_rank="3", quant_status="PRIORITY_RESEARCH")
+    rec_c = _missing_recovery_row(code="600003", master_research_rank="4", quant_status="SECONDARY_RESEARCH")
+    no = _missing_recovery_row(code="600004", master_research_rank="1", financial_review_status="NOT_SELECTED_FOR_DEEP_FINANCIAL_REVIEW")
+    rows = build_overlay([no, rec_c, rec_b, rec_a, near])
+    assert [row["research_opportunity_state"] for row in rows] == [
+        "NEAR_BUY",
+        "EVIDENCE_RECOVERY_PRIORITY",
+        "EVIDENCE_RECOVERY_PRIORITY",
+        "EVIDENCE_RECOVERY_PRIORITY",
+        "NONE",
+    ]
+    assert [row["evidence_recovery_priority_tier"] for row in rows[1:4]] == ["A", "B", "C"]
+
+
+def test_recovery_summary_explicitly_keeps_unknown_non_pass_and_no_starter(tmp_path):
+    terminal = tmp_path / "terminal.csv"
+    out = tmp_path / "out"
+    source = _missing_recovery_row()
+    with terminal.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(source))
+        writer.writeheader()
+        writer.writerow(source)
+    write_overlay(terminal, out)
+    summary = json.loads((out / "near_buy_research_summary.json").read_text(encoding="utf-8"))
+    assert summary["evidence_recovery_count"] == 1
+    assert summary["evidence_recovery_tier_counts"] == {"A": 0, "B": 1, "C": 0}
+    assert summary["evidence_recovery_starter_allowed"] is False
+    assert summary["unknown_evidence_is_pass"] is False
+    assert summary["evidence_recovery_is_formal_signal"] is False
+    assert "starter=NOT_ALLOWED" in (out / "near_buy_research_overlay.md").read_text(encoding="utf-8")

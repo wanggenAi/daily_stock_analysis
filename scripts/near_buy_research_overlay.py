@@ -18,11 +18,13 @@ from collections import Counter
 from pathlib import Path
 from typing import Any, Iterable, Mapping, Sequence
 
-POLICY_VERSION = "near_buy_research_overlay_v1_observer_only"
+POLICY_VERSION = "near_buy_research_overlay_v2_evidence_recovery"
 RESEARCH_AUTHORITY = "OBSERVER_ONLY_RESEARCH_OVERLAY"
 EVIDENCE_STATES = frozenset({"SUFFICIENT", "MISSING", "CONFLICTED", "CONFIRMED_NEGATIVE"})
 NEAR_BUY_STATE = "NEAR_BUY"
+EVIDENCE_RECOVERY_STATE = "EVIDENCE_RECOVERY_PRIORITY"
 NONE_STATE = "NONE"
+RECOVERY_TIERS = ("A", "B", "C")
 STARTER_FRACTION = 0.25
 MIN_NEAR_BUY_SCORE = 70.0
 FORWARD_HORIZONS = (5, 10, 20, 60)
@@ -157,6 +159,47 @@ def evidence_state(row: Mapping[str, Any]) -> tuple[str, list[str], list[str], l
     return state, missing, conflicts, negatives
 
 
+def _evidence_recovery_tier(
+    row: Mapping[str, Any],
+    *,
+    state: str,
+    hard_failures: Sequence[str],
+    negatives: Sequence[str],
+    conflicts: Sequence[str],
+    exec_eligible: bool,
+    retryable: bool,
+    full_review: bool,
+    terminal_decision: str,
+) -> str | None:
+    """Prioritize missing-only evidence recovery without creating trade authority."""
+    if (
+        terminal_decision != "REJECT"
+        or state != "MISSING"
+        or hard_failures
+        or negatives
+        or conflicts
+        or not exec_eligible
+        or not retryable
+        or not full_review
+    ):
+        return None
+
+    financial_ok = _text(row.get("financial_review_status")).upper() == "OK"
+    valuation_ok = _text(row.get("valuation_diagnostic_status")).upper() == "OK"
+    if not (financial_ok and valuation_ok):
+        return None
+
+    second_pass = _text(row.get("long_term_second_pass_status")).upper()
+    quant_status = _text(row.get("quant_status")).upper()
+    if second_pass == "PASSED_ALL_NON_EXIT_PROFILE_HARD_GATES":
+        return "A"
+    if quant_status == "PRIORITY_RESEARCH":
+        return "B"
+    if quant_status == "SECONDARY_RESEARCH":
+        return "C"
+    return None
+
+
 def classify_terminal_row(row: Mapping[str, Any], *, starter_fraction: float = STARTER_FRACTION) -> dict[str, Any]:
     """Return an immutable observer projection for one terminalized candidate."""
     if not 0.20 <= starter_fraction <= 0.30:
@@ -191,6 +234,18 @@ def classify_terminal_row(row: Mapping[str, Any], *, starter_fraction: float = S
         and state in {"MISSING", "CONFLICTED", "SUFFICIENT"}
     )
 
+    recovery_tier = None if near_buy else _evidence_recovery_tier(
+        row,
+        state=state,
+        hard_failures=hard_failures,
+        negatives=negatives,
+        conflicts=conflicts,
+        exec_eligible=exec_eligible,
+        retryable=retryable,
+        full_review=full_review,
+        terminal_decision=terminal_decision,
+    )
+
     reason_codes: list[str] = []
     if near_buy:
         reason_codes.append("high_research_score_without_confirmed_negative")
@@ -201,10 +256,34 @@ def classify_terminal_row(row: Mapping[str, Any], *, starter_fraction: float = S
         if conflicts:
             reason_codes.append("conflicted_evidence_requires_resolution")
 
+    recovery_reason_codes: list[str] = []
+    if recovery_tier:
+        recovery_reason_codes.extend([
+            "missing_evidence_requires_recovery",
+            "financial_review_completed",
+            "valuation_diagnostic_completed",
+        ])
+        if recovery_tier == "A":
+            recovery_reason_codes.append("non_exit_profile_second_pass_completed")
+        else:
+            recovery_reason_codes.append(
+                f"quant_research_priority:{_text(row.get('quant_status')).upper() or 'UNKNOWN'}"
+            )
+
+    if near_buy:
+        opportunity_state = NEAR_BUY_STATE
+    elif recovery_tier:
+        opportunity_state = EVIDENCE_RECOVERY_STATE
+    else:
+        opportunity_state = NONE_STATE
+
     result.update(
         {
-            "research_opportunity_state": NEAR_BUY_STATE if near_buy else NONE_STATE,
+            "research_opportunity_state": opportunity_state,
             "near_buy_reason_codes": ";".join(reason_codes),
+            "evidence_recovery_priority_tier": recovery_tier or "",
+            "evidence_recovery_reason_codes": ";".join(recovery_reason_codes),
+            "evidence_recovery_starter_allowed": False,
             "near_buy_evidence_state": state,
             "missing_evidence_items": ";".join(missing),
             "conflicted_evidence_items": ";".join(conflicts),
@@ -226,31 +305,45 @@ def classify_terminal_row(row: Mapping[str, Any], *, starter_fraction: float = S
         raise AssertionError("near-buy overlay changed terminal decision")
     if near_buy and (negatives or hard_failures):
         raise AssertionError("Near-BUY emitted despite confirmed negative/hard failure")
+    if recovery_tier and (negatives or hard_failures or conflicts):
+        raise AssertionError("evidence recovery emitted despite negative/conflicted evidence")
+    if recovery_tier and result["starter_position_advisory_allowed"]:
+        raise AssertionError("missing-evidence recovery must never receive starter advisory")
     return result
 
 
 def build_overlay(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     projected = [classify_terminal_row(row) for row in rows]
-    projected.sort(
-        key=lambda row: (
-            0 if row["research_opportunity_state"] == NEAR_BUY_STATE else 1,
-            -(_float(row.get("v31_score_total")) or -1.0),
-            _float(row.get("master_research_rank")) or 10**9,
-            _code(row.get("code")),
-        )
-    )
+    tier_priority = {tier: index for index, tier in enumerate(RECOVERY_TIERS)}
+
+    def sort_key(row: Mapping[str, Any]) -> tuple[Any, ...]:
+        state = _text(row.get("research_opportunity_state"))
+        rank = _float(row.get("master_research_rank")) or 10**9
+        code = _code(row.get("code"))
+        if state == NEAR_BUY_STATE:
+            return (0, 0, -(_float(row.get("v31_score_total")) or -1.0), rank, code)
+        if state == EVIDENCE_RECOVERY_STATE:
+            tier = _text(row.get("evidence_recovery_priority_tier"))
+            return (1, tier_priority.get(tier, 99), 0.0, rank, code)
+        return (2, 99, 0.0, rank, code)
+
+    projected.sort(key=sort_key)
     return projected
 
 
 def summarize_overlay(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
     evidence_counts = Counter(_text(row.get("near_buy_evidence_state")) for row in rows)
     near_buy_count = sum(row.get("research_opportunity_state") == NEAR_BUY_STATE for row in rows)
+    recovery_rows = [row for row in rows if row.get("research_opportunity_state") == EVIDENCE_RECOVERY_STATE]
+    recovery_tiers = Counter(_text(row.get("evidence_recovery_priority_tier")) for row in recovery_rows)
     return {
         "schema_version": 1,
         "policy_version": POLICY_VERSION,
         "authority": RESEARCH_AUTHORITY,
         "candidate_count": len(rows),
         "near_buy_count": near_buy_count,
+        "evidence_recovery_count": len(recovery_rows),
+        "evidence_recovery_tier_counts": {tier: recovery_tiers.get(tier, 0) for tier in RECOVERY_TIERS},
         "evidence_state_counts": dict(sorted(evidence_counts.items())),
         "starter_fraction_of_normal_target": STARTER_FRACTION,
         "starter_fraction_band": [0.20, 0.30],
@@ -258,6 +351,9 @@ def summarize_overlay(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
         "canonical_authority_unchanged": True,
         "hard_gate_failure_can_be_near_buy": False,
         "confirmed_negative_can_be_near_buy": False,
+        "evidence_recovery_starter_allowed": False,
+        "unknown_evidence_is_pass": False,
+        "evidence_recovery_is_formal_signal": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
     }
@@ -323,10 +419,11 @@ def _write_csv(path: Path, rows: Sequence[Mapping[str, Any]]) -> None:
     fields = [
         "master_research_rank", "code", "stock_name", "terminal_decision",
         "research_opportunity_state", "near_buy_evidence_state", "near_buy_reason_codes",
+        "evidence_recovery_priority_tier", "evidence_recovery_reason_codes",
         "missing_evidence_items", "conflicted_evidence_items", "confirmed_negative_items",
         "v31_candidate_class", "v31_score_total", "terminal_reason_class",
         "starter_position_advisory_allowed", "starter_fraction_of_normal_target",
-        "starter_advisory_research_only", "formal_action_unchanged",
+        "evidence_recovery_starter_allowed", "starter_advisory_research_only", "formal_action_unchanged",
         "canonical_authority_unchanged", "automatic_promotion_allowed", "no_auto_trade",
         "near_buy_authority", "near_buy_policy_version",
     ]
@@ -352,7 +449,12 @@ def write_overlay(terminal_csv: Path, output_dir: Path) -> list[dict[str, Any]]:
         "",
         f"- candidates: {len(rows)}",
         f"- Near-BUY: {summary['near_buy_count']}",
-        f"- starter advisory: {STARTER_FRACTION:.0%} of normal target when eligible",
+        f"- Evidence recovery priority: {summary['evidence_recovery_count']} "
+        f"(A={summary['evidence_recovery_tier_counts']['A']}, "
+        f"B={summary['evidence_recovery_tier_counts']['B']}, "
+        f"C={summary['evidence_recovery_tier_counts']['C']})",
+        f"- starter advisory: {STARTER_FRACTION:.0%} of normal target for Near-BUY only",
+        "- missing-evidence recovery: no starter position; UNKNOWN remains non-PASS",
         "",
     ]
     for row in rows:
@@ -366,6 +468,19 @@ def write_overlay(terminal_csv: Path, output_dir: Path) -> list[dict[str, Any]]:
             f" | missing={row.get('missing_evidence_items') or 'none'}"
             f" | starter={row.get('starter_fraction_of_normal_target')}"
         )
+    recovery_rows = [row for row in rows if row["research_opportunity_state"] == EVIDENCE_RECOVERY_STATE]
+    if recovery_rows:
+        lines.extend(["", "## Evidence Recovery Priority", ""])
+        for row in recovery_rows[:50]:
+            lines.append(
+                f"- {row.get('code')} {row.get('stock_name', '')}"
+                f" | tier={row.get('evidence_recovery_priority_tier')}"
+                f" | master_rank={row.get('master_research_rank') or 'NA'}"
+                f" | quant_status={row.get('quant_status') or 'NA'}"
+                f" | missing={row.get('missing_evidence_items') or 'none'}"
+                f" | next={row.get('next_research_action') or 'recover_v31_evidence'}"
+                f" | starter=NOT_ALLOWED"
+            )
     (output_dir / "near_buy_research_overlay.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     return rows
 
