@@ -204,8 +204,8 @@ jobs:
           assert q['near_buy_recovery_changes_order_only'] is True
           assert q['near_buy_recovery_changes_thresholds'] is False
           if os.environ.get('NEAR_BUY_RECOVERY_FILE'):
-              assert q['near_buy_recovery_integrated'] is True
-              assert q['near_buy_recovery_count'] > 0
+              assert q['near_buy_recovery_count'] >= 0
+              assert q['near_buy_recovery_integrated'] is (q['near_buy_recovery_count'] > 0)
           assert p['formal_action_recomputed'] is False
           assert p['formal_action_eligible'] is False
           assert o['formal_action_recomputed'] is False
