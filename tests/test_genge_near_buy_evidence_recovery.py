@@ -37,6 +37,31 @@ def test_recovery_workset_is_missing_only_and_deterministic():
     assert all(row["source_row_immutable"] is True for row in workset)
 
 
+def test_empty_recovery_is_healthy_research_only_noop():
+    workset = normalize_recovery_rows([])
+    assert workset == []
+    priority = build_priority_payload(workset, source_run_id="123", workset_digest="empty")
+    assert priority["queue_count"] == 0
+    assert priority["queue"] == []
+    assert priority["priority_changes_order_only"] is True
+    assert priority["threshold_changes_allowed"] is False
+    assert priority["automatic_gate_inference_allowed"] is False
+    assert priority["formal_action_eligible"] is False
+    assert priority["formal_action_recomputed"] is False
+    assert priority["automatic_promotion_allowed"] is False
+    assert priority["starter_position_allowed"] is False
+    assert priority["no_auto_trade"] is True
+
+    routed = build_queue({"rows": []}, {"candidates": {}}, {"securities": []}, priority)
+    assert routed["near_buy_recovery_integrated"] is False
+    assert routed["near_buy_recovery_count"] == 0
+    assert routed["near_buy_recovery_changes_order_only"] is True
+    assert routed["near_buy_recovery_changes_thresholds"] is False
+    assert routed["formal_action_recomputed"] is False
+    assert routed["formal_action_eligible"] is False
+    assert routed["no_auto_trade"] is True
+
+
 def test_recovery_rejects_negative_conflict_and_starter_authority():
     negative = _recovery_row()
     negative["confirmed_negative_items"] = "hard_gate:moat"
