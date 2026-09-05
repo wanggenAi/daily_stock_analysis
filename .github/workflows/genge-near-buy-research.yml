@@ -1,6 +1,12 @@
 name: GenGe Near-BUY Research Overlay
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/near_buy_research_overlay.py"
+      - "tests/test_genge_near_buy_research_overlay.py"
+      - ".github/workflows/genge-near-buy-research.yml"
   pull_request:
     paths:
       - "scripts/near_buy_research_overlay.py"
@@ -48,6 +54,7 @@ jobs:
   build-overlay:
     needs: contract-tests
     if: >-
+      (github.event_name == 'push') ||
       (github.event_name == 'workflow_dispatch') ||
       (
         github.event_name == 'workflow_run' &&
@@ -65,14 +72,48 @@ jobs:
           python-version: "3.11"
       - name: Resolve terminal-review run
         shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
+          preferred=""
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            upstream="${{ github.event.workflow_run.id }}"
-          else
-            upstream="${{ inputs.upstream_run_id }}"
+            preferred="${{ github.event.workflow_run.id }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            preferred="${{ inputs.upstream_run_id }}"
           fi
-          [[ "$upstream" =~ ^[0-9]+$ ]] || { echo "invalid upstream run id" >&2; exit 1; }
+
+          candidates=()
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
+            candidates+=("$preferred")
+          fi
+          mapfile -t successful_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-review.yml/runs?branch=main&status=success&per_page=20" \
+              --jq '.workflow_runs[].id'
+          )
+          for candidate in "${successful_runs[@]}"; do
+            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then
+              candidates+=("$candidate")
+            fi
+          done
+
+          upstream=""
+          for candidate in "${candidates[@]}"; do
+            artifact_id="$(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                --jq '[.artifacts[] | select(.name == "genge-candidate-terminal-decisions" and .expired == false)][0].id // empty'
+            )"
+            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+              upstream="$candidate"
+              echo "selected terminal-review run $candidate with artifact $artifact_id"
+              break
+            fi
+            echo "skip terminal-review run $candidate: usable artifact not found"
+          done
+          [[ "$upstream" =~ ^[0-9]+$ ]] || {
+            echo "no successful main terminal-review run has a usable genge-candidate-terminal-decisions artifact" >&2
+            exit 1
+          }
           echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
       - name: Download terminal decisions
         uses: actions/download-artifact@v4
@@ -105,6 +146,9 @@ jobs:
           assert summary['canonical_authority_unchanged'] is True
           assert summary['hard_gate_failure_can_be_near_buy'] is False
           assert summary['confirmed_negative_can_be_near_buy'] is False
+          assert summary['evidence_recovery_starter_allowed'] is False
+          assert summary['unknown_evidence_is_pass'] is False
+          assert summary['evidence_recovery_is_formal_signal'] is False
           assert summary['automatic_promotion_allowed'] is False
           assert summary['no_auto_trade'] is True
           assert all(row['formal_action_unchanged'] == 'True' for row in rows)
@@ -112,6 +156,8 @@ jobs:
           assert all(row['automatic_promotion_allowed'] == 'False' for row in rows)
           assert all(row['no_auto_trade'] == 'True' for row in rows)
           assert all(not row['confirmed_negative_items'] for row in rows if row['research_opportunity_state'] == 'NEAR_BUY')
+          assert all(row['starter_position_advisory_allowed'] == 'False' for row in rows if row['research_opportunity_state'] == 'EVIDENCE_RECOVERY_PRIORITY')
+          assert all(row['evidence_recovery_starter_allowed'] == 'False' for row in rows)
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
       - name: Publish Near-BUY summary
