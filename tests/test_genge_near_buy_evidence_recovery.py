@@ -165,7 +165,7 @@ def test_router_ignores_untrusted_priority_boost_and_rejects_authority():
     recovery = build_priority_payload(normalize_recovery_rows([_recovery_row()]))
     recovery["queue"][0]["priority_boost"] = 99999
     payload = build_queue({"rows": []}, {"candidates": {}}, {"securities": []}, recovery)
-    assert payload["queue"][0]["priority_score"] == 50  # base PENDING=5 + fixed A=45
+    assert payload["queue"][0]["priority_score"] == 55  # base=5 + missing mapping=5 + fixed A=45
 
     recovery["formal_action_eligible"] = True
     try:
