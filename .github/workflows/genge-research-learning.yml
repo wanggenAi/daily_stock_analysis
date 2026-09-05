@@ -2,10 +2,13 @@ name: GenGe V3.1.1 Research Learning
 
 on:
   workflow_run:
-    # Hourly state is persisted first, which triggers Operating Ledger; learning
-    # follows the successful Ledger so we do not run twice for the same hour.
+    # Hourly state normally arrives through Operating Ledger. A successful
+    # Near-BUY Evidence Recovery run also triggers learning immediately so its
+    # bounded A/B/C research-priority artifact is integrated without waiting for
+    # the next scheduled cycle.
     workflows:
       - "GenGe V3.1.1 Operating Ledger"
+      - "GenGe Near-BUY Evidence Recovery"
     types: [completed]
   schedule:
     # Beijing 17:15 on weekdays: end-of-day learning/outcome refresh.
@@ -15,12 +18,15 @@ on:
     branches: [main]
     paths:
       - ".github/workflows/genge-research-learning.yml"
+      - ".github/workflows/genge-near-buy-evidence-recovery.yml"
+      - "src/strategies/genge_opportunity_discovery/near_buy_evidence_recovery.py"
       - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
       - "src/strategies/genge_opportunity_discovery/price_value_history_summary.py"
       - "src/strategies/genge_opportunity_discovery/formal_decision_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/hourly_research_state.py"
       - "src/strategies/genge_opportunity_discovery/v31_review_queue.py"
       - "src/strategies/genge_opportunity_discovery/production_observability.py"
+      - "tests/test_genge_near_buy_evidence_recovery.py"
       - "tests/test_genge_research_priority_router.py"
       - "tests/test_genge_price_value_history_summary.py"
       - "tests/test_genge_formal_decision_outcomes.py"
@@ -30,6 +36,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 env:
   TZ: Asia/Shanghai
@@ -61,6 +68,78 @@ jobs:
           python -m pip install --disable-pip-version-check -q \
             pandas pytest anyio fastapi httpx starlette PyYAML requests beautifulsoup4 pypdf
 
+      - name: Resolve latest Near-BUY recovery priority artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/near-buy-recovery-priority"
+          rm -rf "$root"
+          mkdir -p "$root"
+          preferred=""
+          if [ "${{ github.event_name }}" = "workflow_run" ] && \
+             [ "${{ github.event.workflow_run.name }}" = "GenGe Near-BUY Evidence Recovery" ]; then
+            preferred="${{ github.event.workflow_run.id }}"
+          fi
+
+          candidates=()
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
+            candidates+=("$preferred")
+          fi
+          mapfile -t successful_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-near-buy-evidence-recovery.yml/runs?branch=main&status=success&per_page=20" \
+              --jq '.workflow_runs[].id'
+          )
+          for candidate in "${successful_runs[@]}"; do
+            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then
+              candidates+=("$candidate")
+            fi
+          done
+
+          selected_run=""
+          selected_artifact=""
+          for candidate in "${candidates[@]}"; do
+            artifact_id="$(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                --jq '[.artifacts[] | select((.name | startswith("genge-near-buy-evidence-recovery-")) and .expired == false)][0].id // empty'
+            )"
+            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+              selected_run="$candidate"
+              selected_artifact="$artifact_id"
+              break
+            fi
+          done
+
+          if [[ ! "$selected_artifact" =~ ^[0-9]+$ ]]; then
+            echo "No successful Near-BUY Evidence Recovery artifact available; learning continues without recovery overlay."
+            echo "NEAR_BUY_RECOVERY_FILE=" >> "$GITHUB_ENV"
+            echo "NEAR_BUY_RECOVERY_RUN_ID=" >> "$GITHUB_ENV"
+            exit 0
+          fi
+
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${selected_artifact}/zip" > "$root/recovery.zip"
+          unzip -q -o "$root/recovery.zip" -d "$root/unpacked"
+          recovery_file="$(find "$root/unpacked" -type f -name near_buy_research_priority.json -print -quit)"
+          test -n "$recovery_file"
+          python - "$recovery_file" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+          payload = json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          assert payload['priority_changes_order_only'] is True
+          assert payload['threshold_changes_allowed'] is False
+          assert payload['automatic_gate_inference_allowed'] is False
+          assert payload['formal_action_eligible'] is False
+          assert payload['formal_action_recomputed'] is False
+          assert payload['automatic_promotion_allowed'] is False
+          assert payload['starter_position_allowed'] is False
+          assert payload['no_auto_trade'] is True
+          PY
+          echo "NEAR_BUY_RECOVERY_FILE=$recovery_file" >> "$GITHUB_ENV"
+          echo "NEAR_BUY_RECOVERY_RUN_ID=$selected_run" >> "$GITHUB_ENV"
+          echo "Using Near-BUY recovery run $selected_run artifact $selected_artifact"
+
       - name: Build and persist learning state with optimistic replay
         run: |
           set -euo pipefail
@@ -79,6 +158,7 @@ jobs:
 
             python -m pytest -q \
               tests/test_genge_hourly_research_state.py \
+              tests/test_genge_near_buy_evidence_recovery.py \
               tests/test_genge_research_priority_router.py \
               tests/test_genge_price_value_history_summary.py \
               tests/test_genge_formal_decision_outcomes.py \
@@ -89,10 +169,15 @@ jobs:
               --history-root data/hourly_deep_overlay \
               --output data/price_value_history/summary.json
 
+            recovery_args=()
+            if [ -n "${NEAR_BUY_RECOVERY_FILE:-}" ] && [ -f "$NEAR_BUY_RECOVERY_FILE" ]; then
+              recovery_args=(--near-buy-recovery "$NEAR_BUY_RECOVERY_FILE")
+            fi
             python -m src.strategies.genge_opportunity_discovery.research_priority_router \
               --hourly data/hourly_research_state/latest.json \
               --lifecycle data/opportunity_snapshots/candidate_lifecycle_state.json \
               --coverage data/research_mapping/coverage.json \
+              "${recovery_args[@]}" \
               --output data/research_priority/latest.json
 
             python -m src.strategies.genge_opportunity_discovery.formal_decision_outcomes \
@@ -106,6 +191,7 @@ jobs:
 
             python - <<'PY'
           import json
+          import os
           from pathlib import Path
           q = json.loads(Path('data/research_priority/latest.json').read_text(encoding='utf-8'))
           p = json.loads(Path('data/price_value_history/summary.json').read_text(encoding='utf-8'))
@@ -115,6 +201,11 @@ jobs:
           assert q['formal_action_recomputed'] is False
           assert q['formal_action_eligible'] is False
           assert q['no_auto_trade'] is True
+          assert q['near_buy_recovery_changes_order_only'] is True
+          assert q['near_buy_recovery_changes_thresholds'] is False
+          if os.environ.get('NEAR_BUY_RECOVERY_FILE'):
+              assert q['near_buy_recovery_integrated'] is True
+              assert q['near_buy_recovery_count'] > 0
           assert p['formal_action_recomputed'] is False
           assert p['formal_action_eligible'] is False
           assert o['formal_action_recomputed'] is False
@@ -164,5 +255,6 @@ jobs:
         run: |
           echo "# GenGe V3.1.1 Research Learning" >> "$GITHUB_STEP_SUMMARY"
           echo "- persistence: optimistic replay on newest main" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Near-BUY Recovery: ${NEAR_BUY_RECOVERY_RUN_ID:-none}; priority changes research order only" >> "$GITHUB_STEP_SUMMARY"
           echo "- learning outputs remain research-only and cannot change Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- automatic V3.1.1 parameter tuning remains disabled" >> "$GITHUB_STEP_SUMMARY"
