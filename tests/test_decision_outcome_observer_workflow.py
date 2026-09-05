@@ -16,28 +16,34 @@ def test_observer_runs_only_after_successful_production_finalizer() -> None:
     assert 'test "$CONCLUSION" = "success"' in text
 
 
-def test_observer_validates_authoritative_chain_before_persistence() -> None:
+def test_observer_validates_exact_six_file_authoritative_chain_before_persistence() -> None:
     text = WORKFLOW.read_text(encoding="utf-8")
 
     for required in (
         "production_authority.json",
         "canonical_snapshot/latest.json",
         "operating_views/hourly.json",
-        "operating_views/daily.json",
         "holdings_reconciliation.json",
         "candidate_lifecycle/candidate_lifecycle_state.json",
         "candidate_lifecycle/summary.json",
     ):
         assert required in text
 
+    # The observer deliberately does not add another Formal input beyond the
+    # user's six-file authoritative truth set.
+    assert "operating_views/daily.json" not in text
+
     assert "authoritative_artifact_provenance" in text
     assert '--expected-finalizer-run-id "$FINALIZER_RUN_ID"' in text
+    assert "validate_authority(authority, snapshot, hourly_view=hourly)" in text
     assert 'assert authority["authorized"] is True' in text
     assert 'assert authority["production_version"] == "GEN_GE_V3_1_1_PRODUCTION"' in text
     assert 'assert str(authority["finalizer_run_id"]) == finalizer_run_id' in text
     assert 'assert authority["canonical_snapshot_id"] == snapshot_id' in text
     assert 'assert authority["source_hashes"] == snapshot["source_hashes"]' in text
     assert 'assert authority["canonical_sha256"] == canonical_sha' in text
+    assert 'assert hourly["canonical_snapshot_id"] == snapshot_id' in text
+    assert 'assert str(hourly["source_run_id"]) == source_run_id' in text
 
 
 def test_observer_locates_unique_snapshot_in_downloaded_artifact() -> None:
