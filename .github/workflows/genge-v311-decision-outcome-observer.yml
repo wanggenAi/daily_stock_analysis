@@ -93,7 +93,7 @@ jobs:
           run-id: ${{ steps.finalizer.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Locate unique authoritative root
+      - name: Locate unique six-file authoritative root
         run: |
           set -euo pipefail
           mapfile -t SNAPSHOTS < <(find authoritative_bundle -type f -path '*/canonical_snapshot/latest.json' -print)
@@ -106,7 +106,6 @@ jobs:
           AUTH_ROOT=$(dirname "$(dirname "$SNAPSHOT")")
           test -f "$AUTH_ROOT/production_authority.json"
           test -f "$AUTH_ROOT/operating_views/hourly.json"
-          test -f "$AUTH_ROOT/operating_views/daily.json"
           test -f "$AUTH_ROOT/holdings_reconciliation.json"
           test -f "$AUTH_ROOT/candidate_lifecycle/candidate_lifecycle_state.json"
           test -f "$AUTH_ROOT/candidate_lifecycle/summary.json"
@@ -125,7 +124,7 @@ jobs:
             --token "$GH_TOKEN" \
             --expected-finalizer-run-id "$FINALIZER_RUN_ID"
 
-      - name: Validate full finalized identity before observing
+      - name: Validate full six-file finalized identity before observing
         env:
           FINALIZER_RUN_ID: ${{ steps.finalizer.outputs.run_id }}
           ARTIFACT_NAME: ${{ steps.finalizer.outputs.artifact_name }}
@@ -136,6 +135,7 @@ jobs:
           import os
           from pathlib import Path
 
+          from src.strategies.genge_opportunity_discovery.canonical_authority import validate_authority
           from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
               LIFECYCLE_CONTRACT_VERSION,
               load_state,
@@ -145,9 +145,14 @@ jobs:
           snapshot_path = Path(os.environ["SNAPSHOT"])
           authority = json.loads((root / "production_authority.json").read_text(encoding="utf-8"))
           snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+          hourly = json.loads((root / "operating_views/hourly.json").read_text(encoding="utf-8"))
           holdings = json.loads((root / "holdings_reconciliation.json").read_text(encoding="utf-8"))
           lifecycle = load_state(root / "candidate_lifecycle/candidate_lifecycle_state.json")
           lifecycle_summary = json.loads((root / "candidate_lifecycle/summary.json").read_text(encoding="utf-8"))
+
+          # Canonical Authority itself enforces authorized/version/source-kind/workflow,
+          # snapshot/source-run identity and the consumer no-recompute contract.
+          validate_authority(authority, snapshot, hourly_view=hourly)
 
           finalizer_run_id = os.environ["FINALIZER_RUN_ID"]
           artifact_name = os.environ["ARTIFACT_NAME"]
@@ -169,6 +174,9 @@ jobs:
 
           canonical_sha = hashlib.sha256(snapshot_path.read_bytes()).hexdigest()
           assert authority["canonical_sha256"] == canonical_sha
+
+          assert hourly["canonical_snapshot_id"] == snapshot_id
+          assert str(hourly["source_run_id"]) == source_run_id
 
           assert holdings["canonical_snapshot_id"] == snapshot_id
           assert str(holdings["canonical_source_run_id"]) == source_run_id
