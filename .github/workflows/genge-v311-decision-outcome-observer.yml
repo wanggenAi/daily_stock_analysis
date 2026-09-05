@@ -50,25 +50,21 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           EVENT_NAME: ${{ github.event_name }}
           EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
-          EVENT_WORKFLOW: ${{ github.event.workflow_run.name }}
-          EVENT_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           MANUAL_RUN_ID: ${{ inputs.finalizer_run_id }}
         run: |
           set -euo pipefail
           if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
             RUN_ID="$MANUAL_RUN_ID"
-            RUN_JSON=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
-            WORKFLOW=$(printf '%s' "$RUN_JSON" | jq -r '.name // empty')
-            CONCLUSION=$(printf '%s' "$RUN_JSON" | jq -r '.conclusion // empty')
           else
             RUN_ID="$EVENT_RUN_ID"
-            WORKFLOW="$EVENT_WORKFLOW"
-            CONCLUSION="$EVENT_CONCLUSION"
           fi
 
           test -n "$RUN_ID"
           printf '%s' "$RUN_ID" | grep -Eq '^[0-9]+$'
-          test "$WORKFLOW" = "GenGe V3.1.1 Production Finalizer"
+          RUN_JSON=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
+          WORKFLOW_PATH=$(printf '%s' "$RUN_JSON" | jq -r '.path // empty')
+          CONCLUSION=$(printf '%s' "$RUN_JSON" | jq -r '.conclusion // empty')
+          test "$WORKFLOW_PATH" = ".github/workflows/genge-v311-production-finalizer.yml"
           test "$CONCLUSION" = "success"
 
           ARTIFACTS=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100")
@@ -97,6 +93,38 @@ jobs:
           run-id: ${{ steps.finalizer.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Locate unique authoritative root
+        run: |
+          set -euo pipefail
+          mapfile -t SNAPSHOTS < <(find authoritative_bundle -type f -path '*/canonical_snapshot/latest.json' -print)
+          if [ "${#SNAPSHOTS[@]}" -ne 1 ]; then
+            echo "expected exactly one canonical_snapshot/latest.json; found ${#SNAPSHOTS[@]}" >&2
+            printf '%s\n' "${SNAPSHOTS[@]:-}" >&2
+            exit 1
+          fi
+          SNAPSHOT="${SNAPSHOTS[0]}"
+          AUTH_ROOT=$(dirname "$(dirname "$SNAPSHOT")")
+          test -f "$AUTH_ROOT/production_authority.json"
+          test -f "$AUTH_ROOT/operating_views/hourly.json"
+          test -f "$AUTH_ROOT/operating_views/daily.json"
+          test -f "$AUTH_ROOT/holdings_reconciliation.json"
+          test -f "$AUTH_ROOT/candidate_lifecycle/candidate_lifecycle_state.json"
+          test -f "$AUTH_ROOT/candidate_lifecycle/summary.json"
+          echo "AUTH_ROOT=$AUTH_ROOT" >> "$GITHUB_ENV"
+          echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
+
+      - name: Revalidate exact Finalizer and producer provenance
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FINALIZER_RUN_ID: ${{ steps.finalizer.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.authoritative_artifact_provenance \
+            --authoritative-root "$AUTH_ROOT" \
+            --repository "$GITHUB_REPOSITORY" \
+            --token "$GH_TOKEN" \
+            --expected-finalizer-run-id "$FINALIZER_RUN_ID"
+
       - name: Validate full finalized identity before observing
         env:
           FINALIZER_RUN_ID: ${{ steps.finalizer.outputs.run_id }}
@@ -108,36 +136,18 @@ jobs:
           import os
           from pathlib import Path
 
-          from src.strategies.genge_opportunity_discovery.canonical_authority import validate_authority
           from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
               LIFECYCLE_CONTRACT_VERSION,
               load_state,
           )
 
-          root = Path("authoritative_bundle")
-          required = [
-              root / "production_authority.json",
-              root / "canonical_snapshot/latest.json",
-              root / "operating_views/hourly.json",
-              root / "operating_views/daily.json",
-              root / "holdings_reconciliation.json",
-              root / "candidate_lifecycle/candidate_lifecycle_state.json",
-              root / "candidate_lifecycle/summary.json",
-          ]
-          missing = [str(path) for path in required if not path.is_file()]
-          if missing:
-              raise SystemExit(f"authoritative artifact missing required files: {missing}")
-
+          root = Path(os.environ["AUTH_ROOT"])
+          snapshot_path = Path(os.environ["SNAPSHOT"])
           authority = json.loads((root / "production_authority.json").read_text(encoding="utf-8"))
-          snapshot_path = root / "canonical_snapshot/latest.json"
           snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
-          hourly = json.loads((root / "operating_views/hourly.json").read_text(encoding="utf-8"))
-          daily = json.loads((root / "operating_views/daily.json").read_text(encoding="utf-8"))
           holdings = json.loads((root / "holdings_reconciliation.json").read_text(encoding="utf-8"))
           lifecycle = load_state(root / "candidate_lifecycle/candidate_lifecycle_state.json")
           lifecycle_summary = json.loads((root / "candidate_lifecycle/summary.json").read_text(encoding="utf-8"))
-
-          validate_authority(authority, snapshot, hourly_view=hourly, daily_view=daily)
 
           finalizer_run_id = os.environ["FINALIZER_RUN_ID"]
           artifact_name = os.environ["ARTIFACT_NAME"]
@@ -192,13 +202,14 @@ jobs:
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
           from scripts.decision_outcome_git_persistence import (
               persist_canonical_observation_with_replay,
           )
 
           result = persist_canonical_observation_with_replay(
-              canonical_path=Path("authoritative_bundle/canonical_snapshot/latest.json"),
+              canonical_path=Path(os.environ["SNAPSHOT"]),
               repo_root=Path("."),
               remote="origin",
               branch="main",
