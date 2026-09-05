@@ -37,6 +37,17 @@ def test_recovery_workset_is_missing_only_and_deterministic():
     assert all(row["source_row_immutable"] is True for row in workset)
 
 
+def test_full_near_buy_overlay_is_valid_recovery_input():
+    rows = [
+        {"code": "000001", "research_opportunity_state": "REJECT"},
+        {"code": "000002", "research_opportunity_state": "NEAR_BUY"},
+        _recovery_row("603369", "A"),
+    ]
+    workset = normalize_recovery_rows(rows)
+    assert [row["code"] for row in workset] == ["603369"]
+    assert workset[0]["evidence_recovery_priority_tier"] == "A"
+
+
 def test_empty_recovery_is_healthy_research_only_noop():
     workset = normalize_recovery_rows([])
     assert workset == []
