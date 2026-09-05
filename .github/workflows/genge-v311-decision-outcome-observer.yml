@@ -1,0 +1,278 @@
+name: GenGe V3.1.1 Decision Outcome Observer
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Production Finalizer"
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      finalizer_run_id:
+        description: "Successful Production Finalizer run id to observe"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-v311-decision-outcome-observer-${{ github.event.workflow_run.id || inputs.finalizer_run_id }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  observe-finalized-decisions:
+    name: Persist finalized canonical decisions as observer-only evidence
+    if: >-
+      ${{ github.event_name == 'workflow_dispatch' ||
+          github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout latest observer code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Resolve exact successful Finalizer and authoritative artifact
+        id: finalizer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          EVENT_RUN_ID: ${{ github.event.workflow_run.id }}
+          MANUAL_RUN_ID: ${{ inputs.finalizer_run_id }}
+        run: |
+          set -euo pipefail
+          if [ "$EVENT_NAME" = "workflow_dispatch" ]; then
+            RUN_ID="$MANUAL_RUN_ID"
+          else
+            RUN_ID="$EVENT_RUN_ID"
+          fi
+
+          test -n "$RUN_ID"
+          printf '%s' "$RUN_ID" | grep -Eq '^[0-9]+$'
+          RUN_JSON=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}")
+          WORKFLOW_PATH=$(printf '%s' "$RUN_JSON" | jq -r '.path // empty')
+          CONCLUSION=$(printf '%s' "$RUN_JSON" | jq -r '.conclusion // empty')
+          test "$WORKFLOW_PATH" = ".github/workflows/genge-v311-production-finalizer.yml"
+          test "$CONCLUSION" = "success"
+
+          ARTIFACTS=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100")
+          mapfile -t MATCHES < <(
+            printf '%s' "$ARTIFACTS" | jq -r '
+              .artifacts[]
+              | select(.expired == false)
+              | .name
+              | select(startswith("genge-v311-authoritative-canonical-"))'
+          )
+          if [ "${#MATCHES[@]}" -ne 1 ]; then
+            echo "expected exactly one non-expired authoritative canonical artifact; found ${#MATCHES[@]}" >&2
+            printf '%s\n' "${MATCHES[@]:-}" >&2
+            exit 1
+          fi
+
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=${MATCHES[0]}" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact authoritative Finalizer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ steps.finalizer.outputs.artifact_name }}
+          path: authoritative_bundle
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.finalizer.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Locate unique six-file authoritative root
+        run: |
+          set -euo pipefail
+          mapfile -t SNAPSHOTS < <(find authoritative_bundle -type f -path '*/canonical_snapshot/latest.json' -print)
+          if [ "${#SNAPSHOTS[@]}" -ne 1 ]; then
+            echo "expected exactly one canonical_snapshot/latest.json; found ${#SNAPSHOTS[@]}" >&2
+            printf '%s\n' "${SNAPSHOTS[@]:-}" >&2
+            exit 1
+          fi
+          SNAPSHOT="${SNAPSHOTS[0]}"
+          AUTH_ROOT=$(dirname "$(dirname "$SNAPSHOT")")
+          test -f "$AUTH_ROOT/production_authority.json"
+          test -f "$AUTH_ROOT/operating_views/hourly.json"
+          test -f "$AUTH_ROOT/holdings_reconciliation.json"
+          test -f "$AUTH_ROOT/candidate_lifecycle/candidate_lifecycle_state.json"
+          test -f "$AUTH_ROOT/candidate_lifecycle/summary.json"
+          echo "AUTH_ROOT=$AUTH_ROOT" >> "$GITHUB_ENV"
+          echo "SNAPSHOT=$SNAPSHOT" >> "$GITHUB_ENV"
+
+      - name: Revalidate exact Finalizer and producer provenance
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          FINALIZER_RUN_ID: ${{ steps.finalizer.outputs.run_id }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.authoritative_artifact_provenance \
+            --authoritative-root "$AUTH_ROOT" \
+            --repository "$GITHUB_REPOSITORY" \
+            --token "$GH_TOKEN" \
+            --expected-finalizer-run-id "$FINALIZER_RUN_ID"
+
+      - name: Validate full six-file finalized identity before observing
+        env:
+          FINALIZER_RUN_ID: ${{ steps.finalizer.outputs.run_id }}
+          ARTIFACT_NAME: ${{ steps.finalizer.outputs.artifact_name }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          from src.strategies.genge_opportunity_discovery.canonical_authority import validate_authority
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+              LIFECYCLE_CONTRACT_VERSION,
+              load_state,
+          )
+
+          root = Path(os.environ["AUTH_ROOT"])
+          snapshot_path = Path(os.environ["SNAPSHOT"])
+          authority = json.loads((root / "production_authority.json").read_text(encoding="utf-8"))
+          snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+          hourly = json.loads((root / "operating_views/hourly.json").read_text(encoding="utf-8"))
+          holdings = json.loads((root / "holdings_reconciliation.json").read_text(encoding="utf-8"))
+          lifecycle = load_state(root / "candidate_lifecycle/candidate_lifecycle_state.json")
+          lifecycle_summary = json.loads((root / "candidate_lifecycle/summary.json").read_text(encoding="utf-8"))
+
+          # Canonical Authority itself enforces authorized/version/source-kind/workflow,
+          # snapshot/source-run identity and the consumer no-recompute contract.
+          validate_authority(authority, snapshot, hourly_view=hourly)
+
+          finalizer_run_id = os.environ["FINALIZER_RUN_ID"]
+          artifact_name = os.environ["ARTIFACT_NAME"]
+          snapshot_id = str(snapshot.get("snapshot_id") or "")
+          source_run_id = str(snapshot.get("source_run_id") or "")
+          if not snapshot_id or not source_run_id:
+              raise SystemExit("canonical snapshot missing snapshot_id/source_run_id")
+
+          assert authority["authorized"] is True
+          assert authority["production_version"] == "GEN_GE_V3_1_1_PRODUCTION"
+          assert str(authority["finalizer_run_id"]) == finalizer_run_id
+          assert str(authority["canonical_source_run_id"]) == source_run_id
+          assert authority["canonical_snapshot_id"] == snapshot_id
+          assert artifact_name == f"genge-v311-authoritative-canonical-{source_run_id}"
+          assert authority["source_hashes"] == snapshot["source_hashes"]
+          assert authority["research_as_of"] == snapshot["research_as_of"]
+          assert authority["latest_trade_date"] == snapshot["latest_trade_date"]
+          assert authority["no_auto_trade"] is True
+
+          canonical_sha = hashlib.sha256(snapshot_path.read_bytes()).hexdigest()
+          assert authority["canonical_sha256"] == canonical_sha
+
+          assert hourly["canonical_snapshot_id"] == snapshot_id
+          assert str(hourly["source_run_id"]) == source_run_id
+
+          assert holdings["canonical_snapshot_id"] == snapshot_id
+          assert str(holdings["canonical_source_run_id"]) == source_run_id
+          assert holdings["candidate_formal_actions_affected_by_holdings_mismatch"] is False
+
+          assert lifecycle["contract_version"] == LIFECYCLE_CONTRACT_VERSION
+          assert lifecycle["latest_applied_snapshot_id"] == snapshot_id
+          assert lifecycle["last_persisted_snapshot_id"] == snapshot_id
+          assert str(lifecycle["last_persisted_source_run_id"]) == source_run_id
+          assert lifecycle["no_auto_trade"] is True
+          assert lifecycle["discovery_is_filtered_by_lifecycle"] is False
+
+          assert lifecycle_summary["canonical_snapshot_id"] == snapshot_id
+          assert str(lifecycle_summary["canonical_source_run_id"]) == source_run_id
+          assert lifecycle_summary["latest_applied_snapshot_id"] == snapshot_id
+          assert lifecycle_summary["no_auto_trade"] is True
+          assert lifecycle_summary["discovery_is_filtered_by_lifecycle"] is False
+
+          print(json.dumps({
+              "authorized": True,
+              "canonical_snapshot_id": snapshot_id,
+              "canonical_source_run_id": source_run_id,
+              "finalizer_run_id": finalizer_run_id,
+              "artifact_name": artifact_name,
+              "identity_validated": True,
+              "observer_only": True,
+          }, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Persist canonical decision observation with optimistic replay
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          from scripts.decision_outcome_git_persistence import (
+              persist_canonical_observation_with_replay,
+          )
+
+          result = persist_canonical_observation_with_replay(
+              canonical_path=Path(os.environ["SNAPSHOT"]),
+              repo_root=Path("."),
+              remote="origin",
+              branch="main",
+              max_attempts=4,
+          )
+          Path("decision-observer-result.json").write_text(
+              json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+          PY
+
+      - name: Verify observer cannot manufacture executions or alter Formal truth
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path("decision-observer-result.json").read_text(encoding="utf-8"))
+          assert result["status"] in {"PERSISTED", "ALREADY_OBSERVED"}
+          assert result["replay_on_conflict"] is True
+          assert result["executions_touched"] is False
+          assert result["production_semantics_mutated"] is False
+          assert result["snapshot_id"]
+          assert result["source_run_id"]
+          assert result["persisted_commit_sha"]
+          print("observer-only persistence contract verified")
+          PY
+
+      - name: Publish observer summary
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          result = json.loads(Path("decision-observer-result.json").read_text(encoding="utf-8"))
+          with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as out:
+              out.write("# GenGe V3.1.1 Decision Outcome Observer\n\n")
+              out.write(f"- status: `{result['status']}`\n")
+              out.write(f"- snapshot_id: `{result['snapshot_id']}`\n")
+              out.write(f"- source_run_id: `{result['source_run_id']}`\n")
+              out.write(f"- canonical decisions discovered: `{result['discovered']}`\n")
+              out.write(f"- newly appended decision observations: `{result['appended']}`\n")
+              out.write(f"- durable decision rows: `{result['durable_total']}`\n")
+              out.write(f"- persistence commit: `{result['persisted_commit_sha']}`\n")
+              out.write("- execution events touched: `False`\n")
+              out.write("- production semantics mutated: `False`\n")
+              out.write("- Formal BUY/ADD/HOLD/REDUCE/EXIT remain canonical-only\n")
+              out.write("- same finalized snapshot is idempotent and creates no duplicate observations\n")
+          PY
+
+      - name: Upload observer audit receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v311-decision-observer-${{ steps.finalizer.outputs.run_id }}
+          path: decision-observer-result.json
+          if-no-files-found: error
