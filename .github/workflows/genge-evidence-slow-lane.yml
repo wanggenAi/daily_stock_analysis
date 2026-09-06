@@ -24,6 +24,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 concurrency:
   group: genge-v311-evidence-slow-lane
@@ -55,6 +56,50 @@ jobs:
             "requests>=2.31.0" "beautifulsoup4>=4.12.0" "PyYAML>=6.0" "pypdf>=5.0.0" \
             pandas pytest anyio fastapi httpx starlette
 
+      - name: Resolve latest explicit All-A industry metadata
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/all-a-industry-source"
+          rm -rf "$root"
+          mkdir -p "$root"
+          echo "ALL_A_INDUSTRY_SOURCE_CSV=" >> "$GITHUB_ENV"
+          echo "ALL_A_INDUSTRY_SOURCE_RUN_ID=" >> "$GITHUB_ENV"
+
+          mapfile -t successful_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?branch=main&status=success&per_page=12" \
+              --jq '.workflow_runs[].id'
+          )
+          for run_id in "${successful_runs[@]}"; do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
+              --jq '[.artifacts[] | select(.name == "genge-all-a-production-report" and .expired == false)][0].id // empty')"
+            if [[ ! "$artifact_id" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            rm -rf "$root/unpacked"
+            mkdir -p "$root/unpacked"
+            if ! gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > "$root/report.zip"; then
+              echo "industry metadata artifact download degraded for run ${run_id}" >&2
+              continue
+            fi
+            if ! unzip -q -o "$root/report.zip" -d "$root/unpacked"; then
+              echo "industry metadata artifact unzip degraded for run ${run_id}" >&2
+              continue
+            fi
+            source_file="$(find "$root/unpacked" -type f -name all_a_quant_screen.csv -not -path '*/_deep_review/*' -print | sort | tail -1)"
+            if [ -z "$source_file" ]; then
+              continue
+            fi
+            echo "ALL_A_INDUSTRY_SOURCE_CSV=$source_file" >> "$GITHUB_ENV"
+            echo "ALL_A_INDUSTRY_SOURCE_RUN_ID=$run_id" >> "$GITHUB_ENV"
+            echo "resolved explicit All-A industry metadata from run ${run_id}: ${source_file}"
+            exit 0
+          done
+
+          echo "No usable successful All-A industry artifact found; static reviewed mapping remains authoritative and unresolved names stay gaps" >&2
+          exit 0
+
       - name: Collect and persist slow-lane evidence with optimistic replay
         run: |
           set -euo pipefail
@@ -73,7 +118,15 @@ jobs:
               tests/test_genge_research_mapping_coverage.py \
               tests/test_genge_competition_peer_evidence_feeder.py
 
+            industry_args=()
+            if [ -n "${ALL_A_INDUSTRY_SOURCE_CSV:-}" ] && [ -f "$ALL_A_INDUSTRY_SOURCE_CSV" ]; then
+              industry_args=(
+                --industry-source-csv "$ALL_A_INDUSTRY_SOURCE_CSV"
+                --industry-source-label "github-actions:genge-opportunity-discovery:${ALL_A_INDUSTRY_SOURCE_RUN_ID}"
+              )
+            fi
             python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+              "${industry_args[@]}" \
               --coverage-output data/research_mapping/coverage.json \
               --industry-csv-output data/research_mapping/company_industry_map.csv
 
@@ -122,7 +175,7 @@ jobs:
               --output data/evidence_events/source_registry.json
 
             python - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
           registry = json.loads(Path('data/evidence_events/source_registry.json').read_text(encoding='utf-8'))
           coverage = json.loads(Path('data/research_mapping/coverage.json').read_text(encoding='utf-8'))
@@ -134,8 +187,16 @@ jobs:
           assert registry['registered_sources']['COMPETITIVE_CHANGE']['implemented'] is True
           assert registry['registered_sources']['REGULATORY_POLICY']['lane'] == 'EVIDENCE_SLOW'
           assert registry['registered_sources']['COMPETITIVE_CHANGE']['mapping_is_evidence_gated'] is True
+          assert coverage['contract_version'] == 'GEN_GE_RESEARCH_MAPPING_COVERAGE_V4_PRODUCTION_INDUSTRY_METADATA'
           assert coverage['formal_action_eligible'] is False
+          assert coverage['formal_action_recomputed'] is False
+          assert coverage['changes_thresholds'] is False
           assert coverage['no_auto_trade'] is True
+          assert coverage['industry_source_may_infer_commodity_or_peers'] is False
+          assert coverage['industry_mapping_origin_counts'].get('REVIEWED_STATIC_PROFILE', 0) >= 0
+          if os.environ.get('ALL_A_INDUSTRY_SOURCE_CSV'):
+              assert coverage['industry_source_input_available'] is True
+              assert coverage['industry_source_resolved_security_count'] > 0
           PY
 
             git add -f data/evidence_events data/research_mapping
@@ -170,7 +231,8 @@ jobs:
           echo "# GenGe V3.1.1 Evidence Slow Lane" >> "$GITHUB_STEP_SUMMARY"
           echo "- persistence: optimistic replay on newest main" >> "$GITHUB_STEP_SUMMARY"
           echo "- official regulatory/policy evidence is collected outside the hourly fast lane" >> "$GITHUB_STEP_SUMMARY"
-          echo "- reviewed mapping coverage exposes unmapped holdings/candidates instead of guessing" >> "$GITHUB_STEP_SUMMARY"
+          echo "- reviewed static industry mappings have precedence; latest successful All-A explicit industry metadata fills only unresolved industry gaps" >> "$GITHUB_STEP_SUMMARY"
+          echo "- conflicting or missing production industry metadata fails closed and cannot infer commodity or peer mappings" >> "$GITHUB_STEP_SUMMARY"
           echo "- explicit peer mappings receive their own official material-event feed before competition bridging" >> "$GITHUB_STEP_SUMMARY"
           echo "- slow-lane fetch failures cannot block or mutate Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- all outputs are research-only Evidence Events" >> "$GITHUB_STEP_SUMMARY"
