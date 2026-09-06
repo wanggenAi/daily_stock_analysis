@@ -112,14 +112,49 @@ def test_growth_enrichment_uses_same_period_prior_year_and_excludes_future_discl
     assert enriched["cash_conversion_ratio"] is not None
 
 
+def test_unknown_core_profit_does_not_become_synthetic_zero_quality_evidence():
+    frame = pd.DataFrame(
+        [
+            {
+                "report_date": "2026-06-30",
+                "disclosure_date": "2026-08-24",
+                "net_profit": None,
+                "recurring_profit": None,
+                "operating_cash_flow": 100,
+            }
+        ]
+    )
+    enriched = enrich_growth(
+        _row(
+            earnings_quality_score="",
+            cash_conversion_ratio="",
+            net_profit_yoy_pct="",
+            recurring_profit_yoy_pct="",
+            operating_cash_flow_yoy_pct="",
+        ),
+        frame,
+        as_of=date(2026, 8, 26),
+    )
+    assert enriched.get("earnings_quality_score") in (None, "")
+    scored = score_row(enriched, _archetype())
+    assert "earnings_quality_score" in scored["success_archetype_missing_features"]
+    assert scored["success_archetype_evidence_coverage"] == 0.0
+    assert scored["success_archetype_state"] == "NONE"
+
+
 def test_reference_stock_is_diagnostic_only_and_not_put_in_priority_queue():
     reference = score_row(
         _row(code="001316", stock_name="润贝航科"), _archetype()
     )
-    peer = score_row(_row(code="600002"), _archetype())
+    peer = score_row(
+        _row(code="600002", terminal_current_price="12.34"), _archetype()
+    )
     payload = build_priority_payload([reference, peer], _archetype())
     assert payload["queue_count"] == 1
     assert payload["queue"][0]["code"] == "600002"
+    assert payload["queue"][0]["source_price"] == 12.34
+    assert payload["queue"][0]["source_price_field"] == "terminal_current_price"
+    assert payload["queue"][0]["source_price_known_by_recall"] is True
     assert payload["canonical_authority_unchanged"] is True
     assert payload["unknown_evidence_is_pass"] is False
 
