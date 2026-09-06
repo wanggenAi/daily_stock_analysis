@@ -19,9 +19,12 @@ from src.strategies.genge_opportunity_discovery.formal_decision_outcomes import 
     load_daily_prices,
 )
 
-CONTRACT_VERSION = "GEN_GE_SUCCESS_ARCHETYPE_OUTCOMES_V2_TERMINAL_PRICE_BASELINE"
+CONTRACT_VERSION = "GEN_GE_SUCCESS_ARCHETYPE_OUTCOMES_V3_LEGACY_ARTIFACT_COMPAT"
 HORIZONS = (5, 20, 60)
 MIN_HUMAN_REVIEW_SAMPLE = 20
+LEGACY_RECALL_CONTRACTS_WITHOUT_COHORT_DATE = {
+    "GEN_GE_SUCCESS_ARCHETYPE_RECALL_V1",
+}
 
 
 def _text(value: Any) -> str:
@@ -167,7 +170,20 @@ def append_cohort(
         priority_payload.get("source_terminal_run_id")
     )
     archetype_id = _text(priority_payload.get("archetype_id"))
+    recall_contract = _text(priority_payload.get("contract_version"))
     if not cohort_date or not archetype_id:
+        legacy_without_date = (
+            recall_contract in LEGACY_RECALL_CONTRACTS_WITHOUT_COHORT_DATE
+            and bool(archetype_id)
+            and not cohort_date
+        )
+        if legacy_without_date:
+            # V1 artifacts predate outcome observation and never persisted a
+            # point-in-time cohort date. They remain valid research-priority
+            # evidence, but inventing a cohort date would create hindsight
+            # leakage. Preserve existing history and wait for a dated V2+
+            # artifact instead of failing the whole Research Learning run.
+            return records
         raise ValueError("archetype outcome cohort requires as_of and archetype_id")
 
     seen = {_text(row.get("record_id")) for row in records}
