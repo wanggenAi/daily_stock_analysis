@@ -19,7 +19,7 @@ from src.strategies.genge_opportunity_discovery.formal_decision_outcomes import 
     load_daily_prices,
 )
 
-CONTRACT_VERSION = "GEN_GE_SUCCESS_ARCHETYPE_OUTCOMES_V1"
+CONTRACT_VERSION = "GEN_GE_SUCCESS_ARCHETYPE_OUTCOMES_V2_TERMINAL_PRICE_BASELINE"
 HORIZONS = (5, 20, 60)
 MIN_HUMAN_REVIEW_SAMPLE = 20
 
@@ -112,6 +112,27 @@ def _baseline(
     return day, daily_prices[code][day]
 
 
+def _cohort_baseline(
+    item: Mapping[str, Any],
+    *,
+    code: str,
+    cohort_date: str,
+    daily_prices: Mapping[str, Mapping[str, Decimal]],
+) -> tuple[str, Decimal | None, str]:
+    # The Terminal Review price is already known before recall is emitted and
+    # is therefore the cleanest frozen cohort baseline. Using it prevents a
+    # newly recalled security from becoming permanently unobservable merely
+    # because it had not yet entered hourly_deep_overlay on the same day.
+    source_price = _dec(item.get("source_price"))
+    if source_price is not None and item.get("source_price_known_by_recall") is True:
+        field = _text(item.get("source_price_field")) or "terminal_price"
+        return cohort_date, source_price, f"SUCCESS_ARCHETYPE_{field.upper()}"
+    baseline_date, baseline_price = _baseline(code, cohort_date, daily_prices)
+    return baseline_date, baseline_price, (
+        "HOURLY_DEEP_OVERLAY" if baseline_price is not None else "UNAVAILABLE"
+    )
+
+
 def validate_priority_payload(payload: Mapping[str, Any]) -> None:
     if payload.get("changes_research_order_only") is not True:
         raise ValueError("success-archetype payload must remain research-order only")
@@ -164,8 +185,11 @@ def append_cohort(
         )
         if record_id in seen:
             continue
-        baseline_date, baseline_price = _baseline(
-            code, cohort_date, daily_prices
+        baseline_date, baseline_price, baseline_source = _cohort_baseline(
+            item,
+            code=code,
+            cohort_date=cohort_date,
+            daily_prices=daily_prices,
         )
         records.append(
             {
@@ -189,6 +213,8 @@ def append_cohort(
                 "baseline_price": (
                     str(baseline_price) if baseline_price is not None else None
                 ),
+                "baseline_source": baseline_source,
+                "source_price_field": item.get("source_price_field"),
             }
         )
         seen.add(record_id)
