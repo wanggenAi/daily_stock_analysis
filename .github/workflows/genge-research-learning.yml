@@ -19,6 +19,7 @@ on:
       - "data/research_archetypes/**"
       - "src/strategies/genge_opportunity_discovery/near_buy_evidence_recovery.py"
       - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
       - "src/strategies/genge_opportunity_discovery/price_value_history_summary.py"
       - "src/strategies/genge_opportunity_discovery/formal_decision_outcomes.py"
@@ -27,6 +28,7 @@ on:
       - "src/strategies/genge_opportunity_discovery/production_observability.py"
       - "tests/test_genge_near_buy_evidence_recovery.py"
       - "tests/test_genge_success_archetype_recall.py"
+      - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
       - "tests/test_genge_research_priority_router.py"
       - "tests/test_genge_price_value_history_summary.py"
@@ -182,12 +184,13 @@ jobs:
             echo "research-learning replay attempt ${attempt}/4"
             git fetch origin main
             git reset --hard origin/main
-            git clean -fdx -- data/research_priority data/price_value_history data/formal_decision_outcomes data/production_observability
+            git clean -fdx -- data/research_priority data/price_value_history data/formal_decision_outcomes data/success_archetype_outcomes data/production_observability
 
             python -m pytest -q \
               tests/test_genge_hourly_research_state.py \
               tests/test_genge_near_buy_evidence_recovery.py \
               tests/test_genge_success_archetype_recall.py \
+              tests/test_genge_success_archetype_outcomes.py \
               tests/test_genge_research_priority_archetype.py \
               tests/test_genge_research_priority_router.py \
               tests/test_genge_price_value_history_summary.py \
@@ -209,6 +212,14 @@ jobs:
               "${archetype_args[@]}" \
               --output data/research_priority/latest.json
 
+            outcome_args=()
+            if [ -n "${SUCCESS_ARCHETYPE_FILE:-}" ] && [ -f "$SUCCESS_ARCHETYPE_FILE" ]; then outcome_args=(--priority "$SUCCESS_ARCHETYPE_FILE"); fi
+            python -m src.strategies.genge_opportunity_discovery.success_archetype_outcomes \
+              "${outcome_args[@]}" \
+              --history data/success_archetype_outcomes/history.jsonl \
+              --price-history-root data/hourly_deep_overlay \
+              --output data/success_archetype_outcomes/latest.json
+
             python -m src.strategies.genge_opportunity_discovery.formal_decision_outcomes --history data/formal_decision_history/history.jsonl --price-history-root data/hourly_deep_overlay --output data/formal_decision_outcomes/latest.json
             python -m src.strategies.genge_opportunity_discovery.production_observability --root . --output data/production_observability/latest.json
 
@@ -217,6 +228,7 @@ jobs:
           from pathlib import Path
           q=json.loads(Path('data/research_priority/latest.json').read_text(encoding='utf-8'))
           p=json.loads(Path('data/price_value_history/summary.json').read_text(encoding='utf-8'))
+          a=json.loads(Path('data/success_archetype_outcomes/latest.json').read_text(encoding='utf-8'))
           o=json.loads(Path('data/formal_decision_outcomes/latest.json').read_text(encoding='utf-8'))
           health=json.loads(Path('data/production_observability/latest.json').read_text(encoding='utf-8'))
           assert q['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
@@ -232,6 +244,12 @@ jobs:
               assert q['success_archetype_recall_count'] >= 0
           assert p['formal_action_recomputed'] is False
           assert p['formal_action_eligible'] is False
+          assert a['formal_action_recomputed'] is False
+          assert a['formal_action_eligible'] is False
+          assert a['parameter_tuning_allowed'] is False
+          assert a['automatic_parameter_tuning_allowed'] is False
+          assert a['changes_thresholds'] is False
+          assert a['no_auto_trade'] is True
           assert o['formal_action_recomputed'] is False
           assert o['formal_action_eligible'] is False
           assert o['parameter_tuning_allowed'] is False
@@ -242,7 +260,7 @@ jobs:
           assert health['checks']['learning_layer_research_only'] is True
           PY
 
-            git add -f data/research_priority data/price_value_history data/formal_decision_outcomes data/production_observability/latest.json
+            git add -f data/research_priority data/price_value_history data/formal_decision_outcomes data/success_archetype_outcomes data/production_observability/latest.json
             if git diff --cached --quiet; then echo "No learning state change to persist"; exit 0; fi
             git commit -m "Persist V3.1.1 research learning state [skip ci]"
             if git push origin HEAD:main; then exit 0; fi
@@ -260,6 +278,7 @@ jobs:
             data/research_priority
             data/price_value_history
             data/formal_decision_outcomes
+            data/success_archetype_outcomes
             data/production_observability/latest.json
           if-no-files-found: warn
           retention-days: 60
@@ -271,6 +290,7 @@ jobs:
           echo "- persistence: optimistic replay on newest main" >> "$GITHUB_STEP_SUMMARY"
           echo "- Near-BUY Recovery: ${NEAR_BUY_RECOVERY_RUN_ID:-none}; research-order only" >> "$GITHUB_STEP_SUMMARY"
           echo "- Success Archetype Recall: ${SUCCESS_ARCHETYPE_RUN_ID:-none}; research-order only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- success-archetype outcomes: 5/20/60 trading-day observation; human review only" >> "$GITHUB_STEP_SUMMARY"
           echo "- overlay boost combination: MAX_NOT_SUM" >> "$GITHUB_STEP_SUMMARY"
           echo "- learning outputs remain research-only and cannot change Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- automatic V3.1.1 parameter tuning remains disabled" >> "$GITHUB_STEP_SUMMARY"

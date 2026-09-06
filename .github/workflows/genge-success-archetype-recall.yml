@@ -10,8 +10,10 @@ on:
       - ".github/workflows/genge-success-archetype-recall.yml"
       - "data/research_archetypes/**"
       - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
       - "tests/test_genge_success_archetype_recall.py"
+      - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
   push:
     branches: [main]
@@ -19,8 +21,10 @@ on:
       - ".github/workflows/genge-success-archetype-recall.yml"
       - "data/research_archetypes/**"
       - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
       - "tests/test_genge_success_archetype_recall.py"
+      - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
 
 permissions:
@@ -47,9 +51,12 @@ jobs:
           python -m pip install -r .github/requirements-ci.txt
       - name: Validate research-only archetype contracts
         run: |
-          python -m py_compile src/strategies/genge_opportunity_discovery/success_archetype_recall.py
+          python -m py_compile \
+            src/strategies/genge_opportunity_discovery/success_archetype_recall.py \
+            src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py
           python -m pytest -q \
             tests/test_genge_success_archetype_recall.py \
+            tests/test_genge_success_archetype_outcomes.py \
             tests/test_genge_research_priority_archetype.py \
             tests/test_genge_research_priority_router.py
 
@@ -120,7 +127,7 @@ jobs:
           test -n "$terminal_csv"
           echo "TERMINAL_CSV=$terminal_csv" >> "$GITHUB_ENV"
           echo "TERMINAL_RUN_ID=$selected_run" >> "$GITHUB_ENV"
-      - name: Build PIT-safe Runbei archetype recall
+      - name: Build bounded PIT-safe Runbei archetype recall
         run: |
           as_of="$(date -u +%F)"
           python -m src.strategies.genge_opportunity_discovery.success_archetype_recall \
@@ -129,8 +136,16 @@ jobs:
             --as-of "$as_of" \
             --cache-dir data/cache/valuation_research_fundamentals \
             --output-dir reports/success_archetype_recall \
-            --max-workers 8
-      - name: Validate authority invariants
+            --max-workers 8 \
+            --max-extra-financial-fetches 200 \
+            --source-terminal-run-id "$TERMINAL_RUN_ID"
+      - name: Save refreshed public fundamental cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/cache/valuation_research_fundamentals
+          key: genge-postscan-valuation-${{ runner.os }}-main-${{ github.run_id }}
+      - name: Validate authority and bounded-fetch invariants
         run: |
           python - <<'PY'
           import json
@@ -145,6 +160,18 @@ jobs:
           assert p['changes_thresholds'] is False
           assert p['unknown_evidence_is_pass'] is False
           assert p['no_auto_trade'] is True
+          assert p['bounded_wide_financial_fetch_enabled'] is True
+          assert p['source_row_count'] > 0
+          assert p['expansion_fetch_limit'] == 200
+          assert 0 <= p['expansion_fetch_count'] <= p['expansion_fetch_limit']
+          assert p['expansion_truncated_count'] == max(0, p['expansion_candidate_count'] - p['expansion_fetch_count'])
+          assert str(p['source_terminal_run_id']) == str(__import__('os').environ['TERMINAL_RUN_ID'])
+          for row in p['queue']:
+              assert row['formal_action_eligible'] is False
+              assert row['formal_action_recomputed'] is False
+              assert row['automatic_promotion_allowed'] is False
+              assert row['starter_position_allowed'] is False
+              assert row['no_auto_trade'] is True
           PY
       - name: Upload success-archetype research artifact
         uses: actions/upload-artifact@v4
@@ -162,6 +189,12 @@ jobs:
           print('# GenGe Success Archetype Recall')
           print(f"- archetype: {p['archetype_id']}")
           print(f"- reference: {p['reference_code']}")
+          print(f"- terminal source rows: {p['source_row_count']}")
+          print(f"- existing deep-financial fetches: {p['existing_deep_financial_fetch_count']}")
+          print(f"- bounded expansion candidates: {p['expansion_candidate_count']}")
+          print(f"- bounded expansion fetched: {p['expansion_fetch_count']} / {p['expansion_fetch_limit']}")
+          print(f"- expansion truncated: {p['expansion_truncated_count']}")
+          print(f"- financial evidence unavailable after fetch: {p['financial_evidence_unavailable_count']}")
           print(f"- research recall count: {p['queue_count']}")
           print('- authority: research-order only; no Formal/Canonical mutation; no auto-trade')
           PY
