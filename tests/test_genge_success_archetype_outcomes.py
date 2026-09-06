@@ -28,6 +28,9 @@ def _priority():
                 "source_quant_status": "HARD_REJECT",
                 "source_financial_review_status": "NOT_SELECTED_FOR_DEEP_FINANCIAL_REVIEW",
                 "financial_evidence_origin": "ARCHETYPE_BOUNDED_FINANCIAL_FETCH",
+                "source_price": 10,
+                "source_price_field": "terminal_current_price",
+                "source_price_known_by_recall": True,
             }
         ],
     }
@@ -45,14 +48,22 @@ def _prices():
     return {"600001": rows}
 
 
-def test_append_cohort_is_idempotent_and_freezes_baseline():
+def test_append_cohort_is_idempotent_and_freezes_terminal_price_baseline():
     first = append_cohort([], _priority(), _prices())
     second = append_cohort(first, _priority(), _prices())
     assert len(first) == 1
     assert len(second) == 1
     assert first[0]["baseline_date"] == "2026-09-04"
     assert first[0]["baseline_price"] == "10"
+    assert first[0]["baseline_source"] == "SUCCESS_ARCHETYPE_TERMINAL_CURRENT_PRICE"
     assert first[0]["similarity_bucket"] == "S80_PLUS"
+
+
+def test_terminal_price_baseline_does_not_require_hourly_overlay_membership():
+    records = append_cohort([], _priority(), {})
+    assert records[0]["baseline_date"] == "2026-09-04"
+    assert records[0]["baseline_price"] == "10"
+    assert records[0]["baseline_source"] == "SUCCESS_ARCHETYPE_TERMINAL_CURRENT_PRICE"
 
 
 def test_evaluate_observes_fifth_distinct_trading_day_and_never_changes_authority():
@@ -72,8 +83,11 @@ def test_evaluate_observes_fifth_distinct_trading_day_and_never_changes_authorit
 
 def test_missing_baseline_price_stays_pending_instead_of_becoming_pass():
     priority = _priority()
+    priority["queue"][0]["source_price"] = None
+    priority["queue"][0]["source_price_known_by_recall"] = False
     records = append_cohort([], priority, {})
     assert records[0]["baseline_price"] is None
+    assert records[0]["baseline_source"] == "UNAVAILABLE"
     payload = evaluate(records, {})
     assert payload["records"][0]["horizons"]["d5"]["status"] == "PENDING"
     assert payload["observed_horizon_count"] == 0
