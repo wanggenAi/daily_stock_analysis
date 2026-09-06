@@ -13,7 +13,7 @@ from src.strategies.genge_cycle_bottom.fundamentals import PublicFundamentalLoad
 from src.strategies.genge_opportunity_discovery import valuation_research_report as valuation
 from src.strategies.genge_opportunity_discovery.fundamental_valuation import normalize_core_earnings
 
-CONTRACT_VERSION = "GEN_GE_SUCCESS_ARCHETYPE_RECALL_V2_BOUNDED_WIDE_FINANCIAL_FETCH"
+CONTRACT_VERSION = "GEN_GE_SUCCESS_ARCHETYPE_RECALL_V3_BOUNDED_WIDE_FINANCIAL_FETCH_WITH_PRICE_BASELINE"
 AUTHORITY = "RESEARCH_ONLY_SUCCESS_ARCHETYPE_RECALL"
 DEFAULT_ARCHETYPE = Path("data/research_archetypes/runbei_v1.json")
 DEFAULT_EXTRA_FINANCIAL_FETCH_LIMIT = 200
@@ -124,9 +124,13 @@ def enrich_financial_evidence(
         out["normalized_core_operating_profit"] = earnings.normalized_core_operating_profit
         out["operating_cash_flow"] = earnings.operating_cash_flow
         out["cash_conversion_ratio"] = earnings.cash_conversion_ratio
-        out["earnings_quality_score"] = earnings.earnings_quality_score
-        out["earnings_quality_confidence"] = earnings.earnings_quality_confidence
-        out["earnings_normalization_method"] = earnings.normalization_method
+        # A synthetic zero emitted only because core profit is unavailable is
+        # not observed evidence. Keep it missing so UNKNOWN never inflates
+        # evidence coverage for the bounded expansion pool.
+        if earnings.normalized_core_operating_profit is not None:
+            out["earnings_quality_score"] = earnings.earnings_quality_score
+            out["earnings_quality_confidence"] = earnings.earnings_quality_confidence
+            out["earnings_normalization_method"] = earnings.normalization_method
 
     for src, dst in (
         ("net_profit", "net_profit_yoy_pct"),
@@ -285,6 +289,14 @@ def score_row(row: Mapping[str, Any], archetype: Mapping[str, Any]) -> dict[str,
     return out
 
 
+def _source_price(row: Mapping[str, Any]) -> tuple[float | None, str]:
+    for field in ("terminal_current_price", "current_price"):
+        value = _float(row.get(field))
+        if value is not None and value > 0:
+            return value, field
+    return None, ""
+
+
 def build_priority_payload(
     rows: Iterable[Mapping[str, Any]],
     archetype: Mapping[str, Any],
@@ -299,6 +311,7 @@ def build_priority_payload(
             or _code(row.get("code")) == ref
         ):
             continue
+        source_price, source_price_field = _source_price(row)
         queue.append(
             {
                 "code": _code(row.get("code")),
@@ -319,6 +332,9 @@ def build_priority_payload(
                 "financial_disclosure_date": _text(
                     row.get("archetype_financial_disclosure_date")
                 ),
+                "source_price": source_price,
+                "source_price_field": source_price_field,
+                "source_price_known_by_recall": source_price is not None,
                 "formal_action_eligible": False,
                 "formal_action_recomputed": False,
                 "automatic_promotion_allowed": False,
