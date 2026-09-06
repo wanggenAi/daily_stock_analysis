@@ -1,0 +1,207 @@
+name: GenGe All-A Industry Mapping Handoff
+
+on:
+  workflow_run:
+    workflows: ["GenGe Opportunity Discovery"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Successful GenGe Opportunity Discovery run containing genge-all-a-production-report"
+        required: true
+        type: string
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-all-a-industry-mapping-handoff
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  refresh-industry-mapping:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       (github.event.workflow_run.event == 'schedule' || github.event.workflow_run.event == 'workflow_dispatch'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install mapping dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -q pandas pytest
+
+      - name: Resolve exact successful All-A production artifact
+        id: source
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISPATCH_RUN_ID: ${{ inputs.source_run_id }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          if [ "${GITHUB_EVENT_NAME}" = "workflow_dispatch" ]; then
+            run_id="${DISPATCH_RUN_ID}"
+          else
+            run_id="${WORKFLOW_RUN_ID}"
+          fi
+          if [[ ! "$run_id" =~ ^[0-9]+$ ]]; then
+            echo "invalid All-A source run id: $run_id" >&2
+            exit 1
+          fi
+
+          run_meta="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")"
+          conclusion="$(jq -r '.conclusion // empty' <<<"$run_meta")"
+          event="$(jq -r '.event // empty' <<<"$run_meta")"
+          workflow_id="$(jq -r '.workflow_id // empty' <<<"$run_meta")"
+          expected_workflow_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml" --jq '.id')"
+          if [ "$conclusion" != "success" ]; then
+            echo "source run ${run_id} is not successful: ${conclusion}" >&2
+            exit 1
+          fi
+          if [ "$workflow_id" != "$expected_workflow_id" ]; then
+            echo "source run ${run_id} is not GenGe Opportunity Discovery" >&2
+            exit 1
+          fi
+          if [ "$event" != "schedule" ] && [ "$event" != "workflow_dispatch" ]; then
+            echo "source run ${run_id} event ${event} cannot contain the All-A production job" >&2
+            exit 1
+          fi
+
+          artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
+            --jq '[.artifacts[] | select(.name == "genge-all-a-production-report" and .expired == false)][0].id // empty')"
+          if [[ ! "$artifact_id" =~ ^[0-9]+$ ]]; then
+            echo "successful All-A source run ${run_id} has no live genge-all-a-production-report artifact" >&2
+            exit 1
+          fi
+
+          root="$RUNNER_TEMP/all-a-industry-source"
+          rm -rf "$root"
+          mkdir -p "$root/unpacked"
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > "$root/report.zip"
+          unzip -q -o "$root/report.zip" -d "$root/unpacked"
+          source_file="$(find "$root/unpacked" -type f -name all_a_quant_screen.csv -not -path '*/_deep_review/*' -print | sort | tail -1)"
+          if [ -z "$source_file" ]; then
+            echo "artifact ${artifact_id} from run ${run_id} has no all_a_quant_screen.csv" >&2
+            exit 1
+          fi
+
+          python - "$source_file" <<'PY'
+          import csv, sys
+          path = sys.argv[1]
+          with open(path, encoding='utf-8-sig', newline='') as handle:
+              reader = csv.DictReader(handle)
+              fields = set(reader.fieldnames or [])
+              rows = list(reader)
+          required = {'code', 'industry'}
+          missing = required - fields
+          assert not missing, f'missing required explicit industry fields: {sorted(missing)}'
+          explicit = [row for row in rows if str(row.get('code') or '').strip() and str(row.get('industry') or '').strip()]
+          assert explicit, 'All-A production artifact contains no explicit code+industry rows'
+          print(f'all_a_rows={len(rows)} explicit_industry_rows={len(explicit)}')
+          PY
+
+          echo "ALL_A_INDUSTRY_SOURCE_CSV=$source_file" >> "$GITHUB_ENV"
+          echo "ALL_A_INDUSTRY_SOURCE_RUN_ID=$run_id" >> "$GITHUB_ENV"
+          echo "source_run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "artifact_id=$artifact_id" >> "$GITHUB_OUTPUT"
+
+      - name: Refresh and persist research industry mapping with optimistic replay
+        run: |
+          set -euo pipefail
+          git config user.name "genge-all-a-industry-mapping-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+
+          for attempt in 1 2 3 4; do
+            echo "industry-mapping replay attempt ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fdx -- data/research_mapping
+
+            python -m pytest -q tests/test_genge_research_mapping_coverage.py tests/test_genge_all_a_industry_handoff_contract.py
+            python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+              --industry-source-csv "$ALL_A_INDUSTRY_SOURCE_CSV" \
+              --industry-source-label "github-actions:genge-opportunity-discovery:${ALL_A_INDUSTRY_SOURCE_RUN_ID}" \
+              --coverage-output data/research_mapping/coverage.json \
+              --industry-csv-output data/research_mapping/company_industry_map.csv
+
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          coverage = json.loads(Path('data/research_mapping/coverage.json').read_text(encoding='utf-8'))
+          assert coverage['contract_version'] == 'GEN_GE_RESEARCH_MAPPING_COVERAGE_V4_PRODUCTION_INDUSTRY_METADATA'
+          assert coverage['industry_source_input_available'] is True
+          assert coverage['industry_source_resolved_security_count'] > 0
+          assert coverage['industry_source_may_infer_commodity_or_peers'] is False
+          assert coverage['formal_action_eligible'] is False
+          assert coverage['formal_action_recomputed'] is False
+          assert coverage['changes_thresholds'] is False
+          assert coverage['no_auto_trade'] is True
+          assert coverage['industry_mapped_count'] >= coverage['industry_static_mapped_count']
+          print(json.dumps({
+              'tracked_security_count': coverage['tracked_security_count'],
+              'industry_mapped_count': coverage['industry_mapped_count'],
+              'industry_static_mapped_count': coverage['industry_static_mapped_count'],
+              'industry_production_mapped_count': coverage['industry_production_mapped_count'],
+              'industry_unmapped_count': coverage['industry_unmapped_count'],
+              'industry_source_resolved_security_count': coverage['industry_source_resolved_security_count'],
+              'industry_source_conflicting_security_count': coverage['industry_source_conflicting_security_count'],
+          }, ensure_ascii=False, indent=2))
+          PY
+
+            git add -f data/research_mapping
+            if git diff --cached --quiet; then
+              echo "No research mapping change to persist"
+              exit 0
+            fi
+            git commit -m "Persist explicit All-A industry mapping [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push race detected; replaying mapping from newest origin/main" >&2
+          done
+
+          echo "industry mapping persistence failed after 4 optimistic replay attempts" >&2
+          exit 1
+
+      - name: Dispatch Research Learning after mapping refresh
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-research-learning.yml --ref main
+
+      - name: Upload mapping handoff artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-all-a-industry-mapping-${{ github.run_id }}
+          path: data/research_mapping
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish mapping handoff summary
+        if: always()
+        run: |
+          echo "# GenGe All-A Industry Mapping Handoff" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact source run: ${ALL_A_INDUSTRY_SOURCE_RUN_ID:-UNRESOLVED}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- consumes only successful schedule/workflow_dispatch All-A production artifacts" >> "$GITHUB_STEP_SUMMARY"
+          echo "- reviewed static profiles keep precedence" >> "$GITHUB_STEP_SUMMARY"
+          echo "- explicit production industry metadata may fill industry gaps only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- commodity/peer mappings are never inferred from industry" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Formal/Canonical authority is unchanged; no auto-trade" >> "$GITHUB_STEP_SUMMARY"
