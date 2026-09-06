@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "archetype_id": "RUNBEI_001316_20260826_V1",
+  "reference": {
+    "code": "001316",
+    "name": "润贝航科",
+    "feature_cutoff": "2026-08-26",
+    "selection_reference": "user-held-by-2026-08-25",
+    "financial_report_date": "2026-06-30",
+    "financial_disclosure_date": "2026-08-24",
+    "post_cutoff_returns_used_as_features": false,
+    "post_cutoff_valuation_used_as_features": false,
+    "source_notes": [
+      "CURRENT_HOLDINGS.md historical review records 2026H1 attributable profit +44.82%, deduct-profit +45.14%, and operating cash flow +26.52%.",
+      "The 2026-09-06 Terminal Review confirms the reference financial row itself is 2026-06-30, disclosed 2026-08-24, with earnings quality 90 and cash conversion 1.0721; those two values are therefore pre-cutoff evidence.",
+      "Later price returns, later valuation percentiles, later implied-profit diagnostics, and any post-cutoff information are forbidden as archetype features."
+    ],
+    "frozen_business_facts": {
+      "h1_attributable_profit_yoy_pct": 44.82,
+      "h1_deduct_profit_yoy_pct": 45.14,
+      "h1_operating_cash_flow_yoy_pct": 26.52,
+      "earnings_quality_score": 90.0,
+      "cash_conversion_ratio": 1.0721
+    }
+  },
+  "thresholds": {
+    "min_similarity_score": 52.0,
+    "min_evidence_coverage": 0.60
+  },
+  "features": [
+    {"id": "earnings_quality_score", "weight": 20, "mode": "proximity", "reference_value": 90.0, "tolerance": 25.0, "aliases": ["earnings_quality_score"]},
+    {"id": "cash_conversion_ratio", "weight": 15, "mode": "proximity", "reference_value": 1.0721, "tolerance": 1.5, "aliases": ["cash_conversion_ratio"]},
+    {"id": "net_profit_yoy_pct", "weight": 25, "mode": "proximity", "reference_value": 44.82, "tolerance": 60.0, "aliases": ["net_profit_yoy_pct", "attributable_profit_yoy_pct", "h1_attributable_profit_yoy_pct"]},
+    {"id": "recurring_profit_yoy_pct", "weight": 25, "mode": "proximity", "reference_value": 45.14, "tolerance": 60.0, "aliases": ["recurring_profit_yoy_pct", "deduct_profit_yoy_pct", "h1_deduct_profit_yoy_pct"]},
+    {"id": "operating_cash_flow_yoy_pct", "weight": 15, "mode": "proximity", "reference_value": 26.52, "tolerance": 80.0, "aliases": ["operating_cash_flow_yoy_pct", "ocf_yoy_pct", "h1_operating_cash_flow_yoy_pct"]}
+  ]
+}
