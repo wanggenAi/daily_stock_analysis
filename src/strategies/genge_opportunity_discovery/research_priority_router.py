@@ -1,7 +1,9 @@
 """Route research work without changing V3.1.1 Formal actions.
 
-Combines hourly research state, candidate lifecycle and reviewed mapping coverage
-into an auditable Deep Review / mapping queue. This module is research-only.
+Combines hourly research state, candidate lifecycle, reviewed mapping coverage and
+an optional Near-BUY evidence-recovery queue into an auditable Deep Review /
+mapping queue. This module is research-only: Near-BUY recovery can change
+research order only, never thresholds, gate outcomes or Formal actions.
 """
 from __future__ import annotations
 
@@ -11,8 +13,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_RESEARCH_PRIORITY_ROUTER_V3"
+CONTRACT_VERSION = "GEN_GE_RESEARCH_PRIORITY_ROUTER_V4_NEAR_BUY_RECOVERY"
 STRUCTURAL_REUNDERWRITE_PRICE_STATUSES = {"VALUE_ANCHOR_UNAVAILABLE"}
+RECOVERY_TIER_BOOST = {"A": 45, "B": 30, "C": 20}
 
 
 def _load(path: Path) -> dict[str, Any]:
@@ -37,16 +40,48 @@ def _tier_score(tier: str) -> int:
     return 5
 
 
+def _bool(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"1", "true", "yes", "y", "pass", "passed"}
+
+
+def _recovery_map(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
+    """Accept only research-only recovery rows and ignore caller-supplied score boosts."""
+    if not payload:
+        return {}
+    if _bool(payload.get("formal_action_eligible")) or _bool(payload.get("formal_action_recomputed")):
+        raise AssertionError("Near-BUY recovery artifact attempted Formal authority")
+    if _bool(payload.get("automatic_promotion_allowed")) or _bool(payload.get("starter_position_allowed")):
+        raise AssertionError("Near-BUY recovery artifact attempted automatic promotion/starter authority")
+    if payload.get("priority_changes_order_only") is False or payload.get("threshold_changes_allowed") is True:
+        raise AssertionError("Near-BUY recovery artifact attempted threshold semantics change")
+
+    result: dict[str, dict[str, Any]] = {}
+    for raw in payload.get("queue") or []:
+        if not isinstance(raw, Mapping):
+            continue
+        code = str(raw.get("code") or "").strip().zfill(6)
+        tier = str(raw.get("recovery_tier") or "").strip().upper()
+        if not code or tier not in RECOVERY_TIER_BOOST:
+            continue
+        if _bool(raw.get("formal_action_eligible")) or _bool(raw.get("formal_action_recomputed")):
+            raise AssertionError(f"Near-BUY recovery row attempted Formal authority: {code}")
+        if _bool(raw.get("automatic_promotion_allowed")):
+            raise AssertionError(f"Near-BUY recovery row attempted automatic promotion: {code}")
+        result[code] = {
+            "code": code,
+            "name": str(raw.get("name") or ""),
+            "recovery_tier": tier,
+            # The router owns the bounded score. Never trust an artifact-provided boost.
+            "priority_boost": RECOVERY_TIER_BOOST[tier],
+            "missing_evidence_items": list(raw.get("missing_evidence_items") or []),
+        }
+    return result
+
+
 def _requires_structural_reunderwrite(*, is_current_holding: bool, hourly_row: Mapping[str, Any]) -> bool:
-    """Return whether a holding's finalized Canonical lacks a usable value anchor.
-
-    HOLD_REVIEW is already a finalized Canonical action, not a research action. If
-    that holding also exposes VALUE_ANCHOR_UNAVAILABLE with no validated anchor,
-    price-only hourly research cannot resolve the condition. Route it back through
-    the existing full Deep Review -> Production Finalizer authority chain instead
-    of silently leaving the holding in a non-actionable review state.
-    """
-
+    """Return whether a holding's finalized Canonical lacks a usable value anchor."""
     if not is_current_holding:
         return False
     if str(hourly_row.get("formal_action") or "") != "HOLD_REVIEW":
@@ -56,28 +91,40 @@ def _requires_structural_reunderwrite(*, is_current_holding: bool, hourly_row: M
     return hourly_row.get("validated_value_anchor") is None
 
 
-def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverage: Mapping[str, Any]) -> dict[str, Any]:
+def build_queue(
+    hourly: Mapping[str, Any],
+    lifecycle: Mapping[str, Any],
+    coverage: Mapping[str, Any],
+    near_buy_recovery: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
     life = lifecycle.get("candidates") or {}
-    coverage_rows = {str(r.get("code") or "").zfill(6): r for r in (coverage.get("securities") or []) if isinstance(r, Mapping)}
-    hourly_rows = {str(r.get("code") or "").zfill(6): r for r in (hourly.get("rows") or []) if isinstance(r, Mapping)}
-    codes = sorted(set(life) | set(coverage_rows) | set(hourly_rows))
+    coverage_rows = {
+        str(r.get("code") or "").zfill(6): r
+        for r in (coverage.get("securities") or [])
+        if isinstance(r, Mapping)
+    }
+    hourly_rows = {
+        str(r.get("code") or "").zfill(6): r
+        for r in (hourly.get("rows") or [])
+        if isinstance(r, Mapping)
+    }
+    recovery_rows = _recovery_map(near_buy_recovery)
+    codes = sorted(set(life) | set(coverage_rows) | set(hourly_rows) | set(recovery_rows))
     queue: list[dict[str, Any]] = []
     for code in codes:
         l = life.get(code) or {}
         c = coverage_rows.get(code) or {}
         h = hourly_rows.get(code) or {}
+        recovery = recovery_rows.get(code) or {}
         reasons: list[str] = []
         score = 0
 
         # Current-holding identity is an operational fact, not a research-mapping
-        # attribute. Mapping coverage intentionally persists across holding/candidate
-        # lifecycle changes, so its historical HOLDING scope must never project a
-        # closed position back into CURRENT_HOLDING. The current hourly state is
-        # produced from the reconciled current portfolio and is therefore the only
-        # authority used by this research-only router for holding priority.
+        # attribute. Historical mapping scope must never resurrect a closed holding.
         is_current_holding = str(h.get("scope") or "").upper() == "HOLDING"
         if is_current_holding:
-            score += 50; reasons.append("CURRENT_HOLDING")
+            score += 50
+            reasons.append("CURRENT_HOLDING")
         tier = str(l.get("research_tier") or "")
         ts = _tier_score(tier)
         score += ts
@@ -90,15 +137,19 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
             hourly_row=h,
         )
         if conclusion in {"PRICE_ATTRACTIVE_RESEARCH_LEAD", "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD"}:
-            score += 35; reasons.append(conclusion)
+            score += 35
+            reasons.append(conclusion)
         if conclusion == "NEW_EVIDENCE_REUNDERWRITE_LEAD" or thesis == "REUNDERWRITE_REQUIRED" or structural_reunderwrite:
-            score += 45; reasons.append("REUNDERWRITE_REQUIRED")
+            score += 45
+            reasons.append("REUNDERWRITE_REQUIRED")
             if structural_reunderwrite:
                 reasons.append("VALUE_ANCHOR_REUNDERWRITE_REQUIRED")
         elif thesis in {"WEAKENING_RESEARCH_SIGNAL", "MIXED_NEW_EVIDENCE"}:
-            score += 25; reasons.append("MATERIAL_EVIDENCE_CHANGE")
+            score += 25
+            reasons.append("MATERIAL_EVIDENCE_CHANGE")
         if str(h.get("deep_review_priority") or "") == "RAISE":
-            score += 15; reasons.append("HOURLY_PRIORITY_RAISE")
+            score += 15
+            reasons.append("HOURLY_PRIORITY_RAISE")
 
         mapping_gaps: list[str] = []
         if not c.get("industry_mapped"):
@@ -111,7 +162,13 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
         if c.get("peer_monitoring_state") == "APPLICABLE_UNMAPPED":
             mapping_gaps.append("PEER")
         if mapping_gaps:
-            score += min(15, 5 * len(mapping_gaps)); reasons.append("MAPPING_GAP")
+            score += min(15, 5 * len(mapping_gaps))
+            reasons.append("MAPPING_GAP")
+
+        recovery_tier = str(recovery.get("recovery_tier") or "")
+        if recovery_tier:
+            score += RECOVERY_TIER_BOOST[recovery_tier]
+            reasons.append(f"NEAR_BUY_EVIDENCE_RECOVERY_{recovery_tier}")
 
         if score >= 70:
             priority = "P0"
@@ -123,13 +180,15 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
             priority = "P3"
         queue.append({
             "code": code,
-            "name": c.get("name") or l.get("stock_name") or h.get("name") or "",
+            "name": c.get("name") or l.get("stock_name") or h.get("name") or recovery.get("name") or "",
             "priority": priority,
             "priority_score": score,
             "research_tier": tier,
             "thesis_status": thesis or None,
             "hourly_research_conclusion": conclusion or None,
             "mapping_gaps": mapping_gaps,
+            "near_buy_evidence_recovery_tier": recovery_tier or None,
+            "near_buy_missing_evidence_items": recovery.get("missing_evidence_items") or [],
             "reason_codes": reasons,
             "formal_action": h.get("formal_action"),
             "formal_action_recomputed": False,
@@ -145,6 +204,10 @@ def build_queue(hourly: Mapping[str, Any], lifecycle: Mapping[str, Any], coverag
         "formal_action_recomputed": False,
         "formal_action_eligible": False,
         "no_auto_trade": True,
+        "near_buy_recovery_integrated": bool(recovery_rows),
+        "near_buy_recovery_count": len(recovery_rows),
+        "near_buy_recovery_changes_order_only": True,
+        "near_buy_recovery_changes_thresholds": False,
         "queue_count": len(queue),
         "p0_count": sum(r["priority"] == "P0" for r in queue),
         "p1_count": sum(r["priority"] == "P1" for r in queue),
@@ -159,12 +222,20 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--hourly", type=Path, default=Path("data/hourly_research_state/latest.json"))
     p.add_argument("--lifecycle", type=Path, default=Path("data/opportunity_snapshots/candidate_lifecycle_state.json"))
     p.add_argument("--coverage", type=Path, default=Path("data/research_mapping/coverage.json"))
+    p.add_argument("--near-buy-recovery", type=Path)
     p.add_argument("--output", type=Path, default=Path("data/research_priority/latest.json"))
     args = p.parse_args(argv)
-    payload = build_queue(_load(args.hourly), _load(args.lifecycle), _load(args.coverage))
+    recovery = _load(args.near_buy_recovery) if args.near_buy_recovery else {}
+    payload = build_queue(_load(args.hourly), _load(args.lifecycle), _load(args.coverage), recovery)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps({k: payload[k] for k in ("queue_count", "p0_count", "p1_count", "mapping_gap_count", "partial_mapping_gap_count")}, ensure_ascii=False))
+    print(json.dumps({
+        key: payload[key]
+        for key in (
+            "queue_count", "p0_count", "p1_count", "mapping_gap_count",
+            "partial_mapping_gap_count", "near_buy_recovery_count",
+        )
+    }, ensure_ascii=False))
     return 0
 
 
