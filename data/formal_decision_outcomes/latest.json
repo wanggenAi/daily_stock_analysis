@@ -3,24 +3,42 @@
   "contract_version": "GEN_GE_FORMAL_DECISION_OUTCOMES_V2",
   "formal_action_eligible": false,
   "formal_action_recomputed": false,
-  "generated_at": "2026-09-05T00:55:21.692803+00:00",
+  "generated_at": "2026-09-07T00:58:26.225766+00:00",
   "group_statistics": {
+    "HOLD": {
+      "d5": {
+        "mean_return": "-0.027565",
+        "median_return": "-0.030430",
+        "minimum_sample_for_human_review": 20,
+        "review_readiness": "INSUFFICIENT_SAMPLE",
+        "sample_count": 11
+      }
+    },
+    "HOLD_NO_ADD": {
+      "d5": {
+        "mean_return": "0.085353",
+        "median_return": "0.085353",
+        "minimum_sample_for_human_review": 20,
+        "review_readiness": "INSUFFICIENT_SAMPLE",
+        "sample_count": 11
+      }
+    },
     "HOLD_REVIEW": {
       "d5": {
-        "mean_return": "0.072146",
-        "median_return": "0.065840",
+        "mean_return": "0.071966",
+        "median_return": "0.097056",
         "minimum_sample_for_human_review": 20,
         "review_readiness": "READY_FOR_HUMAN_REVIEW",
-        "sample_count": 64
+        "sample_count": 87
       }
     },
     "REDUCE_25": {
       "d5": {
-        "mean_return": "-0.015484",
-        "median_return": "-0.015646",
+        "mean_return": "-0.014438",
+        "median_return": "-0.013038",
         "minimum_sample_for_human_review": 20,
         "review_readiness": "READY_FOR_HUMAN_REVIEW",
-        "sample_count": 64
+        "sample_count": 76
       }
     }
   },
@@ -32,11 +50,11 @@
   "human_parameter_review_allowed_when_sample_ready": true,
   "minimum_sample_for_human_parameter_review": 20,
   "no_auto_trade": true,
-  "observed_horizon_count": 128,
+  "observed_horizon_count": 185,
   "parameter_review_ready_bucket_count": 2,
   "parameter_tuning_allowed": false,
-  "pending_horizon_count": 895,
-  "record_count": 341,
+  "pending_horizon_count": 910,
+  "record_count": 365,
   "records": [
     {
       "canonical_snapshot_id": "49ee3ff5a6c2aba01bc4",
@@ -46,7 +64,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -56,7 +74,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -100,7 +118,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -110,7 +128,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -128,15 +146,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -154,7 +174,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -164,7 +184,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -208,7 +228,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -218,7 +238,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -236,15 +256,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -262,7 +284,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -272,7 +294,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -316,7 +338,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -326,7 +348,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -344,15 +366,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -370,7 +394,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -380,7 +404,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -424,7 +448,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -434,7 +458,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -452,15 +476,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -478,7 +504,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -488,7 +514,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -532,7 +558,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -542,7 +568,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -560,15 +586,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -586,7 +614,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -596,7 +624,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -640,7 +668,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -650,7 +678,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -668,15 +696,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -694,7 +724,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -704,7 +734,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -748,7 +778,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -758,7 +788,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -776,15 +806,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -802,7 +834,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -812,7 +844,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -856,7 +888,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -866,7 +898,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -884,15 +916,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -910,7 +944,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -920,7 +954,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -964,7 +998,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -974,7 +1008,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -992,15 +1026,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -1018,7 +1054,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -1028,7 +1064,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -1072,7 +1108,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -1082,7 +1118,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -1100,15 +1136,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -1126,7 +1164,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -1136,7 +1174,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -1180,7 +1218,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         },
         "d5": {
@@ -1190,7 +1228,7 @@
           "target_date": "2026-09-02"
         },
         "d60": {
-          "observed_trading_days": 8,
+          "observed_trading_days": 10,
           "status": "PENDING"
         }
       },
@@ -1208,15 +1246,17 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.9",
+          "return": "0.085353",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -1234,7 +1274,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1244,7 +1284,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1288,7 +1328,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1298,7 +1338,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1316,15 +1356,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -1342,7 +1382,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1352,7 +1392,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1396,7 +1436,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1406,7 +1446,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1424,15 +1464,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -1450,7 +1490,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1460,7 +1500,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1504,7 +1544,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1514,7 +1554,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1532,15 +1572,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -1558,7 +1598,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1568,7 +1608,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1612,7 +1652,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1622,7 +1662,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1640,15 +1680,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -1666,7 +1706,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1676,7 +1716,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1720,7 +1760,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1730,7 +1770,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1748,15 +1788,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -1774,7 +1814,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1784,7 +1824,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1828,7 +1868,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1838,7 +1878,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1856,15 +1896,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -1882,7 +1922,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1892,7 +1932,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1936,7 +1976,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -1946,7 +1986,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -1964,15 +2004,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -1990,7 +2030,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2000,7 +2040,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2044,7 +2084,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2054,7 +2094,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2072,15 +2112,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2098,7 +2138,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2108,7 +2148,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2152,7 +2192,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2162,7 +2202,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2180,15 +2220,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2206,7 +2246,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2216,7 +2256,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2260,7 +2300,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2270,7 +2310,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2288,15 +2328,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2314,7 +2354,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2324,7 +2364,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2368,7 +2408,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2378,7 +2418,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2396,15 +2436,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2422,7 +2462,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2432,7 +2472,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2476,7 +2516,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2486,7 +2526,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2504,15 +2544,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2530,7 +2570,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2540,7 +2580,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2584,7 +2624,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2594,7 +2634,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2612,15 +2652,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2638,7 +2678,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2648,7 +2688,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2692,7 +2732,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2702,7 +2742,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2720,15 +2760,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2746,7 +2786,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2756,7 +2796,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2800,7 +2840,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2810,7 +2850,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2828,15 +2868,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2854,7 +2894,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2864,7 +2904,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2908,7 +2948,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2918,7 +2958,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -2936,15 +2976,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -2962,7 +3002,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -2972,7 +3012,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3016,7 +3056,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3026,7 +3066,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3044,15 +3084,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -3070,7 +3110,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3080,7 +3120,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3124,7 +3164,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3134,7 +3174,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3152,15 +3192,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -3178,7 +3218,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3188,7 +3228,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3232,7 +3272,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3242,7 +3282,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3260,15 +3300,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -3286,7 +3326,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3296,7 +3336,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3340,7 +3380,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3350,7 +3390,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3368,15 +3408,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -3394,7 +3434,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3404,7 +3444,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3448,7 +3488,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         },
         "d5": {
@@ -3458,7 +3498,7 @@
           "target_date": "2026-09-03"
         },
         "d60": {
-          "observed_trading_days": 7,
+          "observed_trading_days": 9,
           "status": "PENDING"
         }
       },
@@ -3476,15 +3516,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -3502,7 +3542,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3512,7 +3552,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3556,7 +3596,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3566,7 +3606,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3584,15 +3624,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -3610,7 +3650,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3620,7 +3660,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3664,7 +3704,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3674,7 +3714,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3692,15 +3732,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -3718,7 +3758,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3728,7 +3768,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3772,7 +3812,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3782,7 +3822,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3800,15 +3840,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -3826,7 +3866,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3836,7 +3876,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3880,7 +3920,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3890,7 +3930,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3908,15 +3948,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -3934,7 +3974,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3944,7 +3984,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -3988,7 +4028,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -3998,7 +4038,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4016,15 +4056,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4042,7 +4082,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4052,7 +4092,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4096,7 +4136,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4106,7 +4146,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4124,15 +4164,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4150,7 +4190,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4160,7 +4200,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4204,7 +4244,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4214,7 +4254,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4232,15 +4272,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4258,7 +4298,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4268,7 +4308,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4312,7 +4352,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4322,7 +4362,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4340,15 +4380,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4366,7 +4406,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4376,7 +4416,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4420,7 +4460,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4430,7 +4470,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4448,15 +4488,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4474,7 +4514,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4484,7 +4524,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4528,7 +4568,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4538,7 +4578,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4556,15 +4596,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4582,7 +4622,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4592,7 +4632,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4636,7 +4676,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4646,7 +4686,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4664,15 +4704,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4690,7 +4730,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4700,7 +4740,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4744,7 +4784,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4754,7 +4794,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4772,15 +4812,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4798,7 +4838,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4808,7 +4848,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4852,7 +4892,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4862,7 +4902,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4880,15 +4920,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -4906,7 +4946,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4916,7 +4956,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4960,7 +5000,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -4970,7 +5010,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -4988,15 +5028,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -5014,7 +5054,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5024,7 +5064,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5068,7 +5108,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5078,7 +5118,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5096,15 +5136,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -5122,7 +5162,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5132,7 +5172,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5176,7 +5216,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5186,7 +5226,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5204,15 +5244,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -5230,7 +5270,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5240,7 +5280,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5284,7 +5324,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5294,7 +5334,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5312,15 +5352,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -5338,7 +5378,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5348,7 +5388,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5392,7 +5432,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5402,7 +5442,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5420,15 +5460,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -5446,7 +5486,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5456,7 +5496,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5500,7 +5540,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5510,7 +5550,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5528,15 +5568,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -5554,7 +5594,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5564,7 +5604,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5608,7 +5648,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         },
         "d5": {
@@ -5618,7 +5658,7 @@
           "target_date": "2026-09-04"
         },
         "d60": {
-          "observed_trading_days": 6,
+          "observed_trading_days": 8,
           "status": "PENDING"
         }
       },
@@ -5636,15 +5676,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -5662,7 +5702,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5672,7 +5712,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -5716,7 +5756,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5726,7 +5766,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -5744,15 +5784,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -5770,7 +5810,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5780,7 +5820,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -5824,7 +5864,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5834,7 +5874,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -5852,15 +5892,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -5878,7 +5918,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5888,7 +5928,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -5906,7 +5946,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5916,7 +5956,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -5934,15 +5974,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -5960,7 +6000,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5970,7 +6010,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -5988,7 +6028,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -5998,7 +6038,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6016,15 +6056,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6042,7 +6082,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6052,7 +6092,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6070,7 +6110,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6080,7 +6120,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6098,15 +6138,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6124,7 +6164,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6134,7 +6174,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6152,7 +6192,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6162,7 +6202,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6180,15 +6220,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6206,7 +6246,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6216,7 +6256,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6234,7 +6274,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6244,7 +6284,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6262,15 +6302,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6288,7 +6328,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6298,7 +6338,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6316,7 +6356,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6326,7 +6366,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6344,15 +6384,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6370,7 +6410,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6380,7 +6420,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6398,7 +6438,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6408,7 +6448,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6426,15 +6466,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6452,7 +6492,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6462,7 +6502,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6480,7 +6520,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6490,7 +6530,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6508,15 +6548,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6534,7 +6574,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6544,7 +6584,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6562,7 +6602,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6572,7 +6612,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6590,15 +6630,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6616,7 +6656,7 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6626,7 +6666,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6644,7 +6684,7 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         },
         "d5": {
@@ -6654,7 +6694,7 @@
           "target_date": "2026-09-05"
         },
         "d60": {
-          "observed_trading_days": 5,
+          "observed_trading_days": 7,
           "status": "PENDING"
         }
       },
@@ -6672,15 +6712,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 2,
           "status": "PENDING"
         }
       },
@@ -6698,15 +6738,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.097056",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6724,15 +6766,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.011319",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6750,15 +6794,15 @@
       "formal_action": "HOLD_NO_ADD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 0,
+          "observed_trading_days": 1,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 0,
+          "observed_trading_days": 1,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 0,
+          "observed_trading_days": 1,
           "status": "PENDING"
         }
       },
@@ -6776,15 +6820,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.097056",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6802,15 +6848,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.011319",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6828,15 +6876,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.043354",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6854,15 +6904,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6880,15 +6932,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.097056",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6906,15 +6960,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.011319",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6932,15 +6988,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.043354",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6958,15 +7016,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -6984,15 +7044,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.097056",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7010,15 +7072,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.011319",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7036,15 +7100,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.043354",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7062,15 +7128,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7088,15 +7156,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.097056",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7114,15 +7184,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.011319",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7140,15 +7212,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.043354",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7166,15 +7240,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7192,15 +7268,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.122768",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7218,15 +7296,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.009162",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7244,15 +7324,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.017648",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7270,15 +7352,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7296,15 +7380,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.122768",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7322,15 +7408,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.009162",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7348,15 +7436,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.017648",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7374,15 +7464,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 4,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-06"
         },
         "d60": {
-          "observed_trading_days": 4,
+          "observed_trading_days": 6,
           "status": "PENDING"
         }
       },
@@ -7400,15 +7492,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.122768",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7426,15 +7520,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.009162",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7452,15 +7548,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.017648",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7478,15 +7576,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7504,15 +7604,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.122768",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7530,15 +7632,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.009162",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7556,15 +7660,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.017648",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7582,15 +7688,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7608,15 +7716,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.122768",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7634,15 +7744,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.009162",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7660,15 +7772,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.017648",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7686,15 +7800,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7712,15 +7828,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.122768",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7738,15 +7856,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "-0.009162",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7764,15 +7884,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.017648",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7790,15 +7912,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "-0.030430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7816,15 +7940,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "30.18",
+          "return": "0.114064",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7842,15 +7968,17 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "22.71",
+          "return": "0.005312",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7868,15 +7996,17 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "58.24",
+          "return": "0.028430",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7894,15 +8024,17 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 3,
-          "status": "PENDING"
+          "price": "18.48",
+          "return": "0.001083",
+          "status": "OBSERVED",
+          "target_date": "2026-09-07"
         },
         "d60": {
-          "observed_trading_days": 3,
+          "observed_trading_days": 5,
           "status": "PENDING"
         }
       },
@@ -7920,15 +8052,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -7946,15 +8078,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -7972,15 +8104,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -7998,15 +8130,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8024,15 +8156,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8050,15 +8182,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8076,15 +8208,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8102,15 +8234,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8128,15 +8260,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8154,15 +8286,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8180,15 +8312,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8206,15 +8338,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8232,15 +8364,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8258,15 +8390,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8284,15 +8416,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8310,15 +8442,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8336,15 +8468,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8362,15 +8494,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8388,15 +8520,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8414,15 +8546,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8440,15 +8572,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8466,15 +8598,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8492,15 +8624,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8518,15 +8650,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 2,
+          "observed_trading_days": 4,
           "status": "PENDING"
         }
       },
@@ -8544,15 +8676,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8570,15 +8702,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8596,15 +8728,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8622,15 +8754,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8648,15 +8780,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8674,15 +8806,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8700,15 +8832,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8726,15 +8858,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8752,15 +8884,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8778,15 +8910,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8804,15 +8936,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8830,15 +8962,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8856,15 +8988,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8882,15 +9014,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8908,15 +9040,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8934,15 +9066,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8960,15 +9092,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -8986,15 +9118,15 @@
       "formal_action": "REDUCE_25",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -9012,15 +9144,15 @@
       "formal_action": "HOLD_REVIEW",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -9038,15 +9170,15 @@
       "formal_action": "HOLD",
       "horizons": {
         "d20": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d5": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         },
         "d60": {
-          "observed_trading_days": 1,
+          "observed_trading_days": 3,
           "status": "PENDING"
         }
       },
@@ -9060,6 +9192,630 @@
       "canonical_snapshot_id": "4488e83cdb3bdc1cfbc9",
       "code": "001316",
       "decision_date": "2026-09-04",
+      "decision_price": "30.18",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        }
+      },
+      "name": "润贝航科",
+      "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+      "record_id": "a4800c961c902ec3e2f0568c",
+      "scope": "HOLDING",
+      "valuation_confidence": "LOW"
+    },
+    {
+      "canonical_snapshot_id": "4488e83cdb3bdc1cfbc9",
+      "code": "600406",
+      "decision_date": "2026-09-04",
+      "decision_price": "22.71",
+      "formal_action": "REDUCE_25",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        }
+      },
+      "name": "国电南瑞",
+      "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+      "record_id": "72e34bb253e377d0637dd8e8",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "4488e83cdb3bdc1cfbc9",
+      "code": "601318",
+      "decision_date": "2026-09-04",
+      "decision_price": "58.24",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        }
+      },
+      "name": "中国平安",
+      "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
+      "record_id": "8f596f5cbd83990cded7ac3a",
+      "scope": "HOLDING",
+      "valuation_confidence": "INVALID"
+    },
+    {
+      "canonical_snapshot_id": "4488e83cdb3bdc1cfbc9",
+      "code": "603993",
+      "decision_date": "2026-09-04",
+      "decision_price": "18.48",
+      "formal_action": "HOLD",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 3,
+          "status": "PENDING"
+        }
+      },
+      "name": "洛阳钼业",
+      "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+      "record_id": "031d4db576753db6562f555a",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "39983b8cd338d5b9b1e4",
+      "code": "001316",
+      "decision_date": "2026-09-05",
+      "decision_price": "30.18",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "润贝航科",
+      "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+      "record_id": "6da7bdb08038bca0003366e6",
+      "scope": "HOLDING",
+      "valuation_confidence": "LOW"
+    },
+    {
+      "canonical_snapshot_id": "39983b8cd338d5b9b1e4",
+      "code": "600406",
+      "decision_date": "2026-09-05",
+      "decision_price": "22.71",
+      "formal_action": "REDUCE_25",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "国电南瑞",
+      "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+      "record_id": "c5a4c43fd66a8e65beb95758",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "39983b8cd338d5b9b1e4",
+      "code": "601318",
+      "decision_date": "2026-09-05",
+      "decision_price": "58.24",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "中国平安",
+      "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
+      "record_id": "fbdd3d4ed5994934a71d8cfe",
+      "scope": "HOLDING",
+      "valuation_confidence": "INVALID"
+    },
+    {
+      "canonical_snapshot_id": "39983b8cd338d5b9b1e4",
+      "code": "603993",
+      "decision_date": "2026-09-05",
+      "decision_price": "18.48",
+      "formal_action": "HOLD",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "洛阳钼业",
+      "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+      "record_id": "a5c4e2fc0466dcd00e94da2e",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "6987b90e3647ff655f51",
+      "code": "001316",
+      "decision_date": "2026-09-05",
+      "decision_price": "30.18",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "润贝航科",
+      "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+      "record_id": "beb7064f8ab62b2b448acb8e",
+      "scope": "HOLDING",
+      "valuation_confidence": "LOW"
+    },
+    {
+      "canonical_snapshot_id": "6987b90e3647ff655f51",
+      "code": "600406",
+      "decision_date": "2026-09-05",
+      "decision_price": "22.71",
+      "formal_action": "REDUCE_25",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "国电南瑞",
+      "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+      "record_id": "254b21035e93d59569598ead",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "6987b90e3647ff655f51",
+      "code": "601318",
+      "decision_date": "2026-09-05",
+      "decision_price": "58.24",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "中国平安",
+      "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
+      "record_id": "66a31478e73dcbf6e3f9e3ff",
+      "scope": "HOLDING",
+      "valuation_confidence": "INVALID"
+    },
+    {
+      "canonical_snapshot_id": "6987b90e3647ff655f51",
+      "code": "603993",
+      "decision_date": "2026-09-05",
+      "decision_price": "18.48",
+      "formal_action": "HOLD",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "洛阳钼业",
+      "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+      "record_id": "3c5eeab114574ccb6cae3966",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "050be7006d8a0c3a7ac9",
+      "code": "001316",
+      "decision_date": "2026-09-05",
+      "decision_price": "30.18",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "润贝航科",
+      "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+      "record_id": "079dbf4ba4805b6f09420067",
+      "scope": "HOLDING",
+      "valuation_confidence": "LOW"
+    },
+    {
+      "canonical_snapshot_id": "050be7006d8a0c3a7ac9",
+      "code": "600406",
+      "decision_date": "2026-09-05",
+      "decision_price": "22.71",
+      "formal_action": "REDUCE_25",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "国电南瑞",
+      "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+      "record_id": "3483f2d3b98f21cc58067b0e",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "050be7006d8a0c3a7ac9",
+      "code": "601318",
+      "decision_date": "2026-09-05",
+      "decision_price": "58.24",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "中国平安",
+      "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
+      "record_id": "249d7868d396f4c5e4801409",
+      "scope": "HOLDING",
+      "valuation_confidence": "INVALID"
+    },
+    {
+      "canonical_snapshot_id": "050be7006d8a0c3a7ac9",
+      "code": "603993",
+      "decision_date": "2026-09-05",
+      "decision_price": "18.48",
+      "formal_action": "HOLD",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "洛阳钼业",
+      "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+      "record_id": "92a37926dfdfa7f847ff21f7",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "b2591dddc4f629659010",
+      "code": "001316",
+      "decision_date": "2026-09-05",
+      "decision_price": "30.18",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "润贝航科",
+      "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+      "record_id": "6b0a86630a24bd07d276fe5a",
+      "scope": "HOLDING",
+      "valuation_confidence": "LOW"
+    },
+    {
+      "canonical_snapshot_id": "b2591dddc4f629659010",
+      "code": "600406",
+      "decision_date": "2026-09-05",
+      "decision_price": "22.71",
+      "formal_action": "REDUCE_25",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "国电南瑞",
+      "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+      "record_id": "a3e90efce0b00b8b9a2589dc",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "b2591dddc4f629659010",
+      "code": "601318",
+      "decision_date": "2026-09-05",
+      "decision_price": "58.24",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "中国平安",
+      "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
+      "record_id": "2ee79a7d1a6a37cb21b5616a",
+      "scope": "HOLDING",
+      "valuation_confidence": "INVALID"
+    },
+    {
+      "canonical_snapshot_id": "b2591dddc4f629659010",
+      "code": "603993",
+      "decision_date": "2026-09-05",
+      "decision_price": "18.48",
+      "formal_action": "HOLD",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "洛阳钼业",
+      "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+      "record_id": "3d78124bc30730f2793ae53f",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "610e09cb57bb91c49bf2",
+      "code": "001316",
+      "decision_date": "2026-09-05",
+      "decision_price": "30.18",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "润贝航科",
+      "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+      "record_id": "1b339abe0207d0496f225459",
+      "scope": "HOLDING",
+      "valuation_confidence": "LOW"
+    },
+    {
+      "canonical_snapshot_id": "610e09cb57bb91c49bf2",
+      "code": "600406",
+      "decision_date": "2026-09-05",
+      "decision_price": "22.71",
+      "formal_action": "REDUCE_25",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "国电南瑞",
+      "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+      "record_id": "bb8fa480e98eaa46dcd7dbcd",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "610e09cb57bb91c49bf2",
+      "code": "601318",
+      "decision_date": "2026-09-05",
+      "decision_price": "58.24",
+      "formal_action": "HOLD_REVIEW",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "中国平安",
+      "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
+      "record_id": "cc7a8e2e30548cd2ef47a78d",
+      "scope": "HOLDING",
+      "valuation_confidence": "INVALID"
+    },
+    {
+      "canonical_snapshot_id": "610e09cb57bb91c49bf2",
+      "code": "603993",
+      "decision_date": "2026-09-05",
+      "decision_price": "18.48",
+      "formal_action": "HOLD",
+      "horizons": {
+        "d20": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d5": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        },
+        "d60": {
+          "observed_trading_days": 2,
+          "status": "PENDING"
+        }
+      },
+      "name": "洛阳钼业",
+      "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+      "record_id": "e17f96c9a7d9dcded8bf9fa3",
+      "scope": "HOLDING",
+      "valuation_confidence": "HIGH"
+    },
+    {
+      "canonical_snapshot_id": "493229282f313fe717f6",
+      "code": "001316",
+      "decision_date": "2026-09-06",
       "decision_price": "30.18",
       "formal_action": "HOLD_REVIEW",
       "horizons": {
@@ -9078,14 +9834,14 @@
       },
       "name": "润贝航科",
       "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-      "record_id": "a4800c961c902ec3e2f0568c",
+      "record_id": "7abb749db31872683f21671f",
       "scope": "HOLDING",
       "valuation_confidence": "LOW"
     },
     {
-      "canonical_snapshot_id": "4488e83cdb3bdc1cfbc9",
+      "canonical_snapshot_id": "493229282f313fe717f6",
       "code": "600406",
-      "decision_date": "2026-09-04",
+      "decision_date": "2026-09-06",
       "decision_price": "22.71",
       "formal_action": "REDUCE_25",
       "horizons": {
@@ -9104,14 +9860,14 @@
       },
       "name": "国电南瑞",
       "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-      "record_id": "72e34bb253e377d0637dd8e8",
+      "record_id": "fcad70e42ce5ddf660871a4c",
       "scope": "HOLDING",
       "valuation_confidence": "HIGH"
     },
     {
-      "canonical_snapshot_id": "4488e83cdb3bdc1cfbc9",
+      "canonical_snapshot_id": "493229282f313fe717f6",
       "code": "601318",
-      "decision_date": "2026-09-04",
+      "decision_date": "2026-09-06",
       "decision_price": "58.24",
       "formal_action": "HOLD_REVIEW",
       "horizons": {
@@ -9130,14 +9886,14 @@
       },
       "name": "中国平安",
       "reason_codes": "VALUATION_CONFIDENCE_INVALID;NEUTRAL_VALUE_INVALID;REALISTIC_GROWTH_INVALID",
-      "record_id": "8f596f5cbd83990cded7ac3a",
+      "record_id": "185e2fd91d4ce537875b00c6",
       "scope": "HOLDING",
       "valuation_confidence": "INVALID"
     },
     {
-      "canonical_snapshot_id": "4488e83cdb3bdc1cfbc9",
+      "canonical_snapshot_id": "493229282f313fe717f6",
       "code": "603993",
-      "decision_date": "2026-09-04",
+      "decision_date": "2026-09-06",
       "decision_price": "18.48",
       "formal_action": "HOLD",
       "horizons": {
@@ -9156,7 +9912,7 @@
       },
       "name": "洛阳钼业",
       "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
-      "record_id": "031d4db576753db6562f555a",
+      "record_id": "aa2db3677ffcb6607db74a7f",
       "scope": "HOLDING",
       "valuation_confidence": "HIGH"
     }

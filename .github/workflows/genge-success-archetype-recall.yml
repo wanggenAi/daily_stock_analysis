@@ -1,0 +1,200 @@
+name: GenGe Success Archetype Recall
+
+on:
+  workflow_run:
+    workflows: ["GenGe Candidate Terminal Review"]
+    types: [completed]
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/genge-success-archetype-recall.yml"
+      - "data/research_archetypes/**"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
+      - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
+      - "tests/test_genge_success_archetype_recall.py"
+      - "tests/test_genge_success_archetype_outcomes.py"
+      - "tests/test_genge_research_priority_archetype.py"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-success-archetype-recall.yml"
+      - "data/research_archetypes/**"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
+      - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
+      - "tests/test_genge_success_archetype_recall.py"
+      - "tests/test_genge_success_archetype_outcomes.py"
+      - "tests/test_genge_research_priority_archetype.py"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: genge-success-archetype-${{ github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+      - name: Validate research-only archetype contracts
+        run: |
+          python -m py_compile \
+            src/strategies/genge_opportunity_discovery/success_archetype_recall.py \
+            src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py
+          python -m pytest -q \
+            tests/test_genge_success_archetype_recall.py \
+            tests/test_genge_success_archetype_outcomes.py \
+            tests/test_genge_research_priority_archetype.py \
+            tests/test_genge_research_priority_router.py
+
+  production-recall:
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    needs: contract-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+      - name: Restore public fundamental cache
+        uses: actions/cache/restore@v4
+        with:
+          path: data/cache/valuation_research_fundamentals
+          key: genge-postscan-valuation-${{ runner.os }}-main-${{ github.run_id }}
+          restore-keys: |
+            genge-postscan-valuation-${{ runner.os }}-main-
+            genge-postscan-valuation-${{ runner.os }}-
+      - name: Resolve latest successful Terminal Review artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/success-archetype-terminal"
+          rm -rf "$root"
+          mkdir -p "$root"
+          preferred=""
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            preferred="${{ github.event.workflow_run.id }}"
+          fi
+          candidates=()
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
+            candidates+=("$preferred")
+          fi
+          mapfile -t runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-review.yml/runs?branch=main&status=success&per_page=20" --jq '.workflow_runs[].id'
+          )
+          for candidate in "${runs[@]}"; do
+            if [[ " ${candidates[*]} " != *" $candidate "* ]]; then candidates+=("$candidate"); fi
+          done
+          selected_run=""
+          selected_artifact=""
+          for candidate in "${candidates[@]}"; do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "genge-candidate-terminal-decisions" and .expired == false)][0].id // empty')"
+            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+              selected_run="$candidate"
+              selected_artifact="$artifact_id"
+              break
+            fi
+          done
+          test "$selected_artifact" != ""
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${selected_artifact}/zip" > "$root/terminal.zip"
+          unzip -q -o "$root/terminal.zip" -d "$root/unpacked"
+          terminal_csv="$(find "$root/unpacked" -type f -name candidate_terminal_decisions.csv -print -quit)"
+          test -n "$terminal_csv"
+          echo "TERMINAL_CSV=$terminal_csv" >> "$GITHUB_ENV"
+          echo "TERMINAL_RUN_ID=$selected_run" >> "$GITHUB_ENV"
+      - name: Build bounded PIT-safe Runbei archetype recall
+        run: |
+          as_of="$(date -u +%F)"
+          python -m src.strategies.genge_opportunity_discovery.success_archetype_recall \
+            --terminal-csv "$TERMINAL_CSV" \
+            --archetype data/research_archetypes/runbei_v1.json \
+            --as-of "$as_of" \
+            --cache-dir data/cache/valuation_research_fundamentals \
+            --output-dir reports/success_archetype_recall \
+            --max-workers 8 \
+            --max-extra-financial-fetches 200 \
+            --source-terminal-run-id "$TERMINAL_RUN_ID"
+      - name: Save refreshed public fundamental cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/cache/valuation_research_fundamentals
+          key: genge-postscan-valuation-${{ runner.os }}-main-${{ github.run_id }}
+      - name: Validate authority and bounded-fetch invariants
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = json.loads(Path('reports/success_archetype_recall/success_archetype_priority.json').read_text(encoding='utf-8'))
+          assert p['formal_action_eligible'] is False
+          assert p['formal_action_recomputed'] is False
+          assert p['canonical_authority_unchanged'] is True
+          assert p['automatic_promotion_allowed'] is False
+          assert p['starter_position_allowed'] is False
+          assert p['changes_research_order_only'] is True
+          assert p['changes_thresholds'] is False
+          assert p['unknown_evidence_is_pass'] is False
+          assert p['no_auto_trade'] is True
+          assert p['bounded_wide_financial_fetch_enabled'] is True
+          assert p['source_row_count'] > 0
+          assert p['expansion_fetch_limit'] == 200
+          assert 0 <= p['expansion_fetch_count'] <= p['expansion_fetch_limit']
+          assert p['expansion_truncated_count'] == max(0, p['expansion_candidate_count'] - p['expansion_fetch_count'])
+          assert str(p['source_terminal_run_id']) == str(__import__('os').environ['TERMINAL_RUN_ID'])
+          for row in p['queue']:
+              assert row['formal_action_eligible'] is False
+              assert row['formal_action_recomputed'] is False
+              assert row['automatic_promotion_allowed'] is False
+              assert row['starter_position_allowed'] is False
+              assert row['no_auto_trade'] is True
+          PY
+      - name: Upload success-archetype research artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-success-archetype-recall-${{ env.TERMINAL_RUN_ID }}
+          path: reports/success_archetype_recall
+          if-no-files-found: error
+          retention-days: 30
+      - name: Publish summary
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p=json.loads(Path('reports/success_archetype_recall/success_archetype_priority.json').read_text(encoding='utf-8'))
+          print('# GenGe Success Archetype Recall')
+          print(f"- archetype: {p['archetype_id']}")
+          print(f"- reference: {p['reference_code']}")
+          print(f"- terminal source rows: {p['source_row_count']}")
+          print(f"- existing deep-financial fetches: {p['existing_deep_financial_fetch_count']}")
+          print(f"- bounded expansion candidates: {p['expansion_candidate_count']}")
+          print(f"- bounded expansion fetched: {p['expansion_fetch_count']} / {p['expansion_fetch_limit']}")
+          print(f"- expansion truncated: {p['expansion_truncated_count']}")
+          print(f"- financial evidence unavailable after fetch: {p['financial_evidence_unavailable_count']}")
+          print(f"- research recall count: {p['queue_count']}")
+          print('- authority: research-order only; no Formal/Canonical mutation; no auto-trade')
+          PY

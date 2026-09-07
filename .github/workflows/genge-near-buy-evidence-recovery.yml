@@ -1,0 +1,268 @@
+name: GenGe Near-BUY Evidence Recovery
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe Near-BUY Research Overlay"
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      upstream_run_id:
+        description: "Optional successful Near-BUY Research run id; latest usable main run is fallback"
+        required: false
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-near-buy-evidence-recovery.yml"
+      - "src/strategies/genge_opportunity_discovery/near_buy_evidence_recovery.py"
+      - "tests/test_genge_near_buy_evidence_recovery.py"
+  pull_request:
+    paths:
+      - ".github/workflows/genge-near-buy-evidence-recovery.yml"
+      - "src/strategies/genge_opportunity_discovery/near_buy_evidence_recovery.py"
+      - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
+      - "tests/test_genge_near_buy_evidence_recovery.py"
+      - ".github/workflows/genge-research-learning.yml"
+
+permissions:
+  contents: read
+  actions: read
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+concurrency:
+  group: genge-near-buy-evidence-recovery-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test harness
+        run: |
+          python -m pip install --disable-pip-version-check -q \
+            pandas pytest anyio fastapi httpx starlette PyYAML requests beautifulsoup4 pypdf
+      - name: Run Near-BUY evidence recovery contracts
+        run: |
+          python -m pytest -q \
+            tests/test_genge_near_buy_evidence_recovery.py \
+            tests/test_genge_research_priority_router.py
+      - name: Compile recovery modules
+        run: |
+          python -m py_compile \
+            src/strategies/genge_opportunity_discovery/near_buy_evidence_recovery.py \
+            src/strategies/genge_opportunity_discovery/research_priority_router.py
+
+  build-recovery:
+    needs: contract-tests
+    if: >-
+      (github.event_name == 'push') ||
+      (github.event_name == 'workflow_dispatch') ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success'
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install evidence recovery dependencies
+        run: |
+          python -m pip install --disable-pip-version-check -q \
+            pandas requests beautifulsoup4 pypdf
+
+      - name: Resolve exact Near-BUY source artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          preferred=""
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            preferred="${{ github.event.workflow_run.id }}"
+          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            preferred="${{ inputs.upstream_run_id }}"
+          fi
+
+          candidates=()
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
+            candidates+=("$preferred")
+          fi
+          mapfile -t successful_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-near-buy-research.yml/runs?branch=main&status=success&per_page=20" \
+              --jq '.workflow_runs[].id'
+          )
+          for candidate in "${successful_runs[@]}"; do
+            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then
+              candidates+=("$candidate")
+            fi
+          done
+
+          upstream=""
+          artifact_id=""
+          artifact_name=""
+          for candidate in "${candidates[@]}"; do
+            artifact_line="$(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                --jq '[.artifacts[] | select((.name | startswith("genge-near-buy-research-")) and .expired == false)][0] | if . then "\(.id)\t\(.name)" else "" end'
+            )"
+            if [[ -n "$artifact_line" ]]; then
+              artifact_id="${artifact_line%%$'\t'*}"
+              artifact_name="${artifact_line#*$'\t'}"
+              if [[ "$artifact_id" =~ ^[0-9]+$ ]] && [[ -n "$artifact_name" ]]; then
+                upstream="$candidate"
+                break
+              fi
+            fi
+          done
+          [[ "$upstream" =~ ^[0-9]+$ ]] || {
+            echo "no successful main Near-BUY run has a usable research artifact" >&2
+            exit 1
+          }
+          echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
+          echo "UPSTREAM_ARTIFACT_ID=$artifact_id" >> "$GITHUB_ENV"
+          echo "UPSTREAM_ARTIFACT_NAME=$artifact_name" >> "$GITHUB_ENV"
+          echo "selected Near-BUY run $upstream artifact $artifact_name ($artifact_id)"
+
+      - name: Download Near-BUY research artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ env.UPSTREAM_ARTIFACT_NAME }}
+          run-id: ${{ env.UPSTREAM_RUN_ID }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: near-buy-input
+
+      - name: Validate Recovery input from actual Near-BUY overlay
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s near-buy-input/near_buy_research_overlay.csv
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+          rows = list(csv.DictReader(Path('near-buy-input/near_buy_research_overlay.csv').open(encoding='utf-8')))
+          recovery = [row for row in rows if row.get('research_opportunity_state') == 'EVIDENCE_RECOVERY_PRIORITY']
+          assert all(not row.get('v31_hard_gate_failures') for row in recovery)
+          assert all(not row.get('confirmed_negative_items') for row in recovery)
+          assert all(not row.get('conflicted_evidence_items') for row in recovery)
+          assert all(str(row.get('evidence_recovery_starter_allowed')).lower() in {'', 'false', '0', 'no'} for row in recovery)
+          print(f'validated overlay rows={len(rows)} recovery rows={len(recovery)}; zero recovery is a healthy no-op')
+          PY
+
+      - name: Collect targeted public evidence and build review packets
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +e
+          python -m src.strategies.genge_opportunity_discovery.near_buy_evidence_recovery \
+            --recovery-csv near-buy-input/near_buy_research_overlay.csv \
+            --output-dir near-buy-evidence-recovery \
+            --cache-dir .cache/near-buy-evidence-recovery \
+            --as-of "$(date +%F)" \
+            --source-run-id "$UPSTREAM_RUN_ID" \
+            --source-artifact "$UPSTREAM_ARTIFACT_NAME"
+          rc=$?
+          set -e
+          echo "RECOVERY_EXIT=$rc" >> "$GITHUB_ENV"
+          test -s near-buy-evidence-recovery/recovery_summary.json
+          test -f near-buy-evidence-recovery/recovery_review_packet.csv
+          test -s near-buy-evidence-recovery/near_buy_research_priority.json
+
+      - name: Assert evidence-recovery authority invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('near-buy-evidence-recovery')
+          summary = json.loads((root / 'recovery_summary.json').read_text(encoding='utf-8'))
+          priority = json.loads((root / 'near_buy_research_priority.json').read_text(encoding='utf-8'))
+          packets = list(csv.DictReader((root / 'recovery_review_packet.csv').open(encoding='utf-8')))
+
+          assert summary['workset_count'] == summary['review_packet_count']
+          assert summary['qualitative_judgement_resolved_count'] == 0
+          assert summary['priority_changes_order_only'] is True
+          assert summary['threshold_changes_allowed'] is False
+          assert summary['automatic_gate_inference_allowed'] is False
+          assert summary['unknown_evidence_is_pass'] is False
+          assert summary['formal_action_eligible'] is False
+          assert summary['formal_action_recomputed'] is False
+          assert summary['canonical_authority_unchanged'] is True
+          assert summary['automatic_promotion_allowed'] is False
+          assert summary['starter_position_allowed'] is False
+          assert summary['no_auto_trade'] is True
+
+          assert priority['priority_changes_order_only'] is True
+          assert priority['threshold_changes_allowed'] is False
+          assert priority['automatic_gate_inference_allowed'] is False
+          assert priority['formal_action_eligible'] is False
+          assert priority['formal_action_recomputed'] is False
+          assert priority['automatic_promotion_allowed'] is False
+          assert priority['starter_position_allowed'] is False
+          assert priority['no_auto_trade'] is True
+          assert priority['queue_count'] == len(packets)
+
+          assert all(row['qualitative_judgement_state'] == 'UNRESOLVED' for row in packets)
+          assert all(row['automatic_gate_inference_allowed'] == 'False' for row in packets)
+          assert all(row['unknown_evidence_is_pass'] == 'False' for row in packets)
+          assert all(row['formal_action_eligible'] == 'False' for row in packets)
+          assert all(row['formal_action_recomputed'] == 'False' for row in packets)
+          assert all(row['automatic_promotion_allowed'] == 'False' for row in packets)
+          assert all(row['starter_position_allowed'] == 'False' for row in packets)
+          assert all(row['no_auto_trade'] == 'True' for row in packets)
+          print(json.dumps(summary, ensure_ascii=False, indent=2))
+          PY
+
+      - name: Upload evidence recovery artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-near-buy-evidence-recovery-${{ env.UPSTREAM_RUN_ID }}
+          path: near-buy-evidence-recovery
+          if-no-files-found: warn
+          retention-days: 60
+
+      - name: Publish evidence recovery summary
+        if: always()
+        shell: bash
+        run: |
+          echo "# GenGe Near-BUY Evidence Recovery" >> "$GITHUB_STEP_SUMMARY"
+          echo "- source Near-BUY run: ${UPSTREAM_RUN_ID:-unresolved}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- source CSV: near_buy_research_overlay.csv (Recovery rows filtered by research_opportunity_state)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- targeted public evidence only; qualitative V3.1 judgement remains explicit/unresolved" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Recovery priority changes research order only; thresholds/Formal/Canonical are unchanged" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f near-buy-evidence-recovery/recovery_summary.json ]; then
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          s = json.loads(Path('near-buy-evidence-recovery/recovery_summary.json').read_text(encoding='utf-8'))
+          print(f"- workset: {s['workset_count']} (A={s['tier_counts']['A']} / B={s['tier_counts']['B']} / C={s['tier_counts']['C']})")
+          print(f"- collection states: {s['collection_state_counts']}")
+          print(f"- collector exception: {s['collector_exception'] or 'none'}")
+          PY
+          fi
+
+      - name: Fail closed on collector crash
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rc="${RECOVERY_EXIT:-1}"
+          if [ "$rc" != "0" ]; then
+            echo "targeted evidence collector crashed (exit=$rc); artifact retained for audit" >&2
+            exit "$rc"
+          fi

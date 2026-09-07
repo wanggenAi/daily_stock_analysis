@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [改进] Near-BUY observer overlay 在 V3.1 正式证据缺失时新增只读 Evidence Recovery Priority A/B/C 队列，按已完成财务/估值研究、非退出型二次门槛和现有研究优先级确定补证顺序；UNKNOWN 仍不视为 PASS、缺证据对象不得获得 starter 仓位或自动晋级，并在 Near-BUY 代码合入 main 时用最近成功 Terminal artifact 自动重跑验证。
+- [新功能] GenGe 候选终态后新增 observer-only Near-BUY 研究叠加层：按 SUFFICIENT/MISSING/CONFLICTED/CONFIRMED_NEGATIVE 区分证据质量，仅对无 Hard Gate FAIL、无 confirmed-negative 且满足研究条件的对象标记 NEAR_BUY；提供 20%–30%（默认 25%）研究型 starter-position advisory，并支持 5/10/20/60 交易日前向收益、基准超额、胜率、盈亏比与 60 日最大回撤评估；不改变 Canonical/Production Authority、Formal BUY 门槛、BUY/WAIT_PRICE/REJECT 三态、UNKNOWN 非 PASS 与 no-auto-trade。
 - [改进] GenGe 候选研究层新增有限重试与公开财报备用源，按组件保留已恢复证据并继续补齐缺项；Master Ranking 候选在当前周期统一收敛为 BUY、WAIT_PRICE 或可重试原因明确的 REJECT，Actions 日志直接打印逐股结果且不改变 Production Authority、投资门槛或 no-auto-trade。
 - [修复] 全 A 生产扫描在中国市场收盘后保留 4 小时日线发布缓冲；公开行情尚未覆盖全市场时继续使用上一完整交易日，避免混用新旧交易日触发系统性 `DATE_MISMATCH`，深市扫描既有日期行为不变。
 - [新功能] 晋级 `GEN_GE_V3_1_1_PRODUCTION`：保留 V3.1 BUY 与即时 SELL contract，正式加入验证通过的 Valuation Confidence Gate；LOW/INVALID 一律 HOLD_REVIEW，Hard Gate FAIL 仍强制 EXIT，并统一输出九种生产动作、估值字段与 reason codes。

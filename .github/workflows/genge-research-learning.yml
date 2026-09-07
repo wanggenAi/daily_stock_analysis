@@ -2,25 +2,34 @@ name: GenGe V3.1.1 Research Learning
 
 on:
   workflow_run:
-    # Hourly state is persisted first, which triggers Operating Ledger; learning
-    # follows the successful Ledger so we do not run twice for the same hour.
     workflows:
       - "GenGe V3.1.1 Operating Ledger"
+      - "GenGe Near-BUY Evidence Recovery"
+      - "GenGe Success Archetype Recall"
     types: [completed]
   schedule:
-    # Beijing 17:15 on weekdays: end-of-day learning/outcome refresh.
     - cron: "15 9 * * 1-5"
   workflow_dispatch:
   push:
     branches: [main]
     paths:
       - ".github/workflows/genge-research-learning.yml"
+      - ".github/workflows/genge-near-buy-evidence-recovery.yml"
+      - ".github/workflows/genge-success-archetype-recall.yml"
+      - "data/research_archetypes/**"
+      - "src/strategies/genge_opportunity_discovery/near_buy_evidence_recovery.py"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
+      - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
       - "src/strategies/genge_opportunity_discovery/price_value_history_summary.py"
       - "src/strategies/genge_opportunity_discovery/formal_decision_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/hourly_research_state.py"
       - "src/strategies/genge_opportunity_discovery/v31_review_queue.py"
       - "src/strategies/genge_opportunity_discovery/production_observability.py"
+      - "tests/test_genge_near_buy_evidence_recovery.py"
+      - "tests/test_genge_success_archetype_recall.py"
+      - "tests/test_genge_success_archetype_outcomes.py"
+      - "tests/test_genge_research_priority_archetype.py"
       - "tests/test_genge_research_priority_router.py"
       - "tests/test_genge_price_value_history_summary.py"
       - "tests/test_genge_formal_decision_outcomes.py"
@@ -30,6 +39,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 env:
   TZ: Asia/Shanghai
@@ -45,7 +55,7 @@ jobs:
       github.event_name != 'workflow_run' ||
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,62 +71,185 @@ jobs:
           python -m pip install --disable-pip-version-check -q \
             pandas pytest anyio fastapi httpx starlette PyYAML requests beautifulsoup4 pypdf
 
+      - name: Resolve latest Near-BUY recovery priority artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/near-buy-recovery-priority"
+          rm -rf "$root"
+          mkdir -p "$root"
+          preferred=""
+          if [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.name }}" = "GenGe Near-BUY Evidence Recovery" ]; then
+            preferred="${{ github.event.workflow_run.id }}"
+          fi
+          candidates=()
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then candidates+=("$preferred"); fi
+          mapfile -t successful_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-near-buy-evidence-recovery.yml/runs?branch=main&status=success&per_page=20" --jq '.workflow_runs[].id'
+          )
+          for candidate in "${successful_runs[@]}"; do
+            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then candidates+=("$candidate"); fi
+          done
+          selected_run=""
+          selected_artifact=""
+          for candidate in "${candidates[@]}"; do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" --jq '[.artifacts[] | select((.name | startswith("genge-near-buy-evidence-recovery-")) and .expired == false)][0].id // empty')"
+            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then selected_run="$candidate"; selected_artifact="$artifact_id"; break; fi
+          done
+          if [[ ! "$selected_artifact" =~ ^[0-9]+$ ]]; then
+            echo "NEAR_BUY_RECOVERY_FILE=" >> "$GITHUB_ENV"
+            echo "NEAR_BUY_RECOVERY_RUN_ID=" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${selected_artifact}/zip" > "$root/recovery.zip"
+          unzip -q -o "$root/recovery.zip" -d "$root/unpacked"
+          recovery_file="$(find "$root/unpacked" -type f -name near_buy_research_priority.json -print -quit)"
+          test -n "$recovery_file"
+          python - "$recovery_file" <<'PY'
+          import json, sys
+          from pathlib import Path
+          p=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          assert p['priority_changes_order_only'] is True
+          assert p['threshold_changes_allowed'] is False
+          assert p['formal_action_eligible'] is False
+          assert p['formal_action_recomputed'] is False
+          assert p['automatic_promotion_allowed'] is False
+          assert p['starter_position_allowed'] is False
+          assert p['no_auto_trade'] is True
+          PY
+          echo "NEAR_BUY_RECOVERY_FILE=$recovery_file" >> "$GITHUB_ENV"
+          echo "NEAR_BUY_RECOVERY_RUN_ID=$selected_run" >> "$GITHUB_ENV"
+
+      - name: Resolve latest success-archetype recall artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/success-archetype-priority"
+          rm -rf "$root"
+          mkdir -p "$root"
+          preferred=""
+          if [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.name }}" = "GenGe Success Archetype Recall" ]; then
+            preferred="${{ github.event.workflow_run.id }}"
+          fi
+          candidates=()
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then candidates+=("$preferred"); fi
+          mapfile -t successful_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-success-archetype-recall.yml/runs?branch=main&status=success&per_page=20" --jq '.workflow_runs[].id'
+          )
+          for candidate in "${successful_runs[@]}"; do
+            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then candidates+=("$candidate"); fi
+          done
+          selected_run=""
+          selected_artifact=""
+          for candidate in "${candidates[@]}"; do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" --jq '[.artifacts[] | select((.name | startswith("genge-success-archetype-recall-")) and .expired == false)][0].id // empty')"
+            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then selected_run="$candidate"; selected_artifact="$artifact_id"; break; fi
+          done
+          if [[ ! "$selected_artifact" =~ ^[0-9]+$ ]]; then
+            echo "SUCCESS_ARCHETYPE_FILE=" >> "$GITHUB_ENV"
+            echo "SUCCESS_ARCHETYPE_RUN_ID=" >> "$GITHUB_ENV"
+            exit 0
+          fi
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${selected_artifact}/zip" > "$root/archetype.zip"
+          unzip -q -o "$root/archetype.zip" -d "$root/unpacked"
+          archetype_file="$(find "$root/unpacked" -type f -name success_archetype_priority.json -print -quit)"
+          test -n "$archetype_file"
+          python - "$archetype_file" <<'PY'
+          import json, sys
+          from pathlib import Path
+          p=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          assert p['changes_research_order_only'] is True
+          assert p['changes_thresholds'] is False
+          assert p['unknown_evidence_is_pass'] is False
+          assert p['formal_action_eligible'] is False
+          assert p['formal_action_recomputed'] is False
+          assert p['canonical_authority_unchanged'] is True
+          assert p['automatic_promotion_allowed'] is False
+          assert p['starter_position_allowed'] is False
+          assert p['no_auto_trade'] is True
+          PY
+          echo "SUCCESS_ARCHETYPE_FILE=$archetype_file" >> "$GITHUB_ENV"
+          echo "SUCCESS_ARCHETYPE_RUN_ID=$selected_run" >> "$GITHUB_ENV"
+
       - name: Build and persist learning state with optimistic replay
         run: |
           set -euo pipefail
           git config user.name "genge-v311-research-learning-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-
           for attempt in 1 2 3 4; do
             echo "research-learning replay attempt ${attempt}/4"
             git fetch origin main
             git reset --hard origin/main
-            git clean -fdx -- \
-              data/research_priority \
-              data/price_value_history \
-              data/formal_decision_outcomes \
-              data/production_observability
+            git clean -fdx -- data/research_priority data/price_value_history data/formal_decision_outcomes data/success_archetype_outcomes data/production_observability
 
             python -m pytest -q \
               tests/test_genge_hourly_research_state.py \
+              tests/test_genge_near_buy_evidence_recovery.py \
+              tests/test_genge_success_archetype_recall.py \
+              tests/test_genge_success_archetype_outcomes.py \
+              tests/test_genge_research_priority_archetype.py \
               tests/test_genge_research_priority_router.py \
               tests/test_genge_price_value_history_summary.py \
               tests/test_genge_formal_decision_outcomes.py \
               tests/test_genge_v31_review_priority_order.py \
               tests/test_genge_production_observability.py
 
-            python -m src.strategies.genge_opportunity_discovery.price_value_history_summary \
-              --history-root data/hourly_deep_overlay \
-              --output data/price_value_history/summary.json
+            python -m src.strategies.genge_opportunity_discovery.price_value_history_summary --history-root data/hourly_deep_overlay --output data/price_value_history/summary.json
 
+            recovery_args=()
+            if [ -n "${NEAR_BUY_RECOVERY_FILE:-}" ] && [ -f "$NEAR_BUY_RECOVERY_FILE" ]; then recovery_args=(--near-buy-recovery "$NEAR_BUY_RECOVERY_FILE"); fi
+            archetype_args=()
+            if [ -n "${SUCCESS_ARCHETYPE_FILE:-}" ] && [ -f "$SUCCESS_ARCHETYPE_FILE" ]; then archetype_args=(--success-archetype-recall "$SUCCESS_ARCHETYPE_FILE"); fi
             python -m src.strategies.genge_opportunity_discovery.research_priority_router \
               --hourly data/hourly_research_state/latest.json \
               --lifecycle data/opportunity_snapshots/candidate_lifecycle_state.json \
               --coverage data/research_mapping/coverage.json \
+              "${recovery_args[@]}" \
+              "${archetype_args[@]}" \
               --output data/research_priority/latest.json
 
-            python -m src.strategies.genge_opportunity_discovery.formal_decision_outcomes \
-              --history data/formal_decision_history/history.jsonl \
+            outcome_args=()
+            if [ -n "${SUCCESS_ARCHETYPE_FILE:-}" ] && [ -f "$SUCCESS_ARCHETYPE_FILE" ]; then outcome_args=(--priority "$SUCCESS_ARCHETYPE_FILE"); fi
+            python -m src.strategies.genge_opportunity_discovery.success_archetype_outcomes \
+              "${outcome_args[@]}" \
+              --history data/success_archetype_outcomes/history.jsonl \
               --price-history-root data/hourly_deep_overlay \
-              --output data/formal_decision_outcomes/latest.json
+              --output data/success_archetype_outcomes/latest.json
 
-            python -m src.strategies.genge_opportunity_discovery.production_observability \
-              --root . \
-              --output data/production_observability/latest.json
+            python -m src.strategies.genge_opportunity_discovery.formal_decision_outcomes --history data/formal_decision_history/history.jsonl --price-history-root data/hourly_deep_overlay --output data/formal_decision_outcomes/latest.json
+            python -m src.strategies.genge_opportunity_discovery.production_observability --root . --output data/production_observability/latest.json
 
             python - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
-          q = json.loads(Path('data/research_priority/latest.json').read_text(encoding='utf-8'))
-          p = json.loads(Path('data/price_value_history/summary.json').read_text(encoding='utf-8'))
-          o = json.loads(Path('data/formal_decision_outcomes/latest.json').read_text(encoding='utf-8'))
-          health = json.loads(Path('data/production_observability/latest.json').read_text(encoding='utf-8'))
+          q=json.loads(Path('data/research_priority/latest.json').read_text(encoding='utf-8'))
+          p=json.loads(Path('data/price_value_history/summary.json').read_text(encoding='utf-8'))
+          a=json.loads(Path('data/success_archetype_outcomes/latest.json').read_text(encoding='utf-8'))
+          o=json.loads(Path('data/formal_decision_outcomes/latest.json').read_text(encoding='utf-8'))
+          health=json.loads(Path('data/production_observability/latest.json').read_text(encoding='utf-8'))
           assert q['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
           assert q['formal_action_recomputed'] is False
           assert q['formal_action_eligible'] is False
           assert q['no_auto_trade'] is True
+          assert q['near_buy_recovery_changes_order_only'] is True
+          assert q['near_buy_recovery_changes_thresholds'] is False
+          assert q['success_archetype_recall_changes_order_only'] is True
+          assert q['success_archetype_recall_changes_thresholds'] is False
+          assert q['research_overlay_boost_combination'] == 'MAX_NOT_SUM'
+          if os.environ.get('SUCCESS_ARCHETYPE_FILE'):
+              assert q['success_archetype_recall_count'] >= 0
           assert p['formal_action_recomputed'] is False
           assert p['formal_action_eligible'] is False
+          assert a['formal_action_recomputed'] is False
+          assert a['formal_action_eligible'] is False
+          assert a['parameter_tuning_allowed'] is False
+          assert a['automatic_parameter_tuning_allowed'] is False
+          assert a['changes_thresholds'] is False
+          assert a['no_auto_trade'] is True
           assert o['formal_action_recomputed'] is False
           assert o['formal_action_eligible'] is False
           assert o['parameter_tuning_allowed'] is False
@@ -127,22 +260,12 @@ jobs:
           assert health['checks']['learning_layer_research_only'] is True
           PY
 
-            git add -f \
-              data/research_priority \
-              data/price_value_history \
-              data/formal_decision_outcomes \
-              data/production_observability/latest.json
-            if git diff --cached --quiet; then
-              echo "No learning state change to persist"
-              exit 0
-            fi
+            git add -f data/research_priority data/price_value_history data/formal_decision_outcomes data/success_archetype_outcomes data/production_observability/latest.json
+            if git diff --cached --quiet; then echo "No learning state change to persist"; exit 0; fi
             git commit -m "Persist V3.1.1 research learning state [skip ci]"
-            if git push origin HEAD:main; then
-              exit 0
-            fi
+            if git push origin HEAD:main; then exit 0; fi
             echo "push race detected; replaying learning state from newest origin/main" >&2
           done
-
           echo "research-learning persistence failed after 4 optimistic replay attempts" >&2
           exit 1
 
@@ -155,6 +278,7 @@ jobs:
             data/research_priority
             data/price_value_history
             data/formal_decision_outcomes
+            data/success_archetype_outcomes
             data/production_observability/latest.json
           if-no-files-found: warn
           retention-days: 60
@@ -164,5 +288,9 @@ jobs:
         run: |
           echo "# GenGe V3.1.1 Research Learning" >> "$GITHUB_STEP_SUMMARY"
           echo "- persistence: optimistic replay on newest main" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Near-BUY Recovery: ${NEAR_BUY_RECOVERY_RUN_ID:-none}; research-order only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Success Archetype Recall: ${SUCCESS_ARCHETYPE_RUN_ID:-none}; research-order only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- success-archetype outcomes: 5/20/60 trading-day observation; human review only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- overlay boost combination: MAX_NOT_SUM" >> "$GITHUB_STEP_SUMMARY"
           echo "- learning outputs remain research-only and cannot change Formal actions" >> "$GITHUB_STEP_SUMMARY"
           echo "- automatic V3.1.1 parameter tuning remains disabled" >> "$GITHUB_STEP_SUMMARY"

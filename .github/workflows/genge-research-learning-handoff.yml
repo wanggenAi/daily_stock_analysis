@@ -1,0 +1,31 @@
+name: GenGe Research Learning Handoff
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Evidence Slow Lane"
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-research-learning-handoff
+  cancel-in-progress: false
+
+jobs:
+  dispatch-research-learning:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch Research Learning on main
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-research-learning.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Dispatched GenGe V3.1.1 Research Learning after successful Evidence Slow Lane run ${{ github.event.workflow_run.id }}"
