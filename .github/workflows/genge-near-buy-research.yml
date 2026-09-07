@@ -121,8 +121,10 @@ jobs:
                 continue
                 ;;
             esac
-            artifact_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
-              --jq --arg name "$expected_artifact" '[.artifacts[] | select(.name == $name and .expired == false)][0].id // empty')
+            artifact_id=$(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" |
+                jq -r --arg name "$expected_artifact" '[.artifacts[] | select(.name == $name and .expired == false)][0].id // empty'
+            )
             if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
               upstream="$candidate"
               artifact_name="$expected_artifact"
