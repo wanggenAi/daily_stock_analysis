@@ -1,16 +1,16 @@
-"""Single frozen production entry point for GenGe V3.1.1."""
+"""Single frozen production entry point for GenGe V3.1.1.
+
+Typed-insurer dependencies are intentionally lazy-loaded. Lightweight consumers
+such as Candidate Terminal only need frozen policy constants and must not require
+PyYAML merely by importing this module. Actual production evaluation still loads
+the exact insurer implementation when it is called.
+"""
 from __future__ import annotations
 
 from dataclasses import replace
 from typing import Any, Mapping
 
 from .holding_valuation_continuity import sell_review_required
-from .insurer_typed_production import (
-    assess_insurer_valuation_confidence_v311,
-    decide_insurer_v311,
-    insurer_typed_payload_metadata,
-    is_insurer_typed_input,
-)
 from .selection_framework_v311 import (
     V311Decision,
     ValuationConfidence,
@@ -85,11 +85,7 @@ def _holding_add_input_ready(data: Mapping[str, Any]) -> bool:
     expectation_status = str(data.get("v311_expectation_input_status") or "").strip().upper()
     price_date_status = str(data.get("price_date_verification_status") or "").strip().upper()
     price_mapping_status = str(data.get("price_mapping_status") or "").strip().upper()
-    return (
-        expectation_status == "READY"
-        and price_date_status == "VERIFIED"
-        and price_mapping_status == "OK"
-    )
+    return expectation_status == "READY" and price_date_status == "VERIFIED" and price_mapping_status == "OK"
 
 
 def _holding_add_assessment(
@@ -98,15 +94,6 @@ def _holding_add_assessment(
     *,
     typed_insurer: bool,
 ) -> tuple[bool, tuple[str, ...]]:
-    """Assess a one-lot holding add without changing the frozen Formal Action.
-
-    The Formal Action vocabulary remains untouched.  This produces a separate
-    Canonical execution authorization only for an already-held, non-insurer
-    name with HIGH-confidence fresh valuation evidence and an A-level margin of
-    safety.  It never creates a candidate BUY, never turns UNKNOWN into PASS,
-    and any explicit hard-gate failure blocks authorization.  The dashboard may
-    consume this authorization conservatively, capped at one A-share lot.
-    """
     blockers: list[str] = []
     if typed_insurer:
         blockers.append("TYPED_INSURER_POLICY_SEPARATE")
@@ -147,17 +134,8 @@ def _holding_add_assessment(
 
 
 def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V311Decision:
-    """Keep core-quality admission separate from formal price-action admission.
-
-    Research/core-pool quality never confers BUY privilege.  A candidate may be
-    excellent and remain WAIT until valuation evidence is HIGH confidence and
-    price is at least 20% below the current neutral/base value.  Existing
-    holdings are handled by the holding ladder and can never be re-labelled BUY
-    by the candidate admission path.
-    """
     if decision.action != "BUY":
         return decision
-
     if _has_position(data):
         return replace(
             decision,
@@ -165,59 +143,35 @@ def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V
             target_position_fraction=1.0,
             reason_codes=("CORE_POOL_CONFERS_NO_BUY_PRIVILEGE", "EXISTING_POSITION_NOT_CANDIDATE_BUY"),
         )
-
     if decision.valuation_confidence is not ValuationConfidence.HIGH:
         return replace(
             decision,
             action="WAIT",
             target_position_fraction=0.0,
-            reason_codes=(
-                "CORE_POOL_CONFERS_NO_BUY_PRIVILEGE",
-                "BUY_VALUATION_CONFIDENCE_NOT_HIGH",
-                *decision.reason_codes,
-            ),
+            reason_codes=("CORE_POOL_CONFERS_NO_BUY_PRIVILEGE", "BUY_VALUATION_CONFIDENCE_NOT_HIGH", *decision.reason_codes),
         )
-
     ratio = decision.price_to_neutral
     if ratio is None or ratio > FORMAL_BUY_MAX_PRICE_TO_NEUTRAL:
         return replace(
             decision,
             action="WAIT",
             target_position_fraction=0.0,
-            reason_codes=(
-                "CORE_POOL_CONFERS_NO_BUY_PRIVILEGE",
-                "BUY_MARGIN_OF_SAFETY_INSUFFICIENT",
-                "PRICE_TOO_CLOSE_TO_BASE_VALUE",
-            ),
+            reason_codes=("CORE_POOL_CONFERS_NO_BUY_PRIVILEGE", "BUY_MARGIN_OF_SAFETY_INSUFFICIENT", "PRICE_TOO_CLOSE_TO_BASE_VALUE"),
         )
-
     return replace(
         decision,
-        reason_codes=(
-            "V31_BUY_GATES_PASS",
-            "BUY_VALUATION_CONFIDENCE_HIGH",
-            "MARGIN_OF_SAFETY_PASS",
-            "PRICE_TO_NEUTRAL_AT_OR_BELOW_0_80",
-        ),
+        reason_codes=("V31_BUY_GATES_PASS", "BUY_VALUATION_CONFIDENCE_HIGH", "MARGIN_OF_SAFETY_PASS", "PRICE_TO_NEUTRAL_AT_OR_BELOW_0_80"),
     )
 
 
 def decide_production(data: Mapping[str, Any]) -> V311Decision:
-    """Apply frozen V3.1.1 Formal Actions with strict BUY and SELL rationale.
+    # Lazy import keeps policy-constant consumers independent of insurer/PyYAML runtime.
+    from .insurer_typed_production import decide_insurer_v311, is_insurer_typed_input
 
-    Formal BUY remains unchanged: it requires the underlying V3.1 buy gates,
-    HIGH valuation confidence, no existing position, and price <=80% of neutral
-    value.  Existing-holding staged-add authorization is metadata computed in
-    :func:`production_payload`; it never changes the Formal Action vocabulary.
-    Typed insurers remain under their separate policy. REDUCE/CORE_ONLY still
-    requires the explicit sell-rationale continuity guard.
-    """
     if is_insurer_typed_input(data):
         decision = decide_insurer_v311(data)
     else:
         decision = decide_v311(data)
-
-    # Hard-gate EXIT and holding/sell actions are never weakened by the BUY gate.
     decision = _apply_formal_buy_gate(data, decision)
 
     required, rationale_reasons = sell_review_required(data, decision.action)
@@ -229,14 +183,18 @@ def decide_production(data: Mapping[str, Any]) -> V311Decision:
             reason_codes=("SELL_RATIONALE_REVIEW_REQUIRED", *rationale_reasons),
         )
     if rationale_reasons and decision.action in {"REDUCE_25", "REDUCE_50", "CORE_ONLY"}:
-        return replace(
-            decision,
-            reason_codes=tuple([*decision.reason_codes, *rationale_reasons]),
-        )
+        return replace(decision, reason_codes=tuple([*decision.reason_codes, *rationale_reasons]))
     return decision
 
 
 def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
+    # These imports are required only when production is actually evaluated.
+    from .insurer_typed_production import (
+        assess_insurer_valuation_confidence_v311,
+        insurer_typed_payload_metadata,
+        is_insurer_typed_input,
+    )
+
     typed_insurer = is_insurer_typed_input(data)
     decision = decide_production(data)
     confidence = (
@@ -245,11 +203,7 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         else assess_valuation_confidence_v311(data)
     )
     add_failures, add_unknowns = _holding_add_gate_state(data)
-    add_authorized, add_reasons = _holding_add_assessment(
-        data,
-        decision,
-        typed_insurer=typed_insurer,
-    )
+    add_authorized, add_reasons = _holding_add_assessment(data, decision, typed_insurer=typed_insurer)
     payload = decision.as_dict()
     payload.update({
         "production_model_version": PRODUCTION_MODEL_VERSION,
