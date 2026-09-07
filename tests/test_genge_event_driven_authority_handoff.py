@@ -42,7 +42,7 @@ def test_authoritative_canonical_dedupe_requires_exact_consumer_closure() -> Non
     assert "consumer-only repair" in text
 
 
-def test_handoff_closes_upstream_authority_then_reuses_verified_consumer_handoff() -> None:
+def test_handoff_closes_upstream_authority_then_terminal_before_fresh_consumer() -> None:
     text = _text(HANDOFF_WORKFLOW)
     assert "actions: write" in text
     assert "industry_run_id:" in text
@@ -50,23 +50,28 @@ def test_handoff_closes_upstream_authority_then_reuses_verified_consumer_handoff
     assert "genge-v31-industry-research.yml" in text
     assert "-f explicit_finalizer=false" in text
     assert "genge-v311-production-finalizer.yml" in text
+    assert "genge-candidate-terminal-review.yml" in text
     assert "genge-v311-authority-consumer-handoff.yml" in text
     assert "genge-v311-authoritative-canonical-${industry_run_id}" in text
+    assert 'require_artifact "$terminal_run_id" "genge-candidate-terminal-decisions"' in text
 
     industry = text.index("industry_run_id=$(dispatch_and_resolve")
     finalizer = text.index("finalizer_run_id=$(dispatch_and_resolve")
-    consumers = text.index("consumer_handoff_run_id=$(dispatch_and_resolve")
-    assert industry < finalizer < consumers
+    terminal = text.index("terminal_run_id=$(dispatch_and_resolve")
+    consumer = text.index("consumer_handoff_run_id=$(dispatch_and_resolve")
+    assert industry < finalizer < terminal < consumer
 
 
-def test_handoff_reuses_automatic_consumer_before_explicit_fallback() -> None:
+def test_handoff_dispatches_fresh_consumer_only_after_exact_terminal_closure() -> None:
     text = _text(HANDOFF_WORKFLOW)
-    lookup = text.index("find_success_or_active_named_run")
-    reuse = text.index("REUSED_AUTOMATIC_CONSUMER_HANDOFF")
-    explicit = text.index("EXPLICIT_CONSUMER_HANDOFF")
-    assert lookup < reuse < explicit
-    assert "for _ in $(seq 1 10)" in text
-    assert "automatic consumer handoff is reused when present" in text
+    terminal = text.index("terminal_run_id=$(dispatch_and_resolve")
+    consumer = text.index("consumer_handoff_run_id=$(dispatch_and_resolve")
+    assert terminal < consumer
+    assert "Always dispatch one fresh Consumer after Terminal closes the exact" in text
+    assert "queues behind any automatic run rather than racing it" in text
+    assert 'consumer_dispatch_path="EXPLICIT_POST_TERMINAL_CONSUMER_HANDOFF"' in text
+    assert "REUSED_AUTOMATIC_CONSUMER_HANDOFF" not in text
+    assert "find_success_or_active_named_run" not in text
 
 
 def test_event_handoff_does_not_duplicate_verified_downstream_consumer_orchestration() -> None:
