@@ -1,5 +1,10 @@
 name: GenGe Candidate Terminal Review
 
+run-name: >-
+  GenGe Candidate Terminal Review / ${{
+    inputs.finalizer_run_id || inputs.research_run_id || inputs.upstream_run_id || github.event.workflow_run.id || github.run_id
+  }}
+
 on:
   push:
     branches: [main]
@@ -14,7 +19,10 @@ on:
       - "tests/test_genge_valuation_research_report.py"
       - "tests/test_genge_valuation_research_long_term_runner.py"
       - ".github/workflows/genge-candidate-terminal-review.yml"
+      - ".github/workflows/genge-v311-event-driven-authority-handoff.yml"
+      - ".github/workflows/genge-v311-explicit-production-trigger.yml"
   pull_request:
+    branches: [main]
     paths:
       - "src/strategies/genge_opportunity_discovery/candidate_terminal_decision.py"
       - "src/strategies/genge_opportunity_discovery/valuation_research_report.py"
@@ -26,14 +34,24 @@ on:
       - "tests/test_genge_valuation_research_report.py"
       - "tests/test_genge_valuation_research_long_term_runner.py"
       - ".github/workflows/genge-candidate-terminal-review.yml"
+      - ".github/workflows/genge-v311-event-driven-authority-handoff.yml"
+      - ".github/workflows/genge-v311-explicit-production-trigger.yml"
   workflow_run:
     workflows: ["GenGe Postscan Research Pipeline"]
     types: [completed]
   workflow_dispatch:
     inputs:
       upstream_run_id:
-        description: "Completed GenGe Postscan Research Pipeline run id"
-        required: true
+        description: "Legacy exact completed Postscan run id"
+        required: false
+        type: string
+      research_run_id:
+        description: "Exact completed Every-Industry research run id"
+        required: false
+        type: string
+      finalizer_run_id:
+        description: "Exact completed Production Finalizer run id for research_run_id"
+        required: false
         type: string
 
 permissions:
@@ -41,7 +59,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: genge-candidate-terminal-${{ github.event.workflow_run.id || inputs.upstream_run_id || github.run_id }}
+  group: genge-candidate-terminal-${{ inputs.finalizer_run_id || inputs.research_run_id || inputs.upstream_run_id || github.event.workflow_run.id || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -88,114 +106,275 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Resolve upstream postscan run
+
+      - name: Resolve exact research lineage
+        id: lineage
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_UPSTREAM_RUN_ID: ${{ inputs.upstream_run_id }}
+          INPUT_RESEARCH_RUN_ID: ${{ inputs.research_run_id }}
+          INPUT_FINALIZER_RUN_ID: ${{ inputs.finalizer_run_id }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
-          preferred=""
-          if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            preferred="${{ github.event.workflow_run.id }}"
-          elif [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            preferred="${{ inputs.upstream_run_id }}"
-          fi
 
-          upstream=""
-          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
-            # A production/workflow_dispatch lineage is exact. Never fall back to
-            # an older successful postscan, because that can turn current UNKNOWN
-            # evidence into stale terminal REJECT decisions.
-            run_meta="$(
-              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${preferred}" \
-                --jq '[.name,.status,.conclusion,.head_branch] | @tsv'
-            )"
-            IFS=$'\t' read -r run_name run_status run_conclusion run_branch <<< "$run_meta"
-            [[ "$run_name" == "GenGe Postscan Research Pipeline" ]] || {
-              echo "preferred run $preferred is not GenGe Postscan Research Pipeline: $run_name" >&2
+          require_successful_main_run() {
+            local run_id="$1"
+            local expected_name="$2"
+            local payload
+            payload=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+            local actual_name status conclusion branch
+            actual_name=$(printf '%s' "$payload" | jq -r '.name')
+            status=$(printf '%s' "$payload" | jq -r '.status')
+            conclusion=$(printf '%s' "$payload" | jq -r '.conclusion // ""')
+            branch=$(printf '%s' "$payload" | jq -r '.head_branch // ""')
+            [[ "$actual_name" == "$expected_name" ]] || {
+              echo "run ${run_id} is ${actual_name}, expected ${expected_name}" >&2
               exit 1
             }
-            [[ "$run_status" == "completed" && "$run_conclusion" == "success" ]] || {
-              echo "preferred postscan run $preferred is not successful: status=$run_status conclusion=$run_conclusion" >&2
+            [[ "$status" == "completed" && "$conclusion" == "success" ]] || {
+              echo "run ${run_id} is not successful: status=${status} conclusion=${conclusion}" >&2
               exit 1
             }
-            [[ "$run_branch" == "main" ]] || {
-              echo "preferred postscan run $preferred is not on main: branch=$run_branch" >&2
+            [[ "$branch" == "main" ]] || {
+              echo "run ${run_id} is not on main: branch=${branch}" >&2
               exit 1
             }
-            artifact_id="$(
-              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${preferred}/artifacts?per_page=100" \
-                --jq '[.artifacts[] | select(.name == "genge-postscan-research" and .expired == false)][0].id // empty'
-            )"
-            [[ "$artifact_id" =~ ^[0-9]+$ ]] || {
-              echo "exact postscan run $preferred has no usable genge-postscan-research artifact; stale fallback forbidden" >&2
-              exit 1
-            }
-            upstream="$preferred"
-            echo "selected exact postscan run $preferred with artifact $artifact_id"
-          else
-            # Push-triggered code smoke has no production lineage. It may use the
-            # newest successful main artifact solely to validate the implementation.
-            mapfile -t completed_runs < <(
-              gh api \
-                "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-postscan-research.yml/runs?branch=main&status=success&per_page=20" \
-                --jq '.workflow_runs[].id'
-            )
-            for candidate in "${completed_runs[@]}"; do
-              artifact_id="$(
-                gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
-                  --jq '[.artifacts[] | select(.name == "genge-postscan-research" and .expired == false)][0].id // empty'
-              )"
-              if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
-                upstream="$candidate"
-                echo "selected smoke-validation postscan run $candidate with artifact $artifact_id"
-                break
-              fi
-              echo "skip postscan run $candidate: usable genge-postscan-research artifact not found"
-            done
-          fi
-
-          [[ "$upstream" =~ ^[0-9]+$ ]] || {
-            echo "no valid main postscan artifact resolved" >&2
-            exit 1
           }
-          echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
-          echo "postscan run: $upstream"
-      - name: Download postscan research artifact
+
+          require_single_artifact() {
+            local run_id="$1"
+            local artifact_name="$2"
+            local artifacts count artifact_id
+            artifacts=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+            count=$(printf '%s' "$artifacts" | jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name and .expired == false)] | length')
+            [[ "$count" -eq 1 ]] || {
+              echo "exact run ${run_id} must expose exactly one non-expired ${artifact_name}; found ${count}; stale fallback forbidden" >&2
+              exit 1
+            }
+            artifact_id=$(printf '%s' "$artifacts" | jq -r --arg name "$artifact_name" '[.artifacts[] | select(.name == $name and .expired == false)][0].id')
+            echo "verified exact artifact ${artifact_name} id=${artifact_id} on run ${run_id}"
+          }
+
+          emit_postscan() {
+            local run_id="$1"
+            require_successful_main_run "$run_id" "GenGe Postscan Research Pipeline"
+            require_single_artifact "$run_id" "genge-postscan-research"
+            {
+              echo "mode=POSTSCAN"
+              echo "upstream_run_id=${run_id}"
+              echo "research_run_id="
+              echo "finalizer_run_id="
+            } >> "$GITHUB_OUTPUT"
+            echo "selected exact postscan run ${run_id}; stale fallback forbidden"
+          }
+
+          if [[ "${{ github.event_name }}" == "workflow_run" ]]; then
+            [[ "$TRIGGER_RUN_ID" =~ ^[0-9]+$ ]] || { echo "invalid workflow_run id" >&2; exit 1; }
+            emit_postscan "$TRIGGER_RUN_ID"
+            exit 0
+          fi
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            if [[ -n "$INPUT_RESEARCH_RUN_ID" || -n "$INPUT_FINALIZER_RUN_ID" ]]; then
+              [[ -z "$INPUT_UPSTREAM_RUN_ID" ]] || {
+                echo "upstream_run_id cannot be combined with research_run_id/finalizer_run_id" >&2
+                exit 1
+              }
+              [[ "$INPUT_RESEARCH_RUN_ID" =~ ^[0-9]+$ && "$INPUT_FINALIZER_RUN_ID" =~ ^[0-9]+$ ]] || {
+                echo "research_run_id and finalizer_run_id must both be numeric" >&2
+                exit 1
+              }
+              require_successful_main_run "$INPUT_RESEARCH_RUN_ID" "GenGe V3.1.1 Every-Industry Research"
+              require_single_artifact "$INPUT_RESEARCH_RUN_ID" "genge-v31-every-industry-research"
+              require_successful_main_run "$INPUT_FINALIZER_RUN_ID" "GenGe V3.1.1 Production Finalizer"
+              require_single_artifact "$INPUT_FINALIZER_RUN_ID" "genge-v311-authoritative-canonical-${INPUT_RESEARCH_RUN_ID}"
+              {
+                echo "mode=EVERY_INDUSTRY_AUTHORIZED"
+                echo "upstream_run_id="
+                echo "research_run_id=${INPUT_RESEARCH_RUN_ID}"
+                echo "finalizer_run_id=${INPUT_FINALIZER_RUN_ID}"
+              } >> "$GITHUB_OUTPUT"
+              echo "selected exact Every-Industry ${INPUT_RESEARCH_RUN_ID} + Finalizer ${INPUT_FINALIZER_RUN_ID}; stale fallback forbidden"
+              exit 0
+            fi
+
+            [[ "$INPUT_UPSTREAM_RUN_ID" =~ ^[0-9]+$ ]] || {
+              echo "workflow_dispatch requires upstream_run_id or the exact research_run_id + finalizer_run_id pair" >&2
+              exit 1
+            }
+            emit_postscan "$INPUT_UPSTREAM_RUN_ID"
+            exit 0
+          fi
+
+          # Push-triggered code smoke has no production lineage. It may use the
+          # newest successful main Postscan artifact solely to validate implementation.
+          mapfile -t completed_runs < <(
+            gh api \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-postscan-research.yml/runs?branch=main&status=success&per_page=20" \
+              --jq '.workflow_runs[].id'
+          )
+          for candidate in "${completed_runs[@]}"; do
+            artifact_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+              --jq '[.artifacts[] | select(.name == "genge-postscan-research" and .expired == false)][0].id // empty')
+            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+              {
+                echo "mode=POSTSCAN"
+                echo "upstream_run_id=${candidate}"
+                echo "research_run_id="
+                echo "finalizer_run_id="
+              } >> "$GITHUB_OUTPUT"
+              echo "selected smoke-validation postscan run ${candidate} with artifact ${artifact_id}"
+              exit 0
+            fi
+          done
+          echo "no valid main Postscan artifact resolved for smoke validation" >&2
+          exit 1
+
+      - name: Download exact postscan research artifact
+        if: steps.lineage.outputs.mode == 'POSTSCAN'
         uses: actions/download-artifact@v4
         with:
           name: genge-postscan-research
-          path: upstream
+          path: artifact
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
-          run-id: ${{ env.UPSTREAM_RUN_ID }}
+          run-id: ${{ steps.lineage.outputs.upstream_run_id }}
+
+      - name: Download exact Every-Industry research artifact
+        if: steps.lineage.outputs.mode == 'EVERY_INDUSTRY_AUTHORIZED'
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-v31-every-industry-research
+          path: artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.lineage.outputs.research_run_id }}
+
+      - name: Download exact Finalizer authority artifact
+        if: steps.lineage.outputs.mode == 'EVERY_INDUSTRY_AUTHORIZED'
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-v311-authoritative-canonical-${{ steps.lineage.outputs.research_run_id }}
+          path: authority
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.lineage.outputs.finalizer_run_id }}
+
+      - name: Verify exact Finalizer authority provenance
+        if: steps.lineage.outputs.mode == 'EVERY_INDUSTRY_AUTHORIZED'
+        env:
+          RESEARCH_RUN_ID: ${{ steps.lineage.outputs.research_run_id }}
+          FINALIZER_RUN_ID: ${{ steps.lineage.outputs.finalizer_run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          files = list(Path('authority').rglob('production_authority.json'))
+          assert len(files) == 1, f"expected exactly one production_authority.json, found {len(files)}"
+          payload = json.loads(files[0].read_text(encoding='utf-8'))
+          assert payload.get('authorized') is True
+          assert str(payload.get('canonical_source_run_id')) == os.environ['RESEARCH_RUN_ID']
+          assert str(payload.get('finalizer_run_id')) == os.environ['FINALIZER_RUN_ID']
+          assert payload.get('canonical_source_kind') == 'every-industry'
+          assert payload.get('source_workflow') == 'GenGe V3.1.1 Every-Industry Research'
+          print(json.dumps(payload, ensure_ascii=False, indent=2))
+          PY
+
       - name: Resolve broad and authoritative inputs
+        env:
+          LINEAGE_MODE: ${{ steps.lineage.outputs.mode }}
         shell: bash
         run: |
           set -euo pipefail
+          mkdir -p .terminal-inputs
 
-          master="$(find upstream -type f -name master_opportunity_ranking.csv -print -quit)"
-          if [ -z "$master" ]; then
-            master="$(find upstream -type f -name long_term_formal_buy_candidates.csv -print -quit)"
-          fi
-          if [ -z "$master" ]; then
-            master="$(find upstream -type f -name long_term_second_pass_candidates.csv -print -quit)"
-          fi
-          if [ -z "$master" ]; then
-            master="$(find upstream -type f -name valuation_research_queue.csv -print -quit)"
-          fi
-          [ -n "$master" ] || { echo "no surviving postscan candidate universe" >&2; exit 1; }
+          if [ "$LINEAGE_MODE" = "EVERY_INDUSTRY_AUTHORIZED" ]; then
+            mapfile -t masters < <(find artifact -type f -name v31_review_queue_enriched.csv -print)
+            mapfile -t productions < <(find artifact -type f -name production_decisions.csv ! -path '*/canonical_snapshot/*' -print)
+            [ "${#masters[@]}" -eq 1 ] || { echo "expected exactly one v31_review_queue_enriched.csv; found ${#masters[@]}" >&2; exit 1; }
+            [ "${#productions[@]}" -eq 1 ] || { echo "expected exactly one authoritative production_decisions.csv; found ${#productions[@]}" >&2; exit 1; }
+            master="${masters[0]}"
+            production="${productions[0]}"
+            formal=".terminal-inputs/terminal_formal_compat.csv"
+            MASTER_SOURCE="$master" PRODUCTION_SOURCE="$production" FORMAL_TARGET="$formal" python - <<'PY'
+          import csv
+          import os
+          from pathlib import Path
 
-          formal="$(find upstream -type f -name long_term_formal_buy_candidates.csv -print -quit)"
-          if [ -z "$formal" ]; then
-            formal="upstream/empty_formal_candidates.csv"
-            printf 'code,long_term_formal_buy_eligible,v31_buy_ready\n' > "$formal"
-          fi
+          def code(value):
+              text = str(value or '').strip().upper()
+              if '.' in text:
+                  base, suffix = text.rsplit('.', 1)
+                  if suffix in {'SH', 'SZ', 'BJ'}:
+                      text = base
+              for prefix in ('SH', 'SZ', 'BJ'):
+                  if text.startswith(prefix) and text[len(prefix):].isdigit():
+                      text = text[len(prefix):]
+                      break
+              return text.zfill(6) if text.isdigit() else text
 
-          production="$(find upstream -type f -name production_decisions.csv -print -quit)"
-          if [ -z "$production" ]; then
-            production="upstream/empty_production_decisions.csv"
-            printf 'code,decision_scope,production_action,valuation_confidence,reason_codes\n' > "$production"
+          def truthy(value):
+              return str(value or '').strip().lower() in {'1', 'true', 'yes', 'y', 'pass', 'passed'}
+
+          master_path = Path(os.environ['MASTER_SOURCE'])
+          production_path = Path(os.environ['PRODUCTION_SOURCE'])
+          target = Path(os.environ['FORMAL_TARGET'])
+          with master_path.open(encoding='utf-8') as stream:
+              master_rows = list(csv.DictReader(stream))
+          with production_path.open(encoding='utf-8') as stream:
+              production_rows = list(csv.DictReader(stream))
+          production = {
+              code(row.get('code')): row
+              for row in production_rows
+              if str(row.get('decision_scope') or '').strip().upper() == 'CANDIDATE' and code(row.get('code'))
+          }
+          rows = []
+          for row in master_rows:
+              stock_code = code(row.get('code'))
+              prod = production.get(stock_code)
+              if not prod:
+                  continue
+              v31_buy_ready = truthy(row.get('v31_buy_ready'))
+              eligible = bool(
+                  v31_buy_ready
+                  and str(prod.get('production_action') or '').strip().upper() == 'BUY'
+                  and str(prod.get('valuation_confidence') or '').strip().upper() == 'HIGH'
+                  and truthy(prod.get('production_model_frozen'))
+              )
+              rows.append({
+                  'code': stock_code,
+                  'long_term_formal_buy_eligible': eligible,
+                  'v31_buy_ready': v31_buy_ready,
+              })
+          target.parent.mkdir(parents=True, exist_ok=True)
+          with target.open('w', encoding='utf-8', newline='') as stream:
+              writer = csv.DictWriter(stream, fieldnames=['code', 'long_term_formal_buy_eligible', 'v31_buy_ready'])
+              writer.writeheader()
+              writer.writerows(rows)
+          print(f"modern compatibility formal rows={len(rows)} candidate production rows={len(production)}")
+          PY
+          else
+            master="$(find artifact -type f -name master_opportunity_ranking.csv -print -quit)"
+            if [ -z "$master" ]; then master="$(find artifact -type f -name long_term_formal_buy_candidates.csv -print -quit)"; fi
+            if [ -z "$master" ]; then master="$(find artifact -type f -name long_term_second_pass_candidates.csv -print -quit)"; fi
+            if [ -z "$master" ]; then master="$(find artifact -type f -name valuation_research_queue.csv -print -quit)"; fi
+            [ -n "$master" ] || { echo "no surviving Postscan candidate universe" >&2; exit 1; }
+
+            formal="$(find artifact -type f -name long_term_formal_buy_candidates.csv -print -quit)"
+            if [ -z "$formal" ]; then
+              formal=".terminal-inputs/empty_formal_candidates.csv"
+              printf 'code,long_term_formal_buy_eligible,v31_buy_ready\n' > "$formal"
+            fi
+
+            production="$(find artifact -type f -name production_decisions.csv -print -quit)"
+            if [ -z "$production" ]; then
+              production=".terminal-inputs/empty_production_decisions.csv"
+              printf 'code,decision_scope,production_action,valuation_confidence,reason_codes\n' > "$production"
+            fi
           fi
 
           echo "MASTER_CSV=$master" >> "$GITHUB_ENV"
@@ -204,6 +383,7 @@ jobs:
           echo "candidate source: $master"
           echo "formal source: $formal"
           echo "production source: $production"
+
       - name: Terminalize every surviving research candidate
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.candidate_terminal_decision \
@@ -211,6 +391,36 @@ jobs:
             --formal-csv "$FORMAL_CSV" \
             --production-csv "$PRODUCTION_CSV" \
             --output-dir reports/candidate_terminal_decision
+
+      - name: Record terminal lineage
+        env:
+          LINEAGE_MODE: ${{ steps.lineage.outputs.mode }}
+          UPSTREAM_RUN_ID: ${{ steps.lineage.outputs.upstream_run_id }}
+          RESEARCH_RUN_ID: ${{ steps.lineage.outputs.research_run_id }}
+          FINALIZER_RUN_ID: ${{ steps.lineage.outputs.finalizer_run_id }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          modern = os.environ['LINEAGE_MODE'] == 'EVERY_INDUSTRY_AUTHORIZED'
+          payload = {
+              'lineage_mode': os.environ['LINEAGE_MODE'],
+              'upstream_run_id': os.environ.get('UPSTREAM_RUN_ID') or None,
+              'research_run_id': os.environ.get('RESEARCH_RUN_ID') or None,
+              'finalizer_run_id': os.environ.get('FINALIZER_RUN_ID') or None,
+              'finalizer_authority_verified': modern,
+              'stale_artifact_fallback_allowed': False if modern else None,
+              'decision_authority': 'RESEARCH_TERMINAL_VIEW',
+              'formal_authority_unchanged': True,
+              'no_auto_trade': True,
+          }
+          target = Path('reports/candidate_terminal_decision/terminal_lineage.json')
+          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          print(json.dumps(payload, ensure_ascii=False, indent=2))
+          PY
+
       - name: Validate terminal review contract
         run: |
           python - <<'PY'
@@ -220,6 +430,7 @@ jobs:
           root = Path('reports/candidate_terminal_decision')
           rows = list(csv.DictReader((root/'candidate_terminal_decisions.csv').open(encoding='utf-8')))
           summary = json.loads((root/'candidate_terminal_summary.json').read_text(encoding='utf-8'))
+          lineage = json.loads((root/'terminal_lineage.json').read_text(encoding='utf-8'))
           assert rows
           assert len(rows) == summary['candidate_count'] == summary['terminalized_count']
           assert summary['research_limbo_count'] == 0
@@ -230,6 +441,8 @@ jobs:
           assert summary['canonical_authority_unchanged'] is True
           assert summary['hard_gate_unknown_is_pass'] is False
           assert summary['no_auto_trade'] is True
+          assert lineage['formal_authority_unchanged'] is True
+          assert lineage['no_auto_trade'] is True
           assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','REJECT'} for row in rows)
           assert all(row['decision_authority'] == 'RESEARCH_TERMINAL_VIEW' for row in rows)
           assert all(row['formal_signal_eligible'] == 'False' for row in rows)
@@ -243,7 +456,9 @@ jobs:
           assert all(row['source_production_action'] == 'WAIT' for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
           assert all(row['source_valuation_confidence'] == 'HIGH' for row in rows if row['terminal_decision'] == 'WAIT_PRICE')
           print(json.dumps(summary, ensure_ascii=False, indent=2))
+          print(json.dumps(lineage, ensure_ascii=False, indent=2))
           PY
+
       - name: Print terminal decisions to run log
         if: always()
         run: |
