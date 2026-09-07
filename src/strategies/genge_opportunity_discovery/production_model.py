@@ -26,7 +26,20 @@ RESEARCH_MODEL_VERSION = "gen_ge_v3_2_candidate_round8_round9_frozen"
 PRODUCTION_POLICY_SOURCE = "gen_ge_v3_1_1_high_confidence_strict_buy_safety_margin_plus_explicit_sell_rationale"
 V32_SELL_CONFIRMATION_ENABLED = False
 FORMAL_BUY_MAX_PRICE_TO_NEUTRAL = 0.80
-ALLOWED_ACTIONS = frozenset({"BUY","WAIT","HOLD","HOLD_NO_ADD","HOLD_REVIEW","REDUCE_25","REDUCE_50","CORE_ONLY","EXIT"})
+HOLDING_ADD_POLICY_VERSION = "EXISTING_HOLDING_STAGED_ADD_V1"
+HOLDING_ADD_MAX_PRICE_TO_NEUTRAL = 0.75
+HOLDING_ADD_MAX_LOTS = 1
+ALLOWED_ACTIONS = frozenset({"BUY","ADD","WAIT","HOLD","HOLD_NO_ADD","HOLD_REVIEW","REDUCE_25","REDUCE_50","CORE_ONLY","EXIT"})
+
+_HARD_GATE_FIELDS = {
+    "predictability": "v31_predictability_status",
+    "long_term_demand": "v31_long_term_demand_status",
+    "moat": "v31_moat_status",
+    "financial_safety": "v31_financial_safety_status",
+    "earnings_authenticity": "v31_earnings_authenticity_status",
+}
+_PASS_VALUES = frozenset({"PASS", "PASSED", "OK", "QUALIFIED", "TRUE", "YES", "STABLE", "STRENGTHENING"})
+_FAIL_VALUES = frozenset({"FAIL", "FAILED", "NO", "FALSE", "UNQUALIFIED", "RED", "STRUCTURAL_DECLINE", "WEAKENING"})
 
 
 def _truthy(value: Any) -> bool:
@@ -36,10 +49,93 @@ def _truthy(value: Any) -> bool:
 def _has_position(data: Mapping[str, Any]) -> bool:
     if _truthy(data.get("v311_has_position")) or _truthy(data.get("v32_has_position")):
         return True
+    if str(data.get("holding_status") or "").strip().upper() == "HELD":
+        try:
+            return float(data.get("confirmed_quantity") or 0.0) > 0.0
+        except (TypeError, ValueError):
+            pass
     try:
         return float(data.get("current_position_fraction") or 0.0) > 0.0
     except (TypeError, ValueError):
         return False
+
+
+def _gate_status(value: Any) -> str:
+    text = str(value or "").strip().upper()
+    if text in _PASS_VALUES:
+        return "PASS"
+    if text in _FAIL_VALUES:
+        return "FAIL"
+    return "UNKNOWN"
+
+
+def _holding_add_gate_state(data: Mapping[str, Any]) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    failures: list[str] = []
+    unknowns: list[str] = []
+    for name, field in _HARD_GATE_FIELDS.items():
+        status = _gate_status(data.get(field))
+        if status == "FAIL":
+            failures.append(name)
+        elif status == "UNKNOWN":
+            unknowns.append(name)
+    return tuple(failures), tuple(unknowns)
+
+
+def _holding_add_input_ready(data: Mapping[str, Any]) -> bool:
+    expectation_status = str(data.get("v311_expectation_input_status") or "").strip().upper()
+    price_date_status = str(data.get("price_date_verification_status") or "").strip().upper()
+    price_mapping_status = str(data.get("price_mapping_status") or "").strip().upper()
+    return (
+        expectation_status == "READY"
+        and price_date_status == "VERIFIED"
+        and price_mapping_status == "OK"
+    )
+
+
+def _apply_existing_holding_add_gate(data: Mapping[str, Any], decision: V311Decision) -> V311Decision:
+    """Authorize only a one-lot staged ADD for an already-held, deeply cheap name.
+
+    This is deliberately *not* a Formal BUY shortcut.  It never upgrades a new
+    candidate, never converts UNKNOWN hard gates to PASS, never overrides an
+    explicit hard-gate failure, and never applies to the typed-insurer path.
+    It only allows a small staged ADD when an existing holding already has a
+    HIGH-confidence, same-run/fresh valuation and trades in the frozen V3.1
+    A-level margin band (<=75% of neutral value).  Unknown qualitative gates are
+    retained and surfaced in the payload; the one-lot cap limits risk while a
+    fuller re-underwrite remains pending.
+    """
+    if decision.action != "HOLD" or not _has_position(data):
+        return decision
+    if decision.valuation_confidence is not ValuationConfidence.HIGH:
+        return decision
+    ratio = decision.price_to_neutral
+    if ratio is None or ratio > HOLDING_ADD_MAX_PRICE_TO_NEUTRAL:
+        return decision
+    if not _holding_add_input_ready(data):
+        return decision
+    failures, unknowns = _holding_add_gate_state(data)
+    if failures:
+        return decision
+
+    reasons = [
+        "EXISTING_HOLDING_STAGED_ADD",
+        "VALUATION_CONFIDENCE_HIGH",
+        "A_LEVEL_MARGIN_OF_SAFETY_PASS",
+        f"price_to_neutral={ratio:.3f}<=0.75",
+        "NO_KNOWN_HARD_GATE_FAILURE",
+        "STAGED_ADD_CAP_ONE_LOT",
+        "STAGED_ADD_NOT_FORMAL_BUY",
+    ]
+    if unknowns:
+        reasons.append("HARD_GATE_UNKNOWNS_RETAINED:" + ",".join(unknowns))
+    else:
+        reasons.append("ALL_HARD_GATES_PASS")
+    return replace(
+        decision,
+        action="ADD",
+        target_position_fraction=None,
+        reason_codes=tuple(reasons),
+    )
 
 
 def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V311Decision:
@@ -99,21 +195,23 @@ def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V
 
 
 def decide_production(data: Mapping[str, Any]) -> V311Decision:
-    """Apply V3.1.1 with strict BUY admission and explicit SELL rationale.
+    """Apply V3.1.1 with strict BUY admission, staged holding ADD and SELL rationale.
 
-    Formal BUY requires HIGH valuation confidence, no existing position, and a
-    price no greater than 80% of neutral/base value after the underlying V3.1
-    buy gates pass. Typed insurers may recover audited PIT EV/growth evidence
-    for holding review, but that typed path is deliberately capped at MEDIUM
-    confidence and cannot create Formal BUY eligibility. REDUCE/CORE_ONLY is
-    permitted only when the sell-rationale guard proves either stable intrinsic
-    value plus material price overextension or material, structured, thesis-
-    linked new evidence. Otherwise production fails closed to HOLD_REVIEW.
+    Formal BUY remains unchanged: it requires the underlying V3.1 buy gates,
+    HIGH valuation confidence, no existing position, and price <=80% of neutral
+    value.  A separate, risk-capped holding path may emit ADD only for an
+    existing non-insurer holding with HIGH-confidence fresh valuation evidence,
+    no known hard-gate failure, and price <=75% of neutral value.  Unknown hard
+    gates remain UNKNOWN; they are not promoted to PASS.  Typed insurers remain
+    capped by their own policy and cannot enter this ADD path.  REDUCE/CORE_ONLY
+    still requires the explicit sell-rationale continuity guard.
     """
-    if is_insurer_typed_input(data):
+    typed_insurer = is_insurer_typed_input(data)
+    if typed_insurer:
         decision = decide_insurer_v311(data)
     else:
         decision = decide_v311(data)
+        decision = _apply_existing_holding_add_gate(data, decision)
 
     # Hard-gate EXIT and holding/sell actions are never weakened by the BUY gate.
     decision = _apply_formal_buy_gate(data, decision)
@@ -142,6 +240,7 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         if typed_insurer
         else assess_valuation_confidence_v311(data)
     )
+    add_failures, add_unknowns = _holding_add_gate_state(data)
     payload = decision.as_dict()
     payload.update({
         "production_model_version": PRODUCTION_MODEL_VERSION,
@@ -158,6 +257,16 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         "core_pool_confers_no_buy_privilege": True,
         "formal_sell_requires_explicit_rationale": True,
         "formal_sell_mechanical_valuation_only_forbidden": True,
+        "holding_add_policy_version": HOLDING_ADD_POLICY_VERSION,
+        "holding_add_existing_position_only": True,
+        "holding_add_requires_high_confidence": True,
+        "holding_add_max_price_to_neutral": HOLDING_ADD_MAX_PRICE_TO_NEUTRAL,
+        "holding_add_max_lots": HOLDING_ADD_MAX_LOTS,
+        "holding_add_is_formal_buy": False,
+        "holding_add_hard_gate_failures": ";".join(add_failures),
+        "holding_add_hard_gate_unknowns": ";".join(add_unknowns),
+        "holding_add_unknown_is_pass": False,
+        "holding_add_no_auto_trade": True,
     })
     if typed_insurer:
         payload.update(insurer_typed_payload_metadata(data))
