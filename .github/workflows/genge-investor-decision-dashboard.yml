@@ -204,19 +204,45 @@ jobs:
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
           for attempt in 1 2 3 4; do
             git fetch origin main; git reset --hard origin/main
+            hourly_overlay=""
+            if [ -s data/hourly_deep_overlay/latest.json ]; then
+              if CANONICAL="$CANONICAL" HOURLY="data/hourly_deep_overlay/latest.json" python - <<'PY'
+          import json, os
+          from pathlib import Path
+          canonical=json.loads(Path(os.environ['CANONICAL']).read_text(encoding='utf-8'))
+          hourly=json.loads(Path(os.environ['HOURLY']).read_text(encoding='utf-8'))
+          expected_snapshot=str(canonical.get('snapshot_id') or '').strip()
+          expected_source=str(canonical.get('source_run_id') or '').strip()
+          actual_snapshot=str(hourly.get('canonical_snapshot_id') or '').strip()
+          actual_source=str(hourly.get('canonical_source_run_id') or '').strip()
+          if not expected_snapshot or not expected_source or not actual_snapshot or not actual_source:
+              raise SystemExit('hourly overlay lineage is incomplete')
+          if actual_snapshot != expected_snapshot or actual_source != expected_source:
+              raise SystemExit(
+                  f'hourly overlay lineage mismatch: canonical={expected_snapshot}/{expected_source} '
+                  f'overlay={actual_snapshot}/{actual_source}'
+              )
+          print(f'Hourly overlay exact lineage verified: {actual_snapshot}/{actual_source}')
+          PY
+              then
+                hourly_overlay="data/hourly_deep_overlay/latest.json"
+              else
+                echo "Skipping stale/unverifiable optional hourly overlay; frozen Canonical remains authoritative."
+              fi
+            fi
             args=(--canonical "$CANONICAL" --holdings CURRENT_HOLDINGS.md --funds CURRENT_FUNDS.md --capital CURRENT_CAPITAL.json
                   --json-output data/investor_decision_dashboard/latest.json --markdown-output INVESTOR_DECISION_DASHBOARD.md --mode "$MODE")
             [ -z "${TERMINAL_DECISIONS:-}" ] || [ ! -s "$TERMINAL_DECISIONS" ] || args+=(--terminal-decisions "$TERMINAL_DECISIONS")
-            [ ! -s data/hourly_deep_overlay/latest.json ] || args+=(--hourly data/hourly_deep_overlay/latest.json)
+            [ -z "$hourly_overlay" ] || args+=(--hourly "$hourly_overlay")
             [ ! -s data/research_priority/latest.json ] || args+=(--research-priority data/research_priority/latest.json)
             [ -z "${MARKET_REGIME:-}" ] || [ ! -s "$MARKET_REGIME" ] || args+=(--market-regime "$MARKET_REGIME")
             [ -z "${INDUSTRY_REGIMES:-}" ] || [ ! -s "$INDUSTRY_REGIMES" ] || args+=(--industry-regimes "$INDUSTRY_REGIMES")
             [ -z "${EVENT_DECISION:-}" ] || [ ! -s "$EVENT_DECISION" ] || args+=(--event-decision "$EVENT_DECISION")
             python -m src.strategies.genge_opportunity_discovery.investor_decision_dashboard "${args[@]}"
-            if [ -s data/hourly_deep_overlay/latest.json ]; then
+            if [ -n "$hourly_overlay" ]; then
               python -m src.strategies.genge_opportunity_discovery.investor_live_execution_overlay \
                 --dashboard-json data/investor_decision_dashboard/latest.json \
-                --hourly-json data/hourly_deep_overlay/latest.json \
+                --hourly-json "$hourly_overlay" \
                 --markdown-output INVESTOR_DECISION_DASHBOARD.md \
                 --max-age-minutes 120
             fi
