@@ -12,10 +12,12 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V3"
+CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V4"
 FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 DOWNSTREAM_WORKFLOW = "genge-v31-industry-research.yml"
 HOLDING_SIGNIFICANT_MOVE_PCT = 3.0  # Mirrors the existing hourly RAISE threshold.
+SUCCESS_ARCHETYPE_MIN_SIMILARITY = 70.0
+SUCCESS_ARCHETYPE_MIN_EVIDENCE_COVERAGE = 1.0
 
 URGENT_CONCLUSIONS = {
     "PRICE_ATTRACTIVE_RESEARCH_LEAD",
@@ -89,6 +91,55 @@ def _holding_move_bucket(hourly_row: Mapping[str, Any]) -> str | None:
     return f"{direction}_{band}"
 
 
+def _safe_float(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _high_confidence_success_archetype_recall(priority_row: Mapping[str, Any]) -> bool:
+    reasons = {str(x) for x in (priority_row.get("reason_codes") or [])}
+    if "SUCCESS_ARCHETYPE_RECALL" not in reasons:
+        return False
+    if str(priority_row.get("success_archetype_source_quant_status") or "") != "PRIORITY_RESEARCH":
+        return False
+    similarity = _safe_float(priority_row.get("success_archetype_similarity_score"))
+    coverage = _safe_float(priority_row.get("success_archetype_evidence_coverage"))
+    return bool(
+        similarity is not None
+        and similarity >= SUCCESS_ARCHETYPE_MIN_SIMILARITY
+        and coverage is not None
+        and coverage >= SUCCESS_ARCHETYPE_MIN_EVIDENCE_COVERAGE
+    )
+
+
+def _stable_tokens(values: Any) -> list[str]:
+    tokens: list[str] = []
+    for item in values or []:
+        if isinstance(item, (Mapping, list)):
+            tokens.append(json.dumps(item, ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+        else:
+            token = str(item).strip()
+            if token:
+                tokens.append(token)
+    return sorted(set(tokens))
+
+
+def _success_archetype_signal_state(priority_row: Mapping[str, Any]) -> dict[str, Any] | None:
+    if not _high_confidence_success_archetype_recall(priority_row):
+        return None
+    similarity = float(priority_row.get("success_archetype_similarity_score"))
+    similarity_band = "85_PLUS" if similarity >= 85.0 else "70_TO_85"
+    return {
+        "archetype_id": str(priority_row.get("success_archetype_id") or ""),
+        "similarity_band": similarity_band,
+        "near_buy_evidence_recovery_tier": str(priority_row.get("near_buy_evidence_recovery_tier") or ""),
+        "missing_evidence": _stable_tokens(priority_row.get("missing_evidence")),
+        "mapping_gaps": _stable_tokens(priority_row.get("mapping_gaps")),
+    }
+
+
 def _trigger_reasons(priority_row: Mapping[str, Any]) -> list[str]:
     conclusion = str(priority_row.get("hourly_research_conclusion") or "")
     priority = str(priority_row.get("priority") or "")
@@ -101,6 +152,8 @@ def _trigger_reasons(priority_row: Mapping[str, Any]) -> list[str]:
         selected.append("REUNDERWRITE_REQUIRED")
     if priority in {"P0", "P1"} and "MATERIAL_EVIDENCE_CHANGE" in reasons:
         selected.append("MATERIAL_EVIDENCE_CHANGE")
+    if _high_confidence_success_archetype_recall(priority_row):
+        selected.append("HIGH_CONFIDENCE_SUCCESS_ARCHETYPE_RECALL")
     return sorted(set(selected))
 
 
@@ -112,8 +165,11 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
     HOURLY_PRIORITY_RAISE is not enough. A holding can additionally trigger on
     the existing >=3% significant-move research threshold, but the signal is
     bucketed (3-5%, 5-8%, >=8%) so ordinary intraday noise cannot launch a review
-    every hour. Any resulting Formal action still has to come from the existing
-    Every-Industry -> Production Finalizer authority chain.
+    every hour. High-confidence Success Archetype recalls may also trigger a full
+    authority re-review, but similarity only controls research dispatch: it never
+    changes a Formal action or bypasses any Canonical/Hard Gate. Any resulting
+    Formal action still has to come from the existing Every-Industry -> Production
+    Finalizer authority chain.
     """
 
     _require_research_only_contract(priority, label="research_priority")
@@ -152,6 +208,7 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
 
         conclusion = str(row.get("hourly_research_conclusion") or "")
         material_evidence_ids = _material_evidence_ids(hourly_row)
+        success_archetype_signal_state = _success_archetype_signal_state(row)
         signal_counts = {
             "high_materiality_evidence_count_72h": int(hourly_row.get("high_materiality_evidence_count_72h") or 0),
             "material_weakening_evidence_count_72h": int(hourly_row.get("material_weakening_evidence_count_72h") or 0),
@@ -176,22 +233,25 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
             "signal_counts": signal_counts,
             "price_signal_date": _price_signal_date(hourly_row, conclusion),
         }
+        if success_archetype_signal_state is not None:
+            trigger["success_archetype_signal_state"] = success_archetype_signal_state
         triggers.append(trigger)
-        digest_rows.append(
-            {
-                "code": trigger["code"],
-                "is_current_holding": trigger["is_current_holding"],
-                "thesis_status": trigger["thesis_status"],
-                "hourly_research_conclusion": trigger["hourly_research_conclusion"],
-                "price_evidence_status": trigger["price_evidence_status"],
-                "holding_move_bucket": trigger["holding_move_bucket"],
-                "holding_move_signal_date": trigger["holding_move_signal_date"],
-                "trigger_reasons": trigger["trigger_reasons"],
-                "material_evidence_ids": trigger["material_evidence_ids"],
-                "signal_counts": trigger["signal_counts"],
-                "price_signal_date": trigger["price_signal_date"],
-            }
-        )
+        digest_row = {
+            "code": trigger["code"],
+            "is_current_holding": trigger["is_current_holding"],
+            "thesis_status": trigger["thesis_status"],
+            "hourly_research_conclusion": trigger["hourly_research_conclusion"],
+            "price_evidence_status": trigger["price_evidence_status"],
+            "holding_move_bucket": trigger["holding_move_bucket"],
+            "holding_move_signal_date": trigger["holding_move_signal_date"],
+            "trigger_reasons": trigger["trigger_reasons"],
+            "material_evidence_ids": trigger["material_evidence_ids"],
+            "signal_counts": trigger["signal_counts"],
+            "price_signal_date": trigger["price_signal_date"],
+        }
+        if success_archetype_signal_state is not None:
+            digest_row["success_archetype_signal_state"] = success_archetype_signal_state
+        digest_rows.append(digest_row)
 
     triggers.sort(key=lambda row: (-row["priority_score"], row["code"]))
     digest_rows.sort(key=lambda row: row["code"])
