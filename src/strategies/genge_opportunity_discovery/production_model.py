@@ -5,6 +5,12 @@ from dataclasses import replace
 from typing import Any, Mapping
 
 from .holding_valuation_continuity import sell_review_required
+from .insurer_typed_production import (
+    assess_insurer_valuation_confidence_v311,
+    decide_insurer_v311,
+    insurer_typed_payload_metadata,
+    is_insurer_typed_input,
+)
 from .selection_framework_v311 import (
     V311Decision,
     ValuationConfidence,
@@ -97,12 +103,17 @@ def decide_production(data: Mapping[str, Any]) -> V311Decision:
 
     Formal BUY requires HIGH valuation confidence, no existing position, and a
     price no greater than 80% of neutral/base value after the underlying V3.1
-    buy gates pass.  REDUCE/CORE_ONLY is permitted only when the sell-rationale
-    guard proves either stable intrinsic value plus material price overextension
-    or material, structured, thesis-linked new evidence.  Otherwise production
-    fails closed to HOLD_REVIEW.  Hard-gate EXIT remains immediate.
+    buy gates pass. Typed insurers may recover audited PIT EV/growth evidence
+    for holding review, but that typed path is deliberately capped at MEDIUM
+    confidence and cannot create Formal BUY eligibility. REDUCE/CORE_ONLY is
+    permitted only when the sell-rationale guard proves either stable intrinsic
+    value plus material price overextension or material, structured, thesis-
+    linked new evidence. Otherwise production fails closed to HOLD_REVIEW.
     """
-    decision = decide_v311(data)
+    if is_insurer_typed_input(data):
+        decision = decide_insurer_v311(data)
+    else:
+        decision = decide_v311(data)
 
     # Hard-gate EXIT and holding/sell actions are never weakened by the BUY gate.
     decision = _apply_formal_buy_gate(data, decision)
@@ -124,8 +135,13 @@ def decide_production(data: Mapping[str, Any]) -> V311Decision:
 
 
 def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
+    typed_insurer = is_insurer_typed_input(data)
     decision = decide_production(data)
-    confidence = assess_valuation_confidence_v311(data)
+    confidence = (
+        assess_insurer_valuation_confidence_v311(data)
+        if typed_insurer
+        else assess_valuation_confidence_v311(data)
+    )
     payload = decision.as_dict()
     payload.update({
         "production_model_version": PRODUCTION_MODEL_VERSION,
@@ -143,4 +159,6 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         "formal_sell_requires_explicit_rationale": True,
         "formal_sell_mechanical_valuation_only_forbidden": True,
     })
+    if typed_insurer:
+        payload.update(insurer_typed_payload_metadata(data))
     return payload
