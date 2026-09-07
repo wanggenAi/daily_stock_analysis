@@ -36,7 +36,7 @@ jobs:
           python-version: "3.11"
           cache: pip
 
-      - name: Install repository CI dependencies
+      - name: Install terminal runtime dependencies
         run: |
           python -m pip install --upgrade pip --retries 5 --timeout 60
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
@@ -49,72 +49,71 @@ jobs:
           TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
           TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
           TRIGGER_TITLE: ${{ github.event.workflow_run.display_title }}
+          TRIGGER_PATH: ${{ github.event.workflow_run.path }}
         run: |
           set -euo pipefail
-
           terminal_run_id=""
+
           if [ "${{ github.event_name }}" = "workflow_run" ] && \
              [ "$TRIGGER_EVENT" = "workflow_dispatch" ] && \
+             [ "$TRIGGER_PATH" = ".github/workflows/genge-candidate-terminal-review.yml" ] && \
              printf '%s' "$TRIGGER_TITLE" | grep -Eq '/ [0-9]+$'; then
             terminal_run_id="$TRIGGER_RUN_ID"
           fi
 
           if [ -z "$terminal_run_id" ]; then
             terminal_run_id=$(gh api \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-review.yml/runs?branch=main&status=failure&event=workflow_dispatch&per_page=50" \
+              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-review.yml/runs?branch=main&status=failure&per_page=100" \
               --jq '[.workflow_runs[]
-                | select(.name == "GenGe Candidate Terminal Review")
+                | select(.path == ".github/workflows/genge-candidate-terminal-review.yml")
                 | select(.event == "workflow_dispatch")
                 | select((.display_title // "") | test("/ [0-9]+$"))][0].id // empty')
           fi
 
-          [[ "$terminal_run_id" =~ ^[0-9]+$ ]] || {
-            echo "failed production Candidate Terminal run not found" >&2
-            exit 1
-          }
+          [[ "$terminal_run_id" =~ ^[0-9]+$ ]] || { echo "failed production Candidate Terminal run not found" >&2; exit 1; }
 
-          run_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${terminal_run_id}")
-          name=$(printf '%s' "$run_json" | jq -r '.name')
-          event=$(printf '%s' "$run_json" | jq -r '.event')
-          conclusion=$(printf '%s' "$run_json" | jq -r '.conclusion // ""')
-          title=$(printf '%s' "$run_json" | jq -r '.display_title // ""')
-          [ "$name" = "GenGe Candidate Terminal Review" ] || { echo "unexpected terminal workflow: $name" >&2; exit 1; }
-          [ "$event" = "workflow_dispatch" ] || { echo "non-production terminal event selected: $event" >&2; exit 1; }
-          [ "$conclusion" = "failure" ] || { echo "terminal run is not failed" >&2; exit 1; }
+          terminal_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${terminal_run_id}")
+          terminal_path=$(printf '%s' "$terminal_json" | jq -r '.path // ""')
+          terminal_event=$(printf '%s' "$terminal_json" | jq -r '.event // ""')
+          terminal_conclusion=$(printf '%s' "$terminal_json" | jq -r '.conclusion // ""')
+          terminal_title=$(printf '%s' "$terminal_json" | jq -r '.display_title // ""')
+          [ "$terminal_path" = ".github/workflows/genge-candidate-terminal-review.yml" ] || { echo "unexpected Terminal path: $terminal_path" >&2; exit 1; }
+          [ "$terminal_event" = "workflow_dispatch" ] || { echo "Terminal is not production workflow_dispatch" >&2; exit 1; }
+          [ "$terminal_conclusion" = "failure" ] || { echo "Terminal is not failed" >&2; exit 1; }
 
-          finalizer_run_id=$(printf '%s' "$title" | grep -Eo '[0-9]+$' || true)
-          [[ "$finalizer_run_id" =~ ^[0-9]+$ ]] || { echo "cannot resolve finalizer id from $title" >&2; exit 1; }
+          finalizer_run_id=$(printf '%s' "$terminal_title" | grep -Eo '[0-9]+$' || true)
+          [[ "$finalizer_run_id" =~ ^[0-9]+$ ]] || { echo "cannot resolve Finalizer from $terminal_title" >&2; exit 1; }
 
           finalizer_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${finalizer_run_id}")
-          [ "$(printf '%s' "$finalizer_json" | jq -r '.name')" = "GenGe V3.1.1 Production Finalizer" ] || { echo "resolved run is not Production Finalizer" >&2; exit 1; }
-          [ "$(printf '%s' "$finalizer_json" | jq -r '.conclusion')" = "success" ] || { echo "Production Finalizer is not successful" >&2; exit 1; }
-          [ "$(printf '%s' "$finalizer_json" | jq -r '.head_branch')" = "main" ] || { echo "Production Finalizer is not on main" >&2; exit 1; }
+          [ "$(printf '%s' "$finalizer_json" | jq -r '.path')" = ".github/workflows/genge-v311-production-finalizer.yml" ] || { echo "resolved run is not Production Finalizer" >&2; exit 1; }
+          [ "$(printf '%s' "$finalizer_json" | jq -r '.conclusion')" = "success" ] || { echo "Production Finalizer not successful" >&2; exit 1; }
+          [ "$(printf '%s' "$finalizer_json" | jq -r '.head_branch')" = "main" ] || { echo "Production Finalizer not on main" >&2; exit 1; }
 
-          artifacts=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${finalizer_run_id}/artifacts?per_page=100")
-          auth_name=$(printf '%s' "$artifacts" | jq -r '[.artifacts[] | select(.expired == false and (.name | test("^genge-v311-authoritative-canonical-[0-9]+$")))][0].name // empty')
-          research_run_id="${auth_name##*-}"
-          [[ "$research_run_id" =~ ^[0-9]+$ ]] || { echo "exact authority source id not resolved" >&2; exit 1; }
+          finalizer_artifacts=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${finalizer_run_id}/artifacts?per_page=100")
+          authority_name=$(printf '%s' "$finalizer_artifacts" | jq -r '[.artifacts[] | select(.expired == false and (.name | test("^genge-v311-authoritative-canonical-[0-9]+$")))][0].name // empty')
+          research_run_id="${authority_name##*-}"
+          [[ "$research_run_id" =~ ^[0-9]+$ ]] || { echo "research source not resolved from authority artifact" >&2; exit 1; }
 
           research_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${research_run_id}")
-          [ "$(printf '%s' "$research_json" | jq -r '.name')" = "GenGe V3.1.1 Every-Industry Research" ] || { echo "authority source is not Every-Industry" >&2; exit 1; }
-          [ "$(printf '%s' "$research_json" | jq -r '.conclusion')" = "success" ] || { echo "Every-Industry run is not successful" >&2; exit 1; }
-          [ "$(printf '%s' "$research_json" | jq -r '.head_branch')" = "main" ] || { echo "Every-Industry run is not on main" >&2; exit 1; }
+          [ "$(printf '%s' "$research_json" | jq -r '.path')" = ".github/workflows/genge-v31-industry-research.yml" ] || { echo "authority source is not Every-Industry" >&2; exit 1; }
+          [ "$(printf '%s' "$research_json" | jq -r '.conclusion')" = "success" ] || { echo "Every-Industry not successful" >&2; exit 1; }
+          [ "$(printf '%s' "$research_json" | jq -r '.head_branch')" = "main" ] || { echo "Every-Industry not on main" >&2; exit 1; }
 
           research_artifacts=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${research_run_id}/artifacts?per_page=100")
           research_count=$(printf '%s' "$research_artifacts" | jq -r '[.artifacts[] | select(.name == "genge-v31-every-industry-research" and .expired == false)] | length')
-          auth_count=$(printf '%s' "$artifacts" | jq -r --arg n "$auth_name" '[.artifacts[] | select(.name == $n and .expired == false)] | length')
-          [ "$research_count" -eq 1 ] || { echo "expected exactly one Every-Industry artifact; found $research_count" >&2; exit 1; }
-          [ "$auth_count" -eq 1 ] || { echo "expected exactly one authority artifact; found $auth_count" >&2; exit 1; }
+          authority_count=$(printf '%s' "$finalizer_artifacts" | jq -r --arg n "$authority_name" '[.artifacts[] | select(.name == $n and .expired == false)] | length')
+          [ "$research_count" -eq 1 ] || { echo "Every-Industry artifact count=$research_count" >&2; exit 1; }
+          [ "$authority_count" -eq 1 ] || { echo "authority artifact count=$authority_count" >&2; exit 1; }
 
           {
             echo "terminal_run_id=$terminal_run_id"
             echo "finalizer_run_id=$finalizer_run_id"
             echo "research_run_id=$research_run_id"
-            echo "authority_artifact_name=$auth_name"
+            echo "authority_name=$authority_name"
           } >> "$GITHUB_OUTPUT"
-          echo "repairing exact lineage terminal=${terminal_run_id} research=${research_run_id} finalizer=${finalizer_run_id}"
+          echo "exact repair lineage: Terminal=${terminal_run_id} Finalizer=${finalizer_run_id} Every-Industry=${research_run_id}"
 
-      - name: Download exact Every-Industry research artifact
+      - name: Download exact Every-Industry artifact
         uses: actions/download-artifact@v4
         with:
           name: genge-v31-every-industry-research
@@ -123,10 +122,10 @@ jobs:
           repository: ${{ github.repository }}
           run-id: ${{ steps.lineage.outputs.research_run_id }}
 
-      - name: Download exact Finalizer authority artifact
+      - name: Download exact authority artifact
         uses: actions/download-artifact@v4
         with:
-          name: ${{ steps.lineage.outputs.authority_artifact_name }}
+          name: ${{ steps.lineage.outputs.authority_name }}
           path: authority
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
@@ -140,16 +139,15 @@ jobs:
           python - <<'PY'
           import json, os
           from pathlib import Path
-          files = list(Path('authority').rglob('production_authority.json'))
-          assert len(files) == 1, files
-          payload = json.loads(files[0].read_text(encoding='utf-8'))
-          assert payload.get('authorized') is True
-          assert str(payload.get('canonical_source_run_id')) == os.environ['RESEARCH_RUN_ID']
-          assert str(payload.get('finalizer_run_id')) == os.environ['FINALIZER_RUN_ID']
-          assert payload.get('canonical_source_kind') == 'every-industry'
-          assert payload.get('consumer_contract', {}).get('consumer_may_recompute_formal_action') is False
-          assert payload.get('consumer_contract', {}).get('formal_action_change_requires_new_validated_canonical_snapshot') is True
-          assert payload.get('no_auto_trade') is True
+          files=list(Path('authority').rglob('production_authority.json'))
+          assert len(files)==1
+          p=json.loads(files[0].read_text(encoding='utf-8'))
+          assert p.get('authorized') is True
+          assert str(p.get('canonical_source_run_id'))==os.environ['RESEARCH_RUN_ID']
+          assert str(p.get('finalizer_run_id'))==os.environ['FINALIZER_RUN_ID']
+          assert p.get('canonical_source_kind')=='every-industry'
+          assert p.get('consumer_contract',{}).get('consumer_may_recompute_formal_action') is False
+          assert p.get('no_auto_trade') is True
           PY
 
       - name: Resolve terminal inputs
@@ -157,62 +155,37 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p .terminal-inputs
-          mapfile -t masters < <(find artifact -type f -name v31_review_queue_enriched.csv -print)
-          mapfile -t productions < <(find artifact -type f -name production_decisions.csv ! -path '*/canonical_snapshot/*' -print)
-          [ "${#masters[@]}" -eq 1 ] || { echo "expected one enriched review queue" >&2; exit 1; }
-          [ "${#productions[@]}" -eq 1 ] || { echo "expected one production decisions file" >&2; exit 1; }
-          master="${masters[0]}"
-          production="${productions[0]}"
-          formal=".terminal-inputs/terminal_formal_compat.csv"
+          master=$(find artifact -type f -name v31_review_queue_enriched.csv -print -quit)
+          production=$(find artifact -type f -name production_decisions.csv ! -path '*/canonical_snapshot/*' -print -quit)
+          [ -n "$master" ] || { echo "missing enriched review queue" >&2; exit 1; }
+          [ -n "$production" ] || { echo "missing production decisions" >&2; exit 1; }
+          formal=.terminal-inputs/terminal_formal_compat.csv
           MASTER_SOURCE="$master" PRODUCTION_SOURCE="$production" FORMAL_TARGET="$formal" python - <<'PY'
           import csv, os
           from pathlib import Path
-
-          def code(value):
-              text = str(value or '').strip().upper()
-              if '.' in text:
-                  base, suffix = text.rsplit('.', 1)
-                  if suffix in {'SH','SZ','BJ'}:
-                      text = base
-              for prefix in ('SH','SZ','BJ'):
-                  if text.startswith(prefix) and text[len(prefix):].isdigit():
-                      text = text[len(prefix):]
-                      break
-              return text.zfill(6) if text.isdigit() else text
-
-          def truthy(value):
-              return str(value or '').strip().lower() in {'1','true','yes','y','pass','passed'}
-
-          with Path(os.environ['MASTER_SOURCE']).open(encoding='utf-8') as f:
-              master_rows = list(csv.DictReader(f))
-          with Path(os.environ['PRODUCTION_SOURCE']).open(encoding='utf-8') as f:
-              production_rows = list(csv.DictReader(f))
-          production = {
-              code(r.get('code')): r
-              for r in production_rows
-              if str(r.get('decision_scope') or '').strip().upper() == 'CANDIDATE' and code(r.get('code'))
-          }
-          rows = []
-          for row in master_rows:
-              c = code(row.get('code'))
-              prod = production.get(c)
-              if not prod:
-                  continue
-              ready = truthy(row.get('v31_buy_ready'))
-              eligible = bool(
-                  ready
-                  and str(prod.get('production_action') or '').strip().upper() == 'BUY'
-                  and str(prod.get('valuation_confidence') or '').strip().upper() == 'HIGH'
-                  and truthy(prod.get('production_model_frozen'))
-              )
-              rows.append({'code': c, 'long_term_formal_buy_eligible': eligible, 'v31_buy_ready': ready})
-          target = Path(os.environ['FORMAL_TARGET'])
-          target.parent.mkdir(parents=True, exist_ok=True)
-          with target.open('w', encoding='utf-8', newline='') as f:
-              w = csv.DictWriter(f, fieldnames=['code','long_term_formal_buy_eligible','v31_buy_ready'])
-              w.writeheader()
-              w.writerows(rows)
-          print(f'candidate production rows={len(production)} formal rows={len(rows)}')
+          def code(v):
+              t=str(v or '').strip().upper()
+              if '.' in t:
+                  b,s=t.rsplit('.',1)
+                  if s in {'SH','SZ','BJ'}: t=b
+              for p in ('SH','SZ','BJ'):
+                  if t.startswith(p) and t[len(p):].isdigit(): t=t[len(p):]; break
+              return t.zfill(6) if t.isdigit() else t
+          def truthy(v): return str(v or '').strip().lower() in {'1','true','yes','y','pass','passed'}
+          with Path(os.environ['MASTER_SOURCE']).open(encoding='utf-8') as f: masters=list(csv.DictReader(f))
+          with Path(os.environ['PRODUCTION_SOURCE']).open(encoding='utf-8') as f: prows=list(csv.DictReader(f))
+          prod={code(r.get('code')):r for r in prows if str(r.get('decision_scope') or '').strip().upper()=='CANDIDATE' and code(r.get('code'))}
+          rows=[]
+          for m in masters:
+              c=code(m.get('code')); p=prod.get(c)
+              if not p: continue
+              ready=truthy(m.get('v31_buy_ready'))
+              eligible=bool(ready and str(p.get('production_action') or '').strip().upper()=='BUY' and str(p.get('valuation_confidence') or '').strip().upper()=='HIGH' and truthy(p.get('production_model_frozen')))
+              rows.append({'code':c,'long_term_formal_buy_eligible':eligible,'v31_buy_ready':ready})
+          target=Path(os.environ['FORMAL_TARGET']); target.parent.mkdir(parents=True,exist_ok=True)
+          with target.open('w',encoding='utf-8',newline='') as f:
+              w=csv.DictWriter(f,fieldnames=['code','long_term_formal_buy_eligible','v31_buy_ready']); w.writeheader(); w.writerows(rows)
+          print(f'candidate production rows={len(prod)} formal rows={len(rows)}')
           PY
           echo "MASTER_CSV=$master" >> "$GITHUB_ENV"
           echo "FORMAL_CSV=$formal" >> "$GITHUB_ENV"
@@ -220,58 +193,32 @@ jobs:
 
       - name: Terminalize every research candidate
         run: |
-          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.candidate_terminal_decision \
+          python -m src.strategies.genge_opportunity_discovery.candidate_terminal_decision \
             --master-csv "$MASTER_CSV" \
             --formal-csv "$FORMAL_CSV" \
             --production-csv "$PRODUCTION_CSV" \
             --output-dir reports/candidate_terminal_decision
 
-      - name: Record repaired lineage
-        env:
-          TERMINAL_RUN_ID: ${{ steps.lineage.outputs.terminal_run_id }}
-          RESEARCH_RUN_ID: ${{ steps.lineage.outputs.research_run_id }}
-          FINALIZER_RUN_ID: ${{ steps.lineage.outputs.finalizer_run_id }}
-        run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          payload = {
-              'repair_source_terminal_run_id': os.environ['TERMINAL_RUN_ID'],
-              'research_run_id': os.environ['RESEARCH_RUN_ID'],
-              'finalizer_run_id': os.environ['FINALIZER_RUN_ID'],
-              'lineage_mode': 'EVERY_INDUSTRY_AUTHORIZED_AUTO_REPAIR',
-              'finalizer_authority_verified': True,
-              'stale_artifact_fallback_allowed': False,
-              'formal_authority_unchanged': True,
-              'no_auto_trade': True,
-          }
-          target = Path('reports/candidate_terminal_decision/terminal_repair_lineage.json')
-          target.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
-          PY
-
       - name: Validate terminal closure
         run: |
           python - <<'PY'
-          import csv, json
+          import csv,json
           from pathlib import Path
-          root = Path('reports/candidate_terminal_decision')
-          rows = list(csv.DictReader((root/'candidate_terminal_decisions.csv').open(encoding='utf-8')))
-          summary = json.loads((root/'candidate_terminal_summary.json').read_text(encoding='utf-8'))
-          assert rows
-          assert len(rows) == summary['candidate_count'] == summary['terminalized_count']
-          assert summary['research_limbo_count'] == 0
-          assert summary['unauthorized_buy_count'] == 0
-          assert summary['wait_price_without_price_count'] == 0
-          assert summary['hard_gate_unknown_is_pass'] is False
-          assert summary['canonical_authority_unchanged'] is True
-          assert summary['no_auto_trade'] is True
+          root=Path('reports/candidate_terminal_decision')
+          rows=list(csv.DictReader((root/'candidate_terminal_decisions.csv').open(encoding='utf-8')))
+          s=json.loads((root/'candidate_terminal_summary.json').read_text(encoding='utf-8'))
+          assert rows and len(rows)==s['candidate_count']==s['terminalized_count']
+          assert s['research_limbo_count']==0
+          assert s['unauthorized_buy_count']==0
+          assert s['hard_gate_unknown_is_pass'] is False
+          assert s['canonical_authority_unchanged'] is True
+          assert s['no_auto_trade'] is True
           assert all(r['terminal_decision'] in {'BUY','WAIT_PRICE','REJECT'} for r in rows)
-          print(json.dumps(summary, ensure_ascii=False, indent=2))
-          for code in ('000526','002239','001205','002916'):
-              hit = [r for r in rows if r.get('code') == code]
-              if hit:
-                  r = hit[0]
-                  print(code, r.get('stock_name'), r.get('terminal_decision'), r.get('terminal_reason_class'), r.get('terminal_reason_codes'))
+          print(json.dumps(s,ensure_ascii=False,indent=2))
+          for c in ('000526','002239','001205','002916'):
+              for r in rows:
+                  if r.get('code')==c:
+                      print(c,r.get('stock_name'),r.get('terminal_decision'),r.get('terminal_reason_class'),r.get('terminal_reason_codes'))
           PY
 
       - name: Upload repaired terminal decisions
@@ -286,11 +233,8 @@ jobs:
         if: always()
         run: |
           echo "# Candidate Terminal Auto Repair" >> "$GITHUB_STEP_SUMMARY"
-          echo "- failed production Terminal: ${{ steps.lineage.outputs.terminal_run_id }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- exact Every-Industry: ${{ steps.lineage.outputs.research_run_id }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- exact Production Finalizer: ${{ steps.lineage.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "- UNKNOWN/INVALID never treated as PASS" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Formal authority unchanged; no auto trade" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f reports/candidate_terminal_decision/candidate_terminal_decisions.md ]; then
-            cat reports/candidate_terminal_decision/candidate_terminal_decisions.md >> "$GITHUB_STEP_SUMMARY"
-          fi
+          echo "- Terminal: ${{ steps.lineage.outputs.terminal_run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Every-Industry: ${{ steps.lineage.outputs.research_run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Production Finalizer: ${{ steps.lineage.outputs.finalizer_run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UNKNOWN/INVALID != PASS; Formal authority unchanged; no auto trade" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/candidate_terminal_decision/candidate_terminal_decisions.md ]; then cat reports/candidate_terminal_decision/candidate_terminal_decisions.md >> "$GITHUB_STEP_SUMMARY"; fi
