@@ -106,6 +106,11 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
+      - name: Install repository runtime dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
 
       - name: Resolve exact research lineage
         id: lineage
