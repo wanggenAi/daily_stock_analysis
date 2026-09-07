@@ -24,6 +24,7 @@ FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 TERMINAL_AUTHORITY = "RESEARCH_TERMINAL_VIEW"
 NO_AUTO_TRADE = True
 LOT_SIZE = 100
+HOLDING_ADD_MAX_LOTS = 1
 ACTION_LABELS = {
     "EXIT": "退出/卖出", "SELL": "卖出", "REDUCE_50": "减仓50%",
     "REDUCE_25": "减仓25%", "REDUCE": "减仓", "ADD": "加仓",
@@ -229,7 +230,7 @@ def _planner_cfg(capital: Mapping[str, Any]) -> dict[str, Any]:
             "max_names": int(val("max_names", 5, 1, 20)),
             "first_tranche_ratio": val("first_tranche_ratio", .50, 0, 1),
             "second_tranche_discount_pct": val("second_tranche_discount_pct", .02, 0, .20),
-            "lot_size": LOT_SIZE}
+            "lot_size": LOT_SIZE, "holding_add_max_lots": HOLDING_ADD_MAX_LOTS}
 
 
 def _lot_cash(cash: float, price: float) -> int:
@@ -268,7 +269,10 @@ def _plan(capital: Mapping[str, Any], market: Mapping[str, Any], holdings: list[
     operations, remaining = [], budget
     for i, x in enumerate(actions):
         target = min(per_name, remaining / max(1, len(actions) - i))
-        p = float(x["current_price"]); shares = _lot_cash(target, p); a, b = _split(shares, cfg["first_tranche_ratio"])
+        p = float(x["current_price"]); shares = _lot_cash(target, p)
+        if x.get("source") == "AUTHORIZED_CANONICAL_HOLDING_ACTION" and x.get("action") == "ADD":
+            shares = min(shares, HOLDING_ADD_MAX_LOTS * LOT_SIZE)
+        a, b = _split(shares, cfg["first_tranche_ratio"])
         p1 = round(min(p, x.get("formal_ceiling")) if x.get("formal_ceiling") else p, 2)
         p2 = round(min(p1, p * (1 - cfg["second_tranche_discount_pct"])), 2)
         spend = round(a*p1 + b*p2, 2); remaining = max(0.0, round(remaining-spend, 2))
