@@ -14,11 +14,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Dispatch fresh Opportunity Discovery production run
+      - name: Dispatch exact production authority closure
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run genge-opportunity-discovery.yml \
+          gh workflow run genge-v311-event-driven-authority-handoff.yml \
             --repo "$GITHUB_REPOSITORY" \
-            --ref main \
-            -f run_legacy_report=false
+            --ref main
