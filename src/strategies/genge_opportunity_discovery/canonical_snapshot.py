@@ -76,6 +76,30 @@ SPECIALIZED_CANONICAL_FIELDS = (
     "specialized_fair_pb",
 )
 
+HOLDING_ADD_CANONICAL_FIELDS = (
+    "holding_add_authorization_reason_codes",
+    "holding_add_authorized",
+    "holding_add_existing_position_only",
+    "holding_add_formal_action_unchanged",
+    "holding_add_hard_gate_unknowns",
+    "holding_add_is_formal_buy",
+    "holding_add_max_lots",
+    "holding_add_max_price_to_neutral",
+    "holding_add_no_auto_trade",
+    "holding_add_policy_version",
+    "holding_add_requires_high_confidence",
+    "holding_add_unknown_is_pass",
+)
+HOLDING_ADD_BOOLEAN_FIELDS = {
+    "holding_add_authorized",
+    "holding_add_existing_position_only",
+    "holding_add_formal_action_unchanged",
+    "holding_add_is_formal_buy",
+    "holding_add_no_auto_trade",
+    "holding_add_requires_high_confidence",
+    "holding_add_unknown_is_pass",
+}
+
 
 def _code(value: Any) -> str:
     text = str(value or "").strip().upper()
@@ -183,6 +207,74 @@ def _specialized_payload(row: Mapping[str, Any]) -> dict[str, Any]:
     return payload
 
 
+def _holding_add_payload(row: Mapping[str, Any]) -> dict[str, Any]:
+    payload: dict[str, Any] = {}
+    for field in HOLDING_ADD_CANONICAL_FIELDS:
+        value = row.get(field)
+        if value is None or str(value).strip() == "":
+            continue
+        if field in HOLDING_ADD_BOOLEAN_FIELDS:
+            payload[field] = _bool(value)
+        elif field == "holding_add_max_lots":
+            payload[field] = _int(value, default=0)
+        else:
+            payload[field] = value
+    return payload
+
+
+def _required_holding_add_bool(row: Mapping[str, Any], field: str, expected: bool, code: str) -> None:
+    raw = row.get(field)
+    if raw is None or str(raw).strip() == "":
+        raise ValueError(f"canonical staged-add missing {field} for {code}")
+    if _bool(raw) is not expected:
+        raise ValueError(f"canonical staged-add invalid {field} for {code}")
+
+
+def _validate_holding_add_contract(row: Mapping[str, Any]) -> None:
+    if not _bool(row.get("holding_add_authorized")):
+        return
+    code = _code(row.get("code"))
+    scope = str(row.get("decision_scope") or row.get("scope") or "").strip().upper()
+    action = str(row.get("production_action") or row.get("action") or "").strip().upper()
+    if scope != "HOLDING":
+        raise ValueError(f"canonical staged-add is not an existing holding for {code}")
+    if action != "HOLD":
+        raise ValueError(f"canonical staged-add must preserve Formal HOLD for {code}")
+    if _float(row.get("confirmed_quantity"), default=0.0) <= 0:
+        raise ValueError(f"canonical staged-add requires positive confirmed holding quantity for {code}")
+    _required_holding_add_bool(row, "holding_add_existing_position_only", True, code)
+    _required_holding_add_bool(row, "holding_add_formal_action_unchanged", True, code)
+    _required_holding_add_bool(row, "holding_add_is_formal_buy", False, code)
+    _required_holding_add_bool(row, "holding_add_no_auto_trade", True, code)
+    _required_holding_add_bool(row, "holding_add_requires_high_confidence", True, code)
+    _required_holding_add_bool(row, "holding_add_unknown_is_pass", False, code)
+    if _int(row.get("holding_add_max_lots"), default=0) != 1:
+        raise ValueError(f"canonical staged-add must be capped at exactly one lot for {code}")
+    if not str(row.get("holding_add_policy_version") or "").strip():
+        raise ValueError(f"canonical staged-add policy version missing for {code}")
+    if not str(row.get("holding_add_authorization_reason_codes") or "").strip():
+        raise ValueError(f"canonical staged-add reason codes missing for {code}")
+    if str(row.get("valuation_confidence") or "").strip().upper() != "HIGH":
+        raise ValueError(f"canonical staged-add requires HIGH valuation confidence for {code}")
+    if str(row.get("v311_expectation_input_status") or "").strip() != "READY":
+        raise ValueError(f"canonical staged-add lacks READY strict-PIT input for {code}")
+    if str(row.get("v311_input_error") or "").strip():
+        raise ValueError(f"canonical staged-add has strict-PIT input error for {code}")
+    if str(row.get("hard_gate_failures") or "").strip():
+        raise ValueError(f"canonical staged-add has known hard-gate failure for {code}")
+    price_date = _date(row.get("price_date"))
+    decision_date = _date(row.get("decision_date"))
+    if price_date is None or decision_date is None or price_date > decision_date:
+        raise ValueError(f"canonical staged-add price date is unverified for {code}")
+    current_price = _float(row.get("current_price") or row.get("source_current_price"), default=0.0)
+    neutral_value = _float(row.get("neutral_value") or row.get("source_neutral_value"), default=0.0)
+    max_ratio = _float(row.get("holding_add_max_price_to_neutral"), default=0.0)
+    if current_price <= 0 or neutral_value <= 0 or max_ratio <= 0:
+        raise ValueError(f"canonical staged-add valuation inputs missing for {code}")
+    if current_price / neutral_value > max_ratio + 1e-12:
+        raise ValueError(f"canonical staged-add price exceeds authorized valuation ceiling for {code}")
+
+
 def _compact_research(row: Mapping[str, Any], rank: int) -> dict[str, Any]:
     compact = {
         "rank": rank,
@@ -248,6 +340,8 @@ def _validate_production_rows(rows: Iterable[Mapping[str, Any]]) -> None:
         if not _bool(row.get("no_auto_trade")):
             raise ValueError(f"canonical production no-auto-trade contract missing for {code}")
 
+        _validate_holding_add_contract(row)
+
         action = str(row.get("production_action") or "").strip().upper()
         if action in BUY_ADD_ACTIONS:
             if str(row.get("v311_expectation_input_status") or "").strip() != "READY":
@@ -289,6 +383,7 @@ def _compact_decision(row: Mapping[str, Any]) -> dict[str, Any]:
         "display_only_average_cost": row.get("display_only_average_cost") or "",
     }
     compact.update(_specialized_payload(row))
+    compact.update(_holding_add_payload(row))
     return compact
 
 
@@ -356,6 +451,8 @@ def build_snapshot(
             "formal_buy_thresholds_changed": False,
             "candidate_ledger_is_downstream_memory_only": True,
             "specialized_valuation_evidence_preserved": True,
+            "holding_staged_add_advisory_preserved": True,
+            "holding_staged_add_may_mutate_formal_action": False,
         },
         "discovery": {
             "snapshot_id": snapshot_id,
@@ -429,6 +526,7 @@ def validate_snapshot(
             raise ValueError(f"canonical compact upstream policy reuse for {code}")
         if row.get("no_auto_trade") is not True:
             raise ValueError(f"canonical compact no-auto-trade contract missing for {code}")
+        _validate_holding_add_contract(row)
         action = str(row.get("action") or "").upper()
         if action in BUY_ADD_ACTIONS:
             if row.get("v311_expectation_input_status") != "READY" or row.get("v311_input_error"):
