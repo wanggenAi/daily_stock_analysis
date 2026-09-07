@@ -36,3 +36,16 @@ def test_stale_hourly_overlay_is_skipped_before_dashboard_and_live_overlay() -> 
     assert 'if [ -n "$hourly_overlay" ]; then' in block
     assert "Skipping stale/unverifiable optional hourly overlay; frozen Canonical remains authoritative." in block
     assert "investor_live_execution_overlay" in block
+
+
+def test_dashboard_capital_operation_sources_accept_only_authorized_mirrors() -> None:
+    workflow = _workflow()
+    block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Publish investor-first summary", 1
+    )[0]
+
+    assert "AUTHORIZED_CANONICAL_HOLDING_ACTION" in block
+    assert "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD" in block
+    assert "TERMINAL_FORMAL_BUY_MIRROR" in block
+    assert "assert all(x['source'] in allowed_sources for x in c['operations'])" in block
+    assert "assert all(x.get('authorization_proven') is True for x in c['operations'])" in block
