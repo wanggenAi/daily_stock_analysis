@@ -1,14 +1,14 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-07T16:30:50+00:00",
+  "mode": "MANUAL",
+  "generated_at": "2026-09-07T16:32:18+00:00",
   "canonical_snapshot_id": "467c47fc3cb2b35b554e",
   "canonical_source_run_id": "34142704287",
   "latest_trade_date": "2026-09-07",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
   "no_auto_trade": true,
-  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1837",
+  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1837；盘中价覆盖=0",
   "market": {
     "as_of_date": "2026-09-07",
     "status": "GREEN",
@@ -43,7 +43,8 @@
         "holding_add_reason_codes": "FORMAL_ACTION_NOT_HOLD;A_LEVEL_MARGIN_OF_SAFETY_NOT_MET",
         "neutral_value": 17.457807170543802,
         "valuation_confidence": "HIGH",
-        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION"
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "001316",
@@ -59,7 +60,8 @@
         "holding_add_reason_codes": "FORMAL_ACTION_NOT_HOLD;VALUATION_CONFIDENCE_NOT_HIGH",
         "neutral_value": 49.36957125214809,
         "valuation_confidence": "LOW",
-        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE"
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "601318",
@@ -75,7 +77,8 @@
         "holding_add_reason_codes": "TYPED_INSURER_POLICY_SEPARATE;VALUATION_CONFIDENCE_NOT_HIGH;FRESH_VERIFIED_INPUT_NOT_READY",
         "neutral_value": 83.07,
         "valuation_confidence": "MEDIUM",
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.678<1.00"
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.678<1.00",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "603993",
@@ -91,7 +94,8 @@
         "holding_add_reason_codes": "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED;VALUATION_CONFIDENCE_HIGH;A_LEVEL_MARGIN_OF_SAFETY_PASS;price_to_neutral=0.653<=0.75;NO_KNOWN_HARD_GATE_FAILURE;STAGED_ADD_CAP_ONE_LOT;STAGED_ADD_NOT_FORMAL_BUY;FORMAL_ACTION_UNCHANGED;HARD_GATE_UNKNOWNS_RETAINED:predictability,long_term_demand,moat,financial_safety,earnings_authenticity",
         "neutral_value": 28.12766979232306,
         "valuation_confidence": "HIGH",
-        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD"
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       }
     ]
   },
@@ -128,7 +132,11 @@
         "estimated_cash_cny": 1837.0,
         "immediate_execution_eligible": true,
         "automatic_order_allowed": false,
-        "no_auto_trade": true
+        "no_auto_trade": true,
+        "live_market_price": null,
+        "price_observed_at": "",
+        "price_provider": "",
+        "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
       }
     ],
     "wait_price_reservations": [],
@@ -163,7 +171,11 @@
       "estimated_cash_cny": 1837.0,
       "immediate_execution_eligible": true,
       "automatic_order_allowed": false,
-      "no_auto_trade": true
+      "no_auto_trade": true,
+      "live_market_price": null,
+      "price_observed_at": "",
+      "price_provider": "",
+      "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
     }
   ],
   "decision_summary": {
@@ -233,8 +245,8 @@
     "trigger_codes": []
   },
   "hourly_context": {
-    "available": false,
-    "research_as_of": ""
+    "available": true,
+    "research_as_of": "2026-09-07T16:28:09Z"
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -257,5 +269,19 @@
       "data_health"
     ],
     "engineering_details_are_secondary": true
+  },
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V1",
+    "available": false,
+    "eligible_quote_count": 0,
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 120,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "no_auto_trade": true
   }
 }
