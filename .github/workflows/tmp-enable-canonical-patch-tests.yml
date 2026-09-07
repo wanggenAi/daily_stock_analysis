@@ -1,0 +1,40 @@
+name: Temporary Enable Canonical Patch Tests
+
+on:
+  push:
+    branches:
+      - fix/canonical-holding-add-propagation-20260907
+    paths:
+      - .github/workflows/tmp-enable-canonical-patch-tests.yml
+
+permissions:
+  contents: write
+
+jobs:
+  enable:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/canonical-holding-add-propagation-20260907
+          fetch-depth: 0
+      - name: Inject dependency installation and self-remove
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/tmp-canonical-holding-add-patch.yml')
+          text = p.read_text(encoding='utf-8')
+          marker = '''      - name: Run targeted regression tests\n        shell: bash\n'''
+          insert = '''      - name: Install test dependencies\n        shell: bash\n        run: |\n          python -m pip install --upgrade pip\n          python -m pip install -r .github/requirements-ci.txt\n\n      - name: Run targeted regression tests\n        shell: bash\n'''
+          if marker not in text:
+              raise SystemExit('targeted test marker not found')
+          p.write_text(text.replace(marker, insert, 1), encoding='utf-8')
+          PY
+          git rm .github/workflows/tmp-enable-canonical-patch-tests.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/workflows/tmp-canonical-holding-add-patch.yml
+          git commit -m "chore: install dependencies for canonical patch tests"
+          git push origin HEAD:fix/canonical-holding-add-propagation-20260907
