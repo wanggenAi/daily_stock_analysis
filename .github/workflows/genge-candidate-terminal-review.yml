@@ -76,6 +76,7 @@ jobs:
       github.event_name == 'workflow_dispatch' ||
       (
         github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
         github.event.workflow_run.head_branch == 'main'
       )
     runs-on: ubuntu-latest
@@ -100,37 +101,62 @@ jobs:
             preferred="${{ inputs.upstream_run_id }}"
           fi
 
-          mapfile -t completed_runs < <(
-            gh api \
-              "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-postscan-research.yml/runs?branch=main&status=completed&per_page=20" \
-              --jq '.workflow_runs[].id'
-          )
-          candidates=()
-          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
-            candidates+=("$preferred")
-          fi
-          for candidate in "${completed_runs[@]}"; do
-            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then
-              candidates+=("$candidate")
-            fi
-          done
-
           upstream=""
-          for candidate in "${candidates[@]}"; do
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
+            # A production/workflow_dispatch lineage is exact. Never fall back to
+            # an older successful postscan, because that can turn current UNKNOWN
+            # evidence into stale terminal REJECT decisions.
+            run_meta="$(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${preferred}" \
+                --jq '[.name,.status,.conclusion,.head_branch] | @tsv'
+            )"
+            IFS=$'\t' read -r run_name run_status run_conclusion run_branch <<< "$run_meta"
+            [[ "$run_name" == "GenGe Postscan Research Pipeline" ]] || {
+              echo "preferred run $preferred is not GenGe Postscan Research Pipeline: $run_name" >&2
+              exit 1
+            }
+            [[ "$run_status" == "completed" && "$run_conclusion" == "success" ]] || {
+              echo "preferred postscan run $preferred is not successful: status=$run_status conclusion=$run_conclusion" >&2
+              exit 1
+            }
+            [[ "$run_branch" == "main" ]] || {
+              echo "preferred postscan run $preferred is not on main: branch=$run_branch" >&2
+              exit 1
+            }
             artifact_id="$(
-              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${preferred}/artifacts?per_page=100" \
                 --jq '[.artifacts[] | select(.name == "genge-postscan-research" and .expired == false)][0].id // empty'
             )"
-            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
-              upstream="$candidate"
-              echo "selected postscan run $candidate with artifact $artifact_id"
-              break
-            fi
-            echo "skip postscan run $candidate: usable genge-postscan-research artifact not found"
-          done
+            [[ "$artifact_id" =~ ^[0-9]+$ ]] || {
+              echo "exact postscan run $preferred has no usable genge-postscan-research artifact; stale fallback forbidden" >&2
+              exit 1
+            }
+            upstream="$preferred"
+            echo "selected exact postscan run $preferred with artifact $artifact_id"
+          else
+            # Push-triggered code smoke has no production lineage. It may use the
+            # newest successful main artifact solely to validate the implementation.
+            mapfile -t completed_runs < <(
+              gh api \
+                "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-postscan-research.yml/runs?branch=main&status=success&per_page=20" \
+                --jq '.workflow_runs[].id'
+            )
+            for candidate in "${completed_runs[@]}"; do
+              artifact_id="$(
+                gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                  --jq '[.artifacts[] | select(.name == "genge-postscan-research" and .expired == false)][0].id // empty'
+              )"
+              if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+                upstream="$candidate"
+                echo "selected smoke-validation postscan run $candidate with artifact $artifact_id"
+                break
+              fi
+              echo "skip postscan run $candidate: usable genge-postscan-research artifact not found"
+            done
+          fi
 
           [[ "$upstream" =~ ^[0-9]+$ ]] || {
-            echo "no completed main postscan run has a usable genge-postscan-research artifact" >&2
+            echo "no valid main postscan artifact resolved" >&2
             exit 1
           }
           echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
