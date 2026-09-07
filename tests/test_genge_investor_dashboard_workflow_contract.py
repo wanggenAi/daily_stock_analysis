@@ -18,3 +18,21 @@ def test_market_context_selects_latest_usable_artifact_even_during_rerun() -> No
     assert "sort_by(.created_at) | reverse | .[0].id // empty" in block
     assert "actions/artifacts/${artifact_id}/zip" in block
     assert "MARKET_ARTIFACT_ID=${artifact_id}" in block
+
+
+def test_stale_hourly_overlay_is_skipped_before_dashboard_and_live_overlay() -> None:
+    workflow = _workflow()
+    block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Publish investor-first summary", 1
+    )[0]
+
+    assert "canonical.get('snapshot_id')" in block
+    assert "canonical.get('source_run_id')" in block
+    assert "hourly.get('canonical_snapshot_id')" in block
+    assert "hourly.get('canonical_source_run_id')" in block
+    assert "actual_snapshot != expected_snapshot or actual_source != expected_source" in block
+    assert "hourly_overlay=\"\"" in block
+    assert '[ -z "$hourly_overlay" ] || args+=(--hourly "$hourly_overlay")' in block
+    assert 'if [ -n "$hourly_overlay" ]; then' in block
+    assert "Skipping stale/unverifiable optional hourly overlay; frozen Canonical remains authoritative." in block
+    assert "investor_live_execution_overlay" in block
