@@ -13,12 +13,14 @@ on:
       - "tests/test_genge_near_buy_research_overlay.py"
       - ".github/workflows/genge-near-buy-research.yml"
   workflow_run:
-    workflows: ["GenGe Candidate Terminal Review"]
+    workflows:
+      - "GenGe Candidate Terminal Review"
+      - "GenGe Candidate Terminal Auto Repair"
     types: [completed]
   workflow_dispatch:
     inputs:
       upstream_run_id:
-        description: "Completed GenGe Candidate Terminal Review run id"
+        description: "Completed Candidate Terminal or Auto-Repair run id"
         required: true
         type: string
 
@@ -70,7 +72,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - name: Resolve terminal-review run
+
+      - name: Resolve successful terminal artifact
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -84,45 +87,66 @@ jobs:
           fi
 
           candidates=()
-          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
-            candidates+=("$preferred")
-          fi
-          mapfile -t successful_runs < <(
+          if [[ "$preferred" =~ ^[0-9]+$ ]]; then candidates+=("$preferred"); fi
+
+          mapfile -t terminal_runs < <(
             gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-review.yml/runs?branch=main&status=success&per_page=20" \
               --jq '.workflow_runs[].id'
           )
-          for candidate in "${successful_runs[@]}"; do
+          mapfile -t repair_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-auto-repair.yml/runs?branch=main&status=success&per_page=20" \
+              --jq '.workflow_runs[].id'
+          )
+          for candidate in "${terminal_runs[@]}" "${repair_runs[@]}"; do
             if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then
               candidates+=("$candidate")
             fi
           done
 
           upstream=""
+          artifact_name=""
           for candidate in "${candidates[@]}"; do
-            artifact_id="$(
-              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
-                --jq '[.artifacts[] | select(.name == "genge-candidate-terminal-decisions" and .expired == false)][0].id // empty'
-            )"
+            run_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}")
+            [ "$(printf '%s' "$run_json" | jq -r '.conclusion // ""')" = "success" ] || continue
+            [ "$(printf '%s' "$run_json" | jq -r '.head_branch // ""')" = "main" ] || continue
+            run_path=$(printf '%s' "$run_json" | jq -r '.path // ""')
+            case "$run_path" in
+              .github/workflows/genge-candidate-terminal-review.yml)
+                expected_artifact="genge-candidate-terminal-decisions"
+                ;;
+              .github/workflows/genge-candidate-terminal-auto-repair.yml)
+                expected_artifact="genge-candidate-terminal-decisions-auto-repair"
+                ;;
+              *)
+                continue
+                ;;
+            esac
+            artifact_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+              --jq --arg name "$expected_artifact" '[.artifacts[] | select(.name == $name and .expired == false)][0].id // empty')
             if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
               upstream="$candidate"
-              echo "selected terminal-review run $candidate with artifact $artifact_id"
+              artifact_name="$expected_artifact"
+              echo "selected terminal source run $candidate path=$run_path artifact=$expected_artifact id=$artifact_id"
               break
             fi
-            echo "skip terminal-review run $candidate: usable artifact not found"
           done
+
           [[ "$upstream" =~ ^[0-9]+$ ]] || {
-            echo "no successful main terminal-review run has a usable genge-candidate-terminal-decisions artifact" >&2
+            echo "no successful main Candidate Terminal/Auto-Repair run has a usable terminal artifact" >&2
             exit 1
           }
           echo "UPSTREAM_RUN_ID=$upstream" >> "$GITHUB_ENV"
+          echo "UPSTREAM_ARTIFACT_NAME=$artifact_name" >> "$GITHUB_ENV"
+
       - name: Download terminal decisions
         uses: actions/download-artifact@v4
         with:
-          name: genge-candidate-terminal-decisions
+          name: ${{ env.UPSTREAM_ARTIFACT_NAME }}
           path: upstream
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ env.UPSTREAM_RUN_ID }}
+
       - name: Build observer-only Near-BUY overlay
         shell: bash
         run: |
@@ -132,12 +156,12 @@ jobs:
           python scripts/near_buy_research_overlay.py \
             --terminal-csv "$terminal" \
             --output-dir reports/near_buy_research
+
       - name: Validate authority invariants
         run: |
           python - <<'PY'
           import csv, json
           from pathlib import Path
-
           root = Path('reports/near_buy_research')
           summary = json.loads((root/'near_buy_research_summary.json').read_text(encoding='utf-8'))
           rows = list(csv.DictReader((root/'near_buy_research_overlay.csv').open(encoding='utf-8')))
@@ -160,12 +184,14 @@ jobs:
           assert all(row['evidence_recovery_starter_allowed'] == 'False' for row in rows)
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           PY
+
       - name: Publish Near-BUY summary
         if: always()
         run: |
           if [ -f reports/near_buy_research/near_buy_research_overlay.md ]; then
             cat reports/near_buy_research/near_buy_research_overlay.md >> "$GITHUB_STEP_SUMMARY"
           fi
+
       - name: Upload Near-BUY research artifact
         uses: actions/upload-artifact@v4
         with:
