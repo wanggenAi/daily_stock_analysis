@@ -255,7 +255,9 @@ jobs:
           assert p['presentation_contract']['section_order'][:6] == ['market','stock_portfolio','terminal_buy_now','terminal_wait_price','capital_deployment','final_operation_table']
           c=p['capital_deployment']; assert c['automatic_order_allowed'] is False and c['no_auto_trade'] is True
           assert c['planned_immediate_cash_cny'] <= c['deployment_budget_cny'] <= c['available_cash_cny']
-          assert all(x['source'] in {'AUTHORIZED_CANONICAL_HOLDING_ACTION','TERMINAL_FORMAL_BUY_MIRROR'} for x in c['operations'])
+          allowed_sources={'AUTHORIZED_CANONICAL_HOLDING_ACTION','AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD','TERMINAL_FORMAL_BUY_MIRROR'}
+          assert all(x['source'] in allowed_sources for x in c['operations'])
+          assert all(x.get('authorization_proven') is True for x in c['operations'])
           assert all(x['action']=='WAIT_PRICE' and x['immediate_execution_eligible'] is False for x in c['wait_price_reservations'])
           live=p.get('live_execution_overlay') or {}
           if live:
