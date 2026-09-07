@@ -20,11 +20,12 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 2026-08-26: rerun after canonical All-A source resolution fix.
+          # 2026-09-07: explicit production closure after successful Opportunity Discovery run 34092909926.
           gh workflow run genge-v31-industry-research.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
-            -f upstream_run_id=32865436950
+            -f upstream_run_id=34092909926 \
+            -f explicit_finalizer=true
           sleep 8
           RUN_ID="$(gh run list \
             --repo "$GITHUB_REPOSITORY" \
