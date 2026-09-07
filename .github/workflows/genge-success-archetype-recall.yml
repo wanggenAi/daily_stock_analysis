@@ -15,6 +15,7 @@ on:
       - "tests/test_genge_success_archetype_recall.py"
       - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
+      - "tests/test_genge_runbei_authority_closure.py"
   push:
     branches: [main]
     paths:
@@ -26,6 +27,7 @@ on:
       - "tests/test_genge_success_archetype_recall.py"
       - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
+      - "tests/test_genge_runbei_authority_closure.py"
 
 permissions:
   contents: read
@@ -58,7 +60,8 @@ jobs:
             tests/test_genge_success_archetype_recall.py \
             tests/test_genge_success_archetype_outcomes.py \
             tests/test_genge_research_priority_archetype.py \
-            tests/test_genge_research_priority_router.py
+            tests/test_genge_research_priority_router.py \
+            tests/test_genge_runbei_authority_closure.py
 
   production-recall:
     if: >-
@@ -87,7 +90,7 @@ jobs:
           restore-keys: |
             genge-postscan-valuation-${{ runner.os }}-main-
             genge-postscan-valuation-${{ runner.os }}-
-      - name: Resolve latest successful Terminal Review artifact
+      - name: Resolve Terminal Review artifact with exact workflow lineage
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -97,19 +100,17 @@ jobs:
           rm -rf "$root"
           mkdir -p "$root"
           preferred=""
+          candidates=()
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
             preferred="${{ github.event.workflow_run.id }}"
-          fi
-          candidates=()
-          if [[ "$preferred" =~ ^[0-9]+$ ]]; then
+            test "$preferred" != ""
             candidates+=("$preferred")
+          else
+            mapfile -t runs < <(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-review.yml/runs?branch=main&status=success&per_page=20" --jq '.workflow_runs[].id'
+            )
+            candidates+=("${runs[@]}")
           fi
-          mapfile -t runs < <(
-            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-candidate-terminal-review.yml/runs?branch=main&status=success&per_page=20" --jq '.workflow_runs[].id'
-          )
-          for candidate in "${runs[@]}"; do
-            if [[ " ${candidates[*]} " != *" $candidate "* ]]; then candidates+=("$candidate"); fi
-          done
           selected_run=""
           selected_artifact=""
           for candidate in "${candidates[@]}"; do
@@ -120,6 +121,9 @@ jobs:
               break
             fi
           done
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            test "$selected_run" = "$preferred"
+          fi
           test "$selected_artifact" != ""
           gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${selected_artifact}/zip" > "$root/terminal.zip"
           unzip -q -o "$root/terminal.zip" -d "$root/unpacked"
