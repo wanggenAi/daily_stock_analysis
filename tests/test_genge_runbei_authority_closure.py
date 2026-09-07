@@ -107,3 +107,20 @@ def test_success_archetype_workflow_run_is_exact_terminal_lineage_only() -> None
     assert 'actions/workflows/genge-candidate-terminal-review.yml/runs' not in exact_block
     assert 'test "$selected_run" = "$preferred"' in text
     assert 'test "$selected_artifact" != ""' in text
+
+
+def test_success_archetype_skipped_terminal_is_exact_noop_but_missing_executed_artifact_fails_closed() -> None:
+    text = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
+    resolve = text.split("- name: Resolve Terminal Review artifact with exact workflow lineage", 1)[1].split(
+        "- name: Build bounded PIT-safe Runbei archetype recall", 1
+    )[0]
+    assert 'select(.name == "terminalize") | .conclusion' in resolve
+    assert '"${terminal_conclusions[0]}" = "skipped"' in resolve
+    assert 'echo "RECALL_NOOP=true" >> "$GITHUB_ENV"' in resolve
+    assert "intentional exact-lineage no-op" in resolve
+    assert "has no terminal artifact but terminalize was not exactly one skipped job; failing closed" in resolve
+    assert 'actions/workflows/genge-candidate-terminal-review.yml/runs' not in resolve.split(
+        'if [ "${{ github.event_name }}" = "workflow_run" ]; then', 1
+    )[1].split('else', 1)[0]
+    assert 'if: env.RECALL_NOOP != \'true\'' in text
+    assert "latest successful" not in resolve.lower()

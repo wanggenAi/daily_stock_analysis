@@ -101,6 +101,7 @@ jobs:
           mkdir -p "$root"
           preferred=""
           candidates=()
+          echo "RECALL_NOOP=false" >> "$GITHUB_ENV"
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
             preferred="${{ github.event.workflow_run.id }}"
             test "$preferred" != ""
@@ -114,11 +115,32 @@ jobs:
           selected_run=""
           selected_artifact=""
           for candidate in "${candidates[@]}"; do
-            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" --jq '[.artifacts[] | select(.name == "genge-candidate-terminal-decisions" and .expired == false)][0].id // empty')"
-            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
+            mapfile -t artifact_ids < <(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                --jq '.artifacts[] | select(.name == "genge-candidate-terminal-decisions" and .expired == false) | .id'
+            )
+            if [ "${#artifact_ids[@]}" -gt 1 ]; then
+              echo "::error::Exact Candidate Terminal run ${candidate} exposed multiple non-expired terminal artifacts; refusing ambiguous lineage." >&2
+              exit 1
+            fi
+            if [ "${#artifact_ids[@]}" -eq 1 ]; then
               selected_run="$candidate"
-              selected_artifact="$artifact_id"
+              selected_artifact="${artifact_ids[0]}"
               break
+            fi
+            if [ "${{ github.event_name }}" = "workflow_run" ]; then
+              mapfile -t terminal_conclusions < <(
+                gh api --paginate "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/jobs?filter=latest&per_page=100" \
+                  --jq '.jobs[] | select(.name == "terminalize") | .conclusion'
+              )
+              if [ "${#terminal_conclusions[@]}" -eq 1 ] && [ "${terminal_conclusions[0]}" = "skipped" ]; then
+                echo "RECALL_NOOP=true" >> "$GITHUB_ENV"
+                echo "TERMINAL_RUN_ID=$candidate" >> "$GITHUB_ENV"
+                echo "Exact Candidate Terminal run ${candidate} had terminalize=skipped and no terminal artifact; Success Archetype Recall is an intentional exact-lineage no-op." >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+              echo "::error::Exact Candidate Terminal run ${candidate} has no terminal artifact but terminalize was not exactly one skipped job; failing closed." >&2
+              exit 1
             fi
           done
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
@@ -132,6 +154,7 @@ jobs:
           echo "TERMINAL_CSV=$terminal_csv" >> "$GITHUB_ENV"
           echo "TERMINAL_RUN_ID=$selected_run" >> "$GITHUB_ENV"
       - name: Build bounded PIT-safe Runbei archetype recall
+        if: env.RECALL_NOOP != 'true'
         run: |
           as_of="$(date -u +%F)"
           python -m src.strategies.genge_opportunity_discovery.success_archetype_recall \
@@ -144,12 +167,13 @@ jobs:
             --max-extra-financial-fetches 200 \
             --source-terminal-run-id "$TERMINAL_RUN_ID"
       - name: Save refreshed public fundamental cache
-        if: always()
+        if: env.RECALL_NOOP != 'true'
         uses: actions/cache/save@v4
         with:
           path: data/cache/valuation_research_fundamentals
           key: genge-postscan-valuation-${{ runner.os }}-main-${{ github.run_id }}
       - name: Validate authority and bounded-fetch invariants
+        if: env.RECALL_NOOP != 'true'
         run: |
           python - <<'PY'
           import json
@@ -178,6 +202,7 @@ jobs:
               assert row['no_auto_trade'] is True
           PY
       - name: Upload success-archetype research artifact
+        if: env.RECALL_NOOP != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: genge-success-archetype-recall-${{ env.TERMINAL_RUN_ID }}
@@ -185,6 +210,7 @@ jobs:
           if-no-files-found: error
           retention-days: 30
       - name: Publish summary
+        if: env.RECALL_NOOP != 'true'
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
