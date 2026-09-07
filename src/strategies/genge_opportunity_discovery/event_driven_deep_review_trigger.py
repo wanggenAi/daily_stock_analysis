@@ -12,10 +12,12 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V3"
+CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V4"
 FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 DOWNSTREAM_WORKFLOW = "genge-v31-industry-research.yml"
 HOLDING_SIGNIFICANT_MOVE_PCT = 3.0  # Mirrors the existing hourly RAISE threshold.
+RUNBEI_EXTERNAL_REUNDERWRITE_MIN_SIMILARITY = 70.0
+RUNBEI_EXTERNAL_REUNDERWRITE_MIN_EVIDENCE_COVERAGE = 1.0
 
 URGENT_CONCLUSIONS = {
     "PRICE_ATTRACTIVE_RESEARCH_LEAD",
@@ -89,6 +91,31 @@ def _holding_move_bucket(hourly_row: Mapping[str, Any]) -> str | None:
     return f"{direction}_{band}"
 
 
+def _runbei_external_reunderwrite_required(priority_row: Mapping[str, Any]) -> bool:
+    """Return whether a research-only Runbei recall deserves fresh authority research.
+
+    This is deliberately not a BUY promotion rule. It only launches the existing
+    full Every-Industry -> Production Finalizer chain so missing Hard Gate and
+    valuation evidence can be recomputed under Canonical authority.
+    """
+
+    reasons = {str(x) for x in (priority_row.get("reason_codes") or [])}
+    if "CURRENT_HOLDING" in reasons or "SUCCESS_ARCHETYPE_RECALL" not in reasons:
+        return False
+    if str(priority_row.get("success_archetype_source_quant_status") or "") != "PRIORITY_RESEARCH":
+        return False
+    try:
+        similarity = float(priority_row.get("success_archetype_similarity_score"))
+        coverage = float(priority_row.get("success_archetype_evidence_coverage"))
+    except (TypeError, ValueError):
+        return False
+    if similarity < RUNBEI_EXTERNAL_REUNDERWRITE_MIN_SIMILARITY:
+        return False
+    if coverage < RUNBEI_EXTERNAL_REUNDERWRITE_MIN_EVIDENCE_COVERAGE:
+        return False
+    return True
+
+
 def _trigger_reasons(priority_row: Mapping[str, Any]) -> list[str]:
     conclusion = str(priority_row.get("hourly_research_conclusion") or "")
     priority = str(priority_row.get("priority") or "")
@@ -101,6 +128,8 @@ def _trigger_reasons(priority_row: Mapping[str, Any]) -> list[str]:
         selected.append("REUNDERWRITE_REQUIRED")
     if priority in {"P0", "P1"} and "MATERIAL_EVIDENCE_CHANGE" in reasons:
         selected.append("MATERIAL_EVIDENCE_CHANGE")
+    if _runbei_external_reunderwrite_required(priority_row):
+        selected.append("SUCCESS_ARCHETYPE_RECALL_REUNDERWRITE_REQUIRED")
     return sorted(set(selected))
 
 
@@ -112,8 +141,10 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
     HOURLY_PRIORITY_RAISE is not enough. A holding can additionally trigger on
     the existing >=3% significant-move research threshold, but the signal is
     bucketed (3-5%, 5-8%, >=8%) so ordinary intraday noise cannot launch a review
-    every hour. Any resulting Formal action still has to come from the existing
-    Every-Industry -> Production Finalizer authority chain.
+    every hour. High-similarity external Runbei recalls with complete bounded
+    evidence may request a fresh authority research pass, but cannot change a
+    Formal action directly. Any resulting Formal action still has to come from
+    the existing Every-Industry -> Production Finalizer authority chain.
     """
 
     _require_research_only_contract(priority, label="research_priority")
@@ -175,6 +206,11 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
             "material_evidence_ids": material_evidence_ids,
             "signal_counts": signal_counts,
             "price_signal_date": _price_signal_date(hourly_row, conclusion),
+            "success_archetype_id": str(row.get("success_archetype_id") or ""),
+            "success_archetype_similarity_score": row.get("success_archetype_similarity_score"),
+            "success_archetype_evidence_coverage": row.get("success_archetype_evidence_coverage"),
+            "success_archetype_source_quant_status": str(row.get("success_archetype_source_quant_status") or ""),
+            "near_buy_evidence_recovery_tier": row.get("near_buy_evidence_recovery_tier"),
         }
         triggers.append(trigger)
         digest_rows.append(
@@ -190,6 +226,11 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
                 "material_evidence_ids": trigger["material_evidence_ids"],
                 "signal_counts": trigger["signal_counts"],
                 "price_signal_date": trigger["price_signal_date"],
+                "success_archetype_id": trigger["success_archetype_id"],
+                "success_archetype_similarity_score": trigger["success_archetype_similarity_score"],
+                "success_archetype_evidence_coverage": trigger["success_archetype_evidence_coverage"],
+                "success_archetype_source_quant_status": trigger["success_archetype_source_quant_status"],
+                "near_buy_evidence_recovery_tier": trigger["near_buy_evidence_recovery_tier"],
             }
         )
 
