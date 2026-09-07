@@ -51,7 +51,7 @@ jobs:
       - name: Compile observer overlay
         run: python -m py_compile scripts/near_buy_research_overlay.py
       - name: Run Near-BUY contract tests
-        run: python -m pytest -q tests/test_genge_near_buy_research_overlay.py
+        run: python -m pytest -q tests/test_genge_near_buy_research_overlay.py tests/test_genge_near_buy_workflow_contract.py
 
   build-overlay:
     needs: contract-tests
@@ -121,8 +121,9 @@ jobs:
                 continue
                 ;;
             esac
-            artifact_id=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
-              --jq --arg name "$expected_artifact" '[.artifacts[] | select(.name == $name and .expired == false)][0].id // empty')
+            artifacts_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100")
+            artifact_id=$(printf '%s' "$artifacts_json" | \
+              jq -r --arg name "$expected_artifact" '[.artifacts[] | select(.name == $name and .expired == false)][0].id // empty')
             if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then
               upstream="$candidate"
               artifact_name="$expected_artifact"
