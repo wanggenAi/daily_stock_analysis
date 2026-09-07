@@ -54,6 +54,18 @@ def test_terminal_workflow_verifies_finalizer_authority_provenance():
     assert "finalizer_authority_verified" in text
 
 
+def test_terminalize_installs_runtime_dependencies_before_execution():
+    text = _text(WORKFLOW)
+    terminalize = text.split("\n  terminalize:\n", 1)[1]
+
+    install_pos = terminalize.index("- name: Install repository runtime dependencies")
+    resolve_pos = terminalize.index("- name: Resolve exact research lineage")
+    execute_pos = terminalize.index("- name: Terminalize every surviving research candidate")
+    assert install_pos < resolve_pos < execute_pos
+    assert "python-version: \"3.11\"\n          cache: pip" in terminalize[:resolve_pos]
+    assert "-r .github/requirements-ci.txt" in terminalize[install_pos:resolve_pos]
+
+
 def test_modern_terminal_inputs_are_exact_and_formal_buy_is_mirror_only():
     text = _text(WORKFLOW)
 
