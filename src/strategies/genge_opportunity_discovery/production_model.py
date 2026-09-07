@@ -29,7 +29,7 @@ FORMAL_BUY_MAX_PRICE_TO_NEUTRAL = 0.80
 HOLDING_ADD_POLICY_VERSION = "EXISTING_HOLDING_STAGED_ADD_V1"
 HOLDING_ADD_MAX_PRICE_TO_NEUTRAL = 0.75
 HOLDING_ADD_MAX_LOTS = 1
-ALLOWED_ACTIONS = frozenset({"BUY","ADD","WAIT","HOLD","HOLD_NO_ADD","HOLD_REVIEW","REDUCE_25","REDUCE_50","CORE_ONLY","EXIT"})
+ALLOWED_ACTIONS = frozenset({"BUY","WAIT","HOLD","HOLD_NO_ADD","HOLD_REVIEW","REDUCE_25","REDUCE_50","CORE_ONLY","EXIT"})
 
 _HARD_GATE_FIELDS = {
     "predictability": "v31_predictability_status",
@@ -92,50 +92,58 @@ def _holding_add_input_ready(data: Mapping[str, Any]) -> bool:
     )
 
 
-def _apply_existing_holding_add_gate(data: Mapping[str, Any], decision: V311Decision) -> V311Decision:
-    """Authorize only a one-lot staged ADD for an already-held, deeply cheap name.
+def _holding_add_assessment(
+    data: Mapping[str, Any],
+    decision: V311Decision,
+    *,
+    typed_insurer: bool,
+) -> tuple[bool, tuple[str, ...]]:
+    """Assess a one-lot holding add without changing the frozen Formal Action.
 
-    This is deliberately *not* a Formal BUY shortcut.  It never upgrades a new
-    candidate, never converts UNKNOWN hard gates to PASS, never overrides an
-    explicit hard-gate failure, and never applies to the typed-insurer path.
-    It only allows a small staged ADD when an existing holding already has a
-    HIGH-confidence, same-run/fresh valuation and trades in the frozen V3.1
-    A-level margin band (<=75% of neutral value).  Unknown qualitative gates are
-    retained and surfaced in the payload; the one-lot cap limits risk while a
-    fuller re-underwrite remains pending.
+    The Formal Action vocabulary remains untouched.  This produces a separate
+    Canonical execution authorization only for an already-held, non-insurer
+    name with HIGH-confidence fresh valuation evidence and an A-level margin of
+    safety.  It never creates a candidate BUY, never turns UNKNOWN into PASS,
+    and any explicit hard-gate failure blocks authorization.  The dashboard may
+    consume this authorization conservatively, capped at one A-share lot.
     """
-    if decision.action != "HOLD" or not _has_position(data):
-        return decision
+    blockers: list[str] = []
+    if typed_insurer:
+        blockers.append("TYPED_INSURER_POLICY_SEPARATE")
+    if decision.action != "HOLD":
+        blockers.append("FORMAL_ACTION_NOT_HOLD")
+    if not _has_position(data):
+        blockers.append("NO_EXISTING_POSITION")
     if decision.valuation_confidence is not ValuationConfidence.HIGH:
-        return decision
+        blockers.append("VALUATION_CONFIDENCE_NOT_HIGH")
     ratio = decision.price_to_neutral
-    if ratio is None or ratio > HOLDING_ADD_MAX_PRICE_TO_NEUTRAL:
-        return decision
+    if ratio is None:
+        blockers.append("PRICE_TO_NEUTRAL_INVALID")
+    elif ratio > HOLDING_ADD_MAX_PRICE_TO_NEUTRAL:
+        blockers.append("A_LEVEL_MARGIN_OF_SAFETY_NOT_MET")
     if not _holding_add_input_ready(data):
-        return decision
+        blockers.append("FRESH_VERIFIED_INPUT_NOT_READY")
     failures, unknowns = _holding_add_gate_state(data)
     if failures:
-        return decision
+        blockers.append("HARD_GATE_FAILURE:" + ",".join(failures))
+    if blockers:
+        return False, tuple(blockers)
 
     reasons = [
-        "EXISTING_HOLDING_STAGED_ADD",
+        "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED",
         "VALUATION_CONFIDENCE_HIGH",
         "A_LEVEL_MARGIN_OF_SAFETY_PASS",
         f"price_to_neutral={ratio:.3f}<=0.75",
         "NO_KNOWN_HARD_GATE_FAILURE",
         "STAGED_ADD_CAP_ONE_LOT",
         "STAGED_ADD_NOT_FORMAL_BUY",
+        "FORMAL_ACTION_UNCHANGED",
     ]
     if unknowns:
         reasons.append("HARD_GATE_UNKNOWNS_RETAINED:" + ",".join(unknowns))
     else:
         reasons.append("ALL_HARD_GATES_PASS")
-    return replace(
-        decision,
-        action="ADD",
-        target_position_fraction=None,
-        reason_codes=tuple(reasons),
-    )
+    return True, tuple(reasons)
 
 
 def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V311Decision:
@@ -195,23 +203,19 @@ def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V
 
 
 def decide_production(data: Mapping[str, Any]) -> V311Decision:
-    """Apply V3.1.1 with strict BUY admission, staged holding ADD and SELL rationale.
+    """Apply frozen V3.1.1 Formal Actions with strict BUY and SELL rationale.
 
     Formal BUY remains unchanged: it requires the underlying V3.1 buy gates,
     HIGH valuation confidence, no existing position, and price <=80% of neutral
-    value.  A separate, risk-capped holding path may emit ADD only for an
-    existing non-insurer holding with HIGH-confidence fresh valuation evidence,
-    no known hard-gate failure, and price <=75% of neutral value.  Unknown hard
-    gates remain UNKNOWN; they are not promoted to PASS.  Typed insurers remain
-    capped by their own policy and cannot enter this ADD path.  REDUCE/CORE_ONLY
-    still requires the explicit sell-rationale continuity guard.
+    value.  Existing-holding staged-add authorization is metadata computed in
+    :func:`production_payload`; it never changes the Formal Action vocabulary.
+    Typed insurers remain under their separate policy. REDUCE/CORE_ONLY still
+    requires the explicit sell-rationale continuity guard.
     """
-    typed_insurer = is_insurer_typed_input(data)
-    if typed_insurer:
+    if is_insurer_typed_input(data):
         decision = decide_insurer_v311(data)
     else:
         decision = decide_v311(data)
-        decision = _apply_existing_holding_add_gate(data, decision)
 
     # Hard-gate EXIT and holding/sell actions are never weakened by the BUY gate.
     decision = _apply_formal_buy_gate(data, decision)
@@ -241,6 +245,11 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         else assess_valuation_confidence_v311(data)
     )
     add_failures, add_unknowns = _holding_add_gate_state(data)
+    add_authorized, add_reasons = _holding_add_assessment(
+        data,
+        decision,
+        typed_insurer=typed_insurer,
+    )
     payload = decision.as_dict()
     payload.update({
         "production_model_version": PRODUCTION_MODEL_VERSION,
@@ -258,10 +267,13 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         "formal_sell_requires_explicit_rationale": True,
         "formal_sell_mechanical_valuation_only_forbidden": True,
         "holding_add_policy_version": HOLDING_ADD_POLICY_VERSION,
+        "holding_add_authorized": add_authorized,
+        "holding_add_authorization_reason_codes": ";".join(add_reasons),
         "holding_add_existing_position_only": True,
         "holding_add_requires_high_confidence": True,
         "holding_add_max_price_to_neutral": HOLDING_ADD_MAX_PRICE_TO_NEUTRAL,
         "holding_add_max_lots": HOLDING_ADD_MAX_LOTS,
+        "holding_add_formal_action_unchanged": True,
         "holding_add_is_formal_buy": False,
         "holding_add_hard_gate_failures": ";".join(add_failures),
         "holding_add_hard_gate_unknowns": ";".join(add_unknowns),
