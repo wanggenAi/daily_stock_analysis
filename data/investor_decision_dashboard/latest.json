@@ -1,9 +1,9 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2",
-  "mode": "HOURLY",
-  "generated_at": "2026-09-07T06:02:53+00:00",
-  "canonical_snapshot_id": "3d58064c5203b791eb8f",
-  "canonical_source_run_id": "34085540165",
+  "mode": "TERMINAL_REFRESH",
+  "generated_at": "2026-09-07T06:57:45+00:00",
+  "canonical_snapshot_id": "0883d2ba81c77e996018",
+  "canonical_source_run_id": "34089209286",
   "latest_trade_date": "2026-09-04",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
@@ -34,72 +34,84 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.62,
-        "pnl_pct": -2.19,
+        "current_price": 22.64,
+        "pnl_pct": -2.1,
         "formal_action": "REDUCE_25",
         "investor_action": "减仓25%",
+        "holding_add_authorized": false,
+        "holding_add_max_lots": 1,
+        "holding_add_reason_codes": "",
         "neutral_value": 17.457807170543802,
         "valuation_confidence": "HIGH",
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
         "canonical_price": 22.71,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-07T14:00:14+08:00",
+        "price_observed_at": "2026-09-07T14:24:53+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 159
+        "price_age_seconds": 1972
       },
       {
         "code": "001316",
         "name": "润贝航科",
         "quantity": 200,
-        "average_cost": 26.095,
-        "current_price": 29.5,
-        "pnl_pct": 13.05,
+        "average_cost": 25.745,
+        "current_price": 29.55,
+        "pnl_pct": 14.78,
         "formal_action": "HOLD_REVIEW",
         "investor_action": "持有观察",
+        "holding_add_authorized": false,
+        "holding_add_max_lots": 1,
+        "holding_add_reason_codes": "",
         "neutral_value": 49.36957125214809,
         "valuation_confidence": "LOW",
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
         "canonical_price": 30.18,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-07T14:00:15+08:00",
+        "price_observed_at": "2026-09-07T14:24:54+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 158
+        "price_age_seconds": 1971
       },
       {
         "code": "601318",
         "name": "中国平安",
         "quantity": 300,
         "average_cost": 57.1672,
-        "current_price": 56.52,
-        "pnl_pct": -1.13,
+        "current_price": 56.4,
+        "pnl_pct": -1.34,
         "formal_action": "HOLD",
         "investor_action": "继续持有",
+        "holding_add_authorized": false,
+        "holding_add_max_lots": 1,
+        "holding_add_reason_codes": "",
         "neutral_value": 83.07,
         "valuation_confidence": "MEDIUM",
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.701<1.00",
         "canonical_price": 58.24,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-07T14:00:16+08:00",
+        "price_observed_at": "2026-09-07T14:24:55+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 157
+        "price_age_seconds": 1970
       },
       {
         "code": "603993",
         "name": "洛阳钼业",
-        "quantity": 800,
-        "average_cost": 18.9753,
-        "current_price": 18.38,
-        "pnl_pct": -3.14,
+        "quantity": 900,
+        "average_cost": 18.9114,
+        "current_price": 18.34,
+        "pnl_pct": -3.02,
         "formal_action": "HOLD",
         "investor_action": "继续持有",
+        "holding_add_authorized": false,
+        "holding_add_max_lots": 1,
+        "holding_add_reason_codes": "",
         "neutral_value": 28.12766979232306,
         "valuation_confidence": "HIGH",
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
         "canonical_price": 18.48,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-07T14:00:16+08:00",
+        "price_observed_at": "2026-09-07T14:24:52+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 157
+        "price_age_seconds": 1973
       }
     ]
   },
@@ -128,9 +140,10 @@
       "max_names": 5,
       "first_tranche_ratio": 0.5,
       "second_tranche_discount_pct": 0.02,
-      "lot_size": 100
+      "lot_size": 100,
+      "holding_add_max_lots": 1
     },
-    "authorization_rule": "CANONICAL_HOLDING_ADD_OR_AUTHORIZED_TERMINAL_BUY_ONLY",
+    "authorization_rule": "CANONICAL_HOLDING_STAGED_ADD_OR_AUTHORIZED_TERMINAL_BUY_ONLY",
     "wait_price_rule": "WAIT_PRICE_IS_NOT_IMMEDIATE_BUY",
     "reject_allocation_rule": "REJECT_GETS_ZERO_CAPITAL",
     "automatic_order_allowed": false,
@@ -200,24 +213,12 @@
     "rows": []
   },
   "event_review": {
-    "triggered": true,
-    "trigger_codes": [
-      "603993",
-      "001316",
-      "601318",
-      "000526",
-      "002239",
-      "600754",
-      "603596"
-    ],
-    "signal_digest": "421f7daeeebc944429fc349d237b703640d7d5b79cf4057d609e52e17823424b",
-    "closure_status": "EVENT_TRIGGER_FAILED",
-    "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-    "formal_action_recomputed": false
+    "triggered": false,
+    "trigger_codes": []
   },
   "hourly_context": {
     "available": true,
-    "research_as_of": "2026-09-07T05:25:13Z"
+    "research_as_of": "2026-09-07T06:21:34Z"
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -252,206 +253,12 @@
       "601318",
       "603993"
     ],
-    "latest_quote_observed_at": "2026-09-07T14:00:17+08:00",
+    "latest_quote_observed_at": "2026-09-07T14:24:55+08:00",
     "max_quote_age_minutes": 120,
     "canonical_snapshot_match": true,
     "formal_action_recomputed": false,
     "formal_action_mutation_allowed": false,
     "quote_may_only_change_display_and_execution_reference": true,
     "no_auto_trade": true
-  },
-  "event_deep_review_closure": {
-    "contract_version": "GEN_GE_INVESTOR_EVENT_CLOSURE_V1",
-    "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-    "formal_action_recomputed": false,
-    "no_auto_trade": true,
-    "signal_digest": "421f7daeeebc944429fc349d237b703640d7d5b79cf4057d609e52e17823424b",
-    "event_source_snapshot_id": "3d58064c5203b791eb8f",
-    "event_source_run_id": "34085540165",
-    "closure_status": "EVENT_TRIGGER_FAILED",
-    "event_research_source_run_id": "",
-    "event_finalizer_run_id": "",
-    "event_finalized_snapshot_id": "",
-    "rows": [
-      {
-        "code": "000526",
-        "name": "学大教育",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "KEEP",
-        "trigger_reasons": [
-          "SUCCESS_ARCHETYPE_RECALL_REUNDERWRITE_REQUIRED"
-        ],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 37.47,
-        "latest_price_observed_at": "2026-09-07T14:00:15+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "001316",
-        "name": "润贝航科",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD_REVIEW",
-        "formal_action_after": "HOLD_REVIEW",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 29.5,
-        "latest_price_observed_at": "2026-09-07T14:00:15+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "002239",
-        "name": "奥特佳",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "KEEP",
-        "trigger_reasons": [
-          "SUCCESS_ARCHETYPE_RECALL_REUNDERWRITE_REQUIRED"
-        ],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 2.56,
-        "latest_price_observed_at": "2026-09-07T14:00:15+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "600754",
-        "name": "锦江酒店",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "KEEP",
-        "trigger_reasons": [
-          "SUCCESS_ARCHETYPE_RECALL_REUNDERWRITE_REQUIRED"
-        ],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 19.74,
-        "latest_price_observed_at": "2026-09-07T14:00:15+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "601318",
-        "name": "中国平安",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD",
-        "formal_action_after": "HOLD",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 56.52,
-        "latest_price_observed_at": "2026-09-07T14:00:16+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "603596",
-        "name": "伯特利",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "KEEP",
-        "trigger_reasons": [
-          "SUCCESS_ARCHETYPE_RECALL_REUNDERWRITE_REQUIRED"
-        ],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 30.14,
-        "latest_price_observed_at": "2026-09-07T14:00:17+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "603993",
-        "name": "洛阳钼业",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD",
-        "formal_action_after": "HOLD",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 18.38,
-        "latest_price_observed_at": "2026-09-07T14:00:16+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "002537",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 6.4,
-        "latest_price_observed_at": "2026-09-07T14:00:15+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "002916",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 364.98,
-        "latest_price_observed_at": "2026-09-07T14:00:12+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "600257",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 6.08,
-        "latest_price_observed_at": "2026-09-07T14:00:15+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "600406",
-        "name": "国电南瑞",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "REDUCE_25",
-        "formal_action_after": "REDUCE_25",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。",
-        "latest_price": 22.62,
-        "latest_price_observed_at": "2026-09-07T14:00:14+08:00",
-        "price_evidence_status": "PRICE_GATE_NOT_MET"
-      }
-    ]
   }
 }

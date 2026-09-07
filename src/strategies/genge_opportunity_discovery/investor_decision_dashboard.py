@@ -2,10 +2,11 @@
 
 Formal holding actions are copied from Canonical. New-stock BUY is actionable
 only when Candidate Terminal Review marks BUY *and* proves it is a mirror of an
-already-authorized Formal/Production BUY. WAIT_PRICE is a price trigger only;
-REJECT receives zero capital. This module may make execution more conservative
-(lot sizing, cash caps, staged lower entries) but never loosens investment gates.
-No automatic order placement is allowed.
+already-authorized Formal/Production BUY. A separate Canonical staged-add flag
+may authorize at most one lot for an existing holding without mutating its
+frozen Formal Action. WAIT_PRICE is a price trigger only; REJECT receives zero
+capital. This module may make execution more conservative but never loosens
+investment gates. No automatic order placement is allowed.
 """
 from __future__ import annotations
 
@@ -24,6 +25,7 @@ FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 TERMINAL_AUTHORITY = "RESEARCH_TERMINAL_VIEW"
 NO_AUTO_TRADE = True
 LOT_SIZE = 100
+HOLDING_ADD_MAX_LOTS = 1
 ACTION_LABELS = {
     "EXIT": "退出/卖出", "SELL": "卖出", "REDUCE_50": "减仓50%",
     "REDUCE_25": "减仓25%", "REDUCE": "减仓", "ADD": "加仓",
@@ -151,12 +153,19 @@ def _holdings(snapshot: Mapping[str, Any], holdings: Mapping[str, Mapping[str, A
     for code, held in holdings.items():
         src = by_code.get(code, {})
         action = str(src.get("action") or src.get("production_action") or "").upper()
+        add_authorized = _bool(src.get("holding_add_authorized"))
         price, cost = _num(src.get("current_price")), _num(held.get("average_cost"))
         pnl = (price / cost - 1) * 100 if price is not None and cost not in {None, 0} else None
+        investor_action = ACTION_LABELS.get(action, action or "观察")
+        if action == "HOLD" and add_authorized:
+            investor_action = "继续持有；可分批加仓1手"
         result.append({"code": code, "name": held.get("name") or src.get("stock_name") or "",
                        "quantity": held.get("quantity"), "average_cost": cost, "current_price": price,
                        "pnl_pct": None if pnl is None else round(pnl, 2), "formal_action": action,
-                       "investor_action": ACTION_LABELS.get(action, action or "观察"),
+                       "investor_action": investor_action,
+                       "holding_add_authorized": add_authorized,
+                       "holding_add_max_lots": int(_num(src.get("holding_add_max_lots")) or HOLDING_ADD_MAX_LOTS),
+                       "holding_add_reason_codes": src.get("holding_add_authorization_reason_codes") or "",
                        "neutral_value": _num(src.get("neutral_value")),
                        "valuation_confidence": src.get("valuation_confidence") or "",
                        "reason_codes": src.get("reason_codes") or ""})
@@ -229,7 +238,7 @@ def _planner_cfg(capital: Mapping[str, Any]) -> dict[str, Any]:
             "max_names": int(val("max_names", 5, 1, 20)),
             "first_tranche_ratio": val("first_tranche_ratio", .50, 0, 1),
             "second_tranche_discount_pct": val("second_tranche_discount_pct", .02, 0, .20),
-            "lot_size": LOT_SIZE}
+            "lot_size": LOT_SIZE, "holding_add_max_lots": HOLDING_ADD_MAX_LOTS}
 
 
 def _lot_cash(cash: float, price: float) -> int:
@@ -252,9 +261,12 @@ def _plan(capital: Mapping[str, Any], market: Mapping[str, Any], holdings: list[
     budget, per_name = round(cash * ratio, 2), round(cash * cfg["max_single_name_ratio_of_available_cash"], 2)
     actions = []
     for x in holdings:
-        if x["formal_action"] in {"ADD", "BUY"} and (x.get("current_price") or 0) > 0:
+        holding_add = bool(x.get("holding_add_authorized"))
+        legacy_formal_add = x["formal_action"] in {"ADD", "BUY"}
+        if (holding_add or legacy_formal_add) and (x.get("current_price") or 0) > 0:
             actions.append({"code": x["code"], "name": x["name"], "action": "ADD", "current_price": x["current_price"],
-                            "source": "AUTHORIZED_CANONICAL_HOLDING_ACTION", "authorization_proven": True})
+                            "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD" if holding_add else "AUTHORIZED_CANONICAL_HOLDING_ACTION",
+                            "authorization_proven": True})
     for x in terminal.get("buy_now") or []:
         if (x.get("current_price") or 0) > 0 and x.get("formal_buy_authorized"):
             ceiling = x["neutral_value"] * x["buy_ratio"] if x.get("neutral_value") and x.get("buy_ratio") else None
@@ -268,7 +280,10 @@ def _plan(capital: Mapping[str, Any], market: Mapping[str, Any], holdings: list[
     operations, remaining = [], budget
     for i, x in enumerate(actions):
         target = min(per_name, remaining / max(1, len(actions) - i))
-        p = float(x["current_price"]); shares = _lot_cash(target, p); a, b = _split(shares, cfg["first_tranche_ratio"])
+        p = float(x["current_price"]); shares = _lot_cash(target, p)
+        if x.get("source") in {"AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD", "AUTHORIZED_CANONICAL_HOLDING_ACTION"} and x.get("action") == "ADD":
+            shares = min(shares, HOLDING_ADD_MAX_LOTS * LOT_SIZE)
+        a, b = _split(shares, cfg["first_tranche_ratio"])
         p1 = round(min(p, x.get("formal_ceiling")) if x.get("formal_ceiling") else p, 2)
         p2 = round(min(p1, p * (1 - cfg["second_tranche_discount_pct"])), 2)
         spend = round(a*p1 + b*p2, 2); remaining = max(0.0, round(remaining-spend, 2))
@@ -293,7 +308,7 @@ def _plan(capital: Mapping[str, Any], market: Mapping[str, Any], holdings: list[
             "deployment_budget_cny": budget, "effective_max_deployment_ratio": round(ratio,4),
             "planned_immediate_cash_cny": deployed, "cash_after_immediate_plan_cny": round(cash-deployed,2),
             "operations": operations, "wait_price_reservations": waits, "planner_config": cfg,
-            "authorization_rule": "CANONICAL_HOLDING_ADD_OR_AUTHORIZED_TERMINAL_BUY_ONLY",
+            "authorization_rule": "CANONICAL_HOLDING_STAGED_ADD_OR_AUTHORIZED_TERMINAL_BUY_ONLY",
             "wait_price_rule": "WAIT_PRICE_IS_NOT_IMMEDIATE_BUY", "reject_allocation_rule": "REJECT_GETS_ZERO_CAPITAL",
             "automatic_order_allowed": False, "no_auto_trade": True}
 
@@ -361,7 +376,7 @@ def render_markdown(p: Mapping[str, Any]) -> str:
     if not t.get("wait_price"): lines.append("| — | — | 本轮没有合格 WAIT_PRICE |")
     lines += ["","## 5. 资金怎么花","",f"- 可规划现金：**¥{_f(plan.get('available_cash_cny'))}**；最高部署预算：**¥{_f(plan.get('deployment_budget_cny'))}**",
               f"- 计划立即投入：**¥{_f(plan.get('planned_immediate_cash_cny'))}**；计划后现金：**¥{_f(plan.get('cash_after_immediate_plan_cny'))}**",
-              "- 只有 Canonical 持仓 ADD 或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。","","## 6. 最终操作表","",
+              "- 只有 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。","","## 6. 最终操作表","",
               "| 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 |","|---|---|---:|---:|---:|---:|"]
     for x in p.get("final_operation_table") or []:
         wait=x.get("action")=="WAIT_PRICE"; shares=x.get("planned_trigger_shares") if wait else x.get("planned_shares"); amount=x.get("reserved_cash_cny") if wait else x.get("estimated_cash_cny")
