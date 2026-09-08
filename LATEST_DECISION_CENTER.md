@@ -58,10 +58,13 @@ A05农、林、牧、渔专业及辅助性活动(100.00)、O81机动车、电子
 - 触发来源：`PUSH_CHANGE`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
-- 研究完整性：**PARTIAL_GAPS_REMAIN**
-- 请求深算：**5**；已处理：**5**；完整：**0**；部分：**5**。
+- 研究过程终态：**PARTIAL_GAPS_REMAIN**
+- 请求深算：**5**；已处理：**5**；完整：**0**；证据穷尽：**0**。
+- 同轮补证据尝试：**0**；取得证据：**0**；推进硬门槛：**0**。
 - 尚未解决硬门槛：**19**。
+- 未决原因：无
 - 请求但未进入本次研究工件：**无**。
-- **执行 SUCCESS 不等于研究 COMPLETE**；剩余 UNKNOWN 会继续保持可见，不会冒充 PASS。
+- 是否需要你手工开启下一轮：**True**。
+- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 是流程已自动收口，不代表 UNKNOWN 被当成 PASS。
 
-> 自动触发、自动计算、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
+> 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
