@@ -1,21 +1,15 @@
 """Automatic, fail-closed V3.1 deep calculation worker.
 
-This module standardizes the executable part of a deep review so that GitHub
-Actions can run it immediately whenever a holding/candidate requires deeper
-research. It deliberately separates *automation of work* from *automatic
-promotion*:
+This module standardizes the executable part of a deep review so GitHub Actions
+can run it immediately whenever a holding or candidate requires deeper research.
 
-* machine-verifiable financial-safety / earnings-authenticity gates are resolved
-  only from same-run PIT valuation evidence and conservative thresholds;
-* existing explicit evidence-backed profiles are applied through the frozen
-  explicit-review verifier;
-* judgement-heavy gates that still lack verified evidence remain UNKNOWN;
-* UNKNOWN is never treated as PASS and this worker never creates Formal BUY or
-  trading authority.
-
-The outputs are designed for both production consumption and observability:
-reviewed CSV, profile JSON for the decision center, a machine-readable execution
-status, and a human-readable Markdown summary.
+Safety contract:
+* machine-verifiable financial gates may resolve only from same-run PIT evidence;
+* explicit evidence-backed profiles are verified through the frozen verifier;
+* every upstream PASS is re-verified in this run before it may remain PASS;
+* a PASS without verified provenance and evidence is downgraded to UNKNOWN;
+* UNKNOWN is never treated as PASS;
+* this worker never creates Formal BUY or trading authority.
 """
 from __future__ import annotations
 
@@ -33,7 +27,9 @@ from .v31_explicit_deep_review import apply_explicit_reviews
 CONTRACT = "GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1"
 MACHINE_PASS_CASH_CONVERSION = 0.80
 MACHINE_PASS_EARNINGS_QUALITY = 70.0
-MACHINE_FAIL_REVIEW_STATUSES = frozenset({"FAIL", "FAILED", "REJECT", "REJECTED", "INVALID"})
+MACHINE_FAIL_REVIEW_STATUSES = frozenset(
+    {"FAIL", "FAILED", "REJECT", "REJECTED", "INVALID"}
+)
 
 
 def _text(value: Any) -> str:
@@ -85,14 +81,18 @@ def _latest_valuation_csv(root: Path) -> Path:
         return direct
     candidates = sorted(root.glob("**/valuation_research_queue.csv"), key=str)
     if not candidates:
-        raise FileNotFoundError(f"valuation_research_queue.csv not found under {root}")
+        raise FileNotFoundError(
+            f"valuation_research_queue.csv not found under {root}"
+        )
     return candidates[-1]
 
 
 def _load_explicit_config(path: Path) -> dict[str, Any]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("contract") != EXPLICIT_CONTRACT:
-        raise ValueError(f"unexpected explicit deep-review contract: {payload.get('contract')}")
+        raise ValueError(
+            f"unexpected explicit deep-review contract: {payload.get('contract')}"
+        )
     if payload.get("authority") != "RESEARCH_ONLY":
         raise ValueError("explicit deep-review authority must remain RESEARCH_ONLY")
     if payload.get("automatic_formal_buy_allowed") is not False:
@@ -111,13 +111,23 @@ def _existing_explicit(row: Mapping[str, Any], gate: str) -> str:
 
 def _machine_snapshot(valuation: Mapping[str, Any]) -> dict[str, Any]:
     return {
-        "financial_review_status": _text(valuation.get("financial_review_status")).upper(),
+        "financial_review_status": _text(
+            valuation.get("financial_review_status")
+        ).upper(),
         "cash_conversion_ratio": _float(valuation.get("cash_conversion_ratio")),
-        "earnings_quality_score": _float(valuation.get("earnings_quality_score")),
-        "earnings_quality_confidence": _text(valuation.get("earnings_quality_confidence")).upper(),
-        "normalized_core_operating_profit": _float(valuation.get("normalized_core_operating_profit")),
+        "earnings_quality_score": _float(
+            valuation.get("earnings_quality_score")
+        ),
+        "earnings_quality_confidence": _text(
+            valuation.get("earnings_quality_confidence")
+        ).upper(),
+        "normalized_core_operating_profit": _float(
+            valuation.get("normalized_core_operating_profit")
+        ),
         "operating_cash_flow": _float(valuation.get("operating_cash_flow")),
-        "financial_disclosure_date": _text(valuation.get("financial_disclosure_date")),
+        "financial_disclosure_date": _text(
+            valuation.get("financial_disclosure_date")
+        ),
     }
 
 
@@ -126,9 +136,11 @@ def _strong_machine_financials(snapshot: Mapping[str, Any]) -> bool:
         snapshot.get("financial_review_status") == "OK"
         and snapshot.get("earnings_quality_confidence") == "HIGH"
         and snapshot.get("cash_conversion_ratio") is not None
-        and float(snapshot["cash_conversion_ratio"]) >= MACHINE_PASS_CASH_CONVERSION
+        and float(snapshot["cash_conversion_ratio"])
+        >= MACHINE_PASS_CASH_CONVERSION
         and snapshot.get("earnings_quality_score") is not None
-        and float(snapshot["earnings_quality_score"]) >= MACHINE_PASS_EARNINGS_QUALITY
+        and float(snapshot["earnings_quality_score"])
+        >= MACHINE_PASS_EARNINGS_QUALITY
         and snapshot.get("normalized_core_operating_profit") is not None
         and float(snapshot["normalized_core_operating_profit"]) > 0.0
         and snapshot.get("operating_cash_flow") is not None
@@ -136,7 +148,9 @@ def _strong_machine_financials(snapshot: Mapping[str, Any]) -> bool:
     )
 
 
-def _automatic_gate_decision(gate: str, valuation: Mapping[str, Any]) -> tuple[str, str, dict[str, Any]]:
+def _automatic_gate_decision(
+    gate: str, valuation: Mapping[str, Any]
+) -> tuple[str, str, dict[str, Any]]:
     snapshot = _machine_snapshot(valuation)
     strong = _strong_machine_financials(snapshot)
     review_status = str(snapshot.get("financial_review_status") or "")
@@ -148,37 +162,118 @@ def _automatic_gate_decision(gate: str, valuation: Mapping[str, Any]) -> tuple[s
         if strong:
             return (
                 "PASS",
-                "Same-run PIT financial review is OK with HIGH earnings-quality confidence, positive normalized operating profit and operating cash flow, cash conversion >= 0.80, and earnings-quality score >= 70.",
+                "Same-run PIT financial review is OK with HIGH earnings-quality "
+                "confidence, positive normalized operating profit and operating "
+                "cash flow, cash conversion >= 0.80, and earnings-quality score >= 70.",
                 snapshot,
             )
         if review_status in MACHINE_FAIL_REVIEW_STATUSES:
-            return "FAIL", f"Same-run PIT financial review status is {review_status}.", snapshot
-        if confidence == "HIGH" and normalized is not None and operating_cash is not None and normalized <= 0 and operating_cash <= 0:
-            return "FAIL", "Same-run high-confidence evidence shows both normalized operating profit and operating cash flow are non-positive.", snapshot
-        return "UNKNOWN", "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.", snapshot
+            return (
+                "FAIL",
+                f"Same-run PIT financial review status is {review_status}.",
+                snapshot,
+            )
+        if (
+            confidence == "HIGH"
+            and normalized is not None
+            and operating_cash is not None
+            and normalized <= 0
+            and operating_cash <= 0
+        ):
+            return (
+                "FAIL",
+                "Same-run high-confidence evidence shows both normalized operating "
+                "profit and operating cash flow are non-positive.",
+                snapshot,
+            )
+        return (
+            "UNKNOWN",
+            "Same-run PIT evidence is insufficient for a verified financial-safety "
+            "PASS or FAIL.",
+            snapshot,
+        )
 
     if gate == "earnings_authenticity":
         if strong:
             return (
                 "PASS",
-                "Same-run PIT evidence verifies positive normalized operating profit, positive operating cash flow, strong cash conversion and HIGH-confidence earnings quality.",
+                "Same-run PIT evidence verifies positive normalized operating "
+                "profit, positive operating cash flow, strong cash conversion and "
+                "HIGH-confidence earnings quality.",
                 snapshot,
             )
-        if confidence == "HIGH" and normalized is not None and operating_cash is not None and normalized <= 0 and operating_cash <= 0:
-            return "FAIL", "High-confidence same-run evidence does not support positive core earnings or cash realization.", snapshot
-        return "UNKNOWN", "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.", snapshot
+        if (
+            confidence == "HIGH"
+            and normalized is not None
+            and operating_cash is not None
+            and normalized <= 0
+            and operating_cash <= 0
+        ):
+            return (
+                "FAIL",
+                "High-confidence same-run evidence does not support positive core "
+                "earnings or cash realization.",
+                snapshot,
+            )
+        return (
+            "UNKNOWN",
+            "Same-run PIT evidence is insufficient for a verified "
+            "earnings-authenticity PASS or FAIL.",
+            snapshot,
+        )
 
-    return "UNKNOWN", "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.", snapshot
+    return (
+        "UNKNOWN",
+        "This qualitative gate requires verified evidence beyond deterministic "
+        "same-run financial checks.",
+        snapshot,
+    )
 
 
-def _apply_machine_reviews(rows: list[dict[str, Any]], valuation_rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    valuation_by_code = {_code(row.get("code")): row for row in valuation_rows if _code(row.get("code"))}
+def _prepare_profile_reverification(
+    rows: list[dict[str, Any]], explicit_config: Mapping[str, Any]
+) -> tuple[list[dict[str, Any]], int]:
+    """Clear every upstream PASS so this run must re-establish it.
+
+    The previous implementation only cleared PASS values for codes already present
+    in the explicit-profile config. Production audit showed that this allowed
+    ordinary upstream PASS values to leak into runtime profiles without provenance.
+
+    The systemwide rule is stricter: all incoming PASS values are reset to UNKNOWN
+    before machine and explicit evidence workers run. Existing FAIL is preserved.
+    `explicit_config` remains in the signature for backward compatibility.
+    """
+    del explicit_config
+    output: list[dict[str, Any]] = []
+    cleared = 0
+    for source in rows:
+        row = dict(source)
+        for field in HARD_GATE_FIELDS.values():
+            if _text(row.get(field)).upper() == "PASS":
+                row[field] = "UNKNOWN"
+                cleared += 1
+        output.append(row)
+    return output, cleared
+
+
+def _apply_machine_reviews(
+    rows: list[dict[str, Any]], valuation_rows: list[dict[str, Any]]
+) -> list[dict[str, Any]]:
+    valuation_by_code = {
+        _code(row.get("code")): row
+        for row in valuation_rows
+        if _code(row.get("code"))
+    }
     output: list[dict[str, Any]] = []
     for source in rows:
         row = dict(source)
-        code = _code(row.get("code") or row.get("stock_code") or row.get("symbol"))
+        code = _code(
+            row.get("code") or row.get("stock_code") or row.get("symbol")
+        )
         valuation = valuation_by_code.get(code, {})
         for gate in HARD_GATE_FIELDS:
+            # FAIL is intentionally sticky. PASS should not normally be present
+            # here because the systemwide reverification stage clears it.
             if _existing_explicit(row, gate):
                 continue
             status, rationale, snapshot = _automatic_gate_decision(gate, valuation)
@@ -186,7 +281,11 @@ def _apply_machine_reviews(rows: list[dict[str, Any]], valuation_rows: list[dict
             row[f"v31_auto_deep_review_{gate}_provenance"] = json.dumps(
                 {
                     "contract": CONTRACT,
-                    "source": "SAME_RUN_PIT_MACHINE" if gate in {"financial_safety", "earnings_authenticity"} else "QUALITATIVE_EVIDENCE_REQUIRED",
+                    "source": (
+                        "SAME_RUN_PIT_MACHINE"
+                        if gate in {"financial_safety", "earnings_authenticity"}
+                        else "QUALITATIVE_EVIDENCE_REQUIRED"
+                    ),
                     "status": status,
                     "rationale": rationale,
                     "machine_snapshot": snapshot,
@@ -206,58 +305,102 @@ def _apply_machine_reviews(rows: list[dict[str, Any]], valuation_rows: list[dict
     return output
 
 
-def _prepare_profile_reverification(
-    rows: list[dict[str, Any]], explicit_config: Mapping[str, Any]
-) -> tuple[list[dict[str, Any]], int]:
-    """Force profile-backed upstream PASS values through reviewed evidence again.
-
-    A PASS already present in the candidate queue is not sufficient provenance for
-    the runtime deep-review profile. If this repository contains an explicit gate
-    review for that code, clear only the upstream PASS to UNKNOWN so the explicit
-    verifier must re-establish it from HIGH-confidence evidence and any declared
-    same-run machine checks. Existing FAIL values are intentionally preserved.
-    """
-    profiles = explicit_config.get("profiles") if isinstance(explicit_config.get("profiles"), Mapping) else {}
-    output: list[dict[str, Any]] = []
-    cleared = 0
-    for source in rows:
-        row = dict(source)
-        code = _code(row.get("code") or row.get("stock_code") or row.get("symbol"))
-        profile = profiles.get(code) if isinstance(profiles, Mapping) else None
-        profile_gates = profile.get("gates") if isinstance(profile, Mapping) else None
-        if isinstance(profile_gates, Mapping):
-            for gate, field in HARD_GATE_FIELDS.items():
-                if not isinstance(profile_gates.get(gate), Mapping):
-                    continue
-                if _text(row.get(field)).upper() == "PASS":
-                    row[field] = "UNKNOWN"
-                    cleared += 1
-        output.append(row)
-    return output, cleared
-
-
-def _decode_provenance(row: Mapping[str, Any], gate: str) -> tuple[str, str, list[dict[str, Any]], str]:
+def _decode_provenance(
+    row: Mapping[str, Any], gate: str
+) -> tuple[str, str, list[dict[str, Any]], str]:
     explicit_key = f"v31_deep_review_{gate}_provenance"
     automatic_key = f"v31_auto_deep_review_{gate}_provenance"
-    for key, source in ((explicit_key, "EXPLICIT_VERIFIED"), (automatic_key, "AUTOMATIC_MACHINE")):
-        raw = row.get(key)
-        if not raw:
-            continue
+
+    raw = row.get(explicit_key)
+    if raw:
         try:
             payload = json.loads(str(raw))
         except json.JSONDecodeError:
-            continue
-        rationale = _text(payload.get("rationale"))
-        evidence = payload.get("evidence") if isinstance(payload.get("evidence"), list) else []
-        if not evidence and source == "AUTOMATIC_MACHINE":
-            evidence = [{"source_type": "SAME_RUN_PIT_MACHINE", "reference": "valuation_research_queue.csv"}]
-        confidence = _text(payload.get("confidence")) or ("HIGH" if source == "EXPLICIT_VERIFIED" else "MACHINE")
-        return rationale, confidence, evidence, source
-    return "No verified evidence has resolved this gate yet.", "", [], "UNRESOLVED"
+            payload = {}
+        if isinstance(payload, Mapping):
+            rationale = _text(payload.get("rationale"))
+            evidence = (
+                payload.get("evidence")
+                if isinstance(payload.get("evidence"), list)
+                else []
+            )
+            confidence = _text(payload.get("confidence")) or "HIGH"
+            return rationale, confidence, evidence, "EXPLICIT_VERIFIED"
+
+    raw = row.get(automatic_key)
+    if raw:
+        try:
+            payload = json.loads(str(raw))
+        except json.JSONDecodeError:
+            payload = {}
+        if isinstance(payload, Mapping):
+            rationale = _text(payload.get("rationale"))
+            machine_source = _text(payload.get("source")).upper()
+            evidence: list[dict[str, Any]] = []
+            source = "AUTOMATIC_ATTEMPT"
+            confidence = ""
+            if machine_source == "SAME_RUN_PIT_MACHINE":
+                evidence = [
+                    {
+                        "source_type": "SAME_RUN_PIT_MACHINE",
+                        "reference": "valuation_research_queue.csv",
+                    }
+                ]
+                source = "AUTOMATIC_MACHINE"
+                confidence = "MACHINE"
+            return rationale, confidence, evidence, source
+
+    return (
+        "No verified evidence has resolved this gate yet.",
+        "",
+        [],
+        "UNRESOLVED",
+    )
+
+
+def _pass_is_verified(row: Mapping[str, Any], gate: str) -> bool:
+    status = _text(row.get(HARD_GATE_FIELDS[gate])).upper()
+    if status != "PASS":
+        return True
+    _, _, evidence, source = _decode_provenance(row, gate)
+    return source in {"EXPLICIT_VERIFIED", "AUTOMATIC_MACHINE"} and bool(evidence)
+
+
+def _enforce_verified_pass_provenance(
+    rows: list[dict[str, Any]]
+) -> tuple[list[dict[str, Any]], int]:
+    """Defense-in-depth: no PASS survives without verified provenance."""
+    output: list[dict[str, Any]] = []
+    downgraded = 0
+    for source_row in rows:
+        row = dict(source_row)
+        for gate, field in HARD_GATE_FIELDS.items():
+            if _text(row.get(field)).upper() != "PASS":
+                continue
+            if _pass_is_verified(row, gate):
+                continue
+            row[field] = "UNKNOWN"
+            row[f"v31_deep_provenance_guard_{gate}"] = json.dumps(
+                {
+                    "contract": CONTRACT,
+                    "status": "UNKNOWN",
+                    "reason": "UNVERIFIED_UPSTREAM_PASS_DOWNGRADED",
+                    "unknown_is_pass": False,
+                },
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            downgraded += 1
+        row.update(assess_v31(row).as_dict())
+        output.append(row)
+    return output, downgraded
 
 
 def _profiles(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     profiles: dict[str, Any] = {}
+    verified_pass_gate_count = 0
+    unverified_pass_gate_count = 0
     for row in rows:
         code = _code(row.get("code"))
         if not code:
@@ -268,6 +411,24 @@ def _profiles(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
             if status not in {"PASS", "FAIL"}:
                 status = "UNKNOWN"
             rationale, confidence, evidence, source = _decode_provenance(row, gate)
+            if status == "PASS":
+                if (
+                    source in {"EXPLICIT_VERIFIED", "AUTOMATIC_MACHINE"}
+                    and evidence
+                ):
+                    verified_pass_gate_count += 1
+                else:
+                    # This should be unreachable after the guard. Keep the profile
+                    # fail-closed even if future code accidentally bypasses it.
+                    status = "UNKNOWN"
+                    source = "UNRESOLVED"
+                    confidence = ""
+                    evidence = []
+                    rationale = (
+                        "PASS lacked verified provenance and was fail-closed to "
+                        "UNKNOWN while building the runtime profile."
+                    )
+                    unverified_pass_gate_count += 1
             gates[gate] = {
                 "status": status,
                 "confidence": confidence,
@@ -286,6 +447,8 @@ def _profiles(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
         "automatic_formal_buy_allowed": False,
         "unknown_is_pass": False,
         "no_auto_trade": True,
+        "verified_pass_gate_count": verified_pass_gate_count,
+        "unverified_pass_gate_count": unverified_pass_gate_count,
         "profiles": profiles,
     }
 
@@ -299,19 +462,33 @@ def calculate_rows(
     source_run_id: str = "",
     trigger_source: str = "UNKNOWN",
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
-    machine_reviewed = _apply_machine_reviews(candidate_rows, valuation_rows)
-    machine_reviewed, reverified_upstream_pass_count = _prepare_profile_reverification(
-        machine_reviewed, explicit_config
+    prepared_rows, reverified_upstream_pass_count = _prepare_profile_reverification(
+        candidate_rows, explicit_config
     )
-    reviewed, explicit_summary = apply_explicit_reviews(machine_reviewed, valuation_rows, explicit_config)
+    machine_reviewed = _apply_machine_reviews(prepared_rows, valuation_rows)
+    reviewed, explicit_summary = apply_explicit_reviews(
+        machine_reviewed, valuation_rows, explicit_config
+    )
+    reviewed, unverified_pass_downgraded_count = (
+        _enforce_verified_pass_provenance(reviewed)
+    )
     profile_payload = _profiles(reviewed)
 
-    all_codes = {_code(row.get("code")) for row in reviewed if _code(row.get("code"))}
-    requested = {_code(code) for code in (requested_codes or []) if _code(code)}
+    all_codes = {
+        _code(row.get("code"))
+        for row in reviewed
+        if _code(row.get("code"))
+    }
+    requested = {
+        _code(code) for code in (requested_codes or []) if _code(code)
+    }
     if not requested:
         requested = set(all_codes)
     missing_requested = sorted(requested - all_codes)
-    selected_profiles = [profile_payload["profiles"][code] for code in sorted(requested & all_codes)]
+    selected_profiles = [
+        profile_payload["profiles"][code]
+        for code in sorted(requested & all_codes)
+    ]
     unknown_count = sum(
         1
         for profile in selected_profiles
@@ -319,13 +496,39 @@ def calculate_rows(
         if gate.get("status") == "UNKNOWN"
     )
     complete_count = sum(
-        1 for profile in selected_profiles if all(g.get("status") != "UNKNOWN" for g in profile["gates"].values())
+        1
+        for profile in selected_profiles
+        if all(
+            gate.get("status") != "UNKNOWN"
+            for gate in profile["gates"].values()
+        )
     )
+    unverified_profile_pass_count = sum(
+        1
+        for profile in selected_profiles
+        for gate in profile["gates"].values()
+        if gate.get("status") == "PASS"
+        and (
+            gate.get("source")
+            not in {"EXPLICIT_VERIFIED", "AUTOMATIC_MACHINE"}
+            or not gate.get("evidence")
+        )
+    )
+    if unverified_profile_pass_count:
+        raise ValueError(
+            "fail-closed provenance invariant violated: "
+            f"{unverified_profile_pass_count} PASS gates lack verified evidence"
+        )
+
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     status = {
         "contract": CONTRACT,
         "execution_status": "SUCCESS",
-        "research_outcome": "COMPLETE" if unknown_count == 0 and not missing_requested else "PARTIAL_GAPS_REMAIN",
+        "research_outcome": (
+            "COMPLETE"
+            if unknown_count == 0 and not missing_requested
+            else "PARTIAL_GAPS_REMAIN"
+        ),
         "generated_at": now,
         "source_run_id": str(source_run_id or ""),
         "trigger_source": str(trigger_source or "UNKNOWN"),
@@ -336,9 +539,19 @@ def calculate_rows(
         "complete_requested_count": complete_count,
         "partial_requested_count": len(selected_profiles) - complete_count,
         "unresolved_requested_gate_count": unknown_count,
-        "explicit_profile_applied_count": explicit_summary.get("profile_applied_count", 0),
+        "explicit_profile_applied_count": explicit_summary.get(
+            "profile_applied_count", 0
+        ),
         "reverified_upstream_pass_count": reverified_upstream_pass_count,
-        "hard_gate_passed_count": sum(str(row.get("v31_hard_gates_passed")).lower() == "true" for row in reviewed),
+        "unverified_pass_downgraded_count": unverified_pass_downgraded_count,
+        "verified_pass_gate_count": profile_payload[
+            "verified_pass_gate_count"
+        ],
+        "unverified_pass_gate_count": unverified_profile_pass_count,
+        "hard_gate_passed_count": sum(
+            str(row.get("v31_hard_gates_passed")).lower() == "true"
+            for row in reviewed
+        ),
         "formal_trading_authority": False,
         "automatic_formal_buy_allowed": False,
         "unknown_is_pass": False,
@@ -352,6 +565,9 @@ def calculate_rows(
             "execution_status": "SUCCESS",
             "research_outcome": status["research_outcome"],
             "reverified_upstream_pass_count": reverified_upstream_pass_count,
+            "unverified_pass_downgraded_count": (
+                unverified_pass_downgraded_count
+            ),
         }
     )
     return reviewed, profile_payload, status
@@ -369,7 +585,18 @@ def _render_status(status: Mapping[str, Any]) -> str:
             f"- requested: **{status.get('requested_count')}**",
             f"- complete: **{status.get('complete_requested_count')}**",
             f"- partial: **{status.get('partial_requested_count')}**",
-            f"- unresolved hard gates: **{status.get('unresolved_requested_gate_count')}**",
+            (
+                "- unresolved hard gates: "
+                f"**{status.get('unresolved_requested_gate_count')}**"
+            ),
+            (
+                "- reverified upstream PASS gates: "
+                f"**{status.get('reverified_upstream_pass_count')}**"
+            ),
+            (
+                "- unverified PASS gates remaining: "
+                f"**{status.get('unverified_pass_gate_count')}**"
+            ),
             "- UNKNOWN != PASS; no automatic Formal BUY; no auto trade.",
             "",
         ]
@@ -399,14 +626,22 @@ def run(
         trigger_source=trigger_source,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
-    _write_csv(output_dir / "v31_review_queue_deep_calculated.csv", reviewed)
+    _write_csv(
+        output_dir / "v31_review_queue_deep_calculated.csv", reviewed
+    )
     (output_dir / "deep_review_profiles.json").write_text(
-        json.dumps(profiles, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(profiles, ensure_ascii=False, indent=2, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
     )
     (output_dir / "deep_calculation_status.json").write_text(
-        json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True)
+        + "\n",
+        encoding="utf-8",
     )
-    (output_dir / "deep_calculation.md").write_text(_render_status(status), encoding="utf-8")
+    (output_dir / "deep_calculation.md").write_text(
+        _render_status(status), encoding="utf-8"
+    )
     return status
 
 
@@ -414,13 +649,21 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--candidate-csv", type=Path, required=True)
     parser.add_argument("--valuation-root", type=Path, required=True)
-    parser.add_argument("--explicit-config", type=Path, default=Path("config/v31_explicit_deep_reviews.json"))
+    parser.add_argument(
+        "--explicit-config",
+        type=Path,
+        default=Path("config/v31_explicit_deep_reviews.json"),
+    )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--requested-codes", default="")
     parser.add_argument("--source-run-id", default="")
     parser.add_argument("--trigger-source", default="UNKNOWN")
     args = parser.parse_args()
-    requested = [part.strip() for part in args.requested_codes.replace(";", ",").split(",") if part.strip()]
+    requested = [
+        part.strip()
+        for part in args.requested_codes.replace(";", ",").split(",")
+        if part.strip()
+    ]
     status = run(
         candidate_csv=args.candidate_csv,
         valuation_root=args.valuation_root,
