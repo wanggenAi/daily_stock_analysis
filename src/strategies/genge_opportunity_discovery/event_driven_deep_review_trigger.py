@@ -150,12 +150,21 @@ def _runbei_signal_state(priority_row: Mapping[str, Any]) -> dict[str, Any] | No
     if not _runbei_external_reunderwrite_required(priority_row):
         return None
     similarity = float(priority_row.get("success_archetype_similarity_score"))
+    missing_evidence = sorted(
+        set(
+            _stable_tokens(priority_row.get("missing_evidence"))
+            + _stable_tokens(priority_row.get("near_buy_missing_evidence_items"))
+        )
+    )
     return {
         "archetype_id": str(priority_row.get("success_archetype_id") or ""),
         "similarity_band": "85_PLUS" if similarity >= 85.0 else "70_TO_85",
         "near_buy_evidence_recovery_tier": str(priority_row.get("near_buy_evidence_recovery_tier") or ""),
-        "missing_evidence": _stable_tokens(priority_row.get("missing_evidence")),
+        "missing_evidence": missing_evidence,
         "mapping_gaps": _stable_tokens(priority_row.get("mapping_gaps")),
+        "source_financial_review_status": str(priority_row.get("success_archetype_source_financial_review_status") or ""),
+        "financial_report_date": str(priority_row.get("success_archetype_financial_report_date") or ""),
+        "financial_disclosure_date": str(priority_row.get("success_archetype_financial_disclosure_date") or ""),
     }
 
 
