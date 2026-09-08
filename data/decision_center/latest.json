@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-08T05:00:43+00:00",
+  "generated_at": "2026-09-08T05:05:25+00:00",
   "latest_trade_date": "2026-09-07",
   "canonical_snapshot_id": "058f6b82cb45587969d7",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -20,8 +20,8 @@
     "new_wait_price_count": 0,
     "terminal_reject_count": 500,
     "deep_calculation_execution_status": "SUCCESS",
-    "deep_calculation_research_outcome": "PARTIAL_GAPS_REMAIN",
-    "deep_calculation_terminal_state": "PARTIAL_GAPS_REMAIN",
+    "deep_calculation_research_outcome": "EVIDENCE_EXHAUSTED",
+    "deep_calculation_terminal_state": "EVIDENCE_EXHAUSTED",
     "deep_calculation_unresolved_gate_count": 19,
     "deep_calculation_progressed_gate_count": 0
   },
@@ -557,39 +557,69 @@
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
     "deep_calculation_last_run_completed": true,
     "deep_calculation_last_run_successful": true,
-    "deep_calculation_process_terminal": false,
+    "deep_calculation_process_terminal": true,
     "deep_calculation_requested_research_complete": false,
-    "deep_calculation_manual_next_round_required": true
+    "deep_calculation_manual_next_round_required": false
   },
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "34186237645",
+    "lambda_run_id": "34188936647",
     "lambda_run_attempt": "1",
     "source_run_id": "34177769027",
     "trigger_source": "PUSH_CHANGE",
-    "generated_at": "2026-09-08T04:15:19+00:00",
+    "generated_at": "2026-09-08T05:03:58+00:00",
     "run_state": "COMPLETED",
     "execution_status": "SUCCESS",
-    "research_outcome": "PARTIAL_GAPS_REMAIN",
-    "research_terminal_state": "PARTIAL_GAPS_REMAIN",
+    "research_outcome": "EVIDENCE_EXHAUSTED",
+    "research_terminal_state": "EVIDENCE_EXHAUSTED",
     "requested_count": 5,
     "processed_requested_count": 5,
     "complete_requested_count": 0,
     "partial_requested_count": 5,
-    "evidence_exhausted_requested_count": 0,
+    "evidence_exhausted_requested_count": 5,
     "unresolved_requested_gate_count": 19,
     "missing_requested_codes": [],
-    "unresolved_reasons": {},
-    "gap_closure_attempt_count": 0,
+    "unresolved_reasons": {
+      "001316": {
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE",
+        "predictability": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+      },
+      "002916": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE",
+        "predictability": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+      },
+      "600406": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE",
+        "predictability": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+      },
+      "601318": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE",
+        "predictability": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+      },
+      "603993": {
+        "predictability": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+      }
+    },
+    "gap_closure_attempt_count": 2,
     "new_evidence_count": 0,
     "progressed_gate_count": 0,
     "immediate_retry_required": false,
     "execution_completed": true,
     "execution_succeeded": true,
-    "research_process_terminal": false,
+    "research_process_terminal": true,
     "research_complete": false,
-    "manual_next_round_required": true,
+    "manual_next_round_required": false,
     "unknown_is_pass": false,
     "automatic_formal_buy_allowed": false,
     "no_auto_trade": true,
