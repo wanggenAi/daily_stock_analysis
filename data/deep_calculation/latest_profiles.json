@@ -6,13 +6,13 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-08T13:39:01+00:00",
-  "generated_at": "2026-09-08T13:32:05+00:00",
+  "gap_closure_generated_at": "2026-09-08T14:20:07+00:00",
+  "generated_at": "2026-09-08T14:17:04+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "34232317559",
+  "lambda_run_id": "34237038590",
   "material_event_failed_gate_count": 1,
   "material_event_pass_override_count": 0,
-  "new_evidence_count": 17,
+  "new_evidence_count": 18,
   "no_auto_trade": true,
   "profiles": {
     "000001": {
@@ -29456,31 +29456,75 @@
     "603993": {
       "gates": {
         "earnings_authenticity": {
-          "confidence": "",
-          "evidence": [],
-          "rationale": "No verified evidence has resolved this gate yet.",
-          "source": "UNRESOLVED",
+          "confidence": "HIGH",
+          "evidence": [
+            {
+              "published_date": "2026-08-20",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.cmoc.com/html/2026/News_0820/97.html"
+            }
+          ],
+          "rationale": "The same-run PIT financial review reports positive normalized core operating profit, high-confidence earnings normalization and strong operating-cash conversion. PASS is conditional on machine-verifying those fields in the current valuation research row.",
+          "source": "EXPLICIT_VERIFIED",
           "status": "PASS"
         },
         "financial_safety": {
-          "confidence": "",
-          "evidence": [],
-          "rationale": "No verified evidence has resolved this gate yet.",
-          "source": "UNRESOLVED",
+          "confidence": "HIGH",
+          "evidence": [
+            {
+              "published_date": "2025-03-24",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.cmoc.com/html/2025/News_0324/73.html"
+            },
+            {
+              "published_date": "2025-08-24",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.cmoc.com/html/2025/News_0824/80.html"
+            },
+            {
+              "published_date": "2026-08-20",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.cmoc.com/html/2026/News_0820/97.html"
+            }
+          ],
+          "rationale": "Official results show strong operating cash flow, falling or controlled leverage in recent reporting periods and sustained profitability. The production valuation row must also contain a current PIT financial review before this PASS is accepted.",
+          "source": "EXPLICIT_VERIFIED",
           "status": "PASS"
         },
         "long_term_demand": {
-          "confidence": "",
-          "evidence": [],
-          "rationale": "No verified evidence has resolved this gate yet.",
-          "source": "UNRESOLVED",
+          "confidence": "HIGH",
+          "evidence": [
+            {
+              "published_date": "2026-07-16",
+              "source_type": "INTERNATIONAL_AUTHORITY",
+              "url": "https://www.iea.org/reports/global-critical-minerals-outlook-2026/outlook"
+            },
+            {
+              "published_date": "2026-04-20",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.cmoc.com/html/2026/News_0420/84.html"
+            }
+          ],
+          "rationale": "Copper is the dominant mining revenue driver for CMOC, while the IEA 2026 outlook projects strong copper demand growth through 2040 and a persistent base-case primary supply gap through 2035.",
+          "source": "EXPLICIT_VERIFIED",
           "status": "PASS"
         },
         "moat": {
-          "confidence": "",
-          "evidence": [],
-          "rationale": "No verified evidence has resolved this gate yet.",
-          "source": "UNRESOLVED",
+          "confidence": "HIGH",
+          "evidence": [
+            {
+              "retrieved_date": "2026-09-07",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.cmoc.com/html/AboutUs/"
+            },
+            {
+              "retrieved_date": "2026-09-07",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.cmoc.com/html/Business/Congo-Cu-Co//"
+            }
+          ],
+          "rationale": "Primary company evidence identifies TFM and KFM as world-class copper-cobalt assets; CMOC is a top-ten copper producer and the world's largest cobalt producer, providing resource scale and asset-quality advantages that are difficult to replicate quickly.",
+          "source": "EXPLICIT_VERIFIED",
           "status": "PASS"
         },
         "predictability": {
@@ -33137,6 +33181,7 @@
   "progressed_gate_count": 1,
   "research_outcome": "EVIDENCE_EXHAUSTED",
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
+  "reverified_upstream_pass_count": 4,
   "run_state": "COMPLETED",
   "source_run_id": "34219695011",
   "trigger_source": "PUSH_CHANGE",
