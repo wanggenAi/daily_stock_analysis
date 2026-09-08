@@ -16,17 +16,19 @@ from .company_announcements import collect_company_announcements, collect_compan
 from .public_data import collect_public_industry_data
 
 _INDUSTRY_CLASSIFICATION_PREFIX_RE = re.compile(r"^[A-Z]\d{2}(?:\.\d+)?\s*")
+_CNINFO_TOPSEARCH_URL = "https://www.cninfo.com.cn/new/information/topSearch/query"
 _ORIGINAL_QUERY_SSE = _company_announcements._query_sse
 _ORIGINAL_QUERY_SSE_MATERIAL_EVENTS = _company_announcements._query_sse_material_events
+_ORIGINAL_LOAD_CNINFO_ORG_IDS = _company_announcements._load_cninfo_org_ids
 
 
 def normalize_sse_attachment_url(value: Any) -> str:
     """Return the direct static SSE attachment URL for disclosure files.
 
-    The query API exposes paths such as ``/disclosure/...pdf``.  Fetching those
+    The query API exposes paths such as ``/disclosure/...pdf``. Fetching those
     paths from ``www.sse.com.cn`` can return an HTML shell, which makes a real
-    PDF look like ``html_text`` to the parser.  SSE's disclosure attachment
-    host is ``static.sse.com.cn``; only SSE disclosure URLs are rewritten.
+    PDF look like ``html_text`` to the parser. SSE's disclosure attachment host
+    is ``static.sse.com.cn``; only SSE disclosure URLs are rewritten.
     """
     text = str(value or "").strip()
     if not text:
@@ -66,10 +68,59 @@ def _query_sse_material_events_with_static_attachments(
     return _rewrite_sse_rows(rows), summary
 
 
+class _LazyCninfoOrgIdMap(dict[str, str]):
+    """CNINFO orgId map that falls back to the official topSearch endpoint."""
+
+    def __init__(self, initial: Mapping[str, str], session: Any, timeout: int):
+        super().__init__(initial)
+        self._session = session
+        self._timeout = timeout
+        self._attempted: set[str] = set()
+
+    def get(self, key: Any, default: Any = None) -> Any:
+        code = str(key or "").strip()
+        existing = super().get(code)
+        if existing or not re.fullmatch(r"\d{6}", code) or code in self._attempted:
+            return existing or default
+        self._attempted.add(code)
+        try:
+            response = self._session.post(
+                _CNINFO_TOPSEARCH_URL,
+                headers={
+                    **_company_announcements.REQUEST_HEADERS,
+                    "Referer": "https://www.cninfo.com.cn/",
+                    "X-Requested-With": "XMLHttpRequest",
+                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                },
+                data={"keyWord": code, "maxNum": "10"},
+                timeout=self._timeout,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            if isinstance(payload, list):
+                for item in payload:
+                    if str(item.get("code") or "") == code and str(item.get("orgId") or "").strip():
+                        org_id = str(item["orgId"]).strip()
+                        super().__setitem__(code, org_id)
+                        return org_id
+        except Exception:
+            pass
+        return default
+
+
+def _load_cninfo_org_ids_with_topsearch_fallback(session: Any, timeout: int) -> _LazyCninfoOrgIdMap:
+    try:
+        initial = _ORIGINAL_LOAD_CNINFO_ORG_IDS(session, timeout)
+    except Exception:
+        initial = {}
+    return _LazyCninfoOrgIdMap(initial, session, timeout)
+
+
 # Keep the existing collectors and their pagination/risk rules intact; only fix
-# the attachment host returned by the SSE query helpers they call at runtime.
+# provider adapters at the module-global helpers those collectors call at runtime.
 _company_announcements._query_sse = _query_sse_with_static_attachments
 _company_announcements._query_sse_material_events = _query_sse_material_events_with_static_attachments
+_company_announcements._load_cninfo_org_ids = _load_cninfo_org_ids_with_topsearch_fallback
 
 
 def canonical_industry_name(value: Any) -> str:
@@ -91,7 +142,7 @@ def prepare_industry_alias_map(
     """Expand configured aliases for classified industry labels without renaming rows.
 
     Evidence rows retain the exact upstream industry string so downstream joins
-    remain stable.  Only search terms are augmented with the classification-free
+    remain stable. Only search terms are augmented with the classification-free
     industry name and matching configured aliases.
     """
     source = dict(alias_map or _default_industry_alias_map())
