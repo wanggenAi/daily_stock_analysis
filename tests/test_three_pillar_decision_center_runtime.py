@@ -89,6 +89,33 @@ def _status():
     }
 
 
+def _terminal_status():
+    return {
+        "execution_status": "SUCCESS",
+        "research_outcome": "EVIDENCE_EXHAUSTED",
+        "research_terminal_state": "EVIDENCE_EXHAUSTED",
+        "run_state": "COMPLETED",
+        "lambda_run_id": "999999",
+        "requested_count": 1,
+        "complete_requested_count": 0,
+        "evidence_exhausted_requested_count": 1,
+        "unresolved_requested_gate_count": 2,
+        "unresolved_reasons": {
+            "600406": {
+                "predictability": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN",
+                "moat": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE",
+            }
+        },
+        "gap_closure_attempt_count": 2,
+        "new_evidence_count": 3,
+        "progressed_gate_count": 1,
+        "immediate_retry_required": False,
+        "unknown_is_pass": False,
+        "automatic_formal_buy_allowed": False,
+        "no_auto_trade": True,
+    }
+
+
 def test_automatic_profiles_take_precedence_over_static_bootstrap():
     selected, source = choose_deep_review_config(
         _automatic_profiles(),
@@ -105,6 +132,21 @@ def test_execution_success_and_research_completeness_are_separate():
     assert runtime["research_complete"] is False
     assert runtime["unresolved_requested_gate_count"] == 3
     assert runtime["unknown_is_pass"] is False
+
+
+def test_evidence_exhausted_is_terminal_without_requiring_manual_next_round():
+    runtime = normalize_runtime(_terminal_status())
+    assert runtime["execution_succeeded"] is True
+    assert runtime["research_process_terminal"] is True
+    assert runtime["research_complete"] is False
+    assert runtime["research_terminal_state"] == "EVIDENCE_EXHAUSTED"
+    assert runtime["manual_next_round_required"] is False
+    assert runtime["processed_requested_count"] == 1
+    assert runtime["partial_requested_count"] == 1
+    assert runtime["gap_closure_attempt_count"] == 2
+    assert runtime["new_evidence_count"] == 3
+    assert runtime["progressed_gate_count"] == 1
+    assert "600406" in runtime["unresolved_reasons"]
 
 
 def test_runtime_is_exposed_in_final_decision_center():
@@ -128,6 +170,26 @@ def test_runtime_is_exposed_in_final_decision_center():
     assert deep["status"] == "DEEP_REVIEW_PARTIAL"
     assert deep["pass_count"] == 2
     assert deep["unknown_count"] == 3
+
+
+def test_terminal_runtime_is_visible_in_markdown_with_unresolved_reasons():
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_terminal_status(),
+        industry_links={},
+        era_handoff={},
+    )
+    md = render_runtime_markdown(out)
+    assert "## 自动深算运行状态" in md
+    assert "999999" in md
+    assert "SUCCESS" in md
+    assert "EVIDENCE_EXHAUSTED" in md
+    assert "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN" in md
+    assert "是否需要你手工开启下一轮：**False**" in md
+    assert "执行 SUCCESS 不等于研究 COMPLETE" in md
 
 
 def test_runtime_markdown_makes_finished_but_partial_obvious():
