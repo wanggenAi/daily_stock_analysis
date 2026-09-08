@@ -25,6 +25,19 @@ CONTRACT = "GEN_GE_V31_DEEP_GAP_CLOSURE_V1"
 GATES = ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")
 MAX_COLLECTION_ATTEMPTS = 2
 
+# Only VERIFIED, ACTIVE, HIGH-severity exchange-disclosed events can resolve a
+# gate negatively.  This is intentionally one-way: absence of a risk event never
+# creates PASS.  New high-confidence risk can also override an older PASS.
+MATERIAL_EVENT_FAIL_GATES: Mapping[str, tuple[str, ...]] = {
+    "ACCOUNTING_FRAUD": ("earnings_authenticity", "predictability"),
+    "NON_STANDARD_AUDIT": ("earnings_authenticity",),
+    "DEBT_DEFAULT": ("financial_safety", "predictability"),
+    "BANKRUPTCY_RESTRUCTURING": ("financial_safety", "predictability"),
+    "DELISTING_RISK": ("financial_safety", "predictability"),
+    "FUNDS_OCCUPATION": ("financial_safety",),
+    "ILLEGAL_GUARANTEE": ("financial_safety",),
+}
+
 
 def _code(value: Any) -> str:
     text = str(value or "").strip().upper()
@@ -72,6 +85,75 @@ def _verified_official(row: Mapping[str, Any]) -> bool:
         and bool(_source_family(row.get("source_domain")))
         and bool(str(row.get("publish_date") or row.get("date") or "").strip())
     )
+
+
+def _official_exchange_domain(value: Any) -> bool:
+    domain = _source_family(value)
+    return bool(
+        domain == "cninfo.com.cn"
+        or domain.endswith(".cninfo.com.cn")
+        or domain == "sse.com.cn"
+        or domain.endswith(".sse.com.cn")
+    )
+
+
+def _verified_active_high_material_event(row: Mapping[str, Any], code: str) -> bool:
+    event_type = str(row.get("event_type") or "").upper()
+    return bool(
+        _code(row.get("code")) == code
+        and str(row.get("evidence_status") or "").upper() == "VERIFIED"
+        and str(row.get("source_type") or "").upper() == "EXCHANGE_DISCLOSURE"
+        and _official_exchange_domain(row.get("source_domain"))
+        and str(row.get("evidence_kind") or "").lower() == "material_event"
+        and str(row.get("event_status") or "").upper() == "ACTIVE"
+        and str(row.get("event_severity") or "").upper() == "HIGH"
+        and event_type in MATERIAL_EVENT_FAIL_GATES
+        and bool(str(row.get("publish_date") or row.get("date") or "").strip())
+    )
+
+
+def _material_event_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
+    return {
+        "source_type": row.get("source_type"),
+        "source_domain": row.get("source_domain"),
+        "url": row.get("original_url") or row.get("source"),
+        "publish_date": row.get("publish_date") or row.get("date"),
+        "event_type": row.get("event_type"),
+        "event_status": row.get("event_status"),
+        "event_severity": row.get("event_severity"),
+        "summary": row.get("normalized_summary") or row.get("evidence_value"),
+    }
+
+
+def infer_material_event_gate_failures(
+    code: str, company_evidence: Iterable[Mapping[str, Any]]
+) -> dict[str, tuple[str, list[dict[str, Any]]]]:
+    """Return strict FAIL decisions created by current verified material risks.
+
+    Positive decisions are deliberately impossible here.  A single ACTIVE/HIGH
+    exchange-disclosed event can be sufficient negative proof for the narrow
+    hard gates listed in MATERIAL_EVENT_FAIL_GATES.
+    """
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    event_types: dict[str, set[str]] = {}
+    for raw in company_evidence:
+        if not _verified_active_high_material_event(raw, code):
+            continue
+        event_type = str(raw.get("event_type") or "").upper()
+        evidence = _material_event_evidence(raw)
+        for gate in MATERIAL_EVENT_FAIL_GATES[event_type]:
+            grouped.setdefault(gate, []).append(evidence)
+            event_types.setdefault(gate, set()).add(event_type)
+
+    result: dict[str, tuple[str, list[dict[str, Any]]]] = {}
+    for gate, evidence in grouped.items():
+        types = ",".join(sorted(event_types.get(gate) or set()))
+        rationale = (
+            "Verified ACTIVE/HIGH exchange disclosure establishes a material "
+            f"risk incompatible with {gate}: {types}."
+        )
+        result[gate] = (rationale, evidence)
+    return result
 
 
 def infer_long_term_demand(
@@ -184,6 +266,8 @@ def close_profiles(
     rows_by_code = {_code(r.get("code")): dict(r) for r in candidate_rows if _code(r.get("code"))}
     requested = _requested_codes(requested_codes)
     progressed = 0
+    material_event_failed_gates = 0
+    material_event_pass_overrides = 0
     unresolved: dict[str, dict[str, str]] = {}
     complete_codes: list[str] = []
     exhausted_codes: list[str] = []
@@ -198,6 +282,27 @@ def close_profiles(
         row = rows_by_code.get(code, {})
         industry = str(profile.get("industry") or row.get("normalized_industry") or row.get("industry") or "")
 
+        risk_failures = infer_material_event_gate_failures(code, company_evidence)
+        for gate, (rationale, evidence) in risk_failures.items():
+            raw = gates.get(gate) if isinstance(gates.get(gate), dict) else None
+            if raw is None or _status(raw) == "FAIL":
+                continue
+            previous = _status(raw)
+            raw.update(
+                {
+                    "status": "FAIL",
+                    "confidence": "HIGH",
+                    "rationale": rationale,
+                    "evidence": evidence,
+                    "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+                }
+            )
+            raw.pop("terminal_unresolved_reason", None)
+            progressed += 1
+            material_event_failed_gates += 1
+            if previous == "PASS":
+                material_event_pass_overrides += 1
+
         ltd = gates.get("long_term_demand") if isinstance(gates.get("long_term_demand"), dict) else None
         if ltd is not None and _status(ltd) == "UNKNOWN" and industry:
             decision, rationale, evidence = infer_long_term_demand(industry, industry_evidence)
@@ -211,6 +316,7 @@ def close_profiles(
                         "source": "AUTOMATIC_OFFICIAL_EVIDENCE_CLOSURE",
                     }
                 )
+                ltd.pop("terminal_unresolved_reason", None)
                 progressed += 1
             else:
                 ltd["gap_closure_evidence"] = evidence
@@ -252,6 +358,8 @@ def close_profiles(
         "complete_requested_count": len(complete_codes),
         "evidence_exhausted_requested_count": len(exhausted_codes),
         "progressed_gate_count": progressed,
+        "material_event_failed_gate_count": material_event_failed_gates,
+        "material_event_pass_override_count": material_event_pass_overrides,
         "unresolved_requested_gate_count": sum(len(v) for v in unresolved.values()),
         "unresolved_reasons": unresolved,
         "gap_closure_attempt_count": attempt_count,
@@ -274,6 +382,8 @@ def close_profiles(
             "gap_closure_attempt_count": attempt_count,
             "new_evidence_count": new_evidence_count,
             "progressed_gate_count": progressed,
+            "material_event_failed_gate_count": material_event_failed_gates,
+            "material_event_pass_override_count": material_event_pass_overrides,
             "immediate_retry_required": False,
             "formal_trading_authority": False,
             "automatic_formal_buy_allowed": False,
@@ -393,6 +503,8 @@ def run(
         f"- evidence collection attempts: **{status['gap_closure_attempt_count']}**\n"
         f"- new evidence rows: **{status['new_evidence_count']}**\n"
         f"- progressed gates: **{status['progressed_gate_count']}**\n"
+        f"- material-event failed gates: **{status['material_event_failed_gate_count']}**\n"
+        f"- material-event PASS overrides: **{status['material_event_pass_override_count']}**\n"
         f"- unresolved gates: **{status['unresolved_requested_gate_count']}**\n"
         "- immediate retry required: **False**\n- UNKNOWN != PASS; no automatic Formal BUY; no auto trade.\n",
         encoding="utf-8",
