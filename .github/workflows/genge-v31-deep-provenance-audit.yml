@@ -1,0 +1,162 @@
+name: GenGe V3.1 Deep Provenance Audit
+
+run-name: >-
+  GenGe V3.1 Deep Provenance Audit / ${{ github.event.workflow_run.id || 'latest' }}
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1 Deep Calculation Lambda"
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - "src/strategies/genge_opportunity_discovery/v31_deep_provenance_audit.py"
+      - "tests/test_v31_deep_provenance_audit.py"
+      - ".github/workflows/genge-v31-deep-provenance-audit.yml"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: genge-v31-deep-provenance-audit
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install contract dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Validate provenance audit contract
+        run: |
+          python -m pytest -q tests/test_v31_deep_provenance_audit.py
+
+      - name: Resolve exact completed Lambda state
+        id: resolve
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          actual=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('data/deep_calculation/latest_status.json')
+          status=json.loads(p.read_text(encoding='utf-8'))
+          print(str(status.get('lambda_run_id') or ''))
+          PY
+          )
+          if [ "$EVENT_NAME" = "workflow_run" ]; then
+            expected="$WORKFLOW_RUN_ID"
+          else
+            expected="$actual"
+          fi
+          [[ "$expected" =~ ^[0-9]+$ ]] || { echo "invalid expected Lambda run id: $expected" >&2; exit 1; }
+          if [ "$actual" != "$expected" ]; then
+            echo "superseded=true" >> "$GITHUB_OUTPUT"
+            echo "expected_run_id=$expected" >> "$GITHUB_OUTPUT"
+            echo "Latest deep state already moved to Lambda $actual; audit event $expected is superseded."
+            exit 0
+          fi
+          echo "superseded=false" >> "$GITHUB_OUTPUT"
+          echo "expected_run_id=$expected" >> "$GITHUB_OUTPUT"
+          echo "Auditing terminal deep state for Lambda $expected"
+
+      - name: Audit every terminal hard-gate PASS and augment status
+        if: steps.resolve.outputs.superseded != 'true'
+        env:
+          EXPECTED_RUN_ID: ${{ steps.resolve.outputs.expected_run_id }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.v31_deep_provenance_audit \
+            --profiles-json data/deep_calculation/latest_profiles.json \
+            --status-json data/deep_calculation/latest_status.json \
+            --output-status /tmp/deep_status_augmented.json \
+            --output-audit /tmp/deep_provenance_audit.json \
+            --expected-lambda-run-id "$EXPECTED_RUN_ID"
+
+      - name: Persist provenance proof with optimistic replay
+        if: steps.resolve.outputs.superseded != 'true'
+        env:
+          EXPECTED_RUN_ID: ${{ steps.resolve.outputs.expected_run_id }}
+        run: |
+          set -euo pipefail
+          git config user.name "genge-deep-provenance-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            echo "provenance persistence replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            actual=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('data/deep_calculation/latest_status.json')
+          print(str(json.loads(p.read_text(encoding='utf-8')).get('lambda_run_id') or ''))
+          PY
+            )
+            if [ "$actual" != "$EXPECTED_RUN_ID" ]; then
+              echo "A newer Lambda $actual superseded audit target $EXPECTED_RUN_ID; leaving latest state untouched."
+              exit 0
+            fi
+            mkdir -p data/deep_calculation/history
+            cp /tmp/deep_status_augmented.json data/deep_calculation/latest_status.json
+            cp /tmp/deep_status_augmented.json "data/deep_calculation/history/${EXPECTED_RUN_ID}.json"
+            cp /tmp/deep_provenance_audit.json data/deep_calculation/latest_provenance_audit.json
+            cp /tmp/deep_provenance_audit.json "data/deep_calculation/history/${EXPECTED_RUN_ID}.provenance.json"
+            git add -f \
+              data/deep_calculation/latest_status.json \
+              data/deep_calculation/latest_provenance_audit.json \
+              "data/deep_calculation/history/${EXPECTED_RUN_ID}.json" \
+              "data/deep_calculation/history/${EXPECTED_RUN_ID}.provenance.json"
+            if git diff --cached --quiet; then
+              echo "Provenance proof already current"
+              exit 0
+            fi
+            git commit -m "Persist deep provenance audit ${EXPECTED_RUN_ID} [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved while persisting provenance proof; replaying" >&2
+          done
+          echo "provenance persistence failed after optimistic replay" >&2
+          exit 1
+
+      - name: Publish provenance audit summary
+        if: always() && steps.resolve.outputs.superseded != 'true'
+        run: |
+          echo "# GenGe V3.1 Deep Provenance Audit" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f /tmp/deep_provenance_audit.json ]; then
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          a=json.loads(Path('/tmp/deep_provenance_audit.json').read_text(encoding='utf-8'))
+          print(f"- profiles: **{a['profile_count']}**")
+          print(f"- hard gates: **{a['hard_gate_count']}**")
+          print(f"- PASS / UNKNOWN / FAIL: **{a['pass_gate_count']} / {a['unknown_gate_count']} / {a['fail_gate_count']}**")
+          print(f"- verified PASS: **{a['verified_pass_gate_count']}**")
+          print(f"- unverified PASS: **{a['unverified_pass_gate_count']}**")
+          print(f"- all PASS gates have verified evidence: **{a['all_pass_gates_have_verified_evidence']}**")
+          print("- UNKNOWN != PASS; no automatic Formal BUY; no auto trade.")
+          PY
+          fi
