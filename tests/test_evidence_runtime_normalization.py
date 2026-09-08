@@ -1,8 +1,30 @@
 from src.strategies.genge_opportunity_discovery.evidence_collectors import (
+    _LazyCninfoOrgIdMap,
     canonical_industry_name,
     normalize_sse_attachment_url,
     prepare_industry_alias_map,
 )
+
+
+class _FakeResponse:
+    def __init__(self, payload):
+        self._payload = payload
+
+    def raise_for_status(self):
+        return None
+
+    def json(self):
+        return self._payload
+
+
+class _FakeSession:
+    def __init__(self, payload):
+        self.payload = payload
+        self.calls = []
+
+    def post(self, url, **kwargs):
+        self.calls.append((url, kwargs))
+        return _FakeResponse(self.payload)
 
 
 def test_sse_disclosure_attachment_uses_static_host():
@@ -51,3 +73,28 @@ def test_original_industry_key_is_preserved_for_downstream_join():
     raw = "B09有色金属矿采选业"
     payload = prepare_industry_alias_map([raw])
     assert raw in payload["industries"]
+
+
+def test_cninfo_orgid_map_lazily_recovers_missing_shenzhen_code():
+    session = _FakeSession(
+        [
+            {"code": "001316", "orgId": "gssz0001316", "zwjc": "润贝航科"},
+            {"code": "001317", "orgId": "gssz0001317", "zwjc": "other"},
+        ]
+    )
+    mapping = _LazyCninfoOrgIdMap({}, session, 8)
+
+    assert mapping.get("001316") == "gssz0001316"
+    assert mapping.get("001316") == "gssz0001316"
+    assert len(session.calls) == 1
+    url, kwargs = session.calls[0]
+    assert url.endswith("/new/information/topSearch/query")
+    assert kwargs["data"] == {"keyWord": "001316", "maxNum": "10"}
+
+
+def test_cninfo_orgid_map_fails_closed_on_nonmatching_response():
+    session = _FakeSession([{"code": "001317", "orgId": "gssz0001317"}])
+    mapping = _LazyCninfoOrgIdMap({}, session, 8)
+    assert mapping.get("001316") is None
+    assert mapping.get("001316") is None
+    assert len(session.calls) == 1
