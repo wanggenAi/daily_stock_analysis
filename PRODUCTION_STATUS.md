@@ -1,16 +1,16 @@
 # GenGe V3.1.1 Production Status
 
 - Health: **HEALTHY**
-- Main SHA: `3711ac47c750b1de3409399c1bcfa8d874a2dd8b`
-- Canonical source SHA: `4bc94b6ae3803e5d9fad06dcad162ba6be02e1f5`
+- Main SHA: `66885274f8c7a049b3e29238baf8cfa422b974ef`
+- Canonical source SHA: `09b7e1c708bafb172608ad3cb1c569f42a3f6906`
 - Drift: `CODE_DRIFT_MAIN_ADVANCED`
-- Canonical snapshot: `058f6b82cb45587969d7`
-- Source run: `34177769027`
+- Canonical snapshot: `0c978456594c8fdd147f`
+- Source run: `34189556356`
 - Source workflow: `GenGe V3.1.1 Every-Industry Research`
 - Latest trade date: `2026-09-07`
 - Holdings: `HOLDINGS_IN_SYNC`
 - Holding Formal actions usable: `True`
-- Candidate lifecycle active: `106`
+- Candidate lifecycle active: `108`
 
 ## Formal Actions
 
@@ -21,12 +21,12 @@
 ## Research Learning
 
 - P0 deep-review priorities: **4**
-- P1 deep-review priorities: **8**
+- P1 deep-review priorities: **5**
 - Visible mapping gaps: **183**
 - Price/Value tracked securities: **100**
-- Formal outcome records: **397**
+- Formal outcome records: **401**
 - Observed 5/20/60 horizons: **230**
-- Pending 5/20/60 horizons: **961**
+- Pending 5/20/60 horizons: **973**
 - Automatic V3.1.1 parameter tuning: **DISABLED**
 
 > Formal actions come only from the finalized canonical. Research priority may reorder Deep Review only; it cannot filter Broad Discovery, change frozen gates, or overwrite Formal actions.
