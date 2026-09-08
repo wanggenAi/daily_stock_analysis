@@ -12,7 +12,7 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
-CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V4"
+CONTRACT_VERSION = "GEN_GE_V3_1_1_EVENT_DRIVEN_DEEP_REVIEW_TRIGGER_V5"
 FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 DOWNSTREAM_WORKFLOW = "genge-v31-industry-research.yml"
 HOLDING_SIGNIFICANT_MOVE_PCT = 3.0  # Mirrors the existing hourly RAISE threshold.
@@ -116,6 +116,58 @@ def _runbei_external_reunderwrite_required(priority_row: Mapping[str, Any]) -> b
     return True
 
 
+def _stable_tokens(values: Any) -> list[str]:
+    """Normalize evidence-gap values for semantic, order-independent dedupe."""
+
+    if values in (None, ""):
+        return []
+    if isinstance(values, str):
+        values = [part.strip() for part in values.replace(",", ";").split(";") if part.strip()]
+    elif not isinstance(values, (list, tuple, set)):
+        values = [values]
+
+    tokens: list[str] = []
+    for item in values:
+        if isinstance(item, Mapping):
+            tokens.append(json.dumps(dict(item), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+        elif isinstance(item, (list, tuple)):
+            tokens.append(json.dumps(list(item), ensure_ascii=False, sort_keys=True, separators=(",", ":")))
+        else:
+            token = str(item).strip()
+            if token:
+                tokens.append(token)
+    return sorted(set(tokens))
+
+
+def _runbei_signal_state(priority_row: Mapping[str, Any]) -> dict[str, Any] | None:
+    """Return stable Runbei research state used by exact-signal dedupe.
+
+    Raw similarity scores can wiggle harmlessly between runs. Evidence recovery is
+    different: when a missing Hard Gate or mapping gap disappears, the state must
+    change so a previously finalized exact signal can be re-underwritten again.
+    """
+
+    if not _runbei_external_reunderwrite_required(priority_row):
+        return None
+    similarity = float(priority_row.get("success_archetype_similarity_score"))
+    missing_evidence = sorted(
+        set(
+            _stable_tokens(priority_row.get("missing_evidence"))
+            + _stable_tokens(priority_row.get("near_buy_missing_evidence_items"))
+        )
+    )
+    return {
+        "archetype_id": str(priority_row.get("success_archetype_id") or ""),
+        "similarity_band": "85_PLUS" if similarity >= 85.0 else "70_TO_85",
+        "near_buy_evidence_recovery_tier": str(priority_row.get("near_buy_evidence_recovery_tier") or ""),
+        "missing_evidence": missing_evidence,
+        "mapping_gaps": _stable_tokens(priority_row.get("mapping_gaps")),
+        "source_financial_review_status": str(priority_row.get("success_archetype_source_financial_review_status") or ""),
+        "financial_report_date": str(priority_row.get("success_archetype_financial_report_date") or ""),
+        "financial_disclosure_date": str(priority_row.get("success_archetype_financial_disclosure_date") or ""),
+    }
+
+
 def _trigger_reasons(priority_row: Mapping[str, Any]) -> list[str]:
     conclusion = str(priority_row.get("hourly_research_conclusion") or "")
     priority = str(priority_row.get("priority") or "")
@@ -188,6 +240,7 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
             "material_weakening_evidence_count_72h": int(hourly_row.get("material_weakening_evidence_count_72h") or 0),
             "material_strengthening_evidence_count_72h": int(hourly_row.get("material_strengthening_evidence_count_72h") or 0),
         }
+        runbei_signal_state = _runbei_signal_state(row)
         trigger = {
             "code": code,
             "name": str(row.get("name") or hourly_row.get("name") or ""),
@@ -211,6 +264,7 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
             "success_archetype_evidence_coverage": row.get("success_archetype_evidence_coverage"),
             "success_archetype_source_quant_status": str(row.get("success_archetype_source_quant_status") or ""),
             "near_buy_evidence_recovery_tier": row.get("near_buy_evidence_recovery_tier"),
+            "success_archetype_signal_state": runbei_signal_state,
         }
         triggers.append(trigger)
         digest_rows.append(
@@ -226,11 +280,7 @@ def build_decision(priority: Mapping[str, Any], hourly: Mapping[str, Any]) -> di
                 "material_evidence_ids": trigger["material_evidence_ids"],
                 "signal_counts": trigger["signal_counts"],
                 "price_signal_date": trigger["price_signal_date"],
-                "success_archetype_id": trigger["success_archetype_id"],
-                "success_archetype_similarity_score": trigger["success_archetype_similarity_score"],
-                "success_archetype_evidence_coverage": trigger["success_archetype_evidence_coverage"],
-                "success_archetype_source_quant_status": trigger["success_archetype_source_quant_status"],
-                "near_buy_evidence_recovery_tier": trigger["near_buy_evidence_recovery_tier"],
+                "success_archetype_signal_state": trigger["success_archetype_signal_state"],
             }
         )
 

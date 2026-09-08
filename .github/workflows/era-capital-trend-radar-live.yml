@@ -1,0 +1,183 @@
+name: Era Capital Trend Radar Live
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 0,6,12,18 * * *'
+  push:
+    branches: [main]
+    paths:
+      - 'src/era_radar/live_*.py'
+      - 'src/era_radar/research_handoff_queue.py'
+      - 'config/era_radar_industry_links.json'
+      - 'tools/run_era_radar_live.py'
+      - '.github/workflows/era-capital-trend-radar-live.yml'
+  pull_request:
+    paths:
+      - 'src/era_radar/live_*.py'
+      - 'src/era_radar/research_handoff_queue.py'
+      - 'src/era_radar/source_registry.py'
+      - 'config/era_radar_industry_links.json'
+      - 'tools/run_era_radar_live.py'
+      - 'tests/test_era_radar_live_*.py'
+      - 'tests/test_era_radar_research_handoff_queue.py'
+      - '.github/workflows/era-capital-trend-radar-live.yml'
+
+concurrency:
+  group: era-capital-trend-radar-live-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  deterministic-contracts:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install repository test dependencies
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+      - name: Validate live collectors and research-only handoff without network
+        run: |
+          python -m pytest -q \
+            tests/test_era_radar_live_miit.py \
+            tests/test_era_radar_live_production.py \
+            tests/test_era_radar_research_handoff_queue.py \
+            tests/test_era_radar_handoff.py \
+            tests/test_era_radar_pipeline.py
+
+  live-production:
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    needs: deterministic-contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install production dependencies
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+
+      - name: Collect, hand off and persist with optimistic replay
+        id: persist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'era-radar-live-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+          echo 'should_dispatch=false' >> "$GITHUB_OUTPUT"
+
+          for attempt in 1 2 3 4; do
+            echo "Era Radar production replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fdx -- reports/era_radar_live
+            mkdir -p reports/era_radar_live
+
+            set +e
+            python tools/run_era_radar_live.py --output-dir data/era_radar \
+              | tee reports/era_radar_live/live_result.json
+            live_rc=${PIPESTATUS[0]}
+            set -e
+            if [ "$live_rc" -eq 2 ]; then
+              echo 'Live official-source collection failed closed; durable Era Radar truth is unchanged.' >&2
+              exit 1
+            fi
+            test "$live_rc" -eq 0
+            test -f data/era_radar/latest.json
+
+            python -m src.era_radar.research_handoff_queue \
+              --radar-root data/era_radar \
+              --company-map data/research_mapping/company_industry_map.csv \
+              --links config/era_radar_industry_links.json \
+              --output data/era_radar/research_handoff/latest.json \
+              | tee reports/era_radar_live/handoff_result.json
+
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          radar=json.loads(Path('data/era_radar/latest.json').read_text(encoding='utf-8'))
+          handoff=json.loads(Path('data/era_radar/research_handoff/latest.json').read_text(encoding='utf-8'))
+          assert radar['formal_trading_authority'] is False
+          assert radar['no_auto_trade'] is True
+          assert handoff['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert handoff['formal_action_recomputed'] is False
+          assert handoff['formal_action_eligible'] is False
+          assert handoff['automatic_promotion_allowed'] is False
+          assert handoff['unknown_mapping_is_match'] is False
+          assert handoff['no_auto_trade'] is True
+          PY
+
+            git add -f data/era_radar
+            if git diff --cached --quiet; then
+              echo 'No semantic Era Radar / handoff change to persist.'
+              exit 0
+            fi
+
+            queue_count=$(python - <<'PY'
+          import json
+          from pathlib import Path
+          print(int(json.loads(Path('data/era_radar/research_handoff/latest.json').read_text(encoding='utf-8'))['queue_count']))
+          PY
+            )
+            git commit -m 'Persist live Era Radar research state [skip ci]'
+            if git push origin HEAD:main; then
+              echo "queue_count=${queue_count}" >> "$GITHUB_OUTPUT"
+              if [ "$queue_count" -gt 0 ]; then
+                echo 'should_dispatch=true' >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+            echo 'main moved while persisting Era Radar; replaying from newest main.' >&2
+          done
+
+          echo 'Era Radar persistence failed after 4 optimistic replay attempts.' >&2
+          exit 1
+
+      - name: Launch full authority research for new qualified Era handoffs
+        if: steps.persist.outputs.should_dispatch == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-v311-event-driven-authority-handoff.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Qualified Era handoff count: ${{ steps.persist.outputs.queue_count }}"
+          echo 'Dispatched existing full Discovery -> Every-Industry -> Production Finalizer authority chain.'
+
+      - name: Upload Era Radar audit artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: era-radar-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            reports/era_radar_live/
+            data/era_radar/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Publish summary
+        if: always()
+        run: |
+          echo '# Era Capital Trend Radar Live' >> "$GITHUB_STEP_SUMMARY"
+          echo '- sources: World Bank structural indicators + MIIT policy + MIIT industrial-operation evidence' >> "$GITHUB_STEP_SUMMARY"
+          echo '- publication: fail closed if any configured collector fails' >> "$GITHUB_STEP_SUMMARY"
+          echo '- A-share mapping: explicit trend links + reviewed company-industry mappings only' >> "$GITHUB_STEP_SUMMARY"
+          echo '- qualified new handoffs launch the existing full authority research chain' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Formal action authority: unchanged; no auto-trade' >> "$GITHUB_STEP_SUMMARY"

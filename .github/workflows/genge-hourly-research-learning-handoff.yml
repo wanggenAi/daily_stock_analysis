@@ -1,0 +1,43 @@
+name: GenGe Hourly Research Learning Handoff
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Hourly Deep Overlay"
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-hourly-research-learning-handoff
+  cancel-in-progress: false
+
+jobs:
+  dispatch-research-learning:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch Research Learning on fresh hourly state
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-research-learning.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Fresh Hourly Deep Overlay handed to Research Learning."
+          echo "Research Learning will rebuild research_priority from the latest hourly state; its existing completion event then evaluates Event-Driven Deep Review."
+
+      - name: Publish handoff summary
+        run: |
+          echo "# GenGe Hourly → Research Learning Handoff" >> "$GITHUB_STEP_SUMMARY"
+          echo "- source: successful GenGe V3.1.1 Hourly Deep Overlay" >> "$GITHUB_STEP_SUMMARY"
+          echo "- target: GenGe V3.1.1 Research Learning" >> "$GITHUB_STEP_SUMMARY"
+          echo "- purpose: make PRICE_ATTRACTIVE research leads enter the existing authority re-underwrite chain without waiting for the daily learning schedule" >> "$GITHUB_STEP_SUMMARY"
+          echo "- authority: no Formal action is created here; Canonical / Finalizer authority is unchanged" >> "$GITHUB_STEP_SUMMARY"
