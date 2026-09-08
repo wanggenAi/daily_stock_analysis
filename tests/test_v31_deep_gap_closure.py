@@ -1,3 +1,8 @@
+from src.strategies.genge_opportunity_discovery.evidence_collectors import (
+    canonical_industry_name,
+    normalize_sse_attachment_url,
+    prepare_industry_alias_map,
+)
 from src.strategies.genge_opportunity_discovery.v31_deep_gap_closure import (
     close_profiles,
     infer_long_term_demand,
@@ -123,3 +128,16 @@ def test_all_resolved_profiles_finish_complete():
     assert status["complete_requested_count"] == 1
     assert status["evidence_exhausted_requested_count"] == 0
     assert status["unresolved_requested_gate_count"] == 0
+
+
+def test_sse_and_classified_industry_normalization_are_part_of_gap_closure_contract():
+    relative = "/disclosure/listedinfo/announcement/c/new/2026-08-20/603993_example.pdf"
+    assert normalize_sse_attachment_url(relative).startswith("https://static.sse.com.cn/disclosure/")
+    assert normalize_sse_attachment_url("https://www.sse.com.cn" + relative).startswith(
+        "https://static.sse.com.cn/disclosure/"
+    )
+    raw = "B09有色金属矿采选业"
+    assert canonical_industry_name(raw) == "有色金属矿采选业"
+    aliases = prepare_industry_alias_map([raw])["industries"][raw]["aliases"]
+    assert "有色金属矿采选业" in aliases
+    assert "有色金属" in aliases
