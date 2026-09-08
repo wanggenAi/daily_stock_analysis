@@ -89,9 +89,9 @@ def test_runbei_non_priority_quant_status_does_not_trigger() -> None:
     assert decision["dispatch_required"] is False
 
 
-def test_runbei_signal_digest_changes_when_material_recall_state_changes() -> None:
-    first = build_decision(_priority(similarity=85.9134), _hourly())
-    second = build_decision(_priority(similarity=87.0), _hourly())
+def test_runbei_signal_digest_changes_when_similarity_band_changes() -> None:
+    first = build_decision(_priority(similarity=84.999), _hourly())
+    second = build_decision(_priority(similarity=85.0), _hourly())
     assert first["signal_digest"] != second["signal_digest"]
 
 
