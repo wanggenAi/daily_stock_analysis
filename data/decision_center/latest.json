@@ -1,0 +1,446 @@
+{
+  "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
+  "generated_at": "2026-09-08T03:34:38+00:00",
+  "latest_trade_date": "2026-09-07",
+  "canonical_snapshot_id": "058f6b82cb45587969d7",
+  "formal_action_source": "FINALIZED_CANONICAL_ONLY",
+  "formal_action_recomputed": false,
+  "no_auto_trade": true,
+  "decision_questions": [
+    "我手里的股票，现在该怎么办？",
+    "世界和社会正在往哪里走，钱可能流向哪里，A股该研究什么？",
+    "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？"
+  ],
+  "executive_summary": {
+    "holding_count": 4,
+    "holdings_complete_deep_review": 0,
+    "holdings_deep_review_gaps": 4,
+    "validated_macro_handoffs": 0,
+    "new_buy_now_count": 0,
+    "new_wait_price_count": 0,
+    "terminal_reject_count": 500
+  },
+  "pillar_1_holdings_deep_analysis": {
+    "question": "我手里的股票，现在该怎么办？",
+    "status": "CONFIRMED",
+    "holding_count": 4,
+    "explicit_deep_review_count": 1,
+    "complete_deep_review_count": 0,
+    "deep_review_gap_count": 4,
+    "rows": [
+      {
+        "code": "600406",
+        "name": "国电南瑞",
+        "quantity": 200,
+        "average_cost": 23.1253,
+        "current_price": 22.51,
+        "pnl_pct": -2.66,
+        "formal_action": "REDUCE_25",
+        "investor_action": "减仓25%",
+        "neutral_value": 17.457807170543802,
+        "valuation_confidence": "HIGH",
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+        "holding_add_authorized": false,
+        "deep_review": {
+          "status": "DEEP_REVIEW_MISSING",
+          "complete": false,
+          "pass_count": 0,
+          "fail_count": 0,
+          "unknown_count": 0,
+          "gates": []
+        }
+      },
+      {
+        "code": "001316",
+        "name": "润贝航科",
+        "quantity": 200,
+        "average_cost": 25.745,
+        "current_price": 29.62,
+        "pnl_pct": 15.05,
+        "formal_action": "HOLD_REVIEW",
+        "investor_action": "持有观察",
+        "neutral_value": 49.36957125214809,
+        "valuation_confidence": "LOW",
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+        "holding_add_authorized": false,
+        "deep_review": {
+          "status": "DEEP_REVIEW_MISSING",
+          "complete": false,
+          "pass_count": 0,
+          "fail_count": 0,
+          "unknown_count": 0,
+          "gates": []
+        }
+      },
+      {
+        "code": "601318",
+        "name": "中国平安",
+        "quantity": 300,
+        "average_cost": 57.1672,
+        "current_price": 56.32,
+        "pnl_pct": -1.48,
+        "formal_action": "HOLD",
+        "investor_action": "继续持有",
+        "neutral_value": 83.07,
+        "valuation_confidence": "MEDIUM",
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.678<1.00",
+        "holding_add_authorized": false,
+        "deep_review": {
+          "status": "DEEP_REVIEW_MISSING",
+          "complete": false,
+          "pass_count": 0,
+          "fail_count": 0,
+          "unknown_count": 0,
+          "gates": []
+        }
+      },
+      {
+        "code": "603993",
+        "name": "洛阳钼业",
+        "quantity": 900,
+        "average_cost": 18.9114,
+        "current_price": 18.98,
+        "pnl_pct": 0.36,
+        "formal_action": "HOLD",
+        "investor_action": "继续持有；可分批加仓1手",
+        "neutral_value": 28.12766979232306,
+        "valuation_confidence": "HIGH",
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "holding_add_authorized": true,
+        "deep_review": {
+          "status": "DEEP_REVIEW_PARTIAL",
+          "complete": false,
+          "pass_count": 4,
+          "fail_count": 0,
+          "unknown_count": 1,
+          "gates": [
+            {
+              "gate": "predictability",
+              "status": "UNKNOWN",
+              "confidence": "HIGH",
+              "rationale": "Production scale and operating execution are strong, but commodity-price, DRC policy/geopolitical and resource-cycle sensitivity remain material. Current primary evidence does not justify converting business predictability to PASS.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "long_term_demand",
+              "status": "PASS",
+              "confidence": "HIGH",
+              "rationale": "Copper is the dominant mining revenue driver for CMOC, while the IEA 2026 outlook projects strong copper demand growth through 2040 and a persistent base-case primary supply gap through 2035.",
+              "evidence_count": 2
+            },
+            {
+              "gate": "moat",
+              "status": "PASS",
+              "confidence": "HIGH",
+              "rationale": "Primary company evidence identifies TFM and KFM as world-class copper-cobalt assets; CMOC is a top-ten copper producer and the world's largest cobalt producer, providing resource scale and asset-quality advantages that are difficult to replicate quickly.",
+              "evidence_count": 2
+            },
+            {
+              "gate": "financial_safety",
+              "status": "PASS",
+              "confidence": "HIGH",
+              "rationale": "Official results show strong operating cash flow, falling or controlled leverage in recent reporting periods and sustained profitability. The production valuation row must also contain a current PIT financial review before this PASS is accepted.",
+              "evidence_count": 3
+            },
+            {
+              "gate": "earnings_authenticity",
+              "status": "PASS",
+              "confidence": "HIGH",
+              "rationale": "The same-run PIT financial review reports positive normalized core operating profit, high-confidence earnings normalization and strong operating-cash conversion. PASS is conditional on machine-verifying those fields in the current valuation research row.",
+              "evidence_count": 1
+            }
+          ]
+        }
+      }
+    ]
+  },
+  "pillar_2_world_social_market_capital_map": {
+    "question": "世界和社会正在往哪里走，钱可能流向哪里，A股该研究什么？",
+    "research_as_of": "2026-09-08T02:57:40Z",
+    "direct_fund_flow_claimed": false,
+    "structural_world_social_trends": [
+      {
+        "trend_id": "digital_infrastructure",
+        "lifecycle": "EMERGING",
+        "confidence_score": 33.69,
+        "structural_score": 57.06,
+        "industrial_score": 62.5,
+        "cyclical_score": 67.5,
+        "evidence_count": 3,
+        "independent_families": 2,
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 91.78,
+          "financial_crowding": 50.0,
+          "global_confirmation": 67.33,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 100.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 74.76
+        }
+      },
+      {
+        "trend_id": "software_digital_economy",
+        "lifecycle": "EMERGING",
+        "confidence_score": 16.09,
+        "structural_score": 50.0,
+        "industrial_score": 62.5,
+        "cyclical_score": 67.5,
+        "evidence_count": 2,
+        "independent_families": 1,
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 92.5,
+          "financial_crowding": 50.0,
+          "global_confirmation": 50.0,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 100.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "automotive_industry",
+        "lifecycle": "EMERGING",
+        "confidence_score": 14.89,
+        "structural_score": 50.0,
+        "industrial_score": 58.33,
+        "cyclical_score": 61.66,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [
+          "汽车"
+        ],
+        "components": {
+          "evidence_quality": 78.3,
+          "financial_crowding": 50.0,
+          "global_confirmation": 50.0,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 83.3,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "demographic_longevity",
+        "lifecycle": "EMERGING",
+        "confidence_score": 14.64,
+        "structural_score": 60.32,
+        "industrial_score": 50.0,
+        "cyclical_score": 50.0,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [
+          "医药"
+        ],
+        "components": {
+          "evidence_quality": 65.72,
+          "financial_crowding": 50.0,
+          "global_confirmation": 63.75,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 69.65,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "urbanization_services",
+        "lifecycle": "EMERGING",
+        "confidence_score": 14.18,
+        "structural_score": 58.08,
+        "industrial_score": 50.0,
+        "cyclical_score": 50.0,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 62.3,
+          "financial_crowding": 50.0,
+          "global_confirmation": 60.77,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 65.38,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "research_intensity",
+        "lifecycle": "EMERGING",
+        "confidence_score": 13.95,
+        "structural_score": 55.04,
+        "industrial_score": 50.0,
+        "cyclical_score": 50.0,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 64.16,
+          "financial_crowding": 50.0,
+          "global_confirmation": 62.39,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 67.7
+        }
+      },
+      {
+        "trend_id": "advanced_materials",
+        "lifecycle": "EMERGING",
+        "confidence_score": 13.91,
+        "structural_score": 50.0,
+        "industrial_score": 53.63,
+        "cyclical_score": 50.0,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 68.14,
+          "financial_crowding": 50.0,
+          "global_confirmation": 50.0,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 74.18,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "advanced_manufacturing",
+        "lifecycle": "EMERGING",
+        "confidence_score": 11.11,
+        "structural_score": 48.19,
+        "industrial_score": 45.69,
+        "cyclical_score": 45.69,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [
+          "专用设备",
+          "电气机械",
+          "工程机械"
+        ],
+        "components": {
+          "evidence_quality": 36.19,
+          "financial_crowding": 50.0,
+          "global_confirmation": 37.92,
+          "industrial_capex": 32.74,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "electrification_infrastructure",
+        "lifecycle": "EMERGING",
+        "confidence_score": 0.0,
+        "structural_score": 50.0,
+        "industrial_score": 50.0,
+        "cyclical_score": 50.0,
+        "evidence_count": 1,
+        "independent_families": 0,
+        "a_share_research_industries": [
+          "电力设备"
+        ],
+        "components": {
+          "evidence_quality": 50.0,
+          "financial_crowding": 50.0,
+          "global_confirmation": 50.0,
+          "industrial_capex": 50.0,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        }
+      }
+    ],
+    "tactical_market_behavior_proxy": [
+      {
+        "industry": "A05农、林、牧、渔专业及辅助性活动",
+        "status": "STRONG",
+        "score": 100.0
+      },
+      {
+        "industry": "O81机动车、电子产品和日用产品修理业",
+        "status": "STRONG",
+        "score": 100.0
+      },
+      {
+        "industry": "A01农业",
+        "status": "STRONG",
+        "score": 99.95
+      },
+      {
+        "industry": "A04渔业",
+        "status": "STRONG",
+        "score": 96.98
+      },
+      {
+        "industry": "A02林业",
+        "status": "STRONG",
+        "score": 96.1
+      },
+      {
+        "industry": "H62餐饮业",
+        "status": "STRONG",
+        "score": 94.29
+      },
+      {
+        "industry": "N76水利管理业",
+        "status": "STRONG",
+        "score": 94.1
+      },
+      {
+        "industry": "H61住宿业",
+        "status": "STRONG",
+        "score": 88.42
+      }
+    ],
+    "validated_a_share_research_handoffs": [],
+    "validated_handoff_count": 0,
+    "intersection_status": "NO_VALIDATED_A_SHARE_HANDOFF",
+    "interpretation_rule": "结构趋势回答中长期需求/利润池可能去哪里；市场行为代理回答近期风险偏好在哪里；只有经过映射和后续全权限深算的交集，才能进入个股决策。"
+  },
+  "pillar_3_deep_opportunities": {
+    "question": "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
+    "buy_now": [],
+    "wait_price": [],
+    "terminal_reject_count": 500,
+    "invalid_unauthorized_buy_count": 0,
+    "macro_research_handoffs": [],
+    "actionable_count": 0,
+    "display_rule": "只展示通过终端研究形成 BUY/WAIT_PRICE 的个股；REJECT 只汇总数量和审计，不淹没最终决策页面。",
+    "authority_rule": "BUY 必须是既有 Formal/Production BUY 的镜像；研究趋势和深算上下文不能自行创造 BUY。"
+  },
+  "decision_readiness": {
+    "portfolio_actions_available": true,
+    "all_holdings_explicit_deep_review_complete": false,
+    "structural_trend_evidence_available": true,
+    "validated_macro_to_a_share_handoff_available": false,
+    "terminal_opportunity_result_available": true,
+    "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。"
+  }
+}
