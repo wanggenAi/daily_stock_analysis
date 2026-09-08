@@ -1,0 +1,34 @@
+name: GenGe V3.1 Evidence Change Trigger
+
+run-name: GenGe V3.1 Evidence Change Trigger / ${{ github.sha }}
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/strategies/genge_opportunity_discovery/evidence_collectors/**"
+      - "config/industry_alias_map.yaml"
+      - ".github/workflows/genge-v31-evidence-change-trigger.yml"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-v31-evidence-change-trigger-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch-deep-calculation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch Deep Calculation Lambda immediately
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-v31-deep-calculation-lambda.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f trigger_source="EVIDENCE_LAYER_CHANGE"
