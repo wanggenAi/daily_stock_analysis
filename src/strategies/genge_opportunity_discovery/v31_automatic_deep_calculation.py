@@ -206,6 +206,36 @@ def _apply_machine_reviews(rows: list[dict[str, Any]], valuation_rows: list[dict
     return output
 
 
+def _prepare_profile_reverification(
+    rows: list[dict[str, Any]], explicit_config: Mapping[str, Any]
+) -> tuple[list[dict[str, Any]], int]:
+    """Force profile-backed upstream PASS values through reviewed evidence again.
+
+    A PASS already present in the candidate queue is not sufficient provenance for
+    the runtime deep-review profile. If this repository contains an explicit gate
+    review for that code, clear only the upstream PASS to UNKNOWN so the explicit
+    verifier must re-establish it from HIGH-confidence evidence and any declared
+    same-run machine checks. Existing FAIL values are intentionally preserved.
+    """
+    profiles = explicit_config.get("profiles") if isinstance(explicit_config.get("profiles"), Mapping) else {}
+    output: list[dict[str, Any]] = []
+    cleared = 0
+    for source in rows:
+        row = dict(source)
+        code = _code(row.get("code") or row.get("stock_code") or row.get("symbol"))
+        profile = profiles.get(code) if isinstance(profiles, Mapping) else None
+        profile_gates = profile.get("gates") if isinstance(profile, Mapping) else None
+        if isinstance(profile_gates, Mapping):
+            for gate, field in HARD_GATE_FIELDS.items():
+                if not isinstance(profile_gates.get(gate), Mapping):
+                    continue
+                if _text(row.get(field)).upper() == "PASS":
+                    row[field] = "UNKNOWN"
+                    cleared += 1
+        output.append(row)
+    return output, cleared
+
+
 def _decode_provenance(row: Mapping[str, Any], gate: str) -> tuple[str, str, list[dict[str, Any]], str]:
     explicit_key = f"v31_deep_review_{gate}_provenance"
     automatic_key = f"v31_auto_deep_review_{gate}_provenance"
@@ -270,6 +300,9 @@ def calculate_rows(
     trigger_source: str = "UNKNOWN",
 ) -> tuple[list[dict[str, Any]], dict[str, Any], dict[str, Any]]:
     machine_reviewed = _apply_machine_reviews(candidate_rows, valuation_rows)
+    machine_reviewed, reverified_upstream_pass_count = _prepare_profile_reverification(
+        machine_reviewed, explicit_config
+    )
     reviewed, explicit_summary = apply_explicit_reviews(machine_reviewed, valuation_rows, explicit_config)
     profile_payload = _profiles(reviewed)
 
@@ -304,6 +337,7 @@ def calculate_rows(
         "partial_requested_count": len(selected_profiles) - complete_count,
         "unresolved_requested_gate_count": unknown_count,
         "explicit_profile_applied_count": explicit_summary.get("profile_applied_count", 0),
+        "reverified_upstream_pass_count": reverified_upstream_pass_count,
         "hard_gate_passed_count": sum(str(row.get("v31_hard_gates_passed")).lower() == "true" for row in reviewed),
         "formal_trading_authority": False,
         "automatic_formal_buy_allowed": False,
@@ -317,6 +351,7 @@ def calculate_rows(
             "trigger_source": str(trigger_source or "UNKNOWN"),
             "execution_status": "SUCCESS",
             "research_outcome": status["research_outcome"],
+            "reverified_upstream_pass_count": reverified_upstream_pass_count,
         }
     )
     return reviewed, profile_payload, status
