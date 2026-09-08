@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-08T04:15:03+00:00",
+  "generated_at": "2026-09-08T04:16:41+00:00",
   "latest_trade_date": "2026-09-07",
   "canonical_snapshot_id": "058f6b82cb45587969d7",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -19,15 +19,15 @@
     "new_buy_now_count": 0,
     "new_wait_price_count": 0,
     "terminal_reject_count": 500,
-    "deep_calculation_execution_status": "NOT_AVAILABLE",
-    "deep_calculation_research_outcome": "NOT_AVAILABLE",
-    "deep_calculation_unresolved_gate_count": 0
+    "deep_calculation_execution_status": "SUCCESS",
+    "deep_calculation_research_outcome": "PARTIAL_GAPS_REMAIN",
+    "deep_calculation_unresolved_gate_count": 19
   },
   "pillar_1_holdings_deep_analysis": {
     "question": "我手里的股票，现在该怎么办？",
     "status": "CONFIRMED",
     "holding_count": 4,
-    "explicit_deep_review_count": 1,
+    "explicit_deep_review_count": 4,
     "complete_deep_review_count": 0,
     "deep_review_gap_count": 4,
     "rows": [
@@ -45,12 +45,48 @@
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
         "holding_add_authorized": false,
         "deep_review": {
-          "status": "DEEP_REVIEW_MISSING",
+          "status": "DEEP_REVIEW_PARTIAL",
           "complete": false,
           "pass_count": 0,
           "fail_count": 0,
-          "unknown_count": 0,
-          "gates": []
+          "unknown_count": 5,
+          "gates": [
+            {
+              "gate": "earnings_authenticity",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "financial_safety",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "long_term_demand",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "moat",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "predictability",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            }
+          ]
         }
       },
       {
@@ -67,12 +103,48 @@
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
         "holding_add_authorized": false,
         "deep_review": {
-          "status": "DEEP_REVIEW_MISSING",
+          "status": "DEEP_REVIEW_PARTIAL",
           "complete": false,
-          "pass_count": 0,
+          "pass_count": 2,
           "fail_count": 0,
-          "unknown_count": 0,
-          "gates": []
+          "unknown_count": 3,
+          "gates": [
+            {
+              "gate": "earnings_authenticity",
+              "status": "PASS",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT evidence verifies positive normalized operating profit, positive operating cash flow, strong cash conversion and HIGH-confidence earnings quality.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "financial_safety",
+              "status": "PASS",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT financial review is OK with HIGH earnings-quality confidence, positive normalized operating profit and operating cash flow, cash conversion >= 0.80, and earnings-quality score >= 70.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "long_term_demand",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "moat",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "predictability",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            }
+          ]
         }
       },
       {
@@ -89,12 +161,48 @@
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.678<1.00",
         "holding_add_authorized": false,
         "deep_review": {
-          "status": "DEEP_REVIEW_MISSING",
+          "status": "DEEP_REVIEW_PARTIAL",
           "complete": false,
           "pass_count": 0,
           "fail_count": 0,
-          "unknown_count": 0,
-          "gates": []
+          "unknown_count": 5,
+          "gates": [
+            {
+              "gate": "earnings_authenticity",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "financial_safety",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "long_term_demand",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "moat",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "predictability",
+              "status": "UNKNOWN",
+              "confidence": "MACHINE",
+              "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+              "evidence_count": 1
+            }
+          ]
         }
       },
       {
@@ -118,10 +226,17 @@
           "unknown_count": 1,
           "gates": [
             {
-              "gate": "predictability",
-              "status": "UNKNOWN",
-              "confidence": "HIGH",
-              "rationale": "Production scale and operating execution are strong, but commodity-price, DRC policy/geopolitical and resource-cycle sensitivity remain material. Current primary evidence does not justify converting business predictability to PASS.",
+              "gate": "earnings_authenticity",
+              "status": "PASS",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT evidence verifies positive normalized operating profit, positive operating cash flow, strong cash conversion and HIGH-confidence earnings quality.",
+              "evidence_count": 1
+            },
+            {
+              "gate": "financial_safety",
+              "status": "PASS",
+              "confidence": "MACHINE",
+              "rationale": "Same-run PIT financial review is OK with HIGH earnings-quality confidence, positive normalized operating profit and operating cash flow, cash conversion >= 0.80, and earnings-quality score >= 70.",
               "evidence_count": 1
             },
             {
@@ -139,17 +254,10 @@
               "evidence_count": 2
             },
             {
-              "gate": "financial_safety",
-              "status": "PASS",
+              "gate": "predictability",
+              "status": "UNKNOWN",
               "confidence": "HIGH",
-              "rationale": "Official results show strong operating cash flow, falling or controlled leverage in recent reporting periods and sustained profitability. The production valuation row must also contain a current PIT financial review before this PASS is accepted.",
-              "evidence_count": 3
-            },
-            {
-              "gate": "earnings_authenticity",
-              "status": "PASS",
-              "confidence": "HIGH",
-              "rationale": "The same-run PIT financial review reports positive normalized core operating profit, high-confidence earnings normalization and strong operating-cash conversion. PASS is conditional on machine-verifying those fields in the current valuation research row.",
+              "rationale": "Production scale and operating execution are strong, but commodity-price, DRC policy/geopolitical and resource-cycle sensitivity remain material. Current primary evidence does not justify converting business predictability to PASS.",
               "evidence_count": 1
             }
           ]
@@ -445,34 +553,34 @@
     "validated_macro_to_a_share_handoff_available": false,
     "terminal_opportunity_result_available": true,
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
-    "deep_calculation_last_run_completed": false,
-    "deep_calculation_last_run_successful": false,
+    "deep_calculation_last_run_completed": true,
+    "deep_calculation_last_run_successful": true,
     "deep_calculation_requested_research_complete": false
   },
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V1",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "",
-    "lambda_run_attempt": "",
-    "source_run_id": "",
-    "trigger_source": "",
-    "generated_at": "",
-    "run_state": "NOT_AVAILABLE",
-    "execution_status": "NOT_AVAILABLE",
-    "research_outcome": "NOT_AVAILABLE",
-    "requested_count": 0,
-    "processed_requested_count": 0,
+    "lambda_run_id": "34186237645",
+    "lambda_run_attempt": "1",
+    "source_run_id": "34177769027",
+    "trigger_source": "PUSH_CHANGE",
+    "generated_at": "2026-09-08T04:15:19+00:00",
+    "run_state": "COMPLETED",
+    "execution_status": "SUCCESS",
+    "research_outcome": "PARTIAL_GAPS_REMAIN",
+    "requested_count": 5,
+    "processed_requested_count": 5,
     "complete_requested_count": 0,
-    "partial_requested_count": 0,
-    "unresolved_requested_gate_count": 0,
+    "partial_requested_count": 5,
+    "unresolved_requested_gate_count": 19,
     "missing_requested_codes": [],
-    "execution_completed": false,
-    "execution_succeeded": false,
+    "execution_completed": true,
+    "execution_succeeded": true,
     "research_complete": false,
     "unknown_is_pass": false,
     "automatic_formal_buy_allowed": false,
     "no_auto_trade": true,
     "interpretation": "execution_succeeded only means the automatic calculation job finished successfully; research_complete requires every requested hard gate to be explicitly resolved."
   },
-  "deep_review_profile_source": "STATIC_BOOTSTRAP_FALLBACK"
+  "deep_review_profile_source": "AUTOMATIC_DEEP_CALCULATION"
 }

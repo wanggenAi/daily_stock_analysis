@@ -4,13 +4,13 @@
 
 ## 1. 我的持仓：深算后到底怎么办
 
-- 持仓：**4**；已有显式深算：**1**；深算完整：**0**；仍有 gap：**4**。
+- 持仓：**4**；已有显式深算：**4**；深算完整：**0**；仍有 gap：**4**。
 
 | 股票 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 深算状态 |
 |---|---:|---|---|---|---|
-| 国电南瑞 600406 | -1.88 | REDUCE_25 | **减仓25%** | HIGH | DEEP_REVIEW_MISSING |
-| 润贝航科 001316 | 15.05 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_MISSING |
-| 中国平安 601318 | -1.41 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_MISSING |
+| 国电南瑞 600406 | -1.88 | REDUCE_25 | **减仓25%** | HIGH | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 15.05 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | -1.41 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_PARTIAL |
 | 洛阳钼业 603993 | -2.86 | HOLD | **继续持有；可分批加仓1手** | HIGH | DEEP_REVIEW_PARTIAL |
 
 ## 2. 世界/社会/市场：钱可能在哪里
@@ -53,14 +53,14 @@ A05农、林、牧、渔专业及辅助性活动(100.00)、O81机动车、电子
 
 ## 自动深算运行状态
 
-- 深算资料来源：**STATIC_BOOTSTRAP_FALLBACK**
-- Lambda run：`—`
-- 触发来源：`—`
-- 计算执行：**NOT_AVAILABLE**
-- 运行状态：**NOT_AVAILABLE**
-- 研究完整性：**NOT_AVAILABLE**
-- 请求深算：**0**；已处理：**0**；完整：**0**；部分：**0**。
-- 尚未解决硬门槛：**0**。
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
+- Lambda run：`34186237645`
+- 触发来源：`PUSH_CHANGE`
+- 计算执行：**SUCCESS**
+- 运行状态：**COMPLETED**
+- 研究完整性：**PARTIAL_GAPS_REMAIN**
+- 请求深算：**5**；已处理：**5**；完整：**0**；部分：**5**。
+- 尚未解决硬门槛：**19**。
 - 请求但未进入本次研究工件：**无**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；剩余 UNKNOWN 会继续保持可见，不会冒充 PASS。
 
