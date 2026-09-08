@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from typing import Callable
@@ -19,6 +20,7 @@ from urllib.request import Request, urlopen
 from .collectors import RawObservation
 
 API_ROOT = "https://api.worldbank.org/v2"
+TRANSIENT_HTTP_STATUS = frozenset({408, 425, 429, 500, 502, 503, 504})
 
 
 @dataclass(frozen=True)
@@ -44,17 +46,58 @@ def iso_now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _fetch_json(url: str, *, timeout: float = 20.0) -> object:
+def _sleep_before_retry(attempt: int, backoff_seconds: float) -> None:
+    if backoff_seconds > 0:
+        time.sleep(backoff_seconds * attempt)
+
+
+def _fetch_json(
+    url: str,
+    *,
+    timeout: float = 20.0,
+    attempts: int = 3,
+    backoff_seconds: float = 1.0,
+) -> object:
+    """Fetch one allowlisted World Bank payload with bounded transient retry.
+
+    Retry never changes source authority or publication semantics. Permanent HTTP errors and
+    malformed JSON still fail immediately; an exhausted transient failure still causes the
+    whole live Era Radar collection to fail closed in ``run_live_production``.
+    """
     if not url.startswith(f"{API_ROOT}/"):
         raise ValueError("live World Bank collector refuses non-World-Bank URL")
+    if attempts < 1:
+        raise ValueError("World Bank fetch attempts must be >= 1")
+
     request = Request(url, headers={"User-Agent": "daily-stock-analysis-era-radar/1.0"})
-    try:
-        with urlopen(request, timeout=timeout) as response:  # noqa: S310 - allowlisted HTTPS root above
-            if response.status != 200:
-                raise RuntimeError(f"World Bank HTTP {response.status}")
-            return json.loads(response.read().decode("utf-8"))
-    except (HTTPError, URLError, TimeoutError, json.JSONDecodeError) as exc:
-        raise RuntimeError(f"World Bank collection failed: {exc}") from exc
+    last_error: BaseException | None = None
+    for attempt in range(1, attempts + 1):
+        try:
+            with urlopen(request, timeout=timeout) as response:  # noqa: S310 - allowlisted HTTPS root above
+                status = int(getattr(response, "status", 200))
+                if status != 200:
+                    if status in TRANSIENT_HTTP_STATUS and attempt < attempts:
+                        _sleep_before_retry(attempt, backoff_seconds)
+                        continue
+                    raise RuntimeError(f"World Bank HTTP {status}")
+                try:
+                    return json.loads(response.read().decode("utf-8"))
+                except json.JSONDecodeError as exc:
+                    raise RuntimeError(f"World Bank collection failed: invalid JSON: {exc}") from exc
+        except HTTPError as exc:
+            last_error = exc
+            if exc.code in TRANSIENT_HTTP_STATUS and attempt < attempts:
+                _sleep_before_retry(attempt, backoff_seconds)
+                continue
+            raise RuntimeError(f"World Bank collection failed: HTTP {exc.code}") from exc
+        except (URLError, TimeoutError) as exc:
+            last_error = exc
+            if attempt < attempts:
+                _sleep_before_retry(attempt, backoff_seconds)
+                continue
+            raise RuntimeError(f"World Bank collection failed after {attempts} attempts: {exc}") from exc
+
+    raise RuntimeError(f"World Bank collection failed after {attempts} attempts: {last_error}")
 
 
 def _series(code: str, *, fetcher: Callable[[str], object] = _fetch_json) -> list[tuple[int, float]]:
