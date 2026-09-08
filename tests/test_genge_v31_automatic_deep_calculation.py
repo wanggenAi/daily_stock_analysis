@@ -80,21 +80,64 @@ def test_machine_financial_gates_resolve_but_qualitative_gates_fail_closed():
     assert status["no_auto_trade"] is True
 
 
-def test_verified_explicit_profile_is_merged_after_automatic_machine_work():
+def test_verified_explicit_profile_reverifies_upstream_pass_with_provenance():
+    candidate = _candidate("603993", "洛阳钼业")
+    candidate["v31_long_term_demand_status"] = "PASS"
     reviewed, profiles, status = calculate_rows(
-        [_candidate("603993", "洛阳钼业")],
+        [candidate],
         [_strong_valuation("603993")],
         _explicit_config(),
         requested_codes=["603993"],
     )
     row = reviewed[0]
+    gate = profiles["profiles"]["603993"]["gates"]["long_term_demand"]
     assert row["v31_long_term_demand_status"] == "PASS"
     assert row["v31_financial_safety_status"] == "PASS"
     assert row["v31_earnings_authenticity_status"] == "PASS"
-    assert profiles["profiles"]["603993"]["gates"]["long_term_demand"]["source"] == "EXPLICIT_VERIFIED"
+    assert gate["source"] == "EXPLICIT_VERIFIED"
+    assert gate["rationale"] == "verified structural demand"
+    assert gate["evidence"]
     assert status["explicit_profile_applied_count"] == 1
+    assert status["reverified_upstream_pass_count"] == 1
     assert status["unresolved_requested_gate_count"] == 2
     assert status["automatic_formal_buy_allowed"] is False
+
+
+def test_profile_unknown_downgrades_upstream_pass_instead_of_preserving_unproven_pass():
+    config = _explicit_config()
+    config["profiles"]["603993"]["gates"]["long_term_demand"]["status"] = "UNKNOWN"
+    candidate = _candidate("603993", "洛阳钼业")
+    candidate["v31_long_term_demand_status"] = "PASS"
+
+    reviewed, profiles, status = calculate_rows(
+        [candidate],
+        [_strong_valuation("603993")],
+        config,
+        requested_codes=["603993"],
+    )
+
+    assert reviewed[0]["v31_long_term_demand_status"] == "UNKNOWN"
+    gate = profiles["profiles"]["603993"]["gates"]["long_term_demand"]
+    assert gate["status"] == "UNKNOWN"
+    assert gate["source"] == "EXPLICIT_VERIFIED"
+    assert status["reverified_upstream_pass_count"] == 1
+    assert status["unknown_is_pass"] is False
+
+
+def test_profile_reverification_never_clears_existing_fail():
+    candidate = _candidate("603993", "洛阳钼业")
+    candidate["v31_long_term_demand_status"] = "FAIL"
+
+    reviewed, _profiles, status = calculate_rows(
+        [candidate],
+        [_strong_valuation("603993")],
+        _explicit_config(),
+        requested_codes=["603993"],
+    )
+
+    assert reviewed[0]["v31_long_term_demand_status"] == "FAIL"
+    assert status["reverified_upstream_pass_count"] == 0
+    assert status["unknown_is_pass"] is False
 
 
 def test_missing_requested_code_is_visible_not_silently_dropped():

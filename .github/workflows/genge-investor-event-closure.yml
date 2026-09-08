@@ -235,21 +235,62 @@ jobs:
           assert all(row['event_result_state'] in valid for row in c['rows'])
           PY
 
-      - name: Persist explicit event closure
+      - name: Persist explicit event closure with optimistic replay
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git config user.name "genge-event-closure-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add -f data/investor_decision_dashboard/latest.json
-          git add INVESTOR_DECISION_DASHBOARD.md
-          if git diff --cached --quiet; then
-            echo "Explicit event closure already current"
-            exit 0
-          fi
-          git commit -m "Persist explicit event deep-review closure [skip ci]"
-          git push origin HEAD:main
+
+          for attempt in 1 2 3 4; do
+            echo "Event-closure replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+
+            args=(
+              --dashboard-json data/investor_decision_dashboard/latest.json
+              --dashboard-markdown INVESTOR_DECISION_DASHBOARD.md
+              --event-closure "$EVENT_CLOSURE"
+            )
+            if [ -s data/hourly_deep_overlay/latest.json ]; then
+              args+=(--hourly data/hourly_deep_overlay/latest.json)
+            fi
+            if [ -n "${EVENT_DECISION:-}" ] && [ -s "$EVENT_DECISION" ]; then
+              args+=(--event-decision "$EVENT_DECISION")
+            fi
+            python -m src.strategies.genge_opportunity_discovery.investor_event_closure "${args[@]}"
+
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('data/investor_decision_dashboard/latest.json').read_text(encoding='utf-8'))
+          c=p['event_deep_review_closure']
+          assert p['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert p['formal_action_recomputed'] is False
+          assert p['no_auto_trade'] is True
+          assert c['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert c['formal_action_recomputed'] is False
+          assert c['no_auto_trade'] is True
+          valid={'RAISE_ONLY','EVENT_TRIGGERED_RUNNING','EVENT_TRIGGERED_FINALIZED','EVENT_TRIGGERED_NO_CHANGE','EVENT_TRIGGER_FAILED'}
+          assert all(row['event_result_state'] in valid for row in c['rows'])
+          PY
+
+            git add -f data/investor_decision_dashboard/latest.json
+            git add INVESTOR_DECISION_DASHBOARD.md
+            if git diff --cached --quiet; then
+              echo "Explicit event closure already current"
+              exit 0
+            fi
+            git commit -m "Persist explicit event deep-review closure [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved while persisting event closure; replaying." >&2
+          done
+
+          echo "Event-closure persistence failed after 4 optimistic replay attempts." >&2
+          exit 1
 
       - name: Publish closure summary
         if: always()
