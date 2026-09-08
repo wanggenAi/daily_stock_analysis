@@ -1,15 +1,15 @@
 """Apply evidence-backed explicit V3.1 hard-gate reviews, fail closed.
 
 The frozen V3.1 contract deliberately refuses to infer judgement-heavy gates from
-legacy scores.  This executor fills the missing production stage between the deep
-review queue and the production shortlist.  It only accepts:
+legacy scores. This executor fills the missing production stage between the deep
+review queue and the production shortlist. It only accepts:
 
 * an already-explicit upstream PASS/FAIL; or
 * a repository-reviewed profile with HTTPS evidence, HIGH confidence, and any
   declared machine checks satisfied by the same-run PIT valuation row.
 
 A requested PASS whose evidence or machine checks cannot be verified remains
-UNKNOWN.  The module never creates Formal BUY authority and never auto-trades.
+UNKNOWN. The module never creates Formal BUY authority and never auto-trades.
 """
 
 from __future__ import annotations
@@ -26,6 +26,17 @@ from .selection_framework_v31 import HARD_GATE_FIELDS, assess_v31
 CONTRACT = "GEN_GE_V31_EXPLICIT_DEEP_REVIEW_V1"
 ALLOWED_SOURCE_TYPES = frozenset({"PRIMARY_COMPANY", "INTERNATIONAL_AUTHORITY", "OFFICIAL_REGULATOR"})
 EXPLICIT_STATUSES = frozenset({"PASS", "FAIL"})
+ALLOWED_MACHINE_CHECKS = frozenset(
+    {
+        "financial_review_status",
+        "minimum_cash_conversion_ratio",
+        "minimum_earnings_quality_score",
+        "required_earnings_quality_confidence",
+        "normalized_core_operating_profit_positive",
+        "operating_cash_flow_positive",
+        "disclosure_not_after_research_as_of",
+    }
+)
 
 
 def _text(value: Any) -> str:
@@ -47,10 +58,9 @@ def _code(value: Any) -> str:
 
 def _float(value: Any) -> float | None:
     try:
-        number = float(value)
+        return float(value)
     except (TypeError, ValueError):
         return None
-    return number
 
 
 def _bool(value: Any) -> bool | None:
@@ -144,8 +154,11 @@ def _machine_checks(
 ) -> tuple[bool, list[str]]:
     if not checks:
         return True, []
-    failures: list[str] = []
+    unknown = sorted(set(checks) - ALLOWED_MACHINE_CHECKS)
+    if unknown:
+        raise ValueError("unsupported machine checks: " + ",".join(unknown))
 
+    failures: list[str] = []
     expected_review = _text(checks.get("financial_review_status"))
     if expected_review and _text(valuation.get("financial_review_status")).upper() != expected_review.upper():
         failures.append("financial_review_status")
