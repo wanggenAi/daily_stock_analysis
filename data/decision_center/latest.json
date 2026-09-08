@@ -1,8 +1,8 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-08T15:47:23+00:00",
-  "latest_trade_date": "2026-09-07",
-  "canonical_snapshot_id": "95083f0ad57f03314479",
+  "generated_at": "2026-09-08T16:05:03+00:00",
+  "latest_trade_date": "2026-09-08",
+  "canonical_snapshot_id": "ca988e3580b2c64951af",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
   "no_auto_trade": true,
@@ -18,7 +18,7 @@
     "validated_macro_handoffs": 0,
     "new_buy_now_count": 0,
     "new_wait_price_count": 0,
-    "terminal_reject_count": 500,
+    "terminal_reject_count": 487,
     "deep_calculation_execution_status": "SUCCESS",
     "deep_calculation_research_outcome": "EVIDENCE_EXHAUSTED",
     "deep_calculation_terminal_state": "EVIDENCE_EXHAUSTED",
@@ -38,8 +38,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.69,
-        "pnl_pct": -1.88,
+        "current_price": 22.41,
+        "pnl_pct": -3.09,
         "formal_action": "REDUCE_25",
         "investor_action": "减仓25%",
         "neutral_value": 17.457807170543802,
@@ -96,8 +96,8 @@
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 29.62,
-        "pnl_pct": 15.05,
+        "current_price": 29.57,
+        "pnl_pct": 14.86,
         "formal_action": "HOLD_REVIEW",
         "investor_action": "持有观察",
         "neutral_value": 49.36957125214809,
@@ -154,13 +154,13 @@
         "name": "中国平安",
         "quantity": 300,
         "average_cost": 57.1672,
-        "current_price": 56.36,
-        "pnl_pct": -1.41,
+        "current_price": 55.7,
+        "pnl_pct": -2.57,
         "formal_action": "HOLD",
         "investor_action": "继续持有",
         "neutral_value": 83.07,
         "valuation_confidence": "MEDIUM",
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.678<1.00",
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.671<1.00",
         "holding_add_authorized": false,
         "deep_review": {
           "status": "DEEP_REVIEW_PARTIAL",
@@ -212,8 +212,8 @@
         "name": "洛阳钼业",
         "quantity": 900,
         "average_cost": 18.9114,
-        "current_price": 18.37,
-        "pnl_pct": -2.86,
+        "current_price": 18.94,
+        "pnl_pct": 0.15,
         "formal_action": "HOLD",
         "investor_action": "继续持有；可分批加仓1手",
         "neutral_value": 28.12766979232306,
@@ -492,44 +492,44 @@
     ],
     "tactical_market_behavior_proxy": [
       {
+        "industry": "N76水利管理业",
+        "status": "STRONG",
+        "score": 98.27
+      },
+      {
+        "industry": "B07石油和天然气开采业",
+        "status": "STRONG",
+        "score": 96.46
+      },
+      {
+        "industry": "B11开采专业及辅助性活动",
+        "status": "STRONG",
+        "score": 95.08
+      },
+      {
         "industry": "A05农、林、牧、渔专业及辅助性活动",
         "status": "STRONG",
-        "score": 100.0
-      },
-      {
-        "industry": "O81机动车、电子产品和日用产品修理业",
-        "status": "STRONG",
-        "score": 100.0
-      },
-      {
-        "industry": "A01农业",
-        "status": "STRONG",
-        "score": 99.95
-      },
-      {
-        "industry": "A04渔业",
-        "status": "STRONG",
-        "score": 96.98
+        "score": 95.0
       },
       {
         "industry": "A02林业",
         "status": "STRONG",
-        "score": 96.1
+        "score": 94.92
       },
       {
-        "industry": "H62餐饮业",
+        "industry": "R86新闻和出版业",
         "status": "STRONG",
-        "score": 94.29
+        "score": 94.81
       },
       {
-        "industry": "N76水利管理业",
+        "industry": "R89体育",
         "status": "STRONG",
-        "score": 94.1
+        "score": 93.86
       },
       {
-        "industry": "H61住宿业",
+        "industry": "C25石油、煤炭及其他燃料加工业",
         "status": "STRONG",
-        "score": 88.42
+        "score": 91.04
       }
     ],
     "validated_a_share_research_handoffs": [],
@@ -541,7 +541,7 @@
     "question": "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
     "buy_now": [],
     "wait_price": [],
-    "terminal_reject_count": 500,
+    "terminal_reject_count": 487,
     "invalid_unauthorized_buy_count": 0,
     "macro_research_handoffs": [],
     "actionable_count": 0,
@@ -564,11 +564,11 @@
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "34246340069",
+    "lambda_run_id": "34248073293",
     "lambda_run_attempt": "1",
-    "source_run_id": "34219695011",
-    "trigger_source": "PUSH_CHANGE",
-    "generated_at": "2026-09-08T15:45:56+00:00",
+    "source_run_id": "34246766882",
+    "trigger_source": "EVERY_INDUSTRY_READY",
+    "generated_at": "2026-09-08T16:03:34+00:00",
     "run_state": "COMPLETED",
     "execution_status": "SUCCESS",
     "research_outcome": "EVIDENCE_EXHAUSTED",
@@ -632,7 +632,7 @@
       }
     },
     "gap_closure_attempt_count": 2,
-    "new_evidence_count": 18,
+    "new_evidence_count": 16,
     "progressed_gate_count": 1,
     "immediate_retry_required": false,
     "execution_completed": true,
