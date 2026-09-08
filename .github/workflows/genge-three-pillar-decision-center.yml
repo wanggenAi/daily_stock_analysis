@@ -2,6 +2,13 @@ name: GenGe Three-Pillar Decision Center
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center.py'
+      - '.github/workflows/genge-three-pillar-decision-center.yml'
+      - 'config/v31_explicit_deep_reviews.json'
+      - 'config/era_radar_industry_links.json'
   schedule:
     - cron: '32 * * * 1-5'
   workflow_run:
@@ -25,6 +32,7 @@ jobs:
   contracts:
     if: >-
       github.event_name == 'pull_request' ||
+      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule' ||
       github.event.workflow_run.conclusion == 'success'
