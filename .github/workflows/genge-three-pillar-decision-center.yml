@@ -1,0 +1,119 @@
+name: GenGe Three-Pillar Decision Center
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '32 * * * 1-5'
+  workflow_run:
+    workflows:
+      - "GenGe Investor Decision Brief"
+      - "Era Capital Trend Radar Live"
+    types: [completed]
+  pull_request:
+    paths:
+      - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center.py'
+      - 'tests/test_three_pillar_decision_center.py'
+      - '.github/workflows/genge-three-pillar-decision-center.yml'
+      - 'config/v31_explicit_deep_reviews.json'
+      - 'config/era_radar_industry_links.json'
+
+concurrency:
+  group: genge-three-pillar-decision-center-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  contracts:
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'schedule' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+      - name: Validate three-pillar investor contract
+        run: python -m pytest -q tests/test_three_pillar_decision_center.py
+
+  production:
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Build and persist decision center with optimistic replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'genge-three-pillar-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+
+          for attempt in 1 2 3 4; do
+            echo "Three-pillar replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+
+            test -f data/investor_decision_dashboard/latest.json
+            test -f data/era_radar/latest.json
+
+            python -m src.strategies.genge_opportunity_discovery.three_pillar_decision_center \
+              --output-json data/decision_center/latest.json \
+              --output-md LATEST_DECISION_CENTER.md
+
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('data/decision_center/latest.json').read_text(encoding='utf-8'))
+          assert p['contract_version'] == 'GEN_GE_THREE_PILLAR_DECISION_CENTER_V1'
+          assert p['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert p['formal_action_recomputed'] is False
+          assert p['no_auto_trade'] is True
+          assert 'pillar_1_holdings_deep_analysis' in p
+          assert 'pillar_2_world_social_market_capital_map' in p
+          assert 'pillar_3_deep_opportunities' in p
+          assert p['pillar_2_world_social_market_capital_map']['direct_fund_flow_claimed'] is False
+          PY
+
+            git add -f data/decision_center/latest.json LATEST_DECISION_CENTER.md
+            if git diff --cached --quiet; then
+              echo 'No semantic decision-center change to persist.'
+              exit 0
+            fi
+            git commit -m 'Persist three-pillar investor decision center [skip ci]'
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo 'main moved while persisting decision center; replaying.' >&2
+          done
+
+          echo 'Three-pillar persistence failed after 4 optimistic replay attempts.' >&2
+          exit 1
+
+      - name: Publish summary
+        if: always()
+        run: |
+          echo '# GenGe Three-Pillar Decision Center' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Pillar 1: current holdings + explicit deep-review completeness' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Pillar 2: world/social structural trends + tactical market-behaviour proxy + validated A-share handoffs' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Pillar 3: terminal BUY / WAIT_PRICE opportunities; REJECT stays summarized' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Authority: Canonical Formal actions only; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
