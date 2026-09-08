@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-08T13:42:09+00:00",
+  "generated_at": "2026-09-08T14:21:34+00:00",
   "latest_trade_date": "2026-09-07",
   "canonical_snapshot_id": "95083f0ad57f03314479",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -230,30 +230,30 @@
             {
               "gate": "earnings_authenticity",
               "status": "PASS",
-              "confidence": "",
-              "rationale": "No verified evidence has resolved this gate yet.",
-              "evidence_count": 0
+              "confidence": "HIGH",
+              "rationale": "The same-run PIT financial review reports positive normalized core operating profit, high-confidence earnings normalization and strong operating-cash conversion. PASS is conditional on machine-verifying those fields in the current valuation research row.",
+              "evidence_count": 1
             },
             {
               "gate": "financial_safety",
               "status": "PASS",
-              "confidence": "",
-              "rationale": "No verified evidence has resolved this gate yet.",
-              "evidence_count": 0
+              "confidence": "HIGH",
+              "rationale": "Official results show strong operating cash flow, falling or controlled leverage in recent reporting periods and sustained profitability. The production valuation row must also contain a current PIT financial review before this PASS is accepted.",
+              "evidence_count": 3
             },
             {
               "gate": "long_term_demand",
               "status": "PASS",
-              "confidence": "",
-              "rationale": "No verified evidence has resolved this gate yet.",
-              "evidence_count": 0
+              "confidence": "HIGH",
+              "rationale": "Copper is the dominant mining revenue driver for CMOC, while the IEA 2026 outlook projects strong copper demand growth through 2040 and a persistent base-case primary supply gap through 2035.",
+              "evidence_count": 2
             },
             {
               "gate": "moat",
               "status": "PASS",
-              "confidence": "",
-              "rationale": "No verified evidence has resolved this gate yet.",
-              "evidence_count": 0
+              "confidence": "HIGH",
+              "rationale": "Primary company evidence identifies TFM and KFM as world-class copper-cobalt assets; CMOC is a top-ten copper producer and the world's largest cobalt producer, providing resource scale and asset-quality advantages that are difficult to replicate quickly.",
+              "evidence_count": 2
             },
             {
               "gate": "predictability",
@@ -564,11 +564,11 @@
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "34232317559",
+    "lambda_run_id": "34237038590",
     "lambda_run_attempt": "1",
     "source_run_id": "34219695011",
     "trigger_source": "PUSH_CHANGE",
-    "generated_at": "2026-09-08T13:39:01+00:00",
+    "generated_at": "2026-09-08T14:20:07+00:00",
     "run_state": "COMPLETED",
     "execution_status": "SUCCESS",
     "research_outcome": "EVIDENCE_EXHAUSTED",
@@ -632,7 +632,7 @@
       }
     },
     "gap_closure_attempt_count": 2,
-    "new_evidence_count": 17,
+    "new_evidence_count": 18,
     "progressed_gate_count": 1,
     "immediate_retry_required": false,
     "execution_completed": true,
