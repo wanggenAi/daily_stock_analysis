@@ -54,8 +54,8 @@ A05农、林、牧、渔专业及辅助性活动(100.00)、O81机动车、电子
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`34188936647`
-- 触发来源：`PUSH_CHANGE`
+- Lambda run：`34190431632`
+- 触发来源：`EVERY_INDUSTRY_READY`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
