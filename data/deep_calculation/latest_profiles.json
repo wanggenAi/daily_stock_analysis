@@ -6,11 +6,11 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-08T06:30:07+00:00",
-  "generated_at": "2026-09-08T06:24:36+00:00",
+  "gap_closure_generated_at": "2026-09-08T11:31:08+00:00",
+  "generated_at": "2026-09-08T11:14:34+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "34194385978",
-  "new_evidence_count": 16,
+  "lambda_run_id": "34219463573",
+  "new_evidence_count": 7,
   "no_auto_trade": true,
   "profiles": {
     "000001": {
@@ -24244,7 +24244,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -24256,7 +24257,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "MACHINE",
@@ -24266,9 +24268,22 @@
               "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-08-27",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年1—7月份全国规模以上工业企业利润增长17.6%（匹配词：规模以上工业企业利润）：开采专业及辅助性活动 1137.6 -10.3 1052.1 -10.5 4",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202608/t20260827_1965126.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "MACHINE",
@@ -24280,7 +24295,8 @@
           ],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "MACHINE",
@@ -24292,11 +24308,14 @@
           ],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
         }
       },
       "industry": "B11开采专业及辅助性活动",
-      "name": "中海油服"
+      "name": "中海油服",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "601816": {
       "gates": {
@@ -33176,6 +33195,6 @@
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
   "run_state": "COMPLETED",
   "source_run_id": "34192692431",
-  "trigger_source": "PUSH_CHANGE",
+  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
   "unknown_is_pass": false
 }
