@@ -5,8 +5,8 @@
 - requested: **8**
 - complete: **0**
 - evidence exhausted: **8**
-- evidence collection attempts: **1**
-- new evidence rows: **14**
+- evidence collection attempts: **2**
+- new evidence rows: **16**
 - progressed gates: **0**
 - unresolved gates: **34**
 - immediate retry required: **False**
