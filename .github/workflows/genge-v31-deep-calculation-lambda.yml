@@ -1,0 +1,373 @@
+name: GenGe V3.1 Deep Calculation Lambda
+
+run-name: >-
+  GenGe V3.1 Deep Calculation Lambda / ${{ inputs.trigger_source || github.event_name }} / ${{ inputs.research_run_id || github.event.workflow_run.id || 'latest' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      research_run_id:
+        description: "Optional exact successful Every-Industry research run; newest valid main run is used when omitted"
+        required: false
+        type: string
+      requested_codes:
+        description: "Optional comma-separated A-share codes requiring immediate deep calculation"
+        required: false
+        type: string
+      trigger_source:
+        description: "Machine-readable event source"
+        required: false
+        default: "MANUAL_FALLBACK"
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - "CURRENT_HOLDINGS.md"
+      - "config/v31_explicit_deep_reviews.json"
+      - "src/strategies/genge_opportunity_discovery/v31_automatic_deep_calculation.py"
+      - "src/strategies/genge_opportunity_discovery/v31_explicit_deep_review.py"
+      - "tests/test_genge_v31_automatic_deep_calculation.py"
+      - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Hourly Deep Overlay"
+      - "Era Capital Trend Radar Live"
+    types: [completed]
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: genge-v31-deep-calc-${{ inputs.research_run_id || github.event.workflow_run.id || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  contracts:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install contract dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Validate automatic deep-calculation contract
+        run: |
+          python -m pytest -q \
+            tests/test_genge_v31_explicit_deep_review.py \
+            tests/test_genge_v31_automatic_deep_calculation.py
+
+  deep-calculate:
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Resolve exact Every-Industry source and requested workset
+        id: resolve
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_RESEARCH_RUN_ID: ${{ inputs.research_run_id }}
+          INPUT_REQUESTED_CODES: ${{ inputs.requested_codes }}
+          INPUT_TRIGGER_SOURCE: ${{ inputs.trigger_source }}
+          WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+
+          require_research_run() {
+            local run_id="$1"
+            local run artifacts count
+            run=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+            [ "$(printf '%s' "$run" | jq -r '.path // ""')" = ".github/workflows/genge-v31-industry-research.yml" ] || return 1
+            [ "$(printf '%s' "$run" | jq -r '.conclusion // ""')" = "success" ] || return 1
+            [ "$(printf '%s' "$run" | jq -r '.head_branch // ""')" = "main" ] || return 1
+            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+            count=$(printf '%s' "$artifacts" | jq -r '[.artifacts[] | select(.name == "genge-v31-every-industry-research" and .expired == false)] | length')
+            [ "$count" -eq 1 ]
+          }
+
+          research_run_id="${INPUT_RESEARCH_RUN_ID:-}"
+          if [ -n "$research_run_id" ]; then
+            [[ "$research_run_id" =~ ^[0-9]+$ ]] || { echo "invalid research_run_id=$research_run_id" >&2; exit 1; }
+            require_research_run "$research_run_id" || { echo "requested Every-Industry run is not a valid successful main authority source" >&2; exit 1; }
+          else
+            mapfile -t candidates < <(
+              gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?branch=main&status=success&per_page=40" \
+                --jq '.workflow_runs[].id'
+            )
+            for candidate in "${candidates[@]}"; do
+              if require_research_run "$candidate"; then
+                research_run_id="$candidate"
+                break
+              fi
+            done
+            [[ "$research_run_id" =~ ^[0-9]+$ ]] || { echo "no successful Every-Industry artifact available" >&2; exit 1; }
+          fi
+
+          trigger_source="${INPUT_TRIGGER_SOURCE:-}"
+          if [ -z "$trigger_source" ]; then
+            if [ "${{ github.event_name }}" = "workflow_run" ]; then
+              trigger_source="${WORKFLOW_RUN_NAME:-WORKFLOW_RUN}"
+            elif [ "${{ github.event_name }}" = "push" ]; then
+              trigger_source="PUSH_CHANGE"
+            else
+              trigger_source="${{ github.event_name }}"
+            fi
+          fi
+
+          requested="${INPUT_REQUESTED_CODES:-}"
+          if [ -z "$requested" ]; then
+            requested=$(python - <<'PY'
+          import json, re
+          from pathlib import Path
+
+          codes=[]
+          text=Path('CURRENT_HOLDINGS.md').read_text(encoding='utf-8') if Path('CURRENT_HOLDINGS.md').is_file() else ''
+          in_confirmed=False
+          for line in text.splitlines():
+              if line.strip() == '## Confirmed holdings':
+                  in_confirmed=True
+                  continue
+              if in_confirmed and line.startswith('## '):
+                  break
+              if in_confirmed and line.lstrip().startswith('|'):
+                  cells=[x.strip() for x in line.strip().strip('|').split('|')]
+                  if len(cells) >= 5 and re.fullmatch(r'\d{6}', cells[0]) and cells[4].upper() == 'HELD':
+                      codes.append(cells[0])
+
+          hourly=Path('data/hourly_research_state/latest.json')
+          if hourly.is_file():
+              try:
+                  payload=json.loads(hourly.read_text(encoding='utf-8'))
+                  for row in payload.get('rows') or []:
+                      code=str(row.get('code') or '').zfill(6)
+                      if row.get('deep_review_priority') == 'RAISE' and code.isdigit() and len(code)==6:
+                          codes.append(code)
+              except Exception:
+                  pass
+
+          era=Path('data/era_radar/research_handoff/latest.json')
+          if era.is_file():
+              try:
+                  payload=json.loads(era.read_text(encoding='utf-8'))
+                  for row in payload.get('queue') or []:
+                      code=str(row.get('code') or row.get('stock_code') or '').zfill(6)
+                      if code.isdigit() and len(code)==6:
+                          codes.append(code)
+              except Exception:
+                  pass
+
+          print(','.join(dict.fromkeys(codes)))
+          PY
+            )
+          fi
+
+          {
+            echo "research_run_id=${research_run_id}"
+            echo "requested_codes=${requested}"
+            echo "trigger_source=${trigger_source}"
+          } >> "$GITHUB_OUTPUT"
+          echo "Deep Calculation Lambda source Every-Industry=${research_run_id}; trigger=${trigger_source}; requested=${requested:-ALL}"
+
+      - name: Download exact Every-Industry artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-v31-every-industry-research
+          path: artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.resolve.outputs.research_run_id }}
+
+      - name: Resolve exact deep-calculation inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t candidates < <(find artifact -type f -path '*/v31_review_enriched/v31_review_queue_enriched.csv' -print)
+          mapfile -t valuation_files < <(find artifact -type f -name valuation_research_queue.csv -print)
+          [ "${#candidates[@]}" -eq 1 ] || { echo "expected exactly one enriched V3.1 queue; found ${#candidates[@]}" >&2; exit 1; }
+          [ "${#valuation_files[@]}" -ge 1 ] || { echo "valuation research queue missing from exact artifact" >&2; exit 1; }
+          valuation_root=$(dirname "${valuation_files[0]}")
+          echo "CANDIDATE_CSV=${candidates[0]}" >> "$GITHUB_ENV"
+          echo "VALUATION_ROOT=${valuation_root}" >> "$GITHUB_ENV"
+
+      - name: Execute automatic deep calculation now
+        env:
+          REQUESTED_CODES: ${{ steps.resolve.outputs.requested_codes }}
+          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
+          TRIGGER_SOURCE: ${{ steps.resolve.outputs.trigger_source }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.v31_automatic_deep_calculation \
+            --candidate-csv "$CANDIDATE_CSV" \
+            --valuation-root "$VALUATION_ROOT" \
+            --explicit-config config/v31_explicit_deep_reviews.json \
+            --output-dir reports/deep_calculation_lambda \
+            --requested-codes "$REQUESTED_CODES" \
+            --source-run-id "$RESEARCH_RUN_ID" \
+            --trigger-source "$TRIGGER_SOURCE"
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=Path('reports/deep_calculation_lambda/deep_calculation_status.json')
+          status=json.loads(p.read_text(encoding='utf-8'))
+          status['lambda_run_id']=os.environ['GITHUB_RUN_ID']
+          status['lambda_run_attempt']=os.environ.get('GITHUB_RUN_ATTEMPT','1')
+          status['lambda_workflow']='GenGe V3.1 Deep Calculation Lambda'
+          status['run_state']='COMPLETED'
+          p.write_text(json.dumps(status,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          profiles_path=Path('reports/deep_calculation_lambda/deep_review_profiles.json')
+          profiles=json.loads(profiles_path.read_text(encoding='utf-8'))
+          profiles['lambda_run_id']=os.environ['GITHUB_RUN_ID']
+          profiles['run_state']='COMPLETED'
+          profiles_path.write_text(json.dumps(profiles,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          assert status['execution_status']=='SUCCESS'
+          assert status['unknown_is_pass'] is False
+          assert status['automatic_formal_buy_allowed'] is False
+          assert status['no_auto_trade'] is True
+          print(json.dumps(status,ensure_ascii=False,indent=2))
+          PY
+
+      - name: Persist completed deep-calculation state with optimistic replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/genge-deep-calc
+          cp reports/deep_calculation_lambda/deep_calculation_status.json /tmp/genge-deep-calc/latest_status.json
+          cp reports/deep_calculation_lambda/deep_review_profiles.json /tmp/genge-deep-calc/latest_profiles.json
+          cp reports/deep_calculation_lambda/deep_calculation.md /tmp/genge-deep-calc/latest.md
+          git config user.name "genge-deep-calc-lambda-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+
+          for attempt in 1 2 3 4; do
+            echo "deep-calculation persistence replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/deep_calculation/history
+            cp /tmp/genge-deep-calc/latest_status.json data/deep_calculation/latest_status.json
+            cp /tmp/genge-deep-calc/latest_profiles.json data/deep_calculation/latest_profiles.json
+            cp /tmp/genge-deep-calc/latest.md data/deep_calculation/latest.md
+            cp /tmp/genge-deep-calc/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
+            git add -f data/deep_calculation
+            if git diff --cached --quiet; then
+              echo "Deep-calculation state already current"
+              exit 0
+            fi
+            git commit -m "Persist automatic deep calculation ${GITHUB_RUN_ID} [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved while persisting deep calculation; replaying" >&2
+          done
+          echo "deep-calculation persistence failed after optimistic replay" >&2
+          exit 1
+
+      - name: Upload Deep Calculation Lambda artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v31-deep-calculation-${{ github.run_id }}
+          path: reports/deep_calculation_lambda
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Refresh three-pillar decision center immediately
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-three-pillar-decision-center.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+
+      - name: Persist failure status
+        if: failure()
+        continue-on-error: true
+        shell: bash
+        env:
+          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
+          TRIGGER_SOURCE: ${{ steps.resolve.outputs.trigger_source }}
+        run: |
+          set -u
+          mkdir -p /tmp/genge-deep-failure
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          payload={
+              'contract':'GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1',
+              'execution_status':'FAILURE',
+              'research_outcome':'NOT_COMPLETED',
+              'generated_at':datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+              'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),
+              'trigger_source':os.environ.get('TRIGGER_SOURCE','') or os.environ.get('GITHUB_EVENT_NAME',''),
+              'lambda_run_id':os.environ.get('GITHUB_RUN_ID',''),
+              'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'run_state':'COMPLETED',
+              'unknown_is_pass':False,
+              'automatic_formal_buy_allowed':False,
+              'formal_trading_authority':False,
+              'no_auto_trade':True,
+          }
+          Path('/tmp/genge-deep-failure/latest_status.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+          git config user.name "genge-deep-calc-lambda-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch origin main || continue
+            git reset --hard origin/main || continue
+            mkdir -p data/deep_calculation/history
+            cp /tmp/genge-deep-failure/latest_status.json data/deep_calculation/latest_status.json
+            cp /tmp/genge-deep-failure/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
+            git add -f data/deep_calculation/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
+            git commit -m "Persist failed deep calculation ${GITHUB_RUN_ID} [skip ci]" || exit 0
+            git push origin HEAD:main && exit 0
+          done
+          exit 0
+
+      - name: Publish Lambda status
+        if: always()
+        run: |
+          echo "# GenGe V3.1 Deep Calculation Lambda" >> "$GITHUB_STEP_SUMMARY"
+          echo "- lambda run id: \`${GITHUB_RUN_ID}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- trigger: \`${{ steps.resolve.outputs.trigger_source }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Every-Industry source: \`${{ steps.resolve.outputs.research_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- requested codes: \`${{ steps.resolve.outputs.requested_codes }}\`" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/deep_calculation_lambda/deep_calculation_status.json ]; then
+            cat reports/deep_calculation_lambda/deep_calculation.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- execution: **FAILURE / NOT_COMPLETED**" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "- UNKNOWN != PASS; no automatic Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
