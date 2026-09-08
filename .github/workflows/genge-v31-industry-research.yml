@@ -84,6 +84,8 @@ jobs:
             tests/test_genge_specialized_valuation_authoritative_merge.py \
             tests/test_genge_resource_routing_v31.py \
             tests/test_genge_v31_execution_extensions.py \
+            tests/test_genge_v31_explicit_deep_review.py \
+            tests/test_genge_v31_automatic_deep_calculation.py \
             tests/test_genge_production_model.py \
             tests/test_genge_production_shortlist.py \
             tests/test_genge_canonical_snapshot.py \
@@ -158,10 +160,19 @@ jobs:
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v31_resource_scenario_merge \
             --v31-dir reports/v31_review --resource-root reports/valuation_research_queue \
             --output-dir reports/v31_review_enriched
+      - name: Automatically deep-calculate V3.1 hard gates
+        run: |
+          PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.v31_automatic_deep_calculation \
+            --candidate-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --valuation-root reports/valuation_research_queue \
+            --explicit-config config/v31_explicit_deep_reviews.json \
+            --output-dir reports/v31_deep_calculation \
+            --source-run-id "${GITHUB_RUN_ID}" \
+            --trigger-source "EVERY_INDUSTRY_INLINE"
       - name: Build bounded V3.1.1 production shortlist
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.production_shortlist \
-            --candidate-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --candidate-csv reports/v31_deep_calculation/v31_review_queue_deep_calculated.csv \
             --evidence-csv reports/final_valuation_source/all_a_quant_screen.csv \
             --all-a-report-root upstream/reports/all_a_full_scan \
             --holdings-md CURRENT_HOLDINGS.md \
@@ -176,7 +187,7 @@ jobs:
         run: |
           PYTHONUNBUFFERED=1 python -m src.strategies.genge_opportunity_discovery.canonical_snapshot \
             --discovery-csv reports/discovery_pool/ledger_independent_discovery.csv \
-            --deep-review-csv reports/v31_review_enriched/v31_review_queue_enriched.csv \
+            --deep-review-csv reports/v31_deep_calculation/v31_review_queue_deep_calculated.csv \
             --production-csv reports/production_decisions/production_decisions.csv \
             --output-dir reports/canonical_snapshot \
             --source-kind every-industry \
@@ -204,8 +215,13 @@ jobs:
           assert discovery_summary['durable_recall_applied'] is False
           assert discovery_summary['candidate_ledger_is_input'] is False
           assert all(r.get('discovery_ledger_filter_applied') == 'False' for r in discovery)
-          v31 = list(csv.DictReader(Path('reports/v31_review_enriched/v31_review_queue_enriched.csv').open(encoding='utf-8')))
-          assert v31, 'V3.1 enriched queue is empty'
+          v31 = list(csv.DictReader(Path('reports/v31_deep_calculation/v31_review_queue_deep_calculated.csv').open(encoding='utf-8')))
+          assert v31, 'automatic V3.1 deep calculation output is empty'
+          deep = json.loads(Path('reports/v31_deep_calculation/deep_calculation_status.json').read_text(encoding='utf-8'))
+          assert deep['execution_status'] == 'SUCCESS'
+          assert deep['unknown_is_pass'] is False
+          assert deep['automatic_formal_buy_allowed'] is False
+          assert deep['no_auto_trade'] is True
           shortlist = list(csv.DictReader(Path('reports/production_shortlist/production_shortlist.csv').open(encoding='utf-8')))
           shortlist_summary = json.loads(Path('reports/production_shortlist/production_shortlist_summary.json').read_text(encoding='utf-8'))
           assert shortlist_summary['broad_research_rows_are_production_refresh_inputs'] is False
@@ -242,14 +258,14 @@ jobs:
           assert resource['formal_signal_eligible'] is False and resource['no_auto_trade'] is True
           assert bank['formal_signal_eligible'] is False and bank['no_auto_trade'] is True
           assert merged['formal_signal_eligible'] is False and merged['no_auto_trade'] is True
-          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'ledger_independent_discovery_count': len(discovery), 'v31_count': len(v31), 'production_shortlist_count': len(shortlist), 'dated_same_run_price_count': shortlist_summary['dated_same_run_price_count'], 'provider_fallback_required_count': shortlist_summary['provider_fallback_required_count'], 'snapshot_id': snapshot['snapshot_id'], 'snapshot_discovery_count': snapshot['discovery']['execution_eligible_count'], 'deep_review_count': snapshot['deep_review']['execution_eligible_count'], 'specialized_merge': merged, 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
+          print(json.dumps({'clean_industry_count': len(clean), 'represented_industry_count': len(represented), 'ledger_independent_discovery_count': len(discovery), 'v31_count': len(v31), 'production_shortlist_count': len(shortlist), 'dated_same_run_price_count': shortlist_summary['dated_same_run_price_count'], 'provider_fallback_required_count': shortlist_summary['provider_fallback_required_count'], 'deep_calculation': deep, 'snapshot_id': snapshot['snapshot_id'], 'snapshot_discovery_count': snapshot['discovery']['execution_eligible_count'], 'deep_review_count': snapshot['deep_review']['execution_eligible_count'], 'specialized_merge': merged, 'resource': resource, 'bank': bank}, ensure_ascii=False, indent=2))
           PY
       - name: Publish summary
         if: always()
         run: |
           echo "## V3.1.1 Every-Industry Research" >> "$GITHUB_STEP_SUMMARY"
           if [ -f reports/canonical_snapshot/latest.md ]; then cat reports/canonical_snapshot/latest.md >> "$GITHUB_STEP_SUMMARY"; fi
-          if [ -f reports/v31_review/v31_review_queue.md ]; then cat reports/v31_review/v31_review_queue.md >> "$GITHUB_STEP_SUMMARY"; fi
+          if [ -f reports/v31_deep_calculation/deep_calculation.md ]; then cat reports/v31_deep_calculation/deep_calculation.md >> "$GITHUB_STEP_SUMMARY"; fi
           if [ -f reports/production_decisions/production_decisions.md ]; then cat reports/production_decisions/production_decisions.md >> "$GITHUB_STEP_SUMMARY"; fi
       - name: Save valuation cache
         uses: actions/cache/save@v4
@@ -271,10 +287,21 @@ jobs:
             reports/valuation_research_queue
             reports/v31_review
             reports/v31_review_enriched
+            reports/v31_deep_calculation
             reports/production_shortlist
             reports/production_decisions
             reports/canonical_snapshot
           if-no-files-found: error
+      - name: Dispatch Deep Calculation Lambda immediately
+        if: ${{ success() }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-v31-deep-calculation-lambda.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f research_run_id="${GITHUB_RUN_ID}" \
+            -f trigger_source="EVERY_INDUSTRY_READY"
       - name: Explicitly dispatch Production Finalizer for event-driven chain
         if: ${{ success() && github.event_name == 'workflow_dispatch' && inputs.explicit_finalizer }}
         env:
