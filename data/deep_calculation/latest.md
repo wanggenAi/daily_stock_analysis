@@ -6,10 +6,10 @@
 - complete: **0**
 - evidence exhausted: **8**
 - evidence collection attempts: **2**
-- new evidence rows: **16**
-- progressed gates: **1**
-- material-event failed gates: **1**
+- new evidence rows: **7**
+- progressed gates: **0**
+- material-event failed gates: **0**
 - material-event PASS overrides: **0**
-- unresolved gates: **33**
+- unresolved gates: **34**
 - immediate retry required: **False**
 - UNKNOWN != PASS; no automatic Formal BUY; no auto trade.
