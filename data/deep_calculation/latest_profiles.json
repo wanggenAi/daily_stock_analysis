@@ -6,13 +6,13 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-08T19:51:22+00:00",
-  "generated_at": "2026-09-08T19:48:56+00:00",
+  "gap_closure_generated_at": "2026-09-08T20:08:25+00:00",
+  "generated_at": "2026-09-08T19:59:01+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "34270956521",
-  "material_event_failed_gate_count": 1,
+  "lambda_run_id": "34271931531",
+  "material_event_failed_gate_count": 0,
   "material_event_pass_override_count": 0,
-  "new_evidence_count": 18,
+  "new_evidence_count": 7,
   "no_auto_trade": true,
   "profiles": {
     "000001": {
@@ -7295,22 +7295,17 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "FUNDS_OCCUPATION",
-              "publish_date": "2026-04-20",
-              "source_domain": "static.cninfo.com.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "天职业字[2026]16955-2号 关联方资金占用报告：2025年度控股股东及其他关联方资金占用情况的专项说明 1",
-              "url": "https://static.cninfo.com.cn/finalpage/2026-04-20/1225118486.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
@@ -25693,13 +25688,13 @@
       "name": "华纳药厂"
     }
   },
-  "progressed_gate_count": 1,
+  "progressed_gate_count": 0,
   "research_outcome": "EVIDENCE_EXHAUSTED",
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
   "reverified_upstream_pass_count": 4,
   "run_state": "COMPLETED",
   "source_run_id": "34269878443",
-  "trigger_source": "EVERY_INDUSTRY_READY",
+  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
