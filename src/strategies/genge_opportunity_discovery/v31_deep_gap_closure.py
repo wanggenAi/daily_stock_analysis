@@ -1,12 +1,14 @@
 """Bounded evidence-driven closure for automatic V3.1 deep review.
 
-This module turns an execution-successful but research-partial deep calculation
-into a process-terminal state in the SAME Lambda invocation. It may resolve a
-qualitative gate only from strict verified evidence rules. Otherwise UNKNOWN is
-preserved and the process terminates as EVIDENCE_EXHAUSTED rather than waiting
-for a human to start another round.
+An execution-successful but research-partial calculation is closed in the SAME
+Lambda invocation. Strict verified evidence may resolve a qualitative gate;
+otherwise UNKNOWN is preserved and the process terminates as
+EVIDENCE_EXHAUSTED instead of waiting for a human to start another round.
 
-It is research-only: it cannot create Formal BUY authority or place trades.
+Transient official-source failures receive one bounded refetch attempt with a
+fresh cache namespace. Identical evidence is never used to create an infinite
+retry loop. This module is research-only and cannot create Formal BUY authority
+or place trades.
 """
 from __future__ import annotations
 
@@ -21,6 +23,7 @@ from .evidence_collectors import collect_auto_evidence
 
 CONTRACT = "GEN_GE_V31_DEEP_GAP_CLOSURE_V1"
 GATES = ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")
+MAX_COLLECTION_ATTEMPTS = 2
 
 
 def _code(value: Any) -> str:
@@ -55,11 +58,18 @@ def _status(gate: Mapping[str, Any] | None) -> str:
     return value if value in {"PASS", "FAIL"} else "UNKNOWN"
 
 
+def _source_family(value: Any) -> str:
+    domain = str(value or "").strip().lower().rstrip(".")
+    while domain.startswith("www."):
+        domain = domain[4:]
+    return domain
+
+
 def _verified_official(row: Mapping[str, Any]) -> bool:
     return (
         str(row.get("evidence_status") or "").upper() == "VERIFIED"
         and str(row.get("source_type") or "").upper() == "OFFICIAL_REPORT"
-        and bool(str(row.get("source_domain") or "").strip())
+        and bool(_source_family(row.get("source_domain")))
         and bool(str(row.get("publish_date") or row.get("date") or "").strip())
     )
 
@@ -67,14 +77,29 @@ def _verified_official(row: Mapping[str, Any]) -> bool:
 def infer_long_term_demand(
     industry: str, industry_evidence: Iterable[Mapping[str, Any]]
 ) -> tuple[str, str, list[dict[str, Any]]]:
-    """Resolve only from >=2 independent verified official domains, fail closed."""
-    rows = [dict(r) for r in industry_evidence if str(r.get("industry") or "") == industry and _verified_official(r)]
-    positive = {str(r.get("source_domain")) for r in rows if str(r.get("direction") or r.get("evidence_direction") or "").upper() in {"POSITIVE", "STRENGTHENING"}}
-    negative = {str(r.get("source_domain")) for r in rows if str(r.get("direction") or r.get("evidence_direction") or "").upper() in {"NEGATIVE", "WEAKENING"}}
+    """Resolve only from >=2 independent verified official source families."""
+    rows = [
+        dict(r)
+        for r in industry_evidence
+        if str(r.get("industry") or "") == industry and _verified_official(r)
+    ]
+    positive = {
+        _source_family(r.get("source_domain"))
+        for r in rows
+        if str(r.get("direction") or r.get("evidence_direction") or "").upper()
+        in {"POSITIVE", "STRENGTHENING"}
+    }
+    negative = {
+        _source_family(r.get("source_domain"))
+        for r in rows
+        if str(r.get("direction") or r.get("evidence_direction") or "").upper()
+        in {"NEGATIVE", "WEAKENING"}
+    }
     evidence = [
         {
             "source_type": r.get("source_type"),
             "source_domain": r.get("source_domain"),
+            "source_family": _source_family(r.get("source_domain")),
             "url": r.get("original_url") or r.get("source"),
             "publish_date": r.get("publish_date") or r.get("date"),
             "direction": r.get("direction") or r.get("evidence_direction"),
@@ -83,16 +108,31 @@ def infer_long_term_demand(
         for r in rows
     ]
     if len(positive) >= 2 and not negative:
-        return "PASS", f"At least two independent verified official domains support long-term demand: {sorted(positive)}", evidence
+        return (
+            "PASS",
+            f"At least two independent verified official source families support long-term demand: {sorted(positive)}",
+            evidence,
+        )
     if len(negative) >= 2 and not positive:
-        return "FAIL", f"At least two independent verified official domains weaken long-term demand: {sorted(negative)}", evidence
+        return (
+            "FAIL",
+            f"At least two independent verified official source families weaken long-term demand: {sorted(negative)}",
+            evidence,
+        )
     if positive and negative:
         return "UNKNOWN", "Verified official evidence conflicts; fail-closed UNKNOWN retained.", evidence
-    return "UNKNOWN", "Fewer than two independent same-direction verified official domains; evidence threshold not met.", evidence
+    return (
+        "UNKNOWN",
+        "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
+        evidence,
+    )
 
 
 def _unresolved_reason(gate: str, evidence_summary: Mapping[str, Any]) -> str:
+    fetch_failures = int(evidence_summary.get("final_failed_count") or evidence_summary.get("failed_count") or 0)
     if gate == "long_term_demand":
+        if fetch_failures:
+            return "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         return "OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET"
     if gate == "moat":
         return "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
@@ -103,6 +143,30 @@ def _unresolved_reason(gate: str, evidence_summary: Mapping[str, Any]) -> str:
     if gate == "earnings_authenticity":
         return "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
     return "EVIDENCE_INSUFFICIENT"
+
+
+def _evidence_key(row: Mapping[str, Any]) -> tuple[str, ...]:
+    return (
+        str(row.get("content_hash") or ""),
+        str(row.get("original_url") or row.get("source") or ""),
+        str(row.get("code") or ""),
+        str(row.get("industry") or ""),
+        str(row.get("indicator") or ""),
+        str(row.get("publish_date") or row.get("date") or ""),
+    )
+
+
+def _dedupe(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    seen: set[tuple[str, ...]] = set()
+    for raw in rows:
+        row = dict(raw)
+        key = _evidence_key(row)
+        if key in seen:
+            continue
+        seen.add(key)
+        result.append(row)
+    return result
 
 
 def close_profiles(
@@ -138,13 +202,15 @@ def close_profiles(
         if ltd is not None and _status(ltd) == "UNKNOWN" and industry:
             decision, rationale, evidence = infer_long_term_demand(industry, industry_evidence)
             if decision in {"PASS", "FAIL"}:
-                ltd.update({
-                    "status": decision,
-                    "confidence": "HIGH",
-                    "rationale": rationale,
-                    "evidence": evidence,
-                    "source": "AUTOMATIC_OFFICIAL_EVIDENCE_CLOSURE",
-                })
+                ltd.update(
+                    {
+                        "status": decision,
+                        "confidence": "HIGH",
+                        "rationale": rationale,
+                        "evidence": evidence,
+                        "source": "AUTOMATIC_OFFICIAL_EVIDENCE_CLOSURE",
+                    }
+                )
                 progressed += 1
             else:
                 ltd["gap_closure_evidence"] = evidence
@@ -162,7 +228,7 @@ def close_profiles(
             unresolved[code] = code_unresolved
             exhausted_codes.append(code)
             profile["research_terminal_state"] = "EVIDENCE_EXHAUSTED"
-            profile["research_disposition"] = "EVIDENCE_BLOCKED" if str(row.get("production_shortlist_scope") or "") != "HOLDING" else "HOLD_REVIEW_EVIDENCE_BLOCKED"
+            profile["research_disposition"] = "EVIDENCE_BLOCKED"
         else:
             complete_codes.append(code)
             profile["research_terminal_state"] = "COMPLETE"
@@ -170,6 +236,11 @@ def close_profiles(
 
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     terminal_state = "COMPLETE" if not exhausted_codes else "EVIDENCE_EXHAUSTED"
+    attempt_count = int(evidence_summary.get("collection_attempt_count") or 1)
+    new_evidence_count = int(
+        evidence_summary.get("unique_evidence_count")
+        or (len(industry_evidence) + len(company_evidence))
+    )
     status = {
         "contract": CONTRACT,
         "execution_status": "SUCCESS",
@@ -183,32 +254,78 @@ def close_profiles(
         "progressed_gate_count": progressed,
         "unresolved_requested_gate_count": sum(len(v) for v in unresolved.values()),
         "unresolved_reasons": unresolved,
-        "gap_closure_attempt_count": 1,
-        "new_evidence_count": len(industry_evidence) + len(company_evidence),
+        "gap_closure_attempt_count": attempt_count,
+        "new_evidence_count": new_evidence_count,
         "evidence_audit_count": len(evidence_audit),
         "evidence_collection_summary": dict(evidence_summary),
         "immediate_retry_required": False,
-        "retry_rule": "Retry only after genuinely new evidence/event; never loop on identical evidence.",
+        "retry_rule": "Transient source failures get bounded same-run refetch; identical evidence never loops. Future retry requires a new event/evidence epoch.",
         "formal_trading_authority": False,
         "automatic_formal_buy_allowed": False,
         "unknown_is_pass": False,
         "no_auto_trade": True,
     }
-    out.update({
-        "gap_closure_contract": CONTRACT,
-        "gap_closure_generated_at": now,
-        "research_terminal_state": terminal_state,
-        "research_outcome": terminal_state,
-        "gap_closure_attempt_count": 1,
-        "new_evidence_count": status["new_evidence_count"],
-        "progressed_gate_count": progressed,
-        "immediate_retry_required": False,
-        "formal_trading_authority": False,
-        "automatic_formal_buy_allowed": False,
-        "unknown_is_pass": False,
-        "no_auto_trade": True,
-    })
+    out.update(
+        {
+            "gap_closure_contract": CONTRACT,
+            "gap_closure_generated_at": now,
+            "research_terminal_state": terminal_state,
+            "research_outcome": terminal_state,
+            "gap_closure_attempt_count": attempt_count,
+            "new_evidence_count": new_evidence_count,
+            "progressed_gate_count": progressed,
+            "immediate_retry_required": False,
+            "formal_trading_authority": False,
+            "automatic_formal_buy_allowed": False,
+            "unknown_is_pass": False,
+            "no_auto_trade": True,
+        }
+    )
     return out, status
+
+
+def _collect_with_bounded_retry(
+    *,
+    selected: list[Mapping[str, Any]],
+    as_of: date,
+    cache_dir: Path,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    all_industry: list[dict[str, Any]] = []
+    all_company: list[dict[str, Any]] = []
+    all_audit: list[dict[str, Any]] = []
+    attempt_summaries: list[dict[str, Any]] = []
+
+    for attempt in range(1, MAX_COLLECTION_ATTEMPTS + 1):
+        industry, company, audit, summary = collect_auto_evidence(
+            priority_rows=selected,
+            as_of=as_of,
+            cache_dir=cache_dir / f"attempt-{attempt}",
+            max_companies=max(1, len(selected)),
+        )
+        all_industry.extend(industry)
+        all_company.extend(company)
+        all_audit.extend(audit)
+        attempt_summaries.append(dict(summary))
+        if int(summary.get("failed_count") or 0) == 0:
+            break
+
+    industry_unique = _dedupe(all_industry)
+    company_unique = _dedupe(all_company)
+    final_summary = {
+        "collection_attempt_count": len(attempt_summaries),
+        "max_collection_attempts": MAX_COLLECTION_ATTEMPTS,
+        "attempts": attempt_summaries,
+        "unique_industry_evidence_count": len(industry_unique),
+        "unique_company_evidence_count": len(company_unique),
+        "unique_evidence_count": len(industry_unique) + len(company_unique),
+        "final_failed_count": int(attempt_summaries[-1].get("failed_count") or 0) if attempt_summaries else 0,
+        "final_missing_count": int(attempt_summaries[-1].get("missing_count") or 0) if attempt_summaries else 0,
+        "bounded_retry_exhausted": bool(
+            len(attempt_summaries) == MAX_COLLECTION_ATTEMPTS
+            and int(attempt_summaries[-1].get("failed_count") or 0) > 0
+        ) if attempt_summaries else False,
+    }
+    return industry_unique, company_unique, all_audit, final_summary
 
 
 def run(
@@ -233,11 +350,10 @@ def run(
         copy["stock_name"] = copy.get("stock_name") or copy.get("name") or ""
         selected.append(copy)
 
-    industry_evidence, company_evidence, audit_rows, evidence_summary = collect_auto_evidence(
-        priority_rows=selected,
+    industry_evidence, company_evidence, audit_rows, evidence_summary = _collect_with_bounded_retry(
+        selected=selected,
         as_of=as_of,
         cache_dir=cache_dir,
-        max_companies=max(1, len(selected)),
     )
     closed_profiles, status = close_profiles(
         profiles,
@@ -249,8 +365,12 @@ def run(
         evidence_summary=evidence_summary,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
-    (output_dir / "deep_review_profiles.json").write_text(json.dumps(closed_profiles, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    (output_dir / "deep_calculation_status.json").write_text(json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (output_dir / "deep_review_profiles.json").write_text(
+        json.dumps(closed_profiles, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    (output_dir / "deep_calculation_status.json").write_text(
+        json.dumps(status, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     evidence_packet = {
         "contract": CONTRACT,
         "as_of": as_of.isoformat(),
@@ -262,12 +382,16 @@ def run(
         "formal_trading_authority": False,
         "no_auto_trade": True,
     }
-    (output_dir / "gap_closure_evidence.json").write_text(json.dumps(evidence_packet, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    (output_dir / "gap_closure_evidence.json").write_text(
+        json.dumps(evidence_packet, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
     (output_dir / "deep_calculation.md").write_text(
         "# GenGe Deep Calculation Gap Closure\n\n"
         f"- execution: **SUCCESS**\n- terminal state: **{status['research_terminal_state']}**\n"
         f"- requested: **{status['requested_count']}**\n- complete: **{status['complete_requested_count']}**\n"
         f"- evidence exhausted: **{status['evidence_exhausted_requested_count']}**\n"
+        f"- evidence collection attempts: **{status['gap_closure_attempt_count']}**\n"
+        f"- new evidence rows: **{status['new_evidence_count']}**\n"
         f"- progressed gates: **{status['progressed_gate_count']}**\n"
         f"- unresolved gates: **{status['unresolved_requested_gate_count']}**\n"
         "- immediate retry required: **False**\n- UNKNOWN != PASS; no automatic Formal BUY; no auto trade.\n",
