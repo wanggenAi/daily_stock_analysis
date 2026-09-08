@@ -27,7 +27,7 @@ def _priority() -> dict:
                 "success_archetype_source_quant_status": "PRIORITY_RESEARCH",
                 "near_buy_evidence_recovery_tier": "B",
                 "mapping_gaps": ["INDUSTRY"],
-                "missing_evidence": ["hard_gate_1", "hard_gate_2", "scenario_valuation"],
+                "near_buy_missing_evidence_items": ["hard_gate_1", "hard_gate_2", "scenario_valuation"],
             }
         ],
     }
@@ -92,14 +92,25 @@ def test_digest_ignores_harmless_similarity_wiggle_and_gap_order() -> None:
     first = build_decision(_priority(), _hourly())
     changed = _priority()
     changed["queue"][0]["success_archetype_similarity_score"] = 86.7
-    changed["queue"][0]["missing_evidence"] = ["scenario_valuation", "hard_gate_2", "hard_gate_1"]
+    changed["queue"][0]["near_buy_missing_evidence_items"] = [
+        "scenario_valuation",
+        "hard_gate_2",
+        "hard_gate_1",
+    ]
     second = build_decision(changed, _hourly())
     assert first["signal_digest"] == second["signal_digest"]
 
 
-def test_digest_changes_when_evidence_gap_recovers() -> None:
+def test_digest_changes_when_real_near_buy_evidence_gap_recovers() -> None:
     first = build_decision(_priority(), _hourly())
     recovered = deepcopy(_priority())
-    recovered["queue"][0]["missing_evidence"] = ["hard_gate_2", "scenario_valuation"]
+    recovered["queue"][0]["near_buy_missing_evidence_items"] = ["hard_gate_2", "scenario_valuation"]
     second = build_decision(recovered, _hourly())
     assert first["signal_digest"] != second["signal_digest"]
+
+
+def test_legacy_missing_evidence_and_near_buy_items_are_combined_semantically() -> None:
+    priority = _priority()
+    priority["queue"][0]["missing_evidence"] = ["scenario_valuation", "legacy_gate"]
+    state = build_decision(priority, _hourly())["triggers"][0]["success_archetype_signal_state"]
+    assert state["missing_evidence"] == ["hard_gate_1", "hard_gate_2", "legacy_gate", "scenario_valuation"]
