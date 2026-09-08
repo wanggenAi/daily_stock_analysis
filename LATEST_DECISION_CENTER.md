@@ -8,10 +8,10 @@
 
 | 股票 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 深算状态 |
 |---|---:|---|---|---|---|
-| 国电南瑞 600406 | -2.66 | REDUCE_25 | **减仓25%** | HIGH | DEEP_REVIEW_MISSING |
+| 国电南瑞 600406 | -1.88 | REDUCE_25 | **减仓25%** | HIGH | DEEP_REVIEW_MISSING |
 | 润贝航科 001316 | 15.05 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_MISSING |
-| 中国平安 601318 | -1.48 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_MISSING |
-| 洛阳钼业 603993 | 0.36 | HOLD | **继续持有；可分批加仓1手** | HIGH | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | -1.41 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_MISSING |
+| 洛阳钼业 603993 | -2.86 | HOLD | **继续持有；可分批加仓1手** | HIGH | DEEP_REVIEW_PARTIAL |
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -50,3 +50,18 @@ A05农、林、牧、渔专业及辅助性活动(100.00)、O81机动车、电子
 - Terminal 机会结果可用：**True**
 
 > UNKNOWN != PASS；研究趋势不自动变成 BUY；no_auto_trade=true。
+
+## 自动深算运行状态
+
+- 深算资料来源：**STATIC_BOOTSTRAP_FALLBACK**
+- Lambda run：`—`
+- 触发来源：`—`
+- 计算执行：**NOT_AVAILABLE**
+- 运行状态：**NOT_AVAILABLE**
+- 研究完整性：**NOT_AVAILABLE**
+- 请求深算：**0**；已处理：**0**；完整：**0**；部分：**0**。
+- 尚未解决硬门槛：**0**。
+- 请求但未进入本次研究工件：**无**。
+- **执行 SUCCESS 不等于研究 COMPLETE**；剩余 UNKNOWN 会继续保持可见，不会冒充 PASS。
+
+> 自动触发、自动计算、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
