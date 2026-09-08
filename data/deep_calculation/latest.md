@@ -6,7 +6,7 @@
 - complete: **0**
 - evidence exhausted: **8**
 - evidence collection attempts: **1**
-- new evidence rows: **12**
+- new evidence rows: **14**
 - progressed gates: **0**
 - unresolved gates: **34**
 - immediate retry required: **False**
