@@ -20,6 +20,18 @@ _CNINFO_TOPSEARCH_URL = "https://www.cninfo.com.cn/new/information/topSearch/que
 _ORIGINAL_QUERY_SSE = _company_announcements._query_sse
 _ORIGINAL_QUERY_SSE_MATERIAL_EVENTS = _company_announcements._query_sse_material_events
 _ORIGINAL_LOAD_CNINFO_ORG_IDS = _company_announcements._load_cninfo_org_ids
+_ORIGINAL_CLASSIFY_MATERIAL_EVENTS = _company_announcements._classify_material_events
+
+_FUNDS_OCCUPATION_PREVENTIVE_POLICY_RE = re.compile(
+    r"(?:防范|预防|防止|规范).{0,48}(?:非经营性)?资金占用.{0,24}"
+    r"(?:管理办法|管理制度|内部控制制度|制度|规定)"
+    r"|(?:非经营性)?资金占用.{0,24}(?:管理办法|管理制度|内部控制制度)"
+)
+_FUNDS_OCCUPATION_TRUE_INCIDENT_RE = re.compile(
+    r"(?:存在|发生|形成|新增|发现|涉及|违规).{0,18}(?:非经营性)?资金占用"
+    r"|(?:非经营性)?资金占用(?:事项|问题|行为).{0,18}(?:整改|进展|归还|清偿|解决)"
+    r"|占用(?:上市)?公司资金"
+)
 
 
 def normalize_sse_attachment_url(value: Any) -> str:
@@ -66,6 +78,36 @@ def _query_sse_material_events_with_static_attachments(
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     rows, summary = _ORIGINAL_QUERY_SSE_MATERIAL_EVENTS(*args, **kwargs)
     return _rewrite_sse_rows(rows), summary
+
+
+def is_preventive_funds_occupation_policy(title: Any) -> bool:
+    """Return True only for policy/governance titles without an incident assertion.
+
+    Preventive internal-control documents such as ``防范...资金占用管理办法``
+    mention the risk vocabulary but do not establish that occupation occurred.
+    A title with an explicit occurrence/violation/remediation assertion is never
+    suppressed, even if it also mentions a management policy.
+    """
+    text = _company_announcements._clean_title(title)
+    return bool(
+        _FUNDS_OCCUPATION_PREVENTIVE_POLICY_RE.search(text)
+        and not _FUNDS_OCCUPATION_TRUE_INCIDENT_RE.search(text)
+    )
+
+
+def _classify_material_events_with_policy_guard(
+    title: Any, *, publish_date: date, as_of: date
+) -> list[dict[str, Any]]:
+    events = _ORIGINAL_CLASSIFY_MATERIAL_EVENTS(
+        title, publish_date=publish_date, as_of=as_of
+    )
+    if not is_preventive_funds_occupation_policy(title):
+        return events
+    return [
+        event
+        for event in events
+        if str(event.get("event_type") or "") != "FUNDS_OCCUPATION"
+    ]
 
 
 class _LazyCninfoOrgIdMap(dict[str, str]):
@@ -117,10 +159,12 @@ def _load_cninfo_org_ids_with_topsearch_fallback(session: Any, timeout: int) -> 
 
 
 # Keep the existing collectors and their pagination/risk rules intact; only fix
-# provider adapters at the module-global helpers those collectors call at runtime.
+# provider adapters and false-positive policy classification at the module-global
+# helpers those collectors call at runtime.
 _company_announcements._query_sse = _query_sse_with_static_attachments
 _company_announcements._query_sse_material_events = _query_sse_material_events_with_static_attachments
 _company_announcements._load_cninfo_org_ids = _load_cninfo_org_ids_with_topsearch_fallback
+_company_announcements._classify_material_events = _classify_material_events_with_policy_guard
 
 
 def canonical_industry_name(value: Any) -> str:
