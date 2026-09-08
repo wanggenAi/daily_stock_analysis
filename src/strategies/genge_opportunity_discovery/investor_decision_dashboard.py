@@ -7,6 +7,11 @@ may authorize at most one lot for an existing holding without mutating its
 frozen Formal Action. WAIT_PRICE is a price trigger only; REJECT receives zero
 capital. This module may make execution more conservative but never loosens
 investment gates. No automatic order placement is allowed.
+
+A formal action is persistent state, not an instruction that compounds every
+time this dashboard is regenerated. The persisted prior dashboard is used only
+to classify the lifecycle of that frozen action (NEW / UNCHANGED / CLEARED).
+This presentation/execution metadata never recomputes or mutates Canonical.
 """
 from __future__ import annotations
 
@@ -19,6 +24,8 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
+
+from .execution_lot_feasibility import partial_reduction_pct_from_action, reduction_plan_for_action
 
 CONTRACT_VERSION = "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2"
 FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
@@ -33,6 +40,8 @@ ACTION_LABELS = {
 }
 ACTION_ORDER = {"EXIT": 0, "SELL": 0, "REDUCE_50": 1, "REDUCE_25": 1, "REDUCE": 1,
                 "ADD": 2, "BUY": 2, "HOLD_REVIEW": 3, "HOLD": 4, "": 9}
+RISK_REDUCTION_ACTIONS = {"EXIT", "SELL", "REDUCE", "REDUCE_25", "REDUCE_50"}
+ACTION_LIFECYCLES = {"NEW", "UNCHANGED", "CLEARED"}
 
 
 def _num(value: Any) -> float | None:
@@ -147,22 +156,112 @@ def _validate_canonical(snapshot: Mapping[str, Any]) -> None:
             raise ValueError("dashboard refuses non-production-bridge decision")
 
 
-def _holdings(snapshot: Mapping[str, Any], holdings: Mapping[str, Mapping[str, Any]]) -> list[dict[str, Any]]:
+def _is_risk_reduction(action: Any) -> bool:
+    text = str(action or "").strip().upper()
+    return text in RISK_REDUCTION_ACTIONS or text.startswith("REDUCE_")
+
+
+def _previous_rows(previous_dashboard: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
+    if not isinstance(previous_dashboard, Mapping):
+        return {}
+    portfolio = previous_dashboard.get("stock_portfolio")
+    if not isinstance(portfolio, Mapping):
+        return {}
+    rows = portfolio.get("rows")
+    if not isinstance(rows, list):
+        return {}
+    return {_code(row.get("code")): dict(row) for row in rows if isinstance(row, Mapping) and _code(row.get("code"))}
+
+
+def _action_lifecycle(action: str, previous_action: str, *, previous_seen: bool) -> str:
+    if not previous_seen:
+        return "NEW"
+    if action == previous_action:
+        return "UNCHANGED"
+    if _is_risk_reduction(previous_action) and not _is_risk_reduction(action):
+        return "CLEARED"
+    return "NEW"
+
+
+def _execution_for_reduction(action: str, quantity: Any) -> dict[str, Any] | None:
+    pct = partial_reduction_pct_from_action(action)
+    if pct is None:
+        return None
+    if quantity is None:
+        return {
+            "status": "EXECUTION_BLOCKED_QUANTITY_UNKNOWN",
+            "reason": "HOLDING_QUANTITY_UNKNOWN",
+            "reduction_pct": pct,
+            "target_reduction_shares": None,
+            "executable_reduction_shares": 0,
+            "deferred_reduction_shares": None,
+            "lot_size": LOT_SIZE,
+            "rounding_policy": "FLOOR_ONLY_NEVER_UP",
+            "automatic_order_allowed": False,
+            "no_auto_trade": True,
+        }
+    return reduction_plan_for_action(action, quantity, lot_size=LOT_SIZE)
+
+
+def _investor_action_text(action: str, lifecycle: str, previous_action: str, execution: Mapping[str, Any] | None,
+                          *, add_authorized: bool) -> str:
+    label = ACTION_LABELS.get(action, action or "观察")
+    if lifecycle == "CLEARED":
+        prior_label = ACTION_LABELS.get(previous_action, previous_action or "原动作")
+        text = f"原{prior_label}已解除；当前{label}"
+    elif _is_risk_reduction(action):
+        if lifecycle == "UNCHANGED":
+            text = f"维持{label}目标；本轮无新增减仓/退出信号"
+        else:
+            text = f"新正式动作：{label}"
+    else:
+        text = label
+
+    if action == "HOLD" and add_authorized:
+        text = "继续持有；可分批加仓1手" if lifecycle != "CLEARED" else f"{text}；可分批加仓1手"
+
+    if execution:
+        status = str(execution.get("status") or "")
+        target = execution.get("target_reduction_shares")
+        executable = execution.get("executable_reduction_shares")
+        deferred = execution.get("deferred_reduction_shares")
+        if status == "EXECUTION_DEFERRED_LOT_SIZE":
+            text += f"；目标减{target}股，当前可执行0股（手数约束；禁止向上取整）"
+        elif status == "EXECUTION_PARTIAL_LOT_SIZE":
+            text += f"；目标减{target}股，最多执行{executable}股，余{deferred}股暂缓（禁止向上取整）"
+        elif status == "EXECUTION_READY":
+            text += f"；目标/可执行{target}股"
+        elif status == "EXECUTION_BLOCKED_QUANTITY_UNKNOWN":
+            text += "；持仓股数未知，执行层阻断"
+    return text
+
+
+def _holdings(snapshot: Mapping[str, Any], holdings: Mapping[str, Mapping[str, Any]],
+              previous_dashboard: Mapping[str, Any] | None = None) -> list[dict[str, Any]]:
     by_code = {_code(x.get("code")): dict(x) for x in snapshot.get("production", {}).get("holding_decisions") or []}
+    previous = _previous_rows(previous_dashboard)
     result = []
     for code, held in holdings.items():
         src = by_code.get(code, {})
         action = str(src.get("action") or src.get("production_action") or "").upper()
+        prior = previous.get(code, {})
+        prior_action = str(prior.get("formal_action") or "").upper()
+        lifecycle = _action_lifecycle(action, prior_action, previous_seen=code in previous)
+        if lifecycle not in ACTION_LIFECYCLES:
+            raise AssertionError("unknown formal action lifecycle")
         add_authorized = _bool(src.get("holding_add_authorized"))
         price, cost = _num(src.get("current_price")), _num(held.get("average_cost"))
         pnl = (price / cost - 1) * 100 if price is not None and cost not in {None, 0} else None
-        investor_action = ACTION_LABELS.get(action, action or "观察")
-        if action == "HOLD" and add_authorized:
-            investor_action = "继续持有；可分批加仓1手"
+        execution = _execution_for_reduction(action, held.get("quantity"))
+        investor_action = _investor_action_text(
+            action, lifecycle, prior_action, execution, add_authorized=add_authorized,
+        )
         result.append({"code": code, "name": held.get("name") or src.get("stock_name") or "",
                        "quantity": held.get("quantity"), "average_cost": cost, "current_price": price,
                        "pnl_pct": None if pnl is None else round(pnl, 2), "formal_action": action,
-                       "investor_action": investor_action,
+                       "action_lifecycle": lifecycle, "previous_formal_action": prior_action,
+                       "action_lifecycle_basis": "PREVIOUS_PERSISTED_DASHBOARD" if code in previous else "INITIAL_OBSERVATION",
+                       "investor_action": investor_action, "execution_feasibility": execution,
                        "holding_add_authorized": add_authorized,
                        "holding_add_max_lots": int(_num(src.get("holding_add_max_lots")) or HOLDING_ADD_MAX_LOTS),
                        "holding_add_reason_codes": src.get("holding_add_authorization_reason_codes") or "",
@@ -327,23 +426,32 @@ def build_dashboard(*, canonical: Mapping[str, Any], holdings: Mapping[str, Mapp
                     capital: Mapping[str, Any] | None = None, terminal_decisions: Iterable[Mapping[str, Any]] = (),
                     hourly: Mapping[str, Any] | None = None, research_priority: Mapping[str, Any] | None = None,
                     market_regime: Mapping[str, Any] | None = None, industry_regimes: Iterable[Mapping[str, Any]] = (),
-                    event_decision: Mapping[str, Any] | None = None, mode: str = "HOURLY", generated_at: str | None = None) -> dict[str, Any]:
+                    event_decision: Mapping[str, Any] | None = None, previous_dashboard: Mapping[str, Any] | None = None,
+                    mode: str = "HOURLY", generated_at: str | None = None) -> dict[str, Any]:
     _validate_canonical(canonical)
-    held = _holdings(canonical, holdings); market = _market(market_regime or {}); terminal = _terminal(terminal_decisions)
+    held = _holdings(canonical, holdings, previous_dashboard=previous_dashboard)
+    market = _market(market_regime or {}); terminal = _terminal(terminal_decisions)
     cap = dict(capital or {"status":"UNAVAILABLE","planning_cash_cny":0.0,"planner":{},"no_auto_trade":True})
     if cap.get("no_auto_trade") is not True: raise ValueError("capital planner input lost no-auto-trade contract")
     plan = _plan(cap, market, held, terminal); counts = Counter(x["formal_action"] or "NO_ACTION" for x in held)
-    urgent = sum(x["formal_action"] in {"EXIT","SELL","REDUCE","REDUCE_25","REDUCE_50"} for x in held)
+    lifecycle_counts = Counter(x["action_lifecycle"] for x in held)
+    urgent = sum(_is_risk_reduction(x["formal_action"]) for x in held)
+    new_urgent = sum(_is_risk_reduction(x["formal_action"]) and x["action_lifecycle"] == "NEW" for x in held)
     final_ops = list(plan["operations"]) + list(plan["wait_price_reservations"])
     return {"contract_version": CONTRACT_VERSION, "mode": str(mode).upper(),
             "generated_at": generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
             "canonical_snapshot_id": canonical.get("snapshot_id") or "", "canonical_source_run_id": canonical.get("source_run_id") or "",
             "latest_trade_date": canonical.get("latest_trade_date") or "", "formal_action_source": FORMAL_ACTION_SOURCE,
-            "formal_action_recomputed": False, "no_auto_trade": True,
-            "headline": f"市场={market.get('status','UNKNOWN')}；持仓减仓/退出={urgent}；新股正式BUY={len(terminal['buy_now'])}；等价格={len(terminal['wait_price'])}；计划立即投入≈¥{plan['planned_immediate_cash_cny']:.0f}",
+            "formal_action_recomputed": False,
+            "formal_action_lifecycle_source": "PREVIOUS_PERSISTED_DASHBOARD" if _previous_rows(previous_dashboard) else "INITIAL_OBSERVATION",
+            "formal_actions_are_persistent_state": True, "repeated_report_does_not_compound_action": True,
+            "no_auto_trade": True,
+            "headline": f"市场={market.get('status','UNKNOWN')}；持仓减仓/退出目标={urgent}；本轮新增减仓/退出={new_urgent}；新股正式BUY={len(terminal['buy_now'])}；等价格={len(terminal['wait_price'])}；计划立即投入≈¥{plan['planned_immediate_cash_cny']:.0f}",
             "market": market, "stock_portfolio": {"status":"CONFIRMED" if holdings else "NO_CONFIRMED_HOLDINGS","rows":held},
             "terminal_opportunities": terminal, "capital_deployment": plan, "final_operation_table": final_ops,
             "decision_summary": {"holding_count":len(held),"formal_action_counts":dict(sorted(counts.items())),
+                                 "formal_action_lifecycle_counts":dict(sorted(lifecycle_counts.items())),
+                                 "new_risk_reduction_action_count":new_urgent,
                                  "terminal_buy_count":len(terminal["buy_now"]),"terminal_wait_price_count":len(terminal["wait_price"]),
                                  "terminal_reject_count":terminal["reject_count"],"planned_immediate_cash_cny":plan["planned_immediate_cash_cny"]},
             "capital_direction": _industries(industry_regimes),
@@ -365,9 +473,11 @@ def render_markdown(p: Mapping[str, Any]) -> str:
     lines=["# 投资决策驾驶舱","",f"> {p.get('headline','')}","","## 1. 今天市场怎么样","",
            f"- 市场状态：**{m.get('status','UNKNOWN')}**；是否允许新买：**{m.get('allow_new_buy')}**；仓位倍率：**{_f(m.get('position_multiplier'))}**",
            f"- 上涨家数比例：**{_f((_num(m.get('advance_ratio')) or 0)*100 if m.get('advance_ratio') is not None else None)}%**；数据质量：**{m.get('data_quality','UNKNOWN')}**","",
-           "## 2. 我的持仓怎么办","","| 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作 | 现在怎么办 |","|---|---:|---:|---:|---:|---|---|"]
+           "## 2. 我的持仓怎么办","",
+           "- 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。",
+           "| 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作 | 动作状态 | 现在怎么办 |","|---|---:|---:|---:|---:|---|---|---|"]
     for x in p.get("stock_portfolio",{}).get("rows") or []:
-        lines.append(f"| {x.get('name','')} {x.get('code','')} | {x.get('quantity') or 0} | {_f(x.get('average_cost'))} | {_f(x.get('current_price'))} | {_f(x.get('pnl_pct'))} | {x.get('formal_action') or '—'} | **{x.get('investor_action')}** |")
+        lines.append(f"| {x.get('name','')} {x.get('code','')} | {x.get('quantity') or 0} | {_f(x.get('average_cost'))} | {_f(x.get('current_price'))} | {_f(x.get('pnl_pct'))} | {x.get('formal_action') or '—'} | **{x.get('action_lifecycle') or '—'}** | **{x.get('investor_action')}** |")
     lines += ["","## 3. 今天能直接买什么","","| 股票 | 行业 | 当前价 | 估值信心 | 权限 |","|---|---|---:|---|---|"]
     for x in t.get("buy_now") or []: lines.append(f"| {x['name']} {x['code']} | {x.get('industry') or '—'} | {_f(x.get('current_price'))} | {x.get('valuation_confidence') or '—'} | **正式BUY镜像** |")
     if not t.get("buy_now"): lines.append("| — | — | — | — | 本轮没有已授权新股BUY |")
@@ -386,6 +496,7 @@ def render_markdown(p: Mapping[str, Any]) -> str:
     lines += ["","## 7. 当前强势方向（辅助，不代替BUY权限）","", "、".join(f"{x['industry']}({x['status']})" for x in strong) if strong else "最新行业代理暂缺。",
               "","## 8. 其他已确认资产","",f"- 基金状态：**{p.get('fund_portfolio',{}).get('status')}**","","## 9. 系统状态（最后看）","",
               f"- Canonical：**正常**；Terminal：**{'可用' if p.get('data_health',{}).get('terminal_decisions_available') else '暂无可用产物'}**；资金源：**{p.get('data_health',{}).get('capital_source_status')}**",
+              "- Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。",
               "- 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。","","- **no-auto-trade：true；所有订单必须人工确认。**",""]
     return "\n".join(lines)
 
@@ -394,9 +505,11 @@ def write_dashboard(*, canonical_path: Path, holdings_path: Path, funds_path: Pa
                     terminal_decisions_path: Path | None, hourly_path: Path | None, research_priority_path: Path | None,
                     market_regime_path: Path | None, industry_regimes_path: Path | None, event_decision_path: Path | None,
                     json_output: Path, markdown_output: Path, mode: str) -> dict[str, Any]:
+    previous_dashboard = _json(json_output)
     p=build_dashboard(canonical=_json(canonical_path),holdings=load_confirmed_holdings(holdings_path),funds=load_confirmed_funds(funds_path),
         capital=load_capital(capital_path),terminal_decisions=_csv(terminal_decisions_path),hourly=_json(hourly_path),research_priority=_json(research_priority_path),
-        market_regime=_json(market_regime_path),industry_regimes=_csv(industry_regimes_path),event_decision=_json(event_decision_path),mode=mode)
+        market_regime=_json(market_regime_path),industry_regimes=_csv(industry_regimes_path),event_decision=_json(event_decision_path),
+        previous_dashboard=previous_dashboard,mode=mode)
     json_output.parent.mkdir(parents=True,exist_ok=True); markdown_output.parent.mkdir(parents=True,exist_ok=True)
     json_output.write_text(json.dumps(p,ensure_ascii=False,indent=2),encoding="utf-8"); markdown_output.write_text(render_markdown(p),encoding="utf-8"); return p
 

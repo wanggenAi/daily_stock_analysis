@@ -1,3 +1,5 @@
+import copy
+
 import pytest
 
 from src.strategies.genge_opportunity_discovery.investor_decision_dashboard import build_dashboard, render_markdown
@@ -65,6 +67,8 @@ def test_dashboard_allocates_only_authorized_actions_and_preserves_wait_price():
     )
     assert payload["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
     assert payload["formal_action_recomputed"] is False
+    assert payload["formal_actions_are_persistent_state"] is True
+    assert payload["repeated_report_does_not_compound_action"] is True
     assert payload["no_auto_trade"] is True
     assert [x["code"] for x in payload["terminal_opportunities"]["buy_now"]] == ["600036"]
     assert [x["code"] for x in payload["terminal_opportunities"]["wait_price"]] == ["601899"]
@@ -100,6 +104,53 @@ def test_market_block_can_only_reduce_deployment_not_create_signal():
     assert payload["capital_deployment"]["deployment_budget_cny"] == 0
     assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0
     assert payload["terminal_opportunities"]["buy_now"][0]["code"] == "600036"
+
+
+def test_repeated_reduce_is_unchanged_persistent_state_and_lot_deferred():
+    canonical = copy.deepcopy(_canonical())
+    canonical["production"]["holding_decisions"][0]["action"] = "REDUCE_25"
+    holdings = copy.deepcopy(_holdings())
+    holdings["601318"]["quantity"] = 200
+    previous = {"stock_portfolio": {"rows": [{"code": "601318", "formal_action": "REDUCE_25"}]}}
+
+    payload = build_dashboard(
+        canonical=canonical, holdings=holdings, funds=[], previous_dashboard=previous,
+    )
+    row = next(x for x in payload["stock_portfolio"]["rows"] if x["code"] == "601318")
+    execution = row["execution_feasibility"]
+    assert row["action_lifecycle"] == "UNCHANGED"
+    assert row["previous_formal_action"] == "REDUCE_25"
+    assert execution["target_reduction_shares"] == 50
+    assert execution["executable_reduction_shares"] == 0
+    assert execution["deferred_reduction_shares"] == 50
+    assert execution["status"] == "EXECUTION_DEFERRED_LOT_SIZE"
+    assert payload["decision_summary"]["new_risk_reduction_action_count"] == 0
+    assert "维持减仓25%目标；本轮无新增减仓/退出信号" in row["investor_action"]
+    assert "禁止向上取整" in row["investor_action"]
+    text = render_markdown(payload)
+    assert "同一动作重复出现在后续报表中，不代表再次执行或累计执行" in text
+
+
+def test_reduce_transition_to_hold_is_marked_cleared():
+    canonical = copy.deepcopy(_canonical())
+    canonical["production"]["holding_decisions"][0]["action"] = "HOLD"
+    previous = {"stock_portfolio": {"rows": [{"code": "601318", "formal_action": "REDUCE_25"}]}}
+    payload = build_dashboard(canonical=canonical, holdings=_holdings(), funds=[], previous_dashboard=previous)
+    row = next(x for x in payload["stock_portfolio"]["rows"] if x["code"] == "601318")
+    assert row["action_lifecycle"] == "CLEARED"
+    assert row["previous_formal_action"] == "REDUCE_25"
+    assert "原减仓25%已解除" in row["investor_action"]
+
+
+def test_hold_transition_to_reduce_is_new_action_not_repeated_state():
+    canonical = copy.deepcopy(_canonical())
+    canonical["production"]["holding_decisions"][0]["action"] = "REDUCE_25"
+    previous = {"stock_portfolio": {"rows": [{"code": "601318", "formal_action": "HOLD"}]}}
+    payload = build_dashboard(canonical=canonical, holdings=_holdings(), funds=[], previous_dashboard=previous)
+    row = next(x for x in payload["stock_portfolio"]["rows"] if x["code"] == "601318")
+    assert row["action_lifecycle"] == "NEW"
+    assert payload["decision_summary"]["new_risk_reduction_action_count"] == 1
+    assert row["investor_action"].startswith("新正式动作：减仓25%")
 
 
 def test_dashboard_rejects_bad_authority_and_renders_investor_first_order():

@@ -64,3 +64,40 @@ def test_no_portfolio_capital_reports_thresholds_without_forcing_order():
     assert result["required_capital_for_initial_min_order"] == 210000.0
     assert result["required_capital_for_max_min_order"] == 105000.0
     assert result["initial_budget_legal_quantity"] == ""
+
+
+def test_reduce_25_on_200_shares_defers_instead_of_rounding_up():
+    result = audit.reduction_plan_for_action("REDUCE_25", 200, lot_size=100)
+    assert result is not None
+    assert result["target_reduction_shares"] == 50
+    assert result["executable_reduction_shares"] == 0
+    assert result["deferred_reduction_shares"] == 50
+    assert result["status"] == "EXECUTION_DEFERRED_LOT_SIZE"
+    assert result["reason"] == "LOT_SIZE_CONSTRAINT"
+    assert result["rounding_policy"] == "FLOOR_ONLY_NEVER_UP"
+    assert result["no_auto_trade"] is True
+
+
+def test_reduce_25_on_500_shares_executes_only_one_lot_and_defers_25():
+    result = audit.reduction_plan_for_action("REDUCE_25", 500, lot_size=100)
+    assert result is not None
+    assert result["target_reduction_shares"] == 125
+    assert result["executable_reduction_shares"] == 100
+    assert result["deferred_reduction_shares"] == 25
+    assert result["status"] == "EXECUTION_PARTIAL_LOT_SIZE"
+    assert result["executable_reduction_shares"] <= result["target_reduction_shares"]
+
+
+def test_preexisting_odd_lot_can_be_sold_whole_but_not_split():
+    result = audit.reduction_plan_for_action("REDUCE_25", 250, lot_size=100)
+    assert result is not None
+    assert result["target_reduction_shares"] == 62
+    assert result["preexisting_odd_lot_shares"] == 50
+    assert result["executable_reduction_shares"] == 50
+    assert result["deferred_reduction_shares"] == 12
+    assert result["status"] == "EXECUTION_PARTIAL_LOT_SIZE"
+
+
+def test_non_percentage_reduce_action_does_not_invent_target():
+    assert audit.reduction_plan_for_action("REDUCE", 200, lot_size=100) is None
+    assert audit.reduction_plan_for_action("HOLD", 200, lot_size=100) is None
