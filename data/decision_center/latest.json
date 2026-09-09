@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-09T17:19:53+00:00",
+  "generated_at": "2026-09-09T17:21:34+00:00",
   "latest_trade_date": "2026-09-09",
   "canonical_snapshot_id": "250479b578b36914cd86",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -24,11 +24,11 @@
     "deep_calculation_terminal_state": "EVIDENCE_EXHAUSTED",
     "deep_calculation_unresolved_gate_count": 122,
     "deep_calculation_progressed_gate_count": 1,
-    "research_terminal_requested_count": 0,
+    "research_terminal_requested_count": 34,
     "research_buy_count": 0,
     "research_wait_price_count": 0,
-    "research_reject_count": 0,
-    "urgent_evidence_queue_count": 0
+    "research_reject_count": 34,
+    "urgent_evidence_queue_count": 6
   },
   "pillar_1_holdings_deep_analysis": {
     "question": "我手里的股票，现在该怎么办？",
@@ -580,19 +580,19 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-09-09T16:58:16+00:00",
-      "source_deep_lambda_run_id": "34379012920",
+      "generated_at": "2026-09-09T17:20:03+00:00",
+      "source_deep_lambda_run_id": "34381202638",
       "source_every_industry_run_id": "34372874867",
-      "requested_count": 33,
+      "requested_count": 34,
       "decision_counts": {
         "BUY": 0,
         "WAIT_PRICE": 0,
-        "REJECT": 33
+        "REJECT": 34
       },
       "all_requested_terminal": true,
       "research_buy": [],
       "research_wait_price": [],
-      "research_reject_count": 33,
+      "research_reject_count": 34,
       "urgent_research_queue": [
         {
           "code": "603596",
@@ -804,15 +804,220 @@
       "automatic_formal_buy_allowed": false,
       "unknown_is_pass": false,
       "no_auto_trade": true,
-      "current_for_deep_runtime": false,
-      "stale_for_deep_runtime": true
+      "current_for_deep_runtime": true,
+      "stale_for_deep_runtime": false
     },
     "research_buy": [],
     "research_wait_price": [],
-    "research_reject_count": 0,
-    "urgent_evidence_queue": [],
+    "research_reject_count": 34,
+    "urgent_evidence_queue": [
+      {
+        "code": "603596",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "C36汽车制造业",
+        "name": "伯特利",
+        "no_auto_trade": true,
+        "quant_score": 78.4309,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P2",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "HIGH",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 73.1715,
+        "valuation": {
+          "current_pe": 17.95,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 33.65,
+          "pe_to_history_ratio": 0.5334323922734027,
+          "required_profit_growth_pct": -46.65676077265973
+        }
+      },
+      {
+        "code": "600754",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "H61住宿业",
+        "name": "锦江酒店",
+        "no_auto_trade": true,
+        "quant_score": 77.8914,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P2",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "HIGH",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 77.595,
+        "valuation": {
+          "current_pe": 19.65,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 33.425,
+          "pe_to_history_ratio": 0.5878833208676141,
+          "required_profit_growth_pct": -41.21166791323859
+        }
+      },
+      {
+        "code": "000526",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "P83教育",
+        "name": "学大教育",
+        "no_auto_trade": true,
+        "quant_score": 72.2806,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P2",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "HIGH",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 85.9134,
+        "valuation": {
+          "current_pe": 17.91,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 31.4,
+          "pe_to_history_ratio": 0.5703821656050956,
+          "required_profit_growth_pct": -42.96178343949044
+        }
+      },
+      {
+        "code": "002239",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "C36汽车制造业",
+        "name": "奥特佳",
+        "no_auto_trade": true,
+        "quant_score": 69.4344,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P2",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "HIGH",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 72.0997,
+        "valuation": {
+          "current_pe": 40.38,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 80.44,
+          "pe_to_history_ratio": 0.5019890601690702,
+          "required_profit_growth_pct": -49.80109398309298
+        }
+      },
+      {
+        "code": "603979",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "B11开采专业及辅助性活动",
+        "name": "金诚信",
+        "no_auto_trade": true,
+        "quant_score": 68.9997,
+        "quant_status": "HARD_REJECT",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P2",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "HIGH",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 87.3595,
+        "valuation": {
+          "current_pe": 17.72,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 24.07,
+          "pe_to_history_ratio": 0.736186123805567,
+          "required_profit_growth_pct": -26.3813876194433
+        }
+      },
+      {
+        "code": "002612",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "C18纺织服装、服饰业",
+        "name": "朗姿股份",
+        "no_auto_trade": true,
+        "quant_score": 66.4604,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P2",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "HIGH",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 60.925,
+        "valuation": {
+          "current_pe": 7.39,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 40.015,
+          "pe_to_history_ratio": 0.1846807447207297,
+          "required_profit_growth_pct": -81.53192552792703
+        }
+      }
+    ],
     "research_actionable_count": 0,
-    "research_terminal_current": false
+    "research_terminal_current": true
   },
   "decision_readiness": {
     "portfolio_actions_available": true,
@@ -827,8 +1032,8 @@
     "deep_calculation_requested_research_complete": false,
     "deep_calculation_manual_next_round_required": false,
     "terminal_research_snapshot_available": true,
-    "terminal_research_current_for_deep_runtime": false,
-    "terminal_research_all_requested_terminal": false
+    "terminal_research_current_for_deep_runtime": true,
+    "terminal_research_all_requested_terminal": true
   },
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
