@@ -1,23 +1,30 @@
 """Build a fail-closed Deep-Lambda reopen plan from terminal urgent research.
 
-A new evidence epoch should make urgent evidence-blocked names eligible for another
-Deep Calculation pass, but it must not narrow the persisted terminal workset.
-Therefore this planner re-dispatches the complete previous terminal workset whenever
-at least one strict urgent evidence-blocked row exists. It never changes a gate,
-never converts UNKNOWN to PASS, and never creates Formal/Production authority.
+A genuinely new evidence epoch should make urgent evidence-blocked names eligible
+for another Deep Calculation pass, but it must not narrow the persisted terminal
+workset. Therefore this planner re-dispatches the complete previous terminal
+workset whenever at least one strict urgent evidence-blocked row exists.
+
+Slow-lane schedule completion by itself is not evidence. A deterministic content
+fingerprint over the urgent names' persisted Evidence Event files is exposed so
+the workflow can suppress identical-evidence scheduled retries. This module never
+changes a gate, never converts UNKNOWN to PASS, and never creates Formal/Production
+authority.
 """
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from collections import Counter
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 CONTRACT = "GEN_GE_TERMINAL_URGENT_EVIDENCE_REOPEN_V1"
 TERMINAL_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 EVIDENCE_BLOCKED_REASON = "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
 TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "REJECT"})
+EVIDENCE_FINGERPRINT_SCHEMA = b"GEN_GE_URGENT_EVIDENCE_EPOCH_V1\0"
 
 
 def _code(value: Any) -> str:
@@ -29,6 +36,34 @@ def _code(value: Any) -> str:
             text = text[len(prefix) :]
             break
     return text.zfill(6) if text.isdigit() else text
+
+
+def evidence_epoch_fingerprint(
+    urgent_codes: Iterable[str], evidence_root: Path
+) -> tuple[str, int]:
+    """Fingerprint only evidence persisted for the current urgent subset.
+
+    The fingerprint changes when the urgent set changes, when an urgent security's
+    Evidence Event file first appears/disappears, or when its bytes change. Files
+    for non-urgent securities are deliberately excluded so unrelated slow-lane
+    activity cannot cause a full research-workset replay.
+    """
+    normalized = sorted({_code(code) for code in urgent_codes if _code(code)})
+    digest = hashlib.sha256()
+    digest.update(EVIDENCE_FINGERPRINT_SCHEMA)
+    present_count = 0
+    for code in normalized:
+        digest.update(code.encode("ascii"))
+        digest.update(b"\0")
+        path = evidence_root / f"{code}.jsonl"
+        if not path.is_file():
+            digest.update(b"MISSING\0")
+            continue
+        present_count += 1
+        digest.update(b"PRESENT\0")
+        digest.update(hashlib.sha256(path.read_bytes()).digest())
+        digest.update(b"\0")
+    return digest.hexdigest(), present_count
 
 
 def _safe_terminal_row(raw: Any) -> dict[str, Any]:
@@ -52,7 +87,9 @@ def _safe_terminal_row(raw: Any) -> dict[str, Any]:
     return row
 
 
-def _validate_terminal(payload: Mapping[str, Any]) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
+def _validate_terminal(
+    payload: Mapping[str, Any],
+) -> tuple[list[dict[str, Any]], dict[str, dict[str, Any]]]:
     if payload.get("contract") != TERMINAL_CONTRACT:
         raise ValueError("unexpected terminal research contract")
     if payload.get("all_requested_terminal") is not True:
@@ -91,12 +128,12 @@ def _validate_terminal(payload: Mapping[str, Any]) -> tuple[list[dict[str, Any]]
 
 
 def build_reopen_plan(payload: Mapping[str, Any]) -> dict[str, Any]:
-    """Reopen the complete terminal workset when strict urgent rows need new evidence.
+    """Reopen the complete terminal workset when strict urgent rows need evidence.
 
     The complete previous terminal workset is preserved so the next Terminal run
     cannot accidentally shrink from N names to only the urgent subset. The urgent
-    subset is validated separately and remains the reason the new evidence epoch is
-    dispatched. Specialized industries are eligible for evidence recovery, while
+    subset is validated separately and remains the reason a new evidence epoch may
+    be dispatched. Specialized industries are eligible for evidence recovery, while
     their downstream valuation rules remain authoritative.
     """
     terminal_rows, terminal_by_code = _validate_terminal(payload)
@@ -133,7 +170,9 @@ def build_reopen_plan(payload: Mapping[str, Any]) -> dict[str, Any]:
                 "industry": str(terminal.get("industry") or ""),
                 "research_priority": str(terminal.get("research_priority") or ""),
                 "hard_gate_unknowns": list(terminal.get("hard_gate_unknowns") or []),
-                "urgent_research_reasons": list(terminal.get("urgent_research_reasons") or []),
+                "urgent_research_reasons": list(
+                    terminal.get("urgent_research_reasons") or []
+                ),
             }
         )
 
@@ -148,8 +187,12 @@ def build_reopen_plan(payload: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "contract": CONTRACT,
         "source_terminal_contract": TERMINAL_CONTRACT,
-        "source_deep_lambda_run_id": str(payload.get("source_deep_lambda_run_id") or ""),
-        "source_every_industry_run_id": str(payload.get("source_every_industry_run_id") or ""),
+        "source_deep_lambda_run_id": str(
+            payload.get("source_deep_lambda_run_id") or ""
+        ),
+        "source_every_industry_run_id": str(
+            payload.get("source_every_industry_run_id") or ""
+        ),
         "reopen_reason": "URGENT_EVIDENCE_CONTINUITY_RECHECK",
         "requested_count": len(requested_codes),
         "requested_codes": requested_codes,
@@ -168,12 +211,19 @@ def build_reopen_plan(payload: Mapping[str, Any]) -> dict[str, Any]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--terminal-json", type=Path, required=True)
+    parser.add_argument("--evidence-root", type=Path, default=Path("data/evidence_events"))
     parser.add_argument("--output-json", type=Path, required=True)
     args = parser.parse_args()
     payload = json.loads(args.terminal_json.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("terminal research payload must be an object")
     plan = build_reopen_plan(payload)
+    fingerprint, present_count = evidence_epoch_fingerprint(
+        plan["urgent_requested_codes"], args.evidence_root
+    )
+    plan["evidence_epoch_fingerprint"] = fingerprint
+    plan["evidence_epoch_present_file_count"] = present_count
+    plan["identical_evidence_may_auto_retry"] = False
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(
         json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
