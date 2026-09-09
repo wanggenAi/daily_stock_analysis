@@ -7,12 +7,17 @@
 
 ## Urgent evidence queue
 
-- 603596 伯特利: quant=78.4309, PE/history=0.5334323922734027, unknown=predictability,long_term_demand,moat
-- 600754 锦江酒店: quant=77.8914, PE/history=0.5878833208676141, unknown=predictability,long_term_demand,moat
-- 000526 学大教育: quant=72.2806, PE/history=0.5703821656050956, unknown=predictability,long_term_demand,moat
-- 002239 奥特佳: quant=69.4344, PE/history=0.5019890601690702, unknown=predictability,long_term_demand,moat
-- 603979 金诚信: quant=68.9997, PE/history=0.736186123805567, unknown=predictability,long_term_demand,moat
-- 002612 朗姿股份: quant=66.4604, PE/history=0.1846807447207297, unknown=predictability,long_term_demand,moat
+- 603055 台华新材: quant=63.2418, PE/history=0.7981056829511466, unknown=predictability,long_term_demand,moat, urgent=P0_EVIDENCE_BLOCKED
+- 601318 中国平安: quant=57.2771, PE/history=0.7503001200480192, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=P0_EVIDENCE_BLOCKED
+- 600406 国电南瑞: quant=37.5263, PE/history=0.8265532544378699, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=P0_EVIDENCE_BLOCKED
+- 001316 润贝航科: quant=35.2481, PE/history=0.6673434856175973, unknown=predictability,long_term_demand,moat, urgent=P0_EVIDENCE_BLOCKED
+- 603993 XD洛阳钼: quant=31.1432, PE/history=0.7479546054367907, unknown=predictability, urgent=P0_EVIDENCE_BLOCKED
+- 603596 伯特利: quant=78.4309, PE/history=0.5334323922734027, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 600754 锦江酒店: quant=77.8914, PE/history=0.5878833208676141, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 000526 学大教育: quant=72.2806, PE/history=0.5703821656050956, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 002239 奥特佳: quant=69.4344, PE/history=0.5019890601690702, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 603979 金诚信: quant=68.9997, PE/history=0.736186123805567, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 002612 朗姿股份: quant=66.4604, PE/history=0.1846807447207297, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 
 ## Terminal rows
 
