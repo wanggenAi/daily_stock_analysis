@@ -149,9 +149,9 @@ def build_terminal_decisions(
         _, _, valuation_snapshot = _valuation_decision(valuation)
         quant_score = _num(valuation.get("quant_score"))
         pe_ratio = valuation_snapshot.get("pe_to_history_ratio")
+        evidence_blocked = decision == "REJECT" and reason == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
         attractive_screen = bool(
-            decision == "REJECT"
-            and reason == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
+            evidence_blocked
             and quant_score is not None
             and quant_score >= 65.0
             and pe_ratio is not None
@@ -160,6 +160,12 @@ def build_terminal_decisions(
             and str(valuation.get("financial_review_status") or "").upper() == "OK"
             and str(valuation.get("earnings_quality_confidence") or "").upper() == "HIGH"
         )
+        priority_level = str(priority.get("priority") or "").strip().upper()
+        urgent_reasons: list[str] = []
+        if evidence_blocked and priority_level == "P0":
+            urgent_reasons.append("P0_EVIDENCE_BLOCKED")
+        if attractive_screen:
+            urgent_reasons.append("QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED")
         rows.append(
             {
                 "code": code,
@@ -180,14 +186,23 @@ def build_terminal_decisions(
                 "success_archetype_similarity_score": _num(priority.get("success_archetype_similarity_score")),
                 "success_archetype_id": priority.get("success_archetype_id") or "",
                 "screening_attractiveness": "HIGH" if attractive_screen else "NORMAL",
+                "urgent_research": bool(urgent_reasons),
+                "urgent_research_reasons": urgent_reasons,
                 "valuation": valuation_snapshot,
             }
         )
 
     order = {"BUY": 0, "WAIT_PRICE": 1, "REJECT": 2}
     rows.sort(key=lambda r: (order[r["research_decision"]], -(r.get("quant_score") or -1.0), r["code"]))
-    urgent = [r for r in rows if r["screening_attractiveness"] == "HIGH"]
-    urgent.sort(key=lambda r: (-(r.get("quant_score") or -1.0), r["valuation"].get("pe_to_history_ratio") or 999.0, r["code"]))
+    urgent = [r for r in rows if r.get("urgent_research") is True]
+    urgent.sort(
+        key=lambda r: (
+            0 if str(r.get("research_priority") or "").upper() == "P0" else 1,
+            -(r.get("quant_score") or -1.0),
+            (r.get("valuation") or {}).get("pe_to_history_ratio") or 999.0,
+            r["code"],
+        )
+    )
     counts = {decision: sum(r["research_decision"] == decision for r in rows) for decision in DECISIONS}
     status = dict(deep_status or {})
     return {
@@ -204,7 +219,7 @@ def build_terminal_decisions(
         "unknown_is_pass": False,
         "no_auto_trade": True,
         "terminal_rows": rows,
-        "urgent_research_queue": urgent[:10],
+        "urgent_research_queue": urgent,
         "interpretation": "BUY/WAIT_PRICE are research-only outputs and never create Formal/Production authority. UNKNOWN hard gates converge fail-closed to REJECT after bounded evidence recovery and may reopen only on new evidence.",
     }
 
@@ -227,8 +242,9 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
         lines.append("- None")
     for row in urgent:
         ratio = (row.get("valuation") or {}).get("pe_to_history_ratio")
+        reasons = ",".join(row.get("urgent_research_reasons") or [])
         lines.append(
-            f"- {row.get('code')} {row.get('name')}: quant={row.get('quant_score')}, PE/history={ratio}, unknown={','.join(row.get('hard_gate_unknowns') or [])}"
+            f"- {row.get('code')} {row.get('name')}: quant={row.get('quant_score')}, PE/history={ratio}, unknown={','.join(row.get('hard_gate_unknowns') or [])}, urgent={reasons}"
         )
     lines += ["", "## Terminal rows", ""]
     for row in payload.get("terminal_rows") or []:
