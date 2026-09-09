@@ -26,7 +26,7 @@
 | urbanization_services | 14.18 | 58.08 | 50.00 | 尚未映射 |
 | research_intensity | 13.95 | 55.04 | 50.00 | 尚未映射 |
 | advanced_materials | 13.91 | 50.00 | 53.63 | 尚未映射 |
-| advanced_manufacturing | 11.11 | 48.19 | 45.69 | 专用设备、电气机械、工程机械 |
+| brain_computer_interface | 13.91 | 50.00 | 53.63 | 尚未映射 |
 
 ### 近期市场行为代理
 
