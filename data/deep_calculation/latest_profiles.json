@@ -6,13 +6,13 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-09T07:19:00+00:00",
-  "generated_at": "2026-09-09T07:10:38+00:00",
+  "gap_closure_generated_at": "2026-09-09T07:30:48+00:00",
+  "generated_at": "2026-09-09T07:23:59+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "34322367109",
+  "lambda_run_id": "34323461565",
   "material_event_failed_gate_count": 1,
   "material_event_pass_override_count": 1,
-  "new_evidence_count": 65,
+  "new_evidence_count": 66,
   "no_auto_trade": true,
   "profiles": {
     "000001": {
@@ -17175,27 +17175,34 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
         }
       },
       "industry": "G55水上运输业",
-      "name": "宁波远洋"
+      "name": "宁波远洋",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "601038": {
       "gates": {
@@ -26008,7 +26015,7 @@
   "reverified_upstream_pass_count": 4,
   "run_state": "COMPLETED",
   "source_run_id": "34298569484",
-  "trigger_source": "PUSH_CHANGE",
+  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
