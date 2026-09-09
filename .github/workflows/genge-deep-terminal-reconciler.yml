@@ -1,0 +1,116 @@
+name: GenGe Deep Terminal Reconciler
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-deep-terminal-reconciler.yml"
+      - ".github/workflows/genge-v31-terminal-research-decision.yml"
+  schedule:
+    - cron: "7,37 * * * *"
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: genge-deep-terminal-reconciler
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+
+      - name: Reconcile latest successful Deep into Terminal
+        id: reconcile
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          deep_status="data/deep_calculation/latest_status.json"
+          terminal_state="data/deep_calculation/latest_research_decisions.json"
+          [ -f "$deep_status" ] || { echo "Deep status is absent; nothing to reconcile"; exit 0; }
+
+          deep_id=$(jq -r '.lambda_run_id // empty' "$deep_status")
+          execution_status=$(jq -r '.execution_status // empty' "$deep_status")
+          run_state=$(jq -r '.run_state // empty' "$deep_status")
+          unknown_is_pass=$(jq -r '.unknown_is_pass // true' "$deep_status")
+          formal_authority=$(jq -r '.formal_trading_authority // true' "$deep_status")
+          automatic_formal_buy=$(jq -r '.automatic_formal_buy_allowed // true' "$deep_status")
+          no_auto_trade=$(jq -r '.no_auto_trade // false' "$deep_status")
+
+          if [ "$execution_status" != "SUCCESS" ] || [ "$run_state" != "COMPLETED" ]; then
+            echo "Latest Deep is not a completed success; refusing Terminal dispatch"
+            exit 0
+          fi
+          [[ "$deep_id" =~ ^[0-9]+$ ]] || { echo "invalid Deep lambda_run_id=$deep_id" >&2; exit 1; }
+          [ "$unknown_is_pass" = "false" ] || { echo "Deep authority invariant violated: unknown_is_pass" >&2; exit 1; }
+          [ "$formal_authority" = "false" ] || { echo "Deep authority invariant violated: formal_trading_authority" >&2; exit 1; }
+          [ "$automatic_formal_buy" = "false" ] || { echo "Deep authority invariant violated: automatic_formal_buy_allowed" >&2; exit 1; }
+          [ "$no_auto_trade" = "true" ] || { echo "Deep authority invariant violated: no_auto_trade" >&2; exit 1; }
+
+          terminal_id=""
+          if [ -f "$terminal_state" ]; then
+            terminal_id=$(jq -r '.source_deep_lambda_run_id // empty' "$terminal_state")
+          fi
+
+          echo "latest Deep=${deep_id}; latest persisted Terminal source=${terminal_id:-none}"
+          if [ "$terminal_id" = "$deep_id" ]; then
+            echo "Terminal already consumed latest Deep; identical state is a no-op"
+            echo "dispatched=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          deep_run=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${deep_id}")
+          [ "$(printf '%s' "$deep_run" | jq -r '.path // empty')" = ".github/workflows/genge-v31-deep-calculation-lambda.yml" ] || {
+            echo "latest persisted Deep id does not resolve to Deep Calculation Lambda" >&2
+            exit 1
+          }
+          [ "$(printf '%s' "$deep_run" | jq -r '.conclusion // empty')" = "success" ] || {
+            echo "latest persisted Deep run did not conclude success" >&2
+            exit 1
+          }
+          [ "$(printf '%s' "$deep_run" | jq -r '.head_branch // empty')" = "main" ] || {
+            echo "latest persisted Deep run is not from main" >&2
+            exit 1
+          }
+
+          artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${deep_id}/artifacts?per_page=100")
+          artifact_count=$(printf '%s' "$artifacts" | jq -r --arg name "genge-v31-deep-calculation-${deep_id}" '[.artifacts[] | select(.name == $name and .expired == false)] | length')
+          [ "$artifact_count" -eq 1 ] || {
+            echo "expected exactly one live Deep artifact for run ${deep_id}; found ${artifact_count}" >&2
+            exit 1
+          }
+
+          terminal_runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-terminal-research-decision.yml/runs?branch=main&per_page=20")
+          active_count=$(printf '%s' "$terminal_runs" | jq -r '[.workflow_runs[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "pending")] | length')
+          if [ "$active_count" -gt 0 ]; then
+            echo "A Terminal run is already active; bounded reconciler will retry later if persisted lineage remains stale"
+            echo "dispatched=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          gh workflow run genge-v31-terminal-research-decision.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Dispatched Terminal for latest persisted Deep ${deep_id}"
+          echo "dispatched=true" >> "$GITHUB_OUTPUT"
+          echo "deep_id=${deep_id}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish reconciliation status
+        if: always()
+        run: |
+          echo "# GenGe Deep → Terminal Reconciler" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Terminal dispatch: \`${{ steps.reconcile.outputs.dispatched || 'false' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deep source: \`${{ steps.reconcile.outputs.deep_id || 'already-current-or-not-actionable' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- idempotency: persisted Terminal source equal to latest Deep is a no-op" >> "$GITHUB_STEP_SUMMARY"
+          echo "- authority: UNKNOWN != PASS; Formal authority false; no auto trade" >> "$GITHUB_STEP_SUMMARY"
