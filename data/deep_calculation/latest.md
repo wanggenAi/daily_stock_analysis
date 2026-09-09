@@ -6,7 +6,7 @@
 - complete: **0**
 - evidence exhausted: **4**
 - evidence collection attempts: **2**
-- new evidence rows: **4**
+- new evidence rows: **9**
 - progressed gates: **0**
 - material-event failed gates: **0**
 - material-event PASS overrides: **0**
