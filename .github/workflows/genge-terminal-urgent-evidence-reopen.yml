@@ -36,14 +36,17 @@ jobs:
       github.event_name != 'workflow_run' ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: pip
       - name: Install contract dependencies
-        run: python -m pip install --disable-pip-version-check -q pytest
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
       - name: Verify terminal urgent evidence reopen contract
         run: |
           python -m pytest -q tests/test_terminal_urgent_evidence_reopen.py
@@ -68,7 +71,7 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build fail-closed urgent reopen plan
+      - name: Build fail-closed full-workset reopen plan
         id: plan
         shell: bash
         run: |
@@ -77,35 +80,49 @@ jobs:
           python -m src.strategies.genge_opportunity_discovery.terminal_urgent_evidence_reopen \
             --terminal-json data/deep_calculation/latest_research_decisions.json \
             --output-json "$RUNNER_TEMP/terminal-urgent-reopen-plan.json"
-          count=$(jq -r '.requested_count' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
+          all_count=$(jq -r '.requested_count' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
+          urgent_count=$(jq -r '.urgent_requested_count' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
           codes=$(jq -r '.requested_codes | join(",")' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
+          urgent_codes=$(jq -r '.urgent_requested_codes | join(",")' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
           test "$(jq -r '.research_authority' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "RESEARCH_ONLY"
           test "$(jq -r '.formal_trading_authority' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "false"
           test "$(jq -r '.automatic_gate_inference_allowed' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "false"
           test "$(jq -r '.unknown_is_pass' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "false"
           test "$(jq -r '.no_auto_trade' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "true"
-          echo "count=$count" >> "$GITHUB_OUTPUT"
+          trigger_source="TERMINAL_URGENT_REOPEN_BRIDGE_DEPLOYMENT"
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            trigger_source="SLOW_LANE_TERMINAL_URGENT_REOPEN"
+          elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            trigger_source="MANUAL_TERMINAL_URGENT_REOPEN"
+          fi
+          echo "all_count=$all_count" >> "$GITHUB_OUTPUT"
+          echo "urgent_count=$urgent_count" >> "$GITHUB_OUTPUT"
           echo "codes=$codes" >> "$GITHUB_OUTPUT"
+          echo "urgent_codes=$urgent_codes" >> "$GITHUB_OUTPUT"
+          echo "trigger_source=$trigger_source" >> "$GITHUB_OUTPUT"
 
-      - name: Dispatch Deep Calculation Lambda for urgent evidence-blocked names
-        if: steps.plan.outputs.count != '0'
+      - name: Dispatch Deep Calculation Lambda with preserved terminal workset
+        if: steps.plan.outputs.urgent_count != '0'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REQUESTED_CODES: ${{ steps.plan.outputs.codes }}
+          TRIGGER_SOURCE: ${{ steps.plan.outputs.trigger_source }}
         run: |
           set -euo pipefail
           gh workflow run genge-v31-deep-calculation-lambda.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
             -f requested_codes="$REQUESTED_CODES" \
-            -f trigger_source="SLOW_LANE_TERMINAL_URGENT_REOPEN"
+            -f trigger_source="$TRIGGER_SOURCE"
 
       - name: Publish reopen summary
         if: always()
         run: |
           echo "# GenGe Terminal Urgent Evidence Reopen" >> "$GITHUB_STEP_SUMMARY"
-          echo "- trigger: \`${{ github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
-          echo "- urgent evidence-blocked count: **${{ steps.plan.outputs.count || 'unresolved' }}**" >> "$GITHUB_STEP_SUMMARY"
-          echo "- requested codes: \`${{ steps.plan.outputs.codes || 'none' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- trigger: \`${{ steps.plan.outputs.trigger_source || github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- preserved terminal workset count: **${{ steps.plan.outputs.all_count || 'unresolved' }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- urgent evidence-blocked count: **${{ steps.plan.outputs.urgent_count || 'unresolved' }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- urgent codes: \`${{ steps.plan.outputs.urgent_codes || 'none' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deep requested codes: full previous terminal workset, so the next terminal snapshot cannot shrink to the urgent subset" >> "$GITHUB_STEP_SUMMARY"
           echo "- authority: **RESEARCH_ONLY**; UNKNOWN remains UNKNOWN; no Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
-          echo "- loop control: this workflow listens only to Slow Lane refresh (plus explicit/manual code deployment), never to Deep or Terminal completion" >> "$GITHUB_STEP_SUMMARY"
+          echo "- loop control: listens to Slow Lane refresh plus explicit/manual deployment only; never listens to Deep or Terminal completion" >> "$GITHUB_STEP_SUMMARY"
