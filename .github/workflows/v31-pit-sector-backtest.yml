@@ -20,12 +20,20 @@ on:
 permissions:
   contents: write
 
+# Prevent overlapping PIT runs from racing with themselves. Cross-workflow main
+# movement is handled by the optimistic persistence replay below.
+concurrency:
+  group: v31-pit-sector-backtest-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
+  cancel-in-progress: false
+
 jobs:
   backtest:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
@@ -36,18 +44,52 @@ jobs:
       - name: Run V3.1 PIT test
         run: python scripts/v31_pit_sector_backtest_resilient.py
       - name: Persist auditable results in repository
-        if: github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        if: >-
+          github.event_name == 'schedule' ||
+          ((github.event_name == 'push' || github.event_name == 'workflow_dispatch') && github.ref == 'refs/heads/main')
+        shell: bash
         run: |
-          rm -rf backtests/v31_pit_latest
-          mkdir -p backtests/v31_pit_latest
-          cp -a artifacts/v31_pit_backtest/. backtests/v31_pit_latest/
+          set -euo pipefail
+
+          # Keep the completed audit payload outside the tracked writeback path so
+          # each retry can start from the newest origin/main without losing results.
+          audit_tmp="$(mktemp -d)"
+          trap 'rm -rf "$audit_tmp"' EXIT
+          cp -a artifacts/v31_pit_backtest/. "$audit_tmp/"
+
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add backtests/v31_pit_latest
-          if ! git diff --cached --quiet; then
+
+          # Another workflow may advance main while this backtest is running.
+          # Replay the deterministic writeback on top of the newest main instead
+          # of failing with a non-fast-forward push rejection.
+          for attempt in 1 2 3 4 5; do
+            echo "PIT persistence replay ${attempt}/5"
+            git fetch origin main
+            git reset --hard origin/main
+
+            rm -rf backtests/v31_pit_latest
+            mkdir -p backtests/v31_pit_latest
+            cp -a "$audit_tmp"/. backtests/v31_pit_latest/
+            git add -f backtests/v31_pit_latest
+
+            if git diff --cached --quiet; then
+              echo 'No PIT audit result change to persist.'
+              exit 0
+            fi
+
             git commit -m 'Store locked V3.1 PIT backtest results'
-            git push
-          fi
+            if git push origin HEAD:main; then
+              echo 'PIT audit results persisted successfully.'
+              exit 0
+            fi
+
+            echo 'main moved while persisting PIT results; replaying on latest main.' >&2
+            sleep $((attempt * 2))
+          done
+
+          echo 'PIT result persistence failed after 5 optimistic replay attempts.' >&2
+          exit 1
       - name: Upload full audit artifacts
         if: always()
         uses: actions/upload-artifact@v4
