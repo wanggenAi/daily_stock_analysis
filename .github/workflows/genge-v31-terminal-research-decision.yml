@@ -1,0 +1,147 @@
+name: GenGe V3.1 Terminal Research Decision
+
+on:
+  workflow_dispatch:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1 Deep Calculation Lambda"
+    types: [completed]
+
+concurrency:
+  group: genge-v31-terminal-research-decision-production
+  cancel-in-progress: false
+
+jobs:
+  contracts:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Validate terminal research decision contract
+        run: python -m pytest -q tests/test_v31_terminal_research_decision.py
+
+  production:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Resolve exact deep and Every-Industry lineage
+        id: source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f data/deep_calculation/latest_status.json
+          test -f data/deep_calculation/latest_profiles.json
+          test -f data/deep_calculation/latest_evidence.json
+          source_run_id=$(jq -r '.source_run_id // empty' data/deep_calculation/latest_status.json)
+          lambda_run_id=$(jq -r '.lambda_run_id // empty' data/deep_calculation/latest_status.json)
+          [[ "$source_run_id" =~ ^[0-9]+$ ]] || { echo "invalid source_run_id=$source_run_id" >&2; exit 1; }
+          [[ "$lambda_run_id" =~ ^[0-9]+$ ]] || { echo "invalid lambda_run_id=$lambda_run_id" >&2; exit 1; }
+          test "$(jq -r '.execution_status' data/deep_calculation/latest_status.json)" = "SUCCESS"
+          test "$(jq -r '.immediate_retry_required' data/deep_calculation/latest_status.json)" = "false"
+          echo "source_run_id=$source_run_id" >> "$GITHUB_OUTPUT"
+          echo "lambda_run_id=$lambda_run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact Every-Industry artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-v31-every-industry-research
+          path: artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.source.outputs.source_run_id }}
+
+      - name: Resolve exact valuation research queue
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find artifact -type f -name valuation_research_queue.csv -print)
+          [ "${#files[@]}" -ge 1 ] || { echo 'valuation_research_queue.csv missing' >&2; exit 1; }
+          printf 'VALUATION_CSV=%s\n' "${files[0]}" >> "$GITHUB_ENV"
+
+      - name: Converge every requested code to research BUY WAIT_PRICE or REJECT
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.v31_terminal_research_decision \
+            --profiles-json data/deep_calculation/latest_profiles.json \
+            --evidence-json data/deep_calculation/latest_evidence.json \
+            --valuation-csv "$VALUATION_CSV" \
+            --priority-json data/research_priority/latest.json \
+            --deep-status-json data/deep_calculation/latest_status.json \
+            --output-json reports/terminal_research/latest.json \
+            --output-md reports/terminal_research/latest.md
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('reports/terminal_research/latest.json').read_text(encoding='utf-8'))
+          assert p['all_requested_terminal'] is True
+          assert p['requested_count'] == sum(p['decision_counts'].values())
+          assert set(p['decision_counts']) == {'BUY','WAIT_PRICE','REJECT'}
+          assert p['research_authority'] == 'RESEARCH_ONLY'
+          assert p['formal_trading_authority'] is False
+          assert p['automatic_formal_buy_allowed'] is False
+          assert p['unknown_is_pass'] is False
+          assert p['no_auto_trade'] is True
+          for row in p['terminal_rows']:
+              assert row['research_decision'] in {'BUY','WAIT_PRICE','REJECT'}
+              assert row['formal_buy_authorized'] is False
+          PY
+
+      - name: Persist terminal research decisions with optimistic replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/genge-terminal-research
+          cp reports/terminal_research/latest.json /tmp/genge-terminal-research/latest.json
+          cp reports/terminal_research/latest.md /tmp/genge-terminal-research/latest.md
+          git config user.name 'genge-terminal-research-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            echo "terminal-research persistence replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/deep_calculation/history
+            cp /tmp/genge-terminal-research/latest.json data/deep_calculation/latest_research_decisions.json
+            cp /tmp/genge-terminal-research/latest.md LATEST_RESEARCH_DECISIONS.md
+            cp /tmp/genge-terminal-research/latest.json "data/deep_calculation/history/${{ steps.source.outputs.lambda_run_id }}.research_decisions.json"
+            git add -f data/deep_calculation/latest_research_decisions.json data/deep_calculation/history LATEST_RESEARCH_DECISIONS.md
+            if git diff --cached --quiet; then
+              echo 'Terminal research decision state already current.'
+              exit 0
+            fi
+            git commit -m "Persist terminal research decisions ${{ steps.source.outputs.lambda_run_id }} [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo 'main moved; replaying terminal research persistence.' >&2
+          done
+          echo 'terminal research persistence failed after 4 replays' >&2
+          exit 1
+
+      - name: Publish terminal decision summary
+        if: always()
+        run: |
+          echo '# GenGe V3.1 Terminal Research Decision' >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/terminal_research/latest.json ]; then
+            jq '{requested_count,decision_counts,urgent_research_count:(.urgent_research_queue|length),research_authority,unknown_is_pass,no_auto_trade}' reports/terminal_research/latest.json >> "$GITHUB_STEP_SUMMARY"
+          fi
