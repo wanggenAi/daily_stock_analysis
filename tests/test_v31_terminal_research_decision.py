@@ -84,6 +84,8 @@ def test_evidence_blocked_but_attractive_screen_is_prioritized_without_buying():
     row = out["terminal_rows"][0]
     assert row["research_decision"] == "REJECT"
     assert row["screening_attractiveness"] == "HIGH"
+    assert row["urgent_research"] is True
+    assert "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED" in row["urgent_research_reasons"]
     assert out["urgent_research_queue"][0]["code"] == "000001"
 
 
@@ -95,3 +97,63 @@ def test_specialized_industry_never_uses_generic_pe_to_create_buy():
     assert row["research_decision"] == "REJECT"
     assert row["research_reason"] == "SPECIALIZED_VALUATION_REQUIRED"
     assert row["formal_buy_authorized"] is False
+
+
+def test_p0_evidence_blocked_is_urgent_even_for_specialized_industry_without_fake_buy():
+    gates = _all("PASS")
+    gates["predictability"] = "UNKNOWN"
+    valuation = _valuation(pe="5", median="10")
+    valuation[0]["industry"] = "J68保险业"
+    priority = {"queue": [{"code": "000001", "priority": "P0", "name": "样本", "industry": "J68保险业"}]}
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=valuation,
+        priority_payload=priority,
+    )
+    row = out["terminal_rows"][0]
+    assert row["research_decision"] == "REJECT"
+    assert row["research_reason"] == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
+    assert row["screening_attractiveness"] == "NORMAL"
+    assert row["urgent_research"] is True
+    assert row["urgent_research_reasons"] == ["P0_EVIDENCE_BLOCKED"]
+    assert row["formal_buy_authorized"] is False
+    assert out["urgent_research_queue"][0]["code"] == "000001"
+
+
+def test_urgent_queue_does_not_drop_qualified_names_after_first_ten():
+    codes = [f"{i:06d}" for i in range(1, 12)]
+    gates = _all("PASS")
+    gates["moat"] = "UNKNOWN"
+    profiles = {
+        "unknown_is_pass": False,
+        "automatic_formal_buy_allowed": False,
+        "no_auto_trade": True,
+        "profiles": {
+            code: {"name": f"样本{code}", "industry": "C制造业", "gates": {k: {"status": v} for k, v in gates.items()}}
+            for code in codes
+        },
+    }
+    valuations = [
+        {
+            "code": code,
+            "stock_name": f"样本{code}",
+            "industry": "C制造业",
+            "quant_score": "80",
+            "quant_status": "PRIORITY_RESEARCH",
+            "current_pe": "8",
+            "historical_median_pe_reference": "12",
+            "earnings_quality_score": "90",
+            "earnings_quality_confidence": "HIGH",
+            "financial_review_status": "OK",
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        }
+        for code in codes
+    ]
+    out = build_terminal_decisions(
+        profiles_payload=profiles,
+        evidence_payload={"requested_codes": codes},
+        valuation_rows=valuations,
+    )
+    assert len(out["urgent_research_queue"]) == 11
+    assert {row["code"] for row in out["urgent_research_queue"]} == set(codes)
