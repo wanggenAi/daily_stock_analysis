@@ -2,6 +2,12 @@ name: GenGe V3.1 Terminal Research Decision
 
 on:
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v31-terminal-research-decision.yml"
+      - "src/strategies/genge_opportunity_discovery/v31_terminal_research_decision.py"
+      - "tests/test_v31_terminal_research_decision.py"
   workflow_run:
     workflows:
       - "GenGe V3.1 Deep Calculation Lambda"
@@ -13,7 +19,10 @@ concurrency:
 
 jobs:
   contracts:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -29,7 +38,10 @@ jobs:
         run: python -m pytest -q tests/test_v31_terminal_research_decision.py
 
   production:
-    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'push' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     needs: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 20
