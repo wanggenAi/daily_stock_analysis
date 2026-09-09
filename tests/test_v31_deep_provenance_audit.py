@@ -68,6 +68,20 @@ def test_audit_counts_all_profiles_and_requires_evidence_for_every_pass():
     assert audit["initial_unverified_pass_downgraded_count"] == 2
 
 
+def test_audit_records_runtime_lineage():
+    audit = audit_profiles(
+        _profiles(),
+        audit_run_id="456",
+        audit_workflow="GenGe V3.1 Deep Provenance Audit",
+        audit_run_attempt="2",
+        audit_event="workflow_run",
+    )
+    assert audit["audit_run_id"] == "456"
+    assert audit["audit_workflow"] == "GenGe V3.1 Deep Provenance Audit"
+    assert audit["audit_run_attempt"] == "2"
+    assert audit["audit_event"] == "workflow_run"
+
+
 def test_naked_pass_is_detected_even_when_other_gates_are_safe():
     payload = _profiles()
     payload["profiles"]["001316"]["gates"]["predictability"] = _gate(
@@ -98,11 +112,21 @@ def test_pass_with_evidence_but_unresolved_source_is_not_verified():
     assert audit["all_pass_gates_have_verified_evidence"] is False
 
 
-def test_augment_status_embeds_terminal_provenance_contract():
-    audit = audit_profiles(_profiles())
+def test_augment_status_embeds_terminal_provenance_contract_and_lineage():
+    audit = audit_profiles(
+        _profiles(),
+        audit_run_id="456",
+        audit_workflow="GenGe V3.1 Deep Provenance Audit",
+        audit_run_attempt="2",
+        audit_event="workflow_run",
+    )
     result = augment_status(_status(), audit, expected_lambda_run_id="123")
     assert result["provenance_audit_complete"] is True
     assert result["provenance_audit_contract"] == "GEN_GE_V31_DEEP_PROVENANCE_AUDIT_V1"
+    assert result["provenance_audit_run_id"] == "456"
+    assert result["provenance_audit_workflow"] == "GenGe V3.1 Deep Provenance Audit"
+    assert result["provenance_audit_run_attempt"] == "2"
+    assert result["provenance_audit_event"] == "workflow_run"
     assert result["hard_gate_count"] == 10
     assert result["verified_pass_gate_count"] == 4
     assert result["unverified_pass_gate_count"] == 0

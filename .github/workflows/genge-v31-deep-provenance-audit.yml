@@ -1,7 +1,7 @@
 name: GenGe V3.1 Deep Provenance Audit
 
 run-name: >-
-  GenGe V3.1 Deep Provenance Audit / ${{ github.event.workflow_run.id || 'latest' }}
+  GenGe V3.1 Deep Provenance Audit / audit-${{ github.run_id }} / lambda-${{ github.event.workflow_run.id || 'latest' }}
 
 on:
   workflow_dispatch:
@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: genge-v31-deep-provenance-audit
@@ -87,6 +88,10 @@ jobs:
         if: steps.resolve.outputs.superseded != 'true'
         env:
           EXPECTED_RUN_ID: ${{ steps.resolve.outputs.expected_run_id }}
+          AUDIT_RUN_ID: ${{ github.run_id }}
+          AUDIT_WORKFLOW: ${{ github.workflow }}
+          AUDIT_RUN_ATTEMPT: ${{ github.run_attempt }}
+          AUDIT_EVENT: ${{ github.event_name }}
         run: |
           set -euo pipefail
           python -m src.strategies.genge_opportunity_discovery.v31_deep_provenance_audit \
@@ -94,7 +99,11 @@ jobs:
             --status-json data/deep_calculation/latest_status.json \
             --output-status /tmp/deep_status_augmented.json \
             --output-audit /tmp/deep_provenance_audit.json \
-            --expected-lambda-run-id "$EXPECTED_RUN_ID"
+            --expected-lambda-run-id "$EXPECTED_RUN_ID" \
+            --audit-run-id "$AUDIT_RUN_ID" \
+            --audit-workflow "$AUDIT_WORKFLOW" \
+            --audit-run-attempt "$AUDIT_RUN_ATTEMPT" \
+            --audit-event "$AUDIT_EVENT"
 
       - name: Persist provenance proof with optimistic replay
         if: steps.resolve.outputs.superseded != 'true'
@@ -142,10 +151,28 @@ jobs:
           echo "provenance persistence failed after optimistic replay" >&2
           exit 1
 
+      - name: Refresh deep calculation after provenance code push
+        if: success() && github.event_name == 'push' && steps.resolve.outputs.superseded != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-v31-deep-calculation-lambda.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f trigger_source="PROVENANCE_AUDIT_REFRESH"
+          echo "Fresh Deep Calculation Lambda dispatched for end-to-end provenance self-verification."
+
       - name: Publish provenance audit summary
         if: always() && steps.resolve.outputs.superseded != 'true'
+        env:
+          EXPECTED_RUN_ID: ${{ steps.resolve.outputs.expected_run_id }}
         run: |
           echo "# GenGe V3.1 Deep Provenance Audit" >> "$GITHUB_STEP_SUMMARY"
+          echo "- audit run id: **${GITHUB_RUN_ID}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- audit run attempt: **${GITHUB_RUN_ATTEMPT}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- trigger event: **${GITHUB_EVENT_NAME}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Lambda run id: **${EXPECTED_RUN_ID}**" >> "$GITHUB_STEP_SUMMARY"
           if [ -f /tmp/deep_provenance_audit.json ]; then
             python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
