@@ -17,6 +17,7 @@ from .selection_framework_v311 import (
     assess_valuation_confidence_v311,
     decide_v311,
 )
+from .v311_valuation_audit import build_valuation_audit
 
 PRODUCTION_MODEL_VERSION = "GEN_GE_V3_1_1_PRODUCTION"
 PRODUCTION_MODEL_NAME = "GenGe V3.1.1 Production"
@@ -40,6 +41,7 @@ _HARD_GATE_FIELDS = {
 }
 _PASS_VALUES = frozenset({"PASS", "PASSED", "OK", "QUALIFIED", "TRUE", "YES", "STABLE", "STRENGTHENING"})
 _FAIL_VALUES = frozenset({"FAIL", "FAILED", "NO", "FALSE", "UNQUALIFIED", "RED", "STRUCTURAL_DECLINE", "WEAKENING"})
+_VALUATION_AUTHORITY_ACTIONS = frozenset({"BUY", "REDUCE_25", "REDUCE_50", "CORE_ONLY"})
 
 
 def _truthy(value: Any) -> bool:
@@ -88,6 +90,17 @@ def _holding_add_input_ready(data: Mapping[str, Any]) -> bool:
     return expectation_status == "READY" and price_date_status == "VERIFIED" and price_mapping_status == "OK"
 
 
+def _valuation_audit(data: Mapping[str, Any], decision: V311Decision) -> dict[str, Any]:
+    return build_valuation_audit(
+        data,
+        current_price=decision.current_price,
+        neutral_value=decision.neutral_value,
+        normalized_earnings=decision.normalized_earnings,
+        realistic_growth=decision.realistic_growth,
+        price_to_neutral=decision.price_to_neutral,
+    )
+
+
 def _holding_add_assessment(
     data: Mapping[str, Any],
     decision: V311Decision,
@@ -110,6 +123,9 @@ def _holding_add_assessment(
         blockers.append("A_LEVEL_MARGIN_OF_SAFETY_NOT_MET")
     if not _holding_add_input_ready(data):
         blockers.append("FRESH_VERIFIED_INPUT_NOT_READY")
+    audit = _valuation_audit(data, decision)
+    if bool(audit.get("v311_neutral_value_semantic_guard_required")):
+        blockers.append("NEUTRAL_VALUE_SEMANTICS_UNVERIFIED")
     failures, unknowns = _holding_add_gate_state(data)
     if failures:
         blockers.append("HARD_GATE_FAILURE:" + ",".join(failures))
@@ -121,6 +137,7 @@ def _holding_add_assessment(
         "VALUATION_CONFIDENCE_HIGH",
         "A_LEVEL_MARGIN_OF_SAFETY_PASS",
         f"price_to_neutral={ratio:.3f}<=0.75",
+        "NEUTRAL_VALUE_SEMANTICS_AUTHORIZED",
         "NO_KNOWN_HARD_GATE_FAILURE",
         "STAGED_ADD_CAP_ONE_LOT",
         "STAGED_ADD_NOT_FORMAL_BUY",
@@ -164,6 +181,32 @@ def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V
     )
 
 
+def _apply_neutral_semantics_guard(data: Mapping[str, Any], decision: V311Decision) -> V311Decision:
+    """Block price/value trades when a single model point masquerades as Base.
+
+    Hard-logic EXIT is intentionally not in ``_VALUATION_AUTHORITY_ACTIONS`` and
+    therefore remains authoritative.  The guard only removes trading authority
+    from actions whose direction depends on the Neutral/Base valuation anchor.
+    """
+    if decision.action not in _VALUATION_AUTHORITY_ACTIONS:
+        return decision
+    audit = _valuation_audit(data, decision)
+    if not bool(audit.get("v311_neutral_value_semantic_guard_required")):
+        return decision
+    has_position = _has_position(data)
+    return replace(
+        decision,
+        action="HOLD_REVIEW" if has_position else "WAIT",
+        target_position_fraction=None if has_position else 0.0,
+        reason_codes=(
+            "NEUTRAL_VALUE_SEMANTICS_UNVERIFIED",
+            str(audit.get("v311_neutral_value_semantic_status") or "UNKNOWN"),
+            "ROUND6_SINGLE_POINT_NOT_VALIDATED_BASE",
+            f"MECHANICAL_ACTION_SUPPRESSED:{audit.get('v311_mechanical_valuation_action') or decision.action}",
+        ),
+    )
+
+
 def decide_production(data: Mapping[str, Any]) -> V311Decision:
     # Lazy import keeps policy-constant consumers independent of insurer/PyYAML runtime.
     from .insurer_typed_production import decide_insurer_v311, is_insurer_typed_input
@@ -173,6 +216,7 @@ def decide_production(data: Mapping[str, Any]) -> V311Decision:
     else:
         decision = decide_v311(data)
     decision = _apply_formal_buy_gate(data, decision)
+    decision = _apply_neutral_semantics_guard(data, decision)
 
     required, rationale_reasons = sell_review_required(data, decision.action)
     if required:
@@ -204,7 +248,9 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
     )
     add_failures, add_unknowns = _holding_add_gate_state(data)
     add_authorized, add_reasons = _holding_add_assessment(data, decision, typed_insurer=typed_insurer)
+    audit = _valuation_audit(data, decision)
     payload = decision.as_dict()
+    payload.update(audit)
     payload.update({
         "production_model_version": PRODUCTION_MODEL_VERSION,
         "production_model_name": PRODUCTION_MODEL_NAME,
@@ -233,6 +279,7 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         "holding_add_hard_gate_unknowns": ";".join(add_unknowns),
         "holding_add_unknown_is_pass": False,
         "holding_add_no_auto_trade": True,
+        "v311_final_production_action": decision.action,
     })
     if typed_insurer:
         payload.update(insurer_typed_payload_metadata(data))
