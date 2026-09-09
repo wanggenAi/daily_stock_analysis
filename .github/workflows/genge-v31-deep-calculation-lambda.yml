@@ -31,6 +31,7 @@ on:
       - "tests/test_genge_v31_automatic_deep_calculation.py"
       - "tests/test_v31_deep_gap_closure.py"
       - "tests/test_v31_deep_provenance_audit.py"
+      - "tests/test_runbei_archetype_deep_handoff.py"
       - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
       - ".github/workflows/genge-v31-deep-provenance-audit.yml"
   workflow_run:
@@ -76,12 +77,13 @@ jobs:
             tests/test_genge_v31_explicit_deep_review.py \
             tests/test_genge_v31_automatic_deep_calculation.py \
             tests/test_v31_deep_gap_closure.py \
-            tests/test_v31_deep_provenance_audit.py
+            tests/test_v31_deep_provenance_audit.py \
+            tests/test_runbei_archetype_deep_handoff.py
 
   deep-calculate:
     needs: contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 90
     steps:
       - name: Checkout current main
         uses: actions/checkout@v4
@@ -223,6 +225,31 @@ jobs:
                       code=str(row.get('code') or '').zfill(6)
                       if row.get('deep_review_priority') == 'RAISE' and code.isdigit() and len(code)==6:
                           codes.append(code)
+              except Exception:
+                  pass
+          priority=Path('data/research_priority/latest.json')
+          if priority.is_file():
+              try:
+                  payload=json.loads(priority.read_text(encoding='utf-8'))
+                  recall=[]
+                  for row in payload.get('queue') or []:
+                      code=str(row.get('code') or '').zfill(6)
+                      reason_codes={str(item) for item in (row.get('reason_codes') or [])}
+                      archetype_id=str(row.get('success_archetype_id') or '')
+                      score=row.get('success_archetype_similarity_score')
+                      if (
+                          'SUCCESS_ARCHETYPE_RECALL' in reason_codes
+                          and archetype_id
+                          and code.isdigit()
+                          and len(code)==6
+                      ):
+                          try:
+                              score_value=float(score)
+                          except (TypeError, ValueError):
+                              score_value=-1.0
+                          recall.append((score_value, code))
+                  recall.sort(key=lambda item: (-item[0], item[1]))
+                  codes.extend(code for _, code in recall)
               except Exception:
                   pass
           era=Path('data/era_radar/research_handoff/latest.json')
