@@ -1,15 +1,15 @@
 """Auditable semantics for the V3.1.1 strict-PIT valuation anchor.
 
 The Round-6 strict-PIT extractor produces a single ten-year earning-power value
-from normalized clean EPS and a bounded growth estimate.  Historically that
+from normalized clean EPS and a bounded growth estimate. Historically that
 single point was transported through the legacy ``v31_neutral_value`` field and
 therefore inherited the semantic authority of a calibrated Base/Neutral value.
 
-This module makes the distinction explicit.  It does not change the frozen
-Round-6 arithmetic or the V3.1 sell ladder.  Instead it exposes the complete
-chain and fail-closes *valuation-driven* BUY/SELL authority when a fresh
-strict-PIT single point has not been explicitly validated as a Base value.
-Hard-logic EXIT remains independent of this guard.
+This module makes the distinction explicit. It does not change the frozen
+Round-6 arithmetic or the V3.1 sell ladder. Instead it exposes the complete
+chain and fail-closes valuation-driven BUY/SELL authority when a fresh
+strict-PIT single point has not been explicitly and evidentially validated as a
+Base value. Hard-logic EXIT remains independent of this guard.
 """
 from __future__ import annotations
 
@@ -26,6 +26,7 @@ ROUND6_REALISTIC_GROWTH_CAP = 0.30
 ROUND6_TERMINAL_MULTIPLE = 1.0 / (ROUND6_DISCOUNT_RATE - ROUND6_TERMINAL_GROWTH)
 
 VALIDATED_BASE = "VALIDATED_BASE"
+VALIDATED_BASE_EVIDENCE_MISSING = "VALIDATED_BASE_EVIDENCE_MISSING"
 UNCALIBRATED_SINGLE_POINT = "UNCALIBRATED_SINGLE_POINT"
 LEGACY_UNSPECIFIED = "LEGACY_UNSPECIFIED"
 
@@ -45,12 +46,17 @@ def _finite(value: Any) -> float | None:
 def neutral_value_semantic_status(data: Mapping[str, Any]) -> str:
     """Classify whether ``neutral_value`` is a validated Base or a model point.
 
-    An explicit status is authoritative.  Otherwise fresh Round-6 strict-PIT
-    inputs are classified as an uncalibrated single point because that extractor
-    does not construct Bear/Base/Bull scenarios.  Legacy rows remain visible but
-    are not retroactively reinterpreted.
+    A caller cannot obtain Base authority by relabelling a value. Explicit
+    ``VALIDATED_BASE`` requires both a validation method and evidence reference.
+    Otherwise fresh Round-6 strict-PIT inputs are classified as an uncalibrated
+    single point because that extractor does not construct Bear/Base/Bull
+    scenarios. Legacy rows remain visible but are not retroactively reinterpreted.
     """
     explicit = _text(data.get("v311_neutral_value_semantic_status")).upper()
+    if explicit == VALIDATED_BASE:
+        method = _text(data.get("v311_neutral_value_validation_method"))
+        evidence = _text(data.get("v311_neutral_value_validation_evidence"))
+        return VALIDATED_BASE if method and evidence else VALIDATED_BASE_EVIDENCE_MISSING
     if explicit:
         return explicit
     policy = _text(data.get("v311_expectation_policy_source"))
@@ -109,8 +115,8 @@ def build_valuation_audit(
         _text(data.get("v311_expectation_policy_source")) == ROUND6_POLICY_SOURCE
         or _text(data.get("v31_normalized_profit_method")).upper() == STRICT_EPS_METHOD
     )
-    # Only fresh strict-PIT rows acquire the new semantic guard.  Historical
-    # rows without fresh-input provenance keep legacy behaviour for replay
+    # Only fresh strict-PIT rows acquire the new semantic guard. Historical rows
+    # without fresh-input provenance keep legacy behaviour for replay
     # compatibility; they are labelled rather than silently reclassified.
     guard_required = bool(
         fresh_status == "READY"
@@ -127,6 +133,7 @@ def build_valuation_audit(
     )
     role = {
         VALIDATED_BASE: "VALIDATED_BASE_VALUE",
+        VALIDATED_BASE_EVIDENCE_MISSING: "UNAUTHORIZED_BASE_LABEL",
         UNCALIBRATED_SINGLE_POINT: "ROUND6_EARNING_POWER_SINGLE_POINT",
     }.get(semantic_status, "LEGACY_UNSPECIFIED_VALUE")
 
@@ -156,13 +163,19 @@ def build_valuation_audit(
         "v311_neutral_value_semantic_status": semantic_status,
         "v311_neutral_value_role": role,
         "v311_neutral_value_scenario_calibrated": semantic_status == VALIDATED_BASE,
+        "v311_neutral_value_validation_method": _text(
+            data.get("v311_neutral_value_validation_method")
+        ),
+        "v311_neutral_value_validation_evidence": _text(
+            data.get("v311_neutral_value_validation_evidence")
+        ),
         "v311_neutral_value_semantic_guard_required": guard_required,
         "v311_current_price_audit": _finite(current_price),
         "v311_price_to_model_point": _finite(price_to_neutral),
         "v311_mechanical_valuation_action": mechanical_action,
         "v311_formal_valuation_action_authorized": not guard_required,
         "v311_formal_valuation_authority_reason": (
-            "VALIDATED_BASE_SEMANTICS"
+            "VALIDATED_BASE_SEMANTICS_WITH_EVIDENCE"
             if semantic_status == VALIDATED_BASE
             else (
                 "ROUND6_SINGLE_POINT_NOT_VALIDATED_AS_BASE"
