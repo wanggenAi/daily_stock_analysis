@@ -1,7 +1,10 @@
+import pytest
+
 from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_runtime import (
     build_runtime_decision_center,
     choose_deep_review_config,
     normalize_runtime,
+    normalize_terminal_research,
     render_runtime_markdown,
 )
 
@@ -116,6 +119,42 @@ def _terminal_status():
     }
 
 
+def _terminal_research(lambda_run_id="999999"):
+    row = {
+        "code": "600406",
+        "name": "国电南瑞",
+        "industry": "I65软件和信息技术服务业",
+        "research_decision": "REJECT",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "research_authority": "RESEARCH_ONLY",
+        "formal_buy_authorized": False,
+        "no_auto_trade": True,
+        "hard_gate_pass_count": 2,
+        "hard_gate_failures": [],
+        "hard_gate_unknowns": ["predictability", "moat"],
+        "reopen_on_new_evidence": True,
+        "quant_score": 75.0,
+        "screening_attractiveness": "HIGH",
+        "valuation": {"pe_to_history_ratio": 0.7},
+    }
+    return {
+        "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
+        "generated_at": "2026-09-09T00:00:00+00:00",
+        "source_deep_lambda_run_id": lambda_run_id,
+        "source_every_industry_run_id": "123456",
+        "requested_count": 1,
+        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 1},
+        "all_requested_terminal": True,
+        "research_authority": "RESEARCH_ONLY",
+        "formal_trading_authority": False,
+        "automatic_formal_buy_allowed": False,
+        "unknown_is_pass": False,
+        "no_auto_trade": True,
+        "terminal_rows": [row],
+        "urgent_research_queue": [row],
+    }
+
+
 def test_automatic_profiles_take_precedence_over_static_bootstrap():
     selected, source = choose_deep_review_config(
         _automatic_profiles(),
@@ -149,6 +188,25 @@ def test_evidence_exhausted_is_terminal_without_requiring_manual_next_round():
     assert "600406" in runtime["unresolved_reasons"]
 
 
+def test_terminal_research_contract_preserves_authority_separation():
+    terminal = normalize_terminal_research(_terminal_research())
+    assert terminal["available"] is True
+    assert terminal["requested_count"] == 1
+    assert terminal["decision_counts"] == {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 1}
+    assert terminal["research_reject_count"] == 1
+    assert terminal["formal_trading_authority"] is False
+    assert terminal["automatic_formal_buy_allowed"] is False
+    assert terminal["unknown_is_pass"] is False
+    assert terminal["no_auto_trade"] is True
+
+
+def test_terminal_research_rejects_formal_buy_escalation():
+    payload = _terminal_research()
+    payload["terminal_rows"][0]["formal_buy_authorized"] = True
+    with pytest.raises(ValueError, match="Formal BUY"):
+        normalize_terminal_research(payload)
+
+
 def test_runtime_is_exposed_in_final_decision_center():
     out = build_runtime_decision_center(
         dashboard=_dashboard(),
@@ -172,6 +230,59 @@ def test_runtime_is_exposed_in_final_decision_center():
     assert deep["unknown_count"] == 3
 
 
+def test_matching_terminal_research_is_exposed_separately_from_formal_actions():
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_terminal_status(),
+        terminal_research_decisions=_terminal_research(),
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+    terminal = pillar["terminal_research_snapshot"]
+    assert terminal["available"] is True
+    assert terminal["current_for_deep_runtime"] is True
+    assert pillar["research_terminal_current"] is True
+    assert pillar["research_buy"] == []
+    assert pillar["research_wait_price"] == []
+    assert pillar["research_reject_count"] == 1
+    assert len(pillar["urgent_evidence_queue"]) == 1
+    assert pillar["canonical_formal_buy_now"] == []
+    assert pillar["canonical_formal_wait_price"] == []
+    assert out["executive_summary"]["research_terminal_requested_count"] == 1
+    assert out["executive_summary"]["research_reject_count"] == 1
+    assert out["decision_readiness"]["terminal_research_current_for_deep_runtime"] is True
+    assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
+    assert out["no_auto_trade"] is True
+
+
+def test_stale_terminal_research_is_not_exposed_as_current_actionable_research():
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_terminal_status(),
+        terminal_research_decisions=_terminal_research(lambda_run_id="888888"),
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+    terminal = pillar["terminal_research_snapshot"]
+    assert terminal["available"] is True
+    assert terminal["stale_for_deep_runtime"] is True
+    assert terminal["current_for_deep_runtime"] is False
+    assert pillar["research_buy"] == []
+    assert pillar["research_wait_price"] == []
+    assert pillar["research_reject_count"] == 0
+    assert pillar["urgent_evidence_queue"] == []
+    assert out["decision_readiness"]["terminal_research_snapshot_available"] is True
+    assert out["decision_readiness"]["terminal_research_current_for_deep_runtime"] is False
+
+
 def test_terminal_runtime_is_visible_in_markdown_with_unresolved_reasons():
     out = build_runtime_decision_center(
         dashboard=_dashboard(),
@@ -179,6 +290,7 @@ def test_terminal_runtime_is_visible_in_markdown_with_unresolved_reasons():
         automatic_profiles=_automatic_profiles(),
         static_profiles={},
         deep_calculation_status=_terminal_status(),
+        terminal_research_decisions=_terminal_research(),
         industry_links={},
         era_handoff={},
     )
@@ -190,6 +302,11 @@ def test_terminal_runtime_is_visible_in_markdown_with_unresolved_reasons():
     assert "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN" in md
     assert "是否需要你手工开启下一轮：**False**" in md
     assert "执行 SUCCESS 不等于研究 COMPLETE" in md
+    assert "## 深算终态研究决策" in md
+    assert "与当前 Deep Lambda 一致：**True**" in md
+    assert "研究 REJECT：**1**" in md
+    assert "600406 国电南瑞" in md
+    assert "Formal/Production 权限严格分离" in md
 
 
 def test_runtime_markdown_makes_finished_but_partial_obvious():
@@ -208,3 +325,5 @@ def test_runtime_markdown_makes_finished_but_partial_obvious():
     assert "SUCCESS" in md
     assert "PARTIAL_GAPS_REMAIN" in md
     assert "执行 SUCCESS 不等于研究 COMPLETE" in md
+    assert "## 深算终态研究决策" in md
+    assert "终态快照存在：**False**" in md
