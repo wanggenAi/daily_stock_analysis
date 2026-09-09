@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-09T00:55:44+00:00",
+  "mode": "HOURLY",
+  "generated_at": "2026-09-09T01:15:47+00:00",
   "canonical_snapshot_id": "5c9deb929cf0fed44dfa",
   "canonical_source_run_id": "34269878443",
   "latest_trade_date": "2026-09-08",
@@ -11,7 +11,7 @@
   "formal_actions_are_persistent_state": true,
   "repeated_report_does_not_compound_action": true,
   "no_auto_trade": true,
-  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1894；盘中价覆盖=0",
+  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1885；盘中价覆盖=4",
   "market": {
     "as_of_date": "2026-09-08",
     "status": "GREEN",
@@ -65,7 +65,11 @@
         "neutral_value": 17.457807170543802,
         "valuation_confidence": "HIGH",
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "canonical_price": 22.41,
+        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-09T09:12:56+08:00",
+        "price_provider": "tencent_quote",
+        "price_age_seconds": 171
       },
       {
         "code": "001316",
@@ -86,7 +90,11 @@
         "neutral_value": 49.36957125214809,
         "valuation_confidence": "LOW",
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "canonical_price": 29.57,
+        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-09T09:12:21+08:00",
+        "price_provider": "tencent_quote",
+        "price_age_seconds": 206
       },
       {
         "code": "601318",
@@ -107,15 +115,19 @@
         "neutral_value": 83.07,
         "valuation_confidence": "MEDIUM",
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.671<1.00",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "canonical_price": 55.7,
+        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-09T09:13:03+08:00",
+        "price_provider": "tencent_quote",
+        "price_age_seconds": 164
       },
       {
         "code": "603993",
         "name": "洛阳钼业",
         "quantity": 900,
         "average_cost": 18.9114,
-        "current_price": 18.94,
-        "pnl_pct": 0.15,
+        "current_price": 18.85,
+        "pnl_pct": -0.32,
         "formal_action": "HOLD",
         "action_lifecycle": "UNCHANGED",
         "previous_formal_action": "HOLD",
@@ -128,7 +140,11 @@
         "neutral_value": 28.12766979232306,
         "valuation_confidence": "HIGH",
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "canonical_price": 18.94,
+        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-09T09:12:59+08:00",
+        "price_provider": "tencent_quote",
+        "price_age_seconds": 168
       }
     ]
   },
@@ -147,22 +163,22 @@
     "capital_as_of": "2026-09-03T12:17:00+08:00",
     "deployment_budget_cny": 49000.0,
     "effective_max_deployment_ratio": 0.7,
-    "planned_immediate_cash_cny": 1894.0,
-    "cash_after_immediate_plan_cny": 68106.0,
+    "planned_immediate_cash_cny": 1885.0,
+    "cash_after_immediate_plan_cny": 68115.0,
     "operations": [
       {
         "code": "603993",
         "name": "洛阳钼业",
         "action": "ADD",
-        "current_price": 18.94,
+        "current_price": 18.85,
         "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
         "authorization_proven": true,
         "planned_shares": 100,
         "first_tranche_shares": 100,
-        "first_entry_max_price": 18.94,
+        "first_entry_max_price": 18.85,
         "second_tranche_shares": 0,
         "second_entry_max_price": null,
-        "estimated_cash_cny": 1894.0,
+        "estimated_cash_cny": 1885.0,
         "immediate_execution_eligible": true,
         "automatic_order_allowed": false,
         "no_auto_trade": true,
@@ -193,15 +209,15 @@
       "code": "603993",
       "name": "洛阳钼业",
       "action": "ADD",
-      "current_price": 18.94,
+      "current_price": 18.85,
       "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
       "authorization_proven": true,
       "planned_shares": 100,
       "first_tranche_shares": 100,
-      "first_entry_max_price": 18.94,
+      "first_entry_max_price": 18.85,
       "second_tranche_shares": 0,
       "second_entry_max_price": null,
-      "estimated_cash_cny": 1894.0,
+      "estimated_cash_cny": 1885.0,
       "immediate_execution_eligible": true,
       "automatic_order_allowed": false,
       "no_auto_trade": true,
@@ -225,7 +241,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 500,
-    "planned_immediate_cash_cny": 1894.0
+    "planned_immediate_cash_cny": 1885.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -309,11 +325,16 @@
   },
   "live_execution_overlay": {
     "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V1",
-    "available": false,
-    "eligible_quote_count": 0,
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "latest_quote_observed_at": "",
+    "available": true,
+    "eligible_quote_count": 50,
+    "applied_code_count": 4,
+    "applied_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "latest_quote_observed_at": "2026-09-09T09:13:05+08:00",
     "max_quote_age_minutes": 120,
     "canonical_snapshot_match": true,
     "formal_action_recomputed": false,
