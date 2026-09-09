@@ -1,8 +1,10 @@
 """Runtime-aware producer for the three-pillar investor decision center.
 
 The decision-center composer remains the authority-preserving composition layer.
-This producer adds operational observability for event-driven deep calculation
-and prefers automatically generated profiles over static bootstrap reviews.
+This producer adds operational observability for event-driven deep calculation,
+prefers automatically generated profiles over static bootstrap reviews, and
+exposes terminal research-only BUY / WAIT_PRICE / REJECT separately from
+Canonical/Production actions.
 
 Execution completion, process-terminal closure and research completeness are
 separate concepts. COMPLETE means every requested gate is resolved;
@@ -19,6 +21,8 @@ from typing import Any, Mapping
 from .three_pillar_decision_center import build_decision_center, render_markdown
 
 RUNTIME_CONTRACT = "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2"
+TERMINAL_RESEARCH_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
+TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "REJECT"})
 
 
 def _json(path: Path | None) -> dict[str, Any]:
@@ -112,6 +116,167 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
     }
 
 
+def normalize_terminal_research(
+    terminal_research: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Validate and normalize persisted research-only terminal decisions.
+
+    This layer never promotes Research Authority into Formal/Production authority.
+    A terminal file may contain research BUY / WAIT_PRICE, but every row must remain
+    explicitly unauthorized for Formal BUY and no-auto-trade must stay true.
+    """
+    raw = dict(terminal_research or {})
+    if not raw:
+        return {
+            "available": False,
+            "contract": TERMINAL_RESEARCH_CONTRACT,
+            "generated_at": "",
+            "source_deep_lambda_run_id": "",
+            "source_every_industry_run_id": "",
+            "requested_count": 0,
+            "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 0},
+            "all_requested_terminal": False,
+            "research_buy": [],
+            "research_wait_price": [],
+            "research_reject_count": 0,
+            "urgent_research_queue": [],
+            "research_authority": "RESEARCH_ONLY",
+            "formal_trading_authority": False,
+            "automatic_formal_buy_allowed": False,
+            "unknown_is_pass": False,
+            "no_auto_trade": True,
+        }
+
+    if raw.get("contract") != TERMINAL_RESEARCH_CONTRACT:
+        raise ValueError("unexpected terminal research decision contract")
+    if raw.get("research_authority") != "RESEARCH_ONLY":
+        raise ValueError("terminal research decisions must remain RESEARCH_ONLY")
+    if raw.get("formal_trading_authority") is not False:
+        raise ValueError("terminal research decisions cannot grant Formal trading authority")
+    if raw.get("automatic_formal_buy_allowed") is not False:
+        raise ValueError("terminal research decisions cannot grant automatic Formal BUY")
+    if raw.get("unknown_is_pass") is not False:
+        raise ValueError("terminal research decisions must preserve UNKNOWN != PASS")
+    if raw.get("no_auto_trade") is not True:
+        raise ValueError("terminal research decisions must preserve no-auto-trade")
+
+    rows = [dict(row) for row in (raw.get("terminal_rows") or []) if isinstance(row, Mapping)]
+    requested = _int(raw.get("requested_count"))
+    if requested != len(rows):
+        raise ValueError(
+            "terminal research requested_count must equal the number of terminal rows"
+        )
+    if raw.get("all_requested_terminal") is not True:
+        raise ValueError("terminal research file must explicitly close every requested code")
+
+    buy: list[dict[str, Any]] = []
+    wait: list[dict[str, Any]] = []
+    reject_count = 0
+    for row in rows:
+        decision = str(row.get("research_decision") or "").upper()
+        if decision not in TERMINAL_DECISIONS:
+            raise ValueError(f"invalid terminal research decision: {decision or 'EMPTY'}")
+        if row.get("research_authority") != "RESEARCH_ONLY":
+            raise ValueError("terminal research row lost RESEARCH_ONLY authority")
+        if row.get("formal_buy_authorized") is not False:
+            raise ValueError("terminal research row attempted to authorize Formal BUY")
+        if row.get("no_auto_trade") is not True:
+            raise ValueError("terminal research row lost no-auto-trade")
+        if decision == "BUY":
+            buy.append(row)
+        elif decision == "WAIT_PRICE":
+            wait.append(row)
+        else:
+            reject_count += 1
+
+    raw_counts = raw.get("decision_counts") if isinstance(raw.get("decision_counts"), Mapping) else {}
+    counts = {
+        "BUY": _int(raw_counts.get("BUY")),
+        "WAIT_PRICE": _int(raw_counts.get("WAIT_PRICE")),
+        "REJECT": _int(raw_counts.get("REJECT")),
+    }
+    actual_counts = {"BUY": len(buy), "WAIT_PRICE": len(wait), "REJECT": reject_count}
+    if counts != actual_counts or sum(counts.values()) != requested:
+        raise ValueError("terminal research decision_counts do not match terminal rows")
+
+    urgent = [dict(row) for row in (raw.get("urgent_research_queue") or []) if isinstance(row, Mapping)]
+    return {
+        "available": True,
+        "contract": TERMINAL_RESEARCH_CONTRACT,
+        "generated_at": str(raw.get("generated_at") or ""),
+        "source_deep_lambda_run_id": str(raw.get("source_deep_lambda_run_id") or ""),
+        "source_every_industry_run_id": str(raw.get("source_every_industry_run_id") or ""),
+        "requested_count": requested,
+        "decision_counts": counts,
+        "all_requested_terminal": True,
+        "research_buy": buy,
+        "research_wait_price": wait,
+        "research_reject_count": reject_count,
+        "urgent_research_queue": urgent,
+        "research_authority": "RESEARCH_ONLY",
+        "formal_trading_authority": False,
+        "automatic_formal_buy_allowed": False,
+        "unknown_is_pass": False,
+        "no_auto_trade": True,
+    }
+
+
+def _attach_terminal_research(
+    payload: dict[str, Any],
+    terminal: dict[str, Any],
+    runtime: Mapping[str, Any],
+) -> None:
+    opportunities = payload["pillar_3_deep_opportunities"]
+    deep_lambda = str(runtime.get("lambda_run_id") or "")
+    terminal_lambda = str(terminal.get("source_deep_lambda_run_id") or "")
+    current = bool(terminal.get("available") and deep_lambda and terminal_lambda == deep_lambda)
+    terminal = dict(terminal)
+    terminal["current_for_deep_runtime"] = current
+    terminal["stale_for_deep_runtime"] = bool(terminal.get("available") and not current)
+
+    # Existing buy_now/wait_price remain Canonical/Production mirrors. Research-only
+    # decisions live in distinct fields and never become Formal actions here.
+    opportunities["canonical_formal_buy_now"] = list(opportunities.get("buy_now") or [])
+    opportunities["canonical_formal_wait_price"] = list(opportunities.get("wait_price") or [])
+    opportunities["terminal_research_snapshot"] = terminal
+    opportunities["research_buy"] = list(terminal.get("research_buy") or []) if current else []
+    opportunities["research_wait_price"] = list(terminal.get("research_wait_price") or []) if current else []
+    opportunities["research_reject_count"] = _int(terminal.get("research_reject_count")) if current else 0
+    opportunities["urgent_evidence_queue"] = list(terminal.get("urgent_research_queue") or []) if current else []
+    opportunities["research_actionable_count"] = (
+        len(opportunities["research_buy"]) + len(opportunities["research_wait_price"])
+    )
+    opportunities["research_terminal_current"] = current
+    opportunities["display_rule"] = (
+        "Canonical buy_now/wait_price remain Formal/Production mirrors. Research BUY/WAIT_PRICE are displayed "
+        "separately and only when their source Deep Lambda exactly matches the current deep runtime."
+    )
+    opportunities["authority_rule"] = (
+        "Research BUY/WAIT_PRICE never create Formal BUY, holding-add authorization, or orders. "
+        "Formal actions remain FINALIZED_CANONICAL_ONLY; UNKNOWN is never promoted to PASS."
+    )
+
+    summary = payload["executive_summary"]
+    summary.update(
+        {
+            "research_terminal_requested_count": _int(terminal.get("requested_count")) if current else 0,
+            "research_buy_count": len(opportunities["research_buy"]),
+            "research_wait_price_count": len(opportunities["research_wait_price"]),
+            "research_reject_count": opportunities["research_reject_count"],
+            "urgent_evidence_queue_count": len(opportunities["urgent_evidence_queue"]),
+        }
+    )
+    payload["decision_readiness"].update(
+        {
+            "terminal_research_snapshot_available": terminal.get("available") is True,
+            "terminal_research_current_for_deep_runtime": current,
+            "terminal_research_all_requested_terminal": bool(
+                current and terminal.get("all_requested_terminal") is True
+            ),
+        }
+    )
+
+
 def build_runtime_decision_center(
     *,
     dashboard: Mapping[str, Any],
@@ -119,6 +284,7 @@ def build_runtime_decision_center(
     automatic_profiles: Mapping[str, Any] | None = None,
     static_profiles: Mapping[str, Any] | None = None,
     deep_calculation_status: Mapping[str, Any] | None = None,
+    terminal_research_decisions: Mapping[str, Any] | None = None,
     industry_links: Mapping[str, Any] | None = None,
     era_handoff: Mapping[str, Any] | None = None,
     generated_at: str | None = None,
@@ -133,6 +299,7 @@ def build_runtime_decision_center(
         generated_at=generated_at,
     )
     runtime = normalize_runtime(deep_calculation_status)
+    terminal = normalize_terminal_research(terminal_research_decisions)
     payload["deep_calculation_runtime"] = runtime
     payload["deep_review_profile_source"] = profile_source
     payload["executive_summary"].update(
@@ -153,6 +320,7 @@ def build_runtime_decision_center(
             "deep_calculation_manual_next_round_required": runtime["manual_next_round_required"],
         }
     )
+    _attach_terminal_research(payload, terminal, runtime)
     return payload
 
 
@@ -169,11 +337,25 @@ def _unresolved_text(reasons: Mapping[str, Any]) -> str:
     return "；".join(parts)
 
 
+def _urgent_text(rows: list[Mapping[str, Any]]) -> str:
+    if not rows:
+        return "无"
+    parts: list[str] = []
+    for row in rows[:10]:
+        code = str(row.get("code") or "")
+        name = str(row.get("name") or "")
+        score = row.get("quant_score")
+        parts.append(f"{code} {name}(quant={score})".strip())
+    return "；".join(parts)
+
+
 def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
     base = render_markdown(payload).rstrip()
     runtime = payload.get("deep_calculation_runtime") or {}
     source = payload.get("deep_review_profile_source") or "UNKNOWN"
     missing = runtime.get("missing_requested_codes") or []
+    opportunities = payload.get("pillar_3_deep_opportunities") or {}
+    terminal = opportunities.get("terminal_research_snapshot") or {}
     lines = [
         "",
         "## 自动深算运行状态",
@@ -192,6 +374,14 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         f"- 是否需要你手工开启下一轮：**{runtime.get('manual_next_round_required', True)}**。",
         "- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 是流程已自动收口，不代表 UNKNOWN 被当成 PASS。",
         "",
+        "## 深算终态研究决策",
+        "",
+        f"- 终态快照存在：**{terminal.get('available') is True}**；与当前 Deep Lambda 一致：**{terminal.get('current_for_deep_runtime') is True}**。",
+        f"- 终态来源 Lambda：`{terminal.get('source_deep_lambda_run_id') or '—'}`；当前 Lambda：`{runtime.get('lambda_run_id') or '—'}`。",
+        f"- 请求：**{terminal.get('requested_count', 0) if terminal.get('current_for_deep_runtime') else 0}**；研究 BUY：**{len(opportunities.get('research_buy') or [])}**；研究 WAIT_PRICE：**{len(opportunities.get('research_wait_price') or [])}**；研究 REJECT：**{opportunities.get('research_reject_count', 0)}**。",
+        f"- 高吸引力但证据不足、优先补证：{_urgent_text(opportunities.get('urgent_evidence_queue') or [])}",
+        "- **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。",
+        "",
         "> 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。",
         "",
     ]
@@ -206,6 +396,7 @@ def main() -> int:
     parser.add_argument("--automatic-deep-reviews", type=Path, default=Path("data/deep_calculation/latest_profiles.json"))
     parser.add_argument("--static-deep-reviews", type=Path, default=Path("config/v31_explicit_deep_reviews.json"))
     parser.add_argument("--deep-calculation-status", type=Path, default=Path("data/deep_calculation/latest_status.json"))
+    parser.add_argument("--terminal-research-decisions", type=Path, default=Path("data/deep_calculation/latest_research_decisions.json"))
     parser.add_argument("--industry-links", type=Path, default=Path("config/era_radar_industry_links.json"))
     parser.add_argument("--output-json", type=Path, default=Path("data/decision_center/latest.json"))
     parser.add_argument("--output-md", type=Path, default=Path("LATEST_DECISION_CENTER.md"))
@@ -217,6 +408,7 @@ def main() -> int:
         automatic_profiles=_json(args.automatic_deep_reviews),
         static_profiles=_json(args.static_deep_reviews),
         deep_calculation_status=_json(args.deep_calculation_status),
+        terminal_research_decisions=_json(args.terminal_research_decisions),
         industry_links=_json(args.industry_links),
         era_handoff=_json(args.era_handoff),
     )

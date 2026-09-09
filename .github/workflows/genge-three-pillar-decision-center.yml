@@ -16,6 +16,7 @@ on:
     workflows:
       - "GenGe Investor Decision Brief"
       - "Era Capital Trend Radar Live"
+      - "GenGe V3.1 Terminal Research Decision"
     types: [completed]
   pull_request:
     paths:
@@ -89,6 +90,7 @@ jobs:
 
             test -f data/investor_decision_dashboard/latest.json
             test -f data/era_radar/latest.json
+            test -f data/deep_calculation/latest_research_decisions.json
 
             python -m src.strategies.genge_opportunity_discovery.three_pillar_decision_center_runtime \
               --output-json data/decision_center/latest.json \
@@ -112,6 +114,28 @@ jobs:
           assert runtime['no_auto_trade'] is True
           assert p['deep_review_profile_source'] in {'AUTOMATIC_DEEP_CALCULATION','STATIC_BOOTSTRAP_FALLBACK'}
           assert p['pillar_2_world_social_market_capital_map']['direct_fund_flow_claimed'] is False
+
+          opp=p['pillar_3_deep_opportunities']
+          terminal=opp['terminal_research_snapshot']
+          assert terminal['research_authority'] == 'RESEARCH_ONLY'
+          assert terminal['formal_trading_authority'] is False
+          assert terminal['automatic_formal_buy_allowed'] is False
+          assert terminal['unknown_is_pass'] is False
+          assert terminal['no_auto_trade'] is True
+          assert opp['canonical_formal_buy_now'] == opp['buy_now']
+          assert opp['canonical_formal_wait_price'] == opp['wait_price']
+          if terminal['current_for_deep_runtime']:
+              assert terminal['source_deep_lambda_run_id'] == runtime['lambda_run_id']
+              assert terminal['all_requested_terminal'] is True
+          else:
+              assert opp['research_buy'] == []
+              assert opp['research_wait_price'] == []
+              assert opp['research_reject_count'] == 0
+              assert opp['urgent_evidence_queue'] == []
+          for row in opp['research_buy'] + opp['research_wait_price']:
+              assert row['research_authority'] == 'RESEARCH_ONLY'
+              assert row['formal_buy_authorized'] is False
+              assert row['no_auto_trade'] is True
           PY
 
             git add -f data/decision_center/latest.json LATEST_DECISION_CENTER.md
@@ -135,6 +159,7 @@ jobs:
           echo '# GenGe Three-Pillar Decision Center' >> "$GITHUB_STEP_SUMMARY"
           echo '- Pillar 1: current holdings + automatic/explicit deep-review completeness' >> "$GITHUB_STEP_SUMMARY"
           echo '- Pillar 2: world/social structural trends + tactical market-behaviour proxy + validated A-share handoffs' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Pillar 3: terminal BUY / WAIT_PRICE opportunities; REJECT stays summarized' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Pillar 3: Canonical Formal actions and terminal research-only BUY / WAIT_PRICE / REJECT are separate' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Terminal research is exposed only when its Deep Lambda lineage matches the current runtime; stale research is fail-closed' >> "$GITHUB_STEP_SUMMARY"
           echo '- Deep Calculation Lambda status is visible separately from research completeness' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Authority: Canonical Formal actions only; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Authority: Canonical Formal actions only; research authority cannot escalate; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
