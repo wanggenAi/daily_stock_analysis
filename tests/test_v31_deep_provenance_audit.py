@@ -1,4 +1,5 @@
 import pytest
+from pathlib import Path
 
 from src.strategies.genge_opportunity_discovery.v31_deep_provenance_audit import (
     audit_profiles,
@@ -157,3 +158,24 @@ def test_augment_status_rejects_any_authority_weakening():
     unsafe["unknown_is_pass"] = True
     with pytest.raises(ValueError, match="UNKNOWN != PASS"):
         augment_status(unsafe, audit, expected_lambda_run_id="123")
+
+
+def test_provenance_self_verification_uses_native_push_then_workflow_run():
+    audit_workflow = Path(
+        ".github/workflows/genge-v31-deep-provenance-audit.yml"
+    ).read_text(encoding="utf-8")
+    lambda_workflow = Path(
+        ".github/workflows/genge-v31-deep-calculation-lambda.yml"
+    ).read_text(encoding="utf-8")
+
+    for path in (
+        ".github/workflows/genge-v31-deep-provenance-audit.yml",
+        "src/strategies/genge_opportunity_discovery/v31_deep_provenance_audit.py",
+        "tests/test_v31_deep_provenance_audit.py",
+    ):
+        assert f'- "{path}"' in lambda_workflow
+
+    assert "Synchronize provenance self-verification push" in lambda_workflow
+    assert "PROVENANCE_AUDIT_PUSH_REFRESH" in lambda_workflow
+    assert "GenGe V3.1 Deep Provenance Audit" in lambda_workflow
+    assert "gh workflow run genge-v31-deep-calculation-lambda.yml" not in audit_workflow
