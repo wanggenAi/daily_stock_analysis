@@ -54,8 +54,8 @@ N76水利管理业(98.27)、B07石油和天然气开采业(96.46)、B11开采专
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`34354105808`
-- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
+- Lambda run：`34356029628`
+- 触发来源：`EVERY_INDUSTRY_READY`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
