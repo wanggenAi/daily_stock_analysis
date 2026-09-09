@@ -27,9 +27,12 @@ on:
       - "src/strategies/genge_opportunity_discovery/v31_automatic_deep_calculation.py"
       - "src/strategies/genge_opportunity_discovery/v31_deep_gap_closure.py"
       - "src/strategies/genge_opportunity_discovery/v31_explicit_deep_review.py"
+      - "src/strategies/genge_opportunity_discovery/v31_deep_provenance_audit.py"
       - "tests/test_genge_v31_automatic_deep_calculation.py"
       - "tests/test_v31_deep_gap_closure.py"
+      - "tests/test_v31_deep_provenance_audit.py"
       - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
+      - ".github/workflows/genge-v31-deep-provenance-audit.yml"
   workflow_run:
     workflows:
       - "GenGe V3.1.1 Hourly Deep Overlay"
@@ -72,7 +75,8 @@ jobs:
           python -m pytest -q \
             tests/test_genge_v31_explicit_deep_review.py \
             tests/test_genge_v31_automatic_deep_calculation.py \
-            tests/test_v31_deep_gap_closure.py
+            tests/test_v31_deep_gap_closure.py \
+            tests/test_v31_deep_provenance_audit.py
 
   deep-calculate:
     needs: contracts
@@ -84,6 +88,46 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
+
+      - name: Synchronize provenance self-verification push
+        id: provenance_gate
+        if: github.event_name == 'push'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          provenance_refresh=false
+          changed=$(git diff --name-only "$BEFORE_SHA" "$GITHUB_SHA" || true)
+          if printf '%s\n' "$changed" | grep -Eq '^(\.github/workflows/genge-v31-deep-provenance-audit\.yml|src/strategies/genge_opportunity_discovery/v31_deep_provenance_audit\.py|tests/test_v31_deep_provenance_audit\.py)$'; then
+            provenance_refresh=true
+            audit_completed=false
+            for attempt in $(seq 1 60); do
+              payload=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs?head_sha=${GITHUB_SHA}&event=push&per_page=100")
+              audit_run=$(printf '%s' "$payload" | jq -c '[.workflow_runs[] | select(.path == ".github/workflows/genge-v31-deep-provenance-audit.yml")] | sort_by(.id) | last // empty')
+              if [ -n "$audit_run" ]; then
+                audit_id=$(printf '%s' "$audit_run" | jq -r '.id // empty')
+                audit_status=$(printf '%s' "$audit_run" | jq -r '.status // empty')
+                audit_conclusion=$(printf '%s' "$audit_run" | jq -r '.conclusion // empty')
+                echo "GenGe V3.1 Deep Provenance Audit push run ${audit_id:-unknown}: status=${audit_status:-unknown} conclusion=${audit_conclusion:-pending}"
+                if [ "$audit_status" = "completed" ]; then
+                  [ "$audit_conclusion" = "success" ] || {
+                    echo "matching push provenance audit did not succeed" >&2
+                    exit 1
+                  }
+                  audit_completed=true
+                  break
+                fi
+              fi
+              sleep 5
+            done
+            [ "$audit_completed" = "true" ] || {
+              echo "matching push provenance audit did not complete within bounded synchronization window" >&2
+              exit 1
+            }
+          fi
+          echo "provenance_refresh=$provenance_refresh" >> "$GITHUB_OUTPUT"
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -104,6 +148,7 @@ jobs:
           INPUT_RESEARCH_RUN_ID: ${{ inputs.research_run_id }}
           INPUT_REQUESTED_CODES: ${{ inputs.requested_codes }}
           INPUT_TRIGGER_SOURCE: ${{ inputs.trigger_source }}
+          PROVENANCE_REFRESH: ${{ steps.provenance_gate.outputs.provenance_refresh }}
           WORKFLOW_RUN_NAME: ${{ github.event.workflow_run.name }}
         run: |
           set -euo pipefail
@@ -142,7 +187,11 @@ jobs:
             if [ "${{ github.event_name }}" = "workflow_run" ]; then
               trigger_source="${WORKFLOW_RUN_NAME:-WORKFLOW_RUN}"
             elif [ "${{ github.event_name }}" = "push" ]; then
-              trigger_source="PUSH_CHANGE"
+              if [ "${PROVENANCE_REFRESH:-false}" = "true" ]; then
+                trigger_source="PROVENANCE_AUDIT_PUSH_REFRESH"
+              else
+                trigger_source="PUSH_CHANGE"
+              fi
             else
               trigger_source="${{ github.event_name }}"
             fi

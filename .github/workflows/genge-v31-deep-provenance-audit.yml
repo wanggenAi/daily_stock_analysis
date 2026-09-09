@@ -151,18 +151,6 @@ jobs:
           echo "provenance persistence failed after optimistic replay" >&2
           exit 1
 
-      - name: Refresh deep calculation after provenance code push
-        if: success() && github.event_name == 'push' && steps.resolve.outputs.superseded != 'true'
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          gh workflow run genge-v31-deep-calculation-lambda.yml \
-            --repo "$GITHUB_REPOSITORY" \
-            --ref main \
-            -f trigger_source="PROVENANCE_AUDIT_REFRESH"
-          echo "Fresh Deep Calculation Lambda dispatched for end-to-end provenance self-verification."
-
       - name: Publish provenance audit summary
         if: always() && steps.resolve.outputs.superseded != 'true'
         env:
