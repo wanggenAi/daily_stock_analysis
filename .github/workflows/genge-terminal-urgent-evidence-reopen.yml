@@ -19,7 +19,7 @@ on:
       - "tests/test_terminal_urgent_evidence_reopen.py"
 
 permissions:
-  contents: read
+  contents: write
   actions: write
 
 concurrency:
@@ -61,12 +61,13 @@ jobs:
         (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
       )
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout current main
         uses: actions/checkout@v4
         with:
           ref: main
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -79,30 +80,55 @@ jobs:
           test -s data/deep_calculation/latest_research_decisions.json
           python -m src.strategies.genge_opportunity_discovery.terminal_urgent_evidence_reopen \
             --terminal-json data/deep_calculation/latest_research_decisions.json \
+            --evidence-root data/evidence_events \
             --output-json "$RUNNER_TEMP/terminal-urgent-reopen-plan.json"
+
           all_count=$(jq -r '.requested_count' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
           urgent_count=$(jq -r '.urgent_requested_count' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
           codes=$(jq -r '.requested_codes | join(",")' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
           urgent_codes=$(jq -r '.urgent_requested_codes | join(",")' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
+          fingerprint=$(jq -r '.evidence_epoch_fingerprint' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
+          present_files=$(jq -r '.evidence_epoch_present_file_count' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")
+
           test "$(jq -r '.research_authority' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "RESEARCH_ONLY"
           test "$(jq -r '.formal_trading_authority' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "false"
           test "$(jq -r '.automatic_gate_inference_allowed' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "false"
+          test "$(jq -r '.identical_evidence_may_auto_retry' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "false"
           test "$(jq -r '.unknown_is_pass' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "false"
           test "$(jq -r '.no_auto_trade' "$RUNNER_TEMP/terminal-urgent-reopen-plan.json")" = "true"
+
+          marker=data/research_reopen/latest.json
+          previous_fingerprint=""
+          if [ -s "$marker" ]; then
+            previous_fingerprint=$(jq -r '.evidence_epoch_fingerprint // ""' "$marker")
+          fi
+
           trigger_source="TERMINAL_URGENT_REOPEN_BRIDGE_DEPLOYMENT"
+          should_dispatch=false
+          if [ "$urgent_count" != "0" ]; then
+            should_dispatch=true
+          fi
           if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
             trigger_source="SLOW_LANE_TERMINAL_URGENT_REOPEN"
+            if [ -n "$previous_fingerprint" ] && [ "$previous_fingerprint" = "$fingerprint" ]; then
+              should_dispatch=false
+            fi
           elif [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
             trigger_source="MANUAL_TERMINAL_URGENT_REOPEN"
           fi
+
           echo "all_count=$all_count" >> "$GITHUB_OUTPUT"
           echo "urgent_count=$urgent_count" >> "$GITHUB_OUTPUT"
           echo "codes=$codes" >> "$GITHUB_OUTPUT"
           echo "urgent_codes=$urgent_codes" >> "$GITHUB_OUTPUT"
+          echo "fingerprint=$fingerprint" >> "$GITHUB_OUTPUT"
+          echo "previous_fingerprint=$previous_fingerprint" >> "$GITHUB_OUTPUT"
+          echo "present_files=$present_files" >> "$GITHUB_OUTPUT"
           echo "trigger_source=$trigger_source" >> "$GITHUB_OUTPUT"
+          echo "should_dispatch=$should_dispatch" >> "$GITHUB_OUTPUT"
 
       - name: Dispatch Deep Calculation Lambda with preserved terminal workset
-        if: steps.plan.outputs.urgent_count != '0'
+        if: steps.plan.outputs.should_dispatch == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REQUESTED_CODES: ${{ steps.plan.outputs.codes }}
@@ -115,6 +141,60 @@ jobs:
             -f requested_codes="$REQUESTED_CODES" \
             -f trigger_source="$TRIGGER_SOURCE"
 
+      - name: Persist accepted evidence epoch
+        if: steps.plan.outputs.should_dispatch == 'true'
+        env:
+          EVIDENCE_FINGERPRINT: ${{ steps.plan.outputs.fingerprint }}
+          URGENT_CODES: ${{ steps.plan.outputs.urgent_codes }}
+          WORKSET_COUNT: ${{ steps.plan.outputs.all_count }}
+          URGENT_COUNT: ${{ steps.plan.outputs.urgent_count }}
+          TRIGGER_SOURCE: ${{ steps.plan.outputs.trigger_source }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          marker = {
+              "contract": "GEN_GE_TERMINAL_URGENT_EVIDENCE_REOPEN_EPOCH_V1",
+              "evidence_epoch_fingerprint": os.environ["EVIDENCE_FINGERPRINT"],
+              "urgent_codes": [x for x in os.environ.get("URGENT_CODES", "").split(",") if x],
+              "workset_count": int(os.environ.get("WORKSET_COUNT") or 0),
+              "urgent_count": int(os.environ.get("URGENT_COUNT") or 0),
+              "trigger_source": os.environ.get("TRIGGER_SOURCE", ""),
+              "bridge_run_id": os.environ.get("GITHUB_RUN_ID", ""),
+              "dispatch_accepted_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+              "research_authority": "RESEARCH_ONLY",
+              "formal_trading_authority": False,
+              "unknown_is_pass": False,
+              "no_auto_trade": True,
+          }
+          path = Path("/tmp/terminal-urgent-reopen-epoch.json")
+          path.write_text(json.dumps(marker, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+
+          git config user.name "genge-terminal-urgent-reopen-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/research_reopen
+            cp /tmp/terminal-urgent-reopen-epoch.json data/research_reopen/latest.json
+            git add -f data/research_reopen/latest.json
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "Persist terminal urgent evidence epoch [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved while persisting evidence epoch; replaying" >&2
+          done
+          echo "failed to persist accepted evidence epoch after optimistic replay" >&2
+          exit 1
+
       - name: Publish reopen summary
         if: always()
         run: |
@@ -122,7 +202,11 @@ jobs:
           echo "- trigger: \`${{ steps.plan.outputs.trigger_source || github.event_name }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- preserved terminal workset count: **${{ steps.plan.outputs.all_count || 'unresolved' }}**" >> "$GITHUB_STEP_SUMMARY"
           echo "- urgent evidence-blocked count: **${{ steps.plan.outputs.urgent_count || 'unresolved' }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- urgent evidence files present: **${{ steps.plan.outputs.present_files || 'unresolved' }}**" >> "$GITHUB_STEP_SUMMARY"
           echo "- urgent codes: \`${{ steps.plan.outputs.urgent_codes || 'none' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- evidence epoch fingerprint: \`${{ steps.plan.outputs.fingerprint || 'unresolved' }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deep dispatch: **${{ steps.plan.outputs.should_dispatch || 'false' }}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- identical scheduled evidence is suppressed; push/manual execution may explicitly re-underwrite" >> "$GITHUB_STEP_SUMMARY"
           echo "- Deep requested codes: full previous terminal workset, so the next terminal snapshot cannot shrink to the urgent subset" >> "$GITHUB_STEP_SUMMARY"
           echo "- authority: **RESEARCH_ONLY**; UNKNOWN remains UNKNOWN; no Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
           echo "- loop control: listens to Slow Lane refresh plus explicit/manual deployment only; never listens to Deep or Terminal completion" >> "$GITHUB_STEP_SUMMARY"
