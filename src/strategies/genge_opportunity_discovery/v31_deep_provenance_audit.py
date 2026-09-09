@@ -52,7 +52,14 @@ def _evidence_count(gate: Mapping[str, Any]) -> int:
     return sum(1 for row in evidence if isinstance(row, Mapping) and bool(row))
 
 
-def audit_profiles(payload: Mapping[str, Any]) -> dict[str, Any]:
+def audit_profiles(
+    payload: Mapping[str, Any],
+    *,
+    audit_run_id: str = "",
+    audit_workflow: str = "",
+    audit_run_attempt: str = "",
+    audit_event: str = "",
+) -> dict[str, Any]:
     profiles = payload.get("profiles")
     if not isinstance(profiles, Mapping):
         raise ValueError("deep-review profiles must be an object")
@@ -96,6 +103,10 @@ def audit_profiles(payload: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "contract": CONTRACT,
         "generated_at": now,
+        "audit_run_id": str(audit_run_id or ""),
+        "audit_workflow": str(audit_workflow or ""),
+        "audit_run_attempt": str(audit_run_attempt or ""),
+        "audit_event": str(audit_event or ""),
         "profile_count": len(profiles),
         "hard_gate_count": hard_gate_count,
         "pass_gate_count": status_counts["PASS"],
@@ -155,6 +166,10 @@ def augment_status(
         {
             "provenance_audit_contract": audit.get("contract"),
             "provenance_audit_generated_at": audit.get("generated_at"),
+            "provenance_audit_run_id": str(audit.get("audit_run_id") or ""),
+            "provenance_audit_workflow": str(audit.get("audit_workflow") or ""),
+            "provenance_audit_run_attempt": str(audit.get("audit_run_attempt") or ""),
+            "provenance_audit_event": str(audit.get("audit_event") or ""),
             "provenance_audit_complete": True,
             "profile_count": audit.get("profile_count"),
             "hard_gate_count": audit.get("hard_gate_count"),
@@ -189,11 +204,21 @@ def main() -> int:
     parser.add_argument("--output-status", type=Path, required=True)
     parser.add_argument("--output-audit", type=Path, required=True)
     parser.add_argument("--expected-lambda-run-id", default="")
+    parser.add_argument("--audit-run-id", default="")
+    parser.add_argument("--audit-workflow", default="")
+    parser.add_argument("--audit-run-attempt", default="")
+    parser.add_argument("--audit-event", default="")
     args = parser.parse_args()
 
     profiles = json.loads(args.profiles_json.read_text(encoding="utf-8"))
     status = json.loads(args.status_json.read_text(encoding="utf-8"))
-    audit = audit_profiles(profiles)
+    audit = audit_profiles(
+        profiles,
+        audit_run_id=args.audit_run_id,
+        audit_workflow=args.audit_workflow,
+        audit_run_attempt=args.audit_run_attempt,
+        audit_event=args.audit_event,
+    )
     args.output_audit.parent.mkdir(parents=True, exist_ok=True)
     args.output_audit.write_text(
         json.dumps(audit, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
