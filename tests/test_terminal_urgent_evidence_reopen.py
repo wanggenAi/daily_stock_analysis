@@ -2,6 +2,7 @@ import pytest
 
 from src.strategies.genge_opportunity_discovery.terminal_urgent_evidence_reopen import (
     build_reopen_plan,
+    evidence_epoch_fingerprint,
 )
 
 
@@ -20,10 +21,15 @@ def _row(
         "research_priority": priority,
         "research_decision": "REJECT",
         "research_reason": reason,
-        "reopen_on_new_evidence": reason == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "reopen_on_new_evidence": reason
+        == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "urgent_research": urgent,
         "urgent_research_reasons": (
-            (["P0_EVIDENCE_BLOCKED"] if priority == "P0" else ["QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"])
+            (
+                ["P0_EVIDENCE_BLOCKED"]
+                if priority == "P0"
+                else ["QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"]
+            )
             if urgent
             else []
         ),
@@ -36,7 +42,11 @@ def _row(
 
 
 def _payload(terminal_rows, urgent_rows=None):
-    urgent_rows = [row for row in terminal_rows if row.get("urgent_research")] if urgent_rows is None else urgent_rows
+    urgent_rows = (
+        [row for row in terminal_rows if row.get("urgent_research")]
+        if urgent_rows is None
+        else urgent_rows
+    )
     counts = {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 0}
     for row in terminal_rows:
         counts[row["research_decision"]] += 1
@@ -120,3 +130,34 @@ def test_urgent_row_must_exist_in_terminal_workset():
     outside = _row("001316", priority="P0")
     with pytest.raises(ValueError, match="outside terminal workset"):
         build_reopen_plan(_payload([terminal], urgent_rows=[outside]))
+
+
+def test_evidence_epoch_fingerprint_changes_only_for_urgent_evidence(tmp_path):
+    root = tmp_path / "events"
+    root.mkdir()
+    (root / "600406.jsonl").write_text('{"id":1}\n', encoding="utf-8")
+
+    first, count = evidence_epoch_fingerprint(["600406"], root)
+    second, second_count = evidence_epoch_fingerprint(["600406"], root)
+    assert first == second
+    assert count == second_count == 1
+
+    # Unrelated evidence must not cause an urgent full-workset replay.
+    (root / "000001.jsonl").write_text('{"id":"unrelated"}\n', encoding="utf-8")
+    unrelated, _ = evidence_epoch_fingerprint(["600406"], root)
+    assert unrelated == first
+
+    # New evidence for the urgent security is a genuine new evidence epoch.
+    (root / "600406.jsonl").write_text(
+        '{"id":1}\n{"id":2}\n', encoding="utf-8"
+    )
+    changed, _ = evidence_epoch_fingerprint(["600406"], root)
+    assert changed != first
+
+
+def test_evidence_epoch_fingerprint_changes_when_urgent_set_changes(tmp_path):
+    root = tmp_path / "events"
+    root.mkdir()
+    first, _ = evidence_epoch_fingerprint(["600406"], root)
+    changed, _ = evidence_epoch_fingerprint(["600406", "001316"], root)
+    assert changed != first
