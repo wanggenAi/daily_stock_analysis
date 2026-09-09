@@ -1,33 +1,35 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-09T14:48:16+00:00",
-  "canonical_snapshot_id": "5f933dc467f128128524",
-  "canonical_source_run_id": "34354419329",
-  "latest_trade_date": "2026-09-08",
+  "generated_at": "2026-09-09T16:06:36+00:00",
+  "canonical_snapshot_id": "250479b578b36914cd86",
+  "canonical_source_run_id": "34372874867",
+  "latest_trade_date": "2026-09-09",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
   "formal_action_lifecycle_source": "PREVIOUS_PERSISTED_DASHBOARD",
   "formal_actions_are_persistent_state": true,
   "repeated_report_does_not_compound_action": true,
   "no_auto_trade": true,
-  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1894；盘中价覆盖=0",
+  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1909；盘中价覆盖=0",
   "market": {
-    "as_of_date": "2026-09-08",
-    "status": "GREEN",
+    "as_of_date": "2026-09-09",
+    "status": "YELLOW",
     "allow_new_buy": true,
-    "external_risk_level": "LOW",
+    "external_risk_level": "MEDIUM",
     "data_quality": "OK",
-    "limit_up_count": 73,
-    "limit_down_count": 1,
-    "score": 58.8,
-    "position_multiplier": 1.0,
-    "advance_ratio": 0.6306,
-    "median_return_1d_pct": 0.6086,
-    "above_ma20_ratio": 0.5918,
-    "above_ma60_ratio": 0.6068,
-    "distribution_ratio": 0.028,
-    "risk_reasons": []
+    "limit_up_count": 49,
+    "limit_down_count": 9,
+    "score": 50.37,
+    "position_multiplier": 0.5,
+    "advance_ratio": 0.3491,
+    "median_return_1d_pct": -0.543,
+    "above_ma20_ratio": 0.56,
+    "above_ma60_ratio": 0.59,
+    "distribution_ratio": 0.0437,
+    "risk_reasons": [
+      "external_market_risk_medium"
+    ]
   },
   "stock_portfolio": {
     "status": "CONFIRMED",
@@ -37,8 +39,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.41,
-        "pnl_pct": -3.09,
+        "current_price": 22.45,
+        "pnl_pct": -2.92,
         "formal_action": "REDUCE_25",
         "action_lifecycle": "UNCHANGED",
         "previous_formal_action": "REDUCE_25",
@@ -72,8 +74,8 @@
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 29.57,
-        "pnl_pct": 14.86,
+        "current_price": 31.01,
+        "pnl_pct": 20.45,
         "formal_action": "HOLD_REVIEW",
         "action_lifecycle": "UNCHANGED",
         "previous_formal_action": "HOLD_REVIEW",
@@ -93,8 +95,8 @@
         "name": "中国平安",
         "quantity": 300,
         "average_cost": 57.1672,
-        "current_price": 55.7,
-        "pnl_pct": -2.57,
+        "current_price": 56.26,
+        "pnl_pct": -1.59,
         "formal_action": "HOLD",
         "action_lifecycle": "UNCHANGED",
         "previous_formal_action": "HOLD",
@@ -106,7 +108,7 @@
         "holding_add_reason_codes": "TYPED_INSURER_POLICY_SEPARATE;VALUATION_CONFIDENCE_NOT_HIGH;FRESH_VERIFIED_INPUT_NOT_READY",
         "neutral_value": 83.07,
         "valuation_confidence": "MEDIUM",
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.671<1.00",
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.677<1.00",
         "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
@@ -114,8 +116,8 @@
         "name": "洛阳钼业",
         "quantity": 900,
         "average_cost": 18.9114,
-        "current_price": 18.94,
-        "pnl_pct": 0.15,
+        "current_price": 19.09,
+        "pnl_pct": 0.94,
         "formal_action": "HOLD",
         "action_lifecycle": "UNCHANGED",
         "previous_formal_action": "HOLD",
@@ -124,7 +126,7 @@
         "execution_feasibility": null,
         "holding_add_authorized": true,
         "holding_add_max_lots": 1,
-        "holding_add_reason_codes": "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED;VALUATION_CONFIDENCE_HIGH;A_LEVEL_MARGIN_OF_SAFETY_PASS;price_to_neutral=0.673<=0.75;NO_KNOWN_HARD_GATE_FAILURE;STAGED_ADD_CAP_ONE_LOT;STAGED_ADD_NOT_FORMAL_BUY;FORMAL_ACTION_UNCHANGED;HARD_GATE_UNKNOWNS_RETAINED:predictability,long_term_demand,moat,financial_safety,earnings_authenticity",
+        "holding_add_reason_codes": "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED;VALUATION_CONFIDENCE_HIGH;A_LEVEL_MARGIN_OF_SAFETY_PASS;price_to_neutral=0.679<=0.75;NO_KNOWN_HARD_GATE_FAILURE;STAGED_ADD_CAP_ONE_LOT;STAGED_ADD_NOT_FORMAL_BUY;FORMAL_ACTION_UNCHANGED;HARD_GATE_UNKNOWNS_RETAINED:predictability,long_term_demand,moat,financial_safety,earnings_authenticity",
         "neutral_value": 28.12766979232306,
         "valuation_confidence": "HIGH",
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
@@ -136,7 +138,7 @@
     "available": true,
     "buy_now": [],
     "wait_price": [],
-    "reject_count": 500,
+    "reject_count": 487,
     "invalid_unauthorized_buy_count": 0,
     "decision_authority": "RESEARCH_TERMINAL_VIEW",
     "formal_buy_is_mirror_only": true
@@ -145,24 +147,24 @@
     "status": "READY",
     "available_cash_cny": 70000.0,
     "capital_as_of": "2026-09-03T12:17:00+08:00",
-    "deployment_budget_cny": 49000.0,
-    "effective_max_deployment_ratio": 0.7,
-    "planned_immediate_cash_cny": 1894.0,
-    "cash_after_immediate_plan_cny": 68106.0,
+    "deployment_budget_cny": 35000.0,
+    "effective_max_deployment_ratio": 0.5,
+    "planned_immediate_cash_cny": 1909.0,
+    "cash_after_immediate_plan_cny": 68091.0,
     "operations": [
       {
         "code": "603993",
         "name": "洛阳钼业",
         "action": "ADD",
-        "current_price": 18.94,
+        "current_price": 19.09,
         "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
         "authorization_proven": true,
         "planned_shares": 100,
         "first_tranche_shares": 100,
-        "first_entry_max_price": 18.94,
+        "first_entry_max_price": 19.09,
         "second_tranche_shares": 0,
         "second_entry_max_price": null,
-        "estimated_cash_cny": 1894.0,
+        "estimated_cash_cny": 1909.0,
         "immediate_execution_eligible": true,
         "automatic_order_allowed": false,
         "no_auto_trade": true,
@@ -193,15 +195,15 @@
       "code": "603993",
       "name": "洛阳钼业",
       "action": "ADD",
-      "current_price": 18.94,
+      "current_price": 19.09,
       "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
       "authorization_proven": true,
       "planned_shares": 100,
       "first_tranche_shares": 100,
-      "first_entry_max_price": 18.94,
+      "first_entry_max_price": 19.09,
       "second_tranche_shares": 0,
       "second_entry_max_price": null,
-      "estimated_cash_cny": 1894.0,
+      "estimated_cash_cny": 1909.0,
       "immediate_execution_eligible": true,
       "automatic_order_allowed": false,
       "no_auto_trade": true,
@@ -224,52 +226,52 @@
     "new_risk_reduction_action_count": 0,
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
-    "terminal_reject_count": 500,
-    "planned_immediate_cash_cny": 1894.0
+    "terminal_reject_count": 487,
+    "planned_immediate_cash_cny": 1909.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
     "method": "MARKET_BEHAVIOR_PROXY",
     "strongest_industries": [
       {
-        "industry": "N76水利管理业",
+        "industry": "G55水上运输业",
         "status": "STRONG",
-        "score": 98.27
+        "score": 90.64
       },
       {
-        "industry": "B07石油和天然气开采业",
+        "industry": "B06煤炭开采和洗选业",
         "status": "STRONG",
-        "score": 96.46
+        "score": 90.5
       },
       {
-        "industry": "B11开采专业及辅助性活动",
+        "industry": "B08黑色金属矿采选业",
         "status": "STRONG",
-        "score": 95.08
+        "score": 89.82
       },
       {
-        "industry": "A05农、林、牧、渔专业及辅助性活动",
+        "industry": "A04渔业",
         "status": "STRONG",
-        "score": 95.0
-      },
-      {
-        "industry": "A02林业",
-        "status": "STRONG",
-        "score": 94.92
-      },
-      {
-        "industry": "R86新闻和出版业",
-        "status": "STRONG",
-        "score": 94.81
-      },
-      {
-        "industry": "R89体育",
-        "status": "STRONG",
-        "score": 93.86
+        "score": 86.98
       },
       {
         "industry": "C25石油、煤炭及其他燃料加工业",
         "status": "STRONG",
-        "score": 91.04
+        "score": 83.5
+      },
+      {
+        "industry": "G59装卸搬运和仓储业",
+        "status": "STRONG",
+        "score": 81.85
+      },
+      {
+        "industry": "C31黑色金属冶炼和压延加工业",
+        "status": "STRONG",
+        "score": 80.04
+      },
+      {
+        "industry": "A01农业",
+        "status": "STRONG",
+        "score": 77.58
       }
     ]
   },
@@ -283,7 +285,7 @@
   },
   "hourly_context": {
     "available": true,
-    "research_as_of": "2026-09-09T13:16:17Z"
+    "research_as_of": "2026-09-09T16:02:44Z"
   },
   "data_health": {
     "canonical_authority_available": true,
