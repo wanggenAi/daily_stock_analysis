@@ -4,14 +4,14 @@
 
 ## Confirmed holdings
 
-Snapshot basis: user-provided broker position evidence through 2026-09-07 14:49 CST. The latest screenshot confirms `603993 洛阳钼业` increased from 800 to 900 shares, with 800 currently available and the newly purchased 100 shares unavailable intraday under T+1. `601318 中国平安`, `001316 润贝航科`, and `600406 国电南瑞` remain held. The broker-displayed average cost for `001316 润贝航科` is now 25.7450 CNY. `603369 今世缘` and `600276 恒瑞医药` remain fully closed at 0 shares. Quantities and broker-displayed average costs below are treated as confirmed until the user reports a new buy/sell or provides newer position evidence.
+Snapshot basis: user-provided CITIC Securities broker position / transaction evidence through 2026-09-10 10:56 CST. The latest evidence confirms a new `601318 中国平安` purchase of **100 shares at 55.2500 CNY** was fully filled at 10:16:44, increasing the position from 300 to 400 shares. The latest broker position snapshot shows 300 shares available and the newly purchased 100 shares unavailable intraday under T+1. `603993 洛阳钼业`, `001316 润贝航科`, and `600406 国电南瑞` remain held. Quantities and broker-displayed average costs below are treated as confirmed until the user reports a new buy/sell or provides newer position evidence.
 
 | Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |
 | --- | --- | ---: | ---: | --- | --- |
-| 601318 | 中国平安 | 300 | 57.1672 | HELD | 2026-09-07 |
-| 603993 | 洛阳钼业 | 900 | 18.9114 | HELD | 2026-09-07 |
-| 001316 | 润贝航科 | 200 | 25.7450 | HELD | 2026-09-07 |
-| 600406 | 国电南瑞 | 200 | 23.1253 | HELD | 2026-09-07 |
+| 601318 | 中国平安 | 400 | 55.9658 | HELD | 2026-09-10 |
+| 603993 | 洛阳钼业 | 900 | 18.8163 | HELD | 2026-09-10 |
+| 001316 | 润贝航科 | 200 | 25.7450 | HELD | 2026-09-10 |
+| 600406 | 国电南瑞 | 200 | 23.1253 | HELD | 2026-09-10 |
 
 ## Recently closed positions
 
@@ -26,18 +26,43 @@ Snapshot basis: user-provided broker position evidence through 2026-09-07 14:49 
 
 Every trading-day holding review must refresh price, filings/material events, industry drivers, hard-logic status and valuation evidence. Production version `GEN_GE_V3_1_1_PRODUCTION` requires LOW/INVALID valuation confidence to return HOLD_REVIEW and keeps Hard Gate FAIL -> EXIT. Never infer a transaction from price movement or a prior plan.
 
-## Latest manual holdings update — 2026-09-07 14:49 CST
+## Latest manual holdings update — 2026-09-10 10:56 CST
 
-Latest broker position snapshot confirms:
+Latest broker transaction and position evidence confirms:
 
-- `601318 中国平安`: **300 shares**, broker-displayed average cost **57.1672 CNY**, all 300 shares available.
-- `603993 洛阳钼业`: **900 shares**, broker-displayed average cost **18.9114 CNY**; **800 shares available**, confirming **100 shares were newly added today** and are not yet available intraday under T+1.
+- `601318 中国平安`: **400 shares**, broker-displayed average cost **55.9658 CNY**; **300 shares available**. A **100-share BUY at 55.2500 CNY** submitted at 10:16:44 is shown as **fully filled / 100 shares executed**, so the newly purchased 100 shares are T+1 unavailable intraday.
+- `603993 洛阳钼业`: **900 shares**, broker-displayed average cost **18.8163 CNY**, all 900 shares available.
 - `001316 润贝航科`: **200 shares**, broker-displayed average cost **25.7450 CNY**, all 200 shares available.
 - `600406 国电南瑞`: **200 shares**, broker-displayed average cost **23.1253 CNY**, all 200 shares available.
 - `603369 今世缘`: remains **0 shares / CLOSED**.
 - `600276 恒瑞医药`: remains **0 shares / CLOSED**.
 
-Displayed portfolio and market references at 14:49 CST are informational evidence only and must not be reused as fresh prices in later production decisions:
+Displayed portfolio and market references at approximately 10:56 CST are informational evidence only and must not be reused as fresh prices in later production decisions:
+
+- `601318 中国平安`: market value **22,156.00 CNY**, displayed market price **55.3900 CNY**, floating P/L **-247.95 CNY (-1.03%)**.
+- `603993 洛阳钼业`: market value **17,064.00 CNY**, displayed market price **18.9600 CNY**, floating P/L **+115.62 CNY (+0.76%)**.
+- `001316 润贝航科`: market value **6,020.00 CNY**, displayed market price **30.1000 CNY**, floating P/L **+862.99 CNY (+16.92%)**.
+- `600406 国电南瑞`: market value **4,488.00 CNY**, displayed market price **22.4400 CNY**, floating P/L **-144.33 CNY (-2.96%)**.
+- Combined displayed stock market value: **49,728.00 CNY**.
+- Combined displayed floating P/L: **+586.33 CNY**.
+- Available cash shown in the post-fill broker screen at approximately 10:36 CST: **60,794.41 CNY**.
+
+Current confirmed A-share holdings are therefore exactly **4 names / 1,700 shares total**: `601318 中国平安` 400, `603993 洛阳钼业` 900, `001316 润贝航科` 200, and `600406 国电南瑞` 200.
+
+This manual portfolio update changes holdings state only. It records the user's discretionary 100-share `601318` purchase as transaction evidence but does **not** retroactively convert it into a canonical Formal ADD and does **not** alter the GenGe V3.1.1 frozen production contract, Confidence Gate, Hard Gate, BUY/SELL thresholds, SELL rationale gate, canonical authority, or no-auto-trade policy. Any finalized canonical produced before this holdings update is stale for current-portfolio holding reconciliation until a new authorized production cycle consumes this 400-share `601318` state.
+
+## Prior manual holdings update — 2026-09-07 14:49 CST
+
+Latest broker position snapshot confirmed:
+
+- `601318 中国平安`: **300 shares**, broker-displayed average cost **57.1672 CNY**, all 300 shares available.
+- `603993 洛阳钼业`: **900 shares**, broker-displayed average cost **18.9114 CNY**; **800 shares available**, confirming **100 shares were newly added today** and are not yet available intraday under T+1.
+- `001316 润贝航科`: **200 shares**, broker-displayed average cost **25.7450 CNY**, all 200 shares available.
+- `600406 国电南瑞`: **200 shares**, broker-displayed average cost **23.1253 CNY**, all 200 shares available.
+- `603369 今世缘`: remained **0 shares / CLOSED**.
+- `600276 恒瑞医药`: remained **0 shares / CLOSED**.
+
+Displayed portfolio and market references at 14:49 CST were informational evidence only and must not be reused as fresh prices in later production decisions:
 
 - Account assets: **109,822.97 CNY**.
 - Total market value: **43,878.00 CNY**.
@@ -50,9 +75,7 @@ Displayed portfolio and market references at 14:49 CST are informational evidenc
 - `001316 润贝航科`: market value **5,914.00 CNY**, displayed market price **29.5700 CNY**, floating P/L **+757.04 CNY (+14.86%)**.
 - `600406 国电南瑞`: market value **4,538.00 CNY**, displayed market price **22.6900 CNY**, floating P/L **-94.37 CNY (-1.88%)**.
 
-Current confirmed A-share holdings are therefore exactly **4 names / 1,600 shares total**: `601318 中国平安` 300, `603993 洛阳钼业` 900, `001316 润贝航科` 200, and `600406 国电南瑞` 200.
-
-This manual portfolio update changes holdings state only. It does **not** convert the user's discretionary add into a canonical Formal ADD and does **not** alter the GenGe V3.1.1 frozen production contract, Confidence Gate, Hard Gate, BUY/SELL thresholds, SELL rationale gate, canonical authority, or no-auto-trade policy. Any finalized canonical produced before this holdings update is stale for current-portfolio holding reconciliation until a new authorized production cycle consumes this 900-share `603993` state.
+That snapshot contained exactly **4 names / 1,600 shares total**: `601318 中国平安` 300, `603993 洛阳钼业` 900, `001316 润贝航科` 200, and `600406 国电南瑞` 200.
 
 ## Prior manual holdings update — 2026-09-03 13:38 CST
 
@@ -83,7 +106,7 @@ The prior broker position snapshot had confirmed:
 - `001316 润贝航科`: 200 shares at average cost 26.0950 CNY.
 - `600406 国电南瑞`: 200 shares at average cost 23.1253 CNY.
 
-That prior portfolio contained 4 names / 1,300 shares total and is superseded by the 2026-09-03 and 2026-09-07 evidence above.
+That prior portfolio contained 4 names / 1,300 shares total and is superseded by the later evidence above.
 
 ## Latest hourly risk review — 2026-08-26 20:09 CST
 
@@ -98,7 +121,8 @@ That prior portfolio contained 4 names / 1,300 shares total and is superseded by
 
 ## Change history
 
-- 2026-09-07 14:49 CST: updated from latest broker-position evidence. `603993 洛阳钼业` increased from **800 to 900 shares** after a new **100-share add**; broker-displayed average cost moved from **18.9753 to 18.9114 CNY** and only 800 shares are currently available, consistent with the new 100 shares being T+1 unavailable. Reconfirmed `601318 中国平安` 300 at 57.1672, updated broker-displayed `001316 润贝航科` cost to 25.7450, and reconfirmed `600406 国电南瑞` 200 at 23.1253. Current confirmed holdings remain 4 names and now total **1,600 shares**. This is a holdings-state update only and is not a canonical Formal ADD.
+- 2026-09-10 10:56 CST: refreshed from latest CITIC Securities transaction and position evidence. `601318 中国平安` increased from **300 to 400 shares** after a fully filled **100-share BUY at 55.2500 CNY**; broker-displayed average cost is now **55.9658 CNY** and only 300 shares are currently available, consistent with the new 100 shares being T+1 unavailable. Refreshed broker-displayed `603993 洛阳钼业` average cost to **18.8163 CNY**, reconfirmed `001316 润贝航科` 200 at 25.7450 and `600406 国电南瑞` 200 at 23.1253. Current confirmed holdings remain 4 names and now total **1,700 shares**. This is a holdings-state / transaction-evidence update only and is not a canonical Formal ADD.
+- 2026-09-07 14:49 CST: updated from latest broker-position evidence. `603993 洛阳钼业` increased from **800 to 900 shares** after a new **100-share add**; broker-displayed average cost moved from **18.9753 to 18.9114 CNY** and only 800 shares are currently available, consistent with the new 100 shares being T+1 unavailable. Reconfirmed `601318 中国平安` 300 at 57.1672, updated broker-displayed `001316 润贝航科` cost to 25.7450, and reconfirmed `600406 国电南瑞` 200 at 23.1253. Current confirmed holdings remained 4 names and totaled **1,600 shares**. This was a holdings-state update only and was not a canonical Formal ADD.
 - 2026-09-03 13:38 CST: updated from broker-position evidence. `603993 洛阳钼业` increased from **600 to 800 shares** after a new **200-share add**; average cost moved from **19.1087 to 18.9753 CNY** and only 600 shares were currently available, consistent with the new 200 shares being T+1 unavailable. Refreshed `601318 中国平安` displayed average cost to **57.1672 CNY**. Reconfirmed `001316 润贝航科` 200 at 26.0950 and `600406 国电南瑞` 200 at 23.1253. Current confirmed holdings remained 4 names but totaled **1,500 shares**. This was a holdings-state update only and was not a canonical Formal ADD.
 - 2026-09-01 13:33 CST: updated from broker-position evidence after user confirmed planned purchases were completed. Added `601318 中国平安` 300 shares at average cost 57.1676 CNY and `603993 洛阳钼业` 600 shares at average cost 19.1087 CNY. Reconfirmed `001316 润贝航科` 200 at 26.0950 and `600406 国电南瑞` 200 at 23.1253. `603369 今世缘` remained 0 / CLOSED. Current confirmed holdings were 4 names totaling 1,300 shares.
 - 2026-09-01 CST: user explicitly confirmed the sale of the entire remaining `603369 今世缘` position and provided broker transaction evidence. Updated `603369 今世缘` from 300 shares to 0 / CLOSED.
