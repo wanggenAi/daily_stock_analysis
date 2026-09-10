@@ -38,6 +38,22 @@ def test_stale_hourly_overlay_is_skipped_before_dashboard_and_live_overlay() -> 
     assert "investor_live_execution_overlay" in block
 
 
+def test_manual_broker_quote_overlay_is_wired_as_execution_only_fallback() -> None:
+    workflow = _workflow()
+    block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Publish investor-first summary", 1
+    )[0]
+
+    assert "data/manual_execution_quotes/latest.json" in workflow
+    assert "investor_manual_execution_quote_overlay" in workflow
+    assert "tests/test_genge_investor_manual_execution_quote_overlay.py" in workflow
+    assert 'if [ -s data/manual_execution_quotes/latest.json ]; then' in block
+    assert "USER_CONFIRMED_BROKER_INTRADAY_QUOTE" in block
+    assert "USER_CONFIRMED_BROKER_SCREENSHOT" in block
+    assert "assert live['formal_trading_authority'] is False" in block
+    assert "assert live['automatic_formal_buy_allowed'] is False" in block
+
+
 def test_dashboard_capital_operation_sources_accept_only_authorized_mirrors() -> None:
     workflow = _workflow()
     block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(

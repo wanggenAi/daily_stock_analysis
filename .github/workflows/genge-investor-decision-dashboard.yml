@@ -16,21 +16,26 @@ on:
       - ".github/workflows/genge-investor-decision-dashboard.yml"
       - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
       - "CURRENT_HOLDINGS.md"
       - "CURRENT_FUNDS.md"
       - "CURRENT_CAPITAL.json"
       - "data/hourly_deep_overlay/**"
+      - "data/manual_execution_quotes/**"
       - "data/research_priority/**"
   pull_request:
     paths:
       - ".github/workflows/genge-investor-decision-dashboard.yml"
       - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
       - "CURRENT_HOLDINGS.md"
       - "CURRENT_FUNDS.md"
       - "CURRENT_CAPITAL.json"
+      - "data/manual_execution_quotes/**"
       - "tests/test_genge_investor_decision_dashboard.py"
       - "tests/test_genge_investor_live_execution_overlay.py"
+      - "tests/test_genge_investor_manual_execution_quote_overlay.py"
       - "tests/test_genge_investor_dashboard_workflow_contract.py"
 
 permissions:
@@ -61,6 +66,7 @@ jobs:
           python -m pytest -q \
             tests/test_genge_investor_decision_dashboard.py \
             tests/test_genge_investor_live_execution_overlay.py \
+            tests/test_genge_investor_manual_execution_quote_overlay.py \
             tests/test_genge_investor_dashboard_workflow_contract.py
 
   publish-investor-brief:
@@ -246,6 +252,13 @@ jobs:
                 --markdown-output INVESTOR_DECISION_DASHBOARD.md \
                 --max-age-minutes 120
             fi
+            if [ -s data/manual_execution_quotes/latest.json ]; then
+              python -m src.strategies.genge_opportunity_discovery.investor_manual_execution_quote_overlay \
+                --dashboard-json data/investor_decision_dashboard/latest.json \
+                --manual-quotes-json data/manual_execution_quotes/latest.json \
+                --markdown-output INVESTOR_DECISION_DASHBOARD.md \
+                --max-age-minutes 120
+            fi
             python - <<'PY'
           import json
           from pathlib import Path
@@ -264,6 +277,10 @@ jobs:
               assert live['formal_action_recomputed'] is False
               assert live['formal_action_mutation_allowed'] is False
               assert live['no_auto_trade'] is True
+              if live.get('source') == 'USER_CONFIRMED_BROKER_INTRADAY_QUOTE':
+                  assert live['formal_trading_authority'] is False
+                  assert live['automatic_formal_buy_allowed'] is False
+                  assert live['evidence_authority'] == 'USER_CONFIRMED_BROKER_SCREENSHOT'
           PY
             git add -f data/investor_decision_dashboard/latest.json; git add INVESTOR_DECISION_DASHBOARD.md
             if git diff --cached --quiet; then break; fi
