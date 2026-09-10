@@ -60,6 +60,26 @@ def _has_position(data: Mapping[str, Any]) -> bool:
         return False
 
 
+def _valuation_input(data: Mapping[str, Any], decision: V311Decision) -> dict[str, Any]:
+    """Expose validated typed valuation outputs to the continuity layer.
+
+    The generic input may intentionally contain ``v31_neutral_value=None`` when
+    a typed producer (currently insurers) recovered authoritative point-in-time
+    valuation evidence.  The dynamic holding layer must consume that validated
+    producer output instead of overwriting it with the stale generic ``None``.
+    No low/high scenarios are fabricated when the typed model did not produce
+    them, so the four-zone range remains UNKNOWN until those bounds really exist.
+    """
+    enriched = dict(data)
+    has_neutral = any(enriched.get(field) not in {None, ""} for field in ("v31_neutral_value", "neutral_value"))
+    if not has_neutral and decision.neutral_value is not None:
+        enriched["neutral_value"] = decision.neutral_value
+    has_price = any(enriched.get(field) not in {None, ""} for field in ("v31_current_price", "current_price", "raw_latest_close"))
+    if not has_price and decision.current_price is not None:
+        enriched["current_price"] = decision.current_price
+    return enriched
+
+
 def _gate_status(value: Any) -> str:
     text = str(value or "").strip().upper()
     if text in _PASS_VALUES:
@@ -173,13 +193,14 @@ def decide_production(data: Mapping[str, Any]) -> V311Decision:
     else:
         decision = decide_v311(data)
     decision = _apply_formal_buy_gate(data, decision)
+    valuation_input = _valuation_input(data, decision)
 
     # Dynamic valuation never manufactures REDUCE/EXIT. A material lowering of
     # the latest authorized valuation merely re-opens SELL review when the
     # frozen V3.1.1 ladder has not already produced a stronger action. Hard Gate
     # EXIT and existing SELL thresholds remain authoritative.
     if _has_position(data):
-        valuation_state = assess_holding_valuation_state(data)
+        valuation_state = assess_holding_valuation_state(valuation_input)
         if valuation_state["valuation_change"] in {"LOWERED", "INVALIDATED"} and decision.action in {
             "HOLD", "HOLD_NO_ADD", "BUY", "WAIT"
         }:
@@ -194,7 +215,7 @@ def decide_production(data: Mapping[str, Any]) -> V311Decision:
                 ),
             )
 
-    required, rationale_reasons = sell_review_required(data, decision.action)
+    required, rationale_reasons = sell_review_required(valuation_input, decision.action)
     if required:
         return replace(
             decision,
@@ -222,7 +243,8 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         if typed_insurer
         else assess_valuation_confidence_v311(data)
     )
-    valuation_state = assess_holding_valuation_state(data) if _has_position(data) else {
+    valuation_input = _valuation_input(data, decision)
+    valuation_state = assess_holding_valuation_state(valuation_input) if _has_position(data) else {
         "value_low": None,
         "neutral_value": decision.neutral_value,
         "value_high": None,
