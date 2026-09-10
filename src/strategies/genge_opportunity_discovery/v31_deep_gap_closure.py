@@ -27,6 +27,8 @@ from .evidence_collectors.multi_year_predictability import (
 CONTRACT = "GEN_GE_V31_DEEP_GAP_CLOSURE_V1"
 GATES = ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")
 MAX_COLLECTION_ATTEMPTS = 2
+CONTINUITY_CONFIG = Path("config/v31_explicit_deep_reviews.json")
+CONTINUITY_TERMINAL = Path("data/deep_calculation/latest_research_decisions.json")
 
 # Only VERIFIED, ACTIVE, HIGH-severity exchange-disclosed events can resolve a
 # gate negatively. This is intentionally one-way: absence of a risk event never
@@ -67,6 +69,66 @@ def _read_csv(path: Path) -> list[dict[str, Any]]:
 
 def _requested_codes(raw: Iterable[str]) -> list[str]:
     return sorted({_code(x) for x in raw if _code(x)})
+
+
+def resolve_requested_codes(
+    raw: Iterable[str],
+    *,
+    continuity_config: Path = CONTINUITY_CONFIG,
+    terminal_path: Path = CONTINUITY_TERMINAL,
+) -> list[str]:
+    """Union live requests with durable research-workset continuity anchors.
+
+    The previous implementation trusted only the workflow's current dynamic
+    request list. A code could therefore disappear merely because one upstream
+    queue stopped emitting it. That is an observability/continuity failure, not
+    an explicit research retirement.
+
+    Continuity has two auditable sources:
+    * the latest persisted Terminal requested workset; and
+    * ``continuity_required_codes`` in the existing RESEARCH_ONLY explicit
+      review config, used to bootstrap names that were already dropped before
+      this rule existed.
+
+    This function only affects research coverage. It cannot create PASS, Formal
+    BUY, or trading authority. Missing current profiles remain visible and are
+    terminalized fail-closed as DEEP_PROFILE_MISSING.
+    """
+    codes = set(_requested_codes(raw))
+
+    if continuity_config.is_file():
+        config = _read_json(continuity_config)
+        if config.get("contract") != "GEN_GE_V31_EXPLICIT_DEEP_REVIEW_V1":
+            raise ValueError("unexpected continuity config contract")
+        if config.get("authority") != "RESEARCH_ONLY":
+            raise ValueError("continuity config must remain RESEARCH_ONLY")
+        if config.get("automatic_formal_buy_allowed") is not False:
+            raise ValueError("continuity config must not allow Formal BUY")
+        if config.get("unknown_is_pass") is not False:
+            raise ValueError("continuity config must preserve UNKNOWN != PASS")
+        for raw_code in config.get("continuity_required_codes") or []:
+            code = _code(raw_code)
+            if code and code.isdigit() and len(code) == 6:
+                codes.add(code)
+
+    if terminal_path.is_file():
+        terminal = _read_json(terminal_path)
+        if terminal.get("research_authority") != "RESEARCH_ONLY":
+            raise ValueError("terminal continuity source must remain RESEARCH_ONLY")
+        if terminal.get("formal_trading_authority") is not False:
+            raise ValueError("terminal continuity source must not grant Formal authority")
+        if terminal.get("automatic_formal_buy_allowed") is not False:
+            raise ValueError("terminal continuity source must not grant Formal BUY")
+        if terminal.get("no_auto_trade") is not True:
+            raise ValueError("terminal continuity source must preserve no-auto-trade")
+        for row in terminal.get("terminal_rows") or []:
+            if not isinstance(row, Mapping):
+                continue
+            code = _code(row.get("code"))
+            if code and code.isdigit() and len(code) == 6:
+                codes.add(code)
+
+    return sorted(codes)
 
 
 def _status(gate: Mapping[str, Any] | None) -> str:
@@ -540,7 +602,7 @@ def run(
 ) -> dict[str, Any]:
     profiles = _read_json(profiles_json)
     rows = _read_csv(candidate_csv)
-    requested = _requested_codes(requested_codes)
+    requested = resolve_requested_codes(requested_codes)
     selected: list[dict[str, Any]] = []
     for row in rows:
         code = _code(row.get("code"))
@@ -570,6 +632,7 @@ def run(
     )
     evidence_summary["unique_company_evidence_count"] = len(company_evidence)
     evidence_summary["unique_evidence_count"] = len(industry_evidence) + len(company_evidence)
+    evidence_summary["continuity_requested_count"] = len(requested)
 
     closed_profiles, status = close_profiles(
         profiles,
