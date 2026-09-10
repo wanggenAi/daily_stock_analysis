@@ -77,9 +77,12 @@ def test_staged_add_survives_canonical_without_mutating_formal_action():
 
 def test_dashboard_consumes_only_canonical_staged_add_advisory():
     snapshot = _snapshot()
-    rows = _holdings(snapshot, {
-        "603993": {"code": "603993", "name": "洛阳钼业", "quantity": 900, "average_cost": 18.9114}
-    })
+    rows = _holdings(
+        snapshot,
+        {"603993": {"code": "603993", "name": "洛阳钼业", "quantity": 900, "average_cost": 18.9114}},
+        formal_actions_usable=True,
+        holdings_status="HOLDINGS_IN_SYNC",
+    )
     assert len(rows) == 1
     assert rows[0]["formal_action"] == "HOLD"
     assert rows[0]["holding_add_authorized"] is True
