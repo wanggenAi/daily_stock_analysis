@@ -7,16 +7,24 @@ from src.strategies.genge_opportunity_discovery.investor_decision_dashboard impo
 
 def _decision(code, name, scope, action, price, value=60.0):
     return {
-        "code": code, "stock_name": name, "scope": scope, "action": action,
-        "current_price": price, "neutral_value": value, "valuation_confidence": "HIGH",
-        "reason_codes": "TEST", "v311_production_bridge": "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT",
+        "code": code,
+        "stock_name": name,
+        "scope": scope,
+        "action": action,
+        "current_price": price,
+        "neutral_value": value,
+        "valuation_confidence": "HIGH",
+        "reason_codes": "TEST",
+        "v311_production_bridge": "EXPLICIT_SOURCE_PLUS_FRESH_STRICT_PIT",
         "no_auto_trade": True,
     }
 
 
 def _canonical():
     return {
-        "snapshot_id": "snapshot-1", "source_run_id": "12345", "latest_trade_date": "2026-09-03",
+        "snapshot_id": "snapshot-1",
+        "source_run_id": "12345",
+        "latest_trade_date": "2026-09-03",
         "production": {
             "holding_decisions": [
                 _decision("601318", "中国平安", "HOLDING", "ADD", 58.0, 80.0),
@@ -34,11 +42,31 @@ def _holdings():
     }
 
 
+def _reconciliation(*, in_sync=True):
+    return {
+        "contract_version": "GEN_GE_V31_HOLDINGS_RECONCILIATION_V1",
+        "status": "HOLDINGS_IN_SYNC" if in_sync else "HOLDINGS_OUT_OF_SYNC",
+        "in_sync": in_sync,
+        "canonical_snapshot_id": "snapshot-1",
+        "canonical_source_run_id": "12345",
+        "formal_holding_actions_currently_usable": in_sync,
+        "candidate_formal_actions_affected_by_holdings_mismatch": False,
+        "no_auto_trade": True,
+    }
+
+
 def _capital():
     return {
-        "status": "USER_CONFIRMED_FLOOR", "planning_cash_cny": 70000.0, "as_of": "2026-09-03T12:17:00+08:00",
-        "planner": {"max_deployment_ratio": 0.70, "max_single_name_ratio_of_available_cash": 0.20,
-                    "max_names": 5, "first_tranche_ratio": 0.50, "second_tranche_discount_pct": 0.02},
+        "status": "USER_CONFIRMED_FLOOR",
+        "planning_cash_cny": 70000.0,
+        "as_of": "2026-09-03T12:17:00+08:00",
+        "planner": {
+            "max_deployment_ratio": 0.70,
+            "max_single_name_ratio_of_available_cash": 0.20,
+            "max_names": 5,
+            "first_tranche_ratio": 0.50,
+            "second_tranche_discount_pct": 0.02,
+        },
         "no_auto_trade": True,
     }
 
@@ -57,16 +85,30 @@ def _terminal():
     ]
 
 
+def _build(**overrides):
+    args = {
+        "canonical": _canonical(),
+        "holdings": _holdings(),
+        "holdings_reconciliation": _reconciliation(),
+        "funds": [],
+    }
+    args.update(overrides)
+    return build_dashboard(**args)
+
+
 def test_dashboard_allocates_only_authorized_actions_and_preserves_wait_price():
-    payload = build_dashboard(
-        canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=_terminal(),
+    payload = _build(
+        capital=_capital(),
+        terminal_decisions=_terminal(),
         market_regime={"status": "GREEN", "allow_new_buy": True, "position_multiplier": 1.0,
                        "advance_ratio": 0.55, "data_quality": "OK"},
-        industry_regimes=[{"industry": "银行", "status": "STRONG", "score": "80"}], mode="DAILY",
+        industry_regimes=[{"industry": "银行", "status": "STRONG", "score": "80"}],
+        mode="DAILY",
         generated_at="2026-09-03T04:30:00+00:00",
     )
     assert payload["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
     assert payload["formal_action_recomputed"] is False
+    assert payload["formal_holding_actions_currently_usable"] is True
     assert payload["formal_actions_are_persistent_state"] is True
     assert payload["repeated_report_does_not_compound_action"] is True
     assert payload["no_auto_trade"] is True
@@ -92,15 +134,18 @@ def test_dashboard_allocates_only_authorized_actions_and_preserves_wait_price():
 def test_unauthorized_terminal_buy_is_suppressed_not_promoted():
     rows = _terminal()
     rows[0]["terminal_formal_buy_authorized"] = "False"
-    payload = build_dashboard(canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=rows)
+    payload = _build(capital=_capital(), terminal_decisions=rows)
     assert payload["terminal_opportunities"]["buy_now"] == []
     assert payload["data_health"]["terminal_unauthorized_buy_suppressed"] == 1
     assert "600036" not in {x["code"] for x in payload["capital_deployment"]["operations"]}
 
 
 def test_market_block_can_only_reduce_deployment_not_create_signal():
-    payload = build_dashboard(canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=_terminal(),
-                              market_regime={"status": "RED", "allow_new_buy": False, "position_multiplier": 0.0})
+    payload = _build(
+        capital=_capital(),
+        terminal_decisions=_terminal(),
+        market_regime={"status": "RED", "allow_new_buy": False, "position_multiplier": 0.0},
+    )
     assert payload["capital_deployment"]["deployment_budget_cny"] == 0
     assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0
     assert payload["terminal_opportunities"]["buy_now"][0]["code"] == "600036"
@@ -112,10 +157,7 @@ def test_repeated_reduce_is_unchanged_persistent_state_and_lot_deferred():
     holdings = copy.deepcopy(_holdings())
     holdings["601318"]["quantity"] = 200
     previous = {"stock_portfolio": {"rows": [{"code": "601318", "formal_action": "REDUCE_25"}]}}
-
-    payload = build_dashboard(
-        canonical=canonical, holdings=holdings, funds=[], previous_dashboard=previous,
-    )
+    payload = _build(canonical=canonical, holdings=holdings, previous_dashboard=previous)
     row = next(x for x in payload["stock_portfolio"]["rows"] if x["code"] == "601318")
     execution = row["execution_feasibility"]
     assert row["action_lifecycle"] == "UNCHANGED"
@@ -127,18 +169,16 @@ def test_repeated_reduce_is_unchanged_persistent_state_and_lot_deferred():
     assert payload["decision_summary"]["new_risk_reduction_action_count"] == 0
     assert "维持减仓25%目标；本轮无新增减仓/退出信号" in row["investor_action"]
     assert "禁止向上取整" in row["investor_action"]
-    text = render_markdown(payload)
-    assert "同一动作重复出现在后续报表中，不代表再次执行或累计执行" in text
+    assert "同一动作重复出现在后续报表中，不代表再次执行或累计执行" in render_markdown(payload)
 
 
 def test_reduce_transition_to_hold_is_marked_cleared():
     canonical = copy.deepcopy(_canonical())
     canonical["production"]["holding_decisions"][0]["action"] = "HOLD"
     previous = {"stock_portfolio": {"rows": [{"code": "601318", "formal_action": "REDUCE_25"}]}}
-    payload = build_dashboard(canonical=canonical, holdings=_holdings(), funds=[], previous_dashboard=previous)
+    payload = _build(canonical=canonical, previous_dashboard=previous)
     row = next(x for x in payload["stock_portfolio"]["rows"] if x["code"] == "601318")
     assert row["action_lifecycle"] == "CLEARED"
-    assert row["previous_formal_action"] == "REDUCE_25"
     assert "原减仓25%已解除" in row["investor_action"]
 
 
@@ -146,20 +186,48 @@ def test_hold_transition_to_reduce_is_new_action_not_repeated_state():
     canonical = copy.deepcopy(_canonical())
     canonical["production"]["holding_decisions"][0]["action"] = "REDUCE_25"
     previous = {"stock_portfolio": {"rows": [{"code": "601318", "formal_action": "HOLD"}]}}
-    payload = build_dashboard(canonical=canonical, holdings=_holdings(), funds=[], previous_dashboard=previous)
+    payload = _build(canonical=canonical, previous_dashboard=previous)
     row = next(x for x in payload["stock_portfolio"]["rows"] if x["code"] == "601318")
     assert row["action_lifecycle"] == "NEW"
     assert payload["decision_summary"]["new_risk_reduction_action_count"] == 1
     assert row["investor_action"].startswith("新正式动作：减仓25%")
 
 
+def test_out_of_sync_canonical_reduce_is_research_overlay_only_and_not_plannable():
+    canonical = copy.deepcopy(_canonical())
+    canonical["production"]["holding_decisions"][0]["action"] = "REDUCE_25"
+    payload = _build(
+        canonical=canonical,
+        holdings_reconciliation=_reconciliation(in_sync=False),
+        capital=_capital(),
+    )
+    row = next(x for x in payload["stock_portfolio"]["rows"] if x["code"] == "601318")
+    assert payload["formal_holding_actions_currently_usable"] is False
+    assert row["canonical_formal_action"] == "REDUCE_25"
+    assert row["formal_action"] == ""
+    assert row["action_authority"] == "RESEARCH_OVERLAY"
+    assert row["action_lifecycle"] == "SUSPENDED"
+    assert row["execution_feasibility"] is None
+    assert row["holding_add_authorized"] is False
+    assert all(op["code"] != "601318" for op in payload["capital_deployment"]["operations"])
+    assert "RESEARCH OVERLAY" in row["investor_action"]
+
+
+def test_missing_reconciliation_fails_closed_for_holdings_but_not_candidate_buy():
+    payload = _build(holdings_reconciliation=None, capital=_capital(), terminal_decisions=_terminal())
+    assert payload["formal_holding_actions_currently_usable"] is False
+    assert all(row["formal_action"] == "" for row in payload["stock_portfolio"]["rows"])
+    assert [x["code"] for x in payload["terminal_opportunities"]["buy_now"]] == ["600036"]
+    assert all(op["code"] != "601318" for op in payload["capital_deployment"]["operations"])
+
+
 def test_dashboard_rejects_bad_authority_and_renders_investor_first_order():
     canonical = _canonical()
     canonical["production"]["holding_decisions"][0]["no_auto_trade"] = False
     with pytest.raises(ValueError, match="no-auto-trade"):
-        build_dashboard(canonical=canonical, holdings=_holdings(), funds=[])
+        _build(canonical=canonical)
 
-    payload = build_dashboard(canonical=_canonical(), holdings=_holdings(), funds=[], capital=_capital(), terminal_decisions=_terminal())
+    payload = _build(capital=_capital(), terminal_decisions=_terminal())
     text = render_markdown(payload)
     sections = ["## 1. 今天市场怎么样", "## 2. 我的持仓怎么办", "## 3. 今天能直接买什么",
                 "## 4. WAIT_PRICE：跌到多少钱再买", "## 5. 资金怎么花", "## 6. 最终操作表",
