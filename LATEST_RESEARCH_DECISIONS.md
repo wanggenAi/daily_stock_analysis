@@ -15,7 +15,7 @@
 - 000596 古井贡酒: quant=83.8929, PE/history=0.6363636363636365, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 - 600610 中毅达: quant=80.75, PE/history=0.7051197842845784, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 - 603596 伯特利: quant=78.4309, PE/history=0.5334323922734027, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 603605 珀莱雅: quant=67.4753, PE/history=0.3817923186344239, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 603605 珀莱雅: quant=67.4753, PE/history=0.3817923186344239, unknown=long_term_demand,moat,financial_safety,earnings_authenticity, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 - 002612 朗姿股份: quant=66.4604, PE/history=0.1846807447207297, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 
 ## Terminal rows
