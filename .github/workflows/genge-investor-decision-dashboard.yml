@@ -15,6 +15,8 @@ on:
     paths:
       - ".github/workflows/genge-investor-decision-dashboard.yml"
       - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
+      - "src/strategies/genge_opportunity_discovery/holding_valuation_continuity.py"
+      - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
       - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
       - "CURRENT_HOLDINGS.md"
@@ -27,6 +29,8 @@ on:
     paths:
       - ".github/workflows/genge-investor-decision-dashboard.yml"
       - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
+      - "src/strategies/genge_opportunity_discovery/holding_valuation_continuity.py"
+      - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
       - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
       - "CURRENT_HOLDINGS.md"
@@ -34,6 +38,7 @@ on:
       - "CURRENT_CAPITAL.json"
       - "data/manual_execution_quotes/**"
       - "tests/test_genge_investor_decision_dashboard.py"
+      - "tests/test_v311_dynamic_holding_profit_protection.py"
       - "tests/test_genge_investor_live_execution_overlay.py"
       - "tests/test_genge_investor_manual_execution_quote_overlay.py"
       - "tests/test_genge_investor_dashboard_workflow_contract.py"
@@ -65,6 +70,7 @@ jobs:
           python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
           python -m pytest -q \
             tests/test_genge_investor_decision_dashboard.py \
+            tests/test_v311_dynamic_holding_profit_protection.py \
             tests/test_genge_investor_live_execution_overlay.py \
             tests/test_genge_investor_manual_execution_quote_overlay.py \
             tests/test_genge_investor_dashboard_workflow_contract.py
@@ -126,17 +132,30 @@ jobs:
           gh run download "$selected" --repo "$GITHUB_REPOSITORY" --dir incoming-authority
           canonical=$(find incoming-authority -path '*/canonical_snapshot/latest.json' -print -quit)
           authority=$(find incoming-authority -name production_authority.json -print -quit)
-          test -n "$canonical"; test -n "$authority"
-          CANONICAL="$canonical" AUTHORITY="$authority" python - <<'PY'
-          import json, os
+          reconciliation=$(find incoming-authority -name holdings_reconciliation.json -print -quit)
+          test -n "$canonical"; test -n "$authority"; test -n "$reconciliation"
+          CANONICAL="$canonical" AUTHORITY="$authority" RECONCILIATION="$reconciliation" python - <<'PY'
+          import hashlib, json, os
           from pathlib import Path
+          cpath=Path(os.environ['CANONICAL'])
           a=json.loads(Path(os.environ['AUTHORITY']).read_text(encoding='utf-8'))
-          c=json.loads(Path(os.environ['CANONICAL']).read_text(encoding='utf-8'))
+          c=json.loads(cpath.read_text(encoding='utf-8'))
+          r=json.loads(Path(os.environ['RECONCILIATION']).read_text(encoding='utf-8'))
           assert a['authorized'] is True
           assert a['canonical_snapshot_id'] == c['snapshot_id']
           assert str(a['canonical_source_run_id']) == str(c['source_run_id'])
+          assert a['canonical_sha256'] == hashlib.sha256(cpath.read_bytes()).hexdigest()
+          assert r['contract_version'] == 'GEN_GE_V31_HOLDINGS_RECONCILIATION_V1'
+          assert str(r['canonical_snapshot_id']) == str(c['snapshot_id'])
+          assert str(r['canonical_source_run_id']) == str(c['source_run_id'])
+          assert r['status'] in {'HOLDINGS_IN_SYNC','HOLDINGS_OUT_OF_SYNC'}
+          assert (r['status'] == 'HOLDINGS_IN_SYNC') == (r['in_sync'] is True)
+          assert (r['in_sync'] is True) == (r['formal_holding_actions_currently_usable'] is True)
+          assert r['candidate_formal_actions_affected_by_holdings_mismatch'] is False
+          assert r['no_auto_trade'] is True
           PY
           echo "CANONICAL=$canonical" >> "$GITHUB_ENV"
+          echo "HOLDINGS_RECONCILIATION=$reconciliation" >> "$GITHUB_ENV"
           echo "FINALIZER_RUN_ID=$selected" >> "$GITHUB_ENV"
 
       - name: Download latest usable Terminal BUY WAIT_PRICE REJECT truth
@@ -170,9 +189,6 @@ jobs:
           rm -rf incoming-market; mkdir incoming-market
           selected=""
           artifact_id=""
-          # Do not filter by current run status. A scheduled run may be in a new
-          # attempt while its previous successful attempt still has a valid,
-          # non-expired production artifact. Prefer the newest usable artifact.
           runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?per_page=60")
           for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.event == "schedule" or .event == "workflow_dispatch") | .id'); do
             artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
@@ -236,7 +252,7 @@ jobs:
                 echo "Skipping stale/unverifiable optional hourly overlay; frozen Canonical remains authoritative."
               fi
             fi
-            args=(--canonical "$CANONICAL" --holdings CURRENT_HOLDINGS.md --funds CURRENT_FUNDS.md --capital CURRENT_CAPITAL.json
+            args=(--canonical "$CANONICAL" --holdings CURRENT_HOLDINGS.md --holdings-reconciliation "$HOLDINGS_RECONCILIATION" --funds CURRENT_FUNDS.md --capital CURRENT_CAPITAL.json
                   --json-output data/investor_decision_dashboard/latest.json --markdown-output INVESTOR_DECISION_DASHBOARD.md --mode "$MODE")
             [ -z "${TERMINAL_DECISIONS:-}" ] || [ ! -s "$TERMINAL_DECISIONS" ] || args+=(--terminal-decisions "$TERMINAL_DECISIONS")
             [ -z "$hourly_overlay" ] || args+=(--hourly "$hourly_overlay")
@@ -266,11 +282,16 @@ jobs:
           assert p['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
           assert p['formal_action_recomputed'] is False and p['no_auto_trade'] is True
           assert p['presentation_contract']['section_order'][:6] == ['market','stock_portfolio','terminal_buy_now','terminal_wait_price','capital_deployment','final_operation_table']
+          assert p['holdings_reconciliation']['status'] in {'HOLDINGS_IN_SYNC','HOLDINGS_OUT_OF_SYNC'}
+          assert p['formal_holding_actions_currently_usable'] == p['holdings_reconciliation']['formal_holding_actions_currently_usable']
           c=p['capital_deployment']; assert c['automatic_order_allowed'] is False and c['no_auto_trade'] is True
           assert c['planned_immediate_cash_cny'] <= c['deployment_budget_cny'] <= c['available_cash_cny']
           allowed_sources={'AUTHORIZED_CANONICAL_HOLDING_ACTION','AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD','TERMINAL_FORMAL_BUY_MIRROR'}
           assert all(x['source'] in allowed_sources for x in c['operations'])
           assert all(x.get('authorization_proven') is True for x in c['operations'])
+          if p['formal_holding_actions_currently_usable'] is not True:
+              assert all(not x.get('formal_action') for x in p['stock_portfolio']['rows'])
+              assert all(x['source'] not in {'AUTHORIZED_CANONICAL_HOLDING_ACTION','AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD'} for x in c['operations'])
           assert all(x['action']=='WAIT_PRICE' and x['immediate_execution_eligible'] is False for x in c['wait_price_reservations'])
           live=p.get('live_execution_overlay') or {}
           if live:
