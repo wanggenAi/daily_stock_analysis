@@ -1,17 +1,16 @@
-"""Holding sell-rationale and valuation-continuity guard for GenGe V3.1.1.
+"""Holding sell-rationale and dynamic valuation-continuity guard for GenGe V3.1.1.
 
-A formal REDUCE/CORE_ONLY must have a causal, auditable reason.  Production may
-not sell merely because one fresh run emitted a lower neutral value.  A
-valuation-driven sell is allowed only when a trustworthy prior holding baseline
-exists and either:
+A formal REDUCE/CORE_ONLY must have a causal, auditable reason. Production may
+not sell merely because a position has a large unrealized gain or because one
+fresh run emitted a slightly different valuation. The current valuation range
+is compared with the previous *authorized Canonical* baseline using a material
+change rule; price is always interpreted against the latest valid range.
 
-1. intrinsic-value inputs are continuous and the current price is genuinely
-   overextended versus that stable value basis; or
-2. material, structured new evidence explains why the prior thesis/value basis
-   must be re-underwritten.
-
-Otherwise production fails closed to HOLD_REVIEW.  Hard-gate EXIT is outside
-this module and remains immediate.
+This module does not change the frozen V3.1/V3.1.1 BUY/SELL thresholds, Hard
+Gate, confidence gate, or no-auto-trade contract. It is a fail-closed rationale
+and continuity layer around the authorized producer. Personal cost basis is not
+an input to Formal action generation: profit belongs to the investor-facing
+Profit Protection Overlay and can never be a sell reason by itself.
 """
 from __future__ import annotations
 
@@ -25,9 +24,16 @@ from src.genge_v311_persistence_order import PersistenceOrder, classify_persiste
 STATE_PATH = Path("data/opportunity_snapshots/holding_valuation_continuity_state.json")
 SELL_ACTIONS = {"REDUCE_25", "REDUCE_50", "CORE_ONLY"}
 NON_SELL_ACTIONS = {"HOLD", "HOLD_NO_ADD", "HOLD_REVIEW", "BUY", "WAIT"}
+
+# A <1% move in the valuation basis is noise for action-continuity purposes.
+# This threshold is deliberately much smaller than the 20% discontinuity guard:
+# 1% answers "did value materially move?"; 20% answers "did the valuation basis
+# jump so far that a sell requires explicit re-underwrite evidence?".
+VALUATION_CHANGE_MATERIALITY = 0.01
 NEUTRAL_JUMP_THRESHOLD = 0.20
 NORMALIZED_EARNINGS_JUMP_THRESHOLD = 0.20
 MIN_STABLE_VALUE_OVEREXTENSION = 1.20
+PROFIT_PROTECTION_MAX_UPSIDE_TO_HIGH = 0.10
 
 MATERIAL_EVIDENCE_TYPES = {
     "EARNINGS_POWER_DETERIORATION",
@@ -40,6 +46,17 @@ MATERIAL_EVIDENCE_TYPES = {
     "REGULATORY_OR_POLICY_IMPAIRMENT",
     "CAPITAL_ALLOCATION_IMPAIRMENT",
     "VALUATION_MODEL_INPUT_CORRECTION",
+}
+
+# These are evidence flags only. They never create a Formal action. When a
+# frozen valuation SELL already exists, they let the output explain that the
+# position is also in a value/risk protection regime. UNKNOWN remains UNKNOWN.
+PROFIT_PROTECTION_RISK_FLAGS = {
+    "profit_protection_risk_evidence": "ADDITIONAL_RISK_EVIDENCE",
+    "event_supply_risk_material": "EVENT_SUPPLY_RISK",
+    "shareholder_reduction_window_active": "SHAREHOLDER_REDUCTION_WINDOW",
+    "unlock_window_active": "SHARE_UNLOCK_WINDOW",
+    "failed_spike_confirmed": "FAILED_SPIKE_CONFIRMED",
 }
 
 
@@ -65,6 +82,14 @@ def _code(v: Any):
     return t.zfill(6) if t.isdigit() else t
 
 
+def _first_finite(data: Mapping[str, Any], *fields: str) -> float | None:
+    for field in fields:
+        value = _finite(data.get(field))
+        if value is not None:
+            return value
+    return None
+
+
 def load_state(path: Path = STATE_PATH):
     if not path.exists():
         return {"contract_version": "V311_HOLDING_SELL_RATIONALE_V3", "holdings": {}}
@@ -72,6 +97,139 @@ def load_state(path: Path = STATE_PATH):
     if not isinstance(data.get("holdings"), dict):
         raise ValueError("invalid holding valuation continuity state")
     return data
+
+
+def _current_values(data: Mapping[str, Any]) -> tuple[float | None, float | None, float | None]:
+    low = _first_finite(data, "v31_pessimistic_value", "value_low", "pessimistic_value")
+    neutral = _first_finite(data, "v31_neutral_value", "neutral_value")
+    high = _first_finite(data, "v31_optimistic_value", "value_high", "optimistic_value")
+    return low, neutral, high
+
+
+def _previous_values(prev: Mapping[str, Any] | None) -> tuple[float | None, float | None, float | None]:
+    prev = prev or {}
+    return _finite(prev.get("value_low")), _finite(prev.get("neutral_value")), _finite(prev.get("value_high"))
+
+
+def _range_invalid(low: float | None, neutral: float | None, high: float | None) -> bool:
+    if neutral is None or neutral <= 0:
+        return True
+    if low is not None and low <= 0:
+        return True
+    if high is not None and high <= 0:
+        return True
+    if low is not None and low > neutral:
+        return True
+    if high is not None and neutral > high:
+        return True
+    if low is not None and high is not None and low > high:
+        return True
+    return False
+
+
+def _material_delta(current: float | None, previous: float | None) -> float | None:
+    if current is None or previous is None or previous <= 0:
+        return None
+    return current / previous - 1.0
+
+
+def _valuation_change(
+    current: tuple[float | None, float | None, float | None],
+    previous: tuple[float | None, float | None, float | None],
+) -> str:
+    low, neutral, high = current
+    if _range_invalid(low, neutral, high):
+        return "INVALIDATED"
+
+    p_low, p_neutral, p_high = previous
+    neutral_delta = _material_delta(neutral, p_neutral)
+    if neutral_delta is not None and abs(neutral_delta) >= VALUATION_CHANGE_MATERIALITY:
+        return "RAISED" if neutral_delta > 0 else "LOWERED"
+
+    # If neutral is stable, both range endpoints must move materially in the
+    # same direction before the range itself is called RAISED/LOWERED. This
+    # prevents a noisy single scenario from creating action churn.
+    low_delta = _material_delta(low, p_low)
+    high_delta = _material_delta(high, p_high)
+    endpoint_deltas = [d for d in (low_delta, high_delta) if d is not None and abs(d) >= VALUATION_CHANGE_MATERIALITY]
+    if len(endpoint_deltas) == 2 and all(d > 0 for d in endpoint_deltas):
+        return "RAISED"
+    if len(endpoint_deltas) == 2 and all(d < 0 for d in endpoint_deltas):
+        return "LOWERED"
+    return "STABLE"
+
+
+def _price_zone(price: float | None, low: float | None, neutral: float | None, high: float | None) -> str:
+    if price is None or price <= 0 or _range_invalid(low, neutral, high):
+        return "UNKNOWN"
+    # A full scenario range is required for the named four-zone contract. We do
+    # not fabricate low/high boundaries from neutral when scenario evidence is missing.
+    if low is None or high is None:
+        return "UNKNOWN"
+    if price < low:
+        return "BELOW_VALUE"
+    if price <= neutral:
+        return "FAIR_VALUE"
+    if price <= high:
+        return "UPPER_VALUE"
+    return "OVERVALUED"
+
+
+def _profit_protection_risk_reasons(data: Mapping[str, Any]) -> tuple[str, ...]:
+    reasons = [reason for field, reason in PROFIT_PROTECTION_RISK_FLAGS.items() if _truthy(data.get(field))]
+    evidence_ok, _ = _material_override_evidence(data)
+    if evidence_ok:
+        reasons.append("MATERIAL_THESIS_LINKED_RISK_EVIDENCE")
+    return tuple(dict.fromkeys(reasons))
+
+
+def assess_holding_valuation_state(data: Mapping[str, Any], *, path: Path | None = None) -> dict[str, Any]:
+    """Return latest-vs-authorized valuation state without creating an action.
+
+    `valuation_change` uses the previous persisted authorized Canonical baseline.
+    A missing previous baseline is reported separately and never treated as PASS.
+    """
+    state_path = path or STATE_PATH
+    code = _code(data.get("code"))
+    prev = load_state(state_path).get("holdings", {}).get(code)
+    current = _current_values(data)
+    previous = _previous_values(prev)
+    low, neutral, high = current
+    p_low, p_neutral, p_high = previous
+    price = _first_finite(data, "v31_current_price", "current_price", "raw_latest_close")
+    change = _valuation_change(current, previous)
+    zone = _price_zone(price, low, neutral, high)
+    upside_to_high = None
+    if price is not None and price > 0 and high is not None and high > 0:
+        upside_to_high = high / price - 1.0
+    risk_reasons = _profit_protection_risk_reasons(data)
+    overlay_eligible = bool(
+        prev
+        and change in {"STABLE", "LOWERED"}
+        and zone in {"UPPER_VALUE", "OVERVALUED"}
+        and upside_to_high is not None
+        and upside_to_high <= PROFIT_PROTECTION_MAX_UPSIDE_TO_HIGH
+        and risk_reasons
+    )
+    return {
+        "value_low": low,
+        "neutral_value": neutral,
+        "value_high": high,
+        "valuation_range_ready": low is not None and high is not None and not _range_invalid(low, neutral, high),
+        "previous_value_low": p_low,
+        "previous_neutral_value": p_neutral,
+        "previous_value_high": p_high,
+        "previous_valuation_available": bool(prev and p_neutral is not None and p_neutral > 0),
+        "valuation_change": change,
+        "valuation_change_materiality_threshold": VALUATION_CHANGE_MATERIALITY,
+        "price_value_zone": zone,
+        "price_to_neutral_latest": price / neutral if price is not None and neutral is not None and neutral > 0 else None,
+        "upside_to_value_high": upside_to_high,
+        "profit_protection_overlay_eligible": overlay_eligible,
+        "profit_protection_risk_reasons": ";".join(risk_reasons),
+        "profit_alone_is_sell_reason": False,
+        "profit_used_by_formal_decision": False,
+    }
 
 
 def _material_override_evidence(data: Mapping[str, Any]) -> tuple[bool, tuple[str, ...]]:
@@ -102,12 +260,7 @@ def _material_override_evidence(data: Mapping[str, Any]) -> tuple[bool, tuple[st
 
 
 def sell_review_required(data: Mapping[str, Any], action: str, *, path: Path = STATE_PATH):
-    """Return whether a valuation-driven formal sell must fail closed to review.
-
-    The result includes explicit reason codes so every blocked or permitted
-    transition is explainable.  Stable-value overextension is a legitimate sell
-    reason; a one-run value collapse is not.
-    """
+    """Return whether a valuation-driven formal sell must fail closed to review."""
     if action not in SELL_ACTIONS:
         return False, ()
     if not bool(data.get("v311_has_position") or data.get("v32_has_position")):
@@ -118,11 +271,10 @@ def sell_review_required(data: Mapping[str, Any], action: str, *, path: Path = S
     if not prev:
         return True, ("SELL_RATIONALE_BASELINE_MISSING",)
 
-    current_neutral = _finite(data.get("v31_neutral_value") or data.get("neutral_value"))
+    valuation = assess_holding_valuation_state(data, path=path)
+    current_neutral = _finite(valuation.get("neutral_value"))
     current_norm = _finite(data.get("v31_normalized_profit") or data.get("normalized_earnings"))
-    current_price = _finite(
-        data.get("v31_current_price") or data.get("current_price") or data.get("raw_latest_close")
-    )
+    current_price = _first_finite(data, "v31_current_price", "current_price", "raw_latest_close")
     previous_neutral = _finite(prev.get("neutral_value"))
     previous_norm = _finite(prev.get("normalized_earnings"))
 
@@ -138,25 +290,24 @@ def sell_review_required(data: Mapping[str, Any], action: str, *, path: Path = S
         if abs(current_norm / previous_norm - 1.0) >= NORMALIZED_EARNINGS_JUMP_THRESHOLD:
             continuity_failures.append("NORMALIZED_EARNINGS_DISCONTINUITY")
 
-    # Any discontinuity requires genuinely material new evidence.  A fresh model
-    # output or a short free-text note is not enough.
     if continuity_failures:
         override_ok, override_failures = _material_override_evidence(data)
         if override_ok:
             return False, ("SELL_RATIONALE_MATERIAL_REUNDERWRITE_EVIDENCE",)
         return True, tuple(["SELL_RATIONALE_NOT_PROVEN", *continuity_failures, *override_failures])
 
-    # With a stable value basis, valuation itself can be a valid causal sell
-    # reason only when the market price is materially above that stable basis.
     if current_price is None or current_price <= 0 or current_neutral is None or current_neutral <= 0:
         return True, ("SELL_RATIONALE_PRICE_OR_VALUE_INVALID",)
+
+    # The frozen 1.20/1.40/1.70 ladder remains the necessary valuation trigger.
+    # Profit/cost basis is intentionally absent. Dynamic-range context can add a
+    # stronger protection rationale but cannot lower the frozen sell threshold.
     price_to_neutral = current_price / current_neutral
     if price_to_neutral < MIN_STABLE_VALUE_OVEREXTENSION:
-        return True, (
-            "SELL_RATIONALE_NOT_MATERIAL",
-            "STABLE_VALUE_OVEREXTENSION_BELOW_MINIMUM",
-        )
+        return True, ("SELL_RATIONALE_NOT_MATERIAL", "STABLE_VALUE_OVEREXTENSION_BELOW_MINIMUM")
 
+    if valuation.get("profit_protection_overlay_eligible"):
+        return False, ("SELL_RATIONALE_VALUE_RISK_PROTECTION",)
     return False, ("SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",)
 
 
@@ -166,7 +317,7 @@ def continuity_review_required(data: Mapping[str, Any], action: str, *, path: Pa
 
 
 def persist_from_snapshot(snapshot_path: Path, state_path: Path = STATE_PATH):
-    """Persist only if the authorized snapshot does not move durable state backward."""
+    """Persist only an authorized snapshot that moves durable state forward."""
     snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
     if not isinstance(snapshot, dict):
         raise ValueError("canonical snapshot must be an object")
@@ -176,9 +327,6 @@ def persist_from_snapshot(snapshot_path: Path, state_path: Path = STATE_PATH):
     current_sid = state.get("latest_applied_snapshot_id")
     current_run = state.get("latest_applied_source_run_id")
     if state_exists and (current_sid in (None, "") and current_run in (None, "")):
-        # A pre-monotonic state containing baselines but no durable Canonical
-        # identity cannot safely be treated as empty.  Fail closed rather than
-        # silently assigning it an arbitrary order.
         if state.get("holdings"):
             raise ValueError("holding continuity state has baselines but no durable Canonical identity")
 
@@ -198,12 +346,16 @@ def persist_from_snapshot(snapshot_path: Path, state_path: Path = STATE_PATH):
         if not code:
             continue
         holdings[code] = {
-            "action": row.get("action"),
+            "action": row.get("action") or row.get("production_action"),
+            "value_low": row.get("value_low"),
             "neutral_value": row.get("neutral_value"),
+            "value_high": row.get("value_high"),
             "normalized_earnings": row.get("normalized_earnings"),
             "current_price": row.get("current_price"),
             "price_to_neutral": row.get("price_to_neutral"),
             "valuation_confidence": row.get("valuation_confidence"),
+            "valuation_change": row.get("valuation_change"),
+            "price_value_zone": row.get("price_value_zone"),
             "reason_codes": row.get("reason_codes"),
             "canonical_snapshot_id": snapshot.get("snapshot_id"),
             "canonical_source_run_id": str(snapshot.get("source_run_id")),

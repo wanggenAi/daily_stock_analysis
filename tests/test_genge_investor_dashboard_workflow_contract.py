@@ -65,3 +65,25 @@ def test_dashboard_capital_operation_sources_accept_only_authorized_mirrors() ->
     assert "TERMINAL_FORMAL_BUY_MIRROR" in block
     assert "assert all(x['source'] in allowed_sources for x in c['operations'])" in block
     assert "assert all(x.get('authorization_proven') is True for x in c['operations'])" in block
+
+
+def test_dashboard_consumes_reconciliation_from_same_authorized_artifact_and_fails_closed() -> None:
+    workflow = _workflow()
+    authority = workflow.split("- name: Locate latest successful authorized Canonical", 1)[1].split(
+        "- name: Download latest usable Terminal BUY WAIT_PRICE REJECT truth", 1
+    )[0]
+    build = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Publish investor-first summary", 1
+    )[0]
+
+    assert "holdings_reconciliation.json" in authority
+    assert "canonical_sha256" in authority
+    assert "GEN_GE_V31_HOLDINGS_RECONCILIATION_V1" in authority
+    assert "HOLDINGS_IN_SYNC" in authority and "HOLDINGS_OUT_OF_SYNC" in authority
+    assert "formal_holding_actions_currently_usable" in authority
+    assert "HOLDINGS_RECONCILIATION=$reconciliation" in authority
+    assert '--holdings-reconciliation "$HOLDINGS_RECONCILIATION"' in build
+    assert "p['formal_holding_actions_currently_usable']" in build
+    assert "assert all(not x.get('formal_action') for x in p['stock_portfolio']['rows'])" in build
+    assert "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD" in build
+    assert "tests/test_v311_dynamic_holding_profit_protection.py" in workflow
