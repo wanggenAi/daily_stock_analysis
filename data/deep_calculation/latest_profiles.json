@@ -6,14 +6,15 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-10T05:30:35+00:00",
-  "generated_at": "2026-09-10T05:27:21+00:00",
+  "gap_closure_generated_at": "2026-09-10T09:28:54+00:00",
+  "generated_at": "2026-09-10T09:24:10+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "34440976254",
+  "lambda_run_id": "34460230188",
   "material_event_failed_gate_count": 2,
   "material_event_pass_override_count": 1,
-  "new_evidence_count": 26,
+  "new_evidence_count": 37,
   "no_auto_trade": true,
+  "predictability_resolved_gate_count": 0,
   "profiles": {
     "000001": {
       "gates": {
@@ -941,10 +942,70 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": 3549108530.34,
+                  "operating_cash_flow": 1947212977.0,
+                  "revenue": 18831982591.24
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": 5517251073.1,
+                  "operating_cash_flow": 4727652873.85,
+                  "revenue": 23577928065.99
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": 4589164052.8,
+                  "operating_cash_flow": 4496206034.42,
+                  "revenue": 20253526598.02
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": 3143144732.08,
+                  "operating_cash_flow": 3107914579.48,
+                  "revenue": 16713234153.52
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 2297894413.25,
+                  "operating_cash_flow": 5254308127.79,
+                  "revenue": 13269826266.04
+                }
+              ],
+              "publish_date": "2026-04-29",
+              "reason_code": "REVENUE_STABILITY_THRESHOLD_NOT_MET",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-29/1225237594.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-28/1223320623.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-04-27/1219873167.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-04-29/1216690421.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-30/1213253179.PDF"
+              ],
+              "summary": "UNKNOWN:REVENUE_STABILITY_THRESHOLD_NOT_MET; years=[2021, 2022, 2023, 2024, 2025]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-29/1225237594.PDF"
+            }
+          ],
+          "gap_closure_rationale": "REVENUE_STABILITY_THRESHOLD_NOT_MET",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "REVENUE_STABILITY_THRESHOLD_NOT_MET"
         }
       },
       "industry": "C15酒、饮料和精制茶制造业",
@@ -2854,10 +2915,57 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 1216791291.5
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": 8852.46,
+                  "operating_cash_flow": null,
+                  "revenue": 909361866.9
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": 9236.39,
+                  "operating_cash_flow": null,
+                  "revenue": 825676599.82
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 562060450.42
+                }
+              ],
+              "publish_date": "2026-04-14",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-14/1225099781.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-18/1223129714.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-04-12/1219582664.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-04-24/1216514523.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-14/1225099781.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "F51批发业",
@@ -7570,10 +7678,66 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2021
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 2228332.0
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 1838869664.66
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 1455602.0
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 1319633365.98
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 273350617.52,
+                  "operating_cash_flow": 618831419.0,
+                  "revenue": 1338118782.03
+                }
+              ],
+              "publish_date": "2026-04-20",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-20/1225118481.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-21/1223151504.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-04-19/1219671266.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-04-19/1216457819.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-19/1212961296.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2021]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-20/1225118481.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "D46水的生产和供应业",
@@ -13444,10 +13608,66 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2021
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": null
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": null
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": 114359434.66,
+                  "operating_cash_flow": null,
+                  "revenue": null
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 46828962926.94
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 201243906.04,
+                  "operating_cash_flow": -1163216437.86,
+                  "revenue": 42411007392.46
+                }
+              ],
+              "publish_date": "2026-04-30",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-30/1225257886.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-29/1223374352.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-04-26/1219832725.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-04-28/1216662905.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-29/1213223374.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2021]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-30/1225257886.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "I65软件和信息技术服务业",
@@ -14636,10 +14856,67 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2021,
+                2022
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": 202586711.47,
+                  "revenue": 1044542274.58
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": null,
+                  "operating_cash_flow": 246325511.75,
+                  "revenue": 1099674499.27
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 1206438702.32
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": 11115881.71,
+                  "operating_cash_flow": 58776881.49,
+                  "revenue": 1366003810.57
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 41887667.58,
+                  "operating_cash_flow": 76608656.48,
+                  "revenue": 1394020287.81
+                }
+              ],
+              "publish_date": "2026-03-28",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-03-28/1225040234.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-03-22/1222866749.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-04-30/1219922464.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-04-25/1216560287.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-19/1212962485.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2021, 2022]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-03-28/1225040234.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "C26化学原料和化学制品制造业",
@@ -17960,10 +18237,68 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2021,
+                2022,
+                2023
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": 85665.0,
+                  "operating_cash_flow": null,
+                  "revenue": 10505.06
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": 1266.07,
+                  "operating_cash_flow": null,
+                  "revenue": 10289.25
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": 85665.0,
+                  "operating_cash_flow": 90116.0,
+                  "revenue": 1110.0
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": 83774.0,
+                  "operating_cash_flow": 90116.0,
+                  "revenue": 1798.0
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 90116.0,
+                  "operating_cash_flow": 90116.0,
+                  "revenue": 1693.0
+                }
+              ],
+              "publish_date": "2026-03-27",
+              "reason_code": "REVENUE_STABILITY_THRESHOLD_NOT_MET",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-03-27/1225038263.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-03-20/1222847447.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-03-22/1219376072.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-03-16/1216129433.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-03-18/1212609975.PDF"
+              ],
+              "summary": "UNKNOWN:REVENUE_STABILITY_THRESHOLD_NOT_MET; years=[2021, 2022, 2023]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-03-27/1225038263.PDF"
+            }
+          ],
+          "gap_closure_rationale": "REVENUE_STABILITY_THRESHOLD_NOT_MET",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "REVENUE_STABILITY_THRESHOLD_NOT_MET"
         }
       },
       "industry": "J68保险业",
@@ -20017,10 +20352,66 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2021
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 6407543854.22
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": 72571.98,
+                  "operating_cash_flow": null,
+                  "revenue": 7120075934.69
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": 44911.45,
+                  "operating_cash_flow": null,
+                  "revenue": 5093851969.25
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 4008564034.27
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 97916784.45,
+                  "operating_cash_flow": -57123187.8,
+                  "revenue": 4256569826.64
+                }
+              ],
+              "publish_date": "2026-04-11",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-11/1225093242.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-11/1223057859.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-05-15/1220052206.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-07-06/1217217909.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-27/1213141987.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2021]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-11/1225093242.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "C17纺织业",
@@ -20391,10 +20782,70 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2021,
+                2022,
+                2023,
+                2024,
+                2025
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": 200757657.54,
+                  "operating_cash_flow": 402433441.04,
+                  "revenue": 738277294.03
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": 193587895.88,
+                  "operating_cash_flow": 388834589.63,
+                  "revenue": 688859744.76
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": 220156927.21,
+                  "operating_cash_flow": 359060273.61,
+                  "revenue": 686213671.66
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": 10739414.22,
+                  "operating_cash_flow": 13008040.05,
+                  "revenue": 649876022.88
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 11001.13,
+                  "operating_cash_flow": 378292898.1,
+                  "revenue": 445130995.79
+                }
+              ],
+              "publish_date": "2026-04-25",
+              "reason_code": "OPERATING_CASH_FLOW_STABILITY_THRESHOLD_NOT_MET",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-25/1225185631.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-25/1223278867.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-03-30/1219470105.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-03-16/1216128999.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-26/1213104873.PDF"
+              ],
+              "summary": "UNKNOWN:OPERATING_CASH_FLOW_STABILITY_THRESHOLD_NOT_MET; years=[2021, 2022, 2023, 2024, 2025]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-25/1225185631.PDF"
+            }
+          ],
+          "gap_closure_rationale": "OPERATING_CASH_FLOW_STABILITY_THRESHOLD_NOT_MET",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "OPERATING_CASH_FLOW_STABILITY_THRESHOLD_NOT_MET"
         }
       },
       "industry": "D44电力、热力生产和供应业",
@@ -20771,10 +21222,66 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2024
+              ],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 6018726913.75
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": 7343769059.38,
+                  "operating_cash_flow": 1907085267.82,
+                  "revenue": 7343769059.38
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": null,
+                  "operating_cash_flow": 2197655713.76,
+                  "revenue": 6720086566.18
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": null,
+                  "operating_cash_flow": 1839973576.91,
+                  "revenue": 5505301557.73
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": null,
+                  "operating_cash_flow": 106978.51,
+                  "revenue": 4576846931.28
+                }
+              ],
+              "publish_date": "2026-04-23",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-23/1225154253.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-29/1223377012.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-04-26/1219834786.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-04-26/1216589349.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-26/1213101005.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2024]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-23/1225154253.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "C15酒、饮料和精制茶制造业",
@@ -21766,10 +22273,64 @@
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 12014080628.71
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": null,
+                  "operating_cash_flow": 1057722827.72,
+                  "revenue": 9936599426.94
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": null,
+                  "operating_cash_flow": 678333087.54,
+                  "revenue": 7473782728.86
+                },
+                {
+                  "fiscal_year": 2022,
+                  "net_profit": null,
+                  "operating_cash_flow": 784535594.52,
+                  "revenue": 5539148624.29
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": null,
+                  "operating_cash_flow": 433114948.79,
+                  "revenue": 3492283094.71
+                }
+              ],
+              "publish_date": "2026-03-28",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-03-28/1225048434.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-04-23/1223218080.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-03-28/1219430299.PDF",
+                "https://static.cninfo.com.cn/finalpage/2023-03-22/1216179829.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-04-09/1212857468.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-03-28/1225048434.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "C36汽车制造业",
@@ -23021,10 +23582,67 @@
               "url": "https://en.cmoc.com/html/2026/News_0420/84.html"
             }
           ],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2020,
+                2021
+              ],
+              "cyclical_or_resource": true,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 1000.0
+                },
+                {
+                  "fiscal_year": 2024,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": 2130.0
+                },
+                {
+                  "fiscal_year": 2023,
+                  "net_profit": null,
+                  "operating_cash_flow": null,
+                  "revenue": null
+                },
+                {
+                  "fiscal_year": 2021,
+                  "net_profit": 5106017249.81,
+                  "operating_cash_flow": 6190648051.98,
+                  "revenue": 1738.63
+                },
+                {
+                  "fiscal_year": 2020,
+                  "net_profit": 2328787511.92,
+                  "operating_cash_flow": 8492453630.2,
+                  "revenue": 112981018624.55
+                }
+              ],
+              "publish_date": "2026-04-02",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V1",
+              "source_domain": "static.cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://static.cninfo.com.cn/finalpage/2026-04-02/1225072765.PDF",
+                "https://static.cninfo.com.cn/finalpage/2025-03-22/1222869207.PDF",
+                "https://static.cninfo.com.cn/finalpage/2024-03-23/1219391119.PDF",
+                "https://static.cninfo.com.cn/finalpage/2022-03-19/1212626342.PDF",
+                "https://static.cninfo.com.cn/finalpage/2021-03-23/1209426961.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2020, 2021]",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-04-02/1225072765.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "Production scale and operating execution are strong, but commodity-price, DRC policy/geopolitical and resource-cycle sensitivity remain material. Current primary evidence does not justify converting business predictability to PASS.",
           "source": "EXPLICIT_VERIFIED",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "B09有色金属矿采选业",
@@ -25742,7 +26360,7 @@
   "reverified_upstream_pass_count": 4,
   "run_state": "COMPLETED",
   "source_run_id": "34440040914",
-  "trigger_source": "EVERY_INDUSTRY_READY",
+  "trigger_source": "PUSH_CHANGE",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
