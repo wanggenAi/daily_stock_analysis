@@ -10,17 +10,27 @@ from src.strategies.genge_opportunity_discovery.investor_live_execution_overlay 
 
 def _dashboard():
     return {
-        "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2",
+        "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
         "canonical_snapshot_id": "snap-1",
+        "formal_holding_actions_currently_usable": True,
+        "holdings_reconciliation": {
+            "status": "HOLDINGS_IN_SYNC",
+            "in_sync": True,
+            "formal_holding_actions_currently_usable": True,
+        },
         "no_auto_trade": True,
         "headline": "old",
         "market": {"status": "YELLOW", "allow_new_buy": True, "position_multiplier": 0.5},
         "stock_portfolio": {
             "rows": [
                 {"code": "601318", "name": "中国平安", "quantity": 300, "average_cost": 57.0,
-                 "current_price": 56.0, "formal_action": "HOLD_REVIEW", "investor_action": "持有观察"},
+                 "current_price": 56.0, "formal_action": "HOLD_REVIEW", "investor_action": "持有观察",
+                 "formal_action_currently_usable": True, "action_authority": "FORMAL",
+                 "holding_add_authorized": False},
                 {"code": "600406", "name": "国电南瑞", "quantity": 200, "average_cost": 23.0,
-                 "current_price": 22.5, "formal_action": "ADD", "investor_action": "加仓"},
+                 "current_price": 22.5, "formal_action": "ADD", "investor_action": "加仓",
+                 "formal_action_currently_usable": True, "action_authority": "FORMAL",
+                 "holding_add_authorized": False},
             ]
         },
         "terminal_opportunities": {
@@ -87,7 +97,7 @@ def test_planner_uses_conservative_authorized_limit_when_live_price_rises():
     assert add["immediate_execution_eligible"] is False
     assert add["action"] == "ADD_LIMIT"
 
-    # Terminal BUY has an explicit 0.8 * 55 = 44 ceiling.  Live 45 therefore
+    # Terminal BUY has an explicit 0.8 * 55 = 44 ceiling. Live 45 therefore
     # becomes a manual limit-only instruction at no more than 44.
     buy = operations["600036"]
     assert buy["live_market_price"] == 45.0
