@@ -6,10 +6,10 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-10T04:39:00+00:00",
-  "generated_at": "2026-09-10T04:35:43+00:00",
+  "gap_closure_generated_at": "2026-09-10T04:56:22+00:00",
+  "generated_at": "2026-09-10T04:53:07+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "34437660116",
+  "lambda_run_id": "34438777434",
   "material_event_failed_gate_count": 2,
   "material_event_pass_override_count": 1,
   "new_evidence_count": 26,
@@ -22953,39 +22953,27 @@
     "603993": {
       "gates": {
         "earnings_authenticity": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "published_date": "2026-08-20",
-              "source_type": "PRIMARY_COMPANY",
-              "url": "https://en.cmoc.com/html/2026/News_0820/97.html"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "The same-run PIT financial review reports positive normalized core operating profit, high-confidence earnings normalization and strong operating-cash conversion. PASS is conditional on machine-verifying those fields in the current valuation research row.",
-          "source": "EXPLICIT_VERIFIED",
+          "rationale": "Same-run PIT evidence verifies positive normalized operating profit, positive operating cash flow, strong cash conversion and HIGH-confidence earnings quality.",
+          "source": "AUTOMATIC_MACHINE",
           "status": "PASS"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "published_date": "2025-03-24",
-              "source_type": "PRIMARY_COMPANY",
-              "url": "https://en.cmoc.com/html/2025/News_0324/73.html"
-            },
-            {
-              "published_date": "2025-08-24",
-              "source_type": "PRIMARY_COMPANY",
-              "url": "https://en.cmoc.com/html/2025/News_0824/80.html"
-            },
-            {
-              "published_date": "2026-08-20",
-              "source_type": "PRIMARY_COMPANY",
-              "url": "https://en.cmoc.com/html/2026/News_0820/97.html"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Official results show strong operating cash flow, falling or controlled leverage in recent reporting periods and sustained profitability. The production valuation row must also contain a current PIT financial review before this PASS is accepted.",
-          "source": "EXPLICIT_VERIFIED",
+          "rationale": "Same-run PIT financial review is OK with HIGH earnings-quality confidence, positive normalized operating profit and operating cash flow, cash conversion >= 0.80, and earnings-quality score >= 70.",
+          "source": "AUTOMATIC_MACHINE",
           "status": "PASS"
         },
         "long_term_demand": {
@@ -25753,8 +25741,8 @@
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
   "reverified_upstream_pass_count": 4,
   "run_state": "COMPLETED",
-  "source_run_id": "34372874867",
-  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
+  "source_run_id": "34437821498",
+  "trigger_source": "EVERY_INDUSTRY_READY",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
