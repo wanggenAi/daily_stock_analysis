@@ -1,17 +1,13 @@
 """Investor-first dashboard built only from authorized GenGe truth.
 
-Formal holding actions are copied from Canonical. New-stock BUY is actionable
-only when Candidate Terminal Review marks BUY *and* proves it is a mirror of an
-already-authorized Formal/Production BUY. A separate Canonical staged-add flag
-may authorize at most one lot for an existing holding without mutating its
-frozen Formal Action. WAIT_PRICE is a price trigger only; REJECT receives zero
-capital. This module may make execution more conservative but never loosens
-investment gates. No automatic order placement is allowed.
+Formal holding actions are copied from Canonical only while a holdings
+reconciliation bound to that exact Canonical says HOLDINGS_IN_SYNC and
+formal_holding_actions_currently_usable=true. Otherwise holding actions are
+shown only as RESEARCH OVERLAY and are excluded from execution/capital plans.
 
-A formal action is persistent state, not an instruction that compounds every
-time this dashboard is regenerated. The persisted prior dashboard is used only
-to classify the lifecycle of that frozen action (NEW / UNCHANGED / CLEARED).
-This presentation/execution metadata never recomputes or mutates Canonical.
+New-stock BUY remains actionable only when Candidate Terminal Review marks BUY
+and proves it is a mirror of an already-authorized Formal/Production BUY.
+No automatic order placement is allowed.
 """
 from __future__ import annotations
 
@@ -27,12 +23,16 @@ from typing import Any, Iterable, Mapping
 
 from .execution_lot_feasibility import partial_reduction_pct_from_action, reduction_plan_for_action
 
-CONTRACT_VERSION = "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2"
+CONTRACT_VERSION = "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3"
 FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 TERMINAL_AUTHORITY = "RESEARCH_TERMINAL_VIEW"
 NO_AUTO_TRADE = True
 LOT_SIZE = 100
 HOLDING_ADD_MAX_LOTS = 1
+HOLDINGS_RECONCILIATION_VERSION = "GEN_GE_V31_HOLDINGS_RECONCILIATION_V1"
+HOLDINGS_IN_SYNC = "HOLDINGS_IN_SYNC"
+HOLDINGS_OUT_OF_SYNC = "HOLDINGS_OUT_OF_SYNC"
+
 ACTION_LABELS = {
     "EXIT": "退出/卖出", "SELL": "卖出", "REDUCE_50": "减仓50%",
     "REDUCE_25": "减仓25%", "REDUCE": "减仓", "ADD": "加仓",
@@ -41,7 +41,7 @@ ACTION_LABELS = {
 ACTION_ORDER = {"EXIT": 0, "SELL": 0, "REDUCE_50": 1, "REDUCE_25": 1, "REDUCE": 1,
                 "ADD": 2, "BUY": 2, "HOLD_REVIEW": 3, "HOLD": 4, "": 9}
 RISK_REDUCTION_ACTIONS = {"EXIT", "SELL", "REDUCE", "REDUCE_25", "REDUCE_50"}
-ACTION_LIFECYCLES = {"NEW", "UNCHANGED", "CLEARED"}
+ACTION_LIFECYCLES = {"NEW", "UNCHANGED", "CLEARED", "SUSPENDED"}
 
 
 def _num(value: Any) -> float | None:
@@ -156,6 +156,49 @@ def _validate_canonical(snapshot: Mapping[str, Any]) -> None:
             raise ValueError("dashboard refuses non-production-bridge decision")
 
 
+def _holding_action_authority(
+    snapshot: Mapping[str, Any],
+    reconciliation: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Validate the read-side hard gate for current Formal holding actions."""
+    if not isinstance(reconciliation, Mapping) or not reconciliation:
+        return {
+            "status": "HOLDINGS_RECONCILIATION_MISSING",
+            "in_sync": False,
+            "formal_holding_actions_currently_usable": False,
+            "reason": "RECONCILIATION_REQUIRED_FAIL_CLOSED",
+            "no_auto_trade": True,
+        }
+    if reconciliation.get("contract_version") != HOLDINGS_RECONCILIATION_VERSION:
+        raise ValueError("holdings reconciliation contract mismatch")
+    if reconciliation.get("no_auto_trade") is not True:
+        raise ValueError("holdings reconciliation lost no-auto-trade contract")
+    expected_sid = str(snapshot.get("snapshot_id") or "")
+    expected_run = str(snapshot.get("source_run_id") or "")
+    if str(reconciliation.get("canonical_snapshot_id") or "") != expected_sid:
+        raise ValueError("holdings reconciliation snapshot mismatch")
+    if str(reconciliation.get("canonical_source_run_id") or "") != expected_run:
+        raise ValueError("holdings reconciliation source run mismatch")
+    status = str(reconciliation.get("status") or "")
+    if status not in {HOLDINGS_IN_SYNC, HOLDINGS_OUT_OF_SYNC}:
+        raise ValueError("holdings reconciliation status invalid")
+    in_sync = reconciliation.get("in_sync") is True
+    usable = reconciliation.get("formal_holding_actions_currently_usable") is True
+    if in_sync != usable:
+        raise ValueError("holdings reconciliation usability does not match sync state")
+    if (status == HOLDINGS_IN_SYNC) != in_sync:
+        raise ValueError("holdings reconciliation status does not match in_sync")
+    if reconciliation.get("candidate_formal_actions_affected_by_holdings_mismatch") is not False:
+        raise ValueError("holdings mismatch must not invalidate candidate actions")
+    return {
+        "status": status,
+        "in_sync": in_sync,
+        "formal_holding_actions_currently_usable": usable,
+        "reason": "CURRENT_FORMAL_HOLDING_ACTIONS_USABLE" if usable else "RESEARCH_OVERLAY_ONLY_UNTIL_RECONCILED",
+        "no_auto_trade": True,
+    }
+
+
 def _is_risk_reduction(action: Any) -> bool:
     text = str(action or "").strip().upper()
     return text in RISK_REDUCTION_ACTIONS or text.startswith("REDUCE_")
@@ -210,10 +253,7 @@ def _investor_action_text(action: str, lifecycle: str, previous_action: str, exe
         prior_label = ACTION_LABELS.get(previous_action, previous_action or "原动作")
         text = f"原{prior_label}已解除；当前{label}"
     elif _is_risk_reduction(action):
-        if lifecycle == "UNCHANGED":
-            text = f"维持{label}目标；本轮无新增减仓/退出信号"
-        else:
-            text = f"新正式动作：{label}"
+        text = f"维持{label}目标；本轮无新增减仓/退出信号" if lifecycle == "UNCHANGED" else f"新正式动作：{label}"
     else:
         text = label
 
@@ -236,38 +276,91 @@ def _investor_action_text(action: str, lifecycle: str, previous_action: str, exe
     return text
 
 
-def _holdings(snapshot: Mapping[str, Any], holdings: Mapping[str, Mapping[str, Any]],
-              previous_dashboard: Mapping[str, Any] | None = None) -> list[dict[str, Any]]:
+def _holdings(
+    snapshot: Mapping[str, Any],
+    holdings: Mapping[str, Mapping[str, Any]],
+    *,
+    formal_actions_usable: bool,
+    holdings_status: str,
+    previous_dashboard: Mapping[str, Any] | None = None,
+) -> list[dict[str, Any]]:
     by_code = {_code(x.get("code")): dict(x) for x in snapshot.get("production", {}).get("holding_decisions") or []}
     previous = _previous_rows(previous_dashboard)
     result = []
     for code, held in holdings.items():
         src = by_code.get(code, {})
-        action = str(src.get("action") or src.get("production_action") or "").upper()
+        canonical_action = str(src.get("action") or src.get("production_action") or "").upper()
         prior = previous.get(code, {})
         prior_action = str(prior.get("formal_action") or "").upper()
-        lifecycle = _action_lifecycle(action, prior_action, previous_seen=code in previous)
-        if lifecycle not in ACTION_LIFECYCLES:
-            raise AssertionError("unknown formal action lifecycle")
-        add_authorized = _bool(src.get("holding_add_authorized"))
         price, cost = _num(src.get("current_price")), _num(held.get("average_cost"))
         pnl = (price / cost - 1) * 100 if price is not None and cost not in {None, 0} else None
-        execution = _execution_for_reduction(action, held.get("quantity"))
-        investor_action = _investor_action_text(
-            action, lifecycle, prior_action, execution, add_authorized=add_authorized,
-        )
-        result.append({"code": code, "name": held.get("name") or src.get("stock_name") or "",
-                       "quantity": held.get("quantity"), "average_cost": cost, "current_price": price,
-                       "pnl_pct": None if pnl is None else round(pnl, 2), "formal_action": action,
-                       "action_lifecycle": lifecycle, "previous_formal_action": prior_action,
-                       "action_lifecycle_basis": "PREVIOUS_PERSISTED_DASHBOARD" if code in previous else "INITIAL_OBSERVATION",
-                       "investor_action": investor_action, "execution_feasibility": execution,
-                       "holding_add_authorized": add_authorized,
-                       "holding_add_max_lots": int(_num(src.get("holding_add_max_lots")) or HOLDING_ADD_MAX_LOTS),
-                       "holding_add_reason_codes": src.get("holding_add_authorization_reason_codes") or "",
-                       "neutral_value": _num(src.get("neutral_value")),
-                       "valuation_confidence": src.get("valuation_confidence") or "",
-                       "reason_codes": src.get("reason_codes") or ""})
+
+        if formal_actions_usable:
+            action = canonical_action
+            lifecycle = _action_lifecycle(action, prior_action, previous_seen=code in previous)
+            add_authorized = _bool(src.get("holding_add_authorized"))
+            execution = _execution_for_reduction(action, held.get("quantity"))
+            investor_action = _investor_action_text(
+                action, lifecycle, prior_action, execution, add_authorized=add_authorized,
+            )
+            authority = "FORMAL"
+        else:
+            action = ""
+            lifecycle = "SUSPENDED"
+            add_authorized = False
+            execution = None
+            investor_action = (
+                f"RESEARCH OVERLAY：Canonical {canonical_action or 'NO_ACTION'} 已暂停；"
+                f"{holdings_status}，不得据此生成 ADD/REDUCE/EXIT 执行计划"
+            )
+            authority = "RESEARCH_OVERLAY"
+
+        overlay_eligible = _bool(src.get("profit_protection_overlay_eligible"))
+        profit_overlay_active = bool(pnl is not None and pnl > 0 and overlay_eligible)
+        result.append({
+            "code": code,
+            "name": held.get("name") or src.get("stock_name") or "",
+            "quantity": held.get("quantity"),
+            "average_cost": cost,
+            "current_price": price,
+            "pnl_pct": None if pnl is None else round(pnl, 2),
+            "formal_action": action,
+            "canonical_formal_action": canonical_action,
+            "formal_action_currently_usable": formal_actions_usable,
+            "action_authority": authority,
+            "action_lifecycle": lifecycle,
+            "previous_formal_action": prior_action,
+            "action_lifecycle_basis": (
+                "HOLDINGS_RECONCILIATION_SUSPENSION"
+                if not formal_actions_usable
+                else "PREVIOUS_PERSISTED_DASHBOARD" if code in previous else "INITIAL_OBSERVATION"
+            ),
+            "investor_action": investor_action,
+            "execution_feasibility": execution,
+            "holding_add_authorized": add_authorized,
+            "holding_add_max_lots": int(_num(src.get("holding_add_max_lots")) or HOLDING_ADD_MAX_LOTS),
+            "holding_add_reason_codes": src.get("holding_add_authorization_reason_codes") or "",
+            "value_low": _num(src.get("value_low")),
+            "neutral_value": _num(src.get("neutral_value")),
+            "value_high": _num(src.get("value_high")),
+            "previous_value_low": _num(src.get("previous_value_low")),
+            "previous_neutral_value": _num(src.get("previous_neutral_value")),
+            "previous_value_high": _num(src.get("previous_value_high")),
+            "valuation_change": src.get("valuation_change") or "",
+            "price_value_zone": src.get("price_value_zone") or "",
+            "valuation_confidence": src.get("valuation_confidence") or "",
+            "profit_protection_overlay": {
+                "active": profit_overlay_active,
+                "eligible_from_canonical_value_risk_context": overlay_eligible,
+                "unrealized_profit_pct_display_only": None if pnl is None else round(pnl, 2),
+                "profit_alone_is_sell_reason": False,
+                "formal_action_mutation_allowed": False,
+                "risk_reasons": src.get("profit_protection_risk_reasons") or "",
+                "authority": "RISK_CONTEXT_ONLY",
+                "no_auto_trade": True,
+            },
+            "reason_codes": src.get("reason_codes") or "",
+        })
     result.sort(key=lambda x: (ACTION_ORDER.get(x["formal_action"], 8), x["code"]))
     return result
 
@@ -317,11 +410,16 @@ def _terminal(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
             wait.append(item)
         else:
             reject += 1
+
     def rk(x: Mapping[str, Any]) -> tuple[int, str]:
-        try: n = int(float(x.get("rank") or 10**9))
-        except (TypeError, ValueError): n = 10**9
+        try:
+            n = int(float(x.get("rank") or 10**9))
+        except (TypeError, ValueError):
+            n = 10**9
         return n, str(x.get("code") or "")
-    buy.sort(key=rk); wait.sort(key=rk)
+
+    buy.sort(key=rk)
+    wait.sort(key=rk)
     return {"available": bool(buy or wait or reject), "buy_now": buy, "wait_price": wait,
             "reject_count": reject, "invalid_unauthorized_buy_count": unauthorized,
             "decision_authority": TERMINAL_AUTHORITY, "formal_buy_is_mirror_only": True}
@@ -329,9 +427,12 @@ def _terminal(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
 
 def _planner_cfg(capital: Mapping[str, Any]) -> dict[str, Any]:
     raw = dict(capital.get("planner") or {})
+
     def val(name: str, default: float, low: float, high: float) -> float:
-        n = _num(raw.get(name)); n = default if n is None else n
+        n = _num(raw.get(name))
+        n = default if n is None else n
         return min(high, max(low, n))
+
     return {"max_deployment_ratio": val("max_deployment_ratio", .70, 0, 1),
             "max_single_name_ratio_of_available_cash": val("max_single_name_ratio_of_available_cash", .20, 0, 1),
             "max_names": int(val("max_names", 5, 1, 20)),
@@ -346,7 +447,8 @@ def _lot_cash(cash: float, price: float) -> int:
 
 def _split(shares: int, ratio: float) -> tuple[int, int]:
     lots = shares // LOT_SIZE
-    if lots <= 1: return shares, 0
+    if lots <= 1:
+        return shares, 0
     first = max(1, min(lots, int(round(lots * ratio))))
     return first * LOT_SIZE, (lots - first) * LOT_SIZE
 
@@ -355,11 +457,15 @@ def _plan(capital: Mapping[str, Any], market: Mapping[str, Any], holdings: list[
     cash, cfg = _num(capital.get("planning_cash_cny")) or 0.0, _planner_cfg(capital)
     ratio = cfg["max_deployment_ratio"]
     mult = _num(market.get("position_multiplier"))
-    if mult is not None: ratio = min(ratio, max(0.0, min(1.0, mult)))
-    if market.get("allow_new_buy") is False: ratio = 0.0
+    if mult is not None:
+        ratio = min(ratio, max(0.0, min(1.0, mult)))
+    if market.get("allow_new_buy") is False:
+        ratio = 0.0
     budget, per_name = round(cash * ratio, 2), round(cash * cfg["max_single_name_ratio_of_available_cash"], 2)
     actions = []
     for x in holdings:
+        if not x.get("formal_action_currently_usable"):
+            continue
         holding_add = bool(x.get("holding_add_authorized"))
         legacy_formal_add = x["formal_action"] in {"ADD", "BUY"}
         if (holding_add or legacy_formal_add) and (x.get("current_price") or 0) > 0:
@@ -374,38 +480,44 @@ def _plan(capital: Mapping[str, Any], market: Mapping[str, Any], holdings: list[
     dedup, seen = [], set()
     for x in actions:
         if x["code"] not in seen:
-            dedup.append(x); seen.add(x["code"])
+            dedup.append(x)
+            seen.add(x["code"])
     actions = dedup[:cfg["max_names"]]
     operations, remaining = [], budget
     for i, x in enumerate(actions):
         target = min(per_name, remaining / max(1, len(actions) - i))
-        p = float(x["current_price"]); shares = _lot_cash(target, p)
+        p = float(x["current_price"])
+        shares = _lot_cash(target, p)
         if x.get("source") in {"AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD", "AUTHORIZED_CANONICAL_HOLDING_ACTION"} and x.get("action") == "ADD":
             shares = min(shares, HOLDING_ADD_MAX_LOTS * LOT_SIZE)
         a, b = _split(shares, cfg["first_tranche_ratio"])
         p1 = round(min(p, x.get("formal_ceiling")) if x.get("formal_ceiling") else p, 2)
         p2 = round(min(p1, p * (1 - cfg["second_tranche_discount_pct"])), 2)
-        spend = round(a*p1 + b*p2, 2); remaining = max(0.0, round(remaining-spend, 2))
-        operations.append({**x, "planned_shares": a+b, "first_tranche_shares": a, "first_entry_max_price": p1,
+        spend = round(a * p1 + b * p2, 2)
+        remaining = max(0.0, round(remaining - spend, 2))
+        operations.append({**x, "planned_shares": a + b, "first_tranche_shares": a, "first_entry_max_price": p1,
                            "second_tranche_shares": b, "second_entry_max_price": p2 if b else None,
-                           "estimated_cash_cny": spend, "immediate_execution_eligible": bool(a+b),
+                           "estimated_cash_cny": spend, "immediate_execution_eligible": bool(a + b),
                            "automatic_order_allowed": False, "no_auto_trade": True})
     deployed = round(sum(x["estimated_cash_cny"] for x in operations), 2)
-    reserve_capacity, waits = max(0.0, cash-deployed), []
+    reserve_capacity, waits = max(0.0, cash - deployed), []
     for x in (terminal.get("wait_price") or [])[:cfg["max_names"]]:
-        p = float(x["wait_price_max"]); reserve = min(per_name, reserve_capacity)
-        shares = _lot_cash(reserve, p); a, b = _split(shares, cfg["first_tranche_ratio"])
-        p2 = round(p*(1-cfg["second_tranche_discount_pct"]), 2); reserved = round(a*p+b*p2, 2)
-        reserve_capacity = max(0.0, reserve_capacity-reserved)
+        p = float(x["wait_price_max"])
+        reserve = min(per_name, reserve_capacity)
+        shares = _lot_cash(reserve, p)
+        a, b = _split(shares, cfg["first_tranche_ratio"])
+        p2 = round(p * (1 - cfg["second_tranche_discount_pct"]), 2)
+        reserved = round(a * p + b * p2, 2)
+        reserve_capacity = max(0.0, reserve_capacity - reserved)
         waits.append({"code": x["code"], "name": x["name"], "action": "WAIT_PRICE", "source": "TERMINAL_PRICE_TRIGGER",
-                      "planned_trigger_shares": a+b, "first_tranche_shares": a, "first_entry_max_price": round(p,2),
+                      "planned_trigger_shares": a + b, "first_tranche_shares": a, "first_entry_max_price": round(p, 2),
                       "second_tranche_shares": b, "second_entry_max_price": p2 if b else None,
                       "reserved_cash_cny": reserved, "immediate_execution_eligible": False,
                       "automatic_order_allowed": False, "no_auto_trade": True})
     return {"status": "READY" if capital.get("status") != "UNAVAILABLE" else "CAPITAL_UNAVAILABLE",
-            "available_cash_cny": round(cash,2), "capital_as_of": capital.get("as_of") or "",
-            "deployment_budget_cny": budget, "effective_max_deployment_ratio": round(ratio,4),
-            "planned_immediate_cash_cny": deployed, "cash_after_immediate_plan_cny": round(cash-deployed,2),
+            "available_cash_cny": round(cash, 2), "capital_as_of": capital.get("as_of") or "",
+            "deployment_budget_cny": budget, "effective_max_deployment_ratio": round(ratio, 4),
+            "planned_immediate_cash_cny": deployed, "cash_after_immediate_plan_cny": round(cash - deployed, 2),
             "operations": operations, "wait_price_reservations": waits, "planner_config": cfg,
             "authorization_rule": "CANONICAL_HOLDING_STAGED_ADD_OR_AUTHORIZED_TERMINAL_BUY_ONLY",
             "wait_price_rule": "WAIT_PRICE_IS_NOT_IMMEDIATE_BUY", "reject_allocation_rule": "REJECT_GETS_ZERO_CAPITAL",
@@ -422,101 +534,258 @@ def _industries(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
     return {"direct_fund_flow_claimed": False, "method": "MARKET_BEHAVIOR_PROXY", "strongest_industries": out[:8]}
 
 
-def build_dashboard(*, canonical: Mapping[str, Any], holdings: Mapping[str, Mapping[str, Any]], funds: list[dict[str, Any]],
-                    capital: Mapping[str, Any] | None = None, terminal_decisions: Iterable[Mapping[str, Any]] = (),
-                    hourly: Mapping[str, Any] | None = None, research_priority: Mapping[str, Any] | None = None,
-                    market_regime: Mapping[str, Any] | None = None, industry_regimes: Iterable[Mapping[str, Any]] = (),
-                    event_decision: Mapping[str, Any] | None = None, previous_dashboard: Mapping[str, Any] | None = None,
-                    mode: str = "HOURLY", generated_at: str | None = None) -> dict[str, Any]:
+def build_dashboard(
+    *,
+    canonical: Mapping[str, Any],
+    holdings: Mapping[str, Mapping[str, Any]],
+    funds: list[dict[str, Any]],
+    holdings_reconciliation: Mapping[str, Any] | None = None,
+    capital: Mapping[str, Any] | None = None,
+    terminal_decisions: Iterable[Mapping[str, Any]] = (),
+    hourly: Mapping[str, Any] | None = None,
+    research_priority: Mapping[str, Any] | None = None,
+    market_regime: Mapping[str, Any] | None = None,
+    industry_regimes: Iterable[Mapping[str, Any]] = (),
+    event_decision: Mapping[str, Any] | None = None,
+    previous_dashboard: Mapping[str, Any] | None = None,
+    mode: str = "HOURLY",
+    generated_at: str | None = None,
+) -> dict[str, Any]:
     _validate_canonical(canonical)
-    held = _holdings(canonical, holdings, previous_dashboard=previous_dashboard)
-    market = _market(market_regime or {}); terminal = _terminal(terminal_decisions)
-    cap = dict(capital or {"status":"UNAVAILABLE","planning_cash_cny":0.0,"planner":{},"no_auto_trade":True})
-    if cap.get("no_auto_trade") is not True: raise ValueError("capital planner input lost no-auto-trade contract")
-    plan = _plan(cap, market, held, terminal); counts = Counter(x["formal_action"] or "NO_ACTION" for x in held)
+    holding_authority = _holding_action_authority(canonical, holdings_reconciliation)
+    held = _holdings(
+        canonical,
+        holdings,
+        formal_actions_usable=holding_authority["formal_holding_actions_currently_usable"],
+        holdings_status=holding_authority["status"],
+        previous_dashboard=previous_dashboard,
+    )
+    market = _market(market_regime or {})
+    terminal = _terminal(terminal_decisions)
+    cap = dict(capital or {"status": "UNAVAILABLE", "planning_cash_cny": 0.0, "planner": {}, "no_auto_trade": True})
+    if cap.get("no_auto_trade") is not True:
+        raise ValueError("capital planner input lost no-auto-trade contract")
+    plan = _plan(cap, market, held, terminal)
+    counts = Counter(x["formal_action"] or "NO_CURRENT_FORMAL_ACTION" for x in held)
     lifecycle_counts = Counter(x["action_lifecycle"] for x in held)
     urgent = sum(_is_risk_reduction(x["formal_action"]) for x in held)
     new_urgent = sum(_is_risk_reduction(x["formal_action"]) and x["action_lifecycle"] == "NEW" for x in held)
     final_ops = list(plan["operations"]) + list(plan["wait_price_reservations"])
-    return {"contract_version": CONTRACT_VERSION, "mode": str(mode).upper(),
-            "generated_at": generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-            "canonical_snapshot_id": canonical.get("snapshot_id") or "", "canonical_source_run_id": canonical.get("source_run_id") or "",
-            "latest_trade_date": canonical.get("latest_trade_date") or "", "formal_action_source": FORMAL_ACTION_SOURCE,
-            "formal_action_recomputed": False,
-            "formal_action_lifecycle_source": "PREVIOUS_PERSISTED_DASHBOARD" if _previous_rows(previous_dashboard) else "INITIAL_OBSERVATION",
-            "formal_actions_are_persistent_state": True, "repeated_report_does_not_compound_action": True,
-            "no_auto_trade": True,
-            "headline": f"市场={market.get('status','UNKNOWN')}；持仓减仓/退出目标={urgent}；本轮新增减仓/退出={new_urgent}；新股正式BUY={len(terminal['buy_now'])}；等价格={len(terminal['wait_price'])}；计划立即投入≈¥{plan['planned_immediate_cash_cny']:.0f}",
-            "market": market, "stock_portfolio": {"status":"CONFIRMED" if holdings else "NO_CONFIRMED_HOLDINGS","rows":held},
-            "terminal_opportunities": terminal, "capital_deployment": plan, "final_operation_table": final_ops,
-            "decision_summary": {"holding_count":len(held),"formal_action_counts":dict(sorted(counts.items())),
-                                 "formal_action_lifecycle_counts":dict(sorted(lifecycle_counts.items())),
-                                 "new_risk_reduction_action_count":new_urgent,
-                                 "terminal_buy_count":len(terminal["buy_now"]),"terminal_wait_price_count":len(terminal["wait_price"]),
-                                 "terminal_reject_count":terminal["reject_count"],"planned_immediate_cash_cny":plan["planned_immediate_cash_cny"]},
-            "capital_direction": _industries(industry_regimes),
-            "fund_portfolio": {"status":"CONFIRMED" if funds else "LATEST_HOLDINGS_NOT_PERSISTED","rows":funds},
-            "event_review": {"triggered":bool((event_decision or {}).get("dispatch_required")),"trigger_codes":list((event_decision or {}).get("trigger_codes") or [])},
-            "hourly_context": {"available":bool(hourly),"research_as_of":(hourly or {}).get("research_as_of") or ""},
-            "data_health": {"canonical_authority_available":True,"terminal_decisions_available":terminal["available"],
-                            "terminal_unauthorized_buy_suppressed":terminal["invalid_unauthorized_buy_count"],
-                            "capital_source_status":cap.get("status") or "UNAVAILABLE","engineering_details_are_secondary":True},
-            "presentation_contract": {"investor_first":True,"section_order":["market","stock_portfolio","terminal_buy_now","terminal_wait_price","capital_deployment","final_operation_table","capital_direction","fund_portfolio","data_health"],"engineering_details_are_secondary":True}}
+    return {
+        "contract_version": CONTRACT_VERSION,
+        "mode": str(mode).upper(),
+        "generated_at": generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "canonical_snapshot_id": canonical.get("snapshot_id") or "",
+        "canonical_source_run_id": canonical.get("source_run_id") or "",
+        "latest_trade_date": canonical.get("latest_trade_date") or "",
+        "formal_action_source": FORMAL_ACTION_SOURCE,
+        "formal_action_recomputed": False,
+        "holdings_reconciliation": holding_authority,
+        "formal_holding_actions_currently_usable": holding_authority["formal_holding_actions_currently_usable"],
+        "formal_action_lifecycle_source": "PREVIOUS_PERSISTED_DASHBOARD" if _previous_rows(previous_dashboard) else "INITIAL_OBSERVATION",
+        "formal_actions_are_persistent_state": True,
+        "repeated_report_does_not_compound_action": True,
+        "research_overlay_may_mutate_formal_action": False,
+        "no_auto_trade": True,
+        "headline": (
+            f"市场={market.get('status','UNKNOWN')}；持仓Formal可用={holding_authority['formal_holding_actions_currently_usable']}；"
+            f"持仓减仓/退出目标={urgent}；本轮新增减仓/退出={new_urgent}；新股正式BUY={len(terminal['buy_now'])}；"
+            f"等价格={len(terminal['wait_price'])}；计划立即投入≈¥{plan['planned_immediate_cash_cny']:.0f}"
+        ),
+        "market": market,
+        "stock_portfolio": {"status": "CONFIRMED" if holdings else "NO_CONFIRMED_HOLDINGS", "rows": held},
+        "terminal_opportunities": terminal,
+        "capital_deployment": plan,
+        "final_operation_table": final_ops,
+        "decision_summary": {
+            "holding_count": len(held),
+            "formal_action_counts": dict(sorted(counts.items())),
+            "formal_action_lifecycle_counts": dict(sorted(lifecycle_counts.items())),
+            "new_risk_reduction_action_count": new_urgent,
+            "terminal_buy_count": len(terminal["buy_now"]),
+            "terminal_wait_price_count": len(terminal["wait_price"]),
+            "terminal_reject_count": terminal["reject_count"],
+            "planned_immediate_cash_cny": plan["planned_immediate_cash_cny"],
+        },
+        "capital_direction": _industries(industry_regimes),
+        "fund_portfolio": {"status": "CONFIRMED" if funds else "LATEST_HOLDINGS_NOT_PERSISTED", "rows": funds},
+        "event_review": {"triggered": bool((event_decision or {}).get("dispatch_required")),
+                         "trigger_codes": list((event_decision or {}).get("trigger_codes") or [])},
+        "hourly_context": {"available": bool(hourly), "research_as_of": (hourly or {}).get("research_as_of") or ""},
+        "data_health": {
+            "canonical_authority_available": True,
+            "holdings_reconciliation_status": holding_authority["status"],
+            "formal_holding_actions_currently_usable": holding_authority["formal_holding_actions_currently_usable"],
+            "terminal_decisions_available": terminal["available"],
+            "terminal_unauthorized_buy_suppressed": terminal["invalid_unauthorized_buy_count"],
+            "capital_source_status": cap.get("status") or "UNAVAILABLE",
+            "engineering_details_are_secondary": True,
+        },
+        "presentation_contract": {
+            "investor_first": True,
+            "section_order": ["market", "stock_portfolio", "terminal_buy_now", "terminal_wait_price",
+                              "capital_deployment", "final_operation_table", "capital_direction",
+                              "fund_portfolio", "data_health"],
+            "engineering_details_are_secondary": True,
+        },
+    }
 
 
 def _f(value: Any) -> str:
-    n = _num(value); return "—" if n is None else f"{n:.2f}"
+    n = _num(value)
+    return "—" if n is None else f"{n:.2f}"
 
 
 def render_markdown(p: Mapping[str, Any]) -> str:
-    m, t, plan = p.get("market",{}), p.get("terminal_opportunities",{}), p.get("capital_deployment",{})
-    lines=["# 投资决策驾驶舱","",f"> {p.get('headline','')}","","## 1. 今天市场怎么样","",
-           f"- 市场状态：**{m.get('status','UNKNOWN')}**；是否允许新买：**{m.get('allow_new_buy')}**；仓位倍率：**{_f(m.get('position_multiplier'))}**",
-           f"- 上涨家数比例：**{_f((_num(m.get('advance_ratio')) or 0)*100 if m.get('advance_ratio') is not None else None)}%**；数据质量：**{m.get('data_quality','UNKNOWN')}**","",
-           "## 2. 我的持仓怎么办","",
-           "- 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。",
-           "| 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作 | 动作状态 | 现在怎么办 |","|---|---:|---:|---:|---:|---|---|---|"]
-    for x in p.get("stock_portfolio",{}).get("rows") or []:
-        lines.append(f"| {x.get('name','')} {x.get('code','')} | {x.get('quantity') or 0} | {_f(x.get('average_cost'))} | {_f(x.get('current_price'))} | {_f(x.get('pnl_pct'))} | {x.get('formal_action') or '—'} | **{x.get('action_lifecycle') or '—'}** | **{x.get('investor_action')}** |")
-    lines += ["","## 3. 今天能直接买什么","","| 股票 | 行业 | 当前价 | 估值信心 | 权限 |","|---|---|---:|---|---|"]
-    for x in t.get("buy_now") or []: lines.append(f"| {x['name']} {x['code']} | {x.get('industry') or '—'} | {_f(x.get('current_price'))} | {x.get('valuation_confidence') or '—'} | **正式BUY镜像** |")
-    if not t.get("buy_now"): lines.append("| — | — | — | — | 本轮没有已授权新股BUY |")
-    lines += ["","## 4. WAIT_PRICE：跌到多少钱再买","","| 股票 | 当前价 | 最高等待买价 |","|---|---:|---:|"]
-    for x in t.get("wait_price") or []: lines.append(f"| {x['name']} {x['code']} | {_f(x.get('current_price'))} | **≤{_f(x.get('wait_price_max'))}** |")
-    if not t.get("wait_price"): lines.append("| — | — | 本轮没有合格 WAIT_PRICE |")
-    lines += ["","## 5. 资金怎么花","",f"- 可规划现金：**¥{_f(plan.get('available_cash_cny'))}**；最高部署预算：**¥{_f(plan.get('deployment_budget_cny'))}**",
-              f"- 计划立即投入：**¥{_f(plan.get('planned_immediate_cash_cny'))}**；计划后现金：**¥{_f(plan.get('cash_after_immediate_plan_cny'))}**",
-              "- 只有 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。","","## 6. 最终操作表","",
-              "| 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 |","|---|---|---:|---:|---:|---:|"]
+    m, t, plan = p.get("market", {}), p.get("terminal_opportunities", {}), p.get("capital_deployment", {})
+    holding_usable = p.get("formal_holding_actions_currently_usable") is True
+    lines = [
+        "# 投资决策驾驶舱", "", f"> {p.get('headline','')}", "",
+        "## 1. 今天市场怎么样", "",
+        f"- 市场状态：**{m.get('status','UNKNOWN')}**；是否允许新买：**{m.get('allow_new_buy')}**；仓位倍率：**{_f(m.get('position_multiplier'))}**",
+        f"- 上涨家数比例：**{_f((_num(m.get('advance_ratio')) or 0)*100 if m.get('advance_ratio') is not None else None)}%**；数据质量：**{m.get('data_quality','UNKNOWN')}**",
+        "", "## 2. 我的持仓怎么办", "",
+        "- 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。",
+    ]
+    if not holding_usable:
+        lines.append("- **持仓 reconciliation 非 IN_SYNC：旧 Canonical 持仓动作仅作 RESEARCH OVERLAY，不是当前 Formal Action，不进入资本/执行计划。**")
+    lines += [
+        "| 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作/权限 | 动作状态 | 现在怎么办 |",
+        "|---|---:|---:|---:|---:|---|---|---|",
+    ]
+    for x in p.get("stock_portfolio", {}).get("rows") or []:
+        display_action = x.get("formal_action") or ("RESEARCH OVERLAY" if x.get("action_authority") == "RESEARCH_OVERLAY" else "—")
+        lines.append(
+            f"| {x.get('name','')} {x.get('code','')} | {x.get('quantity') or 0} | {_f(x.get('average_cost'))} | "
+            f"{_f(x.get('current_price'))} | {_f(x.get('pnl_pct'))} | {display_action} | "
+            f"**{x.get('action_lifecycle') or '—'}** | **{x.get('investor_action')}** |"
+        )
+    lines += ["", "## 3. 今天能直接买什么", "", "| 股票 | 行业 | 当前价 | 估值信心 | 权限 |", "|---|---|---:|---|---|"]
+    for x in t.get("buy_now") or []:
+        lines.append(f"| {x['name']} {x['code']} | {x.get('industry') or '—'} | {_f(x.get('current_price'))} | {x.get('valuation_confidence') or '—'} | **正式BUY镜像** |")
+    if not t.get("buy_now"):
+        lines.append("| — | — | — | — | 本轮没有已授权新股BUY |")
+    lines += ["", "## 4. WAIT_PRICE：跌到多少钱再买", "", "| 股票 | 当前价 | 最高等待买价 |", "|---|---:|---:|"]
+    for x in t.get("wait_price") or []:
+        lines.append(f"| {x['name']} {x['code']} | {_f(x.get('current_price'))} | **≤{_f(x.get('wait_price_max'))}** |")
+    if not t.get("wait_price"):
+        lines.append("| — | — | 本轮没有合格 WAIT_PRICE |")
+    lines += [
+        "", "## 5. 资金怎么花", "",
+        f"- 可规划现金：**¥{_f(plan.get('available_cash_cny'))}**；最高部署预算：**¥{_f(plan.get('deployment_budget_cny'))}**",
+        f"- 计划立即投入：**¥{_f(plan.get('planned_immediate_cash_cny'))}**；计划后现金：**¥{_f(plan.get('cash_after_immediate_plan_cny'))}**",
+        "- 只有当前可用 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。",
+        "", "## 6. 最终操作表", "",
+        "| 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 |",
+        "|---|---|---:|---:|---:|---:|",
+    ]
     for x in p.get("final_operation_table") or []:
-        wait=x.get("action")=="WAIT_PRICE"; shares=x.get("planned_trigger_shares") if wait else x.get("planned_shares"); amount=x.get("reserved_cash_cny") if wait else x.get("estimated_cash_cny")
+        wait = x.get("action") == "WAIT_PRICE"
+        shares = x.get("planned_trigger_shares") if wait else x.get("planned_shares")
+        amount = x.get("reserved_cash_cny") if wait else x.get("estimated_cash_cny")
         lines.append(f"| {x.get('name','')} {x.get('code','')} | **{x.get('action')}** | {shares or 0} | {_f(x.get('first_entry_max_price'))} | {_f(x.get('second_entry_max_price'))} | {_f(amount)} |")
-    if not p.get("final_operation_table"): lines.append("| — | — | 0 | — | — | 0 |")
-    strong=p.get("capital_direction",{}).get("strongest_industries") or []
-    lines += ["","## 7. 当前强势方向（辅助，不代替BUY权限）","", "、".join(f"{x['industry']}({x['status']})" for x in strong) if strong else "最新行业代理暂缺。",
-              "","## 8. 其他已确认资产","",f"- 基金状态：**{p.get('fund_portfolio',{}).get('status')}**","","## 9. 系统状态（最后看）","",
-              f"- Canonical：**正常**；Terminal：**{'可用' if p.get('data_health',{}).get('terminal_decisions_available') else '暂无可用产物'}**；资金源：**{p.get('data_health',{}).get('capital_source_status')}**",
-              "- Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。",
-              "- 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。","","- **no-auto-trade：true；所有订单必须人工确认。**",""]
+    if not p.get("final_operation_table"):
+        lines.append("| — | — | 0 | — | — | 0 |")
+    strong = p.get("capital_direction", {}).get("strongest_industries") or []
+    lines += [
+        "", "## 7. 当前强势方向（辅助，不代替BUY权限）", "",
+        "、".join(f"{x['industry']}({x['status']})" for x in strong) if strong else "最新行业代理暂缺。",
+        "", "## 8. 其他已确认资产", "",
+        f"- 基金状态：**{p.get('fund_portfolio',{}).get('status')}**",
+        "", "## 9. 系统状态（最后看）", "",
+        f"- Canonical：**正常**；持仓同步：**{p.get('data_health',{}).get('holdings_reconciliation_status')}**；"
+        f"Terminal：**{'可用' if p.get('data_health',{}).get('terminal_decisions_available') else '暂无可用产物'}**；"
+        f"资金源：**{p.get('data_health',{}).get('capital_source_status')}**",
+        "- Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。",
+        "- Profit Protection Overlay 只展示盈利与价值/风险上下文；**profit alone 不是 SELL rationale，overlay 不得改写 Formal Action。**",
+        "- 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。",
+        "", "- **no-auto-trade：true；所有订单必须人工确认。**", "",
+    ]
     return "\n".join(lines)
 
 
-def write_dashboard(*, canonical_path: Path, holdings_path: Path, funds_path: Path | None, capital_path: Path | None,
-                    terminal_decisions_path: Path | None, hourly_path: Path | None, research_priority_path: Path | None,
-                    market_regime_path: Path | None, industry_regimes_path: Path | None, event_decision_path: Path | None,
-                    json_output: Path, markdown_output: Path, mode: str) -> dict[str, Any]:
+def write_dashboard(
+    *,
+    canonical_path: Path,
+    holdings_path: Path,
+    holdings_reconciliation_path: Path,
+    funds_path: Path | None,
+    capital_path: Path | None,
+    terminal_decisions_path: Path | None,
+    hourly_path: Path | None,
+    research_priority_path: Path | None,
+    market_regime_path: Path | None,
+    industry_regimes_path: Path | None,
+    event_decision_path: Path | None,
+    json_output: Path,
+    markdown_output: Path,
+    mode: str,
+) -> dict[str, Any]:
     previous_dashboard = _json(json_output)
-    p=build_dashboard(canonical=_json(canonical_path),holdings=load_confirmed_holdings(holdings_path),funds=load_confirmed_funds(funds_path),
-        capital=load_capital(capital_path),terminal_decisions=_csv(terminal_decisions_path),hourly=_json(hourly_path),research_priority=_json(research_priority_path),
-        market_regime=_json(market_regime_path),industry_regimes=_csv(industry_regimes_path),event_decision=_json(event_decision_path),
-        previous_dashboard=previous_dashboard,mode=mode)
-    json_output.parent.mkdir(parents=True,exist_ok=True); markdown_output.parent.mkdir(parents=True,exist_ok=True)
-    json_output.write_text(json.dumps(p,ensure_ascii=False,indent=2),encoding="utf-8"); markdown_output.write_text(render_markdown(p),encoding="utf-8"); return p
+    p = build_dashboard(
+        canonical=_json(canonical_path),
+        holdings=load_confirmed_holdings(holdings_path),
+        holdings_reconciliation=_json(holdings_reconciliation_path),
+        funds=load_confirmed_funds(funds_path),
+        capital=load_capital(capital_path),
+        terminal_decisions=_csv(terminal_decisions_path),
+        hourly=_json(hourly_path),
+        research_priority=_json(research_priority_path),
+        market_regime=_json(market_regime_path),
+        industry_regimes=_csv(industry_regimes_path),
+        event_decision=_json(event_decision_path),
+        previous_dashboard=previous_dashboard,
+        mode=mode,
+    )
+    json_output.parent.mkdir(parents=True, exist_ok=True)
+    markdown_output.parent.mkdir(parents=True, exist_ok=True)
+    json_output.write_text(json.dumps(p, ensure_ascii=False, indent=2), encoding="utf-8")
+    markdown_output.write_text(render_markdown(p), encoding="utf-8")
+    return p
 
 
 def main(argv: list[str] | None = None) -> int:
-    q=argparse.ArgumentParser(); q.add_argument("--canonical",type=Path,required=True); q.add_argument("--holdings",type=Path,default=Path("CURRENT_HOLDINGS.md")); q.add_argument("--funds",type=Path,default=Path("CURRENT_FUNDS.md")); q.add_argument("--capital",type=Path,default=Path("CURRENT_CAPITAL.json")); q.add_argument("--terminal-decisions",type=Path); q.add_argument("--hourly",type=Path); q.add_argument("--research-priority",type=Path); q.add_argument("--market-regime",type=Path); q.add_argument("--industry-regimes",type=Path); q.add_argument("--event-decision",type=Path); q.add_argument("--json-output",type=Path,required=True); q.add_argument("--markdown-output",type=Path,required=True); q.add_argument("--mode",default="HOURLY"); a=q.parse_args(argv)
-    p=write_dashboard(canonical_path=a.canonical,holdings_path=a.holdings,funds_path=a.funds,capital_path=a.capital,terminal_decisions_path=a.terminal_decisions,hourly_path=a.hourly,research_priority_path=a.research_priority,market_regime_path=a.market_regime,industry_regimes_path=a.industry_regimes,event_decision_path=a.event_decision,json_output=a.json_output,markdown_output=a.markdown_output,mode=a.mode)
-    print(f"investor_dashboard={p['mode']};snapshot={p['canonical_snapshot_id']};terminal_buy={p['decision_summary']['terminal_buy_count']};wait_price={p['decision_summary']['terminal_wait_price_count']};planned_cash={p['decision_summary']['planned_immediate_cash_cny']}"); return 0
+    q = argparse.ArgumentParser()
+    q.add_argument("--canonical", type=Path, required=True)
+    q.add_argument("--holdings", type=Path, default=Path("CURRENT_HOLDINGS.md"))
+    q.add_argument("--holdings-reconciliation", type=Path, required=True)
+    q.add_argument("--funds", type=Path, default=Path("CURRENT_FUNDS.md"))
+    q.add_argument("--capital", type=Path, default=Path("CURRENT_CAPITAL.json"))
+    q.add_argument("--terminal-decisions", type=Path)
+    q.add_argument("--hourly", type=Path)
+    q.add_argument("--research-priority", type=Path)
+    q.add_argument("--market-regime", type=Path)
+    q.add_argument("--industry-regimes", type=Path)
+    q.add_argument("--event-decision", type=Path)
+    q.add_argument("--json-output", type=Path, required=True)
+    q.add_argument("--markdown-output", type=Path, required=True)
+    q.add_argument("--mode", default="HOURLY")
+    a = q.parse_args(argv)
+    p = write_dashboard(
+        canonical_path=a.canonical,
+        holdings_path=a.holdings,
+        holdings_reconciliation_path=a.holdings_reconciliation,
+        funds_path=a.funds,
+        capital_path=a.capital,
+        terminal_decisions_path=a.terminal_decisions,
+        hourly_path=a.hourly,
+        research_priority_path=a.research_priority,
+        market_regime_path=a.market_regime,
+        industry_regimes_path=a.industry_regimes,
+        event_decision_path=a.event_decision,
+        json_output=a.json_output,
+        markdown_output=a.markdown_output,
+        mode=a.mode,
+    )
+    print(
+        f"investor_dashboard={p['mode']};snapshot={p['canonical_snapshot_id']};"
+        f"holdings_usable={p['formal_holding_actions_currently_usable']};"
+        f"terminal_buy={p['decision_summary']['terminal_buy_count']};"
+        f"wait_price={p['decision_summary']['terminal_wait_price_count']};"
+        f"planned_cash={p['decision_summary']['planned_immediate_cash_cny']}"
+    )
+    return 0
 
-if __name__ == "__main__": raise SystemExit(main())
+
+if __name__ == "__main__":
+    raise SystemExit(main())
