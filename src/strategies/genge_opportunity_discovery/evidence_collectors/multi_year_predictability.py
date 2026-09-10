@@ -178,7 +178,12 @@ def _looks_like_non_metric_number(window: str, match: re.Match[str], fiscal_year
         return True
     if right.lstrip().startswith(("年", "月", "日")):
         return True
-    if _DATE_RE.search(around):
+    token_start = len(left)
+    token_end = token_start + len(raw)
+    if any(
+        date_match.start() < token_end and date_match.end() > token_start
+        for date_match in _DATE_RE.finditer(around)
+    ):
         return True
     if value.is_integer() and 2000 <= abs(value) <= 2100:
         return True
