@@ -193,6 +193,7 @@ def _authorized_luoyang():
         "code": "603993",
         "name": "洛阳钼业",
         "formal_action": "HOLD",
+        "formal_action_currently_usable": True,
         "holding_add_authorized": True,
         "current_price": 18.33,
     }
