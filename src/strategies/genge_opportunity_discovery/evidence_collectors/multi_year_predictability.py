@@ -54,8 +54,10 @@ _UNIT_HEADER_RE = re.compile(
     r"(?:金额单位|单位)\s*[:：]?\s*(?:人民币\s*)?(?P<unit>亿元|万元|元)(?![/每])"
 )
 _DATE_RE = re.compile(
-    r"(?:20\d{2}[-/.年]\d{1,2}(?:[-/.月]\d{1,2})?|"
-    r"\d{1,2}[-/.月]\d{1,2}(?:日)?)"
+    r"(?:20\d{2}(?:[-/.]\d{1,2}){1,2}|"
+    r"20\d{2}年\d{1,2}月(?:\d{1,2}日)?|"
+    r"\d{1,2}月\d{1,2}日|"
+    r"\d{1,2}[-/]\d{1,2})"
 )
 _UNIT_MULTIPLIERS: Mapping[str, float] = {
     "元": 1.0,
@@ -176,7 +178,12 @@ def _looks_like_non_metric_number(window: str, match: re.Match[str], fiscal_year
         return True
     if right.lstrip().startswith(("年", "月", "日")):
         return True
-    if _DATE_RE.search(around):
+    token_start = len(left)
+    token_end = token_start + len(raw)
+    if any(
+        date_match.start() < token_end and date_match.end() > token_start
+        for date_match in _DATE_RE.finditer(around)
+    ):
         return True
     if value.is_integer() and 2000 <= abs(value) <= 2100:
         return True
