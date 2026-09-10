@@ -10,11 +10,17 @@ from src.strategies.genge_opportunity_discovery.investor_manual_execution_quote_
 
 def _dashboard():
     return {
-        "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V2",
+        "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
         "canonical_snapshot_id": "snap-1",
         "canonical_source_run_id": "run-1",
         "formal_action_source": "FINALIZED_CANONICAL_ONLY",
         "formal_action_recomputed": False,
+        "formal_holding_actions_currently_usable": True,
+        "holdings_reconciliation": {
+            "status": "HOLDINGS_IN_SYNC",
+            "in_sync": True,
+            "formal_holding_actions_currently_usable": True,
+        },
         "no_auto_trade": True,
         "headline": "old",
         "market": {
@@ -31,6 +37,8 @@ def _dashboard():
                     "average_cost": 55.9658,
                     "current_price": 56.26,
                     "formal_action": "HOLD",
+                    "formal_action_currently_usable": True,
+                    "action_authority": "FORMAL",
                     "investor_action": "继续持有",
                     "holding_add_authorized": False,
                 },
@@ -41,6 +49,8 @@ def _dashboard():
                     "average_cost": 18.8163,
                     "current_price": 19.09,
                     "formal_action": "HOLD",
+                    "formal_action_currently_usable": True,
+                    "action_authority": "FORMAL",
                     "investor_action": "继续持有；可分批加仓1手",
                     "holding_add_authorized": True,
                 },
