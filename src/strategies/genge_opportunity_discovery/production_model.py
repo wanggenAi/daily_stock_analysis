@@ -10,7 +10,7 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import Any, Mapping
 
-from .holding_valuation_continuity import sell_review_required
+from .holding_valuation_continuity import assess_holding_valuation_state, sell_review_required
 from .selection_framework_v311 import (
     V311Decision,
     ValuationConfidence,
@@ -21,7 +21,7 @@ from .selection_framework_v311 import (
 PRODUCTION_MODEL_VERSION = "GEN_GE_V3_1_1_PRODUCTION"
 PRODUCTION_MODEL_NAME = "GenGe V3.1.1 Production"
 PRODUCTION_DECISION = "PROMOTE_HIGH_CONFIDENCE_STRICT_BUY_SAFETY_MARGIN_PLUS_EXPLICIT_SELL_RATIONALE"
-SELL_CONTRACT = "V31_SELL_LADDER_WITH_EXPLICIT_RATIONALE_AND_CONTINUITY_REVIEW"
+SELL_CONTRACT = "V31_SELL_LADDER_WITH_DYNAMIC_VALUE_EXPLICIT_RATIONALE_AND_CONTINUITY_REVIEW"
 RESEARCH_MODEL_VERSION = "gen_ge_v3_2_candidate_round8_round9_frozen"
 PRODUCTION_POLICY_SOURCE = "gen_ge_v3_1_1_high_confidence_strict_buy_safety_margin_plus_explicit_sell_rationale"
 V32_SELL_CONFIRMATION_ENABLED = False
@@ -174,6 +174,26 @@ def decide_production(data: Mapping[str, Any]) -> V311Decision:
         decision = decide_v311(data)
     decision = _apply_formal_buy_gate(data, decision)
 
+    # Dynamic valuation never manufactures REDUCE/EXIT. A material lowering of
+    # the latest authorized valuation merely re-opens SELL review when the
+    # frozen V3.1.1 ladder has not already produced a stronger action. Hard Gate
+    # EXIT and existing SELL thresholds remain authoritative.
+    if _has_position(data):
+        valuation_state = assess_holding_valuation_state(data)
+        if valuation_state["valuation_change"] in {"LOWERED", "INVALIDATED"} and decision.action in {
+            "HOLD", "HOLD_NO_ADD", "BUY", "WAIT"
+        }:
+            return replace(
+                decision,
+                action="HOLD_REVIEW",
+                target_position_fraction=None,
+                reason_codes=(
+                    "MATERIAL_VALUATION_CHANGE_REQUIRES_SELL_REVIEW",
+                    f"VALUATION_{valuation_state['valuation_change']}",
+                    *decision.reason_codes,
+                ),
+            )
+
     required, rationale_reasons = sell_review_required(data, decision.action)
     if required:
         return replace(
@@ -202,6 +222,25 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         if typed_insurer
         else assess_valuation_confidence_v311(data)
     )
+    valuation_state = assess_holding_valuation_state(data) if _has_position(data) else {
+        "value_low": None,
+        "neutral_value": decision.neutral_value,
+        "value_high": None,
+        "valuation_range_ready": False,
+        "previous_value_low": None,
+        "previous_neutral_value": None,
+        "previous_value_high": None,
+        "previous_valuation_available": False,
+        "valuation_change": "STABLE",
+        "valuation_change_materiality_threshold": 0.01,
+        "price_value_zone": "UNKNOWN",
+        "price_to_neutral_latest": decision.price_to_neutral,
+        "upside_to_value_high": None,
+        "profit_protection_overlay_eligible": False,
+        "profit_protection_risk_reasons": "",
+        "profit_alone_is_sell_reason": False,
+        "profit_used_by_formal_decision": False,
+    }
     add_failures, add_unknowns = _holding_add_gate_state(data)
     add_authorized, add_reasons = _holding_add_assessment(data, decision, typed_insurer=typed_insurer)
     payload = decision.as_dict()
@@ -220,6 +259,9 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         "core_pool_confers_no_buy_privilege": True,
         "formal_sell_requires_explicit_rationale": True,
         "formal_sell_mechanical_valuation_only_forbidden": True,
+        "dynamic_valuation_primary_reference": True,
+        **valuation_state,
+        "profit_protection_overlay_authority": "RISK_CONTEXT_ONLY_NO_FORMAL_ACTION_MUTATION",
         "holding_add_policy_version": HOLDING_ADD_POLICY_VERSION,
         "holding_add_authorized": add_authorized,
         "holding_add_authorization_reason_codes": ";".join(add_reasons),
