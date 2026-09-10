@@ -54,8 +54,8 @@ J66货币金融服务(90.45)、M75科技推广和应用服务业(90.20)、J67资
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`34519285144`
-- 触发来源：`SLOW_LANE_TERMINAL_URGENT_REOPEN`
+- Lambda run：`34520535269`
+- 触发来源：`EVERY_INDUSTRY_READY`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
@@ -70,7 +70,7 @@ J66货币金融服务(90.45)、M75科技推广和应用服务业(90.20)、J67资
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`34513984781`；当前 Lambda：`34519285144`。
+- 终态来源 Lambda：`34513984781`；当前 Lambda：`34520535269`。
 - 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
