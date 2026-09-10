@@ -29,13 +29,20 @@ def test_reconciler_verifies_exact_successful_deep_artifact() -> None:
     assert "expected exactly one live Deep artifact" in text
 
 
-def test_reconciler_preserves_research_authority_guards() -> None:
+def test_reconciler_preserves_literal_false_authority_guards() -> None:
     text = _workflow_text()
 
-    assert ".unknown_is_pass // true" in text
-    assert ".formal_trading_authority // true" in text
-    assert ".automatic_formal_buy_allowed // true" in text
-    assert ".no_auto_trade // false" in text
+    assert 'if has("unknown_is_pass") then .unknown_is_pass else true end' in text
+    assert 'if has("formal_trading_authority") then .formal_trading_authority else true end' in text
+    assert 'if has("automatic_formal_buy_allowed") then .automatic_formal_buy_allowed else true end' in text
+    assert 'if has("no_auto_trade") then .no_auto_trade else false end' in text
+
+    # jq's alternative operator treats literal false like null. These forms
+    # would turn the required false-valued authority invariants into true.
+    assert ".unknown_is_pass // true" not in text
+    assert ".formal_trading_authority // true" not in text
+    assert ".automatic_formal_buy_allowed // true" not in text
+
     assert 'unknown_is_pass" = "false"' in text
     assert 'formal_authority" = "false"' in text
     assert 'automatic_formal_buy" = "false"' in text

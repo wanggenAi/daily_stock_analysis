@@ -43,10 +43,13 @@ jobs:
           deep_id=$(jq -r '.lambda_run_id // empty' "$deep_status")
           execution_status=$(jq -r '.execution_status // empty' "$deep_status")
           run_state=$(jq -r '.run_state // empty' "$deep_status")
-          unknown_is_pass=$(jq -r '.unknown_is_pass // true' "$deep_status")
-          formal_authority=$(jq -r '.formal_trading_authority // true' "$deep_status")
-          automatic_formal_buy=$(jq -r '.automatic_formal_buy_allowed // true' "$deep_status")
-          no_auto_trade=$(jq -r '.no_auto_trade // false' "$deep_status")
+          # jq's `//` treats literal false as absent. Authority invariants are
+          # intentionally false, so preserve an explicit false and fail closed
+          # only when the field is genuinely absent.
+          unknown_is_pass=$(jq -r 'if has("unknown_is_pass") then .unknown_is_pass else true end' "$deep_status")
+          formal_authority=$(jq -r 'if has("formal_trading_authority") then .formal_trading_authority else true end' "$deep_status")
+          automatic_formal_buy=$(jq -r 'if has("automatic_formal_buy_allowed") then .automatic_formal_buy_allowed else true end' "$deep_status")
+          no_auto_trade=$(jq -r 'if has("no_auto_trade") then .no_auto_trade else false end' "$deep_status")
 
           if [ "$execution_status" != "SUCCESS" ] || [ "$run_state" != "COMPLETED" ]; then
             echo "Latest Deep is not a completed success; refusing Terminal dispatch"
