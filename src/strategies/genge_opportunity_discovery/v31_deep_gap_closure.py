@@ -20,14 +20,17 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from .evidence_collectors import collect_auto_evidence
+from .evidence_collectors.multi_year_predictability import (
+    collect_multi_year_predictability_evidence,
+)
 
 CONTRACT = "GEN_GE_V31_DEEP_GAP_CLOSURE_V1"
 GATES = ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")
 MAX_COLLECTION_ATTEMPTS = 2
 
 # Only VERIFIED, ACTIVE, HIGH-severity exchange-disclosed events can resolve a
-# gate negatively.  This is intentionally one-way: absence of a risk event never
-# creates PASS.  New high-confidence risk can also override an older PASS.
+# gate negatively. This is intentionally one-way: absence of a risk event never
+# creates PASS. New high-confidence risk can also override an older PASS.
 MATERIAL_EVENT_FAIL_GATES: Mapping[str, tuple[str, ...]] = {
     "ACCOUNTING_FRAUD": ("earnings_authenticity", "predictability"),
     "NON_STANDARD_AUDIT": ("earnings_authenticity",),
@@ -128,12 +131,7 @@ def _material_event_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
 def infer_material_event_gate_failures(
     code: str, company_evidence: Iterable[Mapping[str, Any]]
 ) -> dict[str, tuple[str, list[dict[str, Any]]]]:
-    """Return strict FAIL decisions created by current verified material risks.
-
-    Positive decisions are deliberately impossible here.  A single ACTIVE/HIGH
-    exchange-disclosed event can be sufficient negative proof for the narrow
-    hard gates listed in MATERIAL_EVENT_FAIL_GATES.
-    """
+    """Return strict FAIL decisions created by current verified material risks."""
     grouped: dict[str, list[dict[str, Any]]] = {}
     event_types: dict[str, set[str]] = {}
     for raw in company_evidence:
@@ -210,6 +208,58 @@ def infer_long_term_demand(
     )
 
 
+def infer_predictability(
+    code: str, company_evidence: Iterable[Mapping[str, Any]]
+) -> tuple[str, str, list[dict[str, Any]]]:
+    """Consume only dedicated strict multi-year official predictability evidence."""
+    rows = [
+        dict(row)
+        for row in company_evidence
+        if _code(row.get("code")) == code
+        and str(row.get("evidence_kind") or "").lower() == "multi_year_predictability"
+        and _official_exchange_domain(row.get("source_domain"))
+    ]
+    evidence = [
+        {
+            "source_type": row.get("source_type"),
+            "source_domain": row.get("source_domain"),
+            "url": row.get("original_url") or row.get("source"),
+            "source_urls": row.get("source_urls") or [],
+            "publish_date": row.get("publish_date") or row.get("date"),
+            "rule_version": row.get("rule_version"),
+            "coverage_years": row.get("coverage_years") or [],
+            "metrics_by_year": row.get("metrics_by_year") or [],
+            "cyclical_or_resource": bool(row.get("cyclical_or_resource")),
+            "classification": row.get("predictability_classification"),
+            "reason_code": row.get("reason_code"),
+            "summary": row.get("normalized_summary") or row.get("evidence_value"),
+        }
+        for row in rows
+    ]
+    verified = [
+        row
+        for row in rows
+        if str(row.get("evidence_status") or "").upper() == "VERIFIED"
+        and bool(row.get("adopted_for_gate"))
+        and str(row.get("predictability_classification") or "").upper() in {"PASS", "FAIL"}
+        and bool(str(row.get("publish_date") or "").strip())
+    ]
+    decisions = {str(row.get("predictability_classification") or "").upper() for row in verified}
+    if len(decisions) == 1:
+        decision = next(iter(decisions))
+        return (
+            decision,
+            "Strict multi-year official-report predictability rule resolved the gate: "
+            + ",".join(sorted({str(row.get("reason_code") or "") for row in verified})),
+            evidence,
+        )
+    if len(decisions) > 1:
+        return "UNKNOWN", "Strict predictability evidence conflicts; fail-closed UNKNOWN retained.", evidence
+    reason_codes = sorted({str(row.get("reason_code") or "") for row in rows if row.get("reason_code")})
+    reason = reason_codes[0] if len(reason_codes) == 1 else "STRICT_MULTI_YEAR_PREDICTABILITY_THRESHOLD_NOT_MET"
+    return "UNKNOWN", reason, evidence
+
+
 def _unresolved_reason(gate: str, evidence_summary: Mapping[str, Any]) -> str:
     fetch_failures = int(evidence_summary.get("final_failed_count") or evidence_summary.get("failed_count") or 0)
     if gate == "long_term_demand":
@@ -219,7 +269,7 @@ def _unresolved_reason(gate: str, evidence_summary: Mapping[str, Any]) -> str:
     if gate == "moat":
         return "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
     if gate == "predictability":
-        return "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN"
+        return str(evidence_summary.get("predictability_unresolved_reason") or "NO_STRICT_MULTI_YEAR_PREDICTABILITY_RULE_PROVEN")
     if gate == "financial_safety":
         return "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
     if gate == "earnings_authenticity":
@@ -268,6 +318,7 @@ def close_profiles(
     progressed = 0
     material_event_failed_gates = 0
     material_event_pass_overrides = 0
+    predictability_resolved_gates = 0
     unresolved: dict[str, dict[str, str]] = {}
     complete_codes: list[str] = []
     exhausted_codes: list[str] = []
@@ -322,11 +373,33 @@ def close_profiles(
                 ltd["gap_closure_evidence"] = evidence
                 ltd["gap_closure_rationale"] = rationale
 
+        predictability = gates.get("predictability") if isinstance(gates.get("predictability"), dict) else None
+        if predictability is not None and _status(predictability) == "UNKNOWN":
+            decision, rationale, evidence = infer_predictability(code, company_evidence)
+            if decision in {"PASS", "FAIL"}:
+                predictability.update(
+                    {
+                        "status": decision,
+                        "confidence": "HIGH",
+                        "rationale": rationale,
+                        "evidence": evidence,
+                        "source": "AUTOMATIC_STRICT_MULTI_YEAR_OFFICIAL_EVIDENCE_CLOSURE",
+                    }
+                )
+                predictability.pop("terminal_unresolved_reason", None)
+                progressed += 1
+                predictability_resolved_gates += 1
+            else:
+                predictability["gap_closure_evidence"] = evidence
+                predictability["gap_closure_rationale"] = rationale
+
         code_unresolved: dict[str, str] = {}
         for gate in GATES:
             raw = gates.get(gate) if isinstance(gates.get(gate), dict) else None
             if raw is None or _status(raw) == "UNKNOWN":
                 reason = _unresolved_reason(gate, evidence_summary)
+                if gate == "predictability" and raw is not None:
+                    reason = str(raw.get("gap_closure_rationale") or reason)
                 code_unresolved[gate] = reason
                 if raw is not None:
                     raw["terminal_unresolved_reason"] = reason
@@ -358,6 +431,7 @@ def close_profiles(
         "complete_requested_count": len(complete_codes),
         "evidence_exhausted_requested_count": len(exhausted_codes),
         "progressed_gate_count": progressed,
+        "predictability_resolved_gate_count": predictability_resolved_gates,
         "material_event_failed_gate_count": material_event_failed_gates,
         "material_event_pass_override_count": material_event_pass_overrides,
         "unresolved_requested_gate_count": sum(len(v) for v in unresolved.values()),
@@ -382,6 +456,7 @@ def close_profiles(
             "gap_closure_attempt_count": attempt_count,
             "new_evidence_count": new_evidence_count,
             "progressed_gate_count": progressed,
+            "predictability_resolved_gate_count": predictability_resolved_gates,
             "material_event_failed_gate_count": material_event_failed_gates,
             "material_event_pass_override_count": material_event_pass_overrides,
             "immediate_retry_required": False,
@@ -438,6 +513,22 @@ def _collect_with_bounded_retry(
     return industry_unique, company_unique, all_audit, final_summary
 
 
+def _predictability_unknown_rows(
+    profiles_payload: Mapping[str, Any], selected: Iterable[Mapping[str, Any]]
+) -> list[dict[str, Any]]:
+    profiles = profiles_payload.get("profiles") if isinstance(profiles_payload.get("profiles"), dict) else {}
+    result: list[dict[str, Any]] = []
+    for raw in selected:
+        row = dict(raw)
+        code = _code(row.get("code"))
+        profile = profiles.get(code) if isinstance(profiles.get(code), dict) else {}
+        gates = profile.get("gates") if isinstance(profile.get("gates"), dict) else {}
+        gate = gates.get("predictability") if isinstance(gates.get("predictability"), dict) else None
+        if gate is not None and _status(gate) == "UNKNOWN":
+            result.append(row)
+    return result
+
+
 def run(
     *,
     profiles_json: Path,
@@ -450,7 +541,7 @@ def run(
     profiles = _read_json(profiles_json)
     rows = _read_csv(candidate_csv)
     requested = _requested_codes(requested_codes)
-    selected = []
+    selected: list[dict[str, Any]] = []
     for row in rows:
         code = _code(row.get("code"))
         if code not in requested:
@@ -465,6 +556,21 @@ def run(
         as_of=as_of,
         cache_dir=cache_dir,
     )
+
+    predictability_selected = _predictability_unknown_rows(profiles, selected)
+    predictability_evidence = collect_multi_year_predictability_evidence(
+        priority_rows=predictability_selected,
+        as_of=as_of,
+    )
+    company_evidence = _dedupe([*company_evidence, *predictability_evidence])
+    evidence_summary["multi_year_predictability_requested_count"] = len(predictability_selected)
+    evidence_summary["multi_year_predictability_evidence_count"] = len(predictability_evidence)
+    evidence_summary["multi_year_predictability_verified_count"] = sum(
+        1 for row in predictability_evidence if str(row.get("evidence_status") or "").upper() == "VERIFIED"
+    )
+    evidence_summary["unique_company_evidence_count"] = len(company_evidence)
+    evidence_summary["unique_evidence_count"] = len(industry_evidence) + len(company_evidence)
+
     closed_profiles, status = close_profiles(
         profiles,
         rows,
@@ -490,6 +596,8 @@ def run(
         "audit": audit_rows,
         "summary": evidence_summary,
         "formal_trading_authority": False,
+        "automatic_formal_buy_allowed": False,
+        "unknown_is_pass": False,
         "no_auto_trade": True,
     }
     (output_dir / "gap_closure_evidence.json").write_text(
@@ -503,6 +611,7 @@ def run(
         f"- evidence collection attempts: **{status['gap_closure_attempt_count']}**\n"
         f"- new evidence rows: **{status['new_evidence_count']}**\n"
         f"- progressed gates: **{status['progressed_gate_count']}**\n"
+        f"- predictability resolved gates: **{status['predictability_resolved_gate_count']}**\n"
         f"- material-event failed gates: **{status['material_event_failed_gate_count']}**\n"
         f"- material-event PASS overrides: **{status['material_event_pass_override_count']}**\n"
         f"- unresolved gates: **{status['unresolved_requested_gate_count']}**\n"
