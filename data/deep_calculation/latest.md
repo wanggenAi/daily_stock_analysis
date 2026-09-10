@@ -2,14 +2,14 @@
 
 - execution: **SUCCESS**
 - terminal state: **EVIDENCE_EXHAUSTED**
-- requested: **34**
+- requested: **11**
 - complete: **0**
-- evidence exhausted: **34**
+- evidence exhausted: **11**
 - evidence collection attempts: **2**
-- new evidence rows: **69**
-- progressed gates: **1**
-- material-event failed gates: **1**
+- new evidence rows: **26**
+- progressed gates: **2**
+- material-event failed gates: **2**
 - material-event PASS overrides: **1**
-- unresolved gates: **122**
+- unresolved gates: **40**
 - immediate retry required: **False**
 - UNKNOWN != PASS; no automatic Formal BUY; no auto trade.
