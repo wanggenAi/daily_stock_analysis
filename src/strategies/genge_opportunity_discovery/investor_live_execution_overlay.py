@@ -68,7 +68,10 @@ def _quote_map(
 
 def _overlay_price(row: dict[str, Any], quote: Mapping[str, Any], *, original_key: str) -> None:
     original = _num(row.get("current_price"))
-    row[original_key] = original
+    # Multiple execution-only quote sources may be layered.  Preserve the first
+    # frozen decision price instead of replacing it with an earlier live quote.
+    if original_key not in row:
+        row[original_key] = original
     row["current_price"] = quote["price"]
     row["price_source"] = "HOURLY_FRESH_EXECUTION_QUOTE"
     row["price_observed_at"] = quote["observed_at"]
@@ -122,11 +125,14 @@ def apply_live_execution_overlay(
             else:
                 row.setdefault("price_source", "TERMINAL_FROZEN_PRICE")
 
-    # Re-plan with the same authority and cash rules, but never pay more for a
-    # holding ADD than the price observed by the frozen Canonical decision.
+    # Re-plan with the same authority and cash rules.  Holding ADDs, including
+    # the staged-add policy where the Formal action remains HOLD, may never pay
+    # more than the price observed by the frozen Canonical decision.
     planning_holdings = copy.deepcopy(holding_rows)
     for row in planning_holdings:
-        if str(row.get("formal_action") or "").upper() not in {"ADD", "BUY"}:
+        legacy_add = str(row.get("formal_action") or "").upper() in {"ADD", "BUY"}
+        staged_add = bool(row.get("holding_add_authorized"))
+        if not (legacy_add or staged_add):
             continue
         live = _num(row.get("current_price"))
         frozen = _num(row.get("canonical_price"))
@@ -152,9 +158,17 @@ def apply_live_execution_overlay(
         for bucket in ("buy_now", "wait_price")
         for row in terminal.get(bucket) or []
     }
+    holding_sources = {
+        "AUTHORIZED_CANONICAL_HOLDING_ACTION",
+        "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
+    }
     for op in new_plan.get("operations") or []:
         code = str(op.get("code") or "").zfill(6)
-        source_row = live_by_code.get(code) if op.get("source") == "AUTHORIZED_CANONICAL_HOLDING_ACTION" else terminal_by_code.get(code)
+        source_row = (
+            live_by_code.get(code)
+            if op.get("source") in holding_sources
+            else terminal_by_code.get(code)
+        )
         live = _num((source_row or {}).get("current_price"))
         op["live_market_price"] = live
         op["price_observed_at"] = (source_row or {}).get("price_observed_at") or ""
