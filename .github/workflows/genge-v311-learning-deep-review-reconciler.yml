@@ -1,0 +1,361 @@
+name: GenGe V3.1.1 Learning Deep Review Reconciler
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      research_learning_run_id:
+        description: "Optional exact Research Learning run id to reconcile."
+        required: false
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v311-learning-deep-review-reconciler.yml"
+      - "tests/test_genge_learning_deep_review_reconciler.py"
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-v311-learning-deep-review-reconciler
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  reconcile-exact-learning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Select unclosed exact Research Learning artifact
+        id: select
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_LEARNING_RUN_ID: ${{ inputs.research_learning_run_id }}
+        run: |
+          set -euo pipefail
+          echo "RECONCILE_NOOP=false" >> "$GITHUB_ENV"
+          root="$RUNNER_TEMP/exact-learning"
+          rm -rf "$root"
+          mkdir -p "$root"
+
+          requested="${REQUESTED_LEARNING_RUN_ID:-}"
+          candidates=()
+          if [ -n "$requested" ]; then
+            [[ "$requested" =~ ^[0-9]+$ ]] || {
+              echo "::error::Invalid Research Learning run id: ${requested}" >&2
+              exit 1
+            }
+            candidates+=("$requested")
+          else
+            cutoff="$(date -u -d '24 hours ago' +%Y-%m-%dT%H:%M:%SZ)"
+            mapfile -t candidates < <(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-research-learning.yml/runs?event=workflow_dispatch&branch=main&status=success&per_page=30" \
+                --jq ".workflow_runs[] | select(.created_at >= \"${cutoff}\") | .id"
+            )
+          fi
+
+          selected_run=""
+          selected_artifact=""
+          selected_recall=""
+          for candidate in "${candidates[@]}"; do
+            [[ "$candidate" =~ ^[0-9]+$ ]] || continue
+
+            marker_name="genge-v311-learning-deep-review-handoff-${candidate}"
+            marker_count="$(gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts?name=${marker_name}&per_page=100" \
+              --jq '[.artifacts[] | select(.expired == false)] | length')"
+            if [ "$marker_count" -gt 0 ]; then
+              if [ -n "$requested" ]; then
+                echo "RECONCILE_NOOP=true" >> "$GITHUB_ENV"
+                echo "Exact Learning ${candidate} already has a verified Deep Review continuation marker." >> "$GITHUB_STEP_SUMMARY"
+                exit 0
+              fi
+              continue
+            fi
+
+            run_payload="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}")"
+            run_name="$(jq -r '.name // ""' <<<"$run_payload")"
+            run_status="$(jq -r '.status // ""' <<<"$run_payload")"
+            run_conclusion="$(jq -r '.conclusion // ""' <<<"$run_payload")"
+            run_branch="$(jq -r '.head_branch // ""' <<<"$run_payload")"
+            run_event="$(jq -r '.event // ""' <<<"$run_payload")"
+            if [ "$run_name" != "GenGe V3.1.1 Research Learning" ] || \
+               [ "$run_status" != "completed" ] || [ "$run_conclusion" != "success" ] || \
+               [ "$run_branch" != "main" ] || [ "$run_event" != "workflow_dispatch" ]; then
+              if [ -n "$requested" ]; then
+                echo "::error::Requested run ${candidate} is not a completed successful main workflow_dispatch Research Learning run." >&2
+                exit 1
+              fi
+              continue
+            fi
+
+            mapfile -t artifact_ids < <(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                | jq -r --arg name "genge-v311-research-learning-${candidate}" \
+                  '.artifacts[] | select(.name == $name and .expired == false) | .id'
+            )
+            if [ "${#artifact_ids[@]}" -ne 1 ]; then
+              if [ -n "$requested" ]; then
+                echo "::error::Requested Research Learning run ${candidate} must expose exactly one live learning artifact; found ${#artifact_ids[@]}." >&2
+                exit 1
+              fi
+              continue
+            fi
+
+            candidate_root="$root/${candidate}"
+            mkdir -p "$candidate_root"
+            gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_ids[0]}/zip" > "$candidate_root/learning.zip"
+            unzip -q -o "$candidate_root/learning.zip" -d "$candidate_root/unpacked"
+            mapfile -t lineage_files < <(find "$candidate_root/unpacked" -type f -name learning_lineage.json)
+            mapfile -t priority_files < <(find "$candidate_root/unpacked" -type f -path '*/research_priority/latest.json')
+            if [ "${#lineage_files[@]}" -ne 1 ] || [ "${#priority_files[@]}" -ne 1 ]; then
+              if [ -n "$requested" ]; then
+                echo "::error::Requested Learning artifact is missing unique lineage/priority files." >&2
+                exit 1
+              fi
+              continue
+            fi
+
+            exact="$(jq -r '.success_archetype_exact_dispatch // false' "${lineage_files[0]}")"
+            artifact_run="$(jq -r '.research_learning_run_id // ""' "${lineage_files[0]}")"
+            recall_run="$(jq -r '.success_archetype_recall_run_id // ""' "${lineage_files[0]}")"
+            if [ "$exact" != "true" ] || [ "$artifact_run" != "$candidate" ] || [[ ! "$recall_run" =~ ^[0-9]+$ ]]; then
+              if [ -n "$requested" ]; then
+                echo "::error::Requested Learning run ${candidate} is not a self-consistent exact Success Archetype handoff." >&2
+                exit 1
+              fi
+              continue
+            fi
+
+            selected_run="$candidate"
+            selected_artifact="${artifact_ids[0]}"
+            selected_recall="$recall_run"
+            cp "${priority_files[0]}" "$root/exact_priority.json"
+            cp "${lineage_files[0]}" "$root/exact_lineage.json"
+            break
+          done
+
+          if [ -z "$selected_run" ]; then
+            echo "RECONCILE_NOOP=true" >> "$GITHUB_ENV"
+            echo "No unclosed exact Research Learning artifact requires Deep Review reconciliation." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          python - "$root/exact_priority.json" "$root/exact_lineage.json" "$selected_run" "$selected_recall" <<'PY'
+          import json, sys
+          from pathlib import Path
+          priority=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          lineage=json.loads(Path(sys.argv[2]).read_text(encoding='utf-8'))
+          learning_run, recall_run = sys.argv[3], sys.argv[4]
+          assert str(lineage['research_learning_run_id']) == learning_run
+          assert str(lineage['success_archetype_recall_run_id']) == recall_run
+          assert lineage['success_archetype_exact_dispatch'] is True
+          assert lineage['canonical_authority_unchanged'] is True
+          assert lineage['no_auto_trade'] is True
+          assert priority['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert priority['formal_action_recomputed'] is False
+          assert priority['formal_action_eligible'] is False
+          assert priority['no_auto_trade'] is True
+          assert priority['success_archetype_recall_integrated'] is True
+          PY
+
+          echo "LEARNING_RUN_ID=$selected_run" >> "$GITHUB_ENV"
+          echo "RECALL_RUN_ID=$selected_recall" >> "$GITHUB_ENV"
+          echo "EXACT_PRIORITY_FILE=$root/exact_priority.json" >> "$GITHUB_ENV"
+          echo "learning_run_id=$selected_run" >> "$GITHUB_OUTPUT"
+          echo "recall_run_id=$selected_recall" >> "$GITHUB_OUTPUT"
+
+      - name: Verify exact Runbei candidates still survive in current main
+        if: env.RECONCILE_NOOP != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$EXACT_PRIORITY_FILE" data/research_priority/latest.json "$GITHUB_ENV" <<'PY'
+          import json, math, sys
+          from pathlib import Path
+
+          exact=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          current=json.loads(Path(sys.argv[2]).read_text(encoding='utf-8'))
+          current_rows={str(r.get('code') or '').zfill(6): r for r in (current.get('queue') or []) if isinstance(r, dict)}
+
+          def eligible(row):
+              reasons={str(x) for x in (row.get('reason_codes') or [])}
+              if 'CURRENT_HOLDING' in reasons or 'SUCCESS_ARCHETYPE_RECALL' not in reasons:
+                  return False
+              if str(row.get('success_archetype_source_quant_status') or '') != 'PRIORITY_RESEARCH':
+                  return False
+              try:
+                  return float(row.get('success_archetype_similarity_score')) >= 70.0 and float(row.get('success_archetype_evidence_coverage')) >= 1.0
+              except (TypeError, ValueError):
+                  return False
+
+          expected={str(r.get('code') or '').zfill(6): r for r in (exact.get('queue') or []) if isinstance(r, dict) and eligible(r)}
+          assert expected, 'exact Learning artifact has no eligible Runbei Deep Review candidates'
+
+          for code, old in expected.items():
+              assert code in current_rows, f'exact Runbei candidate {code} no longer exists in current research priority'
+              new=current_rows[code]
+              assert 'SUCCESS_ARCHETYPE_RECALL' in {str(x) for x in (new.get('reason_codes') or [])}, code
+              assert str(new.get('success_archetype_id') or '') == str(old.get('success_archetype_id') or ''), code
+              assert str(new.get('success_archetype_source_quant_status') or '') == 'PRIORITY_RESEARCH', code
+              assert math.isclose(float(new.get('success_archetype_similarity_score')), float(old.get('success_archetype_similarity_score')), rel_tol=0.0, abs_tol=1e-9), code
+              assert math.isclose(float(new.get('success_archetype_evidence_coverage')), float(old.get('success_archetype_evidence_coverage')), rel_tol=0.0, abs_tol=1e-9), code
+
+          codes=','.join(sorted(expected))
+          with Path(sys.argv[3]).open('a', encoding='utf-8') as out:
+              out.write(f'EXPECTED_RUNBEI_CODES={codes}\n')
+          print(f'Exact Learning candidates preserved in current main: {codes}')
+          PY
+
+      - name: Dispatch and wait for Event-Driven Deep Review
+        id: deep
+        if: env.RECONCILE_NOOP != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          dispatched_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          before_ids="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-event-driven-deep-review.yml/runs?event=workflow_dispatch&per_page=30" --jq '[.workflow_runs[].id]')"
+
+          gh workflow run genge-v311-event-driven-deep-review.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+
+          deep_run=""
+          for attempt in $(seq 1 30); do
+            runs="$(gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-event-driven-deep-review.yml/runs?event=workflow_dispatch&per_page=30")"
+            mapfile -t candidates < <(printf '%s' "$runs" | jq -r \
+              --argjson before "$before_ids" --arg since "$dispatched_at" \
+              '.workflow_runs[] | select((.id as $id | ($before | index($id) | not)) and .created_at >= $since) | .id')
+            if [ "${#candidates[@]}" -eq 1 ]; then deep_run="${candidates[0]}"; break; fi
+            if [ "${#candidates[@]}" -gt 1 ]; then
+              echo "::error::Ambiguous Deep Review dispatch: ${candidates[*]}" >&2
+              exit 1
+            fi
+            sleep 4
+          done
+          [[ "$deep_run" =~ ^[0-9]+$ ]] || {
+            echo "::error::Could not resolve dispatched Deep Review run." >&2
+            exit 1
+          }
+
+          for attempt in $(seq 1 120); do
+            payload="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${deep_run}")"
+            status="$(jq -r '.status // ""' <<<"$payload")"
+            conclusion="$(jq -r '.conclusion // ""' <<<"$payload")"
+            if [ "$status" = "completed" ]; then
+              [ "$conclusion" = "success" ] || {
+                echo "::error::Deep Review run ${deep_run} completed with ${conclusion}." >&2
+                exit 1
+              }
+              break
+            fi
+            [ "$attempt" -lt 120 ] || {
+              echo "::error::Timed out waiting for Deep Review run ${deep_run}." >&2
+              exit 1
+            }
+            sleep 5
+          done
+
+          echo "DEEP_REVIEW_RUN_ID=$deep_run" >> "$GITHUB_ENV"
+          echo "deep_review_run_id=$deep_run" >> "$GITHUB_OUTPUT"
+
+      - name: Verify Deep Review processed exact Runbei candidates
+        if: env.RECONCILE_NOOP != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/verified-deep-review"
+          rm -rf "$root"
+          mkdir -p "$root"
+          mapfile -t artifact_ids < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${DEEP_REVIEW_RUN_ID}/artifacts?per_page=100" \
+              | jq -r --arg name "genge-v311-event-driven-deep-review-${DEEP_REVIEW_RUN_ID}" \
+                '.artifacts[] | select(.name == $name and .expired == false) | .id'
+          )
+          [ "${#artifact_ids[@]}" -eq 1 ] || {
+            echo "::error::Deep Review run ${DEEP_REVIEW_RUN_ID} must expose exactly one decision artifact; found ${#artifact_ids[@]}." >&2
+            exit 1
+          }
+          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_ids[0]}/zip" > "$root/decision.zip"
+          unzip -q -o "$root/decision.zip" -d "$root/unpacked"
+          mapfile -t decisions < <(find "$root/unpacked" -type f -name decision.json)
+          [ "${#decisions[@]}" -eq 1 ] || {
+            echo "::error::Deep Review artifact must contain one decision.json." >&2
+            exit 1
+          }
+
+          python - "${decisions[0]}" "$EXPECTED_RUNBEI_CODES" <<'PY'
+          import json, sys
+          from pathlib import Path
+          decision=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          expected={x.zfill(6) for x in sys.argv[2].split(',') if x}
+          trigger_codes={str(x).zfill(6) for x in (decision.get('trigger_codes') or [])}
+          assert decision['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          assert decision['formal_action_recomputed'] is False
+          assert decision['formal_action_eligible'] is False
+          assert decision['direct_formal_action_change_allowed'] is False
+          assert decision['no_auto_trade'] is True
+          missing=sorted(expected - trigger_codes)
+          assert not missing, f'eligible exact Runbei candidates were not processed by Deep Review: {missing}'
+          assert decision['dispatch_required'] is True
+          PY
+
+          mkdir -p .learning-deep-review-handoff
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload={
+              'research_learning_run_id': os.environ['LEARNING_RUN_ID'],
+              'success_archetype_recall_run_id': os.environ['RECALL_RUN_ID'],
+              'deep_review_run_id': os.environ['DEEP_REVIEW_RUN_ID'],
+              'verified_runbei_codes': [x for x in os.environ['EXPECTED_RUNBEI_CODES'].split(',') if x],
+              'exact_learning_artifact_verified': True,
+              'current_main_candidate_identity_preserved': True,
+              'deep_review_trigger_verified': True,
+              'canonical_authority_unchanged': True,
+              'no_auto_trade': True,
+          }
+          Path('.learning-deep-review-handoff/handoff.json').write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
+
+      - name: Save durable exact-learning continuation marker
+        if: env.RECONCILE_NOOP != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v311-learning-deep-review-handoff-${{ env.LEARNING_RUN_ID }}
+          path: .learning-deep-review-handoff/handoff.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish reconciliation summary
+        if: always()
+        run: |
+          echo "# GenGe V3.1.1 Learning -> Deep Review Reconciliation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- no-op: ${RECONCILE_NOOP:-false}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact Research Learning run: ${LEARNING_RUN_ID:-none}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact Success Archetype Recall run: ${RECALL_RUN_ID:-none}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact Runbei candidates: ${EXPECTED_RUNBEI_CODES:-none}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deep Review run: ${DEEP_REVIEW_RUN_ID:-none}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- authority: research-only continuation; Formal/Canonical authority unchanged; no auto-trade" >> "$GITHUB_STEP_SUMMARY"
