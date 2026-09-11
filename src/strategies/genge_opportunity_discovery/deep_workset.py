@@ -1,9 +1,9 @@
 """Deterministic continuity rules for the V3.1 Deep Calculation workset.
 
 The workset resolver may receive fresh upstream signals that are narrower than
-an earlier Deep lineage. Codes with unresolved gates or an existing FAIL gate
-must not silently disappear merely because a transient upstream queue no
-longer emits them. This module only preserves research continuity; it grants
+an earlier Deep lineage. Codes with unresolved/UNKNOWN gates or an existing
+FAIL gate must not silently disappear merely because a transient upstream queue
+no longer emits them. This module only preserves research continuity; it grants
 no trading authority and does not turn UNKNOWN into PASS.
 """
 from __future__ import annotations
@@ -29,8 +29,11 @@ def retained_deep_codes(
 ) -> list[str]:
     """Return prior-lineage codes that still require deterministic continuity.
 
-    Retain codes named by unresolved_reasons and codes carrying any FAIL gate.
-    Preserve first-seen order and never infer a PASS or Formal action.
+    Retain codes named by unresolved_reasons plus every persisted profile with
+    any non-PASS gate. In the Deep contract a missing/unrecognized gate status
+    is not authority to drop work, so it is retained fail-closed just like
+    UNKNOWN/FAIL. Preserve first-seen order and never infer a PASS or Formal
+    action.
     """
     retained: list[str] = []
 
@@ -52,7 +55,7 @@ def retained_deep_codes(
                 continue
             if any(
                 isinstance(gate, Mapping)
-                and str(gate.get("status") or "").upper() == "FAIL"
+                and str(gate.get("status") or "UNKNOWN").upper() != "PASS"
                 for gate in gates.values()
             ):
                 retained.append(code)
