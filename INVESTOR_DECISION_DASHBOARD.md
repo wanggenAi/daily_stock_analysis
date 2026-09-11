@@ -1,11 +1,13 @@
 # 投资决策驾驶舱
 
-> 市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=4
+> 市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1776；盘中价覆盖=4
 
 ## 1. 今天市场怎么样
 
 - 市场状态：**YELLOW**；是否允许新买：**True**；仓位倍率：**0.50**
 - 上涨家数比例：**17.80%**；数据质量：**OK**
+
+- 盘中执行价覆盖：**4只**；最新行情时间：**2026-09-11T12:05:57+08:00**；正式动作仍来自冻结 Canonical，盘中价只用于当前盈亏与人工下单价格/股数。
 
 ## 2. 我的持仓怎么办
 
@@ -15,7 +17,7 @@
 | 国电南瑞 600406 | 200 | 23.13 | 22.33 | -3.44 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
 | 润贝航科 001316 | 200 | 25.75 | 29.38 | 14.12 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
 | 中国平安 601318 | 400 | 55.97 | 55.23 | -1.31 | HOLD | **UNCHANGED** | **继续持有** |
-| 洛阳钼业 603993 | 1000 | 18.71 | 17.76 | -5.08 | HOLD | **UNCHANGED** | **继续持有；当前Canonical的一手加仓授权已执行完毕，等待新Canonical重新授权** |
+| 洛阳钼业 603993 | 1000 | 18.71 | 17.76 | -5.08 | HOLD | **UNCHANGED** | **继续持有；可分批加仓1手** |
 
 ## 3. 今天能直接买什么
 
@@ -32,14 +34,14 @@
 ## 5. 资金怎么花
 
 - 可规划现金：**¥59000.00**；最高部署预算：**¥29500.00**
-- 计划立即投入：**¥0.00**；计划后现金：**¥59000.00**
+- 计划立即投入：**¥1776.00**；计划后现金：**¥57224.00**
 - 只有当前可用 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。
 
 ## 6. 最终操作表
 
 | 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 |
 |---|---|---:|---:|---:|---:|
-| — | — | 0 | — | — | 0 |
+| 洛阳钼业 603993 | **ADD** | 100 | 17.76 | — | 1776.00 |
 
 ## 7. 当前强势方向（辅助，不代替BUY权限）
 
@@ -57,63 +59,3 @@ J66货币金融服务(STRONG)、M75科技推广和应用服务业(STRONG)、J67�
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 7. 事件深算闭环：到底算完没有
-
-- 总状态：**EVENT_TRIGGERED_RUNNING**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
-
-| 股票 | 闭环状态 | 正式结果 | 为什么没有BUY/ADD / 结果解释 |
-|---|---|---|---|
-| 润贝航科 001316 | **EVENT_TRIGGERED_RUNNING** | **HOLD_REVIEW** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 中国平安 601318 | **EVENT_TRIGGERED_RUNNING** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 台华新材 603055 | **EVENT_TRIGGERED_RUNNING** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 洛阳钼业 603993 | **EVENT_TRIGGERED_RUNNING** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 000567 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 002239 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 002420 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 002537 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 003039 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 600309 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 600315 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 国电南瑞 600406 | **RAISE_ONLY** | **REDUCE_25** | 当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。 |
-| 600610 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 600754 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 600916 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601136 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601236 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601375 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601990 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 603105 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 603883 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 603899 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**39** 只；研究 BUY **0** / WAIT_PRICE **0** / REJECT **39**。
-- urgent research：**13** 只；这些标的本轮仍是 REJECT，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 国电南瑞 600406 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 润贝航科 001316 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
-| XD中国平 601318 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
-
-### Urgent evidence queue
-
-- 台华新材 603055: REJECT；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED, QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- XD中国平 601318: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 国电南瑞 600406: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: REJECT；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: REJECT；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
-- 锦江酒店 600754: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 伯特利 603596: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 朗姿股份 002612: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 学大教育 000526: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 兴通股份 603209: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 奥特佳 002239: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 金诚信 603979: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 浙农股份 002758: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
