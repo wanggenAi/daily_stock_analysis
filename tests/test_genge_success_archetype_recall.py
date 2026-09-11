@@ -16,11 +16,11 @@ def _archetype():
         "reference": {"code": "001316"},
         "thresholds": {"min_similarity_score": 52.0, "min_evidence_coverage": 0.60},
         "features": [
-            {"id": "earnings_quality_score", "weight": 20, "reference_value": 90, "tolerance": 25, "aliases": ["earnings_quality_score"]},
-            {"id": "cash_conversion_ratio", "weight": 15, "reference_value": 1.0721, "tolerance": 1.5, "aliases": ["cash_conversion_ratio"]},
-            {"id": "net_profit_yoy_pct", "weight": 25, "reference_value": 44.82, "tolerance": 60, "aliases": ["net_profit_yoy_pct"]},
-            {"id": "recurring_profit_yoy_pct", "weight": 25, "reference_value": 45.14, "tolerance": 60, "aliases": ["recurring_profit_yoy_pct"]},
-            {"id": "operating_cash_flow_yoy_pct", "weight": 15, "reference_value": 26.52, "tolerance": 80, "aliases": ["operating_cash_flow_yoy_pct"]},
+            {"id": "earnings_quality_score", "weight": 20, "mode": "at_least", "reference_value": 90, "tolerance": 25, "aliases": ["earnings_quality_score"]},
+            {"id": "cash_conversion_ratio", "weight": 15, "mode": "proximity", "reference_value": 1.0721, "tolerance": 1.5, "aliases": ["cash_conversion_ratio"]},
+            {"id": "net_profit_yoy_pct", "weight": 25, "mode": "at_least", "reference_value": 44.82, "tolerance": 60, "aliases": ["net_profit_yoy_pct"]},
+            {"id": "recurring_profit_yoy_pct", "weight": 25, "mode": "at_least", "reference_value": 45.14, "tolerance": 60, "aliases": ["recurring_profit_yoy_pct"]},
+            {"id": "operating_cash_flow_yoy_pct", "weight": 15, "mode": "at_least", "reference_value": 26.52, "tolerance": 80, "aliases": ["operating_cash_flow_yoy_pct"]},
         ],
     }
 
@@ -213,3 +213,47 @@ def test_extra_financial_pool_is_bounded_prioritizes_missed_status_and_keeps_har
     assert total == 3
     assert [row["code"] for row in selected] == ["600002", "600003"]
     assert "600001" not in {row["code"] for row in selected}
+
+
+def test_directional_strength_does_not_penalize_growth_above_runbei_reference():
+    scored = score_row(
+        _row(
+            earnings_quality_score=95,
+            cash_conversion_ratio=1.0721,
+            net_profit_yoy_pct=80,
+            recurring_profit_yoy_pct=100,
+            operating_cash_flow_yoy_pct=260,
+        ),
+        _archetype(),
+    )
+    assert scored["success_archetype_similarity_score"] == 100.0
+    assert scored["success_archetype_state"] == "ARCHETYPE_MATCH"
+
+
+def test_taihua_like_growth_profile_clears_high_confidence_reunderwrite_threshold():
+    scored = score_row(
+        _row(
+            code="603055",
+            stock_name="台华新材",
+            earnings_quality_score=90,
+            cash_conversion_ratio=2.7,
+            net_profit_yoy_pct=17.96,
+            recurring_profit_yoy_pct=73.29,
+            operating_cash_flow_yoy_pct=267.76,
+            quant_status="PRIORITY_RESEARCH",
+        ),
+        _archetype(),
+    )
+    assert scored["success_archetype_evidence_coverage"] == 1.0
+    assert scored["success_archetype_similarity_score"] >= 70.0
+    assert scored["success_archetype_state"] == "ARCHETYPE_MATCH"
+    assert scored["success_archetype_formal_action_eligible"] is False
+    assert scored["success_archetype_no_auto_trade"] is True
+
+
+def test_cash_conversion_remains_symmetric_and_does_not_reward_extreme_spikes():
+    baseline = score_row(_row(cash_conversion_ratio=1.0721), _archetype())
+    extreme = score_row(_row(cash_conversion_ratio=5.0), _archetype())
+    assert extreme["success_archetype_similarity_score"] < baseline[
+        "success_archetype_similarity_score"
+    ]
