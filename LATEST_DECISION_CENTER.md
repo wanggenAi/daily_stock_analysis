@@ -9,9 +9,9 @@
 | 股票 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 深算状态 |
 |---|---:|---|---|---|---|
 | 国电南瑞 600406 | -3.44 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 14.12 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | -1.31 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_PARTIAL |
-| 洛阳钼业 603993 | -5.08 | HOLD | **继续持有；可分批加仓1手** | HIGH | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 13.85 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | -1.60 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | -3.79 | HOLD | **继续持有；可分批加仓1手** | HIGH | DEEP_REVIEW_PARTIAL |
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -69,10 +69,10 @@ J66货币金融服务(90.45)、M75科技推广和应用服务业(90.20)、J67资
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`34547485342`；当前 Lambda：`34550762825`。
-- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：无
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
+- 终态来源 Lambda：`34550762825`；当前 Lambda：`34550762825`。
+- 请求：**39**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**39**。
+- 高吸引力但证据不足、优先补证：603055 台华新材(quant=70.0381)；601318 XD中国平(quant=57.53)；600406 国电南瑞(quant=37.9544)；001316 润贝航科(quant=35.1129)；603993 洛阳钼业(quant=31.4669)；600754 锦江酒店(quant=78.6378)；603596 伯特利(quant=77.4894)；002612 朗姿股份(quant=73.1842)；000526 学大教育(quant=72.1636)；603209 兴通股份(quant=69.8909)
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
