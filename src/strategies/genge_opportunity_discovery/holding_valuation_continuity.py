@@ -25,15 +25,22 @@ STATE_PATH = Path("data/opportunity_snapshots/holding_valuation_continuity_state
 SELL_ACTIONS = {"REDUCE_25", "REDUCE_50", "CORE_ONLY"}
 NON_SELL_ACTIONS = {"HOLD", "HOLD_NO_ADD", "HOLD_REVIEW", "BUY", "WAIT"}
 
-# A <1% move in the valuation basis is noise for action-continuity purposes.
-# This threshold is deliberately much smaller than the 20% discontinuity guard:
-# 1% answers "did value materially move?"; 20% answers "did the valuation basis
-# jump so far that a sell requires explicit re-underwrite evidence?".
 VALUATION_CHANGE_MATERIALITY = 0.01
 NEUTRAL_JUMP_THRESHOLD = 0.20
 NORMALIZED_EARNINGS_JUMP_THRESHOLD = 0.20
 MIN_STABLE_VALUE_OVEREXTENSION = 1.20
 PROFIT_PROTECTION_MAX_UPSIDE_TO_HIGH = 0.10
+
+# Exact frozen Round-6 valuation parameters. The generic range fallback below
+# is allowed only when the supplied neutral value round-trips through this same
+# equation, so a future model change fails closed instead of silently drifting.
+ROUND6_POLICY_SOURCE = "round6_expectation_gap_10y_strict_pit_frozen"
+ROUND6_DISCOUNT_RATE = 0.10
+ROUND6_TERMINAL_GROWTH = 0.03
+ROUND6_HORIZON_YEARS = 10
+ROUND6_REALISTIC_GROWTH_CAP = 0.30
+ROUND6_REVENUE_GROWTH_ALLOWANCE = 0.05
+ROUND6_NEUTRAL_MATCH_TOLERANCE = 1e-8
 
 MATERIAL_EVIDENCE_TYPES = {
     "EARNINGS_POWER_DETERIORATION",
@@ -48,9 +55,6 @@ MATERIAL_EVIDENCE_TYPES = {
     "VALUATION_MODEL_INPUT_CORRECTION",
 }
 
-# These are evidence flags only. They never create a Formal action. When a
-# frozen valuation SELL already exists, they let the output explain that the
-# position is also in a value/risk protection regime. UNKNOWN remains UNKNOWN.
 PROFIT_PROTECTION_RISK_FLAGS = {
     "profit_protection_risk_evidence": "ADDITIONAL_RISK_EVIDENCE",
     "event_supply_risk_material": "EVENT_SUPPLY_RISK",
@@ -99,10 +103,135 @@ def load_state(path: Path = STATE_PATH):
     return data
 
 
-def _current_values(data: Mapping[str, Any]) -> tuple[float | None, float | None, float | None]:
+def _round6_value_expectation_10y(normalized_eps: float, start_growth: float) -> float | None:
+    """Pure-Python mirror of the frozen Round-6 earning-power equation."""
+    if normalized_eps <= 0 or not math.isfinite(normalized_eps) or not math.isfinite(start_growth):
+        return None
+    growth = min(max(float(start_growth), 0.0), ROUND6_REALISTIC_GROWTH_CAP)
+    earnings = float(normalized_eps)
+    present_value = 0.0
+    for year in range(1, ROUND6_HORIZON_YEARS + 1):
+        if year == 1:
+            year_growth = growth
+        else:
+            fraction = (year - 1) / (ROUND6_HORIZON_YEARS - 1)
+            year_growth = growth + (ROUND6_TERMINAL_GROWTH - growth) * fraction
+        earnings *= 1.0 + year_growth
+        present_value += earnings / ((1.0 + ROUND6_DISCOUNT_RATE) ** year)
+    terminal_multiple = 1.0 / (ROUND6_DISCOUNT_RATE - ROUND6_TERMINAL_GROWTH)
+    present_value += (
+        terminal_multiple
+        * earnings
+        / ((1.0 + ROUND6_DISCOUNT_RATE) ** ROUND6_HORIZON_YEARS)
+    )
+    return float(present_value)
+
+
+def _derive_strict_pit_generic_range(
+    data: Mapping[str, Any], neutral: float | None
+) -> dict[str, Any] | None:
+    """Derive an auditable generic range when V3.1 scenario endpoints are absent.
+
+    This is not a new valuation model. It reuses the exact frozen Round-6
+    earning-power equation and varies only the starting-growth assumption by
+    observed strict-PIT uncertainty. The uncertainty width is the maximum of
+    the existing four-report realistic-growth range and disagreement between
+    the two fundamental growth supports already used by Round 6. No price,
+    personal cost basis, unrealized P&L or stock-specific constant is read.
+
+    The fallback is fail-closed: it only runs for READY Round-6 strict-PIT rows,
+    and only when the supplied neutral value round-trips through the frozen
+    equation. Missing uncertainty evidence produces a zero-width range rather
+    than invented dispersion; qualitative UNKNOWN gates remain untouched.
+    """
+    if str(data.get("v311_expectation_input_status") or "").strip().upper() != "READY":
+        return None
+    if str(data.get("v311_expectation_policy_source") or "").strip() != ROUND6_POLICY_SOURCE:
+        return None
+    normalized = _first_finite(data, "v31_normalized_profit", "normalized_earnings")
+    realistic = _first_finite(data, "v31_realistic_profit_cagr", "realistic_growth")
+    if normalized is None or normalized <= 0 or realistic is None or neutral is None or neutral <= 0:
+        return None
+    if realistic < 0 or realistic > ROUND6_REALISTIC_GROWTH_CAP:
+        return None
+
+    recomputed_neutral = _round6_value_expectation_10y(normalized, realistic)
+    if recomputed_neutral is None:
+        return None
+    allowed_error = max(1e-10, abs(neutral) * ROUND6_NEUTRAL_MATCH_TOLERANCE)
+    if abs(recomputed_neutral - neutral) > allowed_error:
+        return None
+
+    widths: list[float] = []
+    four_report_range = _finite(data.get("realistic_growth_four_report_range"))
+    if four_report_range is not None and four_report_range >= 0:
+        widths.append(four_report_range)
+
+    eps_growth = _finite(data.get("eps_growth_3y_round6"))
+    if eps_growth is not None:
+        eps_support = min(max(eps_growth, 0.0), ROUND6_REALISTIC_GROWTH_CAP)
+        widths.append(abs(eps_support - realistic))
+
+    revenue_growth = _finite(data.get("revenue_growth_3y_round6"))
+    if revenue_growth is not None:
+        revenue_support = min(
+            max(revenue_growth + ROUND6_REVENUE_GROWTH_ALLOWANCE, 0.0),
+            ROUND6_REALISTIC_GROWTH_CAP,
+        )
+        widths.append(abs(revenue_support - realistic))
+
+    uncertainty_width = max(widths) if widths else 0.0
+    low_growth = max(0.0, realistic - uncertainty_width)
+    high_growth = min(ROUND6_REALISTIC_GROWTH_CAP, realistic + uncertainty_width)
+    low = _round6_value_expectation_10y(normalized, low_growth)
+    high = _round6_value_expectation_10y(normalized, high_growth)
+    if low is None or high is None or low <= 0 or low > neutral or high < neutral:
+        return None
+    return {
+        "low": low,
+        "neutral": neutral,
+        "high": high,
+        "source": "V311_STRICT_PIT_GENERIC_RANGE",
+        "method": "ROUND6_10Y_EARNING_POWER_REALISTIC_GROWTH_UNCERTAINTY_BAND",
+        "growth_low": low_growth,
+        "growth_neutral": realistic,
+        "growth_high": high_growth,
+        "growth_uncertainty_width": uncertainty_width,
+        "neutral_roundtrip_verified": True,
+    }
+
+
+def _current_valuation_range(data: Mapping[str, Any]) -> tuple[float | None, float | None, float | None, dict[str, Any]]:
     low = _first_finite(data, "v31_pessimistic_value", "value_low", "pessimistic_value")
     neutral = _first_finite(data, "v31_neutral_value", "neutral_value")
     high = _first_finite(data, "v31_optimistic_value", "value_high", "optimistic_value")
+    if low is not None and high is not None:
+        return low, neutral, high, {
+            "source": "V31_EXPLICIT_SCENARIO_RANGE",
+            "method": "UPSTREAM_SCENARIO_VALUATION",
+            "growth_low": None,
+            "growth_neutral": _first_finite(data, "v31_realistic_profit_cagr", "realistic_growth"),
+            "growth_high": None,
+            "growth_uncertainty_width": None,
+            "neutral_roundtrip_verified": None,
+        }
+    if low is None and high is None:
+        derived = _derive_strict_pit_generic_range(data, neutral)
+        if derived:
+            return derived["low"], derived["neutral"], derived["high"], derived
+    return low, neutral, high, {
+        "source": "INCOMPLETE_RANGE",
+        "method": "FAIL_CLOSED_NO_GENERIC_RANGE",
+        "growth_low": None,
+        "growth_neutral": _first_finite(data, "v31_realistic_profit_cagr", "realistic_growth"),
+        "growth_high": None,
+        "growth_uncertainty_width": None,
+        "neutral_roundtrip_verified": False,
+    }
+
+
+def _current_values(data: Mapping[str, Any]) -> tuple[float | None, float | None, float | None]:
+    low, neutral, high, _ = _current_valuation_range(data)
     return low, neutral, high
 
 
@@ -146,12 +275,12 @@ def _valuation_change(
     if neutral_delta is not None and abs(neutral_delta) >= VALUATION_CHANGE_MATERIALITY:
         return "RAISED" if neutral_delta > 0 else "LOWERED"
 
-    # If neutral is stable, both range endpoints must move materially in the
-    # same direction before the range itself is called RAISED/LOWERED. This
-    # prevents a noisy single scenario from creating action churn.
     low_delta = _material_delta(low, p_low)
     high_delta = _material_delta(high, p_high)
-    endpoint_deltas = [d for d in (low_delta, high_delta) if d is not None and abs(d) >= VALUATION_CHANGE_MATERIALITY]
+    endpoint_deltas = [
+        d for d in (low_delta, high_delta)
+        if d is not None and abs(d) >= VALUATION_CHANGE_MATERIALITY
+    ]
     if len(endpoint_deltas) == 2 and all(d > 0 for d in endpoint_deltas):
         return "RAISED"
     if len(endpoint_deltas) == 2 and all(d < 0 for d in endpoint_deltas):
@@ -162,8 +291,6 @@ def _valuation_change(
 def _price_zone(price: float | None, low: float | None, neutral: float | None, high: float | None) -> str:
     if price is None or price <= 0 or _range_invalid(low, neutral, high):
         return "UNKNOWN"
-    # A full scenario range is required for the named four-zone contract. We do
-    # not fabricate low/high boundaries from neutral when scenario evidence is missing.
     if low is None or high is None:
         return "UNKNOWN"
     if price < low:
@@ -176,7 +303,10 @@ def _price_zone(price: float | None, low: float | None, neutral: float | None, h
 
 
 def _profit_protection_risk_reasons(data: Mapping[str, Any]) -> tuple[str, ...]:
-    reasons = [reason for field, reason in PROFIT_PROTECTION_RISK_FLAGS.items() if _truthy(data.get(field))]
+    reasons = [
+        reason for field, reason in PROFIT_PROTECTION_RISK_FLAGS.items()
+        if _truthy(data.get(field))
+    ]
     evidence_ok, _ = _material_override_evidence(data)
     if evidence_ok:
         reasons.append("MATERIAL_THESIS_LINKED_RISK_EVIDENCE")
@@ -184,17 +314,13 @@ def _profit_protection_risk_reasons(data: Mapping[str, Any]) -> tuple[str, ...]:
 
 
 def assess_holding_valuation_state(data: Mapping[str, Any], *, path: Path | None = None) -> dict[str, Any]:
-    """Return latest-vs-authorized valuation state without creating an action.
-
-    `valuation_change` uses the previous persisted authorized Canonical baseline.
-    A missing previous baseline is reported separately and never treated as PASS.
-    """
+    """Return latest-vs-authorized valuation state without creating an action."""
     state_path = path or STATE_PATH
     code = _code(data.get("code"))
     prev = load_state(state_path).get("holdings", {}).get(code)
-    current = _current_values(data)
+    low, neutral, high, range_meta = _current_valuation_range(data)
+    current = (low, neutral, high)
     previous = _previous_values(prev)
-    low, neutral, high = current
     p_low, p_neutral, p_high = previous
     price = _first_finite(data, "v31_current_price", "current_price", "raw_latest_close")
     change = _valuation_change(current, previous)
@@ -216,6 +342,13 @@ def assess_holding_valuation_state(data: Mapping[str, Any], *, path: Path | None
         "neutral_value": neutral,
         "value_high": high,
         "valuation_range_ready": low is not None and high is not None and not _range_invalid(low, neutral, high),
+        "valuation_range_source": range_meta.get("source"),
+        "valuation_range_method": range_meta.get("method"),
+        "valuation_range_growth_low": range_meta.get("growth_low"),
+        "valuation_range_growth_neutral": range_meta.get("growth_neutral"),
+        "valuation_range_growth_high": range_meta.get("growth_high"),
+        "valuation_range_growth_uncertainty_width": range_meta.get("growth_uncertainty_width"),
+        "valuation_range_neutral_roundtrip_verified": range_meta.get("neutral_roundtrip_verified"),
         "previous_value_low": p_low,
         "previous_neutral_value": p_neutral,
         "previous_value_high": p_high,
@@ -299,9 +432,6 @@ def sell_review_required(data: Mapping[str, Any], action: str, *, path: Path = S
     if current_price is None or current_price <= 0 or current_neutral is None or current_neutral <= 0:
         return True, ("SELL_RATIONALE_PRICE_OR_VALUE_INVALID",)
 
-    # The frozen 1.20/1.40/1.70 ladder remains the necessary valuation trigger.
-    # Profit/cost basis is intentionally absent. Dynamic-range context can add a
-    # stronger protection rationale but cannot lower the frozen sell threshold.
     price_to_neutral = current_price / current_neutral
     if price_to_neutral < MIN_STABLE_VALUE_OVEREXTENSION:
         return True, ("SELL_RATIONALE_NOT_MATERIAL", "STABLE_VALUE_OVEREXTENSION_BELOW_MINIMUM")
@@ -311,7 +441,6 @@ def sell_review_required(data: Mapping[str, Any], action: str, *, path: Path = S
     return False, ("SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",)
 
 
-# Backward-compatible alias used by production_model.
 def continuity_review_required(data: Mapping[str, Any], action: str, *, path: Path = STATE_PATH):
     return sell_review_required(data, action, path=path)
 
