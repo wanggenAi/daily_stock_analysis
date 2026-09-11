@@ -15,7 +15,6 @@ changed.  Any worker exception fails the run instead of manufacturing evidence.
 """
 from __future__ import annotations
 
-import argparse
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import date
@@ -184,9 +183,10 @@ def install_runtime_optimizations() -> None:
     core.collect_multi_year_predictability_evidence = collect_predictability_parallel
 
 
-def main(argv: list[str] | None = None) -> int:
+def main() -> int:
+    """Install scheduling optimizations, then delegate CLI parsing to core."""
     install_runtime_optimizations()
-    return core.main(argv)
+    return core.main()
 
 
 if __name__ == "__main__":
