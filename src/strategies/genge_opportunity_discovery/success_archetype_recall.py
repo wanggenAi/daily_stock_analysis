@@ -230,7 +230,13 @@ def _points(row: Mapping[str, Any], feature: Mapping[str, Any]) -> tuple[float, 
     tol = _float(feature.get("tolerance"))
     if value is None or ref is None or tol is None or tol <= 0:
         return 0.0, False, ""
-    similarity = max(0.0, 1.0 - abs(value - ref) / tol)
+    mode = _text(feature.get("mode") or "proximity").lower()
+    if mode == "proximity":
+        similarity = max(0.0, 1.0 - abs(value - ref) / tol)
+    elif mode == "at_least":
+        similarity = 1.0 if value >= ref else max(0.0, 1.0 - (ref - value) / tol)
+    else:
+        raise ValueError(f"unsupported success-archetype feature mode: {mode}")
     return float(feature["weight"]) * similarity, True, field
 
 
