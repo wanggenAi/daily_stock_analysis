@@ -100,6 +100,47 @@ HOLDING_ADD_BOOLEAN_FIELDS = {
     "holding_add_unknown_is_pass",
 }
 
+DYNAMIC_VALUATION_CANONICAL_FIELDS = (
+    "value_low",
+    "value_high",
+    "previous_value_low",
+    "previous_neutral_value",
+    "previous_value_high",
+    "previous_valuation_available",
+    "valuation_change",
+    "valuation_change_materiality_threshold",
+    "price_value_zone",
+    "upside_to_value_high",
+    "valuation_range_ready",
+    "valuation_range_source",
+    "valuation_range_method",
+    "valuation_range_neutral_roundtrip_verified",
+    "valuation_range_growth_low",
+    "valuation_range_growth_neutral",
+    "valuation_range_growth_high",
+    "valuation_range_growth_uncertainty_width",
+    "dynamic_valuation_primary_reference",
+    "profit_alone_is_sell_reason",
+    "profit_protection_overlay_authority",
+    "profit_protection_overlay_eligible",
+    "profit_protection_risk_reasons",
+    "profit_used_by_formal_decision",
+    "formal_sell_mechanical_valuation_only_forbidden",
+    "formal_sell_requires_explicit_rationale",
+    "valuation_confidence_reason_codes",
+)
+DYNAMIC_VALUATION_BOOLEAN_FIELDS = {
+    "previous_valuation_available",
+    "valuation_range_ready",
+    "valuation_range_neutral_roundtrip_verified",
+    "dynamic_valuation_primary_reference",
+    "profit_alone_is_sell_reason",
+    "profit_protection_overlay_eligible",
+    "profit_used_by_formal_decision",
+    "formal_sell_mechanical_valuation_only_forbidden",
+    "formal_sell_requires_explicit_rationale",
+}
+
 
 def _code(value: Any) -> str:
     text = str(value or "").strip().upper()
@@ -219,6 +260,17 @@ def _holding_add_payload(row: Mapping[str, Any]) -> dict[str, Any]:
             payload[field] = _int(value, default=0)
         else:
             payload[field] = value
+    return payload
+
+
+def _dynamic_valuation_payload(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Preserve producer-computed dynamic valuation truth without recomputation."""
+    payload: dict[str, Any] = {}
+    for field in DYNAMIC_VALUATION_CANONICAL_FIELDS:
+        value = row.get(field)
+        if value is None or str(value).strip() == "":
+            continue
+        payload[field] = _bool(value) if field in DYNAMIC_VALUATION_BOOLEAN_FIELDS else value
     return payload
 
 
@@ -382,6 +434,7 @@ def _compact_decision(row: Mapping[str, Any]) -> dict[str, Any]:
         "confirmed_quantity": row.get("confirmed_quantity") or "",
         "display_only_average_cost": row.get("display_only_average_cost") or "",
     }
+    compact.update(_dynamic_valuation_payload(row))
     compact.update(_specialized_payload(row))
     compact.update(_holding_add_payload(row))
     return compact
@@ -451,6 +504,7 @@ def build_snapshot(
             "formal_buy_thresholds_changed": False,
             "candidate_ledger_is_downstream_memory_only": True,
             "specialized_valuation_evidence_preserved": True,
+            "dynamic_valuation_evidence_preserved": True,
             "holding_staged_add_advisory_preserved": True,
             "holding_staged_add_may_mutate_formal_action": False,
         },
