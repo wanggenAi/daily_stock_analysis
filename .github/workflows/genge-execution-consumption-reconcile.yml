@@ -1,0 +1,89 @@
+name: GenGe Execution Consumption Reconciliation
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "CURRENT_EXECUTION_STATE.json"
+      - "src/strategies/genge_opportunity_discovery/execution_consumption_overlay.py"
+      - "tests/test_execution_consumption_overlay.py"
+      - ".github/workflows/genge-execution-consumption-reconcile.yml"
+  workflow_run:
+    workflows:
+      - "GenGe Investor Decision Brief"
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: genge-execution-consumption-reconciliation
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  reconcile:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Validate one-shot execution consumption contract
+        run: python -m pytest -q tests/test_execution_consumption_overlay.py
+      - name: Apply consumption overlay and persist with optimistic replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "genge-execution-reconcile-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            test -s CURRENT_EXECUTION_STATE.json
+            test -s data/investor_decision_dashboard/latest.json
+            python -m src.strategies.genge_opportunity_discovery.execution_consumption_overlay \
+              --dashboard data/investor_decision_dashboard/latest.json \
+              --execution-state CURRENT_EXECUTION_STATE.json \
+              --markdown INVESTOR_DECISION_DASHBOARD.md
+            git add -f data/investor_decision_dashboard/latest.json INVESTOR_DECISION_DASHBOARD.md
+            if git diff --cached --quiet; then
+              echo "Execution consumption overlay already current."
+              break
+            fi
+            git commit -m "Consume executed staged-add authorization [skip ci]"
+            if git push origin HEAD:main; then
+              break
+            fi
+            echo "main moved while persisting execution consumption; replaying" >&2
+            [ "$attempt" -lt 4 ] || exit 1
+          done
+      - name: Refresh three-pillar decision center from reconciled dashboard
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
+      - name: Publish reconciliation summary
+        if: always()
+        run: |
+          echo "# GenGe Execution Consumption Reconciliation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Canonical Formal action is never mutated" >> "$GITHUB_STEP_SUMMARY"
+          echo "- matching snapshot/source-run staged-add consumption prevents repeat planning" >> "$GITHUB_STEP_SUMMARY"
+          echo "- a new Canonical snapshot does not inherit an older consumption record" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UNKNOWN != PASS; no automatic Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
