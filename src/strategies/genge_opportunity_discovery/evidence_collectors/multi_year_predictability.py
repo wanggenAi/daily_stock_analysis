@@ -74,13 +74,12 @@ _METRIC_LABELS: Mapping[str, tuple[str, ...]] = {
 _REQUIRED_METRICS = tuple(_METRIC_LABELS)
 
 # A company-level predictability gate must not silently substitute a product,
-# segment, regional or endpoint subtotal for the consolidated metric. Keep the
-# vocabulary deliberately narrow and explicit so generic company narrative is
-# not rejected merely because it contains words such as “业务”.
+# segment, regional or endpoint subtotal for the consolidated metric. These
+# tokens are checked only in the immediate clause governing the metric label,
+# not arbitrary surrounding company narrative.
 _SCOPED_METRIC_TOKENS = (
-    "铜产品", "钴产品", "钼产品", "钨产品", "镍产品", "锂产品", "铝产品",
-    "黄金产品", "矿山端", "贸易端", "冶炼端", "分部", "分产品", "分地区",
-    "业务板块", "单项业务", "单一业务", "该板块", "本板块",
+    "产品", "板块", "分部", "地区", "区域", "分行业", "按行业", "按产品",
+    "按地区", "按区域", "矿山端", "贸易端", "冶炼端", "单项业务", "单一业务",
 )
 
 
@@ -180,13 +179,24 @@ def _metric_label_unit(text: str, label_end: int) -> str | None:
     return match.group(1) if match else None
 
 
-def _metric_context_is_scoped(text: str, label_start: int) -> bool:
-    """Reject explicit product/segment context immediately governing a label."""
+def _metric_context_is_scoped(text: str, label_start: int, label_end: int) -> bool:
+    """Reject product/segment/regional context immediately governing a label."""
     prefix = text[max(0, label_start - 80):label_start]
     # Only the current clause is relevant; a scoped phrase in an earlier
     # sentence must not poison a later consolidated financial table.
-    clause = re.split(r"[。；;\n\r]", prefix)[-1]
-    return any(token in clause for token in _SCOPED_METRIC_TOKENS)
+    prefix_clause = re.split(r"[。；;\n\r]", prefix)[-1]
+    if any(token in prefix_clause for token in _SCOPED_METRIC_TOKENS):
+        return True
+
+    # Scope may also be encoded immediately after the label, for example
+    # “营业收入（铜产品）” or “营业收入：华东地区”. Inspect only the current
+    # clause and only text before its first number, so a later table row cannot
+    # contaminate a legitimate company-level year series such as
+    # “营业收入(亿元) 2021 ... 2025 ...”.
+    suffix = text[label_end:label_end + 80]
+    suffix_clause = re.split(r"[。；;\n\r]", suffix)[0]
+    suffix_before_number = re.split(r"\d", suffix_clause, maxsplit=1)[0]
+    return any(token in suffix_before_number for token in _SCOPED_METRIC_TOKENS)
 
 
 def _looks_like_non_metric_number(window: str, match: re.Match[str], fiscal_year: int) -> bool:
@@ -264,7 +274,9 @@ def _metric_measurement(
 
     for label in labels:
         for label_match in re.finditer(re.escape(label), normalized):
-            if _metric_context_is_scoped(normalized, label_match.start()):
+            if _metric_context_is_scoped(
+                normalized, label_match.start(), label_match.end()
+            ):
                 ambiguity_reasons.append("SCOPED_SUBTOTAL_NOT_COMPANY_METRIC")
                 continue
 
