@@ -100,7 +100,7 @@ def test_success_archetype_workflow_run_keeps_exact_request_and_audits_fallback(
     assert 'requested_run="${{ github.event.workflow_run.id }}"' in text
     assert 'source_mode="workflow_run_exact"' in text
     assert 'verify_successful_main_candidate_run "$requested_run"' in text
-    assert 'requested_created_at="$(run_payload "$requested_run" | jq -r \'\.created_at\')"' in text
+    assert "requested_created_at=\"$(run_payload \"$requested_run\" | jq -r '.created_at')\"" in text
     assert 'fallback_used="true"' in text
     assert 'fallback_reason="terminalize_skipped_noop_wrapper"' in text
     assert '.created_at <= $cutoff' in text
