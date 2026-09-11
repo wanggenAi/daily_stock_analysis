@@ -229,3 +229,69 @@ def test_specialized_valuation_evidence_survives_canonical_compaction() -> None:
         assert row["insurance_normalized_annual_nbv_cny_million"] == "36897"
         assert row["insurance_model_executed"] is True
         assert row["insurance_model_execution_state"] == "EXECUTED_WITH_ANCHOR"
+
+
+def test_dynamic_holding_valuation_survives_canonical_compaction() -> None:
+    production = _production_row(
+        code="001316",
+        scope="HOLDING",
+        action="HOLD_REVIEW",
+        stock_name="润贝航科",
+        valuation_confidence="LOW",
+        neutral_value="49.36957125214809",
+        value_low="21.644645478526556",
+        value_high="70.29254879749493",
+        previous_value_low="20.0",
+        previous_neutral_value="49.36957125214809",
+        previous_value_high="68.0",
+        previous_valuation_available=True,
+        valuation_change="STABLE",
+        valuation_change_materiality_threshold="0.01",
+        price_value_zone="FAIR_VALUE",
+        upside_to_value_high="1.364364238059029",
+        valuation_range_ready=True,
+        valuation_range_source="V311_STRICT_PIT_GENERIC_RANGE",
+        valuation_range_method="ROUND6_10Y_EARNING_POWER_REALISTIC_GROWTH_UNCERTAINTY_BAND",
+        valuation_range_neutral_roundtrip_verified=True,
+        valuation_range_growth_low="0.0",
+        valuation_range_growth_neutral="0.20636294218718887",
+        valuation_range_growth_high="0.3",
+        valuation_range_growth_uncertainty_width="0.20636294218718887",
+        dynamic_valuation_primary_reference=True,
+        profit_alone_is_sell_reason=False,
+        profit_protection_overlay_authority="RISK_CONTEXT_ONLY_NO_FORMAL_ACTION_MUTATION",
+        profit_protection_overlay_eligible=False,
+        profit_protection_risk_reasons="",
+        profit_used_by_formal_decision=False,
+        formal_sell_mechanical_valuation_only_forbidden=True,
+        formal_sell_requires_explicit_rationale=True,
+        valuation_confidence_reason_codes="REALISTIC_GROWTH_UNSTABLE",
+    )
+
+    snapshot = build_snapshot(
+        discovery_rows=[],
+        deep_review_rows=[],
+        production_rows=[production],
+        source_kind="test",
+        source_run_id="dynamic-valuation-1",
+        generated_at="2026-09-11T00:00:00+00:00",
+    )
+
+    holding = snapshot["production"]["holding_decisions"][0]
+    assert holding["value_low"] == "21.644645478526556"
+    assert holding["neutral_value"] == "49.36957125214809"
+    assert holding["value_high"] == "70.29254879749493"
+    assert holding["previous_value_low"] == "20.0"
+    assert holding["previous_neutral_value"] == "49.36957125214809"
+    assert holding["previous_value_high"] == "68.0"
+    assert holding["valuation_change"] == "STABLE"
+    assert holding["price_value_zone"] == "FAIR_VALUE"
+    assert holding["valuation_range_source"] == "V311_STRICT_PIT_GENERIC_RANGE"
+    assert holding["valuation_range_ready"] is True
+    assert holding["dynamic_valuation_primary_reference"] is True
+    assert holding["profit_alone_is_sell_reason"] is False
+    assert holding["profit_protection_overlay_eligible"] is False
+    assert holding["profit_used_by_formal_decision"] is False
+    assert holding["formal_sell_mechanical_valuation_only_forbidden"] is True
+    assert holding["formal_sell_requires_explicit_rationale"] is True
+    assert snapshot["architecture_contract"]["dynamic_valuation_evidence_preserved"] is True
