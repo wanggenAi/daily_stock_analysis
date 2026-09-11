@@ -125,7 +125,7 @@ jobs:
 
           artifact_ids() {
             gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$1/artifacts?per_page=100" \
-              --jq --arg name "$artifact_name" '.artifacts[] | select(.name == $name and .expired == false) | .id'
+              | jq -r --arg name "$artifact_name" '.artifacts[] | select(.name == $name and .expired == false) | .id'
           }
 
           verify_successful_main_candidate_run() {
@@ -196,8 +196,8 @@ jobs:
 
               mapfile -t prior_runs < <(
                 gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/runs?branch=main&status=success&per_page=100" \
-                  --jq --arg cutoff "$requested_created_at" --arg requested "$requested_run" \
-                  '.workflow_runs[] | select((.id|tostring) != $requested and .created_at <= $cutoff) | .id'
+                  | jq -r --arg cutoff "$requested_created_at" --arg requested "$requested_run" \
+                    '.workflow_runs[] | select((.id|tostring) != $requested and .created_at <= $cutoff) | .id'
               )
               for candidate in "${prior_runs[@]}"; do
                 verify_successful_main_candidate_run "$candidate" >/dev/null 2>&1 || continue
