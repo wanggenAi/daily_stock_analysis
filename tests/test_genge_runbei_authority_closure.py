@@ -126,3 +126,13 @@ def test_success_archetype_only_falls_back_for_confirmed_skipped_noop_and_other_
     assert "if: env.RECALL_NOOP != 'true'" not in text
     assert "'canonical_authority_unchanged': True" in text
     assert "'no_auto_trade': True" in text
+
+
+def test_success_archetype_uses_standard_jq_for_runtime_variables() -> None:
+    text = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
+    resolve = text.split("- name: Resolve Terminal Review artifact with auditable no-op fallback", 1)[1].split(
+        "- name: Build bounded PIT-safe Runbei archetype recall", 1
+    )[0]
+    assert "--jq --arg" not in resolve
+    assert '| jq -r --arg name "$artifact_name"' in resolve
+    assert '| jq -r --arg cutoff "$requested_created_at" --arg requested "$requested_run"' in resolve
