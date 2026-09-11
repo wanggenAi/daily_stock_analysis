@@ -1,9 +1,9 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-11T01:16:58+00:00",
-  "canonical_snapshot_id": "9bdf8180f7bea1222037",
-  "canonical_source_run_id": "34547088246",
+  "generated_at": "2026-09-11T01:32:27+00:00",
+  "canonical_snapshot_id": "d053cb5e5eba6bb2b2ff",
+  "canonical_source_run_id": "34549787479",
   "latest_trade_date": "2026-09-10",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1901；盘中价覆盖=0",
+  "headline": "市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥1901",
   "market": {
     "as_of_date": "2026-09-10",
     "status": "YELLOW",
@@ -96,8 +96,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION"
       },
       {
         "code": "001316",
@@ -137,8 +136,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE"
       },
       {
         "code": "601318",
@@ -178,8 +176,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.668<1.00",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.668<1.00"
       },
       {
         "code": "603993",
@@ -219,8 +216,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD"
       }
     ]
   },
@@ -257,11 +253,7 @@
         "estimated_cash_cny": 1901.0,
         "immediate_execution_eligible": true,
         "automatic_order_allowed": false,
-        "no_auto_trade": true,
-        "live_market_price": 19.01,
-        "price_observed_at": "",
-        "price_provider": "",
-        "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
+        "no_auto_trade": true
       }
     ],
     "wait_price_reservations": [],
@@ -296,11 +288,7 @@
       "estimated_cash_cny": 1901.0,
       "immediate_execution_eligible": true,
       "automatic_order_allowed": false,
-      "no_auto_trade": true,
-      "live_market_price": 19.01,
-      "price_observed_at": "",
-      "price_provider": "",
-      "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
+      "no_auto_trade": true
     }
   ],
   "decision_summary": {
@@ -374,8 +362,8 @@
     "trigger_codes": []
   },
   "hourly_context": {
-    "available": true,
-    "research_as_of": "2026-09-11T00:40:19Z"
+    "available": false,
+    "research_as_of": ""
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -400,19 +388,5 @@
       "data_health"
     ],
     "engineering_details_are_secondary": true
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V1",
-    "available": false,
-    "eligible_quote_count": 0,
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 120,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "no_auto_trade": true
   }
 }
