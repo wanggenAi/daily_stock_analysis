@@ -161,6 +161,48 @@ def test_dates_years_and_percentages_are_not_selected_as_metric_values():
     assert metrics["operating_cash_flow"] == 1500.25 * 10_000
 
 
+def test_metric_label_unit_year_series_beats_scoped_product_revenue():
+    text = """
+    报告期内，铜产品营业收入为550.96亿元，同比增长18%。
+    主要会计数据和财务指标
+    营业收入(亿元) 2021 1,738.63 2022 1,729.91 2023 1,862.69 2024 2,130.29 2025 2,066.84
+    归属于上市公司股东的净利润(亿元) 2021 51.06 2022 60.67 2023 82.50 2024 135.32 2025 203.39
+    经营活动产生的现金流量净额(亿元) 2021 61.91 2022 154.54 2023 155.42 2024 323.87 2025 208.43
+    """
+    metrics = extract_report_metrics(text, 2025)
+    assert metrics["revenue"] == 2066.84 * 100_000_000
+    assert metrics["net_profit"] == 203.39 * 100_000_000
+    assert metrics["operating_cash_flow"] == 208.43 * 100_000_000
+    assert metrics["metric_provenance"]["revenue"]["unit_source"] == "METRIC_LABEL"
+    assert "550.96" not in metrics["metric_provenance"]["revenue"]["excerpt"]
+
+
+def test_scoped_product_revenue_cannot_stand_in_for_company_revenue():
+    text = "报告期内，铜产品营业收入为550.96亿元，同比增长18%。"
+    metrics = extract_report_metrics(text, 2025)
+    assert metrics["revenue"] is None
+    assert metrics["metric_provenance"]["revenue"]["verified"] is False
+    assert (
+        metrics["metric_provenance"]["revenue"]["reason"]
+        == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
+    )
+
+
+def test_generic_segment_region_and_post_label_product_scope_are_rejected():
+    for text in (
+        "新能源板块营业收入为88.00亿元。",
+        "华东地区营业收入为66.00亿元。",
+        "营业收入（铜产品）为55.00亿元。",
+    ):
+        metrics = extract_report_metrics(text, 2025)
+        assert metrics["revenue"] is None
+        assert metrics["metric_provenance"]["revenue"]["verified"] is False
+        assert (
+            metrics["metric_provenance"]["revenue"]["reason"]
+            == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
+        )
+
+
 def test_non_cyclical_three_year_stable_official_metrics_can_pass():
     decision, reason = classify_multi_year_metrics(
         _stable_records(), cyclical_or_resource=False

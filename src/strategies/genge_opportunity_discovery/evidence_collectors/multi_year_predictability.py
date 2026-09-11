@@ -7,7 +7,9 @@ and operating cash flow extracted from official CNINFO annual reports.
 
 Every metric used for cross-year comparison must have trusted currency-unit
 provenance and is normalized to CNY yuan. Ambiguous or conflicting units make
-that metric incomplete instead of guessing a scale.
+that metric incomplete instead of guessing a scale. Company-level metrics are
+also scope-sensitive: product/segment/regional narratives may never stand in
+for consolidated company totals.
 
 Cyclical/resource companies never receive PASS from accounting history alone:
 they require a separate rule proving cycle resilience (commodity-price/cost
@@ -70,6 +72,15 @@ _METRIC_LABELS: Mapping[str, tuple[str, ...]] = {
     "operating_cash_flow": ("经营活动产生的现金流量净额",),
 }
 _REQUIRED_METRICS = tuple(_METRIC_LABELS)
+
+# A company-level predictability gate must not silently substitute a product,
+# segment, regional or endpoint subtotal for the consolidated metric. These
+# tokens are checked only in the immediate clause governing the metric label,
+# not arbitrary surrounding company narrative.
+_SCOPED_METRIC_TOKENS = (
+    "产品", "板块", "分部", "地区", "区域", "分行业", "按行业", "按产品",
+    "按地区", "按区域", "矿山端", "贸易端", "冶炼端", "单项业务", "单一业务",
+)
 
 
 def _code(value: Any) -> str:
@@ -161,6 +172,33 @@ def _nearby_header_unit(text: str, label_start: int) -> tuple[str | None, str]:
     return close[-1].group("unit"), "TABLE_HEADER"
 
 
+def _metric_label_unit(text: str, label_end: int) -> str | None:
+    """Read a unit attached directly to a metric label, e.g. 营业收入(亿元)."""
+    tail = text[label_end:label_end + 24]
+    match = re.match(r"\s*[（(]\s*(亿元|万元|元)\s*[）)]", tail)
+    return match.group(1) if match else None
+
+
+def _metric_context_is_scoped(text: str, label_start: int, label_end: int) -> bool:
+    """Reject product/segment/regional context immediately governing a label."""
+    prefix = text[max(0, label_start - 80):label_start]
+    # Only the current clause is relevant; a scoped phrase in an earlier
+    # sentence must not poison a later consolidated financial table.
+    prefix_clause = re.split(r"[。；;\n\r]", prefix)[-1]
+    if any(token in prefix_clause for token in _SCOPED_METRIC_TOKENS):
+        return True
+
+    # Scope may also be encoded immediately after the label, for example
+    # “营业收入（铜产品）” or “营业收入：华东地区”. Inspect only the current
+    # clause and only text before its first number, so a later table row cannot
+    # contaminate a legitimate company-level year series such as
+    # “营业收入(亿元) 2021 ... 2025 ...”.
+    suffix = text[label_end:label_end + 80]
+    suffix_clause = re.split(r"[。；;\n\r]", suffix)[0]
+    suffix_before_number = re.split(r"\d", suffix_clause, maxsplit=1)[0]
+    return any(token in suffix_before_number for token in _SCOPED_METRIC_TOKENS)
+
+
 def _looks_like_non_metric_number(window: str, match: re.Match[str], fiscal_year: int) -> bool:
     """Reject obvious dates, percentages, years and page/sequence counters."""
     raw = match.group(0)
@@ -196,17 +234,55 @@ def _looks_like_non_metric_number(window: str, match: re.Match[str], fiscal_year
     return False
 
 
+def _measurement_payload(
+    *,
+    normalized: str,
+    label_match: re.Match[str],
+    number_match: re.Match[str],
+    raw_value: float,
+    unit: str,
+    unit_source: str,
+) -> dict[str, Any]:
+    # Evidence must start at the metric actually selected. Pulling preceding
+    # prose into the excerpt can re-introduce a rejected product subtotal (for
+    # example CMOC copper-product 550.96亿元) into otherwise correct company
+    # series provenance and makes the audit trail semantically ambiguous.
+    excerpt_start = label_match.start()
+    excerpt_end = min(len(normalized), label_match.end() + number_match.end() + 100)
+    return {
+        "value_yuan": raw_value * _UNIT_MULTIPLIERS[unit],
+        "raw_value": raw_value,
+        "unit": unit,
+        "unit_source": unit_source,
+        "verified": True,
+        "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+        "excerpt": normalized[excerpt_start:excerpt_end].strip()[:700],
+    }
+
+
 def _metric_measurement(
     text: str, labels: Iterable[str], fiscal_year: int
 ) -> dict[str, Any]:
-    """Extract a metric with explicit unit provenance and normalize it to yuan."""
+    """Extract a company-level metric with explicit unit provenance.
+
+    A year-indexed financial series attached to a metric label is preferred to
+    prose because it binds the requested fiscal year to its exact company-level
+    value. Product/segment/regional contexts are never eligible substitutes.
+    """
     normalized = str(text or "").replace("−", "-").replace("\u3000", " ")
     ambiguity_reasons: list[str] = []
 
     for label in labels:
         for label_match in re.finditer(re.escape(label), normalized):
+            if _metric_context_is_scoped(
+                normalized, label_match.start(), label_match.end()
+            ):
+                ambiguity_reasons.append("SCOPED_SUBTOTAL_NOT_COMPANY_METRIC")
+                continue
+
             label_start = label_match.start()
-            window = normalized[label_match.end():label_match.end() + 320]
+            label_unit = _metric_label_unit(normalized, label_match.end())
+            window = normalized[label_match.end():label_match.end() + 520]
             next_labels = [
                 pos
                 for metric_labels in _METRIC_LABELS.values()
@@ -217,6 +293,32 @@ def _metric_measurement(
             if next_labels:
                 window = window[:min(next_labels)]
             header_unit, header_reason = _nearby_header_unit(normalized, label_start)
+
+            # Prefer explicit year -> value pairs from financial-summary/table
+            # text when the metric label itself carries the unit. Requiring the
+            # year to NOT be followed by 年 prevents dates/narrative years from
+            # being interpreted as table coordinates.
+            if label_unit:
+                series_pattern = re.compile(
+                    rf"(?<!\d){int(fiscal_year)}(?!\d|年)\s*[:：]?\s*"
+                    rf"(?P<sign>[-−]?)(?P<number>(?:\d{{1,3}}(?:,\d{{3}})+|\d+)(?:\.\d+)?)"
+                )
+                series_match = series_pattern.search(window)
+                if series_match:
+                    declared_units = {unit for unit in (label_unit, header_unit) if unit}
+                    if len(declared_units) > 1:
+                        ambiguity_reasons.append("LABEL_HEADER_UNIT_CONFLICT")
+                    else:
+                        raw_token = (series_match.group("sign") or "") + series_match.group("number")
+                        raw_value = float(raw_token.replace(",", ""))
+                        return _measurement_payload(
+                            normalized=normalized,
+                            label_match=label_match,
+                            number_match=series_match,
+                            raw_value=raw_value,
+                            unit=label_unit,
+                            unit_source="METRIC_LABEL",
+                        )
 
             for match in _NUMBER_RE.finditer(window):
                 if _looks_like_non_metric_number(window, match, fiscal_year):
@@ -234,33 +336,32 @@ def _metric_measurement(
                     continue
                 local_unit = next(iter(local_units)) if local_units else None
 
-                declared_units = {unit for unit in (inline_unit, local_unit, header_unit) if unit}
+                declared_units = {
+                    unit for unit in (inline_unit, label_unit, local_unit, header_unit) if unit
+                }
                 if len(declared_units) > 1:
                     ambiguity_reasons.append("INLINE_HEADER_UNIT_CONFLICT")
                     continue
 
-                unit = inline_unit or local_unit or header_unit
+                unit = inline_unit or label_unit or local_unit or header_unit
                 if not unit:
                     ambiguity_reasons.append(header_reason)
                     continue
 
                 unit_source = (
                     "INLINE" if inline_unit
+                    else "METRIC_LABEL" if label_unit
                     else "LOCAL_HEADER" if local_unit
                     else header_reason
                 )
-                value_yuan = raw_value * _UNIT_MULTIPLIERS[unit]
-                excerpt_start = max(0, label_match.start() - 100)
-                excerpt_end = min(len(normalized), match.end() + 80)
-                return {
-                    "value_yuan": value_yuan,
-                    "raw_value": raw_value,
-                    "unit": unit,
-                    "unit_source": unit_source,
-                    "verified": True,
-                    "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                    "excerpt": normalized[excerpt_start:excerpt_end].strip()[:700],
-                }
+                return _measurement_payload(
+                    normalized=normalized,
+                    label_match=label_match,
+                    number_match=match,
+                    raw_value=raw_value,
+                    unit=unit,
+                    unit_source=unit_source,
+                )
 
     reason = ambiguity_reasons[0] if ambiguity_reasons else "METRIC_VALUE_NOT_FOUND"
     return {
@@ -300,7 +401,9 @@ def _metric_is_trusted(row: Mapping[str, Any], metric: str) -> bool:
     return bool(
         detail.get("verified")
         and detail.get("unit") in _UNIT_MULTIPLIERS
-        and detail.get("unit_source") in {"INLINE", "LOCAL_HEADER", "TABLE_HEADER"}
+        and detail.get("unit_source") in {
+            "INLINE", "METRIC_LABEL", "LOCAL_HEADER", "TABLE_HEADER"
+        }
         and detail.get("value_yuan") is not None
     )
 
