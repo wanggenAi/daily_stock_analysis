@@ -233,7 +233,11 @@ def _measurement_payload(
     unit: str,
     unit_source: str,
 ) -> dict[str, Any]:
-    excerpt_start = max(0, label_match.start() - 100)
+    # Evidence must start at the metric actually selected. Pulling preceding
+    # prose into the excerpt can re-introduce a rejected product subtotal (for
+    # example CMOC copper-product 550.96亿元) into otherwise correct company
+    # series provenance and makes the audit trail semantically ambiguous.
+    excerpt_start = label_match.start()
     excerpt_end = min(len(normalized), label_match.end() + number_match.end() + 100)
     return {
         "value_yuan": raw_value * _UNIT_MULTIPLIERS[unit],
