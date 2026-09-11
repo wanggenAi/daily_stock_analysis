@@ -31,7 +31,7 @@ on:
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 concurrency:
   group: genge-success-archetype-${{ github.event.workflow_run.id || github.run_id }}
@@ -209,6 +209,16 @@ jobs:
           path: reports/success_archetype_recall
           if-no-files-found: error
           retention-days: 30
+      - name: Dispatch Research Learning after recall artifact publication
+        if: env.RECALL_NOOP != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-research-learning.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Dispatched GenGe V3.1.1 Research Learning after Success Archetype Recall run ${GITHUB_RUN_ID}." >> "$GITHUB_STEP_SUMMARY"
       - name: Publish summary
         if: env.RECALL_NOOP != 'true'
         run: |
