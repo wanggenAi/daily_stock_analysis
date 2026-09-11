@@ -26,12 +26,14 @@ on:
       - "config/v31_explicit_deep_reviews.json"
       - "src/strategies/genge_opportunity_discovery/v31_automatic_deep_calculation.py"
       - "src/strategies/genge_opportunity_discovery/v31_deep_gap_closure.py"
+      - "src/strategies/genge_opportunity_discovery/v31_deep_gap_closure_optimized.py"
       - "src/strategies/genge_opportunity_discovery/deep_workset.py"
       - "src/strategies/genge_opportunity_discovery/evidence_collectors/multi_year_predictability.py"
       - "src/strategies/genge_opportunity_discovery/v31_explicit_deep_review.py"
       - "src/strategies/genge_opportunity_discovery/v31_deep_provenance_audit.py"
       - "tests/test_genge_v31_automatic_deep_calculation.py"
       - "tests/test_v31_deep_gap_closure.py"
+      - "tests/test_v31_deep_gap_closure_optimized.py"
       - "tests/test_v31_deep_workset.py"
       - "tests/test_v31_multi_year_predictability.py"
       - "tests/test_v31_deep_provenance_audit.py"
@@ -55,6 +57,7 @@ concurrency:
 env:
   TZ: Asia/Shanghai
   PYTHONUNBUFFERED: "1"
+  GEN_GE_DEEP_EVIDENCE_WORKERS: "4"
 
 jobs:
   contracts:
@@ -81,6 +84,7 @@ jobs:
             tests/test_genge_v31_explicit_deep_review.py \
             tests/test_genge_v31_automatic_deep_calculation.py \
             tests/test_v31_deep_gap_closure.py \
+            tests/test_v31_deep_gap_closure_optimized.py \
             tests/test_v31_deep_workset.py \
             tests/test_v31_multi_year_predictability.py \
             tests/test_v31_deep_provenance_audit.py \
@@ -89,7 +93,7 @@ jobs:
   deep-calculate:
     needs: contracts
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - name: Checkout current main
         uses: actions/checkout@v4
@@ -120,20 +124,14 @@ jobs:
                 audit_conclusion=$(printf '%s' "$audit_run" | jq -r '.conclusion // empty')
                 echo "GenGe V3.1 Deep Provenance Audit push run ${audit_id:-unknown}: status=${audit_status:-unknown} conclusion=${audit_conclusion:-pending}"
                 if [ "$audit_status" = "completed" ]; then
-                  [ "$audit_conclusion" = "success" ] || {
-                    echo "matching push provenance audit did not succeed" >&2
-                    exit 1
-                  }
+                  [ "$audit_conclusion" = "success" ] || exit 1
                   audit_completed=true
                   break
                 fi
               fi
               sleep 5
             done
-            [ "$audit_completed" = "true" ] || {
-              echo "matching push provenance audit did not complete within bounded synchronization window" >&2
-              exit 1
-            }
+            [ "$audit_completed" = "true" ] || exit 1
           fi
           echo "provenance_refresh=$provenance_refresh" >> "$GITHUB_OUTPUT"
 
@@ -175,12 +173,10 @@ jobs:
 
           research_run_id="${INPUT_RESEARCH_RUN_ID:-}"
           if [ -n "$research_run_id" ]; then
-            [[ "$research_run_id" =~ ^[0-9]+$ ]] || { echo "invalid research_run_id=$research_run_id" >&2; exit 1; }
-            require_research_run "$research_run_id" || { echo "requested Every-Industry run is not a valid successful main authority source" >&2; exit 1; }
+            [[ "$research_run_id" =~ ^[0-9]+$ ]] || exit 1
+            require_research_run "$research_run_id" || exit 1
           else
-            mapfile -t candidates < <(
-              gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?branch=main&status=success&per_page=40" --jq '.workflow_runs[].id'
-            )
+            mapfile -t candidates < <(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?branch=main&status=success&per_page=40" --jq '.workflow_runs[].id')
             for candidate in "${candidates[@]}"; do
               if require_research_run "$candidate"; then
                 research_run_id="$candidate"
@@ -195,11 +191,7 @@ jobs:
             if [ "${{ github.event_name }}" = "workflow_run" ]; then
               trigger_source="${WORKFLOW_RUN_NAME:-WORKFLOW_RUN}"
             elif [ "${{ github.event_name }}" = "push" ]; then
-              if [ "${PROVENANCE_REFRESH:-false}" = "true" ]; then
-                trigger_source="PROVENANCE_AUDIT_PUSH_REFRESH"
-              else
-                trigger_source="PUSH_CHANGE"
-              fi
+              if [ "${PROVENANCE_REFRESH:-false}" = "true" ]; then trigger_source="PROVENANCE_AUDIT_PUSH_REFRESH"; else trigger_source="PUSH_CHANGE"; fi
             else
               trigger_source="${{ github.event_name }}"
             fi
@@ -215,72 +207,50 @@ jobs:
           text=Path('CURRENT_HOLDINGS.md').read_text(encoding='utf-8') if Path('CURRENT_HOLDINGS.md').is_file() else ''
           in_confirmed=False
           for line in text.splitlines():
-              if line.strip() == '## Confirmed holdings':
-                  in_confirmed=True
-                  continue
-              if in_confirmed and line.startswith('## '):
-                  break
+              if line.strip() == '## Confirmed holdings': in_confirmed=True; continue
+              if in_confirmed and line.startswith('## '): break
               if in_confirmed and line.lstrip().startswith('|'):
                   cells=[x.strip() for x in line.strip().strip('|').split('|')]
-                  if len(cells) >= 5 and re.fullmatch(r'\d{6}', cells[0]) and cells[4].upper() == 'HELD':
-                      codes.append(cells[0])
+                  if len(cells) >= 5 and re.fullmatch(r'\d{6}', cells[0]) and cells[4].upper() == 'HELD': codes.append(cells[0])
           hourly=Path('data/hourly_research_state/latest.json')
           if hourly.is_file():
               try:
                   payload=json.loads(hourly.read_text(encoding='utf-8'))
                   for row in payload.get('rows') or []:
                       code=str(row.get('code') or '').zfill(6)
-                      if row.get('deep_review_priority') == 'RAISE' and code.isdigit() and len(code)==6:
-                          codes.append(code)
-              except Exception:
-                  pass
+                      if row.get('deep_review_priority') == 'RAISE' and code.isdigit() and len(code)==6: codes.append(code)
+              except Exception: pass
           priority=Path('data/research_priority/latest.json')
           if priority.is_file():
               try:
-                  payload=json.loads(priority.read_text(encoding='utf-8'))
-                  recall=[]
+                  payload=json.loads(priority.read_text(encoding='utf-8')); recall=[]
                   for row in payload.get('queue') or []:
                       code=str(row.get('code') or '').zfill(6)
-                      reason_codes={str(item) for item in (row.get('reason_codes') or [])}
-                      archetype_id=str(row.get('success_archetype_id') or '')
-                      score=row.get('success_archetype_similarity_score')
-                      if (
-                          'SUCCESS_ARCHETYPE_RECALL' in reason_codes
-                          and archetype_id
-                          and code.isdigit()
-                          and len(code)==6
-                      ):
-                          try:
-                              score_value=float(score)
-                          except (TypeError, ValueError):
-                              score_value=-1.0
-                          recall.append((score_value, code))
-                  recall.sort(key=lambda item: (-item[0], item[1]))
-                  codes.extend(code for _, code in recall)
-              except Exception:
-                  pass
+                      reasons={str(item) for item in (row.get('reason_codes') or [])}
+                      archetype=str(row.get('success_archetype_id') or '')
+                      if 'SUCCESS_ARCHETYPE_RECALL' in reasons and archetype and code.isdigit() and len(code)==6:
+                          try: score=float(row.get('success_archetype_similarity_score'))
+                          except (TypeError, ValueError): score=-1.0
+                          recall.append((score,code))
+                  recall.sort(key=lambda item:(-item[0],item[1])); codes.extend(code for _,code in recall)
+              except Exception: pass
           era=Path('data/era_radar/research_handoff/latest.json')
           if era.is_file():
               try:
                   payload=json.loads(era.read_text(encoding='utf-8'))
                   for row in payload.get('queue') or []:
                       code=str(row.get('code') or row.get('stock_code') or '').zfill(6)
-                      if code.isdigit() and len(code)==6:
-                          codes.append(code)
-              except Exception:
-                  pass
+                      if code.isdigit() and len(code)==6: codes.append(code)
+              except Exception: pass
           codes.extend(load_retained_deep_codes())
           print(','.join(dict.fromkeys(codes)))
           PY
             )
           fi
-
-          {
-            echo "research_run_id=${research_run_id}"
-            echo "requested_codes=${requested}"
-            echo "trigger_source=${trigger_source}"
-          } >> "$GITHUB_OUTPUT"
-          echo "Deep Calculation Lambda source Every-Industry=${research_run_id}; trigger=${trigger_source}; requested=${requested:-ALL}"
+          echo "research_run_id=$research_run_id" >> "$GITHUB_OUTPUT"
+          echo "requested_codes=$requested" >> "$GITHUB_OUTPUT"
+          echo "trigger_source=$trigger_source" >> "$GITHUB_OUTPUT"
+          echo "Deep Calculation Lambda source Every-Industry=$research_run_id; trigger=$trigger_source; requested=${requested:-ALL}"
 
       - name: Download exact Every-Industry artifact
         uses: actions/download-artifact@v4
@@ -298,10 +268,9 @@ jobs:
           mapfile -t candidates < <(find artifact -type f -path '*/v31_review_enriched/v31_review_queue_enriched.csv' -print)
           mapfile -t valuation_files < <(find artifact -type f -name valuation_research_queue.csv -print)
           [ "${#candidates[@]}" -eq 1 ] || { echo "expected exactly one enriched V3.1 queue; found ${#candidates[@]}" >&2; exit 1; }
-          [ "${#valuation_files[@]}" -ge 1 ] || { echo "valuation research queue missing from exact artifact" >&2; exit 1; }
-          valuation_root=$(dirname "${valuation_files[0]}")
+          [ "${#valuation_files[@]}" -ge 1 ] || { echo "valuation research queue missing" >&2; exit 1; }
           echo "CANDIDATE_CSV=${candidates[0]}" >> "$GITHUB_ENV"
-          echo "VALUATION_ROOT=${valuation_root}" >> "$GITHUB_ENV"
+          echo "VALUATION_ROOT=$(dirname "${valuation_files[0]}")" >> "$GITHUB_ENV"
 
       - name: Execute automatic deep calculation initial pass
         env:
@@ -319,12 +288,49 @@ jobs:
             --source-run-id "$RESEARCH_RUN_ID" \
             --trigger-source "$TRIGGER_SOURCE"
 
-      - name: Close unresolved gates with official evidence in the same Lambda
+      - name: Mark initial-pass checkpoint
+        env:
+          REQUESTED_CODES: ${{ steps.resolve.outputs.requested_codes }}
+          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root=Path('reports/deep_calculation_lambda')
+          payload={
+              'contract':'GEN_GE_V31_DEEP_INITIAL_CHECKPOINT_V1',
+              'run_id':os.environ['GITHUB_RUN_ID'],
+              'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'requested_codes':os.environ.get('REQUESTED_CODES',''),
+              'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),
+              'checkpoint':'INITIAL_PASS_COMPLETE',
+              'generated_at':datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+              'formal_trading_authority':False,
+              'automatic_formal_buy_allowed':False,
+              'unknown_is_pass':False,
+              'no_auto_trade':True,
+          }
+          (root/'initial_checkpoint_status.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+
+      - name: Upload initial-pass checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v31-deep-initial-${{ github.run_id }}
+          path: reports/deep_calculation_lambda
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Close unresolved gates with optimized quality-preserving official evidence
+        id: closure
+        continue-on-error: true
+        timeout-minutes: 75
         env:
           REQUESTED_CODES: ${{ steps.resolve.outputs.requested_codes }}
         run: |
           set -euo pipefail
-          python -m src.strategies.genge_opportunity_discovery.v31_deep_gap_closure \
+          python -m src.strategies.genge_opportunity_discovery.v31_deep_gap_closure_optimized \
             --profiles-json reports/deep_calculation_lambda/deep_review_profiles.json \
             --candidate-csv "$CANDIDATE_CSV" \
             --output-dir reports/deep_calculation_lambda \
@@ -333,6 +339,7 @@ jobs:
             --as-of "$(date -u +%F)"
 
       - name: Finalize Lambda observability contract
+        if: steps.closure.outcome == 'success'
         env:
           RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
           TRIGGER_SOURCE: ${{ steps.resolve.outputs.trigger_source }}
@@ -343,19 +350,11 @@ jobs:
           from pathlib import Path
           p=Path('reports/deep_calculation_lambda/deep_calculation_status.json')
           status=json.loads(p.read_text(encoding='utf-8'))
-          status['source_run_id']=os.environ.get('RESEARCH_RUN_ID','')
-          status['trigger_source']=os.environ.get('TRIGGER_SOURCE','')
-          status['lambda_run_id']=os.environ['GITHUB_RUN_ID']
-          status['lambda_run_attempt']=os.environ.get('GITHUB_RUN_ATTEMPT','1')
-          status['lambda_workflow']='GenGe V3.1 Deep Calculation Lambda'
-          status['run_state']='COMPLETED'
+          status.update({'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),'trigger_source':os.environ.get('TRIGGER_SOURCE',''),'lambda_run_id':os.environ['GITHUB_RUN_ID'],'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),'lambda_workflow':'GenGe V3.1 Deep Calculation Lambda','run_state':'COMPLETED','runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1'})
           p.write_text(json.dumps(status,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           profiles_path=Path('reports/deep_calculation_lambda/deep_review_profiles.json')
           profiles=json.loads(profiles_path.read_text(encoding='utf-8'))
-          profiles['source_run_id']=os.environ.get('RESEARCH_RUN_ID','')
-          profiles['trigger_source']=os.environ.get('TRIGGER_SOURCE','')
-          profiles['lambda_run_id']=os.environ['GITHUB_RUN_ID']
-          profiles['run_state']='COMPLETED'
+          profiles.update({'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),'trigger_source':os.environ.get('TRIGGER_SOURCE',''),'lambda_run_id':os.environ['GITHUB_RUN_ID'],'run_state':'COMPLETED','runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1'})
           profiles_path.write_text(json.dumps(profiles,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           assert status['execution_status']=='SUCCESS'
           assert status['research_terminal_state'] in {'COMPLETE','EVIDENCE_EXHAUSTED'}
@@ -364,10 +363,10 @@ jobs:
           assert status['automatic_formal_buy_allowed'] is False
           assert status['formal_trading_authority'] is False
           assert status['no_auto_trade'] is True
-          print(json.dumps(status,ensure_ascii=False,indent=2))
           PY
 
-      - name: Persist completed deep-calculation state with optimistic replay
+      - name: Persist terminal deep-calculation state with optimistic replay
+        if: steps.closure.outcome == 'success'
         shell: bash
         run: |
           set -euo pipefail
@@ -378,11 +377,8 @@ jobs:
           cp reports/deep_calculation_lambda/gap_closure_evidence.json /tmp/genge-deep-calc/latest_evidence.json
           git config user.name "genge-deep-calc-lambda-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-
           for attempt in 1 2 3 4; do
-            echo "deep-calculation persistence replay ${attempt}/4"
-            git fetch origin main
-            git reset --hard origin/main
+            git fetch origin main; git reset --hard origin/main
             mkdir -p data/deep_calculation/history
             cp /tmp/genge-deep-calc/latest_status.json data/deep_calculation/latest_status.json
             cp /tmp/genge-deep-calc/latest_profiles.json data/deep_calculation/latest_profiles.json
@@ -391,18 +387,61 @@ jobs:
             cp /tmp/genge-deep-calc/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
             cp /tmp/genge-deep-calc/latest_evidence.json "data/deep_calculation/history/${GITHUB_RUN_ID}.evidence.json"
             git add -f data/deep_calculation
-            if git diff --cached --quiet; then
-              echo "Deep-calculation state already current"
-              exit 0
-            fi
+            git diff --cached --quiet && exit 0
             git commit -m "Persist terminal deep calculation ${GITHUB_RUN_ID} [skip ci]"
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            echo "main moved while persisting deep calculation; replaying" >&2
+            git push origin HEAD:main && exit 0
           done
-          echo "deep-calculation persistence failed after optimistic replay" >&2
           exit 1
+
+      - name: Persist partial checkpoint when closure is incomplete
+        if: steps.closure.outcome != 'success'
+        continue-on-error: true
+        env:
+          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
+          TRIGGER_SOURCE: ${{ steps.resolve.outputs.trigger_source }}
+        run: |
+          set -u
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root=Path('reports/deep_calculation_lambda')
+          payload={
+              'contract':'GEN_GE_V31_DEEP_PARTIAL_CHECKPOINT_V1',
+              'execution_status':'PARTIAL',
+              'research_terminal_state':'NOT_COMPLETED',
+              'research_outcome':'INITIAL_PASS_PRESERVED',
+              'generated_at':datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+              'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),
+              'trigger_source':os.environ.get('TRIGGER_SOURCE',''),
+              'lambda_run_id':os.environ.get('GITHUB_RUN_ID',''),
+              'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'initial_pass_complete':(root/'initial_checkpoint_status.json').is_file(),
+              'runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1',
+              'formal_trading_authority':False,
+              'automatic_formal_buy_allowed':False,
+              'unknown_is_pass':False,
+              'no_auto_trade':True,
+          }
+          (root/'partial_status.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+          mkdir -p /tmp/genge-deep-partial
+          cp reports/deep_calculation_lambda/partial_status.json /tmp/genge-deep-partial/status.json
+          cp reports/deep_calculation_lambda/deep_review_profiles.json /tmp/genge-deep-partial/profiles.json
+          git config user.name "genge-deep-calc-lambda-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch origin main || continue; git reset --hard origin/main || continue
+            mkdir -p "data/deep_calculation/partial/${GITHUB_RUN_ID}"
+            cp /tmp/genge-deep-partial/status.json "data/deep_calculation/partial/${GITHUB_RUN_ID}/status.json"
+            cp /tmp/genge-deep-partial/profiles.json "data/deep_calculation/partial/${GITHUB_RUN_ID}/profiles.json"
+            cp /tmp/genge-deep-partial/status.json data/deep_calculation/latest_partial_status.json
+            git add -f data/deep_calculation/partial data/deep_calculation/latest_partial_status.json
+            git diff --cached --quiet && exit 0
+            git commit -m "Persist partial deep calculation ${GITHUB_RUN_ID} [skip ci]" || exit 0
+            git push origin HEAD:main && exit 0
+          done
+          exit 0
 
       - name: Upload Deep Calculation Lambda artifact
         if: always()
@@ -414,58 +453,11 @@ jobs:
           retention-days: 30
 
       - name: Refresh three-pillar decision center immediately
-        if: success()
+        if: steps.closure.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
-
-      - name: Persist failure status
-        if: failure()
-        continue-on-error: true
-        shell: bash
-        env:
-          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
-          TRIGGER_SOURCE: ${{ steps.resolve.outputs.trigger_source }}
-        run: |
-          set -u
-          mkdir -p /tmp/genge-deep-failure
-          python - <<'PY'
-          import json, os
-          from datetime import datetime, timezone
-          from pathlib import Path
-          payload={
-              'contract':'GEN_GE_V31_DEEP_GAP_CLOSURE_V1',
-              'execution_status':'FAILURE',
-              'research_terminal_state':'NOT_COMPLETED',
-              'research_outcome':'NOT_COMPLETED',
-              'generated_at':datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
-              'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),
-              'trigger_source':os.environ.get('TRIGGER_SOURCE','') or os.environ.get('GITHUB_EVENT_NAME',''),
-              'lambda_run_id':os.environ.get('GITHUB_RUN_ID',''),
-              'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
-              'run_state':'COMPLETED',
-              'immediate_retry_required':False,
-              'unknown_is_pass':False,
-              'automatic_formal_buy_allowed':False,
-              'formal_trading_authority':False,
-              'no_auto_trade':True,
-          }
-          Path('/tmp/genge-deep-failure/latest_status.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          PY
-          git config user.name "genge-deep-calc-lambda-bot"
-          git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          for attempt in 1 2 3; do
-            git fetch origin main || continue
-            git reset --hard origin/main || continue
-            mkdir -p data/deep_calculation/history
-            cp /tmp/genge-deep-failure/latest_status.json data/deep_calculation/latest_status.json
-            cp /tmp/genge-deep-failure/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
-            git add -f data/deep_calculation/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
-            git commit -m "Persist failed deep calculation ${GITHUB_RUN_ID} [skip ci]" || exit 0
-            git push origin HEAD:main && exit 0
-          done
-          exit 0
 
       - name: Publish Lambda status
         if: always()
@@ -475,10 +467,15 @@ jobs:
           echo "- trigger: \`${{ steps.resolve.outputs.trigger_source }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- Every-Industry source: \`${{ steps.resolve.outputs.research_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
           echo "- requested codes: \`${{ steps.resolve.outputs.requested_codes }}\`" >> "$GITHUB_STEP_SUMMARY"
-          if [ -f reports/deep_calculation_lambda/deep_calculation_status.json ]; then
-            cat reports/deep_calculation_lambda/deep_calculation.md >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "- execution: **FAILURE / NOT_COMPLETED**" >> "$GITHUB_STEP_SUMMARY"
-          fi
-          echo "- same-run closure: initial calculation -> official evidence collection -> terminal COMPLETE/EVIDENCE_EXHAUSTED" >> "$GITHUB_STEP_SUMMARY"
-          echo "- UNKNOWN != PASS; no automatic Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
+          echo "- initial checkpoint: **uploaded before evidence closure**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- evidence workers: **${GEN_GE_DEEP_EVIDENCE_WORKERS}**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- closure hard limit: **75 minutes**; job safety limit: **120 minutes**" >> "$GITHUB_STEP_SUMMARY"
+          echo "- closure outcome: **${{ steps.closure.outcome }}**" >> "$GITHUB_STEP_SUMMARY"
+          if [ -f reports/deep_calculation_lambda/deep_calculation.md ]; then cat reports/deep_calculation_lambda/deep_calculation.md >> "$GITHUB_STEP_SUMMARY"; fi
+          echo "- evidence thresholds/source depth/gate rules unchanged; UNKNOWN != PASS; no automatic Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Fail closed if official-evidence closure did not terminate
+        if: steps.closure.outcome != 'success'
+        run: |
+          echo "Official-evidence closure did not terminate successfully; initial checkpoint is preserved but no terminal authority is created." >&2
+          exit 1
