@@ -95,44 +95,52 @@ def test_runbei_signal_digest_changes_when_similarity_band_changes() -> None:
     assert first["signal_digest"] != second["signal_digest"]
 
 
-def test_success_archetype_workflow_run_keeps_exact_request_and_audits_fallback() -> None:
+def test_success_archetype_workflow_uses_exact_runtime_resolver() -> None:
     text = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
-    assert 'requested_run="${{ github.event.workflow_run.id }}"' in text
-    assert 'source_mode="workflow_run_exact"' in text
-    assert 'verify_successful_main_candidate_run "$requested_run"' in text
-    assert "requested_created_at=\"$(run_payload \"$requested_run\" | jq -r '.created_at')\"" in text
-    assert 'fallback_used="true"' in text
-    assert 'fallback_reason="terminalize_skipped_noop_wrapper"' in text
-    assert '.created_at <= $cutoff' in text
-    assert 'TERMINAL_REQUESTED_RUN_ID=${requested_run:-$SELECTED_RUN}' in text
-    assert 'TERMINAL_RUN_ID=$SELECTED_RUN' in text
+    assert 'requested="${{ github.event.workflow_run.id }}"' in text
+    assert "terminal_producer_runtime" in text
+    assert '--requested-run-id "$requested"' in text
+    assert "TERMINAL_RESOLUTION_STATUS == 'SELECTED'" in text
+    assert "TERMINAL_RESOLUTION_STATUS == 'NOT_FOUND'" in text
     assert "lineage_provenance.json" in text
+    assert "stale_global_fallback_allowed" in text
 
 
-def test_success_archetype_only_falls_back_for_confirmed_skipped_noop_and_other_missing_artifacts_fail_closed() -> None:
+def test_success_archetype_forbids_old_chronological_global_fallback() -> None:
+    workflow = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
+    runtime = Path("src/strategies/genge_opportunity_discovery/terminal_producer_runtime.py").read_text(encoding="utf-8")
+    pure = Path("src/strategies/genge_opportunity_discovery/terminal_producer_lineage.py").read_text(encoding="utf-8")
+
+    assert 'fallback_reason="terminalize_skipped_noop_wrapper"' not in workflow
+    assert '.created_at <= $cutoff' not in workflow
+    assert 'RECALL_NOOP=true' not in workflow
+    assert "latest successful run" in pure
+    assert "There is deliberately no chronological" in pure
+    assert "stale/global fallback forbidden" in runtime
+    assert "MAX_LINEAGE_HOPS = 12" in runtime
+    assert "MAX_INSPECTED_RUNS = 100" in runtime
+
+
+def test_success_archetype_validates_terminal_artifact_schema_identity_and_provenance() -> None:
+    runtime = Path("src/strategies/genge_opportunity_discovery/terminal_producer_runtime.py").read_text(encoding="utf-8")
+    assert "candidate_terminal_decisions.csv" in runtime
+    assert "candidate_terminal_summary.json" in runtime
+    assert "terminal_lineage.json" in runtime
+    assert "candidate count mismatch" in runtime
+    assert "terminal CSV schema incomplete" in runtime
+    assert "terminal lineage manifest does not match producing run metadata" in runtime
+    assert "_candidate_identity" in runtime
+    assert "formal_authority_unchanged" in runtime
+    assert "hard_gate_unknown_is_pass" in runtime
+    assert "no_auto_trade" in runtime
+
+
+def test_success_archetype_not_found_is_explicit_resolution_not_fake_recall() -> None:
     text = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
-    resolve = text.split("- name: Resolve Terminal Review artifact with auditable no-op fallback", 1)[1].split(
-        "- name: Build bounded PIT-safe Runbei archetype recall", 1
-    )[0]
-    assert 'select(.name == "terminalize") | .conclusion' in resolve
-    assert 'if [ "$requested_terminalize" != "skipped" ]; then' in resolve
-    assert "has no usable terminal artifact and terminalize=${requested_terminalize}; fail closed" in resolve
-    assert 'fallback_reason="terminalize_skipped_noop_wrapper"' in resolve
-    assert "confirmed no-op wrapper" in resolve
-    assert 'if [ "${#ids[@]}" -eq 1 ] && [ "$conclusion" = "success" ]; then' in resolve
-    assert "No prior successful Candidate Terminal real producer" in resolve
-    assert 'RECALL_NOOP=true' not in resolve
-    assert "intentional exact-lineage no-op" not in resolve
+    assert "Publish exhausted-lineage resolution artifact" in text
+    assert "genge-success-archetype-resolution-" in text
+    assert "Upload success-archetype research artifact" in text
+    assert "if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'" in text
     assert "if: env.RECALL_NOOP != 'true'" not in text
     assert "'canonical_authority_unchanged': True" in text
     assert "'no_auto_trade': True" in text
-
-
-def test_success_archetype_uses_standard_jq_for_runtime_variables() -> None:
-    text = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
-    resolve = text.split("- name: Resolve Terminal Review artifact with auditable no-op fallback", 1)[1].split(
-        "- name: Build bounded PIT-safe Runbei archetype recall", 1
-    )[0]
-    assert "--jq --arg" not in resolve
-    assert '| jq -r --arg name "$artifact_name"' in resolve
-    assert '| jq -r --arg cutoff "$requested_created_at" --arg requested "$requested_run"' in resolve
