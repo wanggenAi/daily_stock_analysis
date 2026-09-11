@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-11T03:16:34+00:00",
+  "generated_at": "2026-09-11T03:22:47+00:00",
   "canonical_snapshot_id": "d053cb5e5eba6bb2b2ff",
   "canonical_source_run_id": "34549787479",
   "latest_trade_date": "2026-09-10",
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
+  "headline": "市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥1901",
   "market": {
     "as_of_date": "2026-09-10",
     "status": "YELLOW",
@@ -192,11 +192,11 @@
         "action_lifecycle": "UNCHANGED",
         "previous_formal_action": "HOLD",
         "action_lifecycle_basis": "PREVIOUS_PERSISTED_DASHBOARD",
-        "investor_action": "继续持有；当前Canonical的一手加仓授权已执行完毕，等待新Canonical重新授权",
+        "investor_action": "继续持有；可分批加仓1手",
         "execution_feasibility": null,
-        "holding_add_authorized": false,
+        "holding_add_authorized": true,
         "holding_add_max_lots": 1,
-        "holding_add_reason_codes": "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED;VALUATION_CONFIDENCE_HIGH;A_LEVEL_MARGIN_OF_SAFETY_PASS;price_to_neutral=0.676<=0.75;NO_KNOWN_HARD_GATE_FAILURE;STAGED_ADD_CAP_ONE_LOT;STAGED_ADD_NOT_FORMAL_BUY;FORMAL_ACTION_UNCHANGED;HARD_GATE_UNKNOWNS_RETAINED:predictability,long_term_demand,moat,financial_safety,earnings_authenticity;STAGED_ADD_AUTHORIZATION_CONSUMED",
+        "holding_add_reason_codes": "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED;VALUATION_CONFIDENCE_HIGH;A_LEVEL_MARGIN_OF_SAFETY_PASS;price_to_neutral=0.676<=0.75;NO_KNOWN_HARD_GATE_FAILURE;STAGED_ADD_CAP_ONE_LOT;STAGED_ADD_NOT_FORMAL_BUY;FORMAL_ACTION_UNCHANGED;HARD_GATE_UNKNOWNS_RETAINED:predictability,long_term_demand,moat,financial_safety,earnings_authenticity",
         "value_low": null,
         "neutral_value": 28.12766979232306,
         "value_high": null,
@@ -216,18 +216,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
-        "holding_add_consumption": {
-          "status": "CONSUMED",
-          "canonical_snapshot_id": "d053cb5e5eba6bb2b2ff",
-          "canonical_source_run_id": "34549787479",
-          "consumed_shares": 100,
-          "allowance_shares": 100,
-          "consumed_at": "2026-09-11T10:13:55+08:00",
-          "authority": "EXECUTION_STATE_ONLY",
-          "formal_action_mutation_allowed": false,
-          "no_auto_trade": true
-        }
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD"
       }
     ]
   },
@@ -246,9 +235,27 @@
     "capital_as_of": "2026-09-11T11:00:22+08:00",
     "deployment_budget_cny": 29500.0,
     "effective_max_deployment_ratio": 0.5,
-    "planned_immediate_cash_cny": 0,
-    "cash_after_immediate_plan_cny": 59000.0,
-    "operations": [],
+    "planned_immediate_cash_cny": 1901.0,
+    "cash_after_immediate_plan_cny": 57099.0,
+    "operations": [
+      {
+        "code": "603993",
+        "name": "洛阳钼业",
+        "action": "ADD",
+        "current_price": 19.01,
+        "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
+        "authorization_proven": true,
+        "planned_shares": 100,
+        "first_tranche_shares": 100,
+        "first_entry_max_price": 19.01,
+        "second_tranche_shares": 0,
+        "second_entry_max_price": null,
+        "estimated_cash_cny": 1901.0,
+        "immediate_execution_eligible": true,
+        "automatic_order_allowed": false,
+        "no_auto_trade": true
+      }
+    ],
     "wait_price_reservations": [],
     "planner_config": {
       "max_deployment_ratio": 0.7,
@@ -265,7 +272,25 @@
     "automatic_order_allowed": false,
     "no_auto_trade": true
   },
-  "final_operation_table": [],
+  "final_operation_table": [
+    {
+      "code": "603993",
+      "name": "洛阳钼业",
+      "action": "ADD",
+      "current_price": 19.01,
+      "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
+      "authorization_proven": true,
+      "planned_shares": 100,
+      "first_tranche_shares": 100,
+      "first_entry_max_price": 19.01,
+      "second_tranche_shares": 0,
+      "second_entry_max_price": null,
+      "estimated_cash_cny": 1901.0,
+      "immediate_execution_eligible": true,
+      "automatic_order_allowed": false,
+      "no_auto_trade": true
+    }
+  ],
   "decision_summary": {
     "holding_count": 4,
     "formal_action_counts": {
@@ -280,7 +305,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 500,
-    "planned_immediate_cash_cny": 0
+    "planned_immediate_cash_cny": 1901.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -363,22 +388,5 @@
       "data_health"
     ],
     "engineering_details_are_secondary": true
-  },
-  "execution_consumption_reconciliation": {
-    "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "d053cb5e5eba6bb2b2ff",
-    "canonical_source_run_id": "34549787479",
-    "matching_consumption_count": 1,
-    "applied_consumption_count": 1,
-    "applied": [
-      {
-        "code": "603993",
-        "consumed_shares": 100,
-        "allowance_shares": 100
-      }
-    ],
-    "formal_action_mutation_allowed": false,
-    "automatic_order_allowed": false,
-    "no_auto_trade": true
   }
 }
