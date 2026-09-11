@@ -1,4 +1,5 @@
 {
+  "all_pass_gates_have_verified_evidence": true,
   "automatic_formal_buy_allowed": false,
   "complete_requested_count": 0,
   "contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
@@ -92,10 +93,23 @@
   },
   "evidence_exhausted_requested_count": 39,
   "execution_status": "SUCCESS",
+  "fail_gate_count": 5,
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
+  "gate_source_counts": {
+    "AUTOMATIC_ATTEMPT": 1496,
+    "AUTOMATIC_MACHINE": 995,
+    "AUTOMATIC_STRICT_MULTI_YEAR_OFFICIAL_EVIDENCE_CLOSURE": 1,
+    "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE": 3,
+    "EXPLICIT_VERIFIED": 5
+  },
   "generated_at": "2026-09-11T00:27:42+00:00",
+  "hard_gate_count": 2500,
   "immediate_retry_required": false,
+  "initial_reverified_upstream_pass_count": 4,
+  "initial_unverified_pass_downgraded_count": 0,
+  "initial_unverified_pass_gate_count": 0,
+  "initial_verified_pass_gate_count": 232,
   "lambda_run_attempt": "1",
   "lambda_run_id": "34545008733",
   "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
@@ -103,8 +117,17 @@
   "material_event_pass_override_count": 2,
   "new_evidence_count": 120,
   "no_auto_trade": true,
+  "pass_gate_count": 231,
   "predictability_resolved_gate_count": 1,
+  "profile_count": 500,
   "progressed_gate_count": 4,
+  "provenance_audit_complete": true,
+  "provenance_audit_contract": "GEN_GE_V31_DEEP_PROVENANCE_AUDIT_V1",
+  "provenance_audit_event": "workflow_run",
+  "provenance_audit_generated_at": "2026-09-11T00:28:57+00:00",
+  "provenance_audit_run_attempt": "1",
+  "provenance_audit_run_id": "34546595064",
+  "provenance_audit_workflow": "GenGe V3.1 Deep Provenance Audit",
   "requested_count": 39,
   "research_outcome": "EVIDENCE_EXHAUSTED",
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
@@ -112,6 +135,7 @@
   "run_state": "COMPLETED",
   "source_run_id": "34519442800",
   "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
+  "unknown_gate_count": 2264,
   "unknown_is_pass": false,
   "unresolved_reasons": {
     "000526": {
@@ -338,5 +362,7 @@
       "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
     }
   },
-  "unresolved_requested_gate_count": 145
+  "unresolved_requested_gate_count": 145,
+  "unverified_pass_gate_count": 0,
+  "verified_pass_gate_count": 231
 }
