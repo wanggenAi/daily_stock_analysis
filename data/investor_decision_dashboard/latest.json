@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "EVENT",
-  "generated_at": "2026-09-11T06:09:39+00:00",
+  "mode": "FOLLOWUP",
+  "generated_at": "2026-09-11T06:30:22+00:00",
   "canonical_snapshot_id": "eb7e2299ee0b937954d6",
   "canonical_source_run_id": "34564630742",
   "latest_trade_date": "2026-09-10",
@@ -25,11 +25,11 @@
     "as_of_date": "2026-09-10",
     "status": "YELLOW",
     "allow_new_buy": true,
-    "external_risk_level": "MEDIUM",
+    "external_risk_level": "LOW",
     "data_quality": "OK",
     "limit_up_count": 34,
     "limit_down_count": 14,
-    "score": 41.54,
+    "score": 44.54,
     "position_multiplier": 0.5,
     "advance_ratio": 0.178,
     "median_return_1d_pct": -1.3968,
@@ -37,8 +37,7 @@
     "above_ma60_ratio": 0.5491,
     "distribution_ratio": 0.0596,
     "risk_reasons": [
-      "weak_market_breadth",
-      "external_market_risk_medium"
+      "weak_market_breadth"
     ]
   },
   "stock_portfolio": {
@@ -101,7 +100,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-11T13:24:26+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 2713
+        "price_age_seconds": 3956
       },
       {
         "code": "001316",
@@ -146,7 +145,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-11T13:24:21+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 2718
+        "price_age_seconds": 3961
       },
       {
         "code": "601318",
@@ -191,7 +190,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-11T13:24:24+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 2715
+        "price_age_seconds": 3958
       },
       {
         "code": "603993",
@@ -236,7 +235,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-11T13:24:24+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 2715
+        "price_age_seconds": 3958
       }
     ]
   },
@@ -386,26 +385,8 @@
     "rows": []
   },
   "event_review": {
-    "triggered": true,
-    "trigger_codes": [
-      "603993",
-      "001316",
-      "601318",
-      "603055",
-      "600309",
-      "002239",
-      "600315",
-      "600754",
-      "601375",
-      "000526",
-      "002120",
-      "600918",
-      "603596",
-      "000589",
-      "002832",
-      "600095",
-      "600155"
-    ]
+    "triggered": false,
+    "trigger_codes": []
   },
   "hourly_context": {
     "available": true,
