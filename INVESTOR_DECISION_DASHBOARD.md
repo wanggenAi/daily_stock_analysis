@@ -12,7 +12,7 @@
 ## 2. 我的持仓怎么办
 
 - 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。
-| 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作 | 动作状态 | 现在怎么办 |
+| 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作/权限 | 动作状态 | 现在怎么办 |
 |---|---:|---:|---:|---:|---|---|---|
 | 国电南瑞 600406 | 200 | 23.13 | 22.49 | -2.75 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
 | 润贝航科 001316 | 200 | 25.75 | 29.73 | 15.48 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
@@ -35,7 +35,7 @@
 
 - 可规划现金：**¥60000.00**；最高部署预算：**¥30000.00**
 - 计划立即投入：**¥1901.00**；计划后现金：**¥58099.00**
-- 只有 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。
+- 只有当前可用 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。
 
 ## 6. 最终操作表
 
@@ -53,8 +53,9 @@ J66货币金融服务(STRONG)、M75科技推广和应用服务业(STRONG)、J67�
 
 ## 9. 系统状态（最后看）
 
-- Canonical：**正常**；Terminal：**可用**；资金源：**USER_CONFIRMED_FLOOR**
+- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**可用**；资金源：**USER_CONFIRMED_FLOOR**
 - Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。
+- Profit Protection Overlay 只展示盈利与价值/风险上下文；**profit alone 不是 SELL rationale，overlay 不得改写 Formal Action。**
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
