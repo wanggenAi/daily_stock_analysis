@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-11T14:51:25+00:00",
+  "generated_at": "2026-09-11T15:48:22+00:00",
   "canonical_snapshot_id": "d95ae28f38fc62d1ae78",
   "canonical_source_run_id": "34602073414",
   "latest_trade_date": "2026-09-10",
@@ -20,24 +20,25 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1901；盘中价覆盖=0",
+  "headline": "市场=RED；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0",
   "market": {
-    "as_of_date": "2026-09-10",
-    "status": "YELLOW",
-    "allow_new_buy": true,
+    "as_of_date": "2026-09-11",
+    "status": "RED",
+    "allow_new_buy": false,
     "external_risk_level": "LOW",
     "data_quality": "OK",
-    "limit_up_count": 34,
-    "limit_down_count": 14,
-    "score": 44.54,
-    "position_multiplier": 0.5,
-    "advance_ratio": 0.178,
-    "median_return_1d_pct": -1.3968,
-    "above_ma20_ratio": 0.4606,
-    "above_ma60_ratio": 0.5491,
-    "distribution_ratio": 0.0596,
+    "limit_up_count": 39,
+    "limit_down_count": 25,
+    "score": 35.29,
+    "position_multiplier": 0.0,
+    "advance_ratio": 0.1144,
+    "median_return_1d_pct": -2.1835,
+    "above_ma20_ratio": 0.2826,
+    "above_ma60_ratio": 0.4563,
+    "distribution_ratio": 0.137,
     "risk_reasons": [
-      "weak_market_breadth"
+      "weak_market_breadth",
+      "negative_median_return"
     ]
   },
   "stock_portfolio": {
@@ -236,10 +237,10 @@
     "status": "READY",
     "available_cash_cny": 59000.0,
     "capital_as_of": "2026-09-11T11:00:22+08:00",
-    "deployment_budget_cny": 29500.0,
-    "effective_max_deployment_ratio": 0.5,
-    "planned_immediate_cash_cny": 1901.0,
-    "cash_after_immediate_plan_cny": 57099.0,
+    "deployment_budget_cny": 0.0,
+    "effective_max_deployment_ratio": 0.0,
+    "planned_immediate_cash_cny": 0.0,
+    "cash_after_immediate_plan_cny": 59000.0,
     "operations": [
       {
         "code": "603993",
@@ -248,13 +249,13 @@
         "current_price": 19.01,
         "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
         "authorization_proven": true,
-        "planned_shares": 100,
-        "first_tranche_shares": 100,
+        "planned_shares": 0,
+        "first_tranche_shares": 0,
         "first_entry_max_price": 19.01,
         "second_tranche_shares": 0,
         "second_entry_max_price": null,
-        "estimated_cash_cny": 1901.0,
-        "immediate_execution_eligible": true,
+        "estimated_cash_cny": 0.0,
+        "immediate_execution_eligible": false,
         "automatic_order_allowed": false,
         "no_auto_trade": true,
         "live_market_price": 19.01,
@@ -287,13 +288,13 @@
       "current_price": 19.01,
       "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
       "authorization_proven": true,
-      "planned_shares": 100,
-      "first_tranche_shares": 100,
+      "planned_shares": 0,
+      "first_tranche_shares": 0,
       "first_entry_max_price": 19.01,
       "second_tranche_shares": 0,
       "second_entry_max_price": null,
-      "estimated_cash_cny": 1901.0,
-      "immediate_execution_eligible": true,
+      "estimated_cash_cny": 0.0,
+      "immediate_execution_eligible": false,
       "automatic_order_allowed": false,
       "no_auto_trade": true,
       "live_market_price": 19.01,
@@ -316,51 +317,51 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 500,
-    "planned_immediate_cash_cny": 1901.0
+    "planned_immediate_cash_cny": 0.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
     "method": "MARKET_BEHAVIOR_PROXY",
     "strongest_industries": [
       {
-        "industry": "J66货币金融服务",
-        "status": "STRONG",
-        "score": 90.45
+        "industry": "R87广播、电视、电影和录音制作业",
+        "status": "NEUTRAL",
+        "score": 58.62
       },
       {
         "industry": "M75科技推广和应用服务业",
-        "status": "STRONG",
-        "score": 90.2
-      },
-      {
-        "industry": "J67资本市场服务",
-        "status": "STRONG",
-        "score": 80.16
-      },
-      {
-        "industry": "J68保险业",
-        "status": "STRONG",
-        "score": 79.5
+        "status": "NEUTRAL",
+        "score": 58.1
       },
       {
         "industry": "G60邮政业",
-        "status": "STRONG",
-        "score": 79.15
+        "status": "NEUTRAL",
+        "score": 55.18
       },
       {
-        "industry": "J69其他金融业",
-        "status": "STRONG",
-        "score": 74.73
+        "industry": "I63电信、广播电视和卫星传输服务",
+        "status": "NEUTRAL",
+        "score": 54.84
       },
       {
         "industry": "D44电力、热力生产和供应业",
-        "status": "STRONG",
-        "score": 70.46
+        "status": "NEUTRAL",
+        "score": 53.76
       },
       {
-        "industry": "E47房屋建筑业",
-        "status": "STRONG",
-        "score": 65.36
+        "industry": "C41其他制造业",
+        "status": "NEUTRAL",
+        "score": 50.81
+      },
+      {
+        "industry": "J66货币金融服务",
+        "status": "NEUTRAL",
+        "score": 50.34
+      },
+      {
+        "industry": "A05农、林、牧、渔专业及辅助性活动",
+        "status": "CRISIS",
+        "score": 48.49
       }
     ]
   },
