@@ -5,11 +5,15 @@ on:
     workflows:
       - "GenGe V3.1.1 Operating Ledger"
       - "GenGe Near-BUY Evidence Recovery"
-      - "GenGe Success Archetype Recall"
     types: [completed]
   schedule:
     - cron: "15 9 * * 1-5"
   workflow_dispatch:
+    inputs:
+      success_archetype_run_id:
+        description: "Exact Success Archetype Recall run id whose published artifact must be consumed."
+        required: false
+        type: string
   push:
     branches: [main]
     paths:
@@ -36,6 +40,7 @@ on:
       - "tests/test_genge_hourly_research_state.py"
       - "tests/test_genge_v31_review_priority_order.py"
       - "tests/test_genge_production_observability.py"
+      - "tests/test_genge_success_archetype_exact_handoff.py"
 
 permissions:
   contents: write
@@ -122,46 +127,94 @@ jobs:
           echo "NEAR_BUY_RECOVERY_FILE=$recovery_file" >> "$GITHUB_ENV"
           echo "NEAR_BUY_RECOVERY_RUN_ID=$selected_run" >> "$GITHUB_ENV"
 
-      - name: Resolve latest success-archetype recall artifact
+      - name: Resolve success-archetype recall artifact
         shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISPATCH_SUCCESS_ARCHETYPE_RUN_ID: ${{ inputs.success_archetype_run_id }}
         run: |
           set -euo pipefail
           root="$RUNNER_TEMP/success-archetype-priority"
           rm -rf "$root"
           mkdir -p "$root"
-          preferred=""
-          if [ "${{ github.event_name }}" = "workflow_run" ] && [ "${{ github.event.workflow_run.name }}" = "GenGe Success Archetype Recall" ]; then
-            preferred="${{ github.event.workflow_run.id }}"
-          fi
+
+          preferred="${DISPATCH_SUCCESS_ARCHETYPE_RUN_ID:-}"
+          strict_preferred="false"
           candidates=()
-          if [[ "$preferred" =~ ^[0-9]+$ ]]; then candidates+=("$preferred"); fi
-          mapfile -t successful_runs < <(
-            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-success-archetype-recall.yml/runs?branch=main&status=success&per_page=20" --jq '.workflow_runs[].id'
-          )
-          for candidate in "${successful_runs[@]}"; do
-            if [[ "$candidate" =~ ^[0-9]+$ ]] && [[ " ${candidates[*]} " != *" $candidate "* ]]; then candidates+=("$candidate"); fi
-          done
+          if [ -n "$preferred" ]; then
+            [[ "$preferred" =~ ^[0-9]+$ ]] || {
+              echo "::error::Invalid dispatched Success Archetype Recall run id: ${preferred}" >&2
+              exit 1
+            }
+            strict_preferred="true"
+            candidates+=("$preferred")
+          else
+            mapfile -t successful_runs < <(
+              gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-success-archetype-recall.yml/runs?branch=main&status=success&per_page=20" --jq '.workflow_runs[].id'
+            )
+            for candidate in "${successful_runs[@]}"; do
+              if [[ "$candidate" =~ ^[0-9]+$ ]]; then candidates+=("$candidate"); fi
+            done
+          fi
+
           selected_run=""
           selected_artifact=""
-          for candidate in "${candidates[@]}"; do
-            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" --jq '[.artifacts[] | select((.name | startswith("genge-success-archetype-recall-")) and .expired == false)][0].id // empty')"
-            if [[ "$artifact_id" =~ ^[0-9]+$ ]]; then selected_run="$candidate"; selected_artifact="$artifact_id"; break; fi
+          attempts=1
+          if [ "$strict_preferred" = "true" ]; then attempts=12; fi
+          for attempt in $(seq 1 "$attempts"); do
+            for candidate in "${candidates[@]}"; do
+              mapfile -t artifact_ids < <(
+                gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${candidate}/artifacts?per_page=100" \
+                  --jq '.artifacts[] | select((.name | startswith("genge-success-archetype-recall-")) and .expired == false) | .id'
+              )
+              if [ "${#artifact_ids[@]}" -gt 1 ]; then
+                echo "::error::Success Archetype Recall run ${candidate} exposes multiple live recall artifacts; refusing ambiguous lineage." >&2
+                exit 1
+              fi
+              if [ "${#artifact_ids[@]}" -eq 1 ]; then
+                selected_run="$candidate"
+                selected_artifact="${artifact_ids[0]}"
+                break 2
+              fi
+            done
+            if [ "$attempt" -lt "$attempts" ]; then
+              echo "Waiting for exact Recall artifact from run ${preferred}: attempt ${attempt}/${attempts}" >&2
+              sleep 5
+            fi
           done
+
           if [[ ! "$selected_artifact" =~ ^[0-9]+$ ]]; then
+            if [ "$strict_preferred" = "true" ]; then
+              echo "::error::Exact dispatched Success Archetype Recall run ${preferred} has no unique live recall artifact; failing closed." >&2
+              exit 1
+            fi
             echo "SUCCESS_ARCHETYPE_FILE=" >> "$GITHUB_ENV"
+            echo "SUCCESS_ARCHETYPE_LINEAGE_FILE=" >> "$GITHUB_ENV"
             echo "SUCCESS_ARCHETYPE_RUN_ID=" >> "$GITHUB_ENV"
             exit 0
           fi
+
           gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${selected_artifact}/zip" > "$root/archetype.zip"
           unzip -q -o "$root/archetype.zip" -d "$root/unpacked"
-          archetype_file="$(find "$root/unpacked" -type f -name success_archetype_priority.json -print -quit)"
-          test -n "$archetype_file"
-          python - "$archetype_file" <<'PY'
+          mapfile -t archetype_files < <(find "$root/unpacked" -type f -name success_archetype_priority.json -print)
+          mapfile -t lineage_files < <(find "$root/unpacked" -type f -name lineage_provenance.json -print)
+          [ "${#archetype_files[@]}" -eq 1 ] || {
+            echo "::error::Expected one success_archetype_priority.json in recall artifact ${selected_artifact}; found ${#archetype_files[@]}." >&2
+            exit 1
+          }
+          if [ "$strict_preferred" = "true" ] && [ "${#lineage_files[@]}" -ne 1 ]; then
+            echo "::error::Exact dispatched Recall artifact ${selected_artifact} must contain exactly one lineage_provenance.json; found ${#lineage_files[@]}." >&2
+            exit 1
+          fi
+          archetype_file="${archetype_files[0]}"
+          lineage_file=""
+          if [ "${#lineage_files[@]}" -eq 1 ]; then lineage_file="${lineage_files[0]}"; fi
+
+          python - "$archetype_file" "$lineage_file" "$selected_run" "$strict_preferred" <<'PY'
           import json, sys
           from pathlib import Path
           p=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+          lineage_path, selected_run, strict = sys.argv[2], sys.argv[3], sys.argv[4] == 'true'
           assert p['changes_research_order_only'] is True
           assert p['changes_thresholds'] is False
           assert p['unknown_evidence_is_pass'] is False
@@ -171,9 +224,16 @@ jobs:
           assert p['automatic_promotion_allowed'] is False
           assert p['starter_position_allowed'] is False
           assert p['no_auto_trade'] is True
+          if strict:
+              lineage=json.loads(Path(lineage_path).read_text(encoding='utf-8'))
+              assert str(lineage['recall_run_id']) == str(selected_run)
+              assert lineage['canonical_authority_unchanged'] is True
+              assert lineage['no_auto_trade'] is True
           PY
           echo "SUCCESS_ARCHETYPE_FILE=$archetype_file" >> "$GITHUB_ENV"
+          echo "SUCCESS_ARCHETYPE_LINEAGE_FILE=$lineage_file" >> "$GITHUB_ENV"
           echo "SUCCESS_ARCHETYPE_RUN_ID=$selected_run" >> "$GITHUB_ENV"
+          echo "SUCCESS_ARCHETYPE_EXACT_DISPATCH=$strict_preferred" >> "$GITHUB_ENV"
 
       - name: Build and persist learning state with optimistic replay
         run: |
@@ -196,7 +256,8 @@ jobs:
               tests/test_genge_price_value_history_summary.py \
               tests/test_genge_formal_decision_outcomes.py \
               tests/test_genge_v31_review_priority_order.py \
-              tests/test_genge_production_observability.py
+              tests/test_genge_production_observability.py \
+              tests/test_genge_success_archetype_exact_handoff.py
 
             python -m src.strategies.genge_opportunity_discovery.price_value_history_summary --history-root data/hourly_deep_overlay --output data/price_value_history/summary.json
 
@@ -211,6 +272,25 @@ jobs:
               "${recovery_args[@]}" \
               "${archetype_args[@]}" \
               --output data/research_priority/latest.json
+
+            python - <<'PY'
+          import json, os
+          from pathlib import Path
+          out=Path('data/research_priority/learning_lineage.json')
+          out.parent.mkdir(parents=True, exist_ok=True)
+          payload={
+              'research_learning_run_id': os.environ['GITHUB_RUN_ID'],
+              'success_archetype_recall_run_id': os.environ.get('SUCCESS_ARCHETYPE_RUN_ID', ''),
+              'success_archetype_exact_dispatch': os.environ.get('SUCCESS_ARCHETYPE_EXACT_DISPATCH', 'false').lower() == 'true',
+              'canonical_authority_unchanged': True,
+              'no_auto_trade': True,
+          }
+          dispatched=os.environ.get('DISPATCH_SUCCESS_ARCHETYPE_RUN_ID', '')
+          if dispatched:
+              assert payload['success_archetype_exact_dispatch'] is True
+              assert payload['success_archetype_recall_run_id'] == dispatched
+          out.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+          PY
 
             outcome_args=()
             if [ -n "${SUCCESS_ARCHETYPE_FILE:-}" ] && [ -f "$SUCCESS_ARCHETYPE_FILE" ]; then outcome_args=(--priority "$SUCCESS_ARCHETYPE_FILE"); fi
@@ -231,6 +311,7 @@ jobs:
           a=json.loads(Path('data/success_archetype_outcomes/latest.json').read_text(encoding='utf-8'))
           o=json.loads(Path('data/formal_decision_outcomes/latest.json').read_text(encoding='utf-8'))
           health=json.loads(Path('data/production_observability/latest.json').read_text(encoding='utf-8'))
+          lineage=json.loads(Path('data/research_priority/learning_lineage.json').read_text(encoding='utf-8'))
           assert q['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
           assert q['formal_action_recomputed'] is False
           assert q['formal_action_eligible'] is False
@@ -242,6 +323,11 @@ jobs:
           assert q['research_overlay_boost_combination'] == 'MAX_NOT_SUM'
           if os.environ.get('SUCCESS_ARCHETYPE_FILE'):
               assert q['success_archetype_recall_count'] >= 0
+          if os.environ.get('DISPATCH_SUCCESS_ARCHETYPE_RUN_ID'):
+              assert lineage['success_archetype_exact_dispatch'] is True
+              assert lineage['success_archetype_recall_run_id'] == os.environ['DISPATCH_SUCCESS_ARCHETYPE_RUN_ID']
+          assert lineage['canonical_authority_unchanged'] is True
+          assert lineage['no_auto_trade'] is True
           assert p['formal_action_recomputed'] is False
           assert p['formal_action_eligible'] is False
           assert a['formal_action_recomputed'] is False
@@ -289,7 +375,7 @@ jobs:
           echo "# GenGe V3.1.1 Research Learning" >> "$GITHUB_STEP_SUMMARY"
           echo "- persistence: optimistic replay on newest main" >> "$GITHUB_STEP_SUMMARY"
           echo "- Near-BUY Recovery: ${NEAR_BUY_RECOVERY_RUN_ID:-none}; research-order only" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Success Archetype Recall: ${SUCCESS_ARCHETYPE_RUN_ID:-none}; research-order only" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Success Archetype Recall: ${SUCCESS_ARCHETYPE_RUN_ID:-none}; exact-dispatch=${SUCCESS_ARCHETYPE_EXACT_DISPATCH:-false}; research-order only" >> "$GITHUB_STEP_SUMMARY"
           echo "- success-archetype outcomes: 5/20/60 trading-day observation; human review only" >> "$GITHUB_STEP_SUMMARY"
           echo "- overlay boost combination: MAX_NOT_SUM" >> "$GITHUB_STEP_SUMMARY"
           echo "- learning outputs remain research-only and cannot change Formal actions" >> "$GITHUB_STEP_SUMMARY"
