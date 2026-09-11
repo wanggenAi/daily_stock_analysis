@@ -21,6 +21,7 @@ on:
       - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
       - "tests/test_genge_runbei_authority_closure.py"
+      - "tests/test_genge_success_archetype_exact_handoff.py"
   push:
     branches: [main]
     paths:
@@ -33,10 +34,11 @@ on:
       - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
       - "tests/test_genge_runbei_authority_closure.py"
+      - "tests/test_genge_success_archetype_exact_handoff.py"
 
 permissions:
   contents: read
-  actions: read
+  actions: write
 
 concurrency:
   group: genge-success-archetype-${{ github.event.workflow_run.id || inputs.source_terminal_run_id || github.run_id }}
@@ -66,7 +68,8 @@ jobs:
             tests/test_genge_success_archetype_outcomes.py \
             tests/test_genge_research_priority_archetype.py \
             tests/test_genge_research_priority_router.py \
-            tests/test_genge_runbei_authority_closure.py
+            tests/test_genge_runbei_authority_closure.py \
+            tests/test_genge_success_archetype_exact_handoff.py
 
   production-recall:
     if: >-
@@ -289,6 +292,7 @@ jobs:
               'source_mode': os.environ['TERMINAL_SOURCE_MODE'],
               'fallback_used': os.environ['TERMINAL_FALLBACK_USED'].lower() == 'true',
               'fallback_reason': os.environ.get('TERMINAL_FALLBACK_REASON', ''),
+              'recall_run_id': os.environ['GITHUB_RUN_ID'],
               'canonical_authority_unchanged': True,
               'no_auto_trade': True,
           }
@@ -330,6 +334,7 @@ jobs:
           assert str(p['source_terminal_run_id']) == os.environ['TERMINAL_RUN_ID']
           assert str(lineage['effective_source_run_id']) == os.environ['TERMINAL_RUN_ID']
           assert str(lineage['requested_source_run_id']) == os.environ['TERMINAL_REQUESTED_RUN_ID']
+          assert str(lineage['recall_run_id']) == os.environ['GITHUB_RUN_ID']
           assert lineage['fallback_used'] == (os.environ['TERMINAL_FALLBACK_USED'].lower() == 'true')
           assert lineage['canonical_authority_unchanged'] is True
           assert lineage['no_auto_trade'] is True
@@ -352,6 +357,20 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
+      - name: Dispatch Research Learning with exact recall lineage
+        if: >-
+          github.event_name == 'workflow_run' ||
+          (github.event_name == 'workflow_dispatch' && inputs.source_terminal_run_id != '')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-research-learning.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f success_archetype_run_id="${GITHUB_RUN_ID}"
+          echo "Dispatched Research Learning with exact Success Archetype Recall run ${GITHUB_RUN_ID}." >> "$GITHUB_STEP_SUMMARY"
+
       - name: Publish summary
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
@@ -360,6 +379,7 @@ jobs:
           p=json.loads(Path('reports/success_archetype_recall/success_archetype_priority.json').read_text(encoding='utf-8'))
           lineage=json.loads(Path('reports/success_archetype_recall/lineage_provenance.json').read_text(encoding='utf-8'))
           print('# GenGe Success Archetype Recall')
+          print(f"- recall run: {lineage['recall_run_id']}")
           print(f"- archetype: {p['archetype_id']}")
           print(f"- reference: {p['reference_code']}")
           print(f"- requested terminal run: {lineage['requested_source_run_id']}")
