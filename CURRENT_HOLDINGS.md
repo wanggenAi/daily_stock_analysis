@@ -9,7 +9,7 @@ Snapshot basis: user-provided CITIC Securities broker position evidence at appro
 | Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |
 | --- | --- | ---: | ---: | --- | --- |
 | 601318 | 中国平安 | 400 | 55.9658 | HELD | 2026-09-11 |
-| 603993 | 洛阳钼业 | 1000 | 18.7098 | HELD | 2026-09-11 |
+| 603993 | 洛阳钼业 | 1000 | 18.70980 | HELD | 2026-09-11 |
 | 001316 | 润贝航科 | 200 | 25.7450 | HELD | 2026-09-11 |
 | 600406 | 国电南瑞 | 200 | 23.1253 | HELD | 2026-09-11 |
 
