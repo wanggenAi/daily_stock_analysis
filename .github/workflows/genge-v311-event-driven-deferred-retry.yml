@@ -1,0 +1,40 @@
+name: GenGe V3.1.1 Event-Driven Deferred Retry
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe V3.1.1 Event-Driven Authority Handoff"
+    types: [completed]
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-v311-event-driven-deferred-retry.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-v311-event-driven-deferred-retry
+  cancel-in-progress: false
+
+jobs:
+  retry-current-signal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Redispatch Event-Driven Deep Review after authority slot is released
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-v311-event-driven-deep-review.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Re-dispatched Event-Driven Deep Review so any signal deferred behind the completed authority handoff is re-evaluated." >> "$GITHUB_STEP_SUMMARY"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "- completed authority handoff: ${{ github.event.workflow_run.id }} / ${{ github.event.workflow_run.conclusion }}" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- bootstrap retry from workflow deployment/manual dispatch" >> "$GITHUB_STEP_SUMMARY"
+          fi
