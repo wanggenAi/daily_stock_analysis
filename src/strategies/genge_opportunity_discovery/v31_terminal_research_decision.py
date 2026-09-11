@@ -14,6 +14,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
+from .public_material_gate_recovery import merge_recovered_gates
+
 CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 DECISIONS = {"BUY", "WAIT_PRICE", "REJECT"}
 GATES = ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")
@@ -133,7 +135,8 @@ def build_terminal_decisions(
     rows: list[dict[str, Any]] = []
 
     for code in requested:
-        profile = profiles.get(code) if isinstance(profiles.get(code), Mapping) else {}
+        base_profile = profiles.get(code) if isinstance(profiles.get(code), Mapping) else {}
+        profile = merge_recovered_gates(base_profile, evidence_payload, code) if base_profile else {}
         failed, unknown, passed = _gate_state(profile)
         valuation = valuation_by_code.get(code, {})
         priority = priority_by_code.get(code, {})
