@@ -188,6 +188,21 @@ def test_scoped_product_revenue_cannot_stand_in_for_company_revenue():
     )
 
 
+def test_generic_segment_region_and_post_label_product_scope_are_rejected():
+    for text in (
+        "新能源板块营业收入为88.00亿元。",
+        "华东地区营业收入为66.00亿元。",
+        "营业收入（铜产品）为55.00亿元。",
+    ):
+        metrics = extract_report_metrics(text, 2025)
+        assert metrics["revenue"] is None
+        assert metrics["metric_provenance"]["revenue"]["verified"] is False
+        assert (
+            metrics["metric_provenance"]["revenue"]["reason"]
+            == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
+        )
+
+
 def test_non_cyclical_three_year_stable_official_metrics_can_pass():
     decision, reason = classify_multi_year_metrics(
         _stable_records(), cyclical_or_resource=False
