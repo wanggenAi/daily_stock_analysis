@@ -1,0 +1,354 @@
+name: GenGe V3.1 Single-Stock Fast Deep Calculation
+
+run-name: >-
+  GenGe Fast Deep / ${{ github.event_name }} / ${{ inputs.requested_codes || 'changed-holding' }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      research_run_id:
+        description: "Optional exact successful Every-Industry run; newest valid main run is used when omitted"
+        required: false
+        type: string
+      requested_codes:
+        description: "Comma-separated A-share codes for urgent deep calculation"
+        required: false
+        type: string
+      trigger_source:
+        description: "Machine-readable event source"
+        required: false
+        default: "URGENT_SINGLE_STOCK_FAST"
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - "CURRENT_HOLDINGS.md"
+      - ".github/workflows/genge-v31-single-stock-fast.yml"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: genge-v31-fast-${{ github.event_name }}-${{ github.run_id }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  fast-deep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Resolve changed holding codes
+        id: codes
+        shell: bash
+        env:
+          INPUT_REQUESTED_CODES: ${{ inputs.requested_codes }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          requested="${INPUT_REQUESTED_CODES:-}"
+          if [ -z "$requested" ] && [ "${{ github.event_name }}" = "push" ]; then
+            requested=$(python - <<'PY'
+          import os, re, subprocess
+          from pathlib import Path
+
+          def parse(text: str):
+              out={}
+              in_confirmed=False
+              for line in text.splitlines():
+                  if line.strip() == "## Confirmed holdings":
+                      in_confirmed=True
+                      continue
+                  if in_confirmed and line.startswith("## "):
+                      break
+                  if in_confirmed and line.lstrip().startswith("|"):
+                      cells=[x.strip() for x in line.strip().strip("|").split("|")]
+                      if len(cells) >= 5 and re.fullmatch(r"\d{6}", cells[0]) and cells[4].upper() == "HELD":
+                          out[cells[0]]=(cells[2], cells[3], cells[4])
+              return out
+
+          current=parse(Path("CURRENT_HOLDINGS.md").read_text(encoding="utf-8"))
+          before_sha=os.environ.get("BEFORE_SHA","")
+          previous={}
+          if before_sha and set(before_sha) != {"0"}:
+              try:
+                  old=subprocess.check_output(
+                      ["git","show",f"{before_sha}:CURRENT_HOLDINGS.md"],
+                      text=True,
+                      stderr=subprocess.DEVNULL,
+                  )
+                  previous=parse(old)
+              except Exception:
+                  previous={}
+          changed=[
+              code for code, state in current.items()
+              if previous.get(code) != state
+          ]
+          if not changed:
+              changed=list(current)
+          print(",".join(changed))
+          PY
+            )
+          fi
+          if [ -z "$requested" ]; then
+            echo "No requested or changed holding code resolved" >&2
+            exit 1
+          fi
+          echo "requested_codes=$requested" >> "$GITHUB_OUTPUT"
+          echo "Fast deep requested codes: $requested"
+
+      - name: Resolve exact Every-Industry authority source
+        id: resolve
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          INPUT_RESEARCH_RUN_ID: ${{ inputs.research_run_id }}
+          INPUT_TRIGGER_SOURCE: ${{ inputs.trigger_source }}
+        run: |
+          set -euo pipefail
+
+          require_research_run() {
+            local run_id="$1"
+            local run artifacts count
+            run=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}")
+            [ "$(printf '%s' "$run" | jq -r '.path // ""')" = ".github/workflows/genge-v31-industry-research.yml" ] || return 1
+            [ "$(printf '%s' "$run" | jq -r '.conclusion // ""')" = "success" ] || return 1
+            [ "$(printf '%s' "$run" | jq -r '.head_branch // ""')" = "main" ] || return 1
+            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+            count=$(printf '%s' "$artifacts" | jq -r '[.artifacts[] | select(.name == "genge-v31-every-industry-research" and .expired == false)] | length')
+            [ "$count" -eq 1 ]
+          }
+
+          research_run_id="${INPUT_RESEARCH_RUN_ID:-}"
+          if [ -n "$research_run_id" ]; then
+            [[ "$research_run_id" =~ ^[0-9]+$ ]] || { echo "invalid research_run_id=$research_run_id" >&2; exit 1; }
+            require_research_run "$research_run_id" || { echo "requested Every-Industry run is not a valid successful main authority source" >&2; exit 1; }
+          else
+            mapfile -t candidates < <(
+              gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?branch=main&status=success&per_page=40" --jq '.workflow_runs[].id'
+            )
+            for candidate in "${candidates[@]}"; do
+              if require_research_run "$candidate"; then
+                research_run_id="$candidate"
+                break
+              fi
+            done
+            [[ "$research_run_id" =~ ^[0-9]+$ ]] || { echo "no successful Every-Industry artifact available" >&2; exit 1; }
+          fi
+
+          trigger_source="${INPUT_TRIGGER_SOURCE:-}"
+          if [ -z "$trigger_source" ]; then
+            trigger_source="FAST_${{ github.event_name }}"
+          fi
+          echo "research_run_id=$research_run_id" >> "$GITHUB_OUTPUT"
+          echo "trigger_source=$trigger_source" >> "$GITHUB_OUTPUT"
+
+      - name: Download exact Every-Industry artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-v31-every-industry-research
+          path: artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ steps.resolve.outputs.research_run_id }}
+
+      - name: Resolve deep-calculation inputs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t candidates < <(find artifact -type f -path '*/v31_review_enriched/v31_review_queue_enriched.csv' -print)
+          mapfile -t valuation_files < <(find artifact -type f -name valuation_research_queue.csv -print)
+          [ "${#candidates[@]}" -eq 1 ] || { echo "expected exactly one enriched V3.1 queue; found ${#candidates[@]}" >&2; exit 1; }
+          [ "${#valuation_files[@]}" -ge 1 ] || { echo "valuation research queue missing from exact artifact" >&2; exit 1; }
+          echo "CANDIDATE_CSV=${candidates[0]}" >> "$GITHUB_ENV"
+          echo "VALUATION_ROOT=$(dirname "${valuation_files[0]}")" >> "$GITHUB_ENV"
+
+      - name: Execute fast initial deep calculation
+        env:
+          REQUESTED_CODES: ${{ steps.codes.outputs.requested_codes }}
+          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
+          TRIGGER_SOURCE: ${{ steps.resolve.outputs.trigger_source }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.v31_automatic_deep_calculation \
+            --candidate-csv "$CANDIDATE_CSV" \
+            --valuation-root "$VALUATION_ROOT" \
+            --explicit-config config/v31_explicit_deep_reviews.json \
+            --output-dir reports/deep_calculation_fast \
+            --requested-codes "$REQUESTED_CODES" \
+            --source-run-id "$RESEARCH_RUN_ID" \
+            --trigger-source "$TRIGGER_SOURCE"
+
+      - name: Mark initial checkpoint
+        env:
+          REQUESTED_CODES: ${{ steps.codes.outputs.requested_codes }}
+          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root=Path("reports/deep_calculation_fast")
+          payload={
+              "contract":"GEN_GE_V31_FAST_CHECKPOINT_V1",
+              "run_id":os.environ["GITHUB_RUN_ID"],
+              "run_attempt":os.environ.get("GITHUB_RUN_ATTEMPT","1"),
+              "requested_codes":os.environ.get("REQUESTED_CODES",""),
+              "source_run_id":os.environ.get("RESEARCH_RUN_ID",""),
+              "checkpoint":"INITIAL_PASS_COMPLETE",
+              "generated_at":datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+              "formal_trading_authority":False,
+              "automatic_formal_buy_allowed":False,
+              "unknown_is_pass":False,
+              "no_auto_trade":True,
+          }
+          (root/"initial_checkpoint_status.json").write_text(
+              json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+"\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Upload initial-pass checkpoint
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v31-fast-initial-${{ github.run_id }}
+          path: reports/deep_calculation_fast
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Close unresolved gates with bounded official-evidence window
+        id: closure
+        continue-on-error: true
+        timeout-minutes: 45
+        env:
+          REQUESTED_CODES: ${{ steps.codes.outputs.requested_codes }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.v31_deep_gap_closure \
+            --profiles-json reports/deep_calculation_fast/deep_review_profiles.json \
+            --candidate-csv "$CANDIDATE_CSV" \
+            --output-dir reports/deep_calculation_fast \
+            --cache-dir data/cache/v31_deep_gap_closure_fast \
+            --requested-codes "$REQUESTED_CODES" \
+            --as-of "$(date -u +%F)"
+
+      - name: Finalize fast-run status
+        if: always()
+        env:
+          REQUESTED_CODES: ${{ steps.codes.outputs.requested_codes }}
+          RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
+          CLOSURE_OUTCOME: ${{ steps.closure.outcome }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root=Path("reports/deep_calculation_fast")
+          status_path=root/"deep_calculation_status.json"
+          status={}
+          if status_path.is_file():
+              try:
+                  status=json.loads(status_path.read_text(encoding="utf-8"))
+              except Exception:
+                  status={}
+          closure=os.environ.get("CLOSURE_OUTCOME","unknown")
+          terminal=closure=="success" and status.get("research_terminal_state") in {"COMPLETE","EVIDENCE_EXHAUSTED"}
+          payload={
+              "contract":"GEN_GE_V31_FAST_RUN_V1",
+              "run_id":os.environ["GITHUB_RUN_ID"],
+              "run_attempt":os.environ.get("GITHUB_RUN_ATTEMPT","1"),
+              "requested_codes":os.environ.get("REQUESTED_CODES",""),
+              "source_run_id":os.environ.get("RESEARCH_RUN_ID",""),
+              "generated_at":datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+              "initial_pass_complete":(root/"initial_checkpoint_status.json").is_file(),
+              "closure_outcome":closure,
+              "result_quality":"TERMINAL" if terminal else "PARTIAL_INITIAL_PASS",
+              "research_terminal_state":status.get("research_terminal_state") if terminal else "NOT_COMPLETED",
+              "formal_trading_authority":False,
+              "automatic_formal_buy_allowed":False,
+              "unknown_is_pass":False,
+              "no_auto_trade":True,
+          }
+          (root/"fast_run_status.json").write_text(
+              json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+"\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Persist fast result with optimistic replay
+        if: always()
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -u
+          mkdir -p /tmp/genge-fast
+          cp -R reports/deep_calculation_fast/. /tmp/genge-fast/ || true
+          git config user.name "genge-fast-deep-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            git fetch origin main || continue
+            git reset --hard origin/main || continue
+            mkdir -p data/deep_calculation_fast/history/${GITHUB_RUN_ID}
+            cp -R /tmp/genge-fast/. "data/deep_calculation_fast/history/${GITHUB_RUN_ID}/" || true
+            rm -rf data/deep_calculation_fast/latest
+            mkdir -p data/deep_calculation_fast/latest
+            cp -R /tmp/genge-fast/. data/deep_calculation_fast/latest/ || true
+            git add -f data/deep_calculation_fast
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "Persist fast deep calculation ${GITHUB_RUN_ID} [skip ci]" || exit 0
+            git push origin HEAD:main && exit 0
+          done
+          exit 0
+
+      - name: Upload final or partial fast artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v31-fast-final-${{ github.run_id }}
+          path: reports/deep_calculation_fast
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Refresh three-pillar decision center only after terminal closure
+        if: steps.closure.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+      - name: Publish fast-run summary
+        if: always()
+        run: |
+          echo "# GenGe V3.1 Fast Deep Calculation" >> "$GITHUB_STEP_SUMMARY"
+          echo "- requested codes: \`${{ steps.codes.outputs.requested_codes }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Every-Industry source: \`${{ steps.resolve.outputs.research_run_id }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- initial checkpoint uploaded before official-evidence closure" >> "$GITHUB_STEP_SUMMARY"
+          echo "- closure outcome: \`${{ steps.closure.outcome }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- closure hard limit: 45 minutes; job hard limit: 75 minutes" >> "$GITHUB_STEP_SUMMARY"
+          echo "- timeout/failure preserves initial-pass artifact and persisted partial result" >> "$GITHUB_STEP_SUMMARY"
+          echo "- UNKNOWN != PASS; no automatic Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
