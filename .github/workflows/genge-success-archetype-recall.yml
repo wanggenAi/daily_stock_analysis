@@ -7,8 +7,8 @@ on:
   workflow_dispatch:
     inputs:
       source_terminal_run_id:
-        description: "Optional exact Candidate Terminal Review run id; skipped no-op wrappers resolve to the newest prior real producer."
-        required: false
+        description: "Exact Candidate Terminal Review run id. Fallback is allowed only inside its proven terminal lineage."
+        required: true
         type: string
   pull_request:
     paths:
@@ -17,24 +17,22 @@ on:
       - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
       - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
       - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
+      - "src/strategies/genge_opportunity_discovery/terminal_producer_lineage.py"
+      - "src/strategies/genge_opportunity_discovery/terminal_producer_runtime.py"
       - "tests/test_genge_success_archetype_recall.py"
       - "tests/test_genge_success_archetype_outcomes.py"
       - "tests/test_genge_research_priority_archetype.py"
       - "tests/test_genge_runbei_authority_closure.py"
       - "tests/test_genge_success_archetype_exact_handoff.py"
+      - "tests/test_genge_terminal_producer_lineage.py"
   push:
     branches: [main]
     paths:
       - ".github/workflows/genge-success-archetype-recall.yml"
-      - "data/research_archetypes/**"
-      - "src/strategies/genge_opportunity_discovery/success_archetype_recall.py"
-      - "src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py"
-      - "src/strategies/genge_opportunity_discovery/research_priority_router.py"
-      - "tests/test_genge_success_archetype_recall.py"
-      - "tests/test_genge_success_archetype_outcomes.py"
-      - "tests/test_genge_research_priority_archetype.py"
+      - "src/strategies/genge_opportunity_discovery/terminal_producer_lineage.py"
+      - "src/strategies/genge_opportunity_discovery/terminal_producer_runtime.py"
       - "tests/test_genge_runbei_authority_closure.py"
-      - "tests/test_genge_success_archetype_exact_handoff.py"
+      - "tests/test_genge_terminal_producer_lineage.py"
 
 permissions:
   contents: read
@@ -58,23 +56,26 @@ jobs:
         run: |
           python -m pip install --upgrade pip --disable-pip-version-check
           python -m pip install -r .github/requirements-ci.txt
-      - name: Validate research-only archetype contracts
+      - name: Validate research-only archetype and exact-lineage contracts
         run: |
           python -m py_compile \
             src/strategies/genge_opportunity_discovery/success_archetype_recall.py \
-            src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py
+            src/strategies/genge_opportunity_discovery/success_archetype_outcomes.py \
+            src/strategies/genge_opportunity_discovery/terminal_producer_lineage.py \
+            src/strategies/genge_opportunity_discovery/terminal_producer_runtime.py
           python -m pytest -q \
             tests/test_genge_success_archetype_recall.py \
             tests/test_genge_success_archetype_outcomes.py \
             tests/test_genge_research_priority_archetype.py \
             tests/test_genge_research_priority_router.py \
             tests/test_genge_runbei_authority_closure.py \
-            tests/test_genge_success_archetype_exact_handoff.py
+            tests/test_genge_success_archetype_exact_handoff.py \
+            tests/test_genge_terminal_producer_lineage.py
 
   production-recall:
     if: >-
-      github.event_name != 'pull_request' &&
-      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && inputs.source_terminal_run_id != '')
     needs: contract-tests
     runs-on: ubuntu-latest
     timeout-minutes: 45
@@ -90,6 +91,7 @@ jobs:
         run: |
           python -m pip install --upgrade pip --disable-pip-version-check
           python -m pip install -r .github/requirements-ci.txt
+
       - name: Restore public fundamental cache
         uses: actions/cache/restore@v4
         with:
@@ -98,173 +100,42 @@ jobs:
           restore-keys: |
             genge-postscan-valuation-${{ runner.os }}-main-
             genge-postscan-valuation-${{ runner.os }}-
-      - name: Resolve Terminal Review artifact with auditable no-op fallback
+
+      - name: Resolve Terminal Review artifact through exact lineage only
         id: lineage
-        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           DISPATCH_SOURCE_RUN_ID: ${{ inputs.source_terminal_run_id }}
+        shell: bash
         run: |
           set -euo pipefail
-          root="$RUNNER_TEMP/success-archetype-terminal"
-          rm -rf "$root"
-          mkdir -p "$root"
-
-          workflow_file="genge-candidate-terminal-review.yml"
-          artifact_name="genge-candidate-terminal-decisions"
-          requested_run=""
-          source_mode="latest_real_producer"
-          fallback_used="false"
-          fallback_reason=""
-
-          run_payload() {
-            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$1"
-          }
-
-          terminalize_conclusion() {
-            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$1/jobs?filter=latest&per_page=100" \
-              --jq '[.jobs[] | select(.name == "terminalize") | .conclusion] | if length == 1 then .[0] else "AMBIGUOUS" end'
-          }
-
-          artifact_ids() {
-            gh api "repos/${GITHUB_REPOSITORY}/actions/runs/$1/artifacts?per_page=100" \
-              | jq -r --arg name "$artifact_name" '.artifacts[] | select(.name == $name and .expired == false) | .id'
-          }
-
-          verify_successful_main_candidate_run() {
-            local run_id="$1"
-            local payload name status conclusion branch
-            payload="$(run_payload "$run_id")"
-            name="$(jq -r '.name // ""' <<<"$payload")"
-            status="$(jq -r '.status // ""' <<<"$payload")"
-            conclusion="$(jq -r '.conclusion // ""' <<<"$payload")"
-            branch="$(jq -r '.head_branch // ""' <<<"$payload")"
-            [[ "$name" == GenGe\ Candidate\ Terminal\ Review* ]] || {
-              echo "::error::Run ${run_id} is ${name}, not Candidate Terminal Review." >&2
-              return 1
-            }
-            [[ "$status" == "completed" && "$conclusion" == "success" && "$branch" == "main" ]] || {
-              echo "::error::Run ${run_id} is not a completed successful main Candidate Terminal Review: status=${status} conclusion=${conclusion} branch=${branch}." >&2
-              return 1
-            }
-          }
-
-          select_real_producer() {
-            local candidate="$1"
-            local conclusion
-            mapfile -t ids < <(artifact_ids "$candidate")
-            if [ "${#ids[@]}" -gt 1 ]; then
-              echo "::error::Candidate Terminal run ${candidate} exposed multiple non-expired ${artifact_name} artifacts; refusing ambiguous lineage." >&2
-              return 2
-            fi
-            conclusion="$(terminalize_conclusion "$candidate")"
-            if [ "${#ids[@]}" -eq 1 ] && [ "$conclusion" = "success" ]; then
-              SELECTED_RUN="$candidate"
-              SELECTED_ARTIFACT="${ids[0]}"
-              return 0
-            fi
-            return 1
-          }
-
+          requested=""
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            requested_run="${{ github.event.workflow_run.id }}"
-            source_mode="workflow_run_exact"
-          elif [ -n "${DISPATCH_SOURCE_RUN_ID:-}" ]; then
-            requested_run="$DISPATCH_SOURCE_RUN_ID"
-            source_mode="workflow_dispatch_exact"
-          fi
-
-          SELECTED_RUN=""
-          SELECTED_ARTIFACT=""
-
-          if [ -n "$requested_run" ]; then
-            [[ "$requested_run" =~ ^[0-9]+$ ]] || { echo "::error::Invalid requested run id: ${requested_run}" >&2; exit 1; }
-            verify_successful_main_candidate_run "$requested_run" || exit 1
-
-            if select_real_producer "$requested_run"; then
-              :
-            else
-              rc=$?
-              [ "$rc" -ne 2 ] || exit 1
-              requested_terminalize="$(terminalize_conclusion "$requested_run")"
-              if [ "$requested_terminalize" != "skipped" ]; then
-                echo "::error::Exact Candidate Terminal run ${requested_run} has no usable terminal artifact and terminalize=${requested_terminalize}; fail closed." >&2
-                exit 1
-              fi
-
-              requested_created_at="$(run_payload "$requested_run" | jq -r '.created_at')"
-              fallback_used="true"
-              fallback_reason="terminalize_skipped_noop_wrapper"
-              echo "Exact Candidate Terminal run ${requested_run} is a confirmed no-op wrapper; resolving the newest prior real producer." >> "$GITHUB_STEP_SUMMARY"
-
-              mapfile -t prior_runs < <(
-                gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/runs?branch=main&status=success&per_page=100" \
-                  | jq -r --arg cutoff "$requested_created_at" --arg requested "$requested_run" \
-                    '.workflow_runs[] | select((.id|tostring) != $requested and .created_at <= $cutoff) | .id'
-              )
-              for candidate in "${prior_runs[@]}"; do
-                verify_successful_main_candidate_run "$candidate" >/dev/null 2>&1 || continue
-                if select_real_producer "$candidate"; then
-                  break
-                else
-                  rc=$?
-                  [ "$rc" -ne 2 ] || exit 1
-                fi
-              done
-              [ -n "$SELECTED_RUN" ] || {
-                echo "::error::No prior successful Candidate Terminal real producer with a unique live ${artifact_name} artifact exists before no-op wrapper ${requested_run}." >&2
-                exit 1
-              }
-            fi
+            requested="${{ github.event.workflow_run.id }}"
           else
-            mapfile -t runs < <(
-              gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/runs?branch=main&status=success&per_page=100" --jq '.workflow_runs[].id'
-            )
-            for candidate in "${runs[@]}"; do
-              verify_successful_main_candidate_run "$candidate" >/dev/null 2>&1 || continue
-              if select_real_producer "$candidate"; then
-                break
-              else
-                rc=$?
-                [ "$rc" -ne 2 ] || exit 1
-              fi
-            done
-            [ -n "$SELECTED_RUN" ] || {
-              echo "::error::No successful Candidate Terminal real producer with a unique live ${artifact_name} artifact found." >&2
-              exit 1
-            }
+            requested="${DISPATCH_SOURCE_RUN_ID:-}"
           fi
-
-          gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${SELECTED_ARTIFACT}/zip" > "$root/terminal.zip"
-          unzip -q -o "$root/terminal.zip" -d "$root/unpacked"
-          mapfile -t terminal_csvs < <(find "$root/unpacked" -type f -name candidate_terminal_decisions.csv -print)
-          [ "${#terminal_csvs[@]}" -eq 1 ] || {
-            echo "::error::Expected exactly one candidate_terminal_decisions.csv in artifact ${SELECTED_ARTIFACT}; found ${#terminal_csvs[@]}." >&2
+          [[ "$requested" =~ ^[0-9]+$ ]] || {
+            echo "::error::Invalid exact Candidate Terminal run id: ${requested}" >&2
             exit 1
           }
+          rm -rf reports/success_archetype_resolution
+          python -m src.strategies.genge_opportunity_discovery.terminal_producer_runtime \
+            --repo "$GITHUB_REPOSITORY" \
+            --requested-run-id "$requested" \
+            --output-dir reports/success_archetype_resolution
 
-          terminal_csv="${terminal_csvs[0]}"
-          echo "TERMINAL_CSV=$terminal_csv" >> "$GITHUB_ENV"
-          echo "TERMINAL_RUN_ID=$SELECTED_RUN" >> "$GITHUB_ENV"
-          echo "TERMINAL_REQUESTED_RUN_ID=${requested_run:-$SELECTED_RUN}" >> "$GITHUB_ENV"
-          echo "TERMINAL_SOURCE_MODE=$source_mode" >> "$GITHUB_ENV"
-          echo "TERMINAL_FALLBACK_USED=$fallback_used" >> "$GITHUB_ENV"
-          echo "TERMINAL_FALLBACK_REASON=$fallback_reason" >> "$GITHUB_ENV"
-          {
-            echo "requested_run_id=${requested_run:-$SELECTED_RUN}"
-            echo "effective_run_id=$SELECTED_RUN"
-            echo "source_mode=$source_mode"
-            echo "fallback_used=$fallback_used"
-            echo "fallback_reason=$fallback_reason"
-          } >> "$GITHUB_OUTPUT"
-          {
-            echo "- requested Candidate Terminal run: ${requested_run:-$SELECTED_RUN}"
-            echo "- effective real producer run: ${SELECTED_RUN}"
-            echo "- fallback used: ${fallback_used}"
-            [ -z "$fallback_reason" ] || echo "- fallback reason: ${fallback_reason}"
-          } >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish exhausted-lineage resolution artifact
+        if: env.TERMINAL_RESOLUTION_STATUS == 'NOT_FOUND'
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-success-archetype-resolution-${{ env.TERMINAL_REQUESTED_RUN_ID }}-${{ github.run_id }}
+          path: reports/success_archetype_resolution/resolution.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Build bounded PIT-safe Runbei archetype recall
+        if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'
         run: |
           as_of="$(date -u +%F)"
           python -m src.strategies.genge_opportunity_discovery.success_archetype_recall \
@@ -278,20 +149,25 @@ jobs:
             --source-terminal-run-id "$TERMINAL_RUN_ID"
 
       - name: Persist auditable lineage provenance
+        if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'
         run: |
           python - <<'PY'
           import json
           import os
           from pathlib import Path
 
+          resolution = json.loads(Path('reports/success_archetype_resolution/resolution.json').read_text(encoding='utf-8'))
           out = Path('reports/success_archetype_recall')
           out.mkdir(parents=True, exist_ok=True)
           payload = {
               'requested_source_run_id': os.environ['TERMINAL_REQUESTED_RUN_ID'],
               'effective_source_run_id': os.environ['TERMINAL_RUN_ID'],
-              'source_mode': os.environ['TERMINAL_SOURCE_MODE'],
+              'lineage_key': os.environ['TERMINAL_LINEAGE_KEY'],
+              'resolution_status': os.environ['TERMINAL_RESOLUTION_STATUS'],
               'fallback_used': os.environ['TERMINAL_FALLBACK_USED'].lower() == 'true',
-              'fallback_reason': os.environ.get('TERMINAL_FALLBACK_REASON', ''),
+              'fallback_reason': 'exact_lineage_ancestor' if os.environ['TERMINAL_FALLBACK_USED'].lower() == 'true' else '',
+              'visited_run_ids': resolution['visited_run_ids'],
+              'stale_global_fallback_allowed': False,
               'recall_run_id': os.environ['GITHUB_RUN_ID'],
               'canonical_authority_unchanged': True,
               'no_auto_trade': True,
@@ -303,12 +179,14 @@ jobs:
           PY
 
       - name: Save refreshed public fundamental cache
+        if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'
         uses: actions/cache/save@v4
         with:
           path: data/cache/valuation_research_fundamentals
           key: genge-postscan-valuation-${{ runner.os }}-main-${{ github.run_id }}
 
-      - name: Validate authority, bounded-fetch, and lineage invariants
+      - name: Validate authority, bounded-fetch, and exact-lineage invariants
+        if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'
         run: |
           python - <<'PY'
           import json
@@ -334,13 +212,16 @@ jobs:
           assert str(p['source_terminal_run_id']) == os.environ['TERMINAL_RUN_ID']
           assert str(lineage['effective_source_run_id']) == os.environ['TERMINAL_RUN_ID']
           assert str(lineage['requested_source_run_id']) == os.environ['TERMINAL_REQUESTED_RUN_ID']
+          assert lineage['lineage_key'] == os.environ['TERMINAL_LINEAGE_KEY']
+          assert lineage['resolution_status'] == 'SELECTED'
           assert str(lineage['recall_run_id']) == os.environ['GITHUB_RUN_ID']
           assert lineage['fallback_used'] == (os.environ['TERMINAL_FALLBACK_USED'].lower() == 'true')
+          assert lineage['stale_global_fallback_allowed'] is False
           assert lineage['canonical_authority_unchanged'] is True
           assert lineage['no_auto_trade'] is True
           if lineage['fallback_used']:
               assert lineage['requested_source_run_id'] != lineage['effective_source_run_id']
-              assert lineage['fallback_reason'] == 'terminalize_skipped_noop_wrapper'
+              assert lineage['fallback_reason'] == 'exact_lineage_ancestor'
           for row in p['queue']:
               assert row['formal_action_eligible'] is False
               assert row['formal_action_recomputed'] is False
@@ -350,6 +231,7 @@ jobs:
           PY
 
       - name: Upload success-archetype research artifact
+        if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'
         uses: actions/upload-artifact@v4
         with:
           name: genge-success-archetype-recall-${{ env.TERMINAL_RUN_ID }}
@@ -358,9 +240,7 @@ jobs:
           retention-days: 30
 
       - name: Dispatch Research Learning with exact recall lineage
-        if: >-
-          github.event_name == 'workflow_run' ||
-          (github.event_name == 'workflow_dispatch' && inputs.source_terminal_run_id != '')
+        if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -372,6 +252,7 @@ jobs:
           echo "Dispatched Research Learning with exact Success Archetype Recall run ${GITHUB_RUN_ID}." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Publish summary
+        if: env.TERMINAL_RESOLUTION_STATUS == 'SELECTED'
         run: |
           python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
           import json
@@ -384,15 +265,10 @@ jobs:
           print(f"- reference: {p['reference_code']}")
           print(f"- requested terminal run: {lineage['requested_source_run_id']}")
           print(f"- effective terminal producer: {lineage['effective_source_run_id']}")
+          print(f"- exact lineage: {lineage['lineage_key']}")
           print(f"- fallback used: {lineage['fallback_used']}")
-          if lineage['fallback_reason']:
-              print(f"- fallback reason: {lineage['fallback_reason']}")
           print(f"- terminal source rows: {p['source_row_count']}")
-          print(f"- existing deep-financial fetches: {p['existing_deep_financial_fetch_count']}")
-          print(f"- bounded expansion candidates: {p['expansion_candidate_count']}")
           print(f"- bounded expansion fetched: {p['expansion_fetch_count']} / {p['expansion_fetch_limit']}")
-          print(f"- expansion truncated: {p['expansion_truncated_count']}")
-          print(f"- financial evidence unavailable after fetch: {p['financial_evidence_unavailable_count']}")
           print(f"- research recall count: {p['queue_count']}")
           print('- authority: research-order only; no Formal/Canonical mutation; no auto-trade')
           PY
