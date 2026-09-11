@@ -26,10 +26,14 @@ on:
       - "config/v31_explicit_deep_reviews.json"
       - "src/strategies/genge_opportunity_discovery/v31_automatic_deep_calculation.py"
       - "src/strategies/genge_opportunity_discovery/v31_deep_gap_closure.py"
+      - "src/strategies/genge_opportunity_discovery/deep_workset.py"
+      - "src/strategies/genge_opportunity_discovery/evidence_collectors/multi_year_predictability.py"
       - "src/strategies/genge_opportunity_discovery/v31_explicit_deep_review.py"
       - "src/strategies/genge_opportunity_discovery/v31_deep_provenance_audit.py"
       - "tests/test_genge_v31_automatic_deep_calculation.py"
       - "tests/test_v31_deep_gap_closure.py"
+      - "tests/test_v31_deep_workset.py"
+      - "tests/test_v31_multi_year_predictability.py"
       - "tests/test_v31_deep_provenance_audit.py"
       - "tests/test_runbei_archetype_deep_handoff.py"
       - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
@@ -77,6 +81,8 @@ jobs:
             tests/test_genge_v31_explicit_deep_review.py \
             tests/test_genge_v31_automatic_deep_calculation.py \
             tests/test_v31_deep_gap_closure.py \
+            tests/test_v31_deep_workset.py \
+            tests/test_v31_multi_year_predictability.py \
             tests/test_v31_deep_provenance_audit.py \
             tests/test_runbei_archetype_deep_handoff.py
 
@@ -204,6 +210,7 @@ jobs:
             requested=$(python - <<'PY'
           import json, re
           from pathlib import Path
+          from src.strategies.genge_opportunity_discovery.deep_workset import load_retained_deep_codes
           codes=[]
           text=Path('CURRENT_HOLDINGS.md').read_text(encoding='utf-8') if Path('CURRENT_HOLDINGS.md').is_file() else ''
           in_confirmed=False
@@ -262,6 +269,7 @@ jobs:
                           codes.append(code)
               except Exception:
                   pass
+          codes.extend(load_retained_deep_codes())
           print(','.join(dict.fromkeys(codes)))
           PY
             )
