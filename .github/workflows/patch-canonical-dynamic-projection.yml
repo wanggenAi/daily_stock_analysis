@@ -1,0 +1,138 @@
+name: Patch Canonical Dynamic Valuation Projection
+
+on:
+  push:
+    branches: [fix/canonical-dynamic-valuation-projection]
+    paths: [".github/workflows/patch-canonical-dynamic-projection.yml"]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Apply exact source and regression patch
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          source = Path('src/strategies/genge_opportunity_discovery/canonical_snapshot.py')
+          text = source.read_text(encoding='utf-8')
+
+          constant_anchor = '''HOLDING_ADD_BOOLEAN_FIELDS = {
+    "holding_add_authorized",
+    "holding_add_existing_position_only",
+    "holding_add_formal_action_unchanged",
+    "holding_add_is_formal_buy",
+    "holding_add_no_auto_trade",
+    "holding_add_requires_high_confidence",
+    "holding_add_unknown_is_pass",
+}
+'''
+          dynamic_constants = constant_anchor + '''
+DYNAMIC_VALUATION_CANONICAL_FIELDS = (
+    "value_low",
+    "value_high",
+    "previous_value_low",
+    "previous_neutral_value",
+    "previous_value_high",
+    "previous_valuation_available",
+    "valuation_change",
+    "valuation_change_materiality_threshold",
+    "price_value_zone",
+    "upside_to_value_high",
+    "valuation_range_ready",
+    "valuation_range_source",
+    "valuation_range_method",
+    "valuation_range_neutral_roundtrip_verified",
+    "valuation_range_growth_low",
+    "valuation_range_growth_neutral",
+    "valuation_range_growth_high",
+    "valuation_range_growth_uncertainty_width",
+    "dynamic_valuation_primary_reference",
+    "profit_alone_is_sell_reason",
+    "profit_protection_overlay_authority",
+    "profit_protection_overlay_eligible",
+    "profit_protection_risk_reasons",
+    "profit_used_by_formal_decision",
+    "formal_sell_mechanical_valuation_only_forbidden",
+    "formal_sell_requires_explicit_rationale",
+    "valuation_confidence_reason_codes",
+)
+DYNAMIC_VALUATION_BOOLEAN_FIELDS = {
+    "previous_valuation_available",
+    "valuation_range_ready",
+    "valuation_range_neutral_roundtrip_verified",
+    "dynamic_valuation_primary_reference",
+    "profit_alone_is_sell_reason",
+    "profit_protection_overlay_eligible",
+    "profit_used_by_formal_decision",
+    "formal_sell_mechanical_valuation_only_forbidden",
+    "formal_sell_requires_explicit_rationale",
+}
+'''
+          if text.count(constant_anchor) != 1:
+              raise SystemExit('constant anchor mismatch')
+          text = text.replace(constant_anchor, dynamic_constants, 1)
+
+          helper_anchor = '''def _required_holding_add_bool(row: Mapping[str, Any], field: str, expected: bool, code: str) -> None:
+'''
+          helper = '''def _dynamic_valuation_payload(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Preserve producer-computed dynamic valuation truth without recomputation."""
+    payload: dict[str, Any] = {}
+    for field in DYNAMIC_VALUATION_CANONICAL_FIELDS:
+        value = row.get(field)
+        if value is None or str(value).strip() == "":
+            continue
+        payload[field] = _bool(value) if field in DYNAMIC_VALUATION_BOOLEAN_FIELDS else value
+    return payload
+
+
+''' + helper_anchor
+          if text.count(helper_anchor) != 1:
+              raise SystemExit('helper anchor mismatch')
+          text = text.replace(helper_anchor, helper, 1)
+
+          update_anchor = '''    compact.update(_specialized_payload(row))
+    compact.update(_holding_add_payload(row))
+    return compact
+'''
+          update_replacement = '''    compact.update(_dynamic_valuation_payload(row))
+    compact.update(_specialized_payload(row))
+    compact.update(_holding_add_payload(row))
+    return compact
+'''
+          if text.count(update_anchor) != 1:
+              raise SystemExit('compact decision anchor mismatch')
+          text = text.replace(update_anchor, update_replacement, 1)
+
+          contract_anchor = '''            "specialized_valuation_evidence_preserved": True,
+            "holding_staged_add_advisory_preserved": True,
+'''
+          contract_replacement = '''            "specialized_valuation_evidence_preserved": True,
+            "dynamic_valuation_evidence_preserved": True,
+            "holding_staged_add_advisory_preserved": True,
+'''
+          if text.count(contract_anchor) != 1:
+              raise SystemExit('architecture contract anchor mismatch')
+          text = text.replace(contract_anchor, contract_replacement, 1)
+          source.write_text(text, encoding='utf-8')
+
+          tests = Path('tests/test_genge_canonical_snapshot.py')
+          test_text = tests.read_text(encoding='utf-8')
+          test_name = 'test_dynamic_holding_valuation_survives_canonical_compaction'
+          if test_name not in test_text:
+              test_text += '''\n\ndef test_dynamic_holding_valuation_survives_canonical_compaction() -> None:\n    production = _production_row(\n        code="001316",\n        scope="HOLDING",\n        action="HOLD_REVIEW",\n        stock_name="润贝航科",\n        valuation_confidence="LOW",\n        neutral_value="49.36957125214809",\n        value_low="21.644645478526556",\n        value_high="70.29254879749493",\n        previous_value_low="20.0",\n        previous_neutral_value="49.36957125214809",\n        previous_value_high="68.0",\n        previous_valuation_available=True,\n        valuation_change="STABLE",\n        valuation_change_materiality_threshold="0.01",\n        price_value_zone="FAIR_VALUE",\n        upside_to_value_high="1.364364238059029",\n        valuation_range_ready=True,\n        valuation_range_source="V311_STRICT_PIT_GENERIC_RANGE",\n        valuation_range_method="ROUND6_10Y_EARNING_POWER_REALISTIC_GROWTH_UNCERTAINTY_BAND",\n        valuation_range_neutral_roundtrip_verified=True,\n        valuation_range_growth_low="0.0",\n        valuation_range_growth_neutral="0.20636294218718887",\n        valuation_range_growth_high="0.3",\n        valuation_range_growth_uncertainty_width="0.20636294218718887",\n        dynamic_valuation_primary_reference=True,\n        profit_alone_is_sell_reason=False,\n        profit_protection_overlay_authority="RISK_CONTEXT_ONLY_NO_FORMAL_ACTION_MUTATION",\n        profit_protection_overlay_eligible=False,\n        profit_protection_risk_reasons="",\n        profit_used_by_formal_decision=False,\n        formal_sell_mechanical_valuation_only_forbidden=True,\n        formal_sell_requires_explicit_rationale=True,\n        valuation_confidence_reason_codes="REALISTIC_GROWTH_UNSTABLE",\n    )\n\n    snapshot = build_snapshot(\n        discovery_rows=[],\n        deep_review_rows=[],\n        production_rows=[production],\n        source_kind="test",\n        source_run_id="dynamic-valuation-1",\n        generated_at="2026-09-11T00:00:00+00:00",\n    )\n\n    holding = snapshot["production"]["holding_decisions"][0]\n    assert holding["value_low"] == "21.644645478526556"\n    assert holding["neutral_value"] == "49.36957125214809"\n    assert holding["value_high"] == "70.29254879749493"\n    assert holding["previous_value_low"] == "20.0"\n    assert holding["previous_neutral_value"] == "49.36957125214809"\n    assert holding["previous_value_high"] == "68.0"\n    assert holding["valuation_change"] == "STABLE"\n    assert holding["price_value_zone"] == "FAIR_VALUE"\n    assert holding["valuation_range_source"] == "V311_STRICT_PIT_GENERIC_RANGE"\n    assert holding["valuation_range_ready"] is True\n    assert holding["dynamic_valuation_primary_reference"] is True\n    assert holding["profit_alone_is_sell_reason"] is False\n    assert holding["profit_protection_overlay_eligible"] is False\n    assert holding["profit_used_by_formal_decision"] is False\n    assert holding["formal_sell_mechanical_valuation_only_forbidden"] is True\n    assert holding["formal_sell_requires_explicit_rationale"] is True\n    assert snapshot["architecture_contract"]["dynamic_valuation_evidence_preserved"] is True\n''' 
+              tests.write_text(test_text, encoding='utf-8')
+
+          workflow = Path('.github/workflows/patch-canonical-dynamic-projection.yml')
+          workflow.unlink()
+          PY
+          python -m pytest -q tests/test_genge_canonical_snapshot.py
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Fix canonical dynamic valuation projection"
+          git push origin HEAD:${GITHUB_REF_NAME}
