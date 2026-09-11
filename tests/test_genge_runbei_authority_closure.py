@@ -95,32 +95,34 @@ def test_runbei_signal_digest_changes_when_similarity_band_changes() -> None:
     assert first["signal_digest"] != second["signal_digest"]
 
 
-def test_success_archetype_workflow_run_is_exact_terminal_lineage_only() -> None:
+def test_success_archetype_workflow_run_keeps_exact_request_and_audits_fallback() -> None:
     text = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
-    assert 'preferred="${{ github.event.workflow_run.id }}"' in text
-    assert 'if [ "${{ github.event_name }}" = "workflow_run" ]; then' in text
-    assert 'candidates+=("$preferred")' in text
-    assert 'mapfile -t runs' in text
-    assert 'else' in text
-    # The fallback query must live only in the non-workflow_run branch.
-    exact_block = text.split('if [ "${{ github.event_name }}" = "workflow_run" ]; then', 1)[1].split('else', 1)[0]
-    assert 'actions/workflows/genge-candidate-terminal-review.yml/runs' not in exact_block
-    assert 'test "$selected_run" = "$preferred"' in text
-    assert 'test "$selected_artifact" != ""' in text
+    assert 'requested_run="${{ github.event.workflow_run.id }}"' in text
+    assert 'source_mode="workflow_run_exact"' in text
+    assert 'verify_successful_main_candidate_run "$requested_run"' in text
+    assert 'requested_created_at="$(run_payload "$requested_run" | jq -r \'\.created_at\')"' in text
+    assert 'fallback_used="true"' in text
+    assert 'fallback_reason="terminalize_skipped_noop_wrapper"' in text
+    assert '.created_at <= $cutoff' in text
+    assert 'TERMINAL_REQUESTED_RUN_ID=${requested_run:-$SELECTED_RUN}' in text
+    assert 'TERMINAL_RUN_ID=$SELECTED_RUN' in text
+    assert "lineage_provenance.json" in text
 
 
-def test_success_archetype_skipped_terminal_is_exact_noop_but_missing_executed_artifact_fails_closed() -> None:
+def test_success_archetype_only_falls_back_for_confirmed_skipped_noop_and_other_missing_artifacts_fail_closed() -> None:
     text = Path(".github/workflows/genge-success-archetype-recall.yml").read_text(encoding="utf-8")
-    resolve = text.split("- name: Resolve Terminal Review artifact with exact workflow lineage", 1)[1].split(
+    resolve = text.split("- name: Resolve Terminal Review artifact with auditable no-op fallback", 1)[1].split(
         "- name: Build bounded PIT-safe Runbei archetype recall", 1
     )[0]
     assert 'select(.name == "terminalize") | .conclusion' in resolve
-    assert '"${terminal_conclusions[0]}" = "skipped"' in resolve
-    assert 'echo "RECALL_NOOP=true" >> "$GITHUB_ENV"' in resolve
-    assert "intentional exact-lineage no-op" in resolve
-    assert "has no terminal artifact but terminalize was not exactly one skipped job; failing closed" in resolve
-    assert 'actions/workflows/genge-candidate-terminal-review.yml/runs' not in resolve.split(
-        'if [ "${{ github.event_name }}" = "workflow_run" ]; then', 1
-    )[1].split('else', 1)[0]
-    assert 'if: env.RECALL_NOOP != \'true\'' in text
-    assert "latest successful" not in resolve.lower()
+    assert 'if [ "$requested_terminalize" != "skipped" ]; then' in resolve
+    assert "has no usable terminal artifact and terminalize=${requested_terminalize}; fail closed" in resolve
+    assert 'fallback_reason="terminalize_skipped_noop_wrapper"' in resolve
+    assert "confirmed no-op wrapper" in resolve
+    assert 'if [ "${#ids[@]}" -eq 1 ] && [ "$conclusion" = "success" ]; then' in resolve
+    assert "No prior successful Candidate Terminal real producer" in resolve
+    assert 'RECALL_NOOP=true' not in resolve
+    assert "intentional exact-lineage no-op" not in resolve
+    assert "if: env.RECALL_NOOP != 'true'" not in text
+    assert "'canonical_authority_unchanged': True" in text
+    assert "'no_auto_trade': True" in text
