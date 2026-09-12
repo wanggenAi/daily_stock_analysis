@@ -210,6 +210,44 @@ def test_wrapped_labels_units_and_values_are_layout_equivalent():
     assert extract_report_metrics(wrapped, 2024)["operating_cash_flow"] == extract_report_metrics(compact, 2024)["operating_cash_flow"]
 
 
+def test_grouped_number_split_inside_thousands_group_is_repaired():
+    text = """
+    主要会计数据和财务指标
+    单位：元
+    营业收入（元）
+    2,261,294,31
+    2.85
+    归属于上市公司股东的净利润（元）
+    191,409,34
+    1.77
+    经营活动产生的现金流量净额（元）
+    234,567,89
+    0.12
+    """
+    metrics = extract_report_metrics(text, 2023)
+    assert metrics["revenue"] == 2_261_294_312.85
+    assert metrics["net_profit"] == 191_409_341.77
+    assert metrics["operating_cash_flow"] == 234_567_890.12
+
+
+def test_narrative_metric_mention_cannot_drift_into_next_section_table():
+    text = """
+    单位：元
+    经营活动产生的现金流量净额远高于净利润。
+    六、资产及负债状况分析
+    1、资产构成重大变动情况
+    单位：元
+    2022年末 2022年初
+    金额 占总资产比例 金额 占总资产比例
+    货币资金 94,038,088.16 147,778,855.86
+    """
+    metrics = extract_report_metrics(text, 2022)
+    assert metrics["operating_cash_flow"] is None
+    provenance = metrics["metric_provenance"]["operating_cash_flow"]
+    assert provenance["verified"] is False
+    assert provenance["reason"] == "NARRATIVE_OR_SECTION_BOUNDARY_BEFORE_VALUE"
+
+
 def test_split_year_headers_map_to_wrapped_metric_rows():
     text = """
     主要会计数据和财务指标
