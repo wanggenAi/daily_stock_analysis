@@ -317,7 +317,12 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 500,
-    "planned_immediate_cash_cny": 0.0
+    "planned_immediate_cash_cny": 0.0,
+    "research_terminal_requested_count": 1,
+    "research_buy_count": 0,
+    "research_wait_price_count": 0,
+    "research_reject_count": 1,
+    "urgent_research_count": 1
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -407,13 +412,17 @@
     "terminal_decisions_available": true,
     "terminal_unauthorized_buy_suppressed": 0,
     "capital_source_status": "USER_CONFIRMED_FLOOR",
-    "engineering_details_are_secondary": true
+    "engineering_details_are_secondary": true,
+    "terminal_research_available": true,
+    "terminal_research_authority": "RESEARCH_ONLY",
+    "terminal_research_formal_mutation_allowed": false
   },
   "presentation_contract": {
     "investor_first": true,
     "section_order": [
       "market",
       "stock_portfolio",
+      "terminal_research",
       "terminal_buy_now",
       "terminal_wait_price",
       "capital_deployment",
@@ -923,5 +932,103 @@
         "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
       }
     ]
+  },
+  "terminal_research_snapshot": {
+    "available": true,
+    "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
+    "source_deep_lambda_run_id": "34667012313",
+    "source_every_industry_run_id": "34638052079",
+    "requested_count": 1,
+    "decision_counts": {
+      "BUY": 0,
+      "WAIT_PRICE": 0,
+      "REJECT": 1
+    },
+    "research_authority": "RESEARCH_ONLY",
+    "formal_trading_authority": false,
+    "automatic_formal_buy_allowed": false,
+    "unknown_is_pass": false,
+    "no_auto_trade": true,
+    "terminal_rows": [
+      {
+        "code": "603055",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "C17纺织业",
+        "name": "台华新材",
+        "no_auto_trade": true,
+        "quant_score": 45.6517,
+        "quant_status": "SECONDARY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P0",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 73.5949,
+        "urgent_research": true,
+        "urgent_research_reasons": [
+          "P0_EVIDENCE_BLOCKED"
+        ],
+        "valuation": {
+          "current_pe": 16.01,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 20.060000000000002,
+          "pe_to_history_ratio": 0.7981056829511466,
+          "required_profit_growth_pct": -20.18943170488534
+        }
+      }
+    ],
+    "urgent_research_queue": [
+      {
+        "code": "603055",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 2,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat"
+        ],
+        "industry": "C17纺织业",
+        "name": "台华新材",
+        "no_auto_trade": true,
+        "quant_score": 45.6517,
+        "quant_status": "SECONDARY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "REJECT",
+        "research_priority": "P0",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 73.5949,
+        "urgent_research": true,
+        "urgent_research_reasons": [
+          "P0_EVIDENCE_BLOCKED"
+        ],
+        "valuation": {
+          "current_pe": 16.01,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 20.060000000000002,
+          "pe_to_history_ratio": 0.7981056829511466,
+          "required_profit_growth_pct": -20.18943170488534
+        }
+      }
+    ],
+    "urgent_research_count": 1
   }
 }
