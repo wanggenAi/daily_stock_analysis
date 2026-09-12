@@ -1,7 +1,7 @@
 """Typed extraction-status adapter for the legacy company announcement collector.
 
 The collector predates the robust evidence-normalization contract and exposes a
-coarse ``OK/FAILED/MISSING`` audit surface.  This adapter keeps that schema for
+coarse ``OK/FAILED/MISSING`` audit surface. This adapter keeps that schema for
 backward compatibility while preserving the finer extraction truth required by
 research closure: source absence, fetch failure, parse failure, structure
 recovery failure, ambiguity, recovery and verification are distinct states.
@@ -21,11 +21,14 @@ from .evidence_normalization import (
     VALUE_STATUSES,
     VALUE_VERIFIED,
 )
-from .validators import extract_numeric_context_detailed
+from .validators import extract_numeric_context_detailed, extract_text_from_response_detailed
 
 _TYPED_CACHE_VERSION = 5
 _EXTRACTION_META: ContextVar[dict[str, Any]] = ContextVar(
     "company_announcement_extraction_meta", default={}
+)
+_SOURCE_TEXT_META: ContextVar[dict[str, Any]] = ContextVar(
+    "company_announcement_source_text_meta", default={}
 )
 _EXTRACTION_BY_FINGERPRINT: ContextVar[dict[tuple[str, str, str], dict[str, Any]]] = ContextVar(
     "company_announcement_extraction_by_fingerprint", default={}
@@ -57,8 +60,33 @@ def _fingerprint(row: Mapping[str, Any]) -> tuple[str, str, str]:
     )
 
 
+def _typed_text_extractor(content: bytes, content_type: str) -> tuple[str, str]:
+    """Keep the document-parser outcome available to downstream numeric recovery."""
+    detail = extract_text_from_response_detailed(content, content_type)
+    _SOURCE_TEXT_META.set(dict(detail))
+    return str(detail.get("text") or ""), str(detail.get("parser") or "")
+
+
 def _typed_numeric_extractor(text: str, keywords: list[str] | None = None) -> dict[str, str]:
     detail = extract_numeric_context_detailed(text, keywords)
+    source_detail = dict(_SOURCE_TEXT_META.get())
+    source_status = str(source_detail.get("status") or "")
+
+    # A document parser that explicitly failed or could not recover structure is
+    # stronger evidence than the empty-text numeric extractor's generic absence.
+    # Preserve that truth instead of collapsing parser failure into MISSING.
+    if not str(text or "").strip() and source_status in {
+        PARSE_FAILED,
+        STRUCTURE_RECOVERY_FAILED,
+        SOURCE_DATA_ABSENT,
+    }:
+        detail = {
+            **detail,
+            "status": source_status,
+            "reason": str(source_detail.get("reason") or detail.get("reason") or ""),
+            "extraction_method": str(source_detail.get("parser") or "DOCUMENT_TEXT_EXTRACTION"),
+        }
+
     _EXTRACTION_META.set(dict(detail))
     if detail.get("status") not in VALUE_STATUSES:
         return {}
@@ -89,9 +117,9 @@ def _typed_audit_row_factory(original_audit_row: Any):
             extraction_status = SOURCE_DATA_ABSENT
             extraction_reason = "OFFICIAL_ANNUAL_REPORT_NOT_FOUND"
         elif issue == "announcement_fetch_or_parse_failed":
-            # The legacy collector wraps the network request in this exception
-            # branch. Parser failures returned by the robust validator flow into
-            # the numeric-extraction audit below instead of raising here.
+            # Network exceptions still arrive through the legacy exception branch.
+            # Typed parser failures do not raise: _typed_text_extractor records them
+            # and the numeric-extraction audit below preserves PARSE_FAILED.
             extraction_status = SOURCE_FETCH_FAILED
             extraction_reason = "OFFICIAL_ANNOUNCEMENT_FETCH_FAILED"
         elif issue == "numeric_value_not_located_in_original":
@@ -145,11 +173,13 @@ def install_company_extraction_status_adapter(company_module: Any) -> Any:
     original_collect = company_module.collect_company_announcements
     original_audit_row = company_module._audit_row
 
+    company_module.extract_text_from_response = _typed_text_extractor
     company_module.extract_numeric_context = _typed_numeric_extractor
     company_module._audit_row = _typed_audit_row_factory(original_audit_row)
 
     def collect_company_announcements_typed(*args: Any, **kwargs: Any):
         _EXTRACTION_META.set({})
+        _SOURCE_TEXT_META.set({})
         _EXTRACTION_BY_FINGERPRINT.set({})
         if "cache" in kwargs:
             kwargs = dict(kwargs)
