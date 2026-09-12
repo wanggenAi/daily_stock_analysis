@@ -69,10 +69,10 @@ R87广播、电视、电影和录音制作业(58.62)、M75科技推广和应用�
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`34655454854`；当前 Lambda：`34667012313`。
-- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：无
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
+- 终态来源 Lambda：`34667012313`；当前 Lambda：`34667012313`。
+- 请求：**1**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**1**。
+- 高吸引力但证据不足、优先补证：603055 台华新材(quant=45.6517)
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
