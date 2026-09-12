@@ -1,0 +1,26 @@
+name: TEMP Positive Exact Recall Validation
+
+on:
+  push:
+    branches:
+      - validation/exact-recall-positive-34586652294
+    paths:
+      - ".github/workflows/tmp-positive-exact-recall-validation.yml"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-positive-validation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch known valid producer through formal exact-lineage Recall
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-success-archetype-recall.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f source_terminal_run_id=34586652294
