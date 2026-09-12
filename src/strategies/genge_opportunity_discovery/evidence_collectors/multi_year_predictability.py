@@ -79,6 +79,54 @@ _FULLWIDTH_TRANSLATION = str.maketrans(
         "／": "/", "｜": "|", "；": ";", "　": " ", " ": " ",
     }
 )
+_SPLIT_GROUP_RE = re.compile(
+    r"(?P<head>\d{1,3}(?:,\d{3})*,)(?P<partial>\d{1,2})"
+    r"[ \t]*\n[ \t]*(?P<tail>\d{1,2})(?P<decimal>\.\d+)?(?!\d)"
+)
+_DANGLING_GROUP_RE = re.compile(
+    r"(?P<head>\d{1,3}(?:,\d{3})*,)[ \t]*\n[ \t]*"
+    r"(?P<tail>\d{3})(?P<decimal>\.\d+)?(?!\d)"
+)
+_SECTION_HEADING_RE = re.compile(
+    r"(?:^|\n)\s*(?:第[一二三四五六七八九十百]+[章节]|[一二三四五六七八九十]+、)"
+)
+
+
+def _repair_split_grouped_numbers(text: str) -> str:
+    """Repair only line breaks that split a valid comma-grouped number.
+
+    PDF extractors sometimes emit ``2,261,294,31\n2.85`` for
+    ``2,261,294,312.85``. Joining arbitrary adjacent digit lines would be
+    unsafe because separate table columns can also be numeric. We therefore
+    repair only an already comma-grouped token whose last group is provably
+    incomplete, or a dangling comma followed by one complete 3-digit group.
+    """
+    previous = None
+    while previous != text:
+        previous = text
+
+        def complete_partial(match: re.Match[str]) -> str:
+            partial = match.group("partial")
+            tail = match.group("tail")
+            if len(partial) + len(tail) != 3:
+                return match.group(0)
+            return (
+                match.group("head")
+                + partial
+                + tail
+                + (match.group("decimal") or "")
+            )
+
+        text = _SPLIT_GROUP_RE.sub(complete_partial, text)
+        text = _DANGLING_GROUP_RE.sub(
+            lambda match: (
+                match.group("head")
+                + match.group("tail")
+                + (match.group("decimal") or "")
+            ),
+            text,
+        )
+    return text
 
 
 def _normalize_pdf_text(value: Any) -> str:
@@ -86,6 +134,7 @@ def _normalize_pdf_text(value: Any) -> str:
     text = str(value or "").translate(_FULLWIDTH_TRANSLATION)
     text = text.replace("\u200b", "").replace("\ufeff", "").replace("\u00ad", "")
     text = text.replace("\r\n", "\n").replace("\r", "\n")
+    text = _repair_split_grouped_numbers(text)
     text = re.sub(r"[\t\f\v ]+", " ", text)
     text = re.sub(r"人\s*民\s*币", "人民币", text)
     text = re.sub(r"亿\s*元", "亿元", text)
@@ -284,6 +333,23 @@ def _nearby_header_years(text: str, label_start: int) -> list[int]:
     if max(found) - min(found) > 6:
         return []
     return found[-6:]
+
+
+def _row_fallback_is_local(window: str, match: re.Match[str]) -> bool:
+    """Reject values reached only by drifting from prose into another section."""
+    prefix = window[:match.start()]
+    # In a genuine table row there is no completed prose sentence between the
+    # metric label and its first value. This blocks examples such as
+    # “经营活动产生的现金流量净额远高于净利润。 六、资产...” from borrowing a
+    # later balance-sheet number.
+    if re.search(r"[。！？]", prefix):
+        return False
+    if _SECTION_HEADING_RE.search(prefix):
+        return False
+    # Table headers/cell wrapping can be verbose, but a long run of prose before
+    # the first number is not a local metric row.
+    compact = re.sub(r"\s+", "", prefix)
+    return len(compact) <= 180
 
 
 def _local_unit(
@@ -495,6 +561,9 @@ def _metric_measurement(text: str, labels: Iterable[str], fiscal_year: int) -> d
             for match in _NUMBER_RE.finditer(window):
                 if _looks_like_non_metric_number(window, match, fiscal_year):
                     continue
+                if not _row_fallback_is_local(window, match):
+                    reasons.append("NARRATIVE_OR_SECTION_BOUNDARY_BEFORE_VALUE")
+                    break
                 candidate = _candidate_from_match(
                     normalized=normalized,
                     label_match=label_match,
