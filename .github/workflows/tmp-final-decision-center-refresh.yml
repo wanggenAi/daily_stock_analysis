@@ -1,0 +1,25 @@
+name: TEMP Final Decision Center Refresh
+
+on:
+  push:
+    branches:
+      - validation/final-decision-center-refresh
+    paths:
+      - ".github/workflows/tmp-final-decision-center-refresh.yml"
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch formal Investor Decision Brief refresh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-investor-decision-dashboard.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
