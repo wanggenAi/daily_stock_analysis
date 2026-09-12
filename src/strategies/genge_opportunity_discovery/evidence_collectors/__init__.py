@@ -13,6 +13,7 @@ import yaml
 from . import company_announcements as _company_announcements
 from .cache import EvidenceCache
 from .company_announcements import collect_company_announcements, collect_company_material_events
+from .company_extraction_status import install_company_extraction_status_adapter
 from .public_data import collect_public_industry_data
 
 _INDUSTRY_CLASSIFICATION_PREFIX_RE = re.compile(r"^[A-Z]\d{2}(?:\.\d+)?\s*")
@@ -165,6 +166,7 @@ _company_announcements._query_sse = _query_sse_with_static_attachments
 _company_announcements._query_sse_material_events = _query_sse_material_events_with_static_attachments
 _company_announcements._load_cninfo_org_ids = _load_cninfo_org_ids_with_topsearch_fallback
 _company_announcements._classify_material_events = _classify_material_events_with_policy_guard
+collect_company_announcements = install_company_extraction_status_adapter(_company_announcements)
 
 
 def canonical_industry_name(value: Any) -> str:
