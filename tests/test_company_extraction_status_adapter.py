@@ -4,9 +4,13 @@ from datetime import date
 from pathlib import Path
 
 from src.strategies.genge_opportunity_discovery import evidence_collectors
-from src.strategies.genge_opportunity_discovery.evidence_collectors import company_announcements
+from src.strategies.genge_opportunity_discovery.evidence_collectors import (
+    company_announcements,
+    company_extraction_status,
+)
 from src.strategies.genge_opportunity_discovery.evidence_collectors.cache import EvidenceCache
 from src.strategies.genge_opportunity_discovery.evidence_collectors.evidence_normalization import (
+    PARSE_FAILED,
     SOURCE_DATA_ABSENT,
     SOURCE_FETCH_FAILED,
     STRUCTURE_RECOVERY_FAILED,
@@ -50,6 +54,28 @@ def test_numeric_recovery_failure_is_typed_not_collapsed_to_missing() -> None:
     assert row["unknown_is_pass"] is False
 
 
+def test_document_parse_failure_survives_numeric_stage(monkeypatch) -> None:
+    monkeypatch.setattr(
+        company_extraction_status,
+        "extract_text_from_response_detailed",
+        lambda _content, _content_type: {
+            "status": PARSE_FAILED,
+            "text": "",
+            "parser": "pdf_parse_failed:FixtureError",
+            "reason": "pdf_parse_failed:FixtureError",
+        },
+    )
+    text, parser = company_announcements.extract_text_from_response(b"fixture", "application/pdf")
+    assert text == ""
+    assert parser == "pdf_parse_failed:FixtureError"
+    assert company_announcements.extract_numeric_context(text, ["营业收入"]) == {}
+    row = _audit("numeric_value_not_located_in_original")
+    assert row["extraction_status"] == PARSE_FAILED
+    assert row["parse_failed"] is True
+    assert row["source_data_absent"] is False
+    assert row["unknown_is_pass"] is False
+
+
 def test_fetch_failure_and_true_absence_are_distinct() -> None:
     fetch_failed = _audit("announcement_query_failed")
     absent = _audit("announcement_not_found")
@@ -76,7 +102,7 @@ def test_empty_collection_summary_preserves_typed_contract(tmp_path: Path) -> No
     assert set(counts) == {
         SOURCE_DATA_ABSENT,
         SOURCE_FETCH_FAILED,
-        "PARSE_FAILED",
+        PARSE_FAILED,
         STRUCTURE_RECOVERY_FAILED,
         "AMBIGUOUS_MATCH",
         VALUE_RECOVERED,
