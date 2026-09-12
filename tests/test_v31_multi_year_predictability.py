@@ -125,9 +125,7 @@ def test_missing_unit_provenance_makes_year_incomplete():
         extract_report_metrics(text, 2023),
         extract_report_metrics(text, 2022),
     ]
-    decision, reason = classify_multi_year_metrics(
-        records, cyclical_or_resource=False
-    )
+    decision, reason = classify_multi_year_metrics(records, cyclical_or_resource=False)
     assert decision == "UNKNOWN"
     assert reason == "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
 
@@ -142,10 +140,7 @@ def test_conflicting_inline_and_header_units_are_rejected():
     metrics = extract_report_metrics(text, 2024)
     assert metrics["revenue"] is None
     assert metrics["metric_provenance"]["revenue"]["verified"] is False
-    assert (
-        metrics["metric_provenance"]["revenue"]["reason"]
-        == "INLINE_HEADER_UNIT_CONFLICT"
-    )
+    assert metrics["metric_provenance"]["revenue"]["reason"] == "INLINE_HEADER_UNIT_CONFLICT"
 
 
 def test_dates_years_and_percentages_are_not_selected_as_metric_values():
@@ -182,10 +177,7 @@ def test_scoped_product_revenue_cannot_stand_in_for_company_revenue():
     metrics = extract_report_metrics(text, 2025)
     assert metrics["revenue"] is None
     assert metrics["metric_provenance"]["revenue"]["verified"] is False
-    assert (
-        metrics["metric_provenance"]["revenue"]["reason"]
-        == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
-    )
+    assert metrics["metric_provenance"]["revenue"]["reason"] == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
 
 
 def test_generic_segment_region_and_post_label_product_scope_are_rejected():
@@ -197,16 +189,78 @@ def test_generic_segment_region_and_post_label_product_scope_are_rejected():
         metrics = extract_report_metrics(text, 2025)
         assert metrics["revenue"] is None
         assert metrics["metric_provenance"]["revenue"]["verified"] is False
-        assert (
-            metrics["metric_provenance"]["revenue"]["reason"]
-            == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
-        )
+        assert metrics["metric_provenance"]["revenue"]["reason"] == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
+
+
+def test_wrapped_labels_units_and_values_are_layout_equivalent():
+    compact = """
+    单位：万元
+    营业收入 12,345.60
+    归属于上市公司股东的净利润 1,234.50
+    经营活动产生的现金流量净额 1,500.25
+    """
+    wrapped = """
+    单 位 ： 人 民 币 万 元
+    营业\n收入\n12,345.\n60
+    归属于上市公司股东的\n净利润\n1,234.\n50
+    经营活动产生的现金流量\n净额\n1,500.\n25
+    """
+    assert extract_report_metrics(wrapped, 2024)["revenue"] == extract_report_metrics(compact, 2024)["revenue"]
+    assert extract_report_metrics(wrapped, 2024)["net_profit"] == extract_report_metrics(compact, 2024)["net_profit"]
+    assert extract_report_metrics(wrapped, 2024)["operating_cash_flow"] == extract_report_metrics(compact, 2024)["operating_cash_flow"]
+
+
+def test_split_year_headers_map_to_wrapped_metric_rows():
+    text = """
+    主要会计数据和财务指标
+    单位：万元
+    2024年
+    2023年
+    营业收入
+    12,345.60
+    11,000.00
+    归属于上市公司股东的净利润
+    1,234.50
+    1,100.00
+    经营活动产生的现金流量净额
+    1,500.25
+    1,400.00
+    """
+    metrics = extract_report_metrics(text, 2024)
+    assert metrics["revenue"] == 12345.60 * 10_000
+    assert metrics["net_profit"] == 1234.50 * 10_000
+    assert metrics["operating_cash_flow"] == 1500.25 * 10_000
+    assert metrics["metric_provenance"]["revenue"]["extraction_mode"] == "HEADER_COLUMN_FISCAL_YEAR"
+
+
+def test_fullwidth_year_number_and_punctuation_are_recovered():
+    text = """
+    单位：亿元
+    营业收入（亿元） ２０２４ ： １２３．４５
+    归属于上市公司股东的净利润（亿元） ２０２４ ： １２．３０
+    经营活动产生的现金流量净额（亿元） ２０２４ ： １５．５０
+    """
+    metrics = extract_report_metrics(text, 2024)
+    assert metrics["revenue"] == 123.45 * 100_000_000
+    assert metrics["net_profit"] == 12.30 * 100_000_000
+    assert metrics["operating_cash_flow"] == 15.50 * 100_000_000
+    assert metrics["metric_provenance"]["revenue"]["extraction_mode"] == "EXPLICIT_FISCAL_YEAR_VALUE"
+
+
+def test_conflicting_same_year_values_remain_unknown_instead_of_guessing():
+    text = """
+    营业收入(亿元) 2024 100.00 2024 101.00
+    归属于上市公司股东的净利润(亿元) 2024 10.00
+    经营活动产生的现金流量净额(亿元) 2024 12.00
+    """
+    metrics = extract_report_metrics(text, 2024)
+    assert metrics["revenue"] is None
+    assert metrics["metric_provenance"]["revenue"]["verified"] is False
+    assert metrics["metric_provenance"]["revenue"]["reason"] == "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR"
 
 
 def test_non_cyclical_three_year_stable_official_metrics_can_pass():
-    decision, reason = classify_multi_year_metrics(
-        _stable_records(), cyclical_or_resource=False
-    )
+    decision, reason = classify_multi_year_metrics(_stable_records(), cyclical_or_resource=False)
     assert decision == "PASS"
     assert reason == "STRICT_MULTI_YEAR_ACCOUNTING_PREDICTABILITY_PROVEN"
 
@@ -214,26 +268,20 @@ def test_non_cyclical_three_year_stable_official_metrics_can_pass():
 def test_untrusted_metric_provenance_cannot_pass():
     records = _stable_records()
     records[1]["metric_provenance"]["revenue"]["verified"] = False
-    decision, reason = classify_multi_year_metrics(
-        records, cyclical_or_resource=False
-    )
+    decision, reason = classify_multi_year_metrics(records, cyclical_or_resource=False)
     assert decision == "UNKNOWN"
     assert reason == "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
 
 
 def test_missing_complete_years_remain_unknown():
     records = _stable_records()[:2]
-    decision, reason = classify_multi_year_metrics(
-        records, cyclical_or_resource=False
-    )
+    decision, reason = classify_multi_year_metrics(records, cyclical_or_resource=False)
     assert decision == "UNKNOWN"
     assert reason == "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
 
 
 def test_resource_company_cannot_pass_from_accounting_growth_alone():
-    decision, reason = classify_multi_year_metrics(
-        _stable_records(), cyclical_or_resource=True
-    )
+    decision, reason = classify_multi_year_metrics(_stable_records(), cyclical_or_resource=True)
     assert decision == "UNKNOWN"
     assert reason == "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
 
@@ -286,10 +334,7 @@ def test_close_profiles_preserves_research_only_authority_and_existing_fail():
         industry_evidence=[],
         company_evidence=[_strict_row("603233")],
         evidence_audit=[],
-        evidence_summary={
-            "collection_attempt_count": 1,
-            "unique_evidence_count": 1,
-        },
+        evidence_summary={"collection_attempt_count": 1, "unique_evidence_count": 1},
     )
     gates = closed["profiles"]["603233"]["gates"]
     assert gates["predictability"]["status"] == "PASS"
