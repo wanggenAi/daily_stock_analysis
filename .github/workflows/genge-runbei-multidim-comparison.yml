@@ -1,0 +1,168 @@
+name: GenGe Runbei Multidim Comparison
+
+on:
+  workflow_run:
+    workflows: ["GenGe Success Archetype Recall"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      source_recall_run_id:
+        description: "Exact GenGe Success Archetype Recall run id"
+        required: true
+        type: string
+  pull_request:
+    paths:
+      - ".github/workflows/genge-runbei-multidim-comparison.yml"
+      - "data/research_models/v31_multidim_scorecard.json"
+      - "src/strategies/genge_opportunity_discovery/runbei_multidim_comparison.py"
+      - "tests/test_runbei_multidim_comparison.py"
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: genge-runbei-multidim-${{ github.event.workflow_run.id || inputs.source_recall_run_id || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  contract-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+      - name: Validate multidimensional comparison contracts
+        run: |
+          python -m py_compile src/strategies/genge_opportunity_discovery/runbei_multidim_comparison.py
+          python -m pytest -q tests/test_runbei_multidim_comparison.py
+
+  build-comparison:
+    if: >-
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success') ||
+      (github.event_name == 'workflow_dispatch' && inputs.source_recall_run_id != '')
+    needs: contract-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Resolve exact Success Archetype Recall artifact
+        id: recall
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DISPATCH_SOURCE_RUN_ID: ${{ inputs.source_recall_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_run=""
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            source_run="${{ github.event.workflow_run.id }}"
+          else
+            source_run="${DISPATCH_SOURCE_RUN_ID:-}"
+          fi
+          [[ "$source_run" =~ ^[0-9]+$ ]] || {
+            echo "::error::Invalid exact Success Archetype Recall run id: ${source_run}" >&2
+            exit 1
+          }
+          echo "source_run_id=$source_run" >> "$GITHUB_OUTPUT"
+
+          artifact_json="$(gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${source_run}/artifacts?per_page=100")"
+          mapfile -t artifact_ids < <(
+            printf '%s' "$artifact_json" | jq -r \
+              '.artifacts[] | select(.expired == false) | select(.name | startswith("genge-success-archetype-recall-")) | .id'
+          )
+
+          if [ "${#artifact_ids[@]}" -eq 0 ]; then
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            echo "No production recall artifact on exact run ${source_run}; treating contract-only/no-op run as no-op." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          if [ "${#artifact_ids[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one live recall artifact on run ${source_run}, found ${#artifact_ids[@]}" >&2
+            exit 1
+          fi
+
+          rm -rf reports/source_recall /tmp/runbei-recall.zip
+          mkdir -p reports/source_recall
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_ids[0]}/zip" > /tmp/runbei-recall.zip
+          unzip -q /tmp/runbei-recall.zip -d reports/source_recall
+          mapfile -t scored_files < <(find reports/source_recall -type f -name success_archetype_scored.csv -print)
+          if [ "${#scored_files[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one success_archetype_scored.csv, found ${#scored_files[@]}" >&2
+            exit 1
+          fi
+          echo "scored_csv=${scored_files[0]}" >> "$GITHUB_OUTPUT"
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Build Runbei + V3.1 multidimensional comparison
+        if: steps.recall.outputs.found == 'true'
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.runbei_multidim_comparison \
+            --scored-csv "${{ steps.recall.outputs.scored_csv }}" \
+            --archetype data/research_archetypes/runbei_v1.json \
+            --scorecard data/research_models/v31_multidim_scorecard.json \
+            --output-dir reports/runbei_multidim_comparison \
+            --source-recall-run-id "${{ steps.recall.outputs.source_run_id }}"
+
+      - name: Validate research-only authority invariants
+        if: steps.recall.outputs.found == 'true'
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = json.loads(Path('reports/runbei_multidim_comparison/runbei_multidim_comparison.json').read_text(encoding='utf-8'))
+          assert p['authority'] == 'RESEARCH_ONLY'
+          assert p['formal_action_eligible'] is False
+          assert p['formal_action_recomputed'] is False
+          assert p['unknown_is_pass'] is False
+          assert p['no_auto_trade'] is True
+          assert sum(float(x['weight']) for x in p['feature_schema']) == 100.0
+          assert sum(float(x['weight']) for x in p['v31_scorecard']['dimensions']) == 100.0
+          for row in p['rows']:
+              assert row['formal_action_eligible'] is False
+              assert row['formal_action_recomputed'] is False
+              assert row['similarity_changes_research_order_only'] is True
+              assert row['unknown_is_pass'] is False
+              assert row['no_auto_trade'] is True
+          PY
+
+      - name: Upload multidimensional comparison artifact
+        if: steps.recall.outputs.found == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-runbei-multidim-comparison-${{ steps.recall.outputs.source_run_id }}
+          path: reports/runbei_multidim_comparison
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish comparison summary
+        if: steps.recall.outputs.found == 'true'
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          p = json.loads(Path('reports/runbei_multidim_comparison/runbei_multidim_comparison.json').read_text(encoding='utf-8'))
+          print('# Runbei + V3.1 Multidimensional Comparison')
+          print(f"- exact recall run: {p['source_recall_run_id']}")
+          print(f"- source rows: {p['row_count']}")
+          print(f"- Runbei matches: {p['matched_count']}")
+          print('- persisted views: JSON + CSV + Markdown')
+          print('- five Runbei feature contributions are explicit columns')
+          print('- V3.1 100-point dimensions stay UNKNOWN unless actually persisted upstream')
+          print('- authority: research-only; UNKNOWN != PASS; no Formal BUY mutation; no auto-trade')
+          PY
