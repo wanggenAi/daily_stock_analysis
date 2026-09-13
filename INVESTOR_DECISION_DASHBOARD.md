@@ -93,3 +93,22 @@ R87广播、电视、电影和录音制作业(NEUTRAL)、M75科技推广和应�
 | 601236 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
 | 603883 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
 | 603899 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
+
+## 深算研究终态（Research-only，不等于正式交易授权）
+
+- 本轮深算：**1** 只；研究 BUY **0** / WAIT_PRICE **0** / REJECT **1**。
+- urgent research：**1** 只；这些标的本轮仍是 REJECT，不获得 Formal BUY。
+- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
+
+### 我的持仓深算
+
+| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
+|---|---|---|---|---|
+| 600406 | — | 本轮 workset 未包含 | — | — |
+| 001316 | — | 本轮 workset 未包含 | — | — |
+| 601318 | — | 本轮 workset 未包含 | — | — |
+| 603993 | — | 本轮 workset 未包含 | — | — |
+
+### Urgent evidence queue
+
+- 台华新材 603055: REJECT；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
