@@ -1,0 +1,31 @@
+{
+  "contract_version": "GEN_GE_V31_MULTIDIM_SCORECARD_V1",
+  "name": "V3.1 多维候选比较框架",
+  "authority": "RESEARCH_ONLY",
+  "hard_gates": [
+    "predictability",
+    "financial_safety",
+    "earnings_authenticity"
+  ],
+  "dimensions": [
+    {"id": "long_term_demand", "label": "长期需求", "weight": 10},
+    {"id": "moat_and_direction", "label": "护城河及方向", "weight": 20},
+    {"id": "earnings_quality", "label": "盈利质量", "weight": 10},
+    {"id": "roic_incremental_roic", "label": "ROIC/增量ROIC", "weight": 10},
+    {"id": "management_capital_allocation", "label": "管理层资本配置", "weight": 8},
+    {"id": "growth_runway", "label": "成长空间", "weight": 10},
+    {"id": "normalized_earnings_certainty", "label": "正常化盈利确定性", "weight": 7},
+    {"id": "market_expectation_gap", "label": "市场预期差", "weight": 8},
+    {"id": "valuation_margin_of_safety", "label": "估值/安全边际", "weight": 12},
+    {"id": "market_position", "label": "市场位置", "weight": 5}
+  ],
+  "total_weight": 100,
+  "rules": {
+    "hard_gate_overrides_score": true,
+    "unknown_is_pass": false,
+    "similarity_is_research_recall_only": true,
+    "similarity_can_create_formal_buy": false,
+    "no_auto_trade": true,
+    "missing_dimension_score_policy": "UNKNOWN_NOT_PERSISTED"
+  }
+}
