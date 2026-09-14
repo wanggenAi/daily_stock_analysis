@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-14T17:38:56+00:00",
+  "mode": "MANUAL",
+  "generated_at": "2026-09-14T17:40:39+00:00",
   "canonical_snapshot_id": "1db16b49fd642e3da5c7",
   "canonical_source_run_id": "34874791534",
   "latest_trade_date": "2026-09-14",
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥1789",
+  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1789；盘中价覆盖=0",
   "market": {
     "as_of_date": "2026-09-14",
     "status": "YELLOW",
@@ -93,7 +93,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION"
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "001316",
@@ -133,7 +134,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE"
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "601318",
@@ -173,7 +175,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.659<1.00"
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.659<1.00",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "603993",
@@ -213,7 +216,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD"
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       }
     ]
   },
@@ -250,7 +254,11 @@
         "estimated_cash_cny": 1789.0,
         "immediate_execution_eligible": true,
         "automatic_order_allowed": false,
-        "no_auto_trade": true
+        "no_auto_trade": true,
+        "live_market_price": 17.89,
+        "price_observed_at": "",
+        "price_provider": "",
+        "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
       }
     ],
     "wait_price_reservations": [],
@@ -285,7 +293,11 @@
       "estimated_cash_cny": 1789.0,
       "immediate_execution_eligible": true,
       "automatic_order_allowed": false,
-      "no_auto_trade": true
+      "no_auto_trade": true,
+      "live_market_price": 17.89,
+      "price_observed_at": "",
+      "price_provider": "",
+      "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
     }
   ],
   "decision_summary": {
@@ -359,8 +371,8 @@
     "trigger_codes": []
   },
   "hourly_context": {
-    "available": false,
-    "research_as_of": ""
+    "available": true,
+    "research_as_of": "2026-09-14T17:35:38Z"
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -385,5 +397,19 @@
       "data_health"
     ],
     "engineering_details_are_secondary": true
+  },
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V1",
+    "available": false,
+    "eligible_quote_count": 0,
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 120,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "no_auto_trade": true
   }
 }
