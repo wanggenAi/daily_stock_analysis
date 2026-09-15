@@ -82,6 +82,8 @@ def test_live_quotes_replace_display_prices_but_never_formal_actions():
     assert rows["601318"]["pnl_pct"] == pytest.approx(2.28, abs=0.01)
     assert rows["600406"]["formal_action"] == "ADD"
     assert payload["live_execution_overlay"]["formal_action_recomputed"] is False
+    assert payload["live_execution_overlay"]["market_data_status"] == "OK"
+    assert payload["live_execution_overlay"]["coverage_ratio"] == 1.0
     assert payload["no_auto_trade"] is True
 
 
@@ -89,22 +91,19 @@ def test_planner_uses_conservative_authorized_limit_when_live_price_rises():
     payload = apply_live_execution_overlay(_dashboard(), _hourly(), now=_now())
     operations = {x["code"]: x for x in payload["capital_deployment"]["operations"]}
 
-    # Holding ADD was authorized at frozen 22.5; fresh 23.2 may be displayed but
-    # the execution plan must not chase above the frozen authorized price.
     add = operations["600406"]
     assert add["live_market_price"] == 23.2
     assert add["first_entry_max_price"] == 22.5
     assert add["immediate_execution_eligible"] is False
     assert add["action"] == "ADD_LIMIT"
 
-    # Terminal BUY has an explicit 0.8 * 55 = 44 ceiling. Live 45 therefore
-    # becomes a manual limit-only instruction at no more than 44.
     buy = operations["600036"]
     assert buy["live_market_price"] == 45.0
     assert buy["first_entry_max_price"] == 44.0
     assert buy["immediate_execution_eligible"] is False
     assert buy["action"] == "BUY_LIMIT"
     assert all(x["automatic_order_allowed"] is False for x in operations.values())
+    assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0
 
 
 def test_wait_price_threshold_is_not_changed_by_live_quote():
@@ -129,6 +128,15 @@ def test_stale_or_mismatched_hourly_data_fails_closed():
     assert row["current_price"] == 56.0
     assert row["price_source"] == "CANONICAL_FROZEN_PRICE"
     assert payload["live_execution_overlay"]["applied_code_count"] == 0
+    assert payload["live_execution_overlay"]["market_data_status"] == "DEGRADED"
+    assert payload["live_execution_overlay"]["missing_quote_blocks_immediate_execution"] is True
+    operations = payload["capital_deployment"]["operations"]
+    assert operations
+    assert all(op["immediate_execution_eligible"] is False for op in operations)
+    assert all(op["live_market_price"] is None for op in operations)
+    assert all(op["execution_note"] == "LIVE_EXECUTION_QUOTE_UNAVAILABLE" for op in operations)
+    assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0
+    assert payload["decision_summary"]["planned_immediate_cash_cny"] == 0
 
     bad = _hourly(); bad["canonical_snapshot_id"] = "other"
     with pytest.raises(ValueError, match="canonical snapshot mismatch"):
@@ -140,4 +148,5 @@ def test_markdown_calls_out_live_quote_scope_and_keeps_system_last():
     text = render_live_markdown(payload)
     assert "盘中执行价覆盖" in text
     assert "正式动作仍来自冻结 Canonical" in text
+    assert "缺失/过期盘中价会阻断立即执行" in text
     assert text.index("## 2. 我的持仓怎么办") < text.index("## 5. 资金怎么花")
