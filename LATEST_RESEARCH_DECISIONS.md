@@ -8,7 +8,6 @@
 ## Urgent evidence queue
 
 - 601318 中国平安: quant=58.4317, PE/history=0.7503001200480192, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=P0_EVIDENCE_BLOCKED
-- 603883 老百姓: quant=54.2612, PE/history=1.0227409941638157, unknown=predictability,long_term_demand,moat, urgent=P0_EVIDENCE_BLOCKED
 - 600406 国电南瑞: quant=38.3567, PE/history=0.8265532544378699, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=P0_EVIDENCE_BLOCKED
 - 001316 润贝航科: quant=35.6091, PE/history=0.6673434856175973, unknown=predictability,long_term_demand,moat, urgent=P0_EVIDENCE_BLOCKED
 - 603993 洛阳钼业: quant=30.169, PE/history=0.7479546054367907, unknown=predictability, urgent=P0_EVIDENCE_BLOCKED
