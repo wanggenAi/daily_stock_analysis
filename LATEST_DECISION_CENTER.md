@@ -54,8 +54,8 @@ O81机动车、电子产品和日用产品修理业(100.00)、J66货币金融服
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`34977777325`
-- 触发来源：`SLOW_LANE_TERMINAL_URGENT_REOPEN`
+- Lambda run：`34985148446`
+- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
@@ -70,7 +70,7 @@ O81机动车、电子产品和日用产品修理业(100.00)、J66货币金融服
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`34965871504`；当前 Lambda：`34977777325`。
+- 终态来源 Lambda：`34965871504`；当前 Lambda：`34985148446`。
 - 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
