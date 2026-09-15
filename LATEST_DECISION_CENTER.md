@@ -21,12 +21,12 @@
 |---|---:|---:|---:|---|
 | digital_infrastructure | 33.69 | 57.06 | 62.50 | 尚未映射 |
 | automotive_industry | 16.09 | 50.00 | 62.50 | 汽车 |
-| software_digital_economy | 16.09 | 50.00 | 62.50 | 尚未映射 |
+| software_digital_economy | 15.03 | 50.00 | 58.81 | 尚未映射 |
 | demographic_longevity | 14.64 | 60.32 | 50.00 | 医药 |
 | urbanization_services | 14.18 | 58.08 | 50.00 | 尚未映射 |
 | research_intensity | 13.95 | 55.04 | 50.00 | 尚未映射 |
+| intelligent_ev_supply_chain | 13.91 | 50.00 | 53.63 | 汽车、锂电 |
 | advanced_manufacturing | 11.11 | 48.19 | 45.69 | 专用设备、电气机械、工程机械 |
-| electrification_infrastructure | 0.00 | 50.00 | 50.00 | 电力设备 |
 
 ### 近期市场行为代理
 
