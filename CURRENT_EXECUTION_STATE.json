@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-  "as_of": "2026-09-11T11:00:22+08:00",
+  "as_of": "2026-09-15T11:38:01+08:00",
   "source": "USER_CONFIRMED_BROKER_EVIDENCE",
   "consumptions": [
     {
@@ -12,6 +12,17 @@
       "consumed_lots": 1,
       "consumed_at": "2026-09-11T10:13:55+08:00",
       "evidence": "User-provided CITIC Securities position evidence shows previous balance 900, reference holding 1000 and 900 available intraday after the new 100-share buy.",
+      "no_auto_trade": true
+    },
+    {
+      "canonical_snapshot_id": "4e025e2112441ae19e05",
+      "canonical_source_run_id": "34879450038",
+      "code": "603993",
+      "authorization_type": "HOLDING_STAGED_ADD",
+      "consumed_shares": 100,
+      "consumed_lots": 1,
+      "consumed_at": "2026-09-15T11:38:01+08:00",
+      "evidence": "User-provided CITIC Securities screenshot observed at 11:38:01 CST explicitly shows yesterday balance 1000, reference holding 1100, available shares 1000, today executed quantity 100 and broker average cost 18.6244 CNY. This directly proves a new 100-share T+1 buy and consumes the one-lot staged-add authorization. Exact fill price/time are not visible and are not invented.",
       "no_auto_trade": true
     }
   ],
