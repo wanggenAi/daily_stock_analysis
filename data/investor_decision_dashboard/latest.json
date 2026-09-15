@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-15T02:12:25+00:00",
+  "mode": "PRODUCTION_REFRESH",
+  "generated_at": "2026-09-15T02:20:15+00:00",
   "canonical_snapshot_id": "4e025e2112441ae19e05",
   "canonical_source_run_id": "34879450038",
   "latest_trade_date": "2026-09-14",
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥1789；盘中价覆盖=0",
+  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
   "market": {
     "as_of_date": "2026-09-14",
     "status": "YELLOW",
@@ -236,8 +236,8 @@
     "capital_as_of": "2026-09-11T11:00:22+08:00",
     "deployment_budget_cny": 29500.0,
     "effective_max_deployment_ratio": 0.5,
-    "planned_immediate_cash_cny": 1789.0,
-    "cash_after_immediate_plan_cny": 57211.0,
+    "planned_immediate_cash_cny": 0,
+    "cash_after_immediate_plan_cny": 59000.0,
     "operations": [
       {
         "code": "603993",
@@ -252,13 +252,13 @@
         "second_tranche_shares": 0,
         "second_entry_max_price": null,
         "estimated_cash_cny": 1789.0,
-        "immediate_execution_eligible": true,
+        "immediate_execution_eligible": false,
         "automatic_order_allowed": false,
         "no_auto_trade": true,
-        "live_market_price": 17.89,
+        "live_market_price": null,
         "price_observed_at": "",
         "price_provider": "",
-        "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
+        "execution_note": "LIVE_EXECUTION_QUOTE_UNAVAILABLE"
       }
     ],
     "wait_price_reservations": [],
@@ -291,13 +291,13 @@
       "second_tranche_shares": 0,
       "second_entry_max_price": null,
       "estimated_cash_cny": 1789.0,
-      "immediate_execution_eligible": true,
+      "immediate_execution_eligible": false,
       "automatic_order_allowed": false,
       "no_auto_trade": true,
-      "live_market_price": 17.89,
+      "live_market_price": null,
       "price_observed_at": "",
       "price_provider": "",
-      "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
+      "execution_note": "LIVE_EXECUTION_QUOTE_UNAVAILABLE"
     }
   ],
   "decision_summary": {
@@ -314,7 +314,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 500,
-    "planned_immediate_cash_cny": 1789.0
+    "planned_immediate_cash_cny": 0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -399,17 +399,33 @@
     "engineering_details_are_secondary": true
   },
   "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V1",
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
     "available": false,
+    "market_data_status": "DEGRADED",
     "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
     "applied_code_count": 0,
     "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
     "latest_quote_observed_at": "",
     "max_quote_age_minutes": 120,
     "canonical_snapshot_match": true,
     "formal_action_recomputed": false,
     "formal_action_mutation_allowed": false,
     "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
     "no_auto_trade": true
   }
 }
