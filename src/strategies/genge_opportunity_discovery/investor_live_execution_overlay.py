@@ -70,8 +70,6 @@ def _quote_map(
 
 def _overlay_price(row: dict[str, Any], quote: Mapping[str, Any], *, original_key: str) -> None:
     original = _num(row.get("current_price"))
-    # Multiple execution-only quote sources may be layered. Preserve the first
-    # frozen decision price instead of replacing it with an earlier live quote.
     if original_key not in row:
         row[original_key] = original
     row["current_price"] = quote["price"]
@@ -142,9 +140,6 @@ def apply_live_execution_overlay(
             else:
                 row.setdefault("price_source", "TERMINAL_FROZEN_PRICE")
 
-    # Re-plan with the same authority and cash rules. Holding ADDs, including
-    # the staged-add policy where the Formal action remains HOLD, may never pay
-    # more than the price observed by the frozen Canonical decision.
     planning_holdings = copy.deepcopy(holding_rows)
     for row in planning_holdings:
         legacy_add = str(row.get("formal_action") or "").upper() in {"ADD", "BUY"}
@@ -203,10 +198,23 @@ def apply_live_execution_overlay(
         else:
             op["execution_note"] = "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
 
+    immediate_cash = round(
+        sum(
+            _num(op.get("estimated_cash_cny")) or 0.0
+            for op in new_plan.get("operations") or []
+            if op.get("immediate_execution_eligible") is True
+        ),
+        2,
+    )
+    new_plan["planned_immediate_cash_cny"] = immediate_cash
+    available_cash = _num(new_plan.get("available_cash_cny"))
+    if available_cash is not None:
+        new_plan["cash_after_immediate_plan_cny"] = round(available_cash - immediate_cash, 2)
+
     payload["capital_deployment"] = new_plan
     payload["final_operation_table"] = list(new_plan.get("operations") or []) + list(new_plan.get("wait_price_reservations") or [])
     if isinstance(payload.get("decision_summary"), dict):
-        payload["decision_summary"]["planned_immediate_cash_cny"] = new_plan.get("planned_immediate_cash_cny", 0)
+        payload["decision_summary"]["planned_immediate_cash_cny"] = immediate_cash
 
     unique_applied = sorted(set(applied))
     expected_codes = sorted(_expected_execution_codes(payload))
@@ -240,7 +248,7 @@ def apply_live_execution_overlay(
         f"市场={market.get('status','UNKNOWN')}；持仓减仓/退出="
         f"{sum(str(x.get('formal_action') or '').upper() in {'EXIT','SELL','REDUCE','REDUCE_25','REDUCE_50'} for x in holding_rows)}；"
         f"新股正式BUY={len(terminal.get('buy_now') or [])}；等价格={len(terminal.get('wait_price') or [])}；"
-        f"计划立即投入≈¥{new_plan.get('planned_immediate_cash_cny',0):.0f}；盘中价覆盖={applied_count}/{expected_count}"
+        f"计划立即投入≈¥{immediate_cash:.0f}；盘中价覆盖={applied_count}/{expected_count}"
     )
     return payload
 
