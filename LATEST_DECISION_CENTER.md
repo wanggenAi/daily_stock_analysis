@@ -54,8 +54,8 @@ O81机动车、电子产品和日用产品修理业(91.99)、E49建筑安装业(
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`35010610730`
-- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
+- Lambda run：`35015896979`
+- 触发来源：`SLOW_LANE_TERMINAL_URGENT_REOPEN`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
@@ -69,10 +69,10 @@ O81机动车、电子产品和日用产品修理业(91.99)、E49建筑安装业(
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`35010610730`；当前 Lambda：`35010610730`。
-- 请求：**612**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**612**。
-- 高吸引力但证据不足、优先补证：601318 中国平安(quant=58.4317)；002941 新疆交建(quant=50.1462)；600406 国电南瑞(quant=38.3567)；001316 润贝航科(quant=35.6091)；603993 洛阳钼业(quant=30.169)；000768 中航西飞(quant=84.4614)；603596 伯特利(quant=79.2022)；603613 国联股份(quant=78.8411)；603233 大参林(quant=75.8658)；600059 古越龙山(quant=75.695)
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
+- 终态来源 Lambda：`35010610730`；当前 Lambda：`35015896979`。
+- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
