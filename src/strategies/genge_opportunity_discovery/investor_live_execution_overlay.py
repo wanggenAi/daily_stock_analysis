@@ -1,12 +1,14 @@
 """Overlay fresh intraday quotes onto the investor dashboard without changing authority.
 
 Canonical remains the only source of Formal holding actions and Candidate Terminal
-Review remains the only terminal BUY/WAIT_PRICE/REJECT source.  This module only
-replaces *display/execution reference prices* with bounded-fresh hourly quotes,
-recomputes P/L and lot sizing, and becomes more conservative when a fresh quote
-is above the price that was authorized by the frozen decision evidence.
+Review remains the only terminal BUY/WAIT_PRICE/REJECT source. This module only
+replaces display/execution reference prices with bounded-fresh quotes, recomputes
+P/L and lot sizing, and becomes more conservative when a fresh quote is above the
+price that was authorized by the frozen decision evidence.
 
-It never recomputes or promotes a Formal Action and never places orders.
+It never recomputes or promotes a Formal Action and never places orders. Missing
+or stale execution quotes always fail closed: frozen Canonical prices may remain
+visible, but they are never treated as live execution prices.
 """
 from __future__ import annotations
 
@@ -23,7 +25,7 @@ from src.strategies.genge_opportunity_discovery.investor_decision_dashboard impo
     render_markdown,
 )
 
-OVERLAY_VERSION = "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V1"
+OVERLAY_VERSION = "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2"
 DEFAULT_MAX_QUOTE_AGE_MINUTES = 120
 
 
@@ -68,8 +70,6 @@ def _quote_map(
 
 def _overlay_price(row: dict[str, Any], quote: Mapping[str, Any], *, original_key: str) -> None:
     original = _num(row.get("current_price"))
-    # Multiple execution-only quote sources may be layered.  Preserve the first
-    # frozen decision price instead of replacing it with an earlier live quote.
     if original_key not in row:
         row[original_key] = original
     row["current_price"] = quote["price"]
@@ -77,6 +77,21 @@ def _overlay_price(row: dict[str, Any], quote: Mapping[str, Any], *, original_ke
     row["price_observed_at"] = quote["observed_at"]
     row["price_provider"] = quote["provider"]
     row["price_age_seconds"] = quote["age_seconds"]
+
+
+def _expected_execution_codes(payload: Mapping[str, Any]) -> set[str]:
+    result: set[str] = set()
+    for row in payload.get("stock_portfolio", {}).get("rows") or []:
+        code = str(row.get("code") or "").strip().zfill(6)
+        if code and code != "000000":
+            result.add(code)
+    terminal = payload.get("terminal_opportunities") or {}
+    for bucket in ("buy_now", "wait_price"):
+        for row in terminal.get(bucket) or []:
+            code = str(row.get("code") or "").strip().zfill(6)
+            if code and code != "000000":
+                result.add(code)
+    return result
 
 
 def apply_live_execution_overlay(
@@ -125,9 +140,6 @@ def apply_live_execution_overlay(
             else:
                 row.setdefault("price_source", "TERMINAL_FROZEN_PRICE")
 
-    # Re-plan with the same authority and cash rules.  Holding ADDs, including
-    # the staged-add policy where the Formal action remains HOLD, may never pay
-    # more than the price observed by the frozen Canonical decision.
     planning_holdings = copy.deepcopy(holding_rows)
     for row in planning_holdings:
         legacy_add = str(row.get("formal_action") or "").upper() in {"ADD", "BUY"}
@@ -169,45 +181,74 @@ def apply_live_execution_overlay(
             if op.get("source") in holding_sources
             else terminal_by_code.get(code)
         )
+        observed_at = str((source_row or {}).get("price_observed_at") or "").strip()
+        provider = str((source_row or {}).get("price_provider") or "").strip()
         live = _num((source_row or {}).get("current_price"))
-        op["live_market_price"] = live
-        op["price_observed_at"] = (source_row or {}).get("price_observed_at") or ""
-        op["price_provider"] = (source_row or {}).get("price_provider") or ""
-        if live is not None and op.get("first_entry_max_price") is not None and live > float(op["first_entry_max_price"]):
+        has_fresh_execution_quote = bool(observed_at and provider and code in quotes)
+        op["live_market_price"] = live if has_fresh_execution_quote else None
+        op["price_observed_at"] = observed_at if has_fresh_execution_quote else ""
+        op["price_provider"] = provider if has_fresh_execution_quote else ""
+        if not has_fresh_execution_quote:
+            op["immediate_execution_eligible"] = False
+            op["execution_note"] = "LIVE_EXECUTION_QUOTE_UNAVAILABLE"
+        elif live is not None and op.get("first_entry_max_price") is not None and live > float(op["first_entry_max_price"]):
             op["immediate_execution_eligible"] = False
             op["execution_note"] = "LIVE_PRICE_ABOVE_AUTHORIZED_LIMIT_USE_LIMIT_ORDER_ONLY"
             op["action"] = f"{op.get('action')}_LIMIT"
         else:
             op["execution_note"] = "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
 
+    immediate_cash = round(
+        sum(
+            _num(op.get("estimated_cash_cny")) or 0.0
+            for op in new_plan.get("operations") or []
+            if op.get("immediate_execution_eligible") is True
+        ),
+        2,
+    )
+    new_plan["planned_immediate_cash_cny"] = immediate_cash
+    available_cash = _num(new_plan.get("available_cash_cny"))
+    if available_cash is not None:
+        new_plan["cash_after_immediate_plan_cny"] = round(available_cash - immediate_cash, 2)
+
     payload["capital_deployment"] = new_plan
     payload["final_operation_table"] = list(new_plan.get("operations") or []) + list(new_plan.get("wait_price_reservations") or [])
     if isinstance(payload.get("decision_summary"), dict):
-        payload["decision_summary"]["planned_immediate_cash_cny"] = new_plan.get("planned_immediate_cash_cny", 0)
+        payload["decision_summary"]["planned_immediate_cash_cny"] = immediate_cash
 
     unique_applied = sorted(set(applied))
+    expected_codes = sorted(_expected_execution_codes(payload))
     latest_observed = max(
         (str(q.get("observed_at") or "") for q in quotes.values()), default=""
     )
+    expected_count = len(expected_codes)
+    applied_count = len(set(expected_codes).intersection(unique_applied))
+    coverage_ratio = round(applied_count / expected_count, 6) if expected_count else 1.0
     payload["live_execution_overlay"] = {
         "version": OVERLAY_VERSION,
         "available": bool(quotes),
+        "market_data_status": "OK" if expected_count == applied_count else "DEGRADED",
         "eligible_quote_count": len(quotes),
-        "applied_code_count": len(unique_applied),
+        "expected_code_count": expected_count,
+        "expected_codes": expected_codes,
+        "applied_code_count": applied_count,
         "applied_codes": unique_applied,
+        "missing_codes": sorted(set(expected_codes) - set(unique_applied)),
+        "coverage_ratio": coverage_ratio,
         "latest_quote_observed_at": latest_observed,
         "max_quote_age_minutes": int(max_age_minutes),
         "canonical_snapshot_match": True,
         "formal_action_recomputed": False,
         "formal_action_mutation_allowed": False,
         "quote_may_only_change_display_and_execution_reference": True,
+        "missing_quote_blocks_immediate_execution": True,
         "no_auto_trade": True,
     }
     payload["headline"] = (
         f"市场={market.get('status','UNKNOWN')}；持仓减仓/退出="
         f"{sum(str(x.get('formal_action') or '').upper() in {'EXIT','SELL','REDUCE','REDUCE_25','REDUCE_50'} for x in holding_rows)}；"
         f"新股正式BUY={len(terminal.get('buy_now') or [])}；等价格={len(terminal.get('wait_price') or [])}；"
-        f"计划立即投入≈¥{new_plan.get('planned_immediate_cash_cny',0):.0f}；盘中价覆盖={len(unique_applied)}"
+        f"计划立即投入≈¥{immediate_cash:.0f}；盘中价覆盖={applied_count}/{expected_count}"
     )
     return payload
 
@@ -216,9 +257,10 @@ def render_live_markdown(payload: Mapping[str, Any]) -> str:
     text = render_markdown(payload)
     overlay = payload.get("live_execution_overlay") or {}
     note = (
-        f"- 盘中执行价覆盖：**{overlay.get('applied_code_count', 0)}只**；"
+        f"- 盘中执行价覆盖：**{overlay.get('applied_code_count', 0)}/{overlay.get('expected_code_count', 0)}只**；"
+        f"行情状态：**{overlay.get('market_data_status', 'UNKNOWN')}**；"
         f"最新行情时间：**{overlay.get('latest_quote_observed_at') or '—'}**；"
-        "正式动作仍来自冻结 Canonical，盘中价只用于当前盈亏与人工下单价格/股数。\n\n"
+        "正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。\n\n"
     )
     marker = "## 2. 我的持仓怎么办"
     return text.replace(marker, note + marker, 1) if marker in text else text + "\n" + note
@@ -254,7 +296,8 @@ def main(argv: list[str] | None = None) -> int:
     overlay = payload["live_execution_overlay"]
     print(
         f"investor_live_execution_overlay=OK;quotes={overlay['eligible_quote_count']};"
-        f"applied={overlay['applied_code_count']};formal_action_recomputed=false"
+        f"applied={overlay['applied_code_count']}/{overlay['expected_code_count']};"
+        f"market_data_status={overlay['market_data_status']};formal_action_recomputed=false"
     )
     return 0
 
