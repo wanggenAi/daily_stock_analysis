@@ -1,0 +1,168 @@
+name: GenGe Live Execution Quote Refresh
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe Investor Decision Brief"
+    types: [completed]
+  schedule:
+    # Shanghai/Shenzhen continuous auction sessions, UTC (Beijing = UTC+8).
+    - cron: "30-59/10 1 * * 1-5"
+    - cron: "*/10 2 * * 1-5"
+    - cron: "0-30/10 3 * * 1-5"
+    - cron: "*/10 5-6 * * 1-5"
+    - cron: "0 7 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-live-execution-quote-refresh.yml"
+      - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_direct_execution_quote_overlay.py"
+      - "tests/test_genge_investor_live_execution_overlay.py"
+      - "tests/test_genge_investor_direct_execution_quote_overlay.py"
+  pull_request:
+    paths:
+      - ".github/workflows/genge-live-execution-quote-refresh.yml"
+      - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_direct_execution_quote_overlay.py"
+      - "tests/test_genge_investor_live_execution_overlay.py"
+      - "tests/test_genge_investor_direct_execution_quote_overlay.py"
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-live-execution-quote-refresh
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  execution-quote-contract:
+    name: Live execution quote contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip --retries 5 --timeout 60
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+      - name: Test execution quote safety and direct refresh
+        run: |
+          python -m pytest -q \
+            tests/test_genge_investor_live_execution_overlay.py \
+            tests/test_genge_investor_direct_execution_quote_overlay.py
+
+  refresh-live-execution-quotes:
+    name: Refresh live execution quotes
+    if: >-
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    needs: execution-quote-contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install runtime dependencies
+        run: |
+          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt
+
+      - name: Refresh and persist execution-only market quotes
+        run: |
+          set -euo pipefail
+          git config user.name "genge-live-execution-quote-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+
+          for attempt in 1 2 3 4; do
+            echo "live execution quote refresh attempt ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+
+            test -s data/investor_decision_dashboard/latest.json
+            test -s INVESTOR_DECISION_DASHBOARD.md
+
+            python -m src.strategies.genge_opportunity_discovery.investor_direct_execution_quote_overlay \
+              --dashboard-json data/investor_decision_dashboard/latest.json \
+              --markdown-output INVESTOR_DECISION_DASHBOARD.md \
+              --max-age-minutes 15 \
+              --retry-attempts 3
+
+            python - <<'PY'
+          import json
+          from pathlib import Path
+
+          p = json.loads(Path('data/investor_decision_dashboard/latest.json').read_text(encoding='utf-8'))
+          o = p.get('live_execution_overlay') or {}
+          assert p.get('formal_action_source') == 'FINALIZED_CANONICAL_ONLY'
+          assert p.get('formal_action_recomputed') is False
+          assert p.get('no_auto_trade') is True
+          assert o.get('source') == 'DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE'
+          assert o.get('formal_action_recomputed') is False
+          assert o.get('formal_action_mutation_allowed') is False
+          assert o.get('missing_quote_blocks_immediate_execution') is True
+          assert o.get('market_data_status') in {'OK', 'DEGRADED', 'OFF_SESSION'}
+          applied = set(o.get('applied_codes') or [])
+          for op in (p.get('capital_deployment') or {}).get('operations') or []:
+              if op.get('immediate_execution_eligible') is True:
+                  code = str(op.get('code') or '').zfill(6)
+                  assert code in applied
+                  assert op.get('live_market_price') is not None
+                  assert str(op.get('price_observed_at') or '').strip()
+                  assert str(op.get('price_provider') or '').strip()
+          if int(o.get('expected_code_count') or 0) > 0 and int(o.get('applied_code_count') or 0) == 0:
+              assert (p.get('capital_deployment') or {}).get('planned_immediate_cash_cny') == 0
+              assert all(
+                  op.get('immediate_execution_eligible') is False
+                  for op in (p.get('capital_deployment') or {}).get('operations') or []
+              )
+          PY
+
+            git add -f data/investor_decision_dashboard/latest.json INVESTOR_DECISION_DASHBOARD.md
+            if git diff --cached --quiet; then
+              echo "No execution quote state change to persist"
+              exit 0
+            fi
+            git commit -m "Refresh live execution quotes [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "push race detected; replaying on newest main" >&2
+          done
+
+          echo "live execution quote refresh failed after 4 optimistic replay attempts" >&2
+          exit 1
+
+      - name: Publish quote coverage summary
+        if: always()
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          from pathlib import Path
+          print('# GenGe Live Execution Quote Refresh')
+          path = Path('data/investor_decision_dashboard/latest.json')
+          if not path.is_file():
+              print('- dashboard artifact unavailable')
+              raise SystemExit(0)
+          p = json.loads(path.read_text(encoding='utf-8'))
+          o = p.get('live_execution_overlay') or {}
+          print(f"- market session: {o.get('market_session_state', 'UNKNOWN')}")
+          print(f"- market data: {o.get('market_data_status', 'UNKNOWN')}")
+          print(f"- coverage: {o.get('applied_code_count', 0)}/{o.get('expected_code_count', 0)}")
+          print(f"- latest quote: {o.get('latest_quote_observed_at') or 'N/A'}")
+          print('- Formal/Terminal authority is unchanged; this workflow is execution/display only.')
+          PY
