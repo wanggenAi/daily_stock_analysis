@@ -37,6 +37,17 @@ def _code(value: Any) -> str:
     return text.zfill(6) if text.isdigit() else text
 
 
+def _markdown_scalar(value: Any) -> str:
+    """Normalize scalar table cells without interpreting Markdown as data."""
+    text = str(value or "").strip()
+    while len(text) >= 4 and (
+        (text.startswith("**") and text.endswith("**"))
+        or (text.startswith("__") and text.endswith("__"))
+    ):
+        text = text[2:-2].strip()
+    return text
+
+
 def read_holdings_markdown(path: Path) -> list[dict[str, Any]]:
     """Read the confirmed-holdings table; cost remains display-only metadata."""
     if not path.exists():
@@ -60,8 +71,8 @@ def read_holdings_markdown(path: Path) -> list[dict[str, Any]]:
             {
                 "code": _code(cells[0]),
                 "stock_name": cells[1],
-                "confirmed_quantity": cells[2],
-                "display_only_average_cost": cells[3],
+                "confirmed_quantity": _markdown_scalar(cells[2]),
+                "display_only_average_cost": _markdown_scalar(cells[3]),
                 "holding_status": cells[4],
                 "holding_evidence_date": cells[5],
             }

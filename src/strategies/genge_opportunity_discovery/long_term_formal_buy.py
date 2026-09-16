@@ -15,7 +15,11 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from src.strategies.genge_opportunity_discovery import production_model, selection_framework_v31
+from src.strategies.genge_opportunity_discovery import (
+    general_earnings_scenario,
+    production_model,
+    selection_framework_v31,
+)
 
 DISCLAIMER = "仅用于公开数据长期研究与人工复核，不构成买入或卖出建议，不应自动交易。"
 POLICY_VERSION = "long_term_formal_buy_v3_gen_ge_v3_1_1_production"
@@ -244,6 +248,11 @@ def evaluate_long_term_candidate(
         # Only price is safely inherited. Qualitative V3.1 gates are never inferred
         # from legacy scores/evidence and remain UNKNOWN until explicitly reviewed.
         v31_input["v31_current_price"] = plan.get("raw_latest_close")
+    if general_earnings_scenario.route_is_general(v31_input):
+        # Keep the frozen V3.1 assessment and the V3.1.1 production payload on
+        # the exact same same-run scenario inputs. This derives only scenario
+        # numbers from strict-PIT evidence; it does not weaken any V3.1 gate.
+        v31_input = general_earnings_scenario.enrich_general_earnings_scenario_row(v31_input)
     assessment = selection_framework_v31.assess_v31(v31_input)
 
     production_input = dict(v31_input)

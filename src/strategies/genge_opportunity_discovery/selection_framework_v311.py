@@ -7,9 +7,13 @@ research-only rules and SELL confirmation that were not promoted.
 
 V3.1.1 changes exactly one economic behaviour relative to V3.1:
 LOW/INVALID valuation confidence blocks mechanical valuation BUY/SELL and
-returns HOLD_REVIEW.  Hard-gate failure always wins and returns EXIT.  For
+returns HOLD_REVIEW. Hard-gate failure always wins and returns EXIT. For
 MEDIUM/HIGH confidence the original immediate V3.1 decision contract remains
-in force.  Personal cost basis is never read.
+in force. Personal cost basis is never read.
+
+GENERAL_EARNINGS scenario numbers are refreshed immediately before the frozen
+V3.1 assessment. This is an input-production bridge only: no V3.1 threshold,
+hard gate, BUY condition or authority semantic is changed.
 """
 from __future__ import annotations
 
@@ -18,6 +22,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Any, Mapping
 
+from .general_earnings_scenario import (
+    SCENARIO_OWNED_FIELDS,
+    enrich_general_earnings_scenario_row,
+    route_is_general,
+)
 from .selection_framework_v31 import assess_v31
 
 
@@ -81,9 +90,10 @@ class V311Decision:
     neutral_value: float | None
     current_price: float | None
     price_to_neutral: float | None
+    scenario_fields: Mapping[str, Any] | None = None
 
     def as_dict(self) -> dict[str, Any]:
-        return {
+        payload = {
             "production_model_version": POLICY_VERSION,
             "production_action": self.action,
             "production_target_position_fraction": self.target_position_fraction,
@@ -97,15 +107,13 @@ class V311Decision:
             "current_price": self.current_price,
             "price_to_neutral": self.price_to_neutral,
         }
+        if self.scenario_fields:
+            payload.update(self.scenario_fields)
+        return payload
 
 
 def assess_valuation_confidence_v311(data: Mapping[str, Any]) -> ConfidenceAssessment:
-    """Exact production form of the frozen Round-8/9 confidence gate.
-
-    Aliases only adapt historical-panel names to production payload names; they
-    do not add economic rules.  Missing observation-count, deduct-quality or
-    cash-conversion evidence maps to LOW exactly as the Round-8/9 runner did.
-    """
+    """Exact production form of the frozen Round-8/9 confidence gate."""
     current = _first_finite(data, "v31_current_price", "raw_latest_close", "current_price", "close")
     neutral = _first_finite(data, "v31_neutral_value", "neutral_value", "neutral_value_round6")
     normalized = _first_finite(
@@ -133,15 +141,11 @@ def assess_valuation_confidence_v311(data: Mapping[str, Any]) -> ConfidenceAsses
     if implied is None:
         invalid.append("MARKET_IMPLIED_GROWTH_INVALID")
 
-    # Round-8/9 required ratio_expectation to be positive/finite.  In
-    # production it is mathematically equivalent to current / neutral once
-    # both required inputs above are valid.
     if current is not None and neutral is not None and neutral > 0:
         ratio = current / neutral
         if not math.isfinite(ratio) or ratio <= 0:
             invalid.append("PRICE_TO_NEUTRAL_INVALID")
 
-    # Preserve the historical PIT guard when both dates are supplied.
     fund_date = data.get("fund_available_date")
     decision_date = data.get("date") or data.get("decision_date") or data.get("price_date")
     if fund_date not in (None, "") and decision_date not in (None, ""):
@@ -199,28 +203,39 @@ def assess_valuation_confidence_v311(data: Mapping[str, Any]) -> ConfidenceAsses
 
 def decide_v311(data: Mapping[str, Any]) -> V311Decision:
     """Apply V3.1.1 gate-only policy with the original immediate V3.1 SELL."""
-    v31 = assess_v31(data)
-    confidence = assess_valuation_confidence_v311(data)
-    current = _first_finite(data, "v31_current_price", "raw_latest_close", "current_price", "close")
-    neutral = _first_finite(data, "v31_neutral_value", "neutral_value", "neutral_value_round6")
+    working: Mapping[str, Any] = data
+    scenario_fields: dict[str, Any] = {}
+    if route_is_general(data):
+        enriched = enrich_general_earnings_scenario_row(data)
+        scenario_fields = {
+            field: enriched[field]
+            for field in SCENARIO_OWNED_FIELDS
+            if field in enriched
+        }
+        working = enriched
+
+    v31 = assess_v31(working)
+    confidence = assess_valuation_confidence_v311(working)
+    current = _first_finite(working, "v31_current_price", "raw_latest_close", "current_price", "close")
+    neutral = _first_finite(working, "v31_neutral_value", "neutral_value", "neutral_value_round6")
     normalized = _first_finite(
-        data, "v31_normalized_profit", "normalized_earnings", "normalized_eps_round6"
+        working, "v31_normalized_profit", "normalized_earnings", "normalized_eps_round6"
     )
     realistic = _first_finite(
-        data, "v31_realistic_profit_cagr", "realistic_growth", "realistic_growth_round6"
+        working, "v31_realistic_profit_cagr", "realistic_growth", "realistic_growth_round6"
     )
     implied = _first_finite(
-        data,
+        working,
         "v31_market_implied_profit_cagr",
         "market_implied_growth",
         "market_implied_growth_round6",
     )
-    gap = _first_finite(data, "v31_expectation_gap_pct", "expectation_gap", "expectation_gap_round6")
+    gap = _first_finite(working, "v31_expectation_gap_pct", "expectation_gap", "expectation_gap_round6")
     ratio = current / neutral if current and neutral and neutral > 0 else None
     has_position = (
-        _bool(data.get("v311_has_position"))
-        or _bool(data.get("v32_has_position"))
-        or ((_first_finite(data, "current_position_fraction") or 0.0) > 0)
+        _bool(working.get("v311_has_position"))
+        or _bool(working.get("v32_has_position"))
+        or ((_first_finite(working, "current_position_fraction") or 0.0) > 0)
     )
 
     def result(action: str, target: float | None, reasons: list[str]) -> V311Decision:
@@ -236,13 +251,12 @@ def decide_v311(data: Mapping[str, Any]) -> V311Decision:
             neutral_value=neutral,
             current_price=current,
             price_to_neutral=ratio,
+            scenario_fields=scenario_fields,
         )
 
-    # Hard logic always overrides valuation-confidence uncertainty.
     if v31.hard_gate_failures:
         return result("EXIT", 0.0, ["HARD_GATE_FAIL", *v31.hard_gate_failures])
 
-    # This is the sole promoted V3.1.1 behaviour.
     if confidence.level in {ValuationConfidence.LOW, ValuationConfidence.INVALID}:
         return result(
             "HOLD_REVIEW",

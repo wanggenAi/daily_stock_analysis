@@ -1,6 +1,10 @@
 from src.strategies.genge_opportunity_discovery.long_term_formal_buy import (
     evaluate_long_term_candidate,
 )
+from src.strategies.genge_opportunity_discovery.v311_current_expectation_inputs import (
+    POLICY_SOURCE as ROUND6_POLICY_SOURCE,
+    value_expectation_10y,
+)
 
 
 def _second_pass(code="603369"):
@@ -34,6 +38,15 @@ def _plan():
 
 
 def _v31():
+    # Keep this legacy long-term BUY fixture on the same strict-PIT Round-6
+    # lineage now required by GENERAL_EARNINGS scenario production.  The base
+    # value is intentionally 60 so the historical assertions below retain their
+    # original economic meaning; bear/bull/stress are recomputed by production.
+    realistic_growth = 0.14
+    eps_growth = 0.14
+    revenue_growth = 0.09
+    normalized_profit = 60.0 / value_expectation_10y(1.0, realistic_growth)
+    neutral_value = value_expectation_10y(normalized_profit, realistic_growth)
     return {
         "v31_predictability_status": "PASS",
         "v31_long_term_demand_status": "PASS",
@@ -51,19 +64,18 @@ def _v31():
         "v31_score_expectation_gap": 7,
         "v31_score_valuation_margin_of_safety": 10,
         "v31_score_market_position": 4,
-        "v31_normalized_profit": 100,
-        "v31_normalized_profit_method": "five_year_normalized_profit",
-        "v31_pessimistic_value": 38,
-        "v31_neutral_value": 60,
-        "v31_optimistic_value": 80,
-        "v31_extreme_stress_value": 32,
+        "v31_normalized_profit": normalized_profit,
+        "v31_normalized_profit_method": "STRICT_PIT_NORMALIZED_CLEAN_EPS_ROUND6",
+        "v311_expectation_policy_source": ROUND6_POLICY_SOURCE,
+        "eps_growth_3y_round6": eps_growth,
+        "revenue_growth_3y_round6": revenue_growth,
+        "v31_neutral_value": neutral_value,
         "v31_current_price": 40,
         "v31_market_implied_profit_cagr": 0.06,
-        "v31_realistic_profit_cagr": 0.14,
+        "v31_realistic_profit_cagr": realistic_growth,
         "v31_expectation_gap_pct": 0.08,
         "v31_expectation_gap_thesis": "market underestimates durable earnings growth",
         "v31_risk_adjusted_3y_cagr": 0.17,
-        "v31_potential_max_fundamental_loss_pct": 0.20,
         "v31_why_can_buy": "stable moat, cash earnings and valuation margin",
         "v31_strongest_bear_case": "growth runway or incremental ROIC may disappoint",
         "v31_falsification_status": "PASS",
@@ -87,7 +99,7 @@ def _valuation(required_growth="0.10", quality="75", execution="GENERIC_REVERSE_
         "earnings_quality_confidence": "HIGH",
         "financial_review_status": "OK",
         "normalized_core_operating_profit": "100",
-        # V3.1.1 Round-8/9 confidence evidence.  BUY fixtures must prove the
+        # V3.1.1 Round-8/9 confidence evidence. BUY fixtures must prove the
         # promoted gate rather than relying on pre-V3.1.1 implicit defaults.
         "normalized_earnings_observation_count": "4",
         "deduct_profit_quality_factor": "0.90",
