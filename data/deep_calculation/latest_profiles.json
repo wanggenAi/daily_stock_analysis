@@ -6,13 +6,13 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-16T17:05:35+00:00",
-  "generated_at": "2026-09-16T16:16:22+00:00",
+  "gap_closure_generated_at": "2026-09-16T17:54:14+00:00",
+  "generated_at": "2026-09-16T17:10:46+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "35120575163",
+  "lambda_run_id": "35126310569",
   "material_event_failed_gate_count": 0,
   "material_event_pass_override_count": 0,
-  "new_evidence_count": 501,
+  "new_evidence_count": 547,
   "no_auto_trade": true,
   "predictability_resolved_gate_count": 0,
   "profiles": {
@@ -201,7 +201,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -213,32 +214,76 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年1—8月份社会消费品零售总额增长1.1%（匹配词：社会消费品零售总额）：批发业企业（单位、个体户）、 500 万元及以上的零售业企业（单位、个体户）、 2",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965311.html"
+            },
+            {
+              "direction": "NEUTRAL",
+              "publish_date": "2026-06-12",
+              "source_domain": "www.ndrc.gov.cn",
+              "source_family": "ndrc.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "北京市农产品批发价格指数(第0530-0605周)（匹配词：批发）：【北京市农产品批发价格指数(第0530-0605周)】-国家发展和改革委员会",
+              "url": "https://www.ndrc.gov.cn/fgsj/dfjgzs/bjncppfzs/202606/t20260626_1406105.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "F51批发业",
-      "name": "国际实业"
+      "name": "国际实业",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "000400": {
       "gates": {
@@ -2023,27 +2068,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：计算机、通信和其他电子设备制造业增长 17.2% ，电力、热力生产和供应业增长 4.9%",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C39计算机、通信和其他电子设备制造业",
-      "name": "振华科技"
+      "name": "振华科技",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "000738": {
       "gates": {
@@ -3721,7 +3800,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -3733,32 +3813,76 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：汽车制造业增长 8.7% ，铁路、船舶、航空航天和其他运输设备制",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            },
+            {
+              "direction": "NEUTRAL",
+              "publish_date": "2026-09-10",
+              "source_domain": "www.miit.gov.cn",
+              "source_family": "miit.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月汽车工业经济运行情况（匹配词：汽车）：2026年8月汽车工业经济运行情况",
+              "url": "https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/art/2026/art_8661141ddd554777be9acff6aa8f3309.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C36汽车制造业",
-      "name": "中通客车"
+      "name": "中通客车",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "000968": {
       "gates": {
@@ -4030,27 +4154,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：化学原料和化学制品制造业同比持平，非金属矿物制品业下降 4.1% ，黑色金属冶炼和压延加工业增长 1.0",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C26化学原料和化学制品制造业",
-      "name": "联科科技"
+      "name": "联科科技",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "001209": {
       "gates": {
@@ -4064,7 +4222,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -4076,32 +4235,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-09",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份工业生产者出厂价格同比上涨3.8% 环比上涨0.4%（匹配词：工业生产者出厂价格）：纺织服装、服饰业 0.2 -1.2 -1.4 木材加工和木、竹、藤",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260909_1965262.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C18纺织服装、服饰业",
-      "name": "洪兴股份"
+      "name": "洪兴股份",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "001222": {
       "gates": {
@@ -4562,27 +4756,70 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：汽车制造业增长 8.7% ，铁路、船舶、航空航天和其他运输设备制",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            },
+            {
+              "direction": "NEUTRAL",
+              "publish_date": "2026-09-10",
+              "source_domain": "www.miit.gov.cn",
+              "source_family": "miit.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月汽车工业经济运行情况（匹配词：汽车）：2026年8月汽车工业经济运行情况",
+              "url": "https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/art/2026/art_8661141ddd554777be9acff6aa8f3309.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C36汽车制造业",
-      "name": "铭科精技"
+      "name": "铭科精技",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "001337": {
       "gates": {
@@ -4613,27 +4850,70 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：有色金属冶炼和压延加工业下降 4.1% ，通用设备制造业增长 9.8% ，专用",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            },
+            {
+              "direction": "NEUTRAL",
+              "publish_date": "2026-05-22",
+              "source_domain": "www.miit.gov.cn",
+              "source_family": "miit.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年一季度有色金属行业运行情况（匹配词：有色）：2026年一季度有色金属行业运行情况",
+              "url": "https://www.miit.gov.cn/gxsj/tjfx/yclgy/ys/art/2026/art_67e93b2fa00b49ecbcd1470bbca0b8a7.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "B09有色金属矿采选业",
-      "name": "四川黄金"
+      "name": "四川黄金",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "001368": {
       "gates": {
@@ -4896,7 +5176,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -4908,32 +5189,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：电力、热力生产和供应业增长 4.9% 。 分产品看， 8 月份，规模以上工业",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "D44电力、热力生产和供应业",
-      "name": "协鑫能科"
+      "name": "协鑫能科",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002025": {
       "gates": {
@@ -4947,7 +5263,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -4959,32 +5276,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：计算机、通信和其他电子设备制造业增长 17.2% ，电力、热力生产和供应业增长 4.9%",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C39计算机、通信和其他电子设备制造业",
-      "name": "航天电器"
+      "name": "航天电器",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002026": {
       "gates": {
@@ -4998,7 +5350,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -5010,32 +5363,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：电气机械和器材制造业增长 9.9% ，计算机、通信和其他电子设备制造业增长",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C38电气机械和器材制造业",
-      "name": "山东威达"
+      "name": "山东威达",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002027": {
       "gates": {
@@ -5464,7 +5852,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -5476,32 +5865,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：化学原料和化学制品制造业同比持平，非金属矿物制品业下降 4.1% ，黑色金属冶炼和压延加工业增长 1.0",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C26化学原料和化学制品制造业",
-      "name": "易普力"
+      "name": "易普力",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002098": {
       "gates": {
@@ -6178,7 +6602,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -6190,32 +6615,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-09",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份工业生产者出厂价格同比上涨3.8% 环比上涨0.4%（匹配词：工业生产者出厂价格）：造纸和纸制品业 -0.2 1.4 -0.9 印刷和记录媒介复制业 ",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260909_1965262.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C22造纸和纸制品业",
-      "name": "合兴包装"
+      "name": "合兴包装",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002239": {
       "gates": {
@@ -9953,7 +10413,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -9965,32 +10426,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：橡胶和塑料制品业 … 4.3 … 6.1 非金属矿物制品业 … -4.",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C29橡胶和塑料制品业",
-      "name": "国恩股份"
+      "name": "国恩股份",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002807": {
       "gates": {
@@ -10156,7 +10652,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -10168,32 +10665,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：医药制造业 … 5.2 … 5.3 橡胶和塑料制品业 … 4.3",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C27医药制造业",
-      "name": "凯莱英"
+      "name": "凯莱英",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002827": {
       "gates": {
@@ -13188,27 +13720,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年1—8月份社会消费品零售总额增长1.1%（匹配词：社会消费品零售总额）：零售业态分， 1 — 8 月份，限额以上零售业单位中便利店",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965311.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "F52零售业",
-      "name": "星徽股份"
+      "name": "星徽股份",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "300475": {
       "gates": {
@@ -13422,27 +13988,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：化学原料和化学制品制造业同比持平，非金属矿物制品业下降 4.1% ，黑色金属冶炼和压延加工业增长 1.0",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C26化学原料和化学制品制造业",
-      "name": "蓝晓科技"
+      "name": "蓝晓科技",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "300497": {
       "gates": {
@@ -14140,7 +14740,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -14152,32 +14753,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：农副食品加工业增长 4.3% ，酒、饮料和精制茶制造业增长 3.0%",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C13农副食品加工业",
-      "name": "佩蒂股份"
+      "name": "佩蒂股份",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "300684": {
       "gates": {
@@ -15123,7 +15759,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -15135,32 +15772,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：纺织业增长 3.0% ，化学原料和化学制品制造业同比持平，非",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C17纺织业",
-      "name": "稳健医疗"
+      "name": "稳健医疗",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "300979": {
       "gates": {
@@ -16129,7 +16801,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -16141,32 +16814,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：医药制造业 … 5.2 … 5.3 橡胶和塑料制品业 … 4.3",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C27医药制造业",
-      "name": "华兰疫苗"
+      "name": "华兰疫苗",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "301235": {
       "gates": {
@@ -16508,7 +17216,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -16520,32 +17229,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：医药制造业 … 5.2 … 5.3 橡胶和塑料制品业 … 4.3",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C27医药制造业",
-      "name": "科源制药"
+      "name": "科源制药",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "301282": {
       "gates": {
@@ -17337,7 +18081,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -17349,32 +18094,57 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "G55水上运输业",
-      "name": "日照港"
+      "name": "日照港",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600018": {
       "gates": {
@@ -18506,7 +19276,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -18518,32 +19289,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：电力、热力生产和供应业增长 4.9% 。 分产品看， 8 月份，规模以上工业",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "D44电力、热力生产和供应业",
-      "name": "广州发展"
+      "name": "广州发展",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600104": {
       "gates": {
@@ -18989,7 +19795,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -19001,32 +19808,57 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "E48土木工程建筑业",
-      "name": "上海建工"
+      "name": "上海建工",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600177": {
       "gates": {
@@ -19204,7 +20036,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -19216,32 +20049,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：橡胶和塑料制品业 … 4.3 … 6.1 非金属矿物制品业 … -4.",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C29橡胶和塑料制品业",
-      "name": "紫江企业"
+      "name": "紫江企业",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600221": {
       "gates": {
@@ -21398,27 +22266,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：化学原料和化学制品制造业同比持平，非金属矿物制品业下降 4.1% ，黑色金属冶炼和压延加工业增长 1.0",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C26化学原料和化学制品制造业",
-      "name": "华鲁恒升"
+      "name": "华鲁恒升",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600456": {
       "gates": {
@@ -21432,7 +22334,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -21444,32 +22347,76 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：有色金属冶炼和压延加工业下降 4.1% ，通用设备制造业增长 9.8% ，专用",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            },
+            {
+              "direction": "NEUTRAL",
+              "publish_date": "2026-05-22",
+              "source_domain": "www.miit.gov.cn",
+              "source_family": "miit.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年一季度有色金属行业运行情况（匹配词：有色）：2026年一季度有色金属行业运行情况",
+              "url": "https://www.miit.gov.cn/gxsj/tjfx/yclgy/ys/art/2026/art_67e93b2fa00b49ecbcd1470bbca0b8a7.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C32有色金属冶炼和压延加工业",
-      "name": "宝钛股份"
+      "name": "宝钛股份",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600461": {
       "gates": {
@@ -22989,27 +23936,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：电力、热力生产和供应业增长 4.9% 。 分产品看， 8 月份，规模以上工业",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "D44电力、热力生产和供应业",
-      "name": "申能股份"
+      "name": "申能股份",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600644": {
       "gates": {
@@ -23455,7 +24436,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -23467,32 +24449,76 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年1—8月份社会消费品零售总额增长1.1%（匹配词：社会消费品零售总额）：批发业企业（单位、个体户）、 500 万元及以上的零售业企业（单位、个体户）、 2",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965311.html"
+            },
+            {
+              "direction": "NEUTRAL",
+              "publish_date": "2026-06-12",
+              "source_domain": "www.ndrc.gov.cn",
+              "source_family": "ndrc.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "北京市农产品批发价格指数(第0530-0605周)（匹配词：批发）：【北京市农产品批发价格指数(第0530-0605周)】-国家发展和改革委员会",
+              "url": "https://www.ndrc.gov.cn/fgsj/dfjgzs/bjncppfzs/202606/t20260626_1406105.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "F51批发业",
-      "name": "上海三毛"
+      "name": "上海三毛",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600690": {
       "gates": {
@@ -23962,27 +24988,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年1—8月份社会消费品零售总额增长1.1%（匹配词：社会消费品零售总额）：零售业态分， 1 — 8 月份，限额以上零售业单位中便利店",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965311.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "F52零售业",
-      "name": "友好集团"
+      "name": "友好集团",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600787": {
       "gates": {
@@ -24834,7 +25894,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -24846,32 +25907,57 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "J67资本市场服务",
-      "name": "哈投股份"
+      "name": "哈投股份",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600872": {
       "gates": {
@@ -24902,27 +25988,61 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：食品制造业 … 8.8 … 8.5 酒、饮料和精制茶制造业 … ",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C14食品制造业",
-      "name": "中炬高新"
+      "name": "中炬高新",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600873": {
       "gates": {
@@ -24936,7 +26056,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -24948,32 +26069,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：食品制造业 … 8.8 … 8.5 酒、饮料和精制茶制造业 … ",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C14食品制造业",
-      "name": "梅花生物"
+      "name": "梅花生物",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600886": {
       "gates": {
@@ -26231,7 +27387,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -26243,32 +27400,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：电力、热力生产和供应业增长 4.9% 。 分产品看， 8 月份，规模以上工业",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "D44电力、热力生产和供应业",
-      "name": "宁波能源"
+      "name": "宁波能源",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "600989": {
       "gates": {
@@ -26606,7 +27798,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -26618,32 +27811,57 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "G55水上运输业",
-      "name": "宁波港"
+      "name": "宁波港",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "601020": {
       "gates": {
@@ -27911,7 +29129,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -27923,32 +29142,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：水生产和供应业增长 4.9% 。 分经济类型看， 8 月份，国有控股",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "D46水的生产和供应业",
-      "name": "江南水务"
+      "name": "江南水务",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "601218": {
       "gates": {
@@ -28896,7 +30150,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -28908,32 +30163,57 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "J67资本市场服务",
-      "name": "兴业证券"
+      "name": "兴业证券",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "601390": {
       "gates": {
@@ -29646,7 +30926,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -29658,32 +30939,57 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "E48土木工程建筑业",
-      "name": "中国电建"
+      "name": "中国电建",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "601686": {
       "gates": {
@@ -31907,7 +33213,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -31919,32 +33226,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：通用设备制造业增长 9.8% ，专用设备制造业增长 11.4% ，汽",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C34通用设备制造业",
-      "name": "宁波精达"
+      "name": "宁波精达",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "603098": {
       "gates": {
@@ -33347,7 +34689,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -33359,32 +34702,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：计算机、通信和其他电子设备制造业增长 17.2% ，电力、热力生产和供应业增长 4.9%",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C39计算机、通信和其他电子设备制造业",
-      "name": "依顿电子"
+      "name": "依顿电子",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "603355": {
       "gates": {
@@ -37769,7 +39147,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -37781,32 +39160,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：计算机、通信和其他电子设备制造业增长 17.2% ，电力、热力生产和供应业增长 4.9%",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C39计算机、通信和其他电子设备制造业",
-      "name": "杰普特"
+      "name": "杰普特",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "688026": {
       "gates": {
@@ -38164,7 +39578,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -38176,32 +39591,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "NEGATIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：化学原料和化学制品制造业同比持平，非金属矿物制品业下降 4.1% ，黑色金属冶炼和压延加工业增长 1.0",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C26化学原料和化学制品制造业",
-      "name": "天奈科技"
+      "name": "天奈科技",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "688120": {
       "gates": {
@@ -38909,7 +40359,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -38921,32 +40372,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：铁路、船舶、航空航天和其他运输设备制造业增长 13.4% ，电气机械和器材制造业增长 9.9% ",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C37铁路、船舶、航空航天和其他运输设备制造业",
-      "name": "高铁电气"
+      "name": "高铁电气",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "688293": {
       "gates": {
@@ -39288,7 +40774,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -39300,32 +40787,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：计算机、通信和其他电子设备制造业增长 17.2% ，电力、热力生产和供应业增长 4.9%",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C39计算机、通信和其他电子设备制造业",
-      "name": "帝奥微"
+      "name": "帝奥微",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "688389": {
       "gates": {
@@ -39513,7 +41035,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -39525,32 +41048,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：医药制造业 … 5.2 … 5.3 橡胶和塑料制品业 … 4.3",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C27医药制造业",
-      "name": "科美诊断"
+      "name": "科美诊断",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "688498": {
       "gates": {
@@ -39842,27 +41400,51 @@
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "I65软件和信息技术服务业",
-      "name": "思瑞浦"
+      "name": "思瑞浦",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "688543": {
       "gates": {
@@ -40316,7 +41898,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -40328,32 +41911,67 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-09-15",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：通用设备制造业增长 9.8% ，专用设备制造业增长 11.4% ，汽",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "cninfo.com.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "CNINFO_ORG_ID_NOT_FOUND",
+              "url": null
+            }
+          ],
+          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
         }
       },
       "industry": "C34通用设备制造业",
-      "name": "福立旺"
+      "name": "福立旺",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "688696": {
       "gates": {
@@ -40624,7 +42242,7 @@
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
   "source_run_id": "35119289334",
-  "trigger_source": "EVERY_INDUSTRY_READY",
+  "trigger_source": "Era Capital Trend Radar Live",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
