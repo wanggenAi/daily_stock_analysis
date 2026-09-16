@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
 - requested: **612**
-- BUY: **0** / WAIT_PRICE: **0** / REJECT: **612**
+- BUY: **1** / WAIT_PRICE: **0** / REJECT: **611**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -13,7 +13,6 @@
 - 001316 润贝航科: quant=35.6091, PE/history=0.6673434856175973, unknown=predictability,long_term_demand,moat, urgent=P0_EVIDENCE_BLOCKED
 - 603993 洛阳钼业: quant=30.169, PE/history=0.7479546054367907, unknown=predictability, urgent=P0_EVIDENCE_BLOCKED
 - 000768 中航西飞: quant=84.4614, PE/history=0.6446890806307646, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 603596 伯特利: quant=79.2022, PE/history=0.5334323922734027, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 - 603613 国联股份: quant=78.8411, PE/history=0.7407912687585265, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 - 603233 大参林: quant=75.8658, PE/history=0.7030468394724876, unknown=predictability,long_term_demand,moat, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 - 600059 古越龙山: quant=75.695, PE/history=0.7731308411214954, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
@@ -45,6 +44,7 @@
 
 ## Terminal rows
 
+- 603596 伯特利: **BUY** / ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT
 - 600104 上汽集团: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 688696 极米科技: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 300413 芒果超媒: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
@@ -54,7 +54,6 @@
 - 002274 华昌化工: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 688459 哈铁科技: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 688139 海尔生物: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
-- 603596 伯特利: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 002212 天融信: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 002252 上海莱士: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600765 中航重机: **REJECT** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
