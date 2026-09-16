@@ -7,6 +7,8 @@
 - 市场状态：**GREEN**；是否允许新买：**True**；仓位倍率：**1.00**
 - 上涨家数比例：**73.97%**；数据质量：**OK**
 
+- 盘中执行价覆盖：**0/4只**；行情状态：**OFF_SESSION**；最新行情时间：**—**；正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。
+
 ## 2. 我的持仓怎么办
 
 - 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。
@@ -57,55 +59,3 @@ A02林业(STRONG)、E49建筑安装业(STRONG)、C43金属制品、机械和设�
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**759** 只；研究 BUY **0** / WAIT_PRICE **0** / REJECT **759**。
-- urgent research：**20** 只；这些标的本轮仍是 REJECT，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 国电南瑞 600406 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 润贝航科 001316 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
-| 中国平安 601318 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **REJECT** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
-
-### Urgent evidence queue
-
-- 新疆交建 002941: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 国电南瑞 600406: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: REJECT；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
-- 中国平安 601318: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: REJECT；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
-- 中航西飞 000768: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 国联股份 603613: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 甘化科工 000576: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 大参林 603233: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 台华新材 603055: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 新强联 300850: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 深信服 300454: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 移远通信 603236: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 奥浦迈 688293: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 方正科技 600601: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 睿创微纳 688002: REJECT；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 皖仪科技 688600: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 兴通股份 603209: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 吉华集团 603980: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 汇顶科技 603160: REJECT；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-
-## 7. 事件深算闭环：到底算完没有
-
-- 总状态：**EVENT_TRIGGER_FAILED**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
-
-| 股票 | 闭环状态 | 正式结果 | 为什么没有BUY/ADD / 结果解释 |
-|---|---|---|---|
-| 润贝航科 001316 | **EVENT_TRIGGER_FAILED** | **HOLD_REVIEW** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 新疆交建 002941 | **EVENT_TRIGGER_FAILED** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 中国平安 601318 | **EVENT_TRIGGER_FAILED** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 洛阳钼业 603993 | **EVENT_TRIGGER_FAILED** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 600309 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 国电南瑞 600406 | **RAISE_ONLY** | **REDUCE_25** | 当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。 |
-| 603136 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
