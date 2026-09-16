@@ -250,7 +250,7 @@
     "capital_as_of": "2026-09-15T11:38:01+08:00",
     "deployment_budget_cny": 28500.0,
     "effective_max_deployment_ratio": 0.5,
-    "planned_immediate_cash_cny": 0,
+    "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 57000.0,
     "operations": [],
     "wait_price_reservations": [],
@@ -284,7 +284,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 500,
-    "planned_immediate_cash_cny": 0,
+    "planned_immediate_cash_cny": 0.0,
     "research_terminal_requested_count": 612,
     "research_buy_count": 1,
     "research_wait_price_count": 0,
@@ -390,36 +390,6 @@
       "data_health"
     ],
     "engineering_details_are_secondary": true
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
-    "available": false,
-    "market_data_status": "DEGRADED",
-    "eligible_quote_count": 0,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "missing_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "coverage_ratio": 0.0,
-    "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 120,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true
   },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
@@ -25089,5 +25059,42 @@
       }
     ],
     "urgent_research_count": 34
+  },
+  "live_execution_overlay": {
+    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
+    "available": false,
+    "market_data_status": "OFF_SESSION",
+    "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
+    "market_session_state": "CLOSED",
+    "market_session_active": false,
+    "retry_attempts": 3,
+    "refreshed_at": "2026-09-16T13:36:05.379105+00:00",
+    "refreshed_at_beijing": "2026-09-16T21:36:05.379105+08:00"
   }
 }
