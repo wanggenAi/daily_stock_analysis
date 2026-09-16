@@ -21,10 +21,31 @@ _ORIGINAL_BUILD = _core.build_dashboard
 _ORIGINAL_RENDER = _core.render_markdown
 
 
+def _refresh_stale_headline(payload: dict[str, Any]) -> None:
+    """Rebuild the investor headline from the fail-closed payload state."""
+    market = payload.get("market") or {}
+    rows = (payload.get("stock_portfolio") or {}).get("rows") or []
+    terminal = payload.get("terminal_opportunities") or {}
+    plan = payload.get("capital_deployment") or {}
+    urgent = sum(bool(_core._is_risk_reduction(row.get("formal_action"))) for row in rows)
+    new_urgent = sum(
+        bool(_core._is_risk_reduction(row.get("formal_action"))) and row.get("action_lifecycle") == "NEW"
+        for row in rows
+    )
+    planned_cash = float(plan.get("planned_immediate_cash_cny") or 0.0)
+    payload["headline"] = (
+        "数据代际=STALE_UPSTREAM；禁止新增仓位；"
+        f"市场={market.get('status','UNKNOWN')}；"
+        f"持仓Formal可用={payload.get('formal_holding_actions_currently_usable') is True}；"
+        f"持仓减仓/退出目标={urgent}；本轮新增减仓/退出={new_urgent}；"
+        f"新股正式BUY={len(terminal.get('buy_now') or [])}；"
+        f"等价格={len(terminal.get('wait_price') or [])}；计划立即投入≈¥{planned_cash:.0f}"
+    )
+
+
 def _fail_closed_new_exposure(payload: dict[str, Any], freshness: Mapping[str, Any]) -> None:
     payload["freshness_contract"] = dict(freshness)
     payload["formal_new_exposure_allowed"] = False
-    payload["headline"] = "数据代际=STALE_UPSTREAM；禁止新增仓位；" + str(payload.get("headline") or "")
 
     market = payload.setdefault("market", {})
     market["allow_new_buy"] = False
@@ -65,6 +86,7 @@ def _fail_closed_new_exposure(payload: dict[str, Any], freshness: Mapping[str, A
     health["freshness_status"] = "STALE_UPSTREAM"
     health["freshness_reasons"] = list(freshness.get("reasons") or [])
     health["formal_new_exposure_allowed"] = False
+    _refresh_stale_headline(payload)
 
 
 def build_dashboard(*args: Any, **kwargs: Any) -> dict[str, Any]:

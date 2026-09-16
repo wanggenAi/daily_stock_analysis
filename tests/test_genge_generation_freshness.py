@@ -88,7 +88,9 @@ def test_dashboard_stale_generation_keeps_truth_visible_but_blocks_new_capital()
     assert payload["market"]["allow_new_buy"] is False
     assert payload["capital_deployment"]["operations"] == []
     assert payload["capital_deployment"]["deployment_budget_cny"] == 0.0
+    assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0.0
     assert payload["terminal_opportunities"]["buy_now"][0]["currently_actionable"] is False
+    assert payload["headline"].endswith("计划立即投入≈¥0")
 
 
 def test_live_execution_overlay_cannot_resurrect_stale_new_exposure():
@@ -110,3 +112,4 @@ def test_live_execution_overlay_cannot_resurrect_stale_new_exposure():
     assert live["decision_summary"]["planned_immediate_cash_cny"] == 0.0
     assert live["live_execution_overlay"]["freshness_blocks_new_exposure"] is True
     assert live["headline"].startswith("数据代际=STALE_UPSTREAM；禁止新增仓位；")
+    assert live["headline"].endswith("计划立即投入≈¥0")
