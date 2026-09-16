@@ -6,13 +6,13 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-15T22:41:06+00:00",
-  "generated_at": "2026-09-15T22:13:22+00:00",
+  "gap_closure_generated_at": "2026-09-16T02:04:17+00:00",
+  "generated_at": "2026-09-16T01:21:47+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "35029684913",
+  "lambda_run_id": "35043628546",
   "material_event_failed_gate_count": 0,
   "material_event_pass_override_count": 0,
-  "new_evidence_count": 548,
+  "new_evidence_count": 547,
   "no_auto_trade": true,
   "predictability_resolved_gate_count": 0,
   "profiles": {
@@ -36324,72 +36324,69 @@
           "status": "PASS"
         },
         "long_term_demand": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "direction": "POSITIVE",
-              "publish_date": "2026-09-15",
-              "source_domain": "www.stats.gov.cn",
-              "source_family": "stats.gov.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年8月份规模以上工业增加值增长5.2%（匹配词：规模以上工业增加值）：汽车制造业增长 8.7% ，铁路、船舶、航空航天和其他运输设备制",
-              "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
+              "published_date": "2026-07-02",
+              "source_type": "OFFICIAL_REGULATOR",
+              "url": "https://www.miit.gov.cn/jgsj/zbys/gzdt/art/2026/art_597aed2718264440a0caa19e883f8d74.html"
             },
             {
-              "direction": "NEUTRAL",
-              "publish_date": "2026-09-10",
-              "source_domain": "www.miit.gov.cn",
-              "source_family": "miit.gov.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年8月汽车工业经济运行情况（匹配词：汽车）：2026年8月汽车工业经济运行情况",
-              "url": "https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/art/2026/art_8661141ddd554777be9acff6aa8f3309.html"
+              "published_date": "2026-09-11",
+              "source_type": "OFFICIAL_REGULATOR",
+              "url": "https://www.miit.gov.cn/xwfb/xwfbh/bxwfbh/art/2026/art_05c4683ad9ee4c3c880485f7a8873601.html"
+            },
+            {
+              "published_date": "2026-03-28",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-03-28/1225048434.PDF"
             }
           ],
-          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
+          "rationale": "Official MIIT evidence shows combination-driving-assistance penetration in new Chinese passenger vehicles reached 70% in 2026 and a mandatory national safety standard for such systems has been issued for 2027 implementation. Bethel's official filings and production evidence show WCBS and EMB are execution-layer braking products for higher-level intelligent driving, with WCBS in large-scale delivery and EMB already moving from validation into mass production. The demand driver is therefore tied to a verified structural increase in assisted-driving and intelligent-chassis adoption rather than a single transient model cycle.",
+          "source": "EXPLICIT_VERIFIED",
+          "status": "PASS"
         },
         "moat": {
-          "confidence": "",
-          "evidence": [],
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
-        },
-        "predictability": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "classification": "UNKNOWN",
-              "coverage_years": [],
-              "cyclical_or_resource": false,
-              "metrics_by_year": [],
-              "publish_date": null,
-              "reason_code": "CNINFO_ORG_ID_NOT_FOUND",
-              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "cninfo.com.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "source_urls": [],
-              "summary": "CNINFO_ORG_ID_NOT_FOUND",
-              "url": null
+              "published_date": "2026-05-26",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.btl-auto.com/index.php/News-and-Trends/2026/05-26/416.html"
+            },
+            {
+              "published_date": "2026-09-09",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://en.btl-auto.com/index.php/News-and-Trends/2026/09-04/421.html"
+            },
+            {
+              "published_date": "2026-03-28",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-03-28/1225048434.PDF"
             }
           ],
-          "gap_closure_rationale": "CNINFO_ORG_ID_NOT_FOUND",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "CNINFO_ORG_ID_NOT_FOUND"
+          "rationale": "Primary evidence shows a multi-year commercialization barrier rather than a prototype-only claim: Bethel spent six years developing EMB, built a validation stack exceeding 15,000 test cases, 2,000 validation prototypes and four million road-test kilometers, obtained ASIL-D functional-safety certification, passed 10,000 cumulative EMB units in 2026, and built an automated line planned for 1.2 million units per year. By September 2026 it had four OEM mass-production programs with expected lifetime sales above USD 300m. Together with existing large-scale WCBS delivery, this combination of safety certification, validation depth, embedded OEM programs and scaled manufacturing constitutes a verified replication barrier in brake-by-wire.",
+          "source": "EXPLICIT_VERIFIED",
+          "status": "PASS"
+        },
+        "predictability": {
+          "confidence": "HIGH",
+          "evidence": [
+            {
+              "published_date": "2026-03-28",
+              "source_type": "PRIMARY_COMPANY",
+              "url": "https://static.cninfo.com.cn/finalpage/2026-03-28/1225048434.PDF"
+            }
+          ],
+          "rationale": "The audited 2025 annual report supplies three consecutive complete fiscal years (2023-2025) in one official table. Revenue rose from CNY 7.474bn to 9.937bn to 12.014bn; attributable net profit rose from CNY 0.891bn to 1.209bn to 1.309bn; operating cash flow stayed positive at CNY 0.678bn, 1.058bn and 0.867bn. Revenue and profit never breached the system's downside stability floors, cash-flow decline in 2025 was about 18% and remained well inside the -50% floor, and three-year profit/cash-flow volatility stayed far below the 5x ceiling. This meets the frozen strict multi-year accounting-predictability rule for a non-resource automotive-parts business.",
+          "source": "EXPLICIT_VERIFIED",
+          "status": "PASS"
         }
       },
       "industry": "C36汽车制造业",
       "name": "伯特利",
-      "research_disposition": "EVIDENCE_BLOCKED",
-      "research_terminal_state": "EVIDENCE_EXHAUSTED"
+      "research_disposition": "DEEP_REVIEW_COMPLETE",
+      "research_terminal_state": "COMPLETE"
     },
     "603599": {
       "gates": {
@@ -41981,9 +41978,9 @@
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
   "source_run_id": "34879450038",
-  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
+  "trigger_source": "PUSH_CHANGE",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
-  "verified_pass_gate_count": 226
+  "verified_pass_gate_count": 229
 }
