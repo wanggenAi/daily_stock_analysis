@@ -1,27 +1,24 @@
 """Evidence-derived GENERAL_EARNINGS scenario valuation for GenGe V3.1.
 
 This module closes the numeric scenario gap without weakening the frozen V3.1
-selection policy.  It consumes only strict-PIT Round-6 numeric evidence that is
-already emitted by :mod:`v311_current_expectation_inputs`.
+selection policy. It consumes only strict-PIT Round-6 numeric evidence emitted
+by :mod:`v311_current_expectation_inputs`.
 
-Policy contract
----------------
-* route must be explicitly ``general_reverse_earnings``;
-* normalized EPS, ~3Y EPS CAGR, ~3Y revenue CAGR and the frozen realistic
-  growth must all be present;
-* bear growth removes the Round-6 +5pp revenue allowance and uses the lower of
-  observed normalized-EPS and revenue CAGR, clipped to the frozen 0%-30% band;
-* base growth is the frozen Round-6 realistic growth and must reconcile to the
+Policy contract:
+- route must be explicitly ``general_reverse_earnings``;
+- normalized EPS, ~3Y EPS CAGR, ~3Y revenue CAGR and frozen realistic growth
+  must all be present;
+- bear growth = lower of strict-PIT normalized-EPS CAGR and revenue CAGR,
+  clipped to the frozen 0%-30% band (the +5pp allowance is removed);
+- base growth = the frozen Round-6 realistic growth and must reconcile to the
   supplied neutral value;
-* bull growth is the evidence-backed revenue-support ceiling
-  ``revenue CAGR + 5pp``, clipped to the same frozen 0%-30% band;
-* extreme stress is the frozen model's explicit 0% starting-growth boundary;
-* all scenario values are CURRENT PRESENT VALUES from ``value_expectation_10y``.
-  They are never re-labelled as 3Y terminal values.
+- bull growth = strict-PIT revenue CAGR + the already-frozen 5pp revenue
+  allowance, clipped to the same 0%-30% band;
+- extreme stress = the same Round-6 model's explicit 0% starting-growth bound;
+- all scenario values are CURRENT PRESENT VALUES from ``value_expectation_10y``.
 
-The builder deliberately does not create terminal multiples, 3Y terminal
-values, scenario probabilities, risk-adjusted CAGR, qualitative gate PASSes or
-Formal authority.  If those inputs are absent they remain absent/UNKNOWN.
+No terminal multiple, future terminal value, scenario probability, qualitative
+PASS, risk-adjusted CAGR or Formal authority is fabricated here.
 """
 from __future__ import annotations
 
@@ -38,6 +35,32 @@ from .v311_current_expectation_inputs import (
 
 POLICY_SOURCE = "v31_general_earnings_round6_strict_pit_scenarios_v1"
 GENERAL_STRATEGY_ID = "general_reverse_earnings"
+SCENARIO_OWNED_FIELDS = frozenset(
+    {
+        "v31_pessimistic_value",
+        "v31_optimistic_value",
+        "v31_extreme_stress_value",
+        "v31_scenario_valuation_ready",
+        "v31_bear_downside_pct",
+        "v31_extreme_stress_downside_pct",
+        "v31_potential_max_fundamental_loss_pct",
+        "v31_bear_growth_assumption",
+        "v31_base_growth_assumption",
+        "v31_bull_growth_assumption",
+        "v31_stress_growth_assumption",
+        "v31_bear_growth_source",
+        "v31_base_growth_source",
+        "v31_bull_growth_source",
+        "v31_stress_growth_source",
+        "v31_general_scenario_status",
+        "v31_general_scenario_error",
+        "v31_general_scenario_policy_source",
+        "v31_general_scenario_value_semantics",
+        "v31_general_scenario_downside_status",
+        "v31_general_scenario_3y_cagr_status",
+        "v31_general_scenario_risk_adjusted_cagr_status",
+    }
+)
 
 
 def _finite(value: Any) -> float | None:
@@ -52,12 +75,12 @@ def _clip_growth(value: float) -> float:
     return min(max(float(value), 0.0), REALISTIC_GROWTH_CAP)
 
 
-def _route_is_general(row: Mapping[str, Any]) -> bool:
+def route_is_general(row: Mapping[str, Any]) -> bool:
     return str(row.get("valuation_primary_strategy_id") or "").strip() == GENERAL_STRATEGY_ID
 
 
 def build_general_earnings_scenario(row: Mapping[str, Any]) -> dict[str, Any]:
-    """Return auditable scenario fields, failing closed on any missing lineage."""
+    """Return auditable scenario fields, failing closed on missing lineage."""
     result: dict[str, Any] = {
         "v31_general_scenario_policy_source": POLICY_SOURCE,
         "v31_general_scenario_value_semantics": "CURRENT_PRESENT_VALUE",
@@ -67,12 +90,10 @@ def build_general_earnings_scenario(row: Mapping[str, Any]) -> dict[str, Any]:
         "v31_general_scenario_error": "",
     }
 
-    if not _route_is_general(row):
+    if not route_is_general(row):
         result["v31_general_scenario_error"] = "GENERAL_EARNINGS_ROUTE_UNPROVEN"
         return result
-
-    source = str(row.get("v311_expectation_policy_source") or "").strip()
-    if source != ROUND6_POLICY_SOURCE:
+    if str(row.get("v311_expectation_policy_source") or "").strip() != ROUND6_POLICY_SOURCE:
         result["v31_general_scenario_error"] = "STRICT_PIT_ROUND6_LINEAGE_UNPROVEN"
         return result
 
@@ -138,9 +159,6 @@ def build_general_earnings_scenario(row: Mapping[str, Any]) -> dict[str, Any]:
         }
     )
     if price is not None and price > 0.0:
-        # Signed downside follows the V3.1 research convention requested by the
-        # policy: value/current_price - 1.  Positive means the bear value is
-        # still above price; negative means fundamental downside.
         result["v31_bear_downside_pct"] = bear_value / price - 1.0
         result["v31_extreme_stress_downside_pct"] = stress_value / price - 1.0
         result["v31_potential_max_fundamental_loss_pct"] = bear_value / price - 1.0
@@ -150,11 +168,15 @@ def build_general_earnings_scenario(row: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-def enrich_general_earnings_scenarios(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
-    """Overlay only evidence-derived numeric scenario fields on production rows."""
-    enriched: list[dict[str, Any]] = []
-    for raw in rows:
-        row = dict(raw)
-        row.update(build_general_earnings_scenario(row))
-        enriched.append(row)
+def enrich_general_earnings_scenario_row(row: Mapping[str, Any]) -> dict[str, Any]:
+    """Refresh GENERAL_EARNINGS scenarios and discard stale prior-run outputs."""
+    enriched = dict(row)
+    if route_is_general(enriched):
+        for field in SCENARIO_OWNED_FIELDS:
+            enriched.pop(field, None)
+    enriched.update(build_general_earnings_scenario(enriched))
     return enriched
+
+
+def enrich_general_earnings_scenarios(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
+    return [enrich_general_earnings_scenario_row(row) for row in rows]
