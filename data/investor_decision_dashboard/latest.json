@@ -302,10 +302,10 @@
     "terminal_reject_count": 500,
     "planned_immediate_cash_cny": 0.0,
     "research_terminal_requested_count": 612,
-    "research_buy_count": 0,
+    "research_buy_count": 1,
     "research_wait_price_count": 0,
-    "research_reject_count": 612,
-    "urgent_research_count": 35
+    "research_reject_count": 611,
+    "urgent_research_count": 34
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -611,13 +611,13 @@
   "terminal_research_snapshot": {
     "available": true,
     "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-    "source_deep_lambda_run_id": "35029684913",
+    "source_deep_lambda_run_id": "35043628546",
     "source_every_industry_run_id": "34879450038",
     "requested_count": 612,
     "decision_counts": {
-      "REJECT": 612,
-      "BUY": 0,
-      "WAIT_PRICE": 0
+      "BUY": 1,
+      "WAIT_PRICE": 0,
+      "REJECT": 611
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
@@ -625,6 +625,38 @@
     "unknown_is_pass": false,
     "no_auto_trade": true,
     "terminal_rows": [
+      {
+        "code": "603596",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 5,
+        "hard_gate_unknowns": [],
+        "industry": "C36汽车制造业",
+        "name": "伯特利",
+        "no_auto_trade": true,
+        "quant_score": 79.2022,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": false,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "BUY",
+        "research_priority": "P2",
+        "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "RUNBEI_001316_20260826_V1",
+        "success_archetype_similarity_score": 73.1715,
+        "urgent_research": false,
+        "urgent_research_reasons": [],
+        "valuation": {
+          "current_pe": 17.95,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 33.65,
+          "pe_to_history_ratio": 0.5334323922734027,
+          "required_profit_growth_pct": -46.65676077265973
+        }
+      },
       {
         "code": "600104",
         "formal_buy_authorized": false,
@@ -967,44 +999,6 @@
           "historical_median_pe_reference": 31.915,
           "pe_to_history_ratio": 1.1652827823907252,
           "required_profit_growth_pct": 16.528278239072524
-        }
-      },
-      {
-        "code": "603596",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 2,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "industry": "C36汽车制造业",
-        "name": "伯特利",
-        "no_auto_trade": true,
-        "quant_score": 79.2022,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "REJECT",
-        "research_priority": "P2",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "RUNBEI_001316_20260826_V1",
-        "success_archetype_similarity_score": 73.1715,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 17.95,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 33.65,
-          "pe_to_history_ratio": 0.5334323922734027,
-          "required_profit_growth_pct": -46.65676077265973
         }
       },
       {
@@ -1671,7 +1665,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "NORMAL",
         "success_archetype_id": "",
@@ -1825,7 +1819,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "HIGH",
         "success_archetype_id": "",
@@ -5817,7 +5811,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "HIGH",
         "success_archetype_id": "",
@@ -7893,7 +7887,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "NORMAL",
         "success_archetype_id": "",
@@ -14915,7 +14909,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "NORMAL",
         "success_archetype_id": "",
@@ -15669,7 +15663,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "NORMAL",
         "success_archetype_id": "",
@@ -17011,7 +17005,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "NORMAL",
         "success_archetype_id": "RUNBEI_001316_20260826_V1",
@@ -17649,7 +17643,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "NORMAL",
         "success_archetype_id": "RUNBEI_001316_20260826_V1",
@@ -23963,44 +23957,6 @@
         }
       },
       {
-        "code": "603596",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 2,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "industry": "C36汽车制造业",
-        "name": "伯特利",
-        "no_auto_trade": true,
-        "quant_score": 79.2022,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "REJECT",
-        "research_priority": "P2",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "RUNBEI_001316_20260826_V1",
-        "success_archetype_similarity_score": 73.1715,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 17.95,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 33.65,
-          "pe_to_history_ratio": 0.5334323922734027,
-          "required_profit_growth_pct": -46.65676077265973
-        }
-      },
-      {
         "code": "603613",
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
@@ -24178,7 +24134,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "HIGH",
         "success_archetype_id": "",
@@ -25042,7 +24998,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "REJECT",
-        "research_priority": "P1",
+        "research_priority": "P2",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "HIGH",
         "success_archetype_id": "",
@@ -25103,7 +25059,7 @@
         }
       }
     ],
-    "urgent_research_count": 35
+    "urgent_research_count": 34
   },
   "live_execution_overlay": {
     "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
