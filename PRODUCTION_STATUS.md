@@ -1,7 +1,7 @@
 # GenGe V3.1.1 Production Status
 
 - Health: **HEALTHY**
-- Main SHA: `4ca5d18b9b050702e19e07c930c2ab38510a4259`
+- Main SHA: `547dea8bae5469acedcbed3ad7d25bd6b15c74d1`
 - Canonical source SHA: `f1dbde8b41a1541860f1c5ce35550acd922b3c5c`
 - Drift: `CODE_DRIFT_MAIN_ADVANCED`
 - Canonical snapshot: `4e025e2112441ae19e05`
@@ -21,7 +21,7 @@
 ## Research Learning
 
 - P0 deep-review priorities: **5**
-- P1 deep-review priorities: **12**
+- P1 deep-review priorities: **4**
 - Visible mapping gaps: **175**
 - Price/Value tracked securities: **104**
 - Formal outcome records: **553**
