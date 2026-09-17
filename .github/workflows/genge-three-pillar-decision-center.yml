@@ -130,6 +130,7 @@ jobs:
           else:
               assert opp['research_buy'] == []
               assert opp['research_wait_price'] == []
+              assert opp['research_gap_count'] == 0
               assert opp['research_reject_count'] == 0
               assert opp['urgent_evidence_queue'] == []
           for row in opp['research_buy'] + opp['research_wait_price']:
@@ -159,7 +160,7 @@ jobs:
           echo '# GenGe Three-Pillar Decision Center' >> "$GITHUB_STEP_SUMMARY"
           echo '- Pillar 1: current holdings + automatic/explicit deep-review completeness' >> "$GITHUB_STEP_SUMMARY"
           echo '- Pillar 2: world/social structural trends + tactical market-behaviour proxy + validated A-share handoffs' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Pillar 3: Canonical Formal actions and terminal research-only BUY / WAIT_PRICE / REJECT are separate' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Pillar 3: Canonical Formal actions and terminal research-only BUY / WAIT_PRICE / RESEARCH_GAP / REJECT are separate' >> "$GITHUB_STEP_SUMMARY"
           echo '- Terminal research is exposed only when its Deep Lambda lineage matches the current runtime; stale research is fail-closed' >> "$GITHUB_STEP_SUMMARY"
           echo '- Deep Calculation Lambda status is visible separately from research completeness' >> "$GITHUB_STEP_SUMMARY"
           echo '- Authority: Canonical Formal actions only; research authority cannot escalate; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
