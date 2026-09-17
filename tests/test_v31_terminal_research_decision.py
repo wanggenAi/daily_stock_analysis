@@ -34,12 +34,12 @@ def _all(status):
     return {k: status for k in ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")}
 
 
-def test_unknown_after_bounded_recovery_converges_to_reject_not_fake_pass():
+def test_unknown_after_bounded_recovery_is_research_gap_not_fake_pass():
     gates = _all("PASS")
     gates["moat"] = "UNKNOWN"
     out = build_terminal_decisions(profiles_payload=_profile(gates), evidence_payload=_evidence(), valuation_rows=_valuation())
     row = out["terminal_rows"][0]
-    assert row["research_decision"] == "REJECT"
+    assert row["research_decision"] == "RESEARCH_GAP"
     assert row["research_reason"] == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
     assert row["hard_gate_unknowns"] == ["moat"]
     assert row["reopen_on_new_evidence"] is True
@@ -82,7 +82,7 @@ def test_evidence_blocked_but_attractive_screen_is_prioritized_without_buying():
     gates["predictability"] = "UNKNOWN"
     out = build_terminal_decisions(profiles_payload=_profile(gates), evidence_payload=_evidence(), valuation_rows=_valuation(pe="8", median="12"))
     row = out["terminal_rows"][0]
-    assert row["research_decision"] == "REJECT"
+    assert row["research_decision"] == "RESEARCH_GAP"
     assert row["screening_attractiveness"] == "HIGH"
     assert row["urgent_research"] is True
     assert "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED" in row["urgent_research_reasons"]
@@ -94,7 +94,7 @@ def test_specialized_industry_never_uses_generic_pe_to_create_buy():
     valuation[0]["industry"] = "J68保险业"
     out = build_terminal_decisions(profiles_payload=_profile(_all("PASS")), evidence_payload=_evidence(), valuation_rows=valuation)
     row = out["terminal_rows"][0]
-    assert row["research_decision"] == "REJECT"
+    assert row["research_decision"] == "RESEARCH_GAP"
     assert row["research_reason"] == "SPECIALIZED_VALUATION_REQUIRED"
     assert row["formal_buy_authorized"] is False
 
@@ -112,7 +112,7 @@ def test_p0_evidence_blocked_is_urgent_even_for_specialized_industry_without_fak
         priority_payload=priority,
     )
     row = out["terminal_rows"][0]
-    assert row["research_decision"] == "REJECT"
+    assert row["research_decision"] == "RESEARCH_GAP"
     assert row["research_reason"] == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
     assert row["screening_attractiveness"] == "NORMAL"
     assert row["urgent_research"] is True
@@ -157,3 +157,28 @@ def test_urgent_queue_does_not_drop_qualified_names_after_first_ten():
     )
     assert len(out["urgent_research_queue"]) == 11
     assert {row["code"] for row in out["urgent_research_queue"]} == set(codes)
+
+
+def test_missing_profile_is_research_gap_not_reject():
+    payload = _profile(_all("PASS"))
+    payload["profiles"] = {}
+    out = build_terminal_decisions(
+        profiles_payload=payload,
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(),
+    )
+    row = out["terminal_rows"][0]
+    assert row["research_decision"] == "RESEARCH_GAP"
+    assert row["research_reason"] == "DEEP_PROFILE_MISSING"
+    assert row["reopen_on_new_evidence"] is True
+
+
+def test_missing_valuation_reference_is_research_gap_not_reject():
+    out = build_terminal_decisions(
+        profiles_payload=_profile(_all("PASS")),
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(pe="", median=""),
+    )
+    row = out["terminal_rows"][0]
+    assert row["research_decision"] == "RESEARCH_GAP"
+    assert row["research_reason"] == "VALUATION_REFERENCE_INCOMPLETE"
