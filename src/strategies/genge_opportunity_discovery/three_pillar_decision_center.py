@@ -247,11 +247,12 @@ def _opportunity_pillar(dashboard: Mapping[str, Any], profiles: Mapping[str, Any
         "question": "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
         "buy_now": buy,
         "wait_price": wait,
+        "research_gap_count": int(_num(terminal.get("research_gap_count")) or 0),
         "terminal_reject_count": int(_num(terminal.get("reject_count")) or 0),
         "invalid_unauthorized_buy_count": int(_num(terminal.get("invalid_unauthorized_buy_count")) or 0),
         "macro_research_handoffs": handoffs,
         "actionable_count": len(buy) + len(wait),
-        "display_rule": "只展示通过终端研究形成 BUY/WAIT_PRICE 的个股；REJECT 只汇总数量和审计，不淹没最终决策页面。",
+        "display_rule": "只展示通过终端研究形成 BUY/WAIT_PRICE 的个股；RESEARCH_GAP 与 REJECT 分开汇总，不淹没最终决策页面。",
         "authority_rule": "BUY 必须是既有 Formal/Production BUY 的镜像；研究趋势和深算上下文不能自行创造 BUY。",
     }
 
@@ -289,6 +290,7 @@ def build_decision_center(
             "validated_macro_handoffs": capital_map["validated_handoff_count"],
             "new_buy_now_count": len(opportunities["buy_now"]),
             "new_wait_price_count": len(opportunities["wait_price"]),
+            "research_gap_count": opportunities["research_gap_count"],
             "terminal_reject_count": opportunities["terminal_reject_count"],
         },
         "pillar_1_holdings_deep_analysis": holdings,
@@ -361,7 +363,7 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
             lines.append(f"- **{x['name']} {x['code']}**：等待 ≤{_fmt(x.get('wait_price_max'))}；深算 {x['deep_review']['status']}。")
     else:
         lines.append("- **本轮没有合格 WAIT_PRICE。**")
-    lines += ["", f"- Terminal REJECT：**{o['terminal_reject_count']}**（只做汇总，不淹没决策页面）。",
+    lines += ["", f"- RESEARCH_GAP：**{o.get('research_gap_count', 0)}**；Terminal REJECT：**{o['terminal_reject_count']}**（分开汇总，不淹没决策页面）。",
               "", "## 决策完整性", ""]
     readiness = payload["decision_readiness"]
     lines.append(f"- 全部持仓显式深算完整：**{readiness['all_holdings_explicit_deep_review_complete']}**")
