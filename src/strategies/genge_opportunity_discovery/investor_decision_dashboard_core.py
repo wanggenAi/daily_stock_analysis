@@ -380,10 +380,10 @@ def _market(raw: Mapping[str, Any]) -> dict[str, Any]:
 
 
 def _terminal(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
-    buy, wait, reject, unauthorized = [], [], 0, 0
+    buy, wait, research_gap, reject, unauthorized = [], [], 0, 0, 0
     for raw in rows:
         decision, code = str(raw.get("terminal_decision") or "").upper(), _code(raw.get("code"))
-        if not code or decision not in {"BUY", "WAIT_PRICE", "REJECT"}:
+        if not code or decision not in {"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"}:
             continue
         if not _bool(raw.get("no_auto_trade")):
             raise ValueError(f"terminal decision lost no-auto-trade contract: {code}")
@@ -408,6 +408,8 @@ def _terminal(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
             if item["wait_price_max"] is None:
                 raise ValueError(f"WAIT_PRICE missing wait_price_max: {code}")
             wait.append(item)
+        elif decision == "RESEARCH_GAP":
+            research_gap += 1
         else:
             reject += 1
 
@@ -420,8 +422,8 @@ def _terminal(rows: Iterable[Mapping[str, Any]]) -> dict[str, Any]:
 
     buy.sort(key=rk)
     wait.sort(key=rk)
-    return {"available": bool(buy or wait or reject), "buy_now": buy, "wait_price": wait,
-            "reject_count": reject, "invalid_unauthorized_buy_count": unauthorized,
+    return {"available": bool(buy or wait or research_gap or reject), "buy_now": buy, "wait_price": wait,
+            "research_gap_count": research_gap, "reject_count": reject, "invalid_unauthorized_buy_count": unauthorized,
             "decision_authority": TERMINAL_AUTHORITY, "formal_buy_is_mirror_only": True}
 
 
@@ -604,6 +606,7 @@ def build_dashboard(
             "new_risk_reduction_action_count": new_urgent,
             "terminal_buy_count": len(terminal["buy_now"]),
             "terminal_wait_price_count": len(terminal["wait_price"]),
+            "terminal_research_gap_count": terminal["research_gap_count"],
             "terminal_reject_count": terminal["reject_count"],
             "planned_immediate_cash_cny": plan["planned_immediate_cash_cny"],
         },
