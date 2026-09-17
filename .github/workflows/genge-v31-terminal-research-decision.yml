@@ -95,7 +95,7 @@ jobs:
           [ "${#files[@]}" -ge 1 ] || { echo 'valuation_research_queue.csv missing' >&2; exit 1; }
           printf 'VALUATION_CSV=%s\n' "${files[0]}" >> "$GITHUB_ENV"
 
-      - name: Converge every requested code to research BUY WAIT_PRICE or REJECT
+      - name: Converge every requested code to research BUY WAIT_PRICE RESEARCH_GAP or REJECT
         run: |
           set -euo pipefail
           python -m src.strategies.genge_opportunity_discovery.v31_terminal_research_decision \
@@ -112,14 +112,14 @@ jobs:
           p=json.loads(Path('reports/terminal_research/latest.json').read_text(encoding='utf-8'))
           assert p['all_requested_terminal'] is True
           assert p['requested_count'] == sum(p['decision_counts'].values())
-          assert set(p['decision_counts']) == {'BUY','WAIT_PRICE','REJECT'}
+          assert set(p['decision_counts']) == {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}
           assert p['research_authority'] == 'RESEARCH_ONLY'
           assert p['formal_trading_authority'] is False
           assert p['automatic_formal_buy_allowed'] is False
           assert p['unknown_is_pass'] is False
           assert p['no_auto_trade'] is True
           for row in p['terminal_rows']:
-              assert row['research_decision'] in {'BUY','WAIT_PRICE','REJECT'}
+              assert row['research_decision'] in {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}
               assert row['formal_buy_authorized'] is False
           PY
 
