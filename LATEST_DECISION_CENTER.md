@@ -40,22 +40,22 @@ G60邮政业(89.73)、A05农、林、牧、渔专业及辅助性活动(87.50)、
 - **本轮没有已授权新股 BUY。**
 - **本轮没有合格 WAIT_PRICE。**
 
-- Terminal REJECT：**500**（只做汇总，不淹没决策页面）。
+- Terminal REJECT：**0**（只做汇总，不淹没决策页面）。
 
 ## 决策完整性
 
 - 全部持仓显式深算完整：**False**
 - 世界/社会结构趋势证据可用：**True**
 - 已验证趋势→A股交接可用：**False**
-- Terminal 机会结果可用：**True**
+- Terminal 机会结果可用：**False**
 
 > UNKNOWN != PASS；研究趋势不自动变成 BUY；no_auto_trade=true。
 
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`35284953787`
-- 触发来源：`SLOW_LANE_TERMINAL_URGENT_REOPEN`
+- Lambda run：`35287311463`
+- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
@@ -70,7 +70,7 @@ G60邮政业(89.73)、A05农、林、牧、渔专业及辅助性活动(87.50)、
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`35277109123`；当前 Lambda：`35284953787`。
+- 终态来源 Lambda：`35277109123`；当前 Lambda：`35287311463`。
 - 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
