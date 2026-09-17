@@ -390,6 +390,7 @@ jobs:
             --master-csv "$MASTER_CSV" \
             --formal-csv "$FORMAL_CSV" \
             --production-csv "$PRODUCTION_CSV" \
+            --lifecycle-json data/opportunity_snapshots/candidate_lifecycle_state.json \
             --output-dir reports/candidate_terminal_decision
 
       - name: Record terminal lineage
@@ -434,6 +435,7 @@ jobs:
           assert rows
           assert len(rows) == summary['candidate_count'] == summary['terminalized_count']
           assert summary['research_limbo_count'] == 0
+          assert summary['research_gap_count'] >= 0
           assert summary['unauthorized_buy_count'] == 0
           assert summary['wait_price_without_price_count'] == 0
           assert summary['formal_buy_is_mirror_only'] is True
@@ -443,7 +445,7 @@ jobs:
           assert summary['no_auto_trade'] is True
           assert lineage['formal_authority_unchanged'] is True
           assert lineage['no_auto_trade'] is True
-          assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','REJECT'} for row in rows)
+          assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'} for row in rows)
           assert all(row['decision_authority'] == 'RESEARCH_TERMINAL_VIEW' for row in rows)
           assert all(row['formal_signal_eligible'] == 'False' for row in rows)
           assert all(row['automatic_promotion_allowed'] == 'False' for row in rows)
