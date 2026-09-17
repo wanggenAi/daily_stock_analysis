@@ -86,7 +86,7 @@ jobs:
           assert r['unknown_is_pass'] is False
           assert r['no_auto_trade'] is True
           assert r['requested_count'] == sum(r['decision_counts'].values())
-          assert set(r['decision_counts']) == {'BUY','WAIT_PRICE','REJECT'}
+          assert set(r['decision_counts']) == {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}
           PY
             git add -f data/investor_decision_dashboard/latest.json
             git add INVESTOR_DECISION_DASHBOARD.md

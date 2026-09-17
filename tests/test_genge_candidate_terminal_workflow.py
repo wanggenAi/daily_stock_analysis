@@ -75,7 +75,8 @@ def test_terminal_workflow_enforces_terminal_only_research_states():
     assert "candidate_terminal_decision" in text
     assert "summary['research_limbo_count'] == 0" in text
     assert "summary['unauthorized_buy_count'] == 0" in text
-    assert "{'BUY','WAIT_PRICE','REJECT'}" in text
+    assert "{'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}" in text
+    assert "--lifecycle-json data/opportunity_snapshots/candidate_lifecycle_state.json" in text
     assert "formal_authority_unchanged" in text
     assert "no_auto_trade" in text
     assert "genge-candidate-terminal-decisions" in text

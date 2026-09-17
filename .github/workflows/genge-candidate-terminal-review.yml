@@ -89,6 +89,9 @@ jobs:
 
   terminalize:
     needs: terminal-contract-tests
+    permissions:
+      actions: read
+      contents: write
     if: >-
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
@@ -390,6 +393,7 @@ jobs:
             --master-csv "$MASTER_CSV" \
             --formal-csv "$FORMAL_CSV" \
             --production-csv "$PRODUCTION_CSV" \
+            --lifecycle-json data/opportunity_snapshots/candidate_lifecycle_state.json \
             --output-dir reports/candidate_terminal_decision
 
       - name: Record terminal lineage
@@ -434,6 +438,7 @@ jobs:
           assert rows
           assert len(rows) == summary['candidate_count'] == summary['terminalized_count']
           assert summary['research_limbo_count'] == 0
+          assert summary['research_gap_count'] >= 0
           assert summary['unauthorized_buy_count'] == 0
           assert summary['wait_price_without_price_count'] == 0
           assert summary['formal_buy_is_mirror_only'] is True
@@ -443,7 +448,7 @@ jobs:
           assert summary['no_auto_trade'] is True
           assert lineage['formal_authority_unchanged'] is True
           assert lineage['no_auto_trade'] is True
-          assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','REJECT'} for row in rows)
+          assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'} for row in rows)
           assert all(row['decision_authority'] == 'RESEARCH_TERMINAL_VIEW' for row in rows)
           assert all(row['formal_signal_eligible'] == 'False' for row in rows)
           assert all(row['automatic_promotion_allowed'] == 'False' for row in rows)
@@ -459,6 +464,65 @@ jobs:
           print(json.dumps(lineage, ensure_ascii=False, indent=2))
           PY
 
+      - name: Persist terminal memory with optimistic replay
+        shell: bash
+        env:
+          TERMINAL_MEMORY_ID: terminal:${{ github.run_id }}:${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          cp reports/candidate_terminal_decision/candidate_terminal_decisions.csv /tmp/candidate_terminal_decisions.csv
+          observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git config user.name 'genge-candidate-terminal-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            echo "terminal-memory persistence replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            TERMINAL_CSV=/tmp/candidate_terminal_decisions.csv \
+            TERMINAL_OBSERVED_AT="$observed_at" \
+            python - <<'PY'
+          import csv
+          import json
+          import os
+          from pathlib import Path
+
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+              apply_terminal_memory,
+              load_state,
+              write_state,
+          )
+
+          state_path = Path("data/opportunity_snapshots/candidate_lifecycle_state.json")
+          with Path(os.environ["TERMINAL_CSV"]).open(encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          state = load_state(state_path)
+          state, events = apply_terminal_memory(
+              state,
+              rows,
+              memory_id=os.environ["TERMINAL_MEMORY_ID"],
+              observed_at=os.environ["TERMINAL_OBSERVED_AT"],
+          )
+          write_state(state_path, state)
+          print(json.dumps({
+              "memory_id": os.environ["TERMINAL_MEMORY_ID"],
+              "candidate_count": len(state.get("candidates") or {}),
+              "terminal_memory_event_count": len(events),
+              "no_auto_trade": state.get("no_auto_trade"),
+          }, ensure_ascii=False, indent=2))
+          PY
+            git add data/opportunity_snapshots/candidate_lifecycle_state.json
+            if git diff --cached --quiet; then
+              echo 'Candidate terminal memory already current.'
+              exit 0
+            fi
+            git commit -m "Persist candidate terminal memory ${{ github.run_id }} [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo 'main moved; replaying terminal memory on latest durable lifecycle.' >&2
+          done
+          echo 'candidate terminal memory persistence failed after 4 replays' >&2
+          exit 1
       - name: Print terminal decisions to run log
         if: always()
         run: |
