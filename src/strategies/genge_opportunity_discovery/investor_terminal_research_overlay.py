@@ -7,7 +7,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 TERMINAL_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
-TERMINAL_DECISIONS = {"BUY", "WAIT_PRICE", "REJECT"}
+TERMINAL_DECISIONS = {"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"}
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -62,8 +62,8 @@ def normalize_terminal_research(payload: Mapping[str, Any]) -> dict[str, Any]:
     for raw in urgent:
         if not isinstance(raw, Mapping) or str(raw.get("code") or "") not in row_codes:
             raise ValueError("urgent research row is outside terminal workset")
-        if raw.get("research_decision") != "REJECT":
-            raise ValueError("urgent research must remain REJECT")
+        if raw.get("research_decision") not in {"RESEARCH_GAP", "REJECT"}:
+            raise ValueError("urgent research must remain evidence-blocked and non-actionable")
         urgent_rows.append(dict(raw))
 
     return {
@@ -97,6 +97,7 @@ def apply_overlay(dashboard: Mapping[str, Any], terminal_payload: Mapping[str, A
         "research_terminal_requested_count": research["requested_count"],
         "research_buy_count": research["decision_counts"]["BUY"],
         "research_wait_price_count": research["decision_counts"]["WAIT_PRICE"],
+        "research_gap_count": research["decision_counts"]["RESEARCH_GAP"],
         "research_reject_count": research["decision_counts"]["REJECT"],
         "urgent_research_count": research["urgent_research_count"],
     })
@@ -120,8 +121,8 @@ def append_markdown(markdown: str, dashboard: Mapping[str, Any]) -> str:
         return markdown
     counts = research.get("decision_counts") or {}
     lines = [markdown.rstrip(), "", "## 深算研究终态（Research-only，不等于正式交易授权）", "",
-             f"- 本轮深算：**{research.get('requested_count', 0)}** 只；研究 BUY **{counts.get('BUY', 0)}** / WAIT_PRICE **{counts.get('WAIT_PRICE', 0)}** / REJECT **{counts.get('REJECT', 0)}**。",
-             f"- urgent research：**{research.get('urgent_research_count', 0)}** 只；这些标的本轮仍是 REJECT，不获得 Formal BUY。",
+             f"- 本轮深算：**{research.get('requested_count', 0)}** 只；研究 BUY **{counts.get('BUY', 0)}** / WAIT_PRICE **{counts.get('WAIT_PRICE', 0)}** / RESEARCH_GAP **{counts.get('RESEARCH_GAP', 0)}** / REJECT **{counts.get('REJECT', 0)}**。",
+             f"- urgent research：**{research.get('urgent_research_count', 0)}** 只；这些标的仍是证据缺口，不获得 Formal BUY。",
              "- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。", "", "### 我的持仓深算", "",
              "| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |", "|---|---|---|---|---|"]
     by_code = {str(row.get("code") or ""): row for row in research.get("terminal_rows") or []}
@@ -140,7 +141,7 @@ def append_markdown(markdown: str, dashboard: Mapping[str, Any]) -> str:
     for row in urgent:
         gaps = ", ".join(row.get("hard_gate_unknowns") or []) or "无"
         reasons = ", ".join(row.get("urgent_research_reasons") or [])
-        lines.append(f"- {row.get('name') or ''} {row.get('code')}: REJECT；gaps={gaps}" + (f"；urgent={reasons}" if reasons else ""))
+        lines.append(f"- {row.get('name') or ''} {row.get('code')}: {row.get('research_decision')}；gaps={gaps}" + (f"；urgent={reasons}" if reasons else ""))
     return "\n".join(lines) + "\n"
 
 
