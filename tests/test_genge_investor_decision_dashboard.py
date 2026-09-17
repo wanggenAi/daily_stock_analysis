@@ -80,7 +80,9 @@ def _terminal():
         {**common, "master_research_rank": "2", "code": "601899", "stock_name": "紫金矿业",
          "terminal_decision": "WAIT_PRICE", "terminal_current_price": "34", "wait_price_max": "32",
          "terminal_formal_buy_authorized": "False", "source_valuation_confidence": "HIGH"},
-        {**common, "master_research_rank": "3", "code": "603986", "stock_name": "兆易创新",
+        {**common, "master_research_rank": "3", "code": "002120", "stock_name": "韵达股份",
+         "terminal_decision": "RESEARCH_GAP", "terminal_formal_buy_authorized": "False"},
+        {**common, "master_research_rank": "4", "code": "603986", "stock_name": "兆易创新",
          "terminal_decision": "REJECT", "terminal_formal_buy_authorized": "False"},
     ]
 
@@ -114,7 +116,9 @@ def test_dashboard_allocates_only_authorized_actions_and_preserves_wait_price():
     assert payload["no_auto_trade"] is True
     assert [x["code"] for x in payload["terminal_opportunities"]["buy_now"]] == ["600036"]
     assert [x["code"] for x in payload["terminal_opportunities"]["wait_price"]] == ["601899"]
+    assert payload["terminal_opportunities"]["research_gap_count"] == 1
     assert payload["terminal_opportunities"]["reject_count"] == 1
+    assert payload["decision_summary"]["terminal_research_gap_count"] == 1
 
     ops = payload["capital_deployment"]["operations"]
     assert {x["code"] for x in ops} == {"601318", "600036"}
