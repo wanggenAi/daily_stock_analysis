@@ -46,8 +46,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 21.95,
-        "pnl_pct": -5.08,
+        "current_price": 21.94,
+        "pnl_pct": -5.13,
         "formal_action": "REDUCE_25",
         "canonical_formal_action": "REDUCE_25",
         "formal_action_currently_usable": true,
@@ -95,18 +95,18 @@
         },
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
         "canonical_price": 22.02,
-        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-17T14:05:08+08:00",
+        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-17T14:10:35+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 166
+        "price_age_seconds": 1
       },
       {
         "code": "001316",
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 27.76,
-        "pnl_pct": 7.83,
+        "current_price": 27.71,
+        "pnl_pct": 7.63,
         "formal_action": "HOLD_REVIEW",
         "canonical_formal_action": "HOLD_REVIEW",
         "formal_action_currently_usable": true,
@@ -140,18 +140,18 @@
         },
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
         "canonical_price": 28.19,
-        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-17T14:05:09+08:00",
+        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-17T14:10:30+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 165
+        "price_age_seconds": 6
       },
       {
         "code": "601318",
         "name": "中国平安",
         "quantity": 400,
         "average_cost": 55.9658,
-        "current_price": 53.19,
-        "pnl_pct": -4.96,
+        "current_price": 53.22,
+        "pnl_pct": -4.91,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -185,10 +185,10 @@
         },
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.644<1.00",
         "canonical_price": 53.51,
-        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-17T14:05:09+08:00",
+        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-17T14:10:33+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 165
+        "price_age_seconds": 3
       },
       {
         "code": "603993",
@@ -230,10 +230,10 @@
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
         "canonical_price": 17.84,
-        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-17T14:05:07+08:00",
+        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+        "price_observed_at": "2026-09-17T14:10:34+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 167
+        "price_age_seconds": 2
       }
     ]
   },
@@ -272,7 +272,7 @@
         "automatic_order_allowed": false,
         "no_auto_trade": true,
         "live_market_price": 17.29,
-        "price_observed_at": "2026-09-17T14:05:07+08:00",
+        "price_observed_at": "2026-09-17T14:10:34+08:00",
         "price_provider": "tencent_quote",
         "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
       }
@@ -311,7 +311,7 @@
       "automatic_order_allowed": false,
       "no_auto_trade": true,
       "live_market_price": 17.29,
-      "price_observed_at": "2026-09-17T14:05:07+08:00",
+      "price_observed_at": "2026-09-17T14:10:34+08:00",
       "price_provider": "tencent_quote",
       "execution_note": "LIVE_PRICE_WITHIN_AUTHORIZED_LIMIT"
     }
@@ -451,38 +451,6 @@
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
   "formal_new_exposure_allowed": true,
-  "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
-    "available": true,
-    "market_data_status": "OK",
-    "eligible_quote_count": 50,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 4,
-    "applied_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "missing_codes": [],
-    "coverage_ratio": 1.0,
-    "latest_quote_observed_at": "2026-09-17T14:05:10+08:00",
-    "max_quote_age_minutes": 120,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true
-  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
     "canonical_snapshot_id": "ca5ef63572bfa5d012d7",
@@ -30176,5 +30144,44 @@
         "price_evidence_status": "PRICE_GATE_NOT_MET"
       }
     ]
+  },
+  "live_execution_overlay": {
+    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
+    "available": true,
+    "market_data_status": "OK",
+    "eligible_quote_count": 4,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 4,
+    "applied_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "missing_codes": [],
+    "coverage_ratio": 1.0,
+    "latest_quote_observed_at": "2026-09-17T14:10:35+08:00",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": false,
+    "formal_new_exposure_allowed": true,
+    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
+    "market_session_state": "ACTIVE_AFTERNOON",
+    "market_session_active": true,
+    "retry_attempts": 3,
+    "refreshed_at": "2026-09-17T06:10:36.827552+00:00",
+    "refreshed_at_beijing": "2026-09-17T14:10:36.827552+08:00"
   }
 }
