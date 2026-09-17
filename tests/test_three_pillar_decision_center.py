@@ -62,6 +62,7 @@ def _dashboard():
                     "formal_buy_authorized": False,
                 }
             ],
+            "research_gap_count": 37,
             "reject_count": 499,
             "invalid_unauthorized_buy_count": 0,
         },
@@ -159,7 +160,9 @@ def test_terminal_opportunities_do_not_invent_buy_authority():
     assert opportunities["buy_now"] == []
     assert len(opportunities["wait_price"]) == 1
     assert opportunities["wait_price"][0]["terminal_decision"] == "WAIT_PRICE"
+    assert opportunities["research_gap_count"] == 37
     assert opportunities["terminal_reject_count"] == 499
+    assert out["executive_summary"]["research_gap_count"] == 37
     assert opportunities["actionable_count"] == 1
 
 
