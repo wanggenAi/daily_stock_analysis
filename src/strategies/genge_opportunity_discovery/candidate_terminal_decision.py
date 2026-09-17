@@ -3,15 +3,15 @@
 This module never creates trade authority.  It consumes the broad postscan
 Master Opportunity Ranking as the candidate universe, then overlays existing
 Formal-BUY and GenGe V3.1.1 Production outputs.  Every candidate ends the current
-cycle as exactly BUY, WAIT_PRICE, or REJECT.
+cycle as BUY, WAIT_PRICE, RESEARCH_GAP, or REJECT.
 
 Safety invariants:
 * BUY only mirrors an already-authorized Formal BUY + frozen Production BUY.
 * WAIT_PRICE only mirrors a HIGH-confidence Production WAIT whose blocker is
   the frozen formal-BUY price gate; the wait price is the production 0.80 x
   neutral-value ceiling, never the looser V3.1 diagnostic bands.
-* UNKNOWN/missing evidence remains non-pass and becomes a retryable current-cycle
-  REJECT rather than indefinite RESEARCH_CANDIDATE / RAISE_ONLY limbo.
+* UNKNOWN/missing evidence remains non-pass and becomes explicit RESEARCH_GAP.
+  Only an explicit logical failure is REJECT; research gaps remain durable and retryable.
 * Canonical Authority, Hard Gate, Confidence Gate and no-auto-trade are unchanged.
 """
 from __future__ import annotations
@@ -30,7 +30,7 @@ from .selection_framework_v31 import assess_v31, execution_universe_status, merg
 DISCLAIMER = "仅用于公开数据长期研究与人工复核，不构成买入或卖出建议，不应自动交易。"
 POLICY_VERSION = "candidate_terminal_decision_v2_master_production_overlay"
 DECISION_AUTHORITY = "RESEARCH_TERMINAL_VIEW"
-TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "REJECT"})
+TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
 PRICE_ONLY_REASON_CODES = frozenset(
     {"BUY_MARGIN_OF_SAFETY_INSUFFICIENT", "PRICE_TOO_CLOSE_TO_BASE_VALUE"}
 )
@@ -166,7 +166,7 @@ def terminalize_candidate(
     full_review_attempted = _attempted_deep_review(master)
     evidence_complete = _evidence_complete(assessment)
 
-    decision = "REJECT"
+    decision = "RESEARCH_GAP"
     reason_class = "EVIDENCE_INSUFFICIENT"
     reason_codes: list[str] = []
     retryable = True
@@ -174,6 +174,7 @@ def terminalize_candidate(
     formal_authorized = False
 
     if execution_universe_status(code) != "EXECUTION_ELIGIBLE":
+        decision = "REJECT"
         reason_class = "EXECUTION_UNIVERSE_RESEARCH_ONLY"
         reason_codes = [f"execution_universe:{execution_universe_status(code)}"]
         retryable = False
@@ -210,8 +211,9 @@ def terminalize_candidate(
                 wait_price = candidate_wait
                 retryable = True
 
-        if decision == "REJECT":
+        if decision == "RESEARCH_GAP":
             if assessment.hard_gate_failures:
+                decision = "REJECT"
                 reason_class = "HARD_GATE_FAILED"
                 reason_codes = [f"hard_gate_failed:{name}" for name in assessment.hard_gate_failures]
                 retryable = False
@@ -287,6 +289,7 @@ def build_terminal_rows(
     master_rows: Iterable[Mapping[str, Any]],
     formal_rows: Iterable[Mapping[str, Any]],
     production_rows: Iterable[Mapping[str, Any]],
+    lifecycle_candidates: Iterable[Mapping[str, Any]] = (),
 ) -> list[dict[str, Any]]:
     formal_map = _map(formal_rows)
     production_map = _map(production_rows, candidate_only=True)
@@ -298,7 +301,29 @@ def build_terminal_rows(
             continue
         rows.append(terminalize_candidate(raw, formal_map.get(code), production_map.get(code)))
         seen.add(code)
-    priority = {"BUY": 0, "WAIT_PRICE": 1, "REJECT": 2}
+
+    # Durable lifecycle memory is part of the candidate universe.  An ACTIVE
+    # candidate that is absent from today's master scan must remain visible for
+    # research rather than silently disappearing from the next cycle.
+    for raw in lifecycle_candidates:
+        code = _code(raw.get("code"))
+        state = _text(raw.get("lifecycle_state")).upper()
+        if not code or code in seen or state != "ACTIVE":
+            continue
+        recalled = {
+            "code": code,
+            "stock_name": _text(raw.get("stock_name")),
+            "research_tier": _text(raw.get("research_tier")),
+            "candidate_lifecycle_state": state,
+            "historical_candidate_recalled": True,
+        }
+        row = terminalize_candidate(recalled, formal_map.get(code), production_map.get(code))
+        if row["terminal_decision"] == "RESEARCH_GAP":
+            row["terminal_reason_class"] = "HISTORICAL_CANDIDATE_RESEARCH_GAP"
+            row["terminal_reason_codes"] = "active_lifecycle_candidate_not_present_in_current_master"
+        rows.append(row)
+        seen.add(code)
+    priority = {"BUY": 0, "WAIT_PRICE": 1, "RESEARCH_GAP": 2, "REJECT": 3}
     rows.sort(key=lambda row: (priority[row["terminal_decision"]], float(row.get("master_research_rank") or 10**9), row["code"]))
     return rows
 
@@ -322,11 +347,28 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
-def write_report(master_csv: Path, formal_csv: Path, production_csv: Path, output_dir: Path) -> list[dict[str, Any]]:
+def _read_lifecycle_candidates(path: Path | None) -> list[dict[str, Any]]:
+    if path is None:
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    candidates = payload.get("candidates") if isinstance(payload, Mapping) else None
+    if not isinstance(candidates, Mapping):
+        raise ValueError("candidate lifecycle JSON must contain a candidates object")
+    return [dict(value) for value in candidates.values() if isinstance(value, Mapping)]
+
+
+def write_report(
+    master_csv: Path,
+    formal_csv: Path,
+    production_csv: Path,
+    output_dir: Path,
+    lifecycle_json: Path | None = None,
+) -> list[dict[str, Any]]:
     master_rows = _read(master_csv)
     formal_rows = _read(formal_csv)
     production_rows = _read(production_csv)
-    rows = build_terminal_rows(master_rows, formal_rows, production_rows)
+    lifecycle_candidates = _read_lifecycle_candidates(lifecycle_json)
+    rows = build_terminal_rows(master_rows, formal_rows, production_rows, lifecycle_candidates)
     output_dir.mkdir(parents=True, exist_ok=True)
     _write_csv(output_dir / "candidate_terminal_decisions.csv", rows)
 
@@ -337,6 +379,7 @@ def write_report(master_csv: Path, formal_csv: Path, production_csv: Path, outpu
         "terminalized_count": len(rows),
         "buy_count": counts["BUY"],
         "wait_price_count": counts["WAIT_PRICE"],
+        "research_gap_count": counts["RESEARCH_GAP"],
         "reject_count": counts["REJECT"],
         "reason_counts": dict(sorted(reasons.items())),
         "research_limbo_count": 0,
@@ -357,8 +400,8 @@ def write_report(master_csv: Path, formal_csv: Path, production_csv: Path, outpu
     lines = [
         "# Candidate Terminal Decisions", "", DISCLAIMER, "",
         f"- candidates: {len(rows)}", f"- BUY: {counts['BUY']}",
-        f"- WAIT_PRICE: {counts['WAIT_PRICE']}", f"- REJECT: {counts['REJECT']}",
-        "- research limbo: 0",
+        f"- WAIT_PRICE: {counts['WAIT_PRICE']}", f"- RESEARCH_GAP: {counts['RESEARCH_GAP']}", f"- REJECT: {counts['REJECT']}",
+        "- research limbo: 0 (RESEARCH_GAP is explicit durable state, not limbo)",
         f"- WAIT_PRICE ceiling: frozen Production gate <= {FORMAL_BUY_MAX_PRICE_TO_NEUTRAL:.2f} x neutral value",
         "- BUY authority: mirror of existing Formal BUY + frozen Production BUY only", "",
     ]
@@ -395,9 +438,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--master-csv", type=Path, required=True)
     parser.add_argument("--formal-csv", type=Path, required=True)
     parser.add_argument("--production-csv", type=Path, required=True)
+    parser.add_argument("--lifecycle-json", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args(argv)
-    rows = write_report(args.master_csv, args.formal_csv, args.production_csv, args.output_dir)
+    rows = write_report(args.master_csv, args.formal_csv, args.production_csv, args.output_dir, args.lifecycle_json)
     print(f"candidate_terminal_decisions={args.output_dir};count={len(rows)}")
     return 0
 
