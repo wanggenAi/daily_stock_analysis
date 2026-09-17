@@ -16,7 +16,7 @@ def _terminal():
     row = {
         "code": "600406",
         "name": "国电南瑞",
-        "research_decision": "REJECT",
+        "research_decision": "RESEARCH_GAP",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "research_authority": "RESEARCH_ONLY",
         "formal_buy_authorized": False,
@@ -34,7 +34,7 @@ def _terminal():
         "unknown_is_pass": False,
         "no_auto_trade": True,
         "requested_count": 1,
-        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 1},
+        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 1, "REJECT": 0},
         "terminal_rows": [row],
         "urgent_research_queue": [row],
         "source_deep_lambda_run_id": "123",
@@ -49,7 +49,8 @@ def test_overlay_exposes_research_without_mutating_formal_authority():
     assert out["no_auto_trade"] is True
     assert out["terminal_research_snapshot"]["research_authority"] == "RESEARCH_ONLY"
     assert out["terminal_research_snapshot"]["formal_trading_authority"] is False
-    assert out["decision_summary"]["research_reject_count"] == 1
+    assert out["decision_summary"]["research_gap_count"] == 1
+    assert out["decision_summary"]["research_reject_count"] == 0
     assert out["decision_summary"]["urgent_research_count"] == 1
     assert "terminal_research" in out["presentation_contract"]["section_order"]
 
