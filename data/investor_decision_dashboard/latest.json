@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=1/4",
+  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
   "market": {
     "as_of_date": "2026-09-16",
     "status": "GREEN",
@@ -186,7 +186,7 @@
         "name": "洛阳钼业",
         "quantity": null,
         "average_cost": null,
-        "current_price": 17.35,
+        "current_price": 17.84,
         "pnl_pct": null,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
@@ -221,10 +221,7 @@
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
         "canonical_price": 17.84,
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-17T16:14:58+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 898
+        "price_source": "CANONICAL_FROZEN_PRICE"
       }
     ]
   },
@@ -250,21 +247,21 @@
         "code": "603993",
         "name": "洛阳钼业",
         "action": "ADD",
-        "current_price": 17.35,
+        "current_price": 17.84,
         "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
         "authorization_proven": true,
         "planned_shares": 100,
         "first_tranche_shares": 100,
-        "first_entry_max_price": 17.35,
+        "first_entry_max_price": 17.84,
         "second_tranche_shares": 0,
         "second_entry_max_price": null,
-        "estimated_cash_cny": 1735.0,
+        "estimated_cash_cny": 1784.0,
         "immediate_execution_eligible": false,
         "automatic_order_allowed": false,
         "no_auto_trade": true,
-        "live_market_price": 17.35,
-        "price_observed_at": "2026-09-17T16:14:58+08:00",
-        "price_provider": "tencent_quote",
+        "live_market_price": null,
+        "price_observed_at": "",
+        "price_provider": "",
         "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
       }
     ],
@@ -289,21 +286,21 @@
       "code": "603993",
       "name": "洛阳钼业",
       "action": "ADD",
-      "current_price": 17.35,
+      "current_price": 17.84,
       "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
       "authorization_proven": true,
       "planned_shares": 100,
       "first_tranche_shares": 100,
-      "first_entry_max_price": 17.35,
+      "first_entry_max_price": 17.84,
       "second_tranche_shares": 0,
       "second_entry_max_price": null,
-      "estimated_cash_cny": 1735.0,
+      "estimated_cash_cny": 1784.0,
       "immediate_execution_eligible": false,
       "automatic_order_allowed": false,
       "no_auto_trade": true,
-      "live_market_price": 17.35,
-      "price_observed_at": "2026-09-17T16:14:58+08:00",
-      "price_provider": "tencent_quote",
+      "live_market_price": null,
+      "price_observed_at": "",
+      "price_provider": "",
       "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
     }
   ],
@@ -30138,9 +30135,9 @@
   },
   "live_execution_overlay": {
     "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
-    "available": true,
+    "available": false,
     "market_data_status": "OFF_SESSION",
-    "eligible_quote_count": 1,
+    "eligible_quote_count": 0,
     "expected_code_count": 4,
     "expected_codes": [
       "001316",
@@ -30148,17 +30145,16 @@
       "601318",
       "603993"
     ],
-    "applied_code_count": 1,
-    "applied_codes": [
-      "603993"
-    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
     "missing_codes": [
       "001316",
       "600406",
-      "601318"
+      "601318",
+      "603993"
     ],
-    "coverage_ratio": 0.25,
-    "latest_quote_observed_at": "2026-09-17T16:14:58+08:00",
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
     "max_quote_age_minutes": 15,
     "canonical_snapshot_match": true,
     "formal_action_recomputed": false,
@@ -30173,7 +30169,7 @@
     "market_session_state": "CLOSED",
     "market_session_active": false,
     "retry_attempts": 3,
-    "refreshed_at": "2026-09-17T08:29:56.388322+00:00",
-    "refreshed_at_beijing": "2026-09-17T16:29:56.388322+08:00"
+    "refreshed_at": "2026-09-17T09:45:32.276585+00:00",
+    "refreshed_at_beijing": "2026-09-17T17:45:32.276585+08:00"
   }
 }
