@@ -124,7 +124,7 @@ def _terminal_research(lambda_run_id="999999"):
         "code": "600406",
         "name": "国电南瑞",
         "industry": "I65软件和信息技术服务业",
-        "research_decision": "REJECT",
+        "research_decision": "RESEARCH_GAP",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "research_authority": "RESEARCH_ONLY",
         "formal_buy_authorized": False,
@@ -143,7 +143,7 @@ def _terminal_research(lambda_run_id="999999"):
         "source_deep_lambda_run_id": lambda_run_id,
         "source_every_industry_run_id": "123456",
         "requested_count": 1,
-        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 1},
+        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 1, "REJECT": 0},
         "all_requested_terminal": True,
         "research_authority": "RESEARCH_ONLY",
         "formal_trading_authority": False,
@@ -192,8 +192,9 @@ def test_terminal_research_contract_preserves_authority_separation():
     terminal = normalize_terminal_research(_terminal_research())
     assert terminal["available"] is True
     assert terminal["requested_count"] == 1
-    assert terminal["decision_counts"] == {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 1}
-    assert terminal["research_reject_count"] == 1
+    assert terminal["decision_counts"] == {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 1, "REJECT": 0}
+    assert terminal["research_gap_count"] == 1
+    assert terminal["research_reject_count"] == 0
     assert terminal["formal_trading_authority"] is False
     assert terminal["automatic_formal_buy_allowed"] is False
     assert terminal["unknown_is_pass"] is False
@@ -248,12 +249,15 @@ def test_matching_terminal_research_is_exposed_separately_from_formal_actions():
     assert pillar["research_terminal_current"] is True
     assert pillar["research_buy"] == []
     assert pillar["research_wait_price"] == []
-    assert pillar["research_reject_count"] == 1
+    assert pillar["research_gap_count"] == 1
+    assert pillar["research_gap_count"] == 0
+    assert pillar["research_reject_count"] == 0
     assert len(pillar["urgent_evidence_queue"]) == 1
     assert pillar["canonical_formal_buy_now"] == []
     assert pillar["canonical_formal_wait_price"] == []
     assert out["executive_summary"]["research_terminal_requested_count"] == 1
-    assert out["executive_summary"]["research_reject_count"] == 1
+    assert out["executive_summary"]["research_gap_count"] == 1
+    assert out["executive_summary"]["research_reject_count"] == 0
     assert out["decision_readiness"]["terminal_research_current_for_deep_runtime"] is True
     assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
     assert out["no_auto_trade"] is True
@@ -304,7 +308,8 @@ def test_terminal_runtime_is_visible_in_markdown_with_unresolved_reasons():
     assert "执行 SUCCESS 不等于研究 COMPLETE" in md
     assert "## 深算终态研究决策" in md
     assert "与当前 Deep Lambda 一致：**True**" in md
-    assert "研究 REJECT：**1**" in md
+    assert "RESEARCH_GAP：**1**" in md
+    assert "研究 REJECT：**0**" in md
     assert "600406 国电南瑞" in md
     assert "Formal/Production 权限严格分离" in md
 
@@ -327,3 +332,13 @@ def test_runtime_markdown_makes_finished_but_partial_obvious():
     assert "执行 SUCCESS 不等于研究 COMPLETE" in md
     assert "## 深算终态研究决策" in md
     assert "终态快照存在：**False**" in md
+
+
+def test_explicit_reject_remains_separate_from_research_gap():
+    payload = _terminal_research()
+    payload["terminal_rows"][0]["research_decision"] = "REJECT"
+    payload["terminal_rows"][0]["research_reason"] = "HARD_GATE_FAIL"
+    payload["decision_counts"] = {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 0, "REJECT": 1}
+    terminal = normalize_terminal_research(payload)
+    assert terminal["research_gap_count"] == 0
+    assert terminal["research_reject_count"] == 1
