@@ -319,8 +319,34 @@ def build_terminal_rows(
         }
         row = terminalize_candidate(recalled, formal_map.get(code), production_map.get(code))
         if row["terminal_decision"] == "RESEARCH_GAP":
-            row["terminal_reason_class"] = "HISTORICAL_CANDIDATE_RESEARCH_GAP"
-            row["terminal_reason_codes"] = "active_lifecycle_candidate_not_present_in_current_master"
+            remembered_decision = _text(raw.get("last_terminal_decision")).upper()
+            remembered_wait = _float(raw.get("last_wait_price_max"))
+            remembered_action = _text(raw.get("last_terminal_source_production_action")).upper()
+            remembered_confidence = _text(
+                raw.get("last_terminal_source_valuation_confidence")
+            ).upper()
+            if (
+                remembered_decision == "WAIT_PRICE"
+                and remembered_wait is not None
+                and remembered_wait > 0
+                and remembered_action == "WAIT"
+                and remembered_confidence == "HIGH"
+            ):
+                row["terminal_decision"] = "WAIT_PRICE"
+                row["terminal_reason_class"] = "HISTORICAL_WAIT_PRICE_PRESERVED"
+                row["terminal_reason_codes"] = "active_lifecycle_candidate_not_present_in_current_master"
+                row["terminal_current_price"] = _float(raw.get("last_terminal_price"))
+                row["wait_price_max"] = remembered_wait
+                row["wait_price_semantics"] = "frozen_formal_buy_ceiling"
+                row["source_production_action"] = "WAIT"
+                row["source_valuation_confidence"] = "HIGH"
+                row["terminal_retryable_next_cycle"] = True
+                row["terminal_formal_buy_authorized"] = False
+                row["historical_wait_price_preserved"] = True
+                row["terminal_price_stale"] = True
+            else:
+                row["terminal_reason_class"] = "HISTORICAL_CANDIDATE_RESEARCH_GAP"
+                row["terminal_reason_codes"] = "active_lifecycle_candidate_not_present_in_current_master"
         rows.append(row)
         seen.add(code)
     priority = {"BUY": 0, "WAIT_PRICE": 1, "RESEARCH_GAP": 2, "REJECT": 3}
