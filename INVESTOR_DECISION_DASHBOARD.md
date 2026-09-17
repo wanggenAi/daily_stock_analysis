@@ -53,7 +53,7 @@ G60邮政业(STRONG)、A05农、林、牧、渔专业及辅助性活动(STRONG)�
 
 ## 9. 系统状态（最后看）
 
-- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**可用**；资金源：**USER_CONFIRMED_FLOOR**
+- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**暂无可用产物**；资金源：**USER_CONFIRMED_FLOOR**
 - Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。
 - Profit Protection Overlay 只展示盈利与价值/风险上下文；**profit alone 不是 SELL rationale，overlay 不得改写 Formal Action。**
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
