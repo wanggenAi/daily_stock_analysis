@@ -312,3 +312,16 @@ def test_primary_exchange_predictability_does_not_load_cninfo_org_ids(monkeypatc
 
     assert len(rows) == 1
     assert rows[0]["reason_code"] == "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+
+
+
+def test_szse_absolute_attachment_is_normalized_to_download_endpoint():
+    assert company_module._szse_attachment_url(
+        "http://disc.static.szse.cn/disc/example.PDF"
+    ) == "https://disc.static.szse.cn/download/disc/example.PDF"
+    assert company_module._szse_attachment_url(
+        "https://disc.static.szse.cn/download/disc/example.PDF"
+    ) == "https://disc.static.szse.cn/download/disc/example.PDF"
+    assert company_module._szse_attachment_url(
+        "https://example.com/disc/example.PDF"
+    ) == ""
