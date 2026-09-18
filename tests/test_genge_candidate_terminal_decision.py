@@ -6,6 +6,12 @@ from src.strategies.genge_opportunity_discovery.candidate_terminal_decision impo
     write_report,
 )
 
+from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+    ACTIVE,
+    apply_terminal_memory,
+    empty_state,
+)
+
 
 def _master(code="000415"):
     return {
@@ -228,3 +234,142 @@ def test_evidence_exhaustion_is_retryable_research_gap_not_unknown_pass():
     assert row["terminal_decision"] == "RESEARCH_GAP"
     assert row["terminal_retryable_next_cycle"] is True
     assert row["terminal_formal_buy_authorized"] is False
+
+
+def test_wait_price_candidate_can_become_buy_only_after_existing_authority():
+    day1 = terminalize_candidate(
+        _master("002120"),
+        _formal("002120"),
+        _production(
+            "WAIT",
+            "002120",
+            reason_codes="PRICE_TOO_CLOSE_TO_BASE_VALUE",
+            neutral_value="10",
+            current_price="9",
+        ),
+    )
+    assert day1["terminal_decision"] == "WAIT_PRICE"
+    assert day1["terminal_retryable_next_cycle"] is True
+
+    day3 = terminalize_candidate(
+        _master("002120"),
+        _formal("002120"),
+        _production(
+            "BUY",
+            "002120",
+            neutral_value="10",
+            current_price="7.9",
+        ),
+    )
+    assert day3["terminal_decision"] == "BUY"
+    assert day3["terminal_formal_buy_authorized"] is True
+    assert day3["automatic_promotion_allowed"] is False
+    assert day3["no_auto_trade"] is True
+
+def test_wait_price_survives_missing_scan_and_fresh_authority_can_promote_to_buy():
+    # Day 1: fresh existing research reaches WAIT_PRICE through the existing price gate.
+    state = empty_state()
+    state["candidates"]["002120"] = {
+        "code": "002120",
+        "stock_name": "韵达股份",
+        "lifecycle_state": ACTIVE,
+        "research_tier": "PENDING",
+        "seen_count": 1,
+        "history": [],
+        "applied_evidence_ids": [],
+    }
+    day1 = build_terminal_rows(
+        [_master("002120")],
+        [_formal("002120")],
+        [
+            _production(
+                "WAIT",
+                "002120",
+                reason_codes="PRICE_TOO_CLOSE_TO_BASE_VALUE",
+                neutral_value="10",
+                current_price="9",
+            )
+        ],
+    )
+    assert day1[0]["terminal_decision"] == "WAIT_PRICE"
+    assert day1[0]["wait_price_max"] == 8.0
+
+    state, memory_events = apply_terminal_memory(
+        state,
+        day1,
+        memory_id="terminal-day-1",
+        observed_at="2026-09-16T10:00:00+00:00",
+    )
+    assert len(memory_events) == 1
+    remembered = state["candidates"]["002120"]
+    assert remembered["last_terminal_decision"] == "WAIT_PRICE"
+    assert remembered["last_wait_price_max"] == 8.0
+    assert len(remembered["terminal_history"]) == 1
+
+    # Day 2: the daily master scan does not rediscover 002120. It remains a
+    # durable WAIT_PRICE research candidate; the remembered price is explicitly stale.
+    day2 = build_terminal_rows([], [], [], list(state["candidates"].values()))
+    assert len(day2) == 1
+    assert day2[0]["code"] == "002120"
+    assert day2[0]["terminal_decision"] == "WAIT_PRICE"
+    assert day2[0]["wait_price_max"] == 8.0
+    assert day2[0]["historical_candidate_recalled"] is True
+    assert day2[0]["historical_wait_price_preserved"] is True
+    assert day2[0]["terminal_price_stale"] is True
+    assert day2[0]["terminal_formal_buy_authorized"] is False
+    assert day2[0]["no_auto_trade"] is True
+
+    # Recalled rows are memory projections only and must not create another
+    # terminal-memory event or overwrite the fresh Day-1 decision.
+    state2, recalled_events = apply_terminal_memory(
+        state,
+        day2,
+        memory_id="terminal-day-2",
+        observed_at="2026-09-17T10:00:00+00:00",
+    )
+    assert recalled_events == []
+    assert state2["candidates"]["002120"]["last_terminal_decision"] == "WAIT_PRICE"
+    assert len(state2["candidates"]["002120"]["terminal_history"]) == 1
+
+    # Day 3: only fresh existing Formal + frozen Production BUY authority can
+    # advance the candidate. No BUY rule is recreated in lifecycle memory.
+    day3 = build_terminal_rows(
+        [_master("002120")],
+        [_formal("002120")],
+        [_production("BUY", "002120", current_price="7.9", neutral_value="10")],
+        list(state2["candidates"].values()),
+    )
+    assert len(day3) == 1
+    assert day3[0]["terminal_decision"] == "BUY"
+    assert day3[0]["terminal_formal_buy_authorized"] is True
+    assert day3[0]["automatic_promotion_allowed"] is False
+    assert day3[0]["no_auto_trade"] is True
+
+
+def test_terminal_memory_cannot_invent_missing_historical_candidate():
+    state = empty_state()
+    state["candidates"]["002120"] = {
+        "code": "002120",
+        "stock_name": "韵达股份",
+        "lifecycle_state": ACTIVE,
+        "research_tier": "PENDING",
+        "seen_count": 1,
+        "history": [],
+        "applied_evidence_ids": [],
+    }
+    rows = [
+        {
+            "code": "000589",
+            "terminal_decision": "RESEARCH_GAP",
+            "terminal_reason_class": "DEEP_PROFILE_MISSING",
+        }
+    ]
+    state2, events = apply_terminal_memory(
+        state,
+        rows,
+        memory_id="terminal-no-fabrication",
+        observed_at="2026-09-17T10:00:00+00:00",
+    )
+    assert events == []
+    assert "000589" not in state2["candidates"]
+

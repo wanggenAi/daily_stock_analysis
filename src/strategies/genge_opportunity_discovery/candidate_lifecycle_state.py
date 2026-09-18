@@ -276,6 +276,108 @@ def apply_snapshot(
     return next_state, events
 
 
+TERMINAL_MEMORY_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
+
+
+def apply_terminal_memory(
+    state: Mapping[str, Any],
+    terminal_rows: Iterable[Mapping[str, Any]],
+    *,
+    memory_id: str,
+    observed_at: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Persist fresh terminal research memory for already-durable ACTIVE candidates.
+
+    This is memory only: it cannot add candidates, reactivate inactive candidates,
+    or grant trading authority.  Recalled rows are deliberately ignored so stale
+    memory never overwrites a fresher terminal decision.
+    """
+    next_state = copy.deepcopy(dict(state))
+    _validate_state(next_state)
+    memory_id = str(memory_id or "").strip()
+    observed_at = str(observed_at or "").strip()
+    if not memory_id:
+        raise ValueError("terminal memory requires memory_id")
+    if _parse_timestamp(observed_at) is None:
+        raise ValueError("terminal memory observed_at must be ISO-8601")
+
+    applied = list(next_state.get("applied_terminal_memory_ids") or [])
+    if memory_id in applied:
+        return next_state, []
+
+    events: list[dict[str, Any]] = []
+    candidates = next_state["candidates"]
+    for raw in terminal_rows:
+        if not isinstance(raw, Mapping):
+            continue
+        code = _code(raw.get("code"))
+        decision = str(raw.get("terminal_decision") or "").strip().upper()
+        if not code or decision not in TERMINAL_MEMORY_DECISIONS:
+            continue
+        candidate = candidates.get(code)
+        if not isinstance(candidate, dict) or candidate.get("lifecycle_state") != ACTIVE:
+            continue
+        if raw.get("historical_candidate_recalled") is True or str(
+            raw.get("historical_candidate_recalled") or ""
+        ).strip().lower() == "true":
+            continue
+
+        wait_price = raw.get("wait_price_max")
+        current_price = raw.get("terminal_current_price")
+        prior_decision = str(candidate.get("last_terminal_decision") or "")
+        prior_wait = candidate.get("last_wait_price_max")
+        candidate["last_terminal_decision"] = decision
+        candidate["last_terminal_reason_class"] = str(raw.get("terminal_reason_class") or "")
+        candidate["last_terminal_reason_codes"] = str(raw.get("terminal_reason_codes") or "")
+        candidate["last_terminal_price"] = current_price
+        candidate["last_wait_price_max"] = wait_price
+        candidate["last_terminal_source_production_action"] = str(
+            raw.get("source_production_action") or ""
+        )
+        candidate["last_terminal_source_valuation_confidence"] = str(
+            raw.get("source_valuation_confidence") or ""
+        )
+        candidate["last_terminal_observed_at"] = observed_at
+        candidate["last_terminal_memory_id"] = memory_id
+        candidate["price_zone"] = (
+            "WAIT_PRICE" if decision == "WAIT_PRICE"
+            else "BUY_READY" if decision == "BUY"
+            else ""
+        )
+        candidate["next_action"] = {
+            "BUY": "BUY_READY_REVIEW",
+            "WAIT_PRICE": "WAIT_FOR_PRICE",
+            "RESEARCH_GAP": "CONTINUE_RESEARCH",
+            "REJECT": "NO_ACTION",
+        }[decision]
+
+        history = candidate.setdefault("terminal_history", [])
+        event = {
+            "event": "TERMINAL_MEMORY",
+            "code": code,
+            "memory_id": memory_id,
+            "observed_at": observed_at,
+            "terminal_decision": decision,
+            "terminal_reason_class": candidate["last_terminal_reason_class"],
+            "terminal_price": current_price,
+            "wait_price_max": wait_price,
+            "prior_terminal_decision": prior_decision,
+            "prior_wait_price_max": prior_wait,
+            "no_auto_trade": True,
+        }
+        history.append(event)
+        if len(history) > 100:
+            del history[:-100]
+        events.append(event)
+
+    applied.append(memory_id)
+    next_state["applied_terminal_memory_ids"] = applied[-200:]
+    next_state["latest_terminal_memory_id"] = memory_id
+    next_state["latest_terminal_memory_observed_at"] = observed_at
+    _validate_state(next_state)
+    return next_state, events
+
+
 def apply_explicit_transition(
     state: Mapping[str, Any],
     transition: Mapping[str, Any],

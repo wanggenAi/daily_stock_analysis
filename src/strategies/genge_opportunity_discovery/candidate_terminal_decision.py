@@ -293,6 +293,7 @@ def build_terminal_rows(
     master_rows: Iterable[Mapping[str, Any]],
     formal_rows: Iterable[Mapping[str, Any]],
     production_rows: Iterable[Mapping[str, Any]],
+    lifecycle_candidates: Iterable[Mapping[str, Any]] = (),
 ) -> list[dict[str, Any]]:
     formal_map = _map(formal_rows)
     production_map = _map(production_rows, candidate_only=True)
@@ -303,6 +304,59 @@ def build_terminal_rows(
         if not code or code in seen:
             continue
         rows.append(terminalize_candidate(raw, formal_map.get(code), production_map.get(code)))
+        seen.add(code)
+
+    # Durable lifecycle memory is part of the candidate universe. An ACTIVE
+    # candidate absent from today's master scan remains visible for research.
+    # A remembered BUY is never carried forward: BUY still requires fresh
+    # existing Formal + frozen Production authority in terminalize_candidate().
+    for raw in lifecycle_candidates:
+        code = _code(raw.get("code"))
+        state = _text(raw.get("lifecycle_state")).upper()
+        if not code or code in seen or state != "ACTIVE":
+            continue
+        recalled = {
+            "code": code,
+            "stock_name": _text(raw.get("stock_name")),
+            "research_tier": _text(raw.get("research_tier")),
+            "candidate_lifecycle_state": state,
+            "historical_candidate_recalled": True,
+        }
+        row = terminalize_candidate(recalled, formal_map.get(code), production_map.get(code))
+        if row["terminal_decision"] == "RESEARCH_GAP":
+            remembered_decision = _text(raw.get("last_terminal_decision")).upper()
+            remembered_wait = _float(raw.get("last_wait_price_max"))
+            remembered_action = _text(raw.get("last_terminal_source_production_action")).upper()
+            remembered_confidence = _text(
+                raw.get("last_terminal_source_valuation_confidence")
+            ).upper()
+            if (
+                remembered_decision == "WAIT_PRICE"
+                and remembered_wait is not None
+                and remembered_wait > 0
+                and remembered_action == "WAIT"
+                and remembered_confidence == "HIGH"
+            ):
+                row["terminal_decision"] = "WAIT_PRICE"
+                row["terminal_reason_class"] = "HISTORICAL_WAIT_PRICE_PRESERVED"
+                row["terminal_reason_codes"] = (
+                    "active_lifecycle_candidate_not_present_in_current_master"
+                )
+                row["terminal_current_price"] = _float(raw.get("last_terminal_price"))
+                row["wait_price_max"] = remembered_wait
+                row["wait_price_semantics"] = "frozen_formal_buy_ceiling"
+                row["source_production_action"] = "WAIT"
+                row["source_valuation_confidence"] = "HIGH"
+                row["terminal_retryable_next_cycle"] = True
+                row["terminal_formal_buy_authorized"] = False
+                row["historical_wait_price_preserved"] = True
+                row["terminal_price_stale"] = True
+            else:
+                row["terminal_reason_class"] = "HISTORICAL_CANDIDATE_RESEARCH_GAP"
+                row["terminal_reason_codes"] = (
+                    "active_lifecycle_candidate_not_present_in_current_master"
+                )
+        rows.append(row)
         seen.add(code)
     priority = {"BUY": 0, "WAIT_PRICE": 1, "RESEARCH_GAP": 2, "REJECT": 3}
     rows.sort(key=lambda row: (priority[row["terminal_decision"]], float(row.get("master_research_rank") or 10**9), row["code"]))
@@ -328,11 +382,28 @@ def _write_csv(path: Path, rows: list[dict[str, Any]]) -> None:
         writer.writerows(rows)
 
 
-def write_report(master_csv: Path, formal_csv: Path, production_csv: Path, output_dir: Path) -> list[dict[str, Any]]:
+def _read_lifecycle_candidates(path: Path | None) -> list[dict[str, Any]]:
+    if path is None:
+        return []
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    candidates = payload.get("candidates") if isinstance(payload, Mapping) else None
+    if not isinstance(candidates, Mapping):
+        raise ValueError("candidate lifecycle JSON must contain a candidates object")
+    return [dict(value) for value in candidates.values() if isinstance(value, Mapping)]
+
+
+def write_report(
+    master_csv: Path,
+    formal_csv: Path,
+    production_csv: Path,
+    output_dir: Path,
+    lifecycle_json: Path | None = None,
+) -> list[dict[str, Any]]:
     master_rows = _read(master_csv)
     formal_rows = _read(formal_csv)
     production_rows = _read(production_csv)
-    rows = build_terminal_rows(master_rows, formal_rows, production_rows)
+    lifecycle_candidates = _read_lifecycle_candidates(lifecycle_json)
+    rows = build_terminal_rows(master_rows, formal_rows, production_rows, lifecycle_candidates)
     output_dir.mkdir(parents=True, exist_ok=True)
     _write_csv(output_dir / "candidate_terminal_decisions.csv", rows)
 
@@ -402,9 +473,16 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--master-csv", type=Path, required=True)
     parser.add_argument("--formal-csv", type=Path, required=True)
     parser.add_argument("--production-csv", type=Path, required=True)
+    parser.add_argument("--lifecycle-json", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args(argv)
-    rows = write_report(args.master_csv, args.formal_csv, args.production_csv, args.output_dir)
+    rows = write_report(
+        args.master_csv,
+        args.formal_csv,
+        args.production_csv,
+        args.output_dir,
+        args.lifecycle_json,
+    )
     print(f"candidate_terminal_decisions={args.output_dir};count={len(rows)}")
     return 0
 
