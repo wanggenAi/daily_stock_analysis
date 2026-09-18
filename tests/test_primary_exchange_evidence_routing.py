@@ -116,10 +116,10 @@ def test_szse_annual_query_enforces_exact_code_category_and_official_pdf():
         def post(self, url, *, json, headers, timeout):
             assert url == company_module.SZSE_ANNOUNCEMENT_URL
             assert json["stock"] == ["001316"]
-            assert json["channelCode"] == ["listedNotice_disc"]
+            assert json["channelCode"] == ["fixed_disc"]
             assert json["bigCategoryId"] == ["010301"]
             assert json["seDate"] == ["2025-03-07", "2026-09-18"]
-            assert headers["Referer"] == company_module.SZSE_DISCLOSURE_REFERER
+            assert headers["Referer"] == company_module.SZSE_PERIODIC_REPORT_REFERER
             assert timeout == 8
             return Response()
 
@@ -138,6 +138,8 @@ def test_predictability_szse_history_keeps_distinct_full_annual_reports(monkeypa
     def fake_szse(code, *, start, as_of, session, timeout, **kwargs):
         assert code == "001316"
         assert kwargs["big_category_id"] == "010301"
+        assert kwargs["channel_code"] == "fixed_disc"
+        assert kwargs["referer"] == company_module.SZSE_PERIODIC_REPORT_REFERER
         return ([
             {
                 "title": "润贝航科：2025年年度报告",
