@@ -130,7 +130,7 @@ def test_szse_annual_query_enforces_exact_code_category_and_official_pdf():
     assert rows[0]["title"] == "润贝航科：2025年年度报告"
     assert rows[0]["source_name"] == "szse"
     assert rows[0]["url"] == (
-        "https://disc.static.szse.cn/disc/disk03/finalpage/2026-04-20/runbei.PDF"
+        "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-20/runbei.PDF"
     )
 
 
@@ -202,3 +202,82 @@ def test_sse_annual_query_rejects_half_year_summaries_and_notices():
         "公司2025年年度报告",
         "公司2024年年度报告（修订版）",
     ]
+
+
+
+def test_szse_relative_attachment_uses_download_endpoint():
+    assert company_module._szse_attachment_url(
+        "/disc/disk03/finalpage/2026-04-20/example.PDF"
+    ) == (
+        "https://disc.static.szse.cn/download/disc/disk03/finalpage/"
+        "2026-04-20/example.PDF"
+    )
+
+
+def test_szse_missing_announce_count_keeps_paging_until_short_page():
+    class Response:
+        def __init__(self, rows):
+            self._rows = rows
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"data": self._rows}
+
+    class Session:
+        pages = []
+
+        def post(self, _url, *, json, **_kwargs):
+            page = int(json["pageNum"])
+            self.pages.append(page)
+            count = 30 if page == 1 else 2
+            return Response([
+                {
+                    "secCode": ["001316"],
+                    "title": f"普通公告{page}-{index}",
+                    "publishTime": "2026-09-10 00:00:00",
+                    "attachPath": f"/disc/page-{page}-{index}.PDF",
+                }
+                for index in range(count)
+            ])
+
+    session = Session()
+    rows, meta = company_module._query_szse_announcements(
+        "001316",
+        start=date(2026, 1, 1),
+        as_of=date(2026, 9, 18),
+        session=session,
+        timeout=8,
+        max_pages=5,
+        page_size=30,
+    )
+
+    assert session.pages == [1, 2]
+    assert len(rows) == 32
+    assert meta["truncated"] is False
+    assert meta["reported_total"] == 0
+
+
+def test_szse_history_rejects_annual_report_correction_notice(monkeypatch):
+    def fake_szse(code, **_kwargs):
+        assert code == "001316"
+        return ([
+            {
+                "title": "关于2025年年度报告的更正公告",
+                "publish_date": "2026-04-21",
+                "url": "https://disc.static.szse.cn/download/disc/correction.pdf",
+            },
+            {
+                "title": "润贝航科2025年年度报告",
+                "publish_date": "2026-04-20",
+                "url": "https://disc.static.szse.cn/download/disc/annual.pdf",
+            },
+        ], {"pages_fetched": 1})
+
+    monkeypatch.setattr(predictability, "_query_szse_announcements", fake_szse)
+    rows = predictability._query_szse_history(
+        "001316", date(2026, 9, 18), object(), 8
+    )
+
+    assert [row["title"] for row in rows] == ["润贝航科2025年年度报告"]
