@@ -69,6 +69,14 @@ def test_modern_terminal_inputs_are_exact_and_formal_buy_is_mirror_only():
     assert "CANDIDATE" in text
 
 
+def test_terminalize_job_installs_runtime_dependencies():
+    text = _text(WORKFLOW)
+
+    terminalize = text.split("  terminalize:", 1)[1]
+    assert "Install terminal runtime dependencies" in terminalize
+    assert "-r .github/requirements-ci.txt" in terminalize
+    assert "cache: pip" in terminalize
+
 def test_terminal_workflow_enforces_terminal_only_research_states():
     text = _text(WORKFLOW)
 
