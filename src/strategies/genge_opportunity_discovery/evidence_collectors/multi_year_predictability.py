@@ -788,9 +788,16 @@ def collect_multi_year_predictability_evidence(
     session = requests.Session()
     # Primary-exchange routes do not depend on CNINFO orgId metadata. Keep the
     # legacy lookup best-effort only for unsupported/fallback code families.
-    try:
-        org_ids = _load_cninfo_org_ids(session, timeout)
-    except Exception:
+    needs_cninfo = any(
+        not _code(row.get("code")).startswith(("0", "2", "3", "6"))
+        for row in selected
+    )
+    if needs_cninfo:
+        try:
+            org_ids = _load_cninfo_org_ids(session, timeout)
+        except Exception:
+            org_ids = {}
+    else:
         org_ids = {}
 
     results: list[dict[str, Any]] = []
