@@ -4,12 +4,12 @@
 Make this repository resumable for long ChatGPT web development sessions by storing verified execution state in GitHub, without changing stock-analysis business logic.
 
 ## Current Phase
-CI — PR is open; follow blocking checks to green, then merge and verify main.
+Merge — blocking CI is green; merge PR #181, then verify live main and production/artifact state.
 
 ## Last Verified Main
 `466944c7f2887c1babcc6c714390bfd81e8850ba`
 
-Current commit SHA: `98340de64ddf7cd47c310444cdd3d8c3e5b0bb45` (verified PR head immediately before this checkpoint write; the live GitHub branch ref is authoritative).
+Current commit SHA: `12eeee1e3d24f33693293ebd760f7765478ff053` (CI-verified PR head immediately before this state-only checkpoint write; the live GitHub branch ref is authoritative).
 
 ## Active Branch
 `fix/candidate-terminal-runtime-main` — reused only after PR #178 was merged/closed; fast-forwarded and then merged with the latest `main`.
@@ -18,7 +18,7 @@ Current commit SHA: `98340de64ddf7cd47c310444cdd3d8c3e5b0bb45` (verified PR head
 #181 — open
 
 ## CI
-Pre-PR structural verification passed. PR #181 is open; blocking GitHub CI is pending on the updated PR head.
+PR #181 CI run `35321792911` passed on `12eeee1e3d24f33693293ebd760f7765478ff053`: `ai-governance` success, `backend-gate` success, `docker-build` success, `web-gate` skipped as expected.
 
 ## Production / Artifact
 No production change is intended. Latest verified persisted `data/opportunity_snapshots/candidate_lifecycle_state.json` blob: `b8207c0db854a9aef0c9e7aef00326c1bab82654`. Production files changed on concurrent `main` were preserved during synchronization; this branch diff contains only governance/state files.
@@ -40,7 +40,7 @@ No production change is intended. Latest verified persisted `data/opportunity_sn
 none
 
 ## Next Action
-Inspect PR #181 blocking CI; fix any failing check, otherwise merge when green.
+Merge PR #181, then re-read live `main`, merge result, Actions, and persisted production/artifact state.
 
 ## Do Not Repeat
 - Do not redesign or re-audit stock selection, valuation, BUY/WAIT_PRICE/REJECT logic, or evidence thresholds.
