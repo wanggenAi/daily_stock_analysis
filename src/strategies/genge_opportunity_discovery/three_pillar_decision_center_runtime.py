@@ -3,7 +3,7 @@
 The decision-center composer remains the authority-preserving composition layer.
 This producer adds operational observability for event-driven deep calculation,
 prefers automatically generated profiles over static bootstrap reviews, and
-exposes terminal research-only BUY / WAIT_PRICE / REJECT separately from
+exposes terminal research-only BUY / WAIT_PRICE / RESEARCH_GAP / REJECT separately from
 Canonical/Production actions.
 
 Execution completion, process-terminal closure and research completeness are
@@ -22,7 +22,7 @@ from .three_pillar_decision_center import build_decision_center, render_markdown
 
 RUNTIME_CONTRACT = "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2"
 TERMINAL_RESEARCH_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
-TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "REJECT"})
+TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
 
 
 def _json(path: Path | None) -> dict[str, Any]:
@@ -134,10 +134,12 @@ def normalize_terminal_research(
             "source_deep_lambda_run_id": "",
             "source_every_industry_run_id": "",
             "requested_count": 0,
-            "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 0},
+            "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 0, "REJECT": 0},
             "all_requested_terminal": False,
             "research_buy": [],
             "research_wait_price": [],
+            "research_gap": [],
+            "research_gap_count": 0,
             "research_reject_count": 0,
             "urgent_research_queue": [],
             "research_authority": "RESEARCH_ONLY",
@@ -171,6 +173,7 @@ def normalize_terminal_research(
 
     buy: list[dict[str, Any]] = []
     wait: list[dict[str, Any]] = []
+    gaps: list[dict[str, Any]] = []
     reject_count = 0
     for row in rows:
         decision = str(row.get("research_decision") or "").upper()
@@ -186,6 +189,8 @@ def normalize_terminal_research(
             buy.append(row)
         elif decision == "WAIT_PRICE":
             wait.append(row)
+        elif decision == "RESEARCH_GAP":
+            gaps.append(row)
         else:
             reject_count += 1
 
@@ -193,9 +198,10 @@ def normalize_terminal_research(
     counts = {
         "BUY": _int(raw_counts.get("BUY")),
         "WAIT_PRICE": _int(raw_counts.get("WAIT_PRICE")),
+        "RESEARCH_GAP": _int(raw_counts.get("RESEARCH_GAP")),
         "REJECT": _int(raw_counts.get("REJECT")),
     }
-    actual_counts = {"BUY": len(buy), "WAIT_PRICE": len(wait), "REJECT": reject_count}
+    actual_counts = {"BUY": len(buy), "WAIT_PRICE": len(wait), "RESEARCH_GAP": len(gaps), "REJECT": reject_count}
     if counts != actual_counts or sum(counts.values()) != requested:
         raise ValueError("terminal research decision_counts do not match terminal rows")
 
@@ -211,6 +217,8 @@ def normalize_terminal_research(
         "all_requested_terminal": True,
         "research_buy": buy,
         "research_wait_price": wait,
+        "research_gap": gaps,
+        "research_gap_count": len(gaps),
         "research_reject_count": reject_count,
         "urgent_research_queue": urgent,
         "research_authority": "RESEARCH_ONLY",
@@ -241,6 +249,8 @@ def _attach_terminal_research(
     opportunities["terminal_research_snapshot"] = terminal
     opportunities["research_buy"] = list(terminal.get("research_buy") or []) if current else []
     opportunities["research_wait_price"] = list(terminal.get("research_wait_price") or []) if current else []
+    opportunities["research_gap"] = list(terminal.get("research_gap") or []) if current else []
+    opportunities["research_gap_count"] = _int(terminal.get("research_gap_count")) if current else 0
     opportunities["research_reject_count"] = _int(terminal.get("research_reject_count")) if current else 0
     opportunities["urgent_evidence_queue"] = list(terminal.get("urgent_research_queue") or []) if current else []
     opportunities["research_actionable_count"] = (
@@ -248,7 +258,7 @@ def _attach_terminal_research(
     )
     opportunities["research_terminal_current"] = current
     opportunities["display_rule"] = (
-        "Canonical buy_now/wait_price remain Formal/Production mirrors. Research BUY/WAIT_PRICE are displayed "
+        "Canonical buy_now/wait_price remain Formal/Production mirrors. Research BUY/WAIT_PRICE/RESEARCH_GAP are displayed "
         "separately and only when their source Deep Lambda exactly matches the current deep runtime."
     )
     opportunities["authority_rule"] = (
@@ -262,6 +272,7 @@ def _attach_terminal_research(
             "research_terminal_requested_count": _int(terminal.get("requested_count")) if current else 0,
             "research_buy_count": len(opportunities["research_buy"]),
             "research_wait_price_count": len(opportunities["research_wait_price"]),
+            "research_gap_count": opportunities["research_gap_count"],
             "research_reject_count": opportunities["research_reject_count"],
             "urgent_evidence_queue_count": len(opportunities["urgent_evidence_queue"]),
         }
@@ -378,7 +389,7 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         "",
         f"- 终态快照存在：**{terminal.get('available') is True}**；与当前 Deep Lambda 一致：**{terminal.get('current_for_deep_runtime') is True}**。",
         f"- 终态来源 Lambda：`{terminal.get('source_deep_lambda_run_id') or '—'}`；当前 Lambda：`{runtime.get('lambda_run_id') or '—'}`。",
-        f"- 请求：**{terminal.get('requested_count', 0) if terminal.get('current_for_deep_runtime') else 0}**；研究 BUY：**{len(opportunities.get('research_buy') or [])}**；研究 WAIT_PRICE：**{len(opportunities.get('research_wait_price') or [])}**；研究 REJECT：**{opportunities.get('research_reject_count', 0)}**。",
+        f"- 请求：**{terminal.get('requested_count', 0) if terminal.get('current_for_deep_runtime') else 0}**；研究 BUY：**{len(opportunities.get('research_buy') or [])}**；研究 WAIT_PRICE：**{len(opportunities.get('research_wait_price') or [])}**；研究 RESEARCH_GAP：**{opportunities.get('research_gap_count', 0)}**；研究 REJECT：**{opportunities.get('research_reject_count', 0)}**。",
         f"- 高吸引力但证据不足、优先补证：{_urgent_text(opportunities.get('urgent_evidence_queue') or [])}",
         "- **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。",
         "",
