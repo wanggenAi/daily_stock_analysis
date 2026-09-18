@@ -325,3 +325,16 @@ def test_szse_absolute_attachment_is_normalized_to_download_endpoint():
     assert company_module._szse_attachment_url(
         "https://example.com/disc/example.PDF"
     ) == ""
+
+
+
+def test_predictability_unknown_provenance_tracks_primary_exchange():
+    sh = predictability._unknown_row(
+        "600406", "输配电气", "ANNUAL_REPORT_QUERY_FAILED:HTTPError"
+    )
+    sz = predictability._unknown_row(
+        "001316", "批发业", "ANNUAL_REPORT_QUERY_FAILED:HTTPError"
+    )
+
+    assert sh["source_domain"] == "sse.com.cn"
+    assert sz["source_domain"] == "szse.cn"
