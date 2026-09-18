@@ -50,3 +50,120 @@ def test_predictability_sse_history_keeps_distinct_complete_years(monkeypatch):
     )
     assert [row["fiscal_year"] for row in rows] == [2025, 2024, 2023]
     assert all("摘要" not in row["title"] for row in rows)
+
+
+
+def test_shenzhen_company_disclosure_uses_szse(monkeypatch):
+    calls = []
+
+    def fake_szse(code, as_of, session, timeout):
+        calls.append(code)
+        return [{
+            "title": "2025年年度报告",
+            "publish_date": "2026-03-30",
+            "url": "https://disc.static.szse.cn/disc/2025.pdf",
+        }]
+
+    monkeypatch.setattr(company_module, "_query_szse", fake_szse)
+    rows = company_module._announcement_candidates(
+        "001316", date(2026, 9, 18), object(), 8, {"001316": "legacy-org"}
+    )
+    assert rows[0]["title"] == "2025年年度报告"
+    assert calls == ["001316"]
+
+
+def test_shenzhen_material_events_use_szse(monkeypatch):
+    calls = []
+
+    def fake_szse(code, as_of, session, timeout):
+        calls.append(code)
+        return ([{"title": "重大事项公告"}], {"pages_fetched": 1})
+
+    monkeypatch.setattr(company_module, "_query_szse_material_events", fake_szse)
+    rows, summary = company_module._material_event_candidates(
+        "002941", date(2026, 9, 18), object(), 8, {"002941": "legacy-org"}
+    )
+    assert rows[0]["title"] == "重大事项公告"
+    assert summary["pages_fetched"] == 1
+    assert calls == ["002941"]
+
+
+def test_szse_annual_query_enforces_exact_code_category_and_official_pdf():
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "announceCount": 2,
+                "data": [
+                    {
+                        "secCode": ["001316"],
+                        "title": "润贝航科：2025年年度报告",
+                        "publishTime": "2026-04-20 00:00:00",
+                        "attachPath": "/disc/disk03/finalpage/2026-04-20/runbei.PDF",
+                    },
+                    {
+                        "secCode": ["001317"],
+                        "title": "其他公司：2025年年度报告",
+                        "publishTime": "2026-04-20 00:00:00",
+                        "attachPath": "/disc/disk03/finalpage/2026-04-20/other.PDF",
+                    },
+                ],
+            }
+
+    class Session:
+        def post(self, url, *, json, headers, timeout):
+            assert url == company_module.SZSE_ANNOUNCEMENT_URL
+            assert json["stock"] == ["001316"]
+            assert json["channelCode"] == ["listedNotice_disc"]
+            assert json["bigCategoryId"] == ["010301"]
+            assert json["seDate"] == ["2025-03-07", "2026-09-18"]
+            assert headers["Referer"] == company_module.SZSE_DISCLOSURE_REFERER
+            assert timeout == 8
+            return Response()
+
+    rows = company_module._query_szse(
+        "001316", date(2026, 9, 18), Session(), 8
+    )
+    assert len(rows) == 1
+    assert rows[0]["title"] == "润贝航科：2025年年度报告"
+    assert rows[0]["source_name"] == "szse"
+    assert rows[0]["url"] == (
+        "https://disc.static.szse.cn/disc/disk03/finalpage/2026-04-20/runbei.PDF"
+    )
+
+
+def test_predictability_szse_history_keeps_distinct_full_annual_reports(monkeypatch):
+    def fake_szse(code, *, start, as_of, session, timeout, **kwargs):
+        assert code == "001316"
+        assert kwargs["big_category_id"] == "010301"
+        return ([
+            {
+                "title": "润贝航科：2025年年度报告",
+                "publish_date": "2026-04-20",
+                "url": "https://disc.static.szse.cn/disc/2025.pdf",
+            },
+            {
+                "title": "润贝航科：2025年年度报告摘要",
+                "publish_date": "2026-04-20",
+                "url": "https://disc.static.szse.cn/disc/2025-summary.pdf",
+            },
+            {
+                "title": "润贝航科：2024年年度报告",
+                "publish_date": "2025-04-20",
+                "url": "https://disc.static.szse.cn/disc/2024.pdf",
+            },
+            {
+                "title": "润贝航科：2023年年度报告",
+                "publish_date": "2024-04-20",
+                "url": "https://disc.static.szse.cn/disc/2023.pdf",
+            },
+        ], {"pages_fetched": 1})
+
+    monkeypatch.setattr(predictability, "_query_szse_announcements", fake_szse)
+    rows = predictability._query_szse_history(
+        "001316", date(2026, 9, 18), object(), 8
+    )
+    assert [row["fiscal_year"] for row in rows] == [2025, 2024, 2023]
+    assert all("摘要" not in row["title"] for row in rows)
