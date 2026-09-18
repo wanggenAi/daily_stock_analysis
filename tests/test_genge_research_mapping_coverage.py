@@ -133,3 +133,14 @@ def test_conflicting_production_industry_metadata_fails_closed(tmp_path: Path):
     assert by_code["001316"]["industry_source_conflict"] is True
     assert by_code["000526"]["industry"] == "教育"
     assert by_code["600406"]["industry"] == "人工复核行业"
+
+def test_operating_ledger_preserves_recovered_industry_mapping_contract():
+    root = Path(__file__).resolve().parents[1]
+    ledger = (root / ".github/workflows/genge-v311-operating-ledger.yml").read_text(encoding="utf-8")
+    slow_lane = (root / ".github/workflows/genge-evidence-slow-lane.yml").read_text(encoding="utf-8")
+
+    assert "operating-ledger-industry-source.csv" in ledger
+    assert '--industry-source-csv "$industry_source"' in ledger
+    assert 'operating-ledger:persisted-research-mapping' in ledger
+    assert '".github/workflows/genge-v311-operating-ledger.yml"' in slow_lane
+
