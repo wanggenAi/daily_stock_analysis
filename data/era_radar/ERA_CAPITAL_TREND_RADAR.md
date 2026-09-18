@@ -1,7 +1,7 @@
 # Era & Capital Trend Radar
 
-Snapshot: `7cb718f20b7513c7cbb7`
-Research as of: `2026-09-15T11:54:41Z`
+Snapshot: `35f8d2582a60cbd18af0`
+Research as of: `2026-09-18T11:27:40Z`
 
 > Research intelligence only. No Formal trading authority. No auto-trade.
 
@@ -13,6 +13,5 @@ Research as of: `2026-09-15T11:54:41Z`
 | demographic_longevity | EMERGING | 60.32 | 50.00 | 50.00 | 14.64 | 1 |
 | urbanization_services | EMERGING | 58.08 | 50.00 | 50.00 | 14.18 | 1 |
 | research_intensity | EMERGING | 55.04 | 50.00 | 50.00 | 13.95 | 1 |
-| intelligent_ev_supply_chain | EMERGING | 50.00 | 53.63 | 50.00 | 13.91 | 1 |
 | advanced_manufacturing | EMERGING | 48.19 | 45.69 | 45.69 | 11.11 | 1 |
 | electrification_infrastructure | EMERGING | 50.00 | 50.00 | 50.00 | 0.00 | 0 |
