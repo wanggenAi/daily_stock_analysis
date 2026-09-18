@@ -19,6 +19,7 @@ REQUEST_HEADERS = {
 CNINFO_STOCK_LIST_URL = "https://www.cninfo.com.cn/new/data/szse_stock.json"
 SZSE_ANNOUNCEMENT_URL = "https://www.szse.cn/api/disc/announcement/annList"
 SZSE_DISCLOSURE_REFERER = "https://www.szse.cn/disclosure/listed/notice/index.html"
+SZSE_PERIODIC_REPORT_REFERER = "https://www.szse.cn/disclosure/listed/fixed/index.html"
 SZSE_STATIC_HOST = "https://disc.static.szse.cn"
 SZSE_ANNUAL_REPORT_CATEGORY = "010301"
 SHANGHAI_TIMEZONE = ZoneInfo("Asia/Shanghai")
@@ -298,6 +299,8 @@ def _query_szse_announcements(
     session: requests.Session,
     timeout: int,
     big_category_id: str = "",
+    channel_code: str = "listedNotice_disc",
+    referer: str = SZSE_DISCLOSURE_REFERER,
     max_pages: int = 1,
     page_size: int = MATERIAL_EVENT_PAGE_SIZE,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -311,7 +314,7 @@ def _query_szse_announcements(
         payload: dict[str, Any] = {
             "seDate": [start.isoformat(), as_of.isoformat()],
             "stock": [code],
-            "channelCode": ["listedNotice_disc"],
+            "channelCode": [channel_code],
             "pageSize": int(page_size),
             "pageNum": int(page),
         }
@@ -324,7 +327,7 @@ def _query_szse_announcements(
                     **REQUEST_HEADERS,
                     "Accept": "application/json, text/javascript, */*; q=0.01",
                     "Content-Type": "application/json",
-                    "Referer": SZSE_DISCLOSURE_REFERER,
+                    "Referer": referer,
                     "Origin": "https://www.szse.cn",
                     "X-Request-Type": "ajax",
                     "X-Requested-With": "XMLHttpRequest",
@@ -424,6 +427,8 @@ def _query_szse(
         session=session,
         timeout=timeout,
         big_category_id=SZSE_ANNUAL_REPORT_CATEGORY,
+        channel_code="fixed_disc",
+        referer=SZSE_PERIODIC_REPORT_REFERER,
         max_pages=2,
         page_size=30,
     )
