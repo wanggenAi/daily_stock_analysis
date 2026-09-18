@@ -26,6 +26,11 @@ MATERIAL_EVENT_WINDOW_DAYS = 730
 MATERIAL_EVENT_PAGE_SIZE = 30
 MATERIAL_EVENT_MAX_PAGES = 20
 MATERIAL_EVENT_MAX_DOCUMENTS = 16
+FULL_ANNUAL_REPORT_RE = re.compile(r"20\\d{2}年(?:年度报告|年报)")
+FULL_ANNUAL_REPORT_EXCLUDED_TOKENS = (
+    "半年度", "摘要", "英文", "取消", "更正公告", "补充公告", "提示性公告",
+)
+
 
 MATERIAL_EVENT_RULES: tuple[tuple[str, re.Pattern[str], int, str], ...] = (
     ("DELISTING_RISK", re.compile(r"终止上市|退市风险警示|可能被终止上市|股票退市|恢复上市"), 730, "HIGH"),
@@ -319,6 +324,14 @@ def _query_cninfo(
     )
 
 
+def _is_full_annual_report_title(value: Any) -> bool:
+    title = _clean_title(value)
+    return bool(
+        FULL_ANNUAL_REPORT_RE.search(title)
+        and not any(token in title for token in FULL_ANNUAL_REPORT_EXCLUDED_TOKENS)
+    )
+
+
 def _query_sse(code: str, as_of: date, session: requests.Session, timeout: int) -> list[dict[str, Any]]:
     params = {
         "jsonCallBack": "",
@@ -327,7 +340,7 @@ def _query_sse(code: str, as_of: date, session: requests.Session, timeout: int) 
         "keyWord": "年度报告",
         "securityType": "0101,120100,020100,020200,120200",
         "reportType2": "DQBG",
-        "pageHelp.pageSize": "5",
+        "pageHelp.pageSize": "30",
         "pageHelp.pageNo": "1",
         "pageHelp.beginPage": "1",
         "pageHelp.cacheSize": "1",
@@ -343,6 +356,9 @@ def _query_sse(code: str, as_of: date, session: requests.Session, timeout: int) 
     data = response.json().get("pageHelp", {}).get("data") or []
     result: list[dict[str, Any]] = []
     for item in data:
+        title = _clean_title(item.get("TITLE"))
+        if not _is_full_annual_report_title(title):
+            continue
         publish_date = str(item.get("SSEDATE") or "")[:10]
         if publish_date and publish_date > as_of.isoformat():
             continue
@@ -351,7 +367,7 @@ def _query_sse(code: str, as_of: date, session: requests.Session, timeout: int) 
             continue
         result.append(
             {
-                "title": _clean_title(item.get("TITLE")),
+                "title": title,
                 "publish_date": publish_date,
                 "url": f"https://www.sse.com.cn{url}",
                 "source_type": "EXCHANGE_DISCLOSURE",
