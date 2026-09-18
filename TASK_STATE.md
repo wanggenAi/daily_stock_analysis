@@ -1,53 +1,53 @@
 # Current Mission
 
 ## Goal
-Make this repository resumable for long ChatGPT web development sessions by storing verified execution state in GitHub, without changing stock-analysis business logic.
+Keep long ChatGPT web development resumable from live GitHub state without changing stock-analysis business logic.
 
 ## Current Phase
-Merge — blocking CI is green; merge PR #181, then verify live main and production/artifact state.
+CI — PR #183 is open with a state-only diff; wait for/check blocking CI before merge.
 
 ## Last Verified Main
-`466944c7f2887c1babcc6c714390bfd81e8850ba`
+`90b340af0735b1d11d2adaba003d3910974ad4d9`
 
-Current commit SHA: `12eeee1e3d24f33693293ebd760f7765478ff053` (CI-verified PR head immediately before this state-only checkpoint write; the live GitHub branch ref is authoritative).
+Verified resumable-execution implementation commit on main: `feb104def09967cda74db6be7a156fe5ba2a17a7`.
 
 ## Active Branch
-`fix/candidate-terminal-runtime-main` — reused only after PR #178 was merged/closed; fast-forwarded and then merged with the latest `main`.
+`chore/finalize-resumable-task-state`
 
 ## Active PR
-#181 — open
+#183 — open
 
 ## CI
-PR #181 CI run `35321792911` passed on `12eeee1e3d24f33693293ebd760f7765478ff053`: `ai-governance` success, `backend-gate` success, `docker-build` success, `web-gate` skipped as expected.
+PR #183 CI not yet observed after PR creation. Existing `ci.yml` has blocking `ai-governance`; `scripts/check_ai_assets.py` validates required `TASK_STATE.md` headings and the 120-line limit.
 
 ## Production / Artifact
-No production change is intended. Latest verified persisted `data/opportunity_snapshots/candidate_lifecycle_state.json` blob: `b8207c0db854a9aef0c9e7aef00326c1bab82654`. Production files changed on concurrent `main` were preserved during synchronization; this branch diff contains only governance/state files.
+No production change is intended. Verified persisted `data/opportunity_snapshots/candidate_lifecycle_state.json` blob: `b8207c0db854a9aef0c9e7aef00326c1bab82654`.
 
 ## Completed
-- Verified live `main`, history, open PRs, Actions, AI instructions, and persisted lifecycle state.
-- Created `TASK_STATE.md` and checkpointed each stable implementation phase.
-- Added GitHub-first recovery and interruption-resume rules to `AGENTS.md`.
-- Synchronized the minimal Copilot mirror.
-- Extended existing `ai-governance` validation to require the state file and compact schema.
-- Re-read a concurrently advanced `main`, verified its two changed files were unrelated, and merged it without conflict.
-- Verified branch is ahead of current `main` with `behind_by=0` and only four intended files changed.
+- Verified current main/history, open PR search, CI workflow, AI instructions, and persisted lifecycle state.
+- Verified `AGENTS.md` contains the GitHub-first long-task recovery protocol.
+- Verified Copilot instructions require live GitHub recovery and stable-phase checkpoints.
+- Verified existing CI validates `TASK_STATE.md`; no new workflow/database/service is needed.
+- Confirmed the resumable-execution implementation commit is already present on current `main`.
+- Repaired the stale checkpoint on a branch whose diff is only `TASK_STATE.md`.
+- Opened PR #183.
 
 ## Current Findings
-- Existing `ci.yml` is sufficient; no new workflow, database, or service is needed.
-- No stock-analysis business or production workflow file is in this diff.
+- Previous `TASK_STATE.md` was stale: it still said PR #181 needed merging although its implementation commit is already on `main`.
+- Only checkpoint-state repair is required; stock business logic remains untouched.
 
 ## Blockers
 none
 
 ## Next Action
-Merge PR #181, then re-read live `main`, merge result, Actions, and persisted production/artifact state.
+Check PR #183 CI; if green, merge it, then re-read live `main` and production/artifact state.
 
 ## Do Not Repeat
-- Do not redesign or re-audit stock selection, valuation, BUY/WAIT_PRICE/REJECT logic, or evidence thresholds.
-- Do not add a new state service, database, or workflow for this mechanism.
-- Do not re-handle the concurrent `main` commits already merged into this branch.
+- Do not rebuild the resumable-task mechanism already present on `main`.
+- Do not redesign or re-audit stock selection, valuation, BUY/WAIT_PRICE/REJECT logic, evidence thresholds, or candidate lifecycle.
+- Do not add a database, service, or new workflow for checkpointing.
 
 ## Guardrails
-- GitHub live state is the source of truth; chat context is not.
+- Live GitHub state is the source of truth; chat context is not.
 - Keep `TASK_STATE.md` concise, factual, and checkpoint-oriented.
-- Do not change stock business logic, valuation logic, signal thresholds, or data-decision standards.
+- Do not change stock business logic, valuation logic, signal thresholds, production workflows, or data-decision standards.
