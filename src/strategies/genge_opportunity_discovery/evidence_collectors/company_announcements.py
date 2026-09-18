@@ -26,7 +26,7 @@ MATERIAL_EVENT_WINDOW_DAYS = 730
 MATERIAL_EVENT_PAGE_SIZE = 30
 MATERIAL_EVENT_MAX_PAGES = 20
 MATERIAL_EVENT_MAX_DOCUMENTS = 16
-FULL_ANNUAL_REPORT_RE = re.compile(r"20\\d{2}年(?:年度报告|年报)")
+FULL_ANNUAL_REPORT_RE = re.compile(r"20\d{2}年(?:年度报告|年报)")
 FULL_ANNUAL_REPORT_EXCLUDED_TOKENS = (
     "半年度", "摘要", "英文", "取消", "更正公告", "补充公告", "提示性公告",
 )
