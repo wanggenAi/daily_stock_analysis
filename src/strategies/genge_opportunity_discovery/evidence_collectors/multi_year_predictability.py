@@ -19,8 +19,10 @@ from .company_announcements import (
     REQUEST_HEADERS,
     _clean_title,
     _cninfo_publish_date,
+    SZSE_ANNUAL_REPORT_CATEGORY,
     _load_cninfo_org_ids,
     _query_sse,
+    _query_szse_announcements,
 )
 from .validators import content_hash, extract_text_from_response, source_domain, utc_now
 
@@ -233,6 +235,45 @@ def _query_sse_history(
     """Return strict annual-report bodies from the issuer's primary SSE source."""
     by_year: dict[int, dict[str, Any]] = {}
     for item in _query_sse(code, as_of, session, timeout):
+        title = _clean_title(item.get("title"))
+        if "摘要" in title or "英文" in title or "取消" in title:
+            continue
+        year = _fiscal_year(title)
+        published = str(item.get("publish_date") or "").strip()
+        url = str(item.get("url") or "").strip()
+        if year is None or not published or not url or published > as_of.isoformat():
+            continue
+        candidate = {
+            "fiscal_year": year,
+            "title": title,
+            "publish_date": published,
+            "url": url,
+        }
+        previous = by_year.get(year)
+        if previous is None or candidate["publish_date"] > previous["publish_date"]:
+            by_year[year] = candidate
+    return [by_year[year] for year in sorted(by_year, reverse=True)[:MAX_REPORTS]]
+
+
+def _query_szse_history(
+    code: str,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+) -> list[dict[str, Any]]:
+    """Return strict annual-report bodies from the issuer's primary SZSE source."""
+    rows, _ = _query_szse_announcements(
+        code,
+        start=as_of - timedelta(days=HISTORY_DAYS),
+        as_of=as_of,
+        session=session,
+        timeout=timeout,
+        big_category_id=SZSE_ANNUAL_REPORT_CATEGORY,
+        max_pages=5,
+        page_size=30,
+    )
+    by_year: dict[int, dict[str, Any]] = {}
+    for item in rows:
         title = _clean_title(item.get("title"))
         if "摘要" in title or "英文" in title or "取消" in title:
             continue
@@ -741,18 +782,12 @@ def collect_multi_year_predictability_evidence(
         return []
 
     session = requests.Session()
+    # Primary-exchange routes do not depend on CNINFO orgId metadata. Keep the
+    # legacy lookup best-effort only for unsupported/fallback code families.
     try:
         org_ids = _load_cninfo_org_ids(session, timeout)
-    except Exception as exc:
-        reason = f"CNINFO_ORG_ID_FETCH_FAILED:{type(exc).__name__}"
-        return [
-            _unknown_row(
-                _code(row.get("code")),
-                str(row.get("normalized_industry") or row.get("industry") or ""),
-                reason,
-            )
-            for row in selected
-        ]
+    except Exception:
+        org_ids = {}
 
     results: list[dict[str, Any]] = []
     for row in selected:
@@ -762,10 +797,12 @@ def collect_multi_year_predictability_evidence(
         try:
             if code.startswith("6"):
                 candidates = _query_sse_history(code, as_of, session, timeout)
+            elif code.startswith(("0", "2", "3")):
+                candidates = _query_szse_history(code, as_of, session, timeout)
             elif org_id:
                 candidates = _query_cninfo_history(code, org_id, as_of, session, timeout)
             else:
-                results.append(_unknown_row(code, industry, "CNINFO_ORG_ID_NOT_FOUND"))
+                results.append(_unknown_row(code, industry, "OFFICIAL_ANNOUNCEMENT_PROVIDER_UNAVAILABLE"))
                 continue
         except Exception as exc:
             results.append(_unknown_row(code, industry, f"ANNUAL_REPORT_QUERY_FAILED:{type(exc).__name__}"))
