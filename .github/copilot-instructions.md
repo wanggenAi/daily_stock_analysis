@@ -11,8 +11,9 @@ If any instruction in this file conflicts with `AGENTS.md`, follow `AGENTS.md`.
   - Web: `apps/dsa-web/`
   - Desktop: `apps/dsa-desktop/`
   - Deployment/workflows: `scripts/`, `.github/workflows/`, `docker/`
-- Do not run `git commit`, `git tag`, or `git push` without explicit user confirmation.
+- Do not run `git commit`, `git push`, or PR merge operations without explicit user authorization. If the current task already explicitly authorizes the full execution chain, do not pause to ask for the same confirmation again. `git tag` still requires an explicit request.
 - Before creating/updating PRs, PR review, or issue analysis, refresh the latest code baseline with `git fetch --all --prune`; if the worktree is clean and the current branch can fast-forward, run `git pull --ff-only`. If local changes, conflicts, missing upstream, or non-fast-forward history make that unsafe, do not stash/reset/overwrite local state; analyze against fetched remote refs or record the baseline gap before proceeding.
+- For long or resumable tasks, treat live GitHub state as authoritative: read current main/history, open PRs, Actions/checks, task-relevant persisted data/artifacts, and `TASK_STATE.md` before resuming; update `TASK_STATE.md` after each stable verified phase.
 - PR titles should use `<type>: <change summary>` such as `fix: 修复大盘分析历史记录丢失`; use `fix`/`feat`/`refactor`/`docs`/`chore`/`test`/`ci` where possible, and avoid `[codex]`, `codex`, `autocode`, `copilot`, or other tool/agent source prefixes. Treat this as process guidance and do not use title format mismatches as a hard review blocker.
 - Do not hardcode secrets, accounts, ports, model names, absolute environment-specific paths, or environment-specific branches.
 - Reuse existing modules, configuration entrypoints, scripts, and tests instead of adding parallel implementations.
