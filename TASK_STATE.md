@@ -4,12 +4,12 @@
 Make this repository resumable for long ChatGPT web development sessions by storing verified execution state in GitHub, without changing stock-analysis business logic.
 
 ## Current Phase
-Modification — establish the recovery contract and CI guard.
+Validation — recovery contract is committed; verify structure before opening the PR.
 
 ## Last Verified Main
 `a6b86098b6ab5a30aa90e33fcb0f744914d247d2`
 
-Current commit SHA: `a6b86098b6ab5a30aa90e33fcb0f744914d247d2` (verified branch HEAD immediately before this checkpoint write; the live GitHub branch ref is authoritative).
+Current commit SHA: `28f181bc08d3dbc0cc8cbe9ad0ae48dd2cbf4196` (verified branch HEAD immediately before this checkpoint write; the live GitHub branch ref is authoritative).
 
 ## Active Branch
 `fix/candidate-terminal-runtime-main` — reused only after PR #178 was merged/closed; fast-forwarded to current `main`.
@@ -18,26 +18,28 @@ Current commit SHA: `a6b86098b6ab5a30aa90e33fcb0f744914d247d2` (verified branch 
 none
 
 ## CI
-This mission has not opened a PR yet. Existing `ci.yml` runs `python scripts/check_ai_assets.py` in blocking `ai-governance`.
+This mission has not opened a PR yet. Existing `ci.yml` blocking `ai-governance` already runs `python scripts/check_ai_assets.py`; that script now validates `TASK_STATE.md`.
 
 ## Production / Artifact
 No production change is intended. Latest observed Candidate Terminal Review on `main`: run `35320870736` in progress for `a6b8609`; previous run `35320723321` succeeded and exposed no workflow artifacts. Persisted `data/opportunity_snapshots/candidate_lifecycle_state.json` blob: `b8207c0db854a9aef0c9e7aef00326c1bab82654`.
 
 ## Completed
 - Verified current `main`, recent history, open PRs, Actions, AI instructions, and persisted lifecycle state.
-- Confirmed `AGENTS.md` exists and `TASK_STATE.md` did not exist.
-- Confirmed existing `ai-governance` CI is the minimal integration point.
-- Isolated this work from current business PRs.
+- Created the first resumable `TASK_STATE.md` checkpoint.
+- Added GitHub-first recovery rules and stable-phase checkpoint rules to `AGENTS.md`.
+- Synchronized the minimal Copilot mirror.
+- Extended existing `ai-governance` validation to require the state file and its compact schema.
+- Kept stock-analysis business logic and production workflows untouched.
 
 ## Current Findings
-- `AGENTS.md` and Copilot instructions need an explicit exception for tasks where the user already authorized commit/push/PR/merge.
-- No new workflow, database, or service is needed.
+- Existing `ci.yml` is sufficient; no new workflow, database, or service is needed.
+- The work is isolated from current business PRs.
 
 ## Blockers
 none
 
 ## Next Action
-Update `AGENTS.md`, the minimal Copilot mirror, and `scripts/check_ai_assets.py` so resumable checkpoints are mandatory and structurally validated.
+Run deterministic structural verification on the committed branch, then open the PR and follow CI to completion.
 
 ## Do Not Repeat
 - Do not redesign or re-audit stock selection, valuation, BUY/WAIT_PRICE/REJECT logic, or evidence thresholds.
