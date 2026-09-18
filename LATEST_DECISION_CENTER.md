@@ -54,8 +54,8 @@ G60邮政业(89.73)、A05农、林、牧、渔专业及辅助性活动(87.50)、
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`35305781202`
-- 触发来源：`PUSH_CHANGE`
+- Lambda run：`35305786105`
+- 触发来源：`EVIDENCE_LAYER_CHANGE`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
@@ -70,7 +70,7 @@ G60邮政业(89.73)、A05农、林、牧、渔专业及辅助性活动(87.50)、
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`35287311463`；当前 Lambda：`35305781202`。
+- 终态来源 Lambda：`35305781202`；当前 Lambda：`35305786105`。
 - 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
