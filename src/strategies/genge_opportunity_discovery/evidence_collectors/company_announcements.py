@@ -17,6 +17,10 @@ REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
 }
 CNINFO_STOCK_LIST_URL = "https://www.cninfo.com.cn/new/data/szse_stock.json"
+SZSE_ANNOUNCEMENT_URL = "https://www.szse.cn/api/disc/announcement/annList"
+SZSE_DISCLOSURE_REFERER = "https://www.szse.cn/disclosure/listed/notice/index.html"
+SZSE_STATIC_HOST = "https://disc.static.szse.cn"
+SZSE_ANNUAL_REPORT_CATEGORY = "010301"
 SHANGHAI_TIMEZONE = ZoneInfo("Asia/Shanghai")
 MATERIAL_EVENT_WINDOW_DAYS = 730
 # CNINFO currently caps this endpoint at 30 rows even when a larger pageSize is
@@ -256,6 +260,183 @@ def _load_cninfo_org_ids(session: requests.Session, timeout: int) -> dict[str, s
         for item in stock_list
         if _normalize_code(item.get("code")) and str(item.get("orgId") or "").strip()
     }
+
+
+def _szse_attachment_url(value: Any) -> str:
+    """Normalize an SZSE disclosure attachment to the official static host."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if text.startswith("//"):
+        text = "https:" + text
+    if text.startswith(("http://", "https://")):
+        if "disc.static.szse.cn" not in text.lower():
+            return ""
+        return re.sub(r"^http://", "https://", text, flags=re.IGNORECASE)
+    path = "/" + text.lstrip("/")
+    if path.startswith("/disc/") or path.startswith("/download/"):
+        return SZSE_STATIC_HOST + path
+    return SZSE_STATIC_HOST + "/download/" + text.lstrip("/")
+
+
+def _szse_exact_code(item: Mapping[str, Any], code: str) -> bool:
+    raw_codes = item.get("secCode")
+    if isinstance(raw_codes, str):
+        codes = [raw_codes]
+    elif isinstance(raw_codes, (list, tuple)):
+        codes = list(raw_codes)
+    else:
+        codes = []
+    return code in {_normalize_code(value) for value in codes if _normalize_code(value)}
+
+
+def _query_szse_announcements(
+    code: str,
+    *,
+    start: date,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+    big_category_id: str = "",
+    max_pages: int = 1,
+    page_size: int = MATERIAL_EVENT_PAGE_SIZE,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Query first-party SZSE issuer disclosures with exact-code/date validation."""
+    result: list[dict[str, Any]] = []
+    pages_fetched = 0
+    reported_total = 0
+    query_error = ""
+    last_page_count = 0
+    for page in range(1, max(1, int(max_pages)) + 1):
+        payload: dict[str, Any] = {
+            "seDate": [start.isoformat(), as_of.isoformat()],
+            "stock": [code],
+            "channelCode": ["listedNotice_disc"],
+            "pageSize": int(page_size),
+            "pageNum": int(page),
+        }
+        if big_category_id:
+            payload["bigCategoryId"] = [big_category_id]
+        try:
+            response = session.post(
+                SZSE_ANNOUNCEMENT_URL,
+                headers={
+                    **REQUEST_HEADERS,
+                    "Accept": "application/json, text/javascript, */*; q=0.01",
+                    "Content-Type": "application/json",
+                    "Referer": SZSE_DISCLOSURE_REFERER,
+                    "Origin": "https://www.szse.cn",
+                    "X-Request-Type": "ajax",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                json=payload,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            body = response.json()
+            if not isinstance(body, Mapping) or "data" not in body:
+                raise ValueError("szse_announcement_response_schema_missing")
+            raw_rows = body.get("data")
+            if raw_rows is None:
+                raw_rows = []
+            if not isinstance(raw_rows, list):
+                raise ValueError("szse_announcement_data_invalid")
+            try:
+                total = int(body.get("announceCount") or 0)
+            except (TypeError, ValueError) as exc:
+                raise ValueError("szse_announcement_total_invalid") from exc
+            if total < 0:
+                raise ValueError("szse_announcement_total_invalid")
+            if raw_rows and total == 0:
+                # Some historical variants omit announceCount. Do not fabricate
+                # completeness from that response; treat the page as partial.
+                total = len(raw_rows)
+        except Exception as exc:
+            if not pages_fetched:
+                raise
+            query_error = f"{type(exc).__name__}: {exc}"
+            break
+
+        pages_fetched += 1
+        last_page_count = len(raw_rows)
+        reported_total = max(reported_total, total)
+        for item in raw_rows:
+            if not isinstance(item, Mapping) or not _szse_exact_code(item, code):
+                continue
+            title = _clean_title(item.get("title"))
+            publish_text = str(item.get("publishTime") or "")[:10]
+            try:
+                published = date.fromisoformat(publish_text)
+            except ValueError:
+                continue
+            attachment = _szse_attachment_url(item.get("attachPath"))
+            if (
+                not title
+                or "英文" in title
+                or published < start
+                or published > as_of
+                or not attachment
+            ):
+                continue
+            result.append({
+                "title": title,
+                "publish_date": published.isoformat(),
+                "url": attachment,
+                "source_type": "EXCHANGE_DISCLOSURE",
+                "source_name": "szse",
+            })
+
+        if not raw_rows:
+            break
+        if reported_total and page * int(page_size) >= reported_total:
+            break
+        if len(raw_rows) < int(page_size):
+            break
+
+    deduped = list({str(item["url"]): item for item in result}.values())
+    return deduped, {
+        "pages_fetched": pages_fetched,
+        "reported_total": reported_total,
+        "query_error": query_error,
+        "truncated": bool(
+            query_error
+            or (reported_total and reported_total > pages_fetched * int(page_size))
+            or (
+                pages_fetched == max(1, int(max_pages))
+                and last_page_count >= int(page_size)
+                and (not reported_total or pages_fetched * int(page_size) < reported_total)
+            )
+        ),
+    }
+
+
+def _query_szse(
+    code: str,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+) -> list[dict[str, Any]]:
+    start = as_of - timedelta(days=560)
+    rows, _ = _query_szse_announcements(
+        code,
+        start=start,
+        as_of=as_of,
+        session=session,
+        timeout=timeout,
+        big_category_id=SZSE_ANNUAL_REPORT_CATEGORY,
+        max_pages=2,
+        page_size=30,
+    )
+    rows = [
+        row for row in rows
+        if "摘要" not in str(row.get("title") or "")
+        and "取消" not in str(row.get("title") or "")
+    ]
+    return sorted(
+        rows,
+        key=lambda item: str(item.get("publish_date") or ""),
+        reverse=True,
+    )
 
 
 def _query_cninfo(
@@ -562,6 +743,23 @@ def _query_sse_material_events(
     }
 
 
+def _query_szse_material_events(
+    code: str,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    return _query_szse_announcements(
+        code,
+        start=as_of - timedelta(days=MATERIAL_EVENT_WINDOW_DAYS),
+        as_of=as_of,
+        session=session,
+        timeout=timeout,
+        max_pages=MATERIAL_EVENT_MAX_PAGES,
+        page_size=MATERIAL_EVENT_PAGE_SIZE,
+    )
+
+
 def _material_event_candidates(
     code: str,
     as_of: date,
@@ -569,9 +767,12 @@ def _material_event_candidates(
     timeout: int,
     cninfo_org_ids: Mapping[str, str],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    # Prefer the issuer's primary exchange for Shanghai-listed securities.
+    # Prefer each issuer's primary exchange. CNINFO remains only a fallback for
+    # unsupported code families, never a substitute for an exchange query.
     if code.startswith("6"):
         return _query_sse_material_events(code, as_of, session, timeout)
+    if code.startswith(("0", "2", "3")):
+        return _query_szse_material_events(code, as_of, session, timeout)
     org_id = str(cninfo_org_ids.get(code) or "").strip()
     if org_id:
         return _query_cninfo_material_events(code, org_id, as_of, session, timeout)
@@ -637,10 +838,11 @@ def _announcement_candidates(
     timeout: int,
     cninfo_org_ids: Mapping[str, str],
 ) -> list[dict[str, Any]]:
-    # Shanghai-listed issuers have a first-party SSE disclosure endpoint. Use
-    # it directly instead of routing through the cross-market CNINFO adapter.
+    # Route Shanghai/Shenzhen issuers directly to their primary exchanges.
     if code.startswith("6"):
         return _query_sse(code, as_of, session, timeout)
+    if code.startswith(("0", "2", "3")):
+        return _query_szse(code, as_of, session, timeout)
     org_id = str(cninfo_org_ids.get(code) or "").strip()
     if org_id:
         return _query_cninfo(code, org_id, as_of, session, timeout)
@@ -707,6 +909,8 @@ def collect_company_announcements(
         collector = (
             "sse_company_announcement"
             if code.startswith("6")
+            else "szse_company_announcement"
+            if code.startswith(("0", "2", "3"))
             else "cninfo_company_announcement"
             if cninfo_org_ids.get(code)
             else "official_company_announcement_unavailable"
@@ -770,7 +974,13 @@ def collect_company_announcements(
         item = announcements[0]
         url = str(item.get("url") or "")
         source_name = str(item.get("source_name") or "")
-        referer = "https://www.sse.com.cn/" if source_name == "sse" else "https://www.cninfo.com.cn/"
+        referer = (
+            "https://www.sse.com.cn/"
+            if source_name == "sse"
+            else SZSE_DISCLOSURE_REFERER
+            if source_name == "szse"
+            else "https://www.cninfo.com.cn/"
+        )
         try:
             response = session.get(url, headers={**REQUEST_HEADERS, "Referer": referer}, timeout=timeout)
             network_fetches += 1
@@ -902,6 +1112,8 @@ def collect_company_material_events(
         provider_collector = (
             "sse_material_event"
             if code.startswith("6")
+            else "szse_material_event"
+            if code.startswith(("0", "2", "3"))
             else "cninfo_material_event"
             if cninfo_org_ids.get(code)
             else "official_material_event_unavailable"
@@ -975,7 +1187,13 @@ def collect_company_material_events(
         for item in selected:
             url = str(item.get("url") or "")
             source_name = str(item.get("source_name") or "")
-            referer = "https://www.sse.com.cn/" if source_name == "sse" else "https://www.cninfo.com.cn/"
+            referer = (
+                "https://www.sse.com.cn/"
+                if source_name == "sse"
+                else SZSE_DISCLOSURE_REFERER
+                if source_name == "szse"
+                else "https://www.cninfo.com.cn/"
+            )
             try:
                 cached_document = document_cache.get(url)
                 if cached_document is None:
@@ -987,7 +1205,9 @@ def collect_company_material_events(
                     network_fetches += 1
                     response.raise_for_status()
                     text, parser = extract_text_from_response(
-                        response.content, response.headers.get("content-type", ""),
+                        response.content,
+                        response.headers.get("content-type", ""),
+                        url,
                     )
                     cached_document = (response.content, text, parser)
                     document_cache[url] = cached_document
