@@ -107,6 +107,47 @@ class ValuationResearchReportTest(unittest.TestCase):
         )
         self.assertNotIn("999999", {row["code"] for row in rows})
 
+    def test_durable_lifecycle_recall_is_not_consumed_by_relaxed_reserve(self):
+        source_rows = [
+            {
+                "code": "000001",
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_rank": 1,
+                "quant_score": 99,
+                "hard_blockers": "",
+            },
+            {
+                "code": "002120",
+                "stock_name": "韵达股份",
+                "quant_status": "LOW_PRIORITY",
+                "quant_rank": 0,
+                "quant_score": "",
+                "hard_blockers": "",
+                "durable_recall_source_missing": True,
+                "candidate_lifecycle_recall": True,
+                "formal_signal_eligible": False,
+                "automatic_promotion_allowed": False,
+                "no_auto_trade": True,
+            },
+            {
+                "code": "300001",
+                "quant_status": "HARD_REJECT",
+                "quant_rank": 2,
+                "quant_score": 95,
+                "hard_blockers": "price_too_high",
+            },
+        ]
+
+        rows = select_wide_recall_rows(source_rows, research_limit=2, relaxed_reserve=1)
+        by_code = {row["code"]: row for row in rows}
+
+        self.assertIn("002120", by_code)
+        self.assertEqual(by_code["002120"]["wide_recall_reason"], "NORMAL_RESEARCH_QUEUE")
+        self.assertTrue(by_code["002120"]["candidate_lifecycle_recall"])
+        self.assertFalse(by_code["002120"]["formal_signal_eligible"])
+        self.assertFalse(by_code["002120"]["automatic_promotion_allowed"])
+        self.assertTrue(by_code["002120"]["no_auto_trade"])
+
     def test_queue_ranks_low_implied_expectation_before_high_expectation(self):
         source_rows = [
             {
