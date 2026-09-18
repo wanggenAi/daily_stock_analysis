@@ -403,7 +403,8 @@ def test_durable_lifecycle_recall_is_not_lost_to_relaxed_reserve() -> None:
             "quant_rank": "0",
             "quant_score": "",
             "hard_blockers": "",
-            "durable_recall_source_missing": True,
+            # CSV round-trip produces a string; the continuation marker must survive it.
+            "durable_recall_source_missing": "True",
             "valuation_source_channel": "DURABLE_LIFECYCLE_RECALL",
             "formal_signal_eligible": False,
             "automatic_promotion_allowed": False,
