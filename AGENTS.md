@@ -11,7 +11,7 @@
   - Web 前端改动在 `apps/dsa-web/`
   - 桌面端改动在 `apps/dsa-desktop/`
   - 部署与流水线改动在 `scripts/`、`.github/workflows/`、`docker/`
-- 未经明确确认，不执行 `git commit`、`git tag`、`git push`。
+- 除非用户已在当前任务中明确授权执行对应远端操作，否则不执行 `git commit`、`git push`、PR 创建/合并等写操作；一旦用户已明确授权完整执行链路，不得因本条规则反复停下来重新询问。`git tag` 仍需用户明确要求。
 - commit message 使用英文，不添加 `Co-Authored-By`。
 - 不写死密钥、账号、路径、模型名、端口或环境差异逻辑。
 - 优先复用现有模块、配置入口、脚本和测试，不新增平行实现。
@@ -142,6 +142,37 @@ gh run view <run_id> --log-failed
    - 未验证项
    - 风险点
    - 回滚方式
+
+## 5.1 长任务断点恢复协议
+
+本协议用于 ChatGPT 网页版、Coding Agent 或其他可能因超时、断线、会话切换而中断的长任务。其目标是让 GitHub 仓库本身保存可恢复的执行状态，而不是依赖聊天记忆。
+
+1. **GitHub 当前真实状态永远是 source of truth。** 每次开始或恢复任务，先读取并核对：
+   - 当前 `main` / 默认分支 HEAD
+   - 最近 git history
+   - open PR
+   - GitHub Actions / checks
+   - 与当前任务相关的持久化数据与 workflow artifact
+   - 根目录 `TASK_STATE.md`
+2. 不得仅依赖聊天上下文、上一轮总结或用户粘贴的旧 SHA 判断“做到哪里”。这些信息只能用于定位，必须由 GitHub 当前状态复核。
+3. 长任务按可验证的小阶段推进，通常为：定位 → 修改 → 测试 → commit → push → PR → CI → merge → main verification → production/artifact verification。
+4. 每完成一个**真实且稳定、可由远端证据复核**的阶段，立即更新 `TASK_STATE.md`；不要等整个大任务结束后再一次性补写。
+5. `TASK_STATE.md` 只保存恢复任务所需的事实，至少维护：当前唯一目标、当前阶段、最近验证的 main SHA、当前/最近验证的 commit SHA、active branch、active PR、CI 状态、production/artifact 状态、Completed、Current Findings、Blockers、Next Action、Do Not Repeat、Guardrails。
+6. `TASK_STATE.md` 必须精简、可机读、可人工快速扫描；禁止复制聊天记录、写长篇分析、写未经验证的推测。若状态文件自身的 checkpoint commit 会使 branch HEAD 前移，可记录“写入本次 checkpoint 前最后验证的 HEAD”，并明确 live GitHub ref 始终优先。
+7. 如果发现上一次会话中断：
+   - 不要从头重新分析；
+   - 不要重新询问已经可以由仓库状态恢复的项目背景；
+   - 先用 `main` / PR / Actions / artifact / `TASK_STATE.md` 恢复真实断点；
+   - 从第一个尚未完成的阶段继续。
+8. 对需要等待 GitHub Actions、production workflow 或 artifact 的阶段：
+   - 先确保代码已经 push；
+   - 先把当前 checkpoint 持久化到 `TASK_STATE.md`；
+   - 再读取 workflow/check 状态；
+   - 若当前会话随后中断，下次会话必须能仅凭 GitHub 继续。
+9. 不得为了实现断点机制修改股票系统业务逻辑，包括选股、估值、BUY/WAIT_PRICE/REJECT 阈值、风险门槛、数据判定标准或生产交易权限。
+10. 不为此机制新增数据库、服务或复杂状态框架。优先复用 `AGENTS.md`、`TASK_STATE.md` 和现有 CI。
+11. 如果任务已经通过用户明确授权执行完整的 commit → push → PR → CI → merge 链路，就持续推进到权限或真实 blocker 为止，不要在每个阶段重复请求继续确认。
+12. 最终交付前再次读取 live `main`、PR/merge 结果和相关 Actions；`TASK_STATE.md` 的最终状态必须与这些远端事实一致。
 
 ## 6. 验证矩阵
 

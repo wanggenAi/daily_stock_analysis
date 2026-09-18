@@ -11,6 +11,7 @@ ROOT = Path(__file__).resolve().parent.parent
 AGENTS = ROOT / "AGENTS.md"
 CLAUDE = ROOT / "CLAUDE.md"
 COPILOT = ROOT / ".github" / "copilot-instructions.md"
+TASK_STATE = ROOT / "TASK_STATE.md"
 INSTRUCTIONS_DIR = ROOT / ".github" / "instructions"
 CLAUDE_SKILLS_DIR = ROOT / ".claude" / "skills"
 
@@ -32,6 +33,24 @@ REQUIRED_GITIGNORE_SNIPPETS = (
     "!.claude/skills/",
     "!.claude/skills/**",
 )
+
+REQUIRED_TASK_STATE_HEADINGS = (
+    "# Current Mission",
+    "## Goal",
+    "## Current Phase",
+    "## Last Verified Main",
+    "## Active Branch",
+    "## Active PR",
+    "## CI",
+    "## Production / Artifact",
+    "## Completed",
+    "## Current Findings",
+    "## Blockers",
+    "## Next Action",
+    "## Do Not Repeat",
+    "## Guardrails",
+)
+
 
 
 def fail(message: str) -> None:
@@ -68,6 +87,17 @@ def ensure_copilot_entry() -> None:
     for fragment in required_fragments:
         if fragment not in content:
             fail(f".github/copilot-instructions.md is missing required text: {fragment!r}")
+
+
+def ensure_task_state() -> None:
+    ensure_file_exists(TASK_STATE, "resumable task state")
+    content = TASK_STATE.read_text(encoding="utf-8")
+    lines = content.splitlines()
+    if len(lines) > 120:
+        fail("TASK_STATE.md must stay concise (maximum 120 lines)")
+    for heading in REQUIRED_TASK_STATE_HEADINGS:
+        if heading not in lines:
+            fail(f"TASK_STATE.md is missing required heading: {heading!r}")
 
 
 def ensure_instruction_files() -> None:
@@ -116,6 +146,7 @@ def ensure_no_tracked_claude_artifacts() -> None:
 def main() -> None:
     ensure_symlink()
     ensure_copilot_entry()
+    ensure_task_state()
     ensure_instruction_files()
     ensure_skill_files()
     ensure_gitignore_rules()
