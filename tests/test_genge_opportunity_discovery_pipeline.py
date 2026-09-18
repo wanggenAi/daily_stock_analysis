@@ -435,7 +435,7 @@ def test_company_collector_prefers_sse_official_pdf_for_shanghai(
                     },
                 )
             assert url == (
-                "https://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/"
+                "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/"
                 "2026-04-17/report.PDF"
             )
             return FakeResponse(content="营业收入 100亿元，同比增长 5%".encode("utf-8"))
@@ -453,7 +453,7 @@ def test_company_collector_prefers_sse_official_pdf_for_shanghai(
 
     assert audit_rows == []
     assert summary["company_evidence_rows"] == 1
-    assert evidence_rows[0]["source_domain"] == "www.sse.com.cn"
+    assert evidence_rows[0]["source_domain"] == "static.sse.com.cn"
     assert evidence_rows[0]["collector"] == "sse_company_announcement"
     assert evidence_rows[0]["evidence_status"] == "VERIFIED"
 
