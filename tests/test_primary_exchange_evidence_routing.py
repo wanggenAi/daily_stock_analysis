@@ -281,3 +281,34 @@ def test_szse_history_rejects_annual_report_correction_notice(monkeypatch):
     )
 
     assert [row["title"] for row in rows] == ["润贝航科2025年年度报告"]
+
+
+
+def test_primary_exchange_predictability_does_not_load_cninfo_org_ids(monkeypatch):
+    monkeypatch.setattr(
+        predictability,
+        "_load_cninfo_org_ids",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("CNINFO orgId lookup must not run for SZSE")
+        ),
+    )
+    monkeypatch.setattr(
+        predictability,
+        "_query_szse_history",
+        lambda *_args, **_kwargs: [],
+    )
+
+    rows = predictability.collect_multi_year_predictability_evidence(
+        priority_rows=[
+            {
+                "code": "001316",
+                "stock_name": "润贝航科",
+                "normalized_industry": "批发业",
+            }
+        ],
+        as_of=date(2026, 9, 18),
+        timeout=1,
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["reason_code"] == "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
