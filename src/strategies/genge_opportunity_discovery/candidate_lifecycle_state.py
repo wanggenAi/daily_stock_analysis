@@ -276,6 +276,161 @@ def apply_snapshot(
     return next_state, events
 
 
+
+TERMINAL_MEMORY_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
+
+
+def _terminal_memory_truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return str(value or "").strip().lower() in {"1", "true", "yes", "y", "pass", "passed"}
+
+
+def _terminal_memory_float(value: Any) -> float | None:
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number == number else None
+
+
+def apply_terminal_memory(
+    state: Mapping[str, Any],
+    terminal_rows: Iterable[Mapping[str, Any]],
+    *,
+    memory_id: str,
+    observed_at: str,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Fold terminal research outcomes into already-durable ACTIVE candidates.
+
+    This is memory only: it cannot admit candidates, reactivate inactive names,
+    or manufacture trade authority. BUY is accepted only when the terminal row
+    already proves existing Formal + frozen Production authority. A retryable
+    RESEARCH_GAP does not erase a previously valid WAIT_PRICE memory.
+    """
+    next_state = copy.deepcopy(dict(state))
+    _validate_state(next_state)
+    memory_id = str(memory_id or "").strip()
+    observed_at = str(observed_at or "").strip()
+    if not memory_id:
+        raise ValueError("terminal memory requires memory_id")
+    if _parse_timestamp(observed_at) is None:
+        raise ValueError("terminal memory observed_at must be ISO-8601")
+
+    applied = list(next_state.get("applied_terminal_memory_ids") or [])
+    if memory_id in applied:
+        return next_state, []
+
+    candidates = next_state["candidates"]
+    events: list[dict[str, Any]] = []
+    for raw in terminal_rows:
+        if not isinstance(raw, Mapping):
+            continue
+        code = _code(raw.get("code"))
+        decision = str(raw.get("terminal_decision") or "").strip().upper()
+        if not code or decision not in TERMINAL_MEMORY_DECISIONS:
+            continue
+        candidate = candidates.get(code)
+        if not isinstance(candidate, dict) or candidate.get("lifecycle_state") != ACTIVE:
+            continue
+
+        source_action = str(raw.get("source_production_action") or "").strip().upper()
+        source_confidence = str(raw.get("source_valuation_confidence") or "").strip().upper()
+        wait_price = _terminal_memory_float(raw.get("wait_price_max"))
+        current_price = _terminal_memory_float(raw.get("terminal_current_price"))
+
+        if decision == "BUY" and not (
+            _terminal_memory_truthy(raw.get("terminal_formal_buy_authorized"))
+            and source_action == "BUY"
+            and source_confidence == "HIGH"
+        ):
+            raise ValueError(f"unauthorized terminal BUY memory rejected: {code}")
+        if decision == "WAIT_PRICE" and not (
+            wait_price is not None
+            and wait_price > 0
+            and source_action == "WAIT"
+            and source_confidence == "HIGH"
+        ):
+            raise ValueError(f"invalid terminal WAIT_PRICE memory rejected: {code}")
+
+        prior_decision = str(candidate.get("last_terminal_decision") or "").strip().upper()
+        prior_wait = candidate.get("last_wait_price_max")
+        preserve_wait = decision == "RESEARCH_GAP" and prior_decision == "WAIT_PRICE"
+
+        candidate["last_researched_time"] = observed_at
+        candidate["last_terminal_memory_id"] = memory_id
+        if preserve_wait:
+            candidate["last_research_gap_reason_class"] = str(
+                raw.get("terminal_reason_class") or ""
+            )
+            candidate["last_research_gap_reason_codes"] = str(
+                raw.get("terminal_reason_codes") or ""
+            )
+            candidate["last_research_gap_observed_at"] = observed_at
+            candidate["next_action"] = "CONTINUE_RESEARCH_WAIT_PRICE"
+            event_name = "TERMINAL_RESEARCH_GAP_PRESERVED_WAIT_PRICE"
+            effective_decision = "WAIT_PRICE"
+        else:
+            candidate["last_terminal_decision"] = decision
+            candidate["last_terminal_reason_class"] = str(
+                raw.get("terminal_reason_class") or ""
+            )
+            candidate["last_terminal_reason_codes"] = str(
+                raw.get("terminal_reason_codes") or ""
+            )
+            candidate["last_terminal_observed_at"] = observed_at
+            candidate["last_terminal_source_production_action"] = source_action
+            candidate["last_terminal_source_valuation_confidence"] = source_confidence
+            if current_price is not None and current_price > 0:
+                candidate["last_price"] = current_price
+                candidate["last_terminal_price"] = current_price
+            if decision == "WAIT_PRICE":
+                candidate["last_wait_price_max"] = wait_price
+                candidate["price_zone"] = "WAIT_PRICE"
+                candidate["next_action"] = "WAIT_FOR_PRICE"
+            elif decision == "BUY":
+                candidate["price_zone"] = "BUY_READY"
+                candidate["next_action"] = "BUY_READY_REVIEW"
+            elif decision == "RESEARCH_GAP":
+                candidate["price_zone"] = "RESEARCH_GAP"
+                candidate["next_action"] = "CONTINUE_RESEARCH"
+            else:
+                candidate["price_zone"] = ""
+                candidate["next_action"] = "NO_ACTION"
+            event_name = "TERMINAL_MEMORY"
+            effective_decision = decision
+
+        event = {
+            "event": event_name,
+            "code": code,
+            "memory_id": memory_id,
+            "observed_at": observed_at,
+            "incoming_terminal_decision": decision,
+            "effective_terminal_decision": effective_decision,
+            "terminal_reason_class": str(raw.get("terminal_reason_class") or ""),
+            "terminal_reason_codes": str(raw.get("terminal_reason_codes") or ""),
+            "terminal_price": current_price,
+            "wait_price_max": wait_price,
+            "prior_terminal_decision": prior_decision,
+            "prior_wait_price_max": prior_wait,
+            "no_auto_trade": True,
+        }
+        history = candidate.setdefault("terminal_history", [])
+        history.append(event)
+        if len(history) > 100:
+            del history[:-100]
+        events.append(event)
+
+    applied.append(memory_id)
+    next_state["applied_terminal_memory_ids"] = applied[-200:]
+    next_state["latest_terminal_memory_id"] = memory_id
+    next_state["latest_terminal_memory_observed_at"] = observed_at
+    next_state["terminal_memory_event_count"] = int(
+        next_state.get("terminal_memory_event_count") or 0
+    ) + len(events)
+    _validate_state(next_state)
+    return next_state, events
+
 def apply_explicit_transition(
     state: Mapping[str, Any],
     transition: Mapping[str, Any],

@@ -79,6 +79,8 @@ def test_terminal_workflow_enforces_terminal_only_research_states():
     assert "formal_authority_unchanged" in text
     assert "no_auto_trade" in text
     assert "genge-candidate-terminal-decisions" in text
+    assert "Persist terminal lifecycle memory with optimistic replay" in text
+    assert "apply_terminal_memory" in text
 
 
 def test_event_handoff_orders_finalizer_terminal_then_fresh_consumer():

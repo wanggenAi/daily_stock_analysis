@@ -82,6 +82,7 @@ jobs:
         run: >-
           python -m pytest -q
           tests/test_genge_candidate_terminal_decision.py
+          tests/test_genge_candidate_lifecycle_state.py
           tests/test_genge_candidate_terminal_workflow.py
           tests/test_genge_fundamental_recovery.py
           tests/test_genge_valuation_research_report.py
@@ -89,6 +90,9 @@ jobs:
 
   terminalize:
     needs: terminal-contract-tests
+    permissions:
+      actions: read
+      contents: write
     if: >-
       github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
@@ -458,6 +462,79 @@ jobs:
           print(json.dumps(summary, ensure_ascii=False, indent=2))
           print(json.dumps(lineage, ensure_ascii=False, indent=2))
           PY
+
+      - name: Persist terminal lifecycle memory with optimistic replay
+        shell: bash
+        env:
+          TERMINAL_MEMORY_ID: terminal:${{ github.run_id }}:${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          cp reports/candidate_terminal_decision/candidate_terminal_decisions.csv /tmp/candidate_terminal_decisions.csv
+          observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git config user.name 'genge-candidate-terminal-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            echo "terminal-memory persistence replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            TERMINAL_CSV=/tmp/candidate_terminal_decisions.csv \
+            TERMINAL_OBSERVED_AT="$observed_at" \
+            python - <<'PY'
+          import csv
+          import json
+          import os
+          from pathlib import Path
+
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_persistence import (
+              render_ledger_projection,
+          )
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+              apply_terminal_memory,
+              load_state,
+              write_state,
+          )
+
+          state_path = Path("data/opportunity_snapshots/candidate_lifecycle_state.json")
+          ledger_path = Path("V31_CANDIDATE_LEDGER.md")
+          with Path(os.environ["TERMINAL_CSV"]).open(encoding="utf-8", newline="") as stream:
+              rows = list(csv.DictReader(stream))
+          state = load_state(state_path)
+          state, events = apply_terminal_memory(
+              state,
+              rows,
+              memory_id=os.environ["TERMINAL_MEMORY_ID"],
+              observed_at=os.environ["TERMINAL_OBSERVED_AT"],
+          )
+          write_state(state_path, state)
+          ledger_path.write_text(render_ledger_projection(state), encoding="utf-8")
+          print(json.dumps({
+              "memory_id": os.environ["TERMINAL_MEMORY_ID"],
+              "candidate_count": len(state.get("candidates") or {}),
+              "terminal_memory_event_count": len(events),
+              "wait_price_memory_count": sum(
+                  1 for row in (state.get("candidates") or {}).values()
+                  if isinstance(row, dict) and row.get("last_terminal_decision") == "WAIT_PRICE"
+              ),
+              "research_gap_preserved_wait_price_count": sum(
+                  1 for event in events
+                  if event.get("event") == "TERMINAL_RESEARCH_GAP_PRESERVED_WAIT_PRICE"
+              ),
+              "no_auto_trade": state.get("no_auto_trade"),
+          }, ensure_ascii=False, indent=2))
+          PY
+            git add data/opportunity_snapshots/candidate_lifecycle_state.json V31_CANDIDATE_LEDGER.md
+            if git diff --cached --quiet; then
+              echo 'Candidate terminal lifecycle memory already current.'
+              exit 0
+            fi
+            git commit -m "Persist candidate terminal memory ${{ github.run_id }} [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo 'main moved; replaying terminal memory on latest durable lifecycle.' >&2
+          done
+          echo 'candidate terminal lifecycle memory persistence failed after 4 replays' >&2
+          exit 1
 
       - name: Print terminal decisions to run log
         if: always()

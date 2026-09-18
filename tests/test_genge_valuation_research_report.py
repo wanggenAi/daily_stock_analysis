@@ -382,3 +382,45 @@ class ValuationResearchReportTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+def test_durable_lifecycle_recall_is_not_lost_to_relaxed_reserve() -> None:
+    rows = [
+        {
+            "code": f"600{i:03d}",
+            "quant_status": "PRIORITY_RESEARCH",
+            "quant_rank": str(i + 1),
+            "quant_score": str(100 - i),
+            "hard_blockers": "",
+        }
+        for i in range(10)
+    ]
+    rows.append(
+        {
+            "code": "002120",
+            "stock_name": "韵达股份",
+            "quant_status": "LOW_PRIORITY",
+            "quant_rank": "0",
+            "quant_score": "",
+            "hard_blockers": "",
+            "durable_recall_source_missing": True,
+            "valuation_source_channel": "DURABLE_LIFECYCLE_RECALL",
+            "formal_signal_eligible": False,
+            "automatic_promotion_allowed": False,
+            "no_auto_trade": True,
+        }
+    )
+
+    selected = select_wide_recall_rows(
+        rows,
+        research_limit=5,
+        relaxed_reserve=0,
+    )
+    selected_codes = [row["code"] for row in selected]
+
+    assert "002120" in selected_codes
+    recalled = next(row for row in selected if row["code"] == "002120")
+    assert recalled["wide_recall_reason"] == "NORMAL_RESEARCH_QUEUE"
+    assert recalled["formal_signal_eligible"] is False
+    assert recalled["automatic_promotion_allowed"] is False
+    assert recalled["no_auto_trade"] is True
