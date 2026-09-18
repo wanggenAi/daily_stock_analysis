@@ -142,6 +142,16 @@ jobs:
             git fetch origin main
             git reset --hard origin/main
 
+            # Preserve the durable research-only industry map before rebuilding
+            # derived operating state. Evidence Slow Lane may have filled unresolved
+            # candidates from an exact All-A artifact; rebuilding without this source
+            # would silently collapse those mappings back to static-only coverage.
+            industry_source="$RUNNER_TEMP/operating-ledger-industry-source.csv"
+            rm -f "$industry_source"
+            if [ -s data/research_mapping/company_industry_map.csv ]; then
+              cp data/research_mapping/company_industry_map.csv "$industry_source"
+            fi
+
             # Promotion barrier: Production Status may advance to a new Canonical
             # only after the durable hourly price/research surface has caught up
             # to that exact finalized snapshot. A mismatch is a safe no-op, not a
@@ -190,7 +200,15 @@ jobs:
               --ledger data/transactions/ledger.jsonl \
               --output data/transactions/holdings_projection.json
 
+            industry_args=()
+            if [ -s "$industry_source" ]; then
+              industry_args=(
+                --industry-source-csv "$industry_source"
+                --industry-source-label "operating-ledger:persisted-research-mapping"
+              )
+            fi
             python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+              "${industry_args[@]}" \
               --coverage-output data/research_mapping/coverage.json \
               --industry-csv-output data/research_mapping/company_industry_map.csv
 
