@@ -8,9 +8,9 @@
 
 | 股票 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 深算状态 |
 |---|---:|---|---|---|---|
-| 国电南瑞 600406 | -4.82 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 8.80 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | -4.78 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_PARTIAL |
+| 国电南瑞 600406 | -5.08 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 7.44 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | -4.67 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_PARTIAL |
 | 洛阳钼业 603993 | — | HOLD | **继续持有；可分批加仓1手** | HIGH | DEEP_REVIEW_PARTIAL |
 
 ## 2. 世界/社会/市场：钱可能在哪里
