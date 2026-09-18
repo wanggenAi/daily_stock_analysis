@@ -151,7 +151,7 @@ def _wide_recall_reason(source: Mapping[str, Any]) -> str | None:
     # recovery. Keep it inside the normal bounded research budget so an ACTIVE
     # historical candidate cannot be dropped merely because today's discovery
     # source row is absent.
-    if source.get("durable_recall_source_missing") is True:
+    if str(source.get("durable_recall_source_missing") or "").strip().lower() in {"1", "true", "yes"}:
         return "NORMAL_RESEARCH_QUEUE"
 
     status = str(
