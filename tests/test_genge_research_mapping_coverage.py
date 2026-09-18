@@ -144,3 +144,13 @@ def test_operating_ledger_preserves_recovered_industry_mapping_contract():
     assert 'operating-ledger:persisted-research-mapping' in ledger
     assert '".github/workflows/genge-v311-operating-ledger.yml"' in slow_lane
 
+def test_hourly_overlay_preserves_recovered_industry_mapping_contract():
+    root = Path(__file__).resolve().parents[1]
+    hourly = (root / ".github/workflows/genge-hourly-deep-overlay.yml").read_text(encoding="utf-8")
+    slow_lane = (root / ".github/workflows/genge-evidence-slow-lane.yml").read_text(encoding="utf-8")
+
+    assert "hourly-overlay-industry-source.csv" in hourly
+    assert '--industry-source-csv "$industry_source"' in hourly
+    assert 'hourly-overlay:persisted-research-mapping' in hourly
+    assert '".github/workflows/genge-hourly-deep-overlay.yml"' in slow_lane
+
