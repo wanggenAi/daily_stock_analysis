@@ -209,7 +209,7 @@ def _query_cninfo_history(
     by_year: dict[int, dict[str, Any]] = {}
     for item in response.json().get("announcements") or []:
         title = _clean_title(item.get("announcementTitle"))
-        if not _is_full_annual_report_title(title):
+        if "摘要" in title or "英文" in title or "取消" in title:
             continue
         year = _fiscal_year(title)
         adjunct = str(item.get("adjunctUrl") or "").strip()
@@ -279,7 +279,7 @@ def _query_szse_history(
     by_year: dict[int, dict[str, Any]] = {}
     for item in rows:
         title = _clean_title(item.get("title"))
-        if "摘要" in title or "英文" in title or "取消" in title:
+        if not _is_full_annual_report_title(title):
             continue
         year = _fiscal_year(title)
         published = str(item.get("publish_date") or "").strip()
