@@ -7,6 +7,7 @@ from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import
     INVALIDATED,
     apply_explicit_transition,
     apply_snapshot,
+    apply_terminal_memory,
     empty_state,
 )
 from src.strategies.genge_opportunity_discovery.canonical_snapshot import (
@@ -201,3 +202,152 @@ def test_out_of_order_snapshot_is_rejected() -> None:
 
     with pytest.raises(ValueError, match="out-of-order canonical snapshot"):
         apply_snapshot(state, earlier)
+
+def _active_terminal_candidate() -> dict:
+    state = empty_state()
+    state["candidates"]["002120"] = {
+        "code": "002120",
+        "stock_name": "韵达股份",
+        "lifecycle_state": ACTIVE,
+        "research_tier": "PENDING",
+        "seen_count": 1,
+        "history": [],
+        "applied_evidence_ids": [],
+    }
+    return state
+
+
+def test_retryable_research_gap_preserves_existing_wait_price_memory() -> None:
+    state = _active_terminal_candidate()
+    state, first_events = apply_terminal_memory(
+        state,
+        [
+            {
+                "code": "002120",
+                "terminal_decision": "WAIT_PRICE",
+                "terminal_reason_class": "HIGH_CONFIDENCE_PRICE_ONLY_BLOCK",
+                "terminal_reason_codes": "PRICE_TOO_CLOSE_TO_BASE_VALUE",
+                "terminal_current_price": "9",
+                "wait_price_max": "8",
+                "source_production_action": "WAIT",
+                "source_valuation_confidence": "HIGH",
+                "terminal_formal_buy_authorized": False,
+            }
+        ],
+        memory_id="terminal-day-1",
+        observed_at="2026-09-16T10:00:00+00:00",
+    )
+    assert len(first_events) == 1
+    candidate = state["candidates"]["002120"]
+    assert candidate["last_terminal_decision"] == "WAIT_PRICE"
+    assert candidate["last_wait_price_max"] == 8.0
+    assert candidate["price_zone"] == "WAIT_PRICE"
+
+    state, gap_events = apply_terminal_memory(
+        state,
+        [
+            {
+                "code": "002120",
+                "terminal_decision": "RESEARCH_GAP",
+                "terminal_reason_class": "EVIDENCE_INSUFFICIENT",
+                "terminal_reason_codes": "hard_gate_unknown:moat",
+                "terminal_current_price": "8.7",
+                "source_production_action": "WAIT",
+                "source_valuation_confidence": "LOW",
+                "terminal_formal_buy_authorized": False,
+            }
+        ],
+        memory_id="terminal-day-2",
+        observed_at="2026-09-17T10:00:00+00:00",
+    )
+
+    candidate = state["candidates"]["002120"]
+    assert candidate["last_terminal_decision"] == "WAIT_PRICE"
+    assert candidate["last_wait_price_max"] == 8.0
+    assert candidate["last_researched_time"] == "2026-09-17T10:00:00+00:00"
+    assert candidate["last_price"] == 8.7
+    assert candidate["price_zone"] == "WAIT_PRICE"
+    assert candidate["next_action"] == "CONTINUE_RESEARCH_WAIT_PRICE"
+    assert candidate["last_research_gap_reason_class"] == "EVIDENCE_INSUFFICIENT"
+    assert gap_events[0]["event"] == "TERMINAL_RESEARCH_GAP_PRESERVED_WAIT_PRICE"
+    assert gap_events[0]["effective_terminal_decision"] == "WAIT_PRICE"
+
+
+def test_explicit_reject_replaces_wait_price_memory() -> None:
+    state = _active_terminal_candidate()
+    state, _ = apply_terminal_memory(
+        state,
+        [
+            {
+                "code": "002120",
+                "terminal_decision": "WAIT_PRICE",
+                "terminal_reason_class": "HIGH_CONFIDENCE_PRICE_ONLY_BLOCK",
+                "terminal_reason_codes": "PRICE_TOO_CLOSE_TO_BASE_VALUE",
+                "terminal_current_price": "9",
+                "wait_price_max": "8",
+                "source_production_action": "WAIT",
+                "source_valuation_confidence": "HIGH",
+                "terminal_formal_buy_authorized": False,
+            }
+        ],
+        memory_id="terminal-before-reject",
+        observed_at="2026-09-16T10:00:00+00:00",
+    )
+    state, events = apply_terminal_memory(
+        state,
+        [
+            {
+                "code": "002120",
+                "terminal_decision": "REJECT",
+                "terminal_reason_class": "HARD_GATE_FAILED",
+                "terminal_reason_codes": "hard_gate_failed:financial_safety",
+                "terminal_current_price": "8.6",
+                "source_production_action": "REJECT",
+                "source_valuation_confidence": "HIGH",
+                "terminal_formal_buy_authorized": False,
+            }
+        ],
+        memory_id="terminal-hard-fail",
+        observed_at="2026-09-17T10:00:00+00:00",
+    )
+
+    candidate = state["candidates"]["002120"]
+    assert candidate["last_terminal_decision"] == "REJECT"
+    assert candidate["price_zone"] == ""
+    assert candidate["next_action"] == "NO_ACTION"
+    assert events[0]["effective_terminal_decision"] == "REJECT"
+
+
+def test_terminal_memory_rejects_unauthorized_buy_and_cannot_admit_new_candidate() -> None:
+    state = _active_terminal_candidate()
+    with pytest.raises(ValueError, match="unauthorized terminal BUY memory"):
+        apply_terminal_memory(
+            state,
+            [
+                {
+                    "code": "002120",
+                    "terminal_decision": "BUY",
+                    "terminal_formal_buy_authorized": False,
+                    "source_production_action": "BUY",
+                    "source_valuation_confidence": "HIGH",
+                }
+            ],
+            memory_id="terminal-unauthorized-buy",
+            observed_at="2026-09-17T10:00:00+00:00",
+        )
+
+    state, events = apply_terminal_memory(
+        state,
+        [
+            {
+                "code": "000589",
+                "terminal_decision": "RESEARCH_GAP",
+                "terminal_reason_class": "DEEP_PROFILE_MISSING",
+            }
+        ],
+        memory_id="terminal-no-admission",
+        observed_at="2026-09-17T11:00:00+00:00",
+    )
+    assert events == []
+    assert "000589" not in state["candidates"]
+
