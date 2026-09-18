@@ -792,6 +792,17 @@ def _query_szse_material_events(
     )
 
 
+def _uses_primary_exchange_disclosure(code: str) -> bool:
+    return code.startswith(("0", "2", "3", "6"))
+
+
+def _needs_cninfo_org_ids(rows: list[Mapping[str, Any]]) -> bool:
+    return any(
+        code and not _uses_primary_exchange_disclosure(code)
+        for code in (_normalize_code(row.get("code")) for row in rows)
+    )
+
+
 def _material_event_candidates(
     code: str,
     as_of: date,
@@ -925,15 +936,16 @@ def collect_company_announcements(
     network_fetches = 0
     fetch_successes = 0
     task_count = 0
+    targets = rows[: max(0, int(limit))]
     cninfo_org_ids: dict[str, str] = {}
-    if rows[: max(0, int(limit))]:
+    if _needs_cninfo_org_ids(targets):
         try:
             cninfo_org_ids = _load_cninfo_org_ids(session, timeout)
             network_fetches += 1
         except Exception:
             cninfo_org_ids = {}
 
-    for row in rows[: max(0, int(limit))]:
+    for row in targets:
         code = _normalize_code(row.get("code"))
         if not code:
             continue
@@ -1129,7 +1141,7 @@ def collect_company_material_events(
     task_count = 0
     targets = rows[: max(0, int(limit))]
     cninfo_org_ids: dict[str, str] = {}
-    if targets:
+    if _needs_cninfo_org_ids(targets):
         try:
             cninfo_org_ids = _load_cninfo_org_ids(session, timeout)
             network_fetches += 1
