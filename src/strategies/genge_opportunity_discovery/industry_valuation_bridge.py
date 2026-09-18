@@ -87,18 +87,20 @@ def _read_curated_codes(path: Path | None) -> set[str]:
     return codes
 
 
-def _read_candidate_state_codes(path: Path | None) -> tuple[set[str], set[str]] | None:
-    """Return Active and Archived/INVALIDATED codes from machine lifecycle JSON.
+def _read_candidate_state_memory(
+    path: Path | None,
+) -> tuple[dict[str, dict[str, Any]], set[str]] | None:
+    """Return Active candidate metadata and Archived/INVALIDATED codes.
 
-    ``None`` means the JSON state does not exist yet and the caller may use the
-    one-time legacy Markdown compatibility fallback. If a JSON file exists but
-    is invalid, ``load_state`` raises and the research pipeline fails closed
-    instead of silently trusting Markdown.
+    Active metadata is retained so a durable candidate can be recalled for
+    research even when today's All-A snapshot has no row for that code. This
+    remains research-only memory: it never grants a Formal signal or trade
+    authority.
     """
     if path is None or not path.exists():
         return None
     state = load_state(path)
-    active: set[str] = set()
+    active: dict[str, dict[str, Any]] = {}
     inactive: set[str] = set()
     for raw_code, raw_candidate in (state.get("candidates") or {}).items():
         if not isinstance(raw_candidate, Mapping):
@@ -108,11 +110,23 @@ def _read_candidate_state_codes(path: Path | None) -> tuple[set[str], set[str]] 
         if not code:
             continue
         if lifecycle == ACTIVE:
-            active.add(code)
+            candidate = dict(raw_candidate)
+            candidate["code"] = code
+            active[code] = candidate
         elif lifecycle in {ARCHIVED, INVALIDATED}:
             inactive.add(code)
-    return active - inactive, inactive
+    for code in inactive:
+        active.pop(code, None)
+    return active, inactive
 
+
+def _read_candidate_state_codes(path: Path | None) -> tuple[set[str], set[str]] | None:
+    """Return Active and Archived/INVALIDATED codes from machine lifecycle JSON."""
+    memory = _read_candidate_state_memory(path)
+    if memory is None:
+        return None
+    active, inactive = memory
+    return set(active), inactive
 
 def _read_candidate_ledger_codes(path: Path | None) -> tuple[set[str], set[str]]:
     """Compatibility fallback for the pre-state-machine Markdown ledger.
@@ -184,6 +198,7 @@ def merge_sources(
     per_industry: int = 3,
     curated_codes: Iterable[str] = (),
     excluded_codes: Iterable[str] = (),
+    curated_metadata: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> list[dict[str, Any]]:
     """Return global + industry + durable curated research recall.
 
@@ -263,6 +278,39 @@ def merge_sources(
         _mark_research_only(row)
         merged.append(row)
         by_code[code] = row
+
+    metadata = curated_metadata or {}
+    missing_requested = sorted(requested - set(by_code))
+    for code in missing_requested:
+        candidate = dict(metadata.get(code) or {})
+        row = {
+            "code": code,
+            "stock_name": str(candidate.get("stock_name") or ""),
+            "industry": str(candidate.get("industry") or ""),
+            "quant_status": "LOW_PRIORITY",
+            "quant_rank": "0",
+            "quant_score": "",
+            "hard_blockers": "",
+            "valuation_source_channel": (
+                "DURABLE_LIFECYCLE_RECALL" if candidate else "CURATED_RESEARCH_POOL"
+            ),
+            "curated_research_recall": True,
+            "curated_research_reason": "DURABLE_V31_RESEARCH_POOL",
+            "wide_recall_reason": "DURABLE_SOURCE_ROW_MISSING",
+            "source_hard_blockers": "",
+            "durable_recall_source_missing": True,
+            "candidate_lifecycle_recall": bool(candidate),
+            "candidate_lifecycle_research_tier": str(candidate.get("research_tier") or ""),
+            "candidate_lifecycle_last_seen_snapshot_id": str(
+                candidate.get("last_seen_snapshot_id") or ""
+            ),
+            "candidate_lifecycle_last_seen_source_run_id": str(
+                candidate.get("last_seen_source_run_id") or ""
+            ),
+        }
+        _mark_research_only(row)
+        merged.append(row)
+        by_code[code] = row
     return merged
 
 
@@ -300,9 +348,11 @@ def write_merged_report(
         raise FileNotFoundError("missing industry coverage source")
 
     static_curated_codes = _read_curated_codes(curated_pool)
-    lifecycle_codes = _read_candidate_state_codes(candidate_state)
-    if lifecycle_codes is not None:
-        ledger_active_codes, ledger_invalidated_codes = lifecycle_codes
+    lifecycle_memory = _read_candidate_state_memory(candidate_state)
+    lifecycle_metadata: dict[str, dict[str, Any]] = {}
+    if lifecycle_memory is not None:
+        lifecycle_metadata, ledger_invalidated_codes = lifecycle_memory
+        ledger_active_codes = set(lifecycle_metadata)
         candidate_memory_source = "LIFECYCLE_STATE_JSON"
     else:
         ledger_active_codes, ledger_invalidated_codes = _read_candidate_ledger_codes(candidate_ledger)
@@ -317,6 +367,7 @@ def write_merged_report(
         per_industry=per_industry,
         curated_codes=curated_codes,
         excluded_codes=ledger_invalidated_codes,
+        curated_metadata=lifecycle_metadata,
     )
 
     for row in rows:
@@ -382,6 +433,16 @@ def write_merged_report(
         "ledger_invalidated_exclusion_count": len(ledger_invalidated_codes),
         "ledger_active_found_count": len(found_ledger),
         "ledger_active_missing_codes": missing_ledger,
+        "ledger_active_materialized_without_all_a_count": sum(
+            bool(row.get("durable_recall_source_missing"))
+            and _code(row) in ledger_active_codes
+            for row in rows
+        ),
+        "curated_materialized_without_all_a_codes": sorted(
+            _code(row)
+            for row in rows
+            if bool(row.get("durable_recall_source_missing"))
+        ),
         "ledger_invalidated_suppressed_codes": sorted(ledger_invalidated_codes & source_codes),
         "formal_signal_eligible": False,
         "automatic_promotion_allowed": False,
