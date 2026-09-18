@@ -147,6 +147,17 @@ def _quant_order_key(row: Mapping[str, Any]) -> tuple[float, float, str]:
 
 
 def _wide_recall_reason(source: Mapping[str, Any]) -> str | None:
+    # A durable lifecycle recall is a continuation obligation, not a generic
+    # soft-filter recovery. Missing-current-source rows are synthesized by the
+    # lifecycle bridge with quant_rank=0 and must stay in the normal research
+    # budget so the relaxed-recovery cap cannot silently evict them.
+    if str(source.get("durable_recall_source_missing") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        return "NORMAL_RESEARCH_QUEUE"
+
     status = str(
         source.get("quant_status") or source.get("quant_screen_status") or ""
     ).strip().upper()
