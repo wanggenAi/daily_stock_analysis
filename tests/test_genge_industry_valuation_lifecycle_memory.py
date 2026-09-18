@@ -139,11 +139,20 @@ def test_active_candidate_missing_from_today_all_a_is_materialized_for_research(
             }
         )
 
-    # A static research-pool code with no current All-A row is not enough to
-    # manufacture lifecycle memory. Only the machine ACTIVE candidate below may
-    # be materialized from metadata alone.
+    # Ordinary static research-pool codes still cannot manufacture durable
+    # memory. Only the explicitly recovered historical section may survive a
+    # missing current All-A row alongside machine ACTIVE lifecycle candidates.
     curated_pool = tmp_path / "curated.txt"
-    curated_pool.write_text("000589.SZ\n", encoding="utf-8")
+    curated_pool.write_text(
+        """# Recovered historical candidate research lineage
+# Research-only recall backed by persisted evidence.
+000589.SZ
+
+# Ordinary static research
+000588.SZ
+""",
+        encoding="utf-8",
+    )
 
     output = tmp_path / "out"
     rows = write_merged_report(
@@ -159,7 +168,16 @@ def test_active_candidate_missing_from_today_all_a_is_materialized_for_research(
     )
 
     by_code = {row["code"]: row for row in rows}
-    assert "000589" not in by_code
+    assert "000588" not in by_code
+    historical = by_code["000589"]
+    assert historical["valuation_source_channel"] == "RECOVERED_HISTORICAL_RECALL"
+    assert historical["durable_recall_source_missing"] is True
+    assert historical["historical_candidate_recall"] is True
+    assert historical["candidate_lifecycle_recall"] is False
+    assert historical["formal_signal_eligible"] is False
+    assert historical["automatic_promotion_allowed"] is False
+    assert historical["no_auto_trade"] is True
+
     recalled = by_code["002120"]
     assert recalled["stock_name"] == "韵达股份"
     assert recalled["valuation_source_channel"] == "DURABLE_LIFECYCLE_RECALL"
@@ -175,4 +193,6 @@ def test_active_candidate_missing_from_today_all_a_is_materialized_for_research(
     )
     assert summary["ledger_active_missing_codes"] == ["002120"]
     assert summary["ledger_active_materialized_without_all_a_count"] == 1
-    assert "002120" in summary["curated_materialized_without_all_a_codes"]
+    assert summary["recovered_historical_candidate_codes"] == ["000589"]
+    assert summary["recovered_historical_materialized_without_all_a_count"] == 1
+    assert {"000589", "002120"} <= set(summary["curated_materialized_without_all_a_codes"])
