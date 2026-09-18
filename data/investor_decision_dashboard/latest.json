@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-18T07:59:22+00:00",
+  "generated_at": "2026-09-18T08:01:05+00:00",
   "canonical_snapshot_id": "a8f2042fdb64536b8baf",
   "canonical_source_run_id": "35309172034",
   "latest_trade_date": "2026-09-17",
@@ -20,11 +20,11 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥1735",
+  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
   "market": {
     "as_of_date": "2026-09-17",
     "status": "YELLOW",
-    "allow_new_buy": true,
+    "allow_new_buy": false,
     "external_risk_level": "LOW",
     "data_quality": "OK",
     "limit_up_count": 44,
@@ -36,7 +36,8 @@
     "above_ma20_ratio": 0.2895,
     "above_ma60_ratio": 0.4675,
     "distribution_ratio": 0.0388,
-    "risk_reasons": []
+    "risk_reasons": [],
+    "freshness_override": "STALE_UPSTREAM_FAIL_CLOSED"
   },
   "stock_portfolio": {
     "status": "CONFIRMED",
@@ -93,7 +94,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION"
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+        "new_exposure_currently_usable": false
       },
       {
         "code": "001316",
@@ -133,7 +135,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE"
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+        "new_exposure_currently_usable": false
       },
       {
         "code": "601318",
@@ -173,7 +176,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00"
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00",
+        "new_exposure_currently_usable": false
       },
       {
         "code": "603993",
@@ -189,7 +193,7 @@
         "action_lifecycle": "UNCHANGED",
         "previous_formal_action": "HOLD",
         "action_lifecycle_basis": "PREVIOUS_PERSISTED_DASHBOARD",
-        "investor_action": "继续持有；可分批加仓1手",
+        "investor_action": "继续持有；可分批加仓1手；数据代际陈旧，禁止新增仓位",
         "execution_feasibility": null,
         "holding_add_authorized": true,
         "holding_add_max_lots": 1,
@@ -213,7 +217,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD"
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "new_exposure_currently_usable": false
       }
     ]
   },
@@ -227,32 +232,14 @@
     "formal_buy_is_mirror_only": true
   },
   "capital_deployment": {
-    "status": "READY",
+    "status": "STALE_UPSTREAM_BLOCK_NEW_EXPOSURE",
     "available_cash_cny": 57000.0,
     "capital_as_of": "2026-09-15T11:38:01+08:00",
-    "deployment_budget_cny": 28500.0,
-    "effective_max_deployment_ratio": 0.5,
-    "planned_immediate_cash_cny": 1735.0,
-    "cash_after_immediate_plan_cny": 55265.0,
-    "operations": [
-      {
-        "code": "603993",
-        "name": "洛阳钼业",
-        "action": "ADD",
-        "current_price": 17.35,
-        "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
-        "authorization_proven": true,
-        "planned_shares": 100,
-        "first_tranche_shares": 100,
-        "first_entry_max_price": 17.35,
-        "second_tranche_shares": 0,
-        "second_entry_max_price": null,
-        "estimated_cash_cny": 1735.0,
-        "immediate_execution_eligible": true,
-        "automatic_order_allowed": false,
-        "no_auto_trade": true
-      }
-    ],
+    "deployment_budget_cny": 0.0,
+    "effective_max_deployment_ratio": 0.0,
+    "planned_immediate_cash_cny": 0.0,
+    "cash_after_immediate_plan_cny": 57000.0,
+    "operations": [],
     "wait_price_reservations": [],
     "planner_config": {
       "max_deployment_ratio": 0.7,
@@ -269,25 +256,7 @@
     "automatic_order_allowed": false,
     "no_auto_trade": true
   },
-  "final_operation_table": [
-    {
-      "code": "603993",
-      "name": "洛阳钼业",
-      "action": "ADD",
-      "current_price": 17.35,
-      "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
-      "authorization_proven": true,
-      "planned_shares": 100,
-      "first_tranche_shares": 100,
-      "first_entry_max_price": 17.35,
-      "second_tranche_shares": 0,
-      "second_entry_max_price": null,
-      "estimated_cash_cny": 1735.0,
-      "immediate_execution_eligible": true,
-      "automatic_order_allowed": false,
-      "no_auto_trade": true
-    }
-  ],
+  "final_operation_table": [],
   "decision_summary": {
     "holding_count": 4,
     "formal_action_counts": {
@@ -302,7 +271,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 92,
-    "planned_immediate_cash_cny": 1735.0
+    "planned_immediate_cash_cny": 0.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -370,9 +339,12 @@
     "terminal_unauthorized_buy_suppressed": 0,
     "capital_source_status": "USER_CONFIRMED_FLOOR",
     "engineering_details_are_secondary": true,
-    "freshness_status": "OK",
-    "freshness_reasons": [],
-    "formal_new_exposure_allowed": true
+    "freshness_status": "STALE_UPSTREAM",
+    "freshness_reasons": [
+      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
+      "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
+    ],
+    "formal_new_exposure_allowed": false
   },
   "presentation_contract": {
     "investor_first": true,
@@ -391,18 +363,21 @@
   },
   "freshness_contract": {
     "contract_version": "GEN_GE_GENERATION_FRESHNESS_V1",
-    "status": "OK",
-    "fresh": true,
-    "formal_new_exposure_allowed": true,
-    "fail_closed_applied": false,
-    "reasons": [],
-    "evaluated_at": "2026-09-18T07:59:22+00:00",
+    "status": "STALE_UPSTREAM",
+    "fresh": false,
+    "formal_new_exposure_allowed": false,
+    "fail_closed_applied": true,
+    "reasons": [
+      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
+      "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
+    ],
+    "evaluated_at": "2026-09-18T08:01:05+00:00",
     "canonical_generated_at": "2026-09-18T05:15:18+00:00",
     "canonical_latest_trade_date": "2026-09-17",
     "canonical_source_run_id": "35309172034",
-    "expected_min_trade_date": "2026-09-17",
+    "expected_min_trade_date": "2026-09-18",
     "market_as_of": "2026-09-17",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
-  "formal_new_exposure_allowed": true
+  "formal_new_exposure_allowed": false
 }
