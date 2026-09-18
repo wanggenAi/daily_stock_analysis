@@ -54,7 +54,7 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 ## 自动深算运行状态
 
 - 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**
-- Lambda run：`35381341761`
+- Lambda run：`35385476058`
 - 触发来源：`EVERY_INDUSTRY_READY`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
@@ -70,7 +70,7 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`35379866693`；当前 Lambda：`35381341761`。
+- 终态来源 Lambda：`35379866693`；当前 Lambda：`35385476058`。
 - 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
