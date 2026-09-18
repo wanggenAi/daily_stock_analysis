@@ -147,6 +147,17 @@ def _quant_order_key(row: Mapping[str, Any]) -> tuple[float, float, str]:
 
 
 def _wide_recall_reason(source: Mapping[str, Any]) -> str | None:
+    # Durable lifecycle recall is a continuation obligation, not a soft-filter
+    # recovery. Treat it as normal research so an ACTIVE historical candidate
+    # cannot be displaced solely because today's Discovery source row is absent.
+    # This remains research-only and grants no Formal/BUY authority.
+    if str(source.get("durable_recall_source_missing") or "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+    }:
+        return "NORMAL_RESEARCH_QUEUE"
+
     status = str(
         source.get("quant_status") or source.get("quant_screen_status") or ""
     ).strip().upper()
@@ -171,10 +182,17 @@ def select_wide_recall_rows(
     research_limit: int = DEFAULT_RESEARCH_LIMIT,
     relaxed_reserve: int = DEFAULT_RELAXED_RESERVE,
 ) -> list[dict[str, Any]]:
-    """Build a bounded research pool with a hard cap on relaxed recoveries."""
+    """Build research recall without dropping durable lifecycle continuations.
+
+    research_limit remains the budget for today's ordinary discovery/recovery
+    rows. ACTIVE lifecycle candidates materialized because today's source row is
+    missing are continuation obligations and are additive to that budget. This
+    prevents a bounded daily scan from deleting research memory by omission.
+    """
 
     limit = max(0, int(research_limit))
     reserve = max(0, min(limit, int(relaxed_reserve)))
+    durable: list[dict[str, Any]] = []
     normal: list[dict[str, Any]] = []
     relaxed: list[dict[str, Any]] = []
     seen: set[str] = set()
@@ -192,12 +210,19 @@ def select_wide_recall_rows(
         row["source_hard_blockers"] = (
             row.get("hard_blockers") or row.get("hard_reject_blockers") or ""
         )
-        if reason == "NORMAL_RESEARCH_QUEUE":
+        if str(row.get("durable_recall_source_missing") or "").strip().lower() in {
+            "1",
+            "true",
+            "yes",
+        }:
+            durable.append(row)
+        elif reason == "NORMAL_RESEARCH_QUEUE":
             normal.append(row)
         else:
             relaxed.append(row)
         seen.add(code)
 
+    durable.sort(key=_quant_order_key)
     normal.sort(key=_quant_order_key)
     relaxed.sort(key=_quant_order_key)
     normal_budget = max(0, limit - reserve)
@@ -207,7 +232,10 @@ def select_wide_recall_rows(
     selected.extend(
         normal[normal_budget : normal_budget + max(0, limit - len(selected))]
     )
-    return selected[:limit]
+    # Durable lifecycle continuations are additive to the daily discovery
+    # budget. They remain research-only and preserve their existing authority
+    # flags; this function never promotes them to Formal/BUY.
+    return durable + selected[:limit]
 
 
 def _pe_frame(frame: pd.DataFrame | None, *, as_of: date) -> pd.DataFrame:
