@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-18T05:05:45+00:00",
+  "mode": "EVENT",
+  "generated_at": "2026-09-18T05:15:27+00:00",
   "canonical_snapshot_id": "d401864a095af9369712",
   "canonical_source_run_id": "35244446308",
   "latest_trade_date": "2026-09-17",
@@ -46,8 +46,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.09,
-        "pnl_pct": -4.48,
+        "current_price": 22.06,
+        "pnl_pct": -4.61,
         "formal_action": "REDUCE_25",
         "canonical_formal_action": "REDUCE_25",
         "formal_action_currently_usable": true,
@@ -96,9 +96,9 @@
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
         "canonical_price": 21.95,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-18T12:05:55+08:00",
+        "price_observed_at": "2026-09-18T13:13:52+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 3590
+        "price_age_seconds": 95
       },
       {
         "code": "001316",
@@ -141,9 +141,9 @@
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
         "canonical_price": 27.66,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-18T12:05:36+08:00",
+        "price_observed_at": "2026-09-18T13:13:51+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 3609
+        "price_age_seconds": 96
       },
       {
         "code": "601318",
@@ -186,16 +186,16 @@
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00",
         "canonical_price": 53.35,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-18T12:05:32+08:00",
+        "price_observed_at": "2026-09-18T13:13:50+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 3613
+        "price_age_seconds": 97
       },
       {
         "code": "603993",
         "name": "洛阳钼业",
         "quantity": null,
         "average_cost": null,
-        "current_price": 17.43,
+        "current_price": 17.49,
         "pnl_pct": null,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
@@ -231,9 +231,9 @@
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
         "canonical_price": 17.35,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
-        "price_observed_at": "2026-09-18T12:05:53+08:00",
+        "price_observed_at": "2026-09-18T13:13:50+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 3592
+        "price_age_seconds": 97
       }
     ]
   },
@@ -271,8 +271,8 @@
         "immediate_execution_eligible": false,
         "automatic_order_allowed": false,
         "no_auto_trade": true,
-        "live_market_price": 17.43,
-        "price_observed_at": "2026-09-18T12:05:53+08:00",
+        "live_market_price": 17.49,
+        "price_observed_at": "2026-09-18T13:13:50+08:00",
         "price_provider": "tencent_quote",
         "execution_note": "LIVE_PRICE_ABOVE_AUTHORIZED_LIMIT_USE_LIMIT_ORDER_ONLY"
       }
@@ -310,8 +310,8 @@
       "immediate_execution_eligible": false,
       "automatic_order_allowed": false,
       "no_auto_trade": true,
-      "live_market_price": 17.43,
-      "price_observed_at": "2026-09-18T12:05:53+08:00",
+      "live_market_price": 17.49,
+      "price_observed_at": "2026-09-18T13:13:50+08:00",
       "price_provider": "tencent_quote",
       "execution_note": "LIVE_PRICE_ABOVE_AUTHORIZED_LIMIT_USE_LIMIT_ORDER_ONLY"
     }
@@ -383,8 +383,13 @@
     "rows": []
   },
   "event_review": {
-    "triggered": false,
-    "trigger_codes": []
+    "triggered": true,
+    "trigger_codes": [
+      "001316",
+      "601318",
+      "603993",
+      "002941"
+    ]
   },
   "hourly_context": {
     "available": true,
@@ -424,7 +429,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-18T05:05:45+00:00",
+    "evaluated_at": "2026-09-18T05:15:27+00:00",
     "canonical_generated_at": "2026-09-17T16:16:41+00:00",
     "canonical_latest_trade_date": "2026-09-17",
     "canonical_source_run_id": "35244446308",
@@ -454,7 +459,7 @@
     ],
     "missing_codes": [],
     "coverage_ratio": 1.0,
-    "latest_quote_observed_at": "2026-09-18T12:05:58+08:00",
+    "latest_quote_observed_at": "2026-09-18T13:13:52+08:00",
     "max_quote_age_minutes": 120,
     "canonical_snapshot_match": true,
     "formal_action_recomputed": false,
