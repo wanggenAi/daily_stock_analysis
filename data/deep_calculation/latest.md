@@ -11,6 +11,6 @@
 - predictability resolved gates: **0**
 - material-event failed gates: **0**
 - material-event PASS overrides: **0**
-- unresolved gates: **2599**
+- unresolved gates: **2597**
 - immediate retry required: **False**
 - UNKNOWN != PASS; no automatic Formal BUY; no auto trade.
