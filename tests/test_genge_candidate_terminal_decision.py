@@ -228,3 +228,34 @@ def test_evidence_exhaustion_is_retryable_research_gap_not_unknown_pass():
     assert row["terminal_decision"] == "RESEARCH_GAP"
     assert row["terminal_retryable_next_cycle"] is True
     assert row["terminal_formal_buy_authorized"] is False
+
+
+def test_wait_price_candidate_can_become_buy_only_after_existing_authority():
+    day1 = terminalize_candidate(
+        _master("002120"),
+        _formal("002120"),
+        _production(
+            "WAIT",
+            "002120",
+            reason_codes="PRICE_TOO_CLOSE_TO_BASE_VALUE",
+            neutral_value="10",
+            current_price="9",
+        ),
+    )
+    assert day1["terminal_decision"] == "WAIT_PRICE"
+    assert day1["terminal_retryable_next_cycle"] is True
+
+    day3 = terminalize_candidate(
+        _master("002120"),
+        _formal("002120"),
+        _production(
+            "BUY",
+            "002120",
+            neutral_value="10",
+            current_price="7.9",
+        ),
+    )
+    assert day3["terminal_decision"] == "BUY"
+    assert day3["terminal_formal_buy_authorized"] is True
+    assert day3["automatic_promotion_allowed"] is False
+    assert day3["no_auto_trade"] is True
