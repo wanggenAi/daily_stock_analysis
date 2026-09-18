@@ -502,38 +502,32 @@ def test_material_event_collector_preserves_status_timezone_and_inventory(
                 return FakeResponse(content="控股股东全部冻结股份已全部解除。".encode())
             raise AssertionError(url)
 
-        def post(self, url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
-            assert url == "https://www.cninfo.com.cn/new/hisAnnouncement/query"
-            assert data["searchkey"] == ""
-            assert data["category"] == ""
-            assert data["pageNum"] == "1"
+        def post(self, url: str, *, json: dict, **_kwargs) -> FakeResponse:
+            assert url == company_announcements.SZSE_ANNOUNCEMENT_URL
+            assert json["stock"] == ["000088"]
+            assert json["channelCode"] == ["listedNotice_disc"]
+            assert json["pageNum"] == 1
             FakeSession.post_count += 1
-            active_timestamp = int(
-                datetime(2026, 7, 20, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
-            )
-            resolved_timestamp = int(
-                datetime(2026, 7, 21, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
-            )
-            future_timestamp = int(
-                datetime(2026, 7, 30, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
-            )
             return FakeResponse(payload={
-                "totalAnnouncement": 3,
-                "announcements": [
+                "announceCount": 3,
+                "data": [
                     {
-                        "announcementTitle": "关于控股股东部分股份被司法冻结的公告",
-                        "announcementTime": active_timestamp,
-                        "adjunctUrl": "finalpage/2026-07-20/active.PDF",
+                        "secCode": ["000088"],
+                        "title": "关于控股股东部分股份被司法冻结的公告",
+                        "publishTime": "2026-07-20 00:00:00",
+                        "attachPath": "/disc/finalpage/2026-07-20/active.PDF",
                     },
                     {
-                        "announcementTitle": "关于控股股东全部股份解除冻结的公告",
-                        "announcementTime": resolved_timestamp,
-                        "adjunctUrl": "finalpage/2026-07-21/resolved.PDF",
+                        "secCode": ["000088"],
+                        "title": "关于控股股东全部股份解除冻结的公告",
+                        "publishTime": "2026-07-21 00:00:00",
+                        "attachPath": "/disc/finalpage/2026-07-21/resolved.PDF",
                     },
                     {
-                        "announcementTitle": "关于收到监管立案通知的公告",
-                        "announcementTime": future_timestamp,
-                        "adjunctUrl": "finalpage/2026-07-30/future.PDF",
+                        "secCode": ["000088"],
+                        "title": "关于收到监管立案通知的公告",
+                        "publishTime": "2026-07-30 00:00:00",
+                        "attachPath": "/disc/finalpage/2026-07-30/future.PDF",
                     },
                 ],
             })
@@ -856,20 +850,19 @@ def test_partial_material_event_scan_is_not_cached(
             assert url == company_announcements.CNINFO_STOCK_LIST_URL
             return FakeResponse({"stockList": [{"code": "000088", "orgId": "gssz0000088"}]})
 
-        def post(self, _url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
+        def post(self, _url: str, *, json: dict, **_kwargs) -> FakeResponse:
             FakeSession.post_count += 1
-            if data["pageNum"] == "2":
+            page = int(json["pageNum"])
+            if page == 2:
                 raise RuntimeError("transient page failure")
-            timestamp = int(
-                datetime(2026, 7, 20, tzinfo=ZoneInfo("Asia/Shanghai")).timestamp() * 1000
-            )
             return FakeResponse({
-                "totalAnnouncement": company_announcements.MATERIAL_EVENT_PAGE_SIZE * 2,
-                "announcements": [
+                "announceCount": company_announcements.MATERIAL_EVENT_PAGE_SIZE * 2,
+                "data": [
                     {
-                        "announcementTitle": f"普通公告{index}",
-                        "announcementTime": timestamp,
-                        "adjunctUrl": f"finalpage/{index}.PDF",
+                        "secCode": ["000088"],
+                        "title": f"普通公告{index}",
+                        "publishTime": "2026-07-20 00:00:00",
+                        "attachPath": f"/disc/finalpage/{index}.PDF",
                     }
                     for index in range(company_announcements.MATERIAL_EVENT_PAGE_SIZE)
                 ],
