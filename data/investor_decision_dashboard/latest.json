@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-18T05:51:18+00:00",
+  "generated_at": "2026-09-18T07:44:54+00:00",
   "canonical_snapshot_id": "a8f2042fdb64536b8baf",
   "canonical_source_run_id": "35309172034",
   "latest_trade_date": "2026-09-17",
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=4/4",
+  "headline": "市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥1735",
   "market": {
     "as_of_date": "2026-09-17",
     "status": "YELLOW",
@@ -46,8 +46,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.05,
-        "pnl_pct": -4.65,
+        "current_price": 21.95,
+        "pnl_pct": -5.08,
         "formal_action": "REDUCE_25",
         "canonical_formal_action": "REDUCE_25",
         "formal_action_currently_usable": true,
@@ -93,20 +93,15 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 21.95,
-        "price_observed_at": "2026-09-18T15:13:28+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 3
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION"
       },
       {
         "code": "001316",
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 28.11,
-        "pnl_pct": 9.19,
+        "current_price": 27.66,
+        "pnl_pct": 7.44,
         "formal_action": "HOLD_REVIEW",
         "canonical_formal_action": "HOLD_REVIEW",
         "formal_action_currently_usable": true,
@@ -138,20 +133,15 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 27.66,
-        "price_observed_at": "2026-09-18T15:13:00+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 31
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE"
       },
       {
         "code": "601318",
         "name": "中国平安",
         "quantity": 400,
         "average_cost": 55.9658,
-        "current_price": 53.37,
-        "pnl_pct": -4.64,
+        "current_price": 53.35,
+        "pnl_pct": -4.67,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -183,19 +173,14 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00",
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 53.35,
-        "price_observed_at": "2026-09-18T15:13:27+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 4
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00"
       },
       {
         "code": "603993",
         "name": "洛阳钼业",
         "quantity": null,
         "average_cost": null,
-        "current_price": 17.51,
+        "current_price": 17.35,
         "pnl_pct": null,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
@@ -228,12 +213,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 17.35,
-        "price_observed_at": "2026-09-18T15:13:24+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 7
+        "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD"
       }
     ]
   },
@@ -252,13 +232,13 @@
     "capital_as_of": "2026-09-15T11:38:01+08:00",
     "deployment_budget_cny": 28500.0,
     "effective_max_deployment_ratio": 0.5,
-    "planned_immediate_cash_cny": 0.0,
-    "cash_after_immediate_plan_cny": 57000.0,
+    "planned_immediate_cash_cny": 1735.0,
+    "cash_after_immediate_plan_cny": 55265.0,
     "operations": [
       {
         "code": "603993",
         "name": "洛阳钼业",
-        "action": "ADD_LIMIT",
+        "action": "ADD",
         "current_price": 17.35,
         "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
         "authorization_proven": true,
@@ -268,13 +248,9 @@
         "second_tranche_shares": 0,
         "second_entry_max_price": null,
         "estimated_cash_cny": 1735.0,
-        "immediate_execution_eligible": false,
+        "immediate_execution_eligible": true,
         "automatic_order_allowed": false,
-        "no_auto_trade": true,
-        "live_market_price": 17.51,
-        "price_observed_at": "2026-09-18T15:13:24+08:00",
-        "price_provider": "tencent_quote",
-        "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
+        "no_auto_trade": true
       }
     ],
     "wait_price_reservations": [],
@@ -297,7 +273,7 @@
     {
       "code": "603993",
       "name": "洛阳钼业",
-      "action": "ADD_LIMIT",
+      "action": "ADD",
       "current_price": 17.35,
       "source": "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD",
       "authorization_proven": true,
@@ -307,13 +283,9 @@
       "second_tranche_shares": 0,
       "second_entry_max_price": null,
       "estimated_cash_cny": 1735.0,
-      "immediate_execution_eligible": false,
+      "immediate_execution_eligible": true,
       "automatic_order_allowed": false,
-      "no_auto_trade": true,
-      "live_market_price": 17.51,
-      "price_observed_at": "2026-09-18T15:13:24+08:00",
-      "price_provider": "tencent_quote",
-      "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
+      "no_auto_trade": true
     }
   ],
   "decision_summary": {
@@ -330,7 +302,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 92,
-    "planned_immediate_cash_cny": 0.0
+    "planned_immediate_cash_cny": 1735.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -424,7 +396,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-18T05:51:18+00:00",
+    "evaluated_at": "2026-09-18T07:44:54+00:00",
     "canonical_generated_at": "2026-09-18T05:15:18+00:00",
     "canonical_latest_trade_date": "2026-09-17",
     "canonical_source_run_id": "35309172034",
@@ -432,44 +404,5 @@
     "market_as_of": "2026-09-17",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
-  "formal_new_exposure_allowed": true,
-  "live_execution_overlay": {
-    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
-    "available": true,
-    "market_data_status": "OFF_SESSION",
-    "eligible_quote_count": 4,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 4,
-    "applied_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "missing_codes": [],
-    "coverage_ratio": 1.0,
-    "latest_quote_observed_at": "2026-09-18T15:13:28+08:00",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true,
-    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
-    "market_session_state": "CLOSED",
-    "market_session_active": false,
-    "retry_attempts": 3,
-    "refreshed_at": "2026-09-18T07:13:31.240637+00:00",
-    "refreshed_at_beijing": "2026-09-18T15:13:31.240637+08:00"
-  }
+  "formal_new_exposure_allowed": true
 }
