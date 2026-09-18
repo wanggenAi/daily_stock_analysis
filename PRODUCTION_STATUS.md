@@ -1,11 +1,11 @@
 # GenGe V3.1.1 Production Status
 
 - Health: **HEALTHY**
-- Main SHA: `68371ab0a5450a74afebaa53d05cb03ff88572ae`
-- Canonical source SHA: `f3d41e58b7c77404262f259a6bfa3df5cbb59e2b`
+- Main SHA: `895006e19b5270d25770bb2cf22010f66c9f0aa9`
+- Canonical source SHA: `0ca1aa9ef3953b6e7150e386a0aff74387b5c75b`
 - Drift: `CODE_DRIFT_MAIN_ADVANCED`
-- Canonical snapshot: `d401864a095af9369712`
-- Source run: `35244446308`
+- Canonical snapshot: `a8f2042fdb64536b8baf`
+- Source run: `35309172034`
 - Source workflow: `GenGe V3.1.1 Every-Industry Research`
 - Latest trade date: `2026-09-17`
 - Holdings: `HOLDINGS_IN_SYNC`
@@ -22,7 +22,7 @@
 
 - P0 deep-review priorities: **5**
 - P1 deep-review priorities: **7**
-- Visible mapping gaps: **46**
+- Visible mapping gaps: **150**
 - Price/Value tracked securities: **112**
 - Formal outcome records: **573**
 - Observed 5/20/60 horizons: **539**
