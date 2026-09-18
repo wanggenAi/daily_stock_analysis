@@ -17,7 +17,10 @@ from .company_extraction_status import install_company_extraction_status_adapter
 from .public_data import collect_public_industry_data
 
 _INDUSTRY_CLASSIFICATION_PREFIX_RE = re.compile(r"^[A-Z]\d{2}(?:\.\d+)?\s*")
-_CNINFO_TOPSEARCH_URL = "https://www.cninfo.com.cn/new/information/topSearch/query"
+_CNINFO_TOPSEARCH_URLS = (
+    "https://www.cninfo.com.cn/new/information/topSearch/query",
+    "http://www.cninfo.com.cn/new/information/topSearch/query",
+)
 _ORIGINAL_QUERY_SSE = _company_announcements._query_sse
 _ORIGINAL_QUERY_SSE_MATERIAL_EVENTS = _company_announcements._query_sse_material_events
 _ORIGINAL_LOAD_CNINFO_ORG_IDS = _company_announcements._load_cninfo_org_ids
@@ -126,28 +129,33 @@ class _LazyCninfoOrgIdMap(dict[str, str]):
         if existing or not re.fullmatch(r"\d{6}", code) or code in self._attempted:
             return existing or default
         self._attempted.add(code)
-        try:
-            response = self._session.post(
-                _CNINFO_TOPSEARCH_URL,
-                headers={
-                    **_company_announcements.REQUEST_HEADERS,
-                    "Referer": "https://www.cninfo.com.cn/",
-                    "X-Requested-With": "XMLHttpRequest",
-                    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-                },
-                data={"keyWord": code, "maxNum": "10"},
-                timeout=self._timeout,
-            )
-            response.raise_for_status()
-            payload = response.json()
-            if isinstance(payload, list):
+        for url in _CNINFO_TOPSEARCH_URLS:
+            try:
+                response = self._session.post(
+                    url,
+                    headers={
+                        **_company_announcements.REQUEST_HEADERS,
+                        "Referer": "https://www.cninfo.com.cn/",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+                    },
+                    data={"keyWord": code, "maxNum": "10"},
+                    timeout=self._timeout,
+                )
+                response.raise_for_status()
+                payload = response.json()
+                if not isinstance(payload, list):
+                    continue
                 for item in payload:
-                    if str(item.get("code") or "") == code and str(item.get("orgId") or "").strip():
+                    if (
+                        str(item.get("code") or "") == code
+                        and str(item.get("orgId") or "").strip()
+                    ):
                         org_id = str(item["orgId"]).strip()
                         super().__setitem__(code, org_id)
                         return org_id
-        except Exception:
-            pass
+            except Exception:
+                continue
         return default
 
 

@@ -27,6 +27,26 @@ class _FakeSession:
         return _FakeResponse(self.payload)
 
 
+class _FailingResponse:
+    def raise_for_status(self):
+        raise RuntimeError("topSearch transport failed")
+
+    def json(self):
+        return []
+
+
+class _FallbackSession:
+    def __init__(self, payload):
+        self.payload = payload
+        self.calls = []
+
+    def post(self, url, **kwargs):
+        self.calls.append((url, kwargs))
+        if url.startswith("https://"):
+            return _FailingResponse()
+        return _FakeResponse(self.payload)
+
+
 def test_sse_disclosure_attachment_uses_static_host():
     relative = "/disclosure/listedinfo/announcement/c/new/2026-08-20/example.pdf"
     assert normalize_sse_attachment_url(relative) == (
@@ -92,9 +112,21 @@ def test_cninfo_orgid_map_lazily_recovers_missing_shenzhen_code():
     assert kwargs["data"] == {"keyWord": "001316", "maxNum": "10"}
 
 
+def test_cninfo_orgid_map_falls_back_to_http_when_https_fails():
+    session = _FallbackSession(
+        [{"code": "001316", "orgId": "gssz0001316", "zwjc": "润贝航科"}]
+    )
+    mapping = _LazyCninfoOrgIdMap({}, session, 8)
+
+    assert mapping.get("001316") == "gssz0001316"
+    assert len(session.calls) == 2
+    assert session.calls[0][0].startswith("https://")
+    assert session.calls[1][0].startswith("http://")
+
+
 def test_cninfo_orgid_map_fails_closed_on_nonmatching_response():
     session = _FakeSession([{"code": "001317", "orgId": "gssz0001317"}])
     mapping = _LazyCninfoOrgIdMap({}, session, 8)
     assert mapping.get("001316") is None
     assert mapping.get("001316") is None
-    assert len(session.calls) == 1
+    assert len(session.calls) == 2

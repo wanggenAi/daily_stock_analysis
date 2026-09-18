@@ -97,7 +97,41 @@ jobs:
             exit 0
           done
 
-          echo "No usable successful All-A industry artifact found; static reviewed mapping remains authoritative and unresolved names stay gaps" >&2
+          # Current V3.1 Every-Industry research already persists the same
+          # all_a_quant_screen.csv with explicit BaoStock industry metadata. Use
+          # it as the production fallback instead of leaving most active
+          # candidates unmapped when the legacy discovery artifact is absent.
+          mapfile -t v31_runs < <(
+            gh api "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v31-industry-research.yml/runs?branch=main&status=success&per_page=12" \
+              --jq '.workflow_runs[].id'
+          )
+          for run_id in "${v31_runs[@]}"; do
+            artifact_id="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100" \
+              --jq '[.artifacts[] | select(.name == "genge-v31-every-industry-research" and .expired == false)][0].id // empty')"
+            if [[ ! "$artifact_id" =~ ^[0-9]+$ ]]; then
+              continue
+            fi
+            rm -rf "$root/unpacked"
+            mkdir -p "$root/unpacked"
+            if ! gh api "repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > "$root/report.zip"; then
+              echo "V3.1 industry metadata artifact download degraded for run ${run_id}" >&2
+              continue
+            fi
+            if ! unzip -q -o "$root/report.zip" -d "$root/unpacked"; then
+              echo "V3.1 industry metadata artifact unzip degraded for run ${run_id}" >&2
+              continue
+            fi
+            source_file="$(find "$root/unpacked" -type f -path '*/industry_valuation_source/all_a_quant_screen.csv' -print | sort | tail -1)"
+            if [ -z "$source_file" ]; then
+              continue
+            fi
+            echo "ALL_A_INDUSTRY_SOURCE_CSV=$source_file" >> "$GITHUB_ENV"
+            echo "ALL_A_INDUSTRY_SOURCE_RUN_ID=$run_id" >> "$GITHUB_ENV"
+            echo "resolved V3.1 All-A industry metadata from run ${run_id}: ${source_file}"
+            exit 0
+          done
+
+          echo "No usable current or legacy All-A industry artifact found; static reviewed mapping remains authoritative and unresolved names stay gaps" >&2
           exit 0
 
       - name: Collect and persist slow-lane evidence with optimistic replay
