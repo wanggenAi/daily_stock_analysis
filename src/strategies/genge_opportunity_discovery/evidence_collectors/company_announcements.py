@@ -280,9 +280,11 @@ def _szse_attachment_url(value: Any) -> str:
             return ""
         return re.sub(r"^http://", "https://", text, flags=re.IGNORECASE)
     path = "/" + text.lstrip("/")
-    if path.startswith("/disc/") or path.startswith("/download/"):
+    if path.startswith("/download/"):
         return SZSE_STATIC_HOST + path
-    return SZSE_STATIC_HOST + "/download/" + text.lstrip("/")
+    # SZSE API attachPath values are relative to the /download endpoint,
+    # including paths that themselves begin with /disc/.
+    return SZSE_STATIC_HOST + "/download" + path
 
 
 def _szse_exact_code(item: Mapping[str, Any], code: str) -> bool:
@@ -313,6 +315,7 @@ def _query_szse_announcements(
     result: list[dict[str, Any]] = []
     pages_fetched = 0
     reported_total = 0
+    total_known = False
     query_error = ""
     last_page_count = 0
     for page in range(1, max(1, int(max_pages)) + 1):
@@ -349,16 +352,20 @@ def _query_szse_announcements(
                 raw_rows = []
             if not isinstance(raw_rows, list):
                 raise ValueError("szse_announcement_data_invalid")
-            try:
-                total = int(body.get("announceCount") or 0)
-            except (TypeError, ValueError) as exc:
-                raise ValueError("szse_announcement_total_invalid") from exc
-            if total < 0:
-                raise ValueError("szse_announcement_total_invalid")
-            if raw_rows and total == 0:
-                # Some historical variants omit announceCount. Do not fabricate
-                # completeness from that response; treat the page as partial.
-                total = len(raw_rows)
+            raw_total = body.get("announceCount")
+            if raw_total in (None, ""):
+                total = 0
+                page_total_known = False
+            else:
+                try:
+                    total = int(raw_total)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("szse_announcement_total_invalid") from exc
+                if total < 0:
+                    raise ValueError("szse_announcement_total_invalid")
+                page_total_known = True
+                if raw_rows and total == 0:
+                    raise ValueError("szse_announcement_total_inconsistent")
         except Exception as exc:
             if not pages_fetched:
                 raise
@@ -367,7 +374,9 @@ def _query_szse_announcements(
 
         pages_fetched += 1
         last_page_count = len(raw_rows)
-        reported_total = max(reported_total, total)
+        if page_total_known:
+            total_known = True
+            reported_total = max(reported_total, total)
         for item in raw_rows:
             if not isinstance(item, Mapping) or not _szse_exact_code(item, code):
                 continue
@@ -396,7 +405,7 @@ def _query_szse_announcements(
 
         if not raw_rows:
             break
-        if reported_total and page * int(page_size) >= reported_total:
+        if total_known and page * int(page_size) >= reported_total:
             break
         if len(raw_rows) < int(page_size):
             break
@@ -408,11 +417,14 @@ def _query_szse_announcements(
         "query_error": query_error,
         "truncated": bool(
             query_error
-            or (reported_total and reported_total > pages_fetched * int(page_size))
+            or (total_known and reported_total > pages_fetched * int(page_size))
             or (
                 pages_fetched == max(1, int(max_pages))
                 and last_page_count >= int(page_size)
-                and (not reported_total or pages_fetched * int(page_size) < reported_total)
+                and (
+                    not total_known
+                    or pages_fetched * int(page_size) < reported_total
+                )
             )
         ),
     }
@@ -439,8 +451,7 @@ def _query_szse(
     )
     rows = [
         row for row in rows
-        if "摘要" not in str(row.get("title") or "")
-        and "取消" not in str(row.get("title") or "")
+        if _is_full_annual_report_title(row.get("title"))
     ]
     return sorted(
         rows,
