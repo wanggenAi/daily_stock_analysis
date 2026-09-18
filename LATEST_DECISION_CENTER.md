@@ -40,14 +40,14 @@ G60邮政业(89.73)、A05农、林、牧、渔专业及辅助性活动(87.50)、
 - **本轮没有已授权新股 BUY。**
 - **本轮没有合格 WAIT_PRICE。**
 
-- Terminal REJECT：**0**（只做汇总，不淹没决策页面）。
+- Terminal REJECT：**92**（只做汇总，不淹没决策页面）。
 
 ## 决策完整性
 
 - 全部持仓显式深算完整：**False**
 - 世界/社会结构趋势证据可用：**True**
 - 已验证趋势→A股交接可用：**False**
-- Terminal 机会结果可用：**False**
+- Terminal 机会结果可用：**True**
 
 > UNKNOWN != PASS；研究趋势不自动变成 BUY；no_auto_trade=true。
 
