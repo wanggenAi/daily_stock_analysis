@@ -1,53 +1,51 @@
 # Current Mission
 
 ## Goal
-Keep long ChatGPT web development resumable from live GitHub state without changing stock-analysis business logic.
+Keep long ChatGPT web development resumable from live GitHub state.
 
 ## Current Phase
-CI — PR #183 is open with a state-only diff; wait for/check blocking CI before merge.
+Completed — repository recovery rules, checkpointing, CI validation, merge verification, and persisted-state verification are complete.
 
 ## Last Verified Main
-`90b340af0735b1d11d2adaba003d3910974ad4d9`
-
-Verified resumable-execution implementation commit on main: `feb104def09967cda74db6be7a156fe5ba2a17a7`.
+`f9dbee445b1e43e494030bcf72b990c33aedee2e` (verified before this final state-only checkpoint; live `main` remains authoritative).
 
 ## Active Branch
-`chore/finalize-resumable-task-state`
+none
 
 ## Active PR
-#183 — open
+none
 
 ## CI
-PR #183 CI not yet observed after PR creation. Existing `ci.yml` has blocking `ai-governance`; `scripts/check_ai_assets.py` validates required `TASK_STATE.md` headings and the 120-line limit.
+PR #183 validation completed successfully in CI run `35324057764`: `ai-governance`, `backend-gate`, and `docker-build` passed; `web-gate` was skipped as expected.
 
 ## Production / Artifact
-No production change is intended. Verified persisted `data/opportunity_snapshots/candidate_lifecycle_state.json` blob: `b8207c0db854a9aef0c9e7aef00326c1bab82654`.
+No application behavior change was introduced by this mission. The persisted lifecycle-state blob remains `b8207c0db854a9aef0c9e7aef00326c1bab82654`.
 
 ## Completed
-- Verified current main/history, open PR search, CI workflow, AI instructions, and persisted lifecycle state.
-- Verified `AGENTS.md` contains the GitHub-first long-task recovery protocol.
-- Verified Copilot instructions require live GitHub recovery and stable-phase checkpoints.
-- Verified existing CI validates `TASK_STATE.md`; no new workflow/database/service is needed.
-- Confirmed the resumable-execution implementation commit is already present on current `main`.
-- Repaired the stale checkpoint on a branch whose diff is only `TASK_STATE.md`.
-- Opened PR #183.
+- Verified live main, recent history, open PRs, Actions, agent instructions, and relevant persisted state.
+- Confirmed `AGENTS.md` contains the GitHub-first long-task recovery protocol.
+- Confirmed Copilot instructions mirror the recovery/checkpoint rule.
+- Confirmed existing `ai-governance` validates `TASK_STATE.md`; no new database, service, or workflow was required.
+- Repaired stale task state through PR #183 with a `TASK_STATE.md`-only diff.
+- Passed CI, merged PR #183, and re-read live `main`.
+- Preserved concurrent production-state commits while preparing this final checkpoint.
 
 ## Current Findings
-- Previous `TASK_STATE.md` was stale: it still said PR #181 needed merging although its implementation commit is already on `main`.
-- Only checkpoint-state repair is required; stock business logic remains untouched.
+- Repository state is sufficient to recover the next task without relying on chat context.
+- Live `main` may continue to advance through persisted-data commits; always re-read it before resuming work.
 
 ## Blockers
 none
 
 ## Next Action
-Check PR #183 CI; if green, merge it, then re-read live `main` and production/artifact state.
+For the next task, first read live `main`, recent history, open PRs, Actions/checks, task-relevant persisted data/artifacts, and this file; then replace this completed mission with the new verified mission.
 
 ## Do Not Repeat
 - Do not rebuild the resumable-task mechanism already present on `main`.
-- Do not redesign or re-audit stock selection, valuation, BUY/WAIT_PRICE/REJECT logic, evidence thresholds, or candidate lifecycle.
-- Do not add a database, service, or new workflow for checkpointing.
+- Do not re-run this completed checkpoint-repair mission.
+- Do not change application decision logic merely to support checkpointing.
 
 ## Guardrails
 - Live GitHub state is the source of truth; chat context is not.
 - Keep `TASK_STATE.md` concise, factual, and checkpoint-oriented.
-- Do not change stock business logic, valuation logic, signal thresholds, production workflows, or data-decision standards.
+- Keep checkpointing isolated from application behavior.
