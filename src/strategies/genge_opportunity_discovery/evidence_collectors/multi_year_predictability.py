@@ -19,6 +19,7 @@ from .company_announcements import (
     REQUEST_HEADERS,
     _clean_title,
     _cninfo_publish_date,
+    _is_full_annual_report_title,
     SZSE_ANNUAL_REPORT_CATEGORY,
     SZSE_PERIODIC_REPORT_REFERER,
     _load_cninfo_org_ids,
@@ -208,7 +209,7 @@ def _query_cninfo_history(
     by_year: dict[int, dict[str, Any]] = {}
     for item in response.json().get("announcements") or []:
         title = _clean_title(item.get("announcementTitle"))
-        if "摘要" in title or "英文" in title or "取消" in title:
+        if not _is_full_annual_report_title(title):
             continue
         year = _fiscal_year(title)
         adjunct = str(item.get("adjunctUrl") or "").strip()
