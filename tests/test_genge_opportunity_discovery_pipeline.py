@@ -398,7 +398,7 @@ def test_cninfo_uses_official_org_id_and_prefers_full_annual_report() -> None:
     assert session.posted_data["plate"] == "sh"
 
 
-def test_company_collector_prefers_cninfo_official_pdf_for_shanghai(
+def test_company_collector_prefers_sse_official_pdf_for_shanghai(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     class FakeResponse:
@@ -420,24 +420,28 @@ def test_company_collector_prefers_cninfo_official_pdf_for_shanghai(
                 return FakeResponse(
                     payload={"stockList": [{"code": "600519", "orgId": "gssh0600519"}]},
                 )
-            assert url == "https://static.cninfo.com.cn/finalpage/2026-04-17/report.PDF"
+            if url == "https://query.sse.com.cn/security/stock/queryCompanyBulletin.do":
+                return FakeResponse(
+                    payload={
+                        "pageHelp": {
+                            "data": [
+                                {
+                                    "TITLE": "贵州茅台2025年年度报告",
+                                    "SSEDATE": "2026-04-17",
+                                    "URL": "/disclosure/listedinfo/announcement/c/new/2026-04-17/report.PDF",
+                                }
+                            ]
+                        }
+                    },
+                )
+            assert url == (
+                "https://www.sse.com.cn/disclosure/listedinfo/announcement/c/new/"
+                "2026-04-17/report.PDF"
+            )
             return FakeResponse(content="营业收入 100亿元，同比增长 5%".encode("utf-8"))
 
-        def post(self, url: str, *, data: dict[str, str], **_kwargs) -> FakeResponse:
-            assert url == "https://www.cninfo.com.cn/new/hisAnnouncement/query"
-            assert data["column"] == "sse"
-            timestamp = int(datetime(2026, 4, 17, tzinfo=timezone.utc).timestamp() * 1000)
-            return FakeResponse(
-                payload={
-                    "announcements": [
-                        {
-                            "announcementTitle": "贵州茅台2025年年度报告",
-                            "announcementTime": timestamp,
-                            "adjunctUrl": "finalpage/2026-04-17/report.PDF",
-                        }
-                    ]
-                },
-            )
+        def post(self, url: str, **_kwargs) -> FakeResponse:
+            raise AssertionError(f"Shanghai collector must not query CNINFO: {url}")
 
     monkeypatch.setattr(company_announcements.requests, "Session", lambda: FakeSession())
     evidence_rows, audit_rows, summary = company_announcements.collect_company_announcements(
@@ -449,10 +453,9 @@ def test_company_collector_prefers_cninfo_official_pdf_for_shanghai(
 
     assert audit_rows == []
     assert summary["company_evidence_rows"] == 1
-    assert evidence_rows[0]["source_domain"] == "static.cninfo.com.cn"
-    assert evidence_rows[0]["collector"] == "cninfo_company_announcement"
+    assert evidence_rows[0]["source_domain"] == "www.sse.com.cn"
+    assert evidence_rows[0]["collector"] == "sse_company_announcement"
     assert evidence_rows[0]["evidence_status"] == "VERIFIED"
-
 
 def test_material_event_collector_preserves_status_timezone_and_inventory(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
