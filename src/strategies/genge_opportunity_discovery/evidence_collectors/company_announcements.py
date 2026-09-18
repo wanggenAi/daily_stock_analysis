@@ -569,11 +569,12 @@ def _material_event_candidates(
     timeout: int,
     cninfo_org_ids: Mapping[str, str],
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    # Prefer the issuer's primary exchange for Shanghai-listed securities.
+    if code.startswith("6"):
+        return _query_sse_material_events(code, as_of, session, timeout)
     org_id = str(cninfo_org_ids.get(code) or "").strip()
     if org_id:
         return _query_cninfo_material_events(code, org_id, as_of, session, timeout)
-    if code.startswith("6"):
-        return _query_sse_material_events(code, as_of, session, timeout)
     raise RuntimeError("official_material_event_endpoint_unavailable")
 
 
@@ -636,11 +637,13 @@ def _announcement_candidates(
     timeout: int,
     cninfo_org_ids: Mapping[str, str],
 ) -> list[dict[str, Any]]:
+    # Shanghai-listed issuers have a first-party SSE disclosure endpoint. Use
+    # it directly instead of routing through the cross-market CNINFO adapter.
+    if code.startswith("6"):
+        return _query_sse(code, as_of, session, timeout)
     org_id = str(cninfo_org_ids.get(code) or "").strip()
     if org_id:
         return _query_cninfo(code, org_id, as_of, session, timeout)
-    if code.startswith("6"):
-        return _query_sse(code, as_of, session, timeout)
     return []
 
 
@@ -702,9 +705,11 @@ def collect_company_announcements(
             continue
         task_count += 1
         collector = (
-            "cninfo_company_announcement"
+            "sse_company_announcement"
+            if code.startswith("6")
+            else "cninfo_company_announcement"
             if cninfo_org_ids.get(code)
-            else "sse_company_announcement"
+            else "official_company_announcement_unavailable"
         )
         report_period = str(as_of.year - 1)
         key = cache.key_for(
@@ -890,7 +895,13 @@ def collect_company_material_events(
         if not code:
             continue
         task_count += 1
-        provider_collector = "cninfo_material_event" if cninfo_org_ids.get(code) else "sse_material_event"
+        provider_collector = (
+            "sse_material_event"
+            if code.startswith("6")
+            else "cninfo_material_event"
+            if cninfo_org_ids.get(code)
+            else "official_material_event_unavailable"
+        )
         audit_collector = "official_material_event_scan"
         key = cache.key_for({
             "collector": audit_collector,
