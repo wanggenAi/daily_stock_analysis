@@ -747,6 +747,14 @@ def _is_cyclical_or_resource(industry: Any, reports_text: Iterable[str]) -> bool
     return any(pattern.search(sample) for pattern in _RESOURCE_REPORT_PATTERNS)
 
 
+def _official_report_source_domain(code: str) -> str:
+    if code.startswith("6"):
+        return "sse.com.cn"
+    if code.startswith(("0", "2", "3")):
+        return "szse.cn"
+    return "cninfo.com.cn"
+
+
 def _unknown_row(code: str, industry: str, reason: str) -> dict[str, Any]:
     payload = {"code": code, "industry": industry, "reason": reason, "rule": RULE_VERSION}
     return {
@@ -761,7 +769,7 @@ def _unknown_row(code: str, industry: str, reason: str) -> dict[str, Any]:
         "metrics_by_year": [],
         "evidence_status": "OBSERVED_CONTEXT",
         "source_type": "OFFICIAL_REPORT",
-        "source_domain": "cninfo.com.cn",
+        "source_domain": _official_report_source_domain(code),
         "publish_date": "",
         "original_url": "",
         "normalized_summary": reason,
