@@ -4,21 +4,21 @@
 Keep long ChatGPT web development resumable from live GitHub state without changing stock-analysis business logic.
 
 ## Current Phase
-Checkpoint repair — resumable execution mechanism is already on `main`; repair stale `TASK_STATE.md`, then verify through PR/CI/merge.
+CI — PR #183 is open with a state-only diff; wait for/check blocking CI before merge.
 
 ## Last Verified Main
 `90b340af0735b1d11d2adaba003d3910974ad4d9`
 
-Current verified implementation commit on main: `feb104def09967cda74db6be7a156fe5ba2a17a7`.
+Verified resumable-execution implementation commit on main: `feb104def09967cda74db6be7a156fe5ba2a17a7`.
 
 ## Active Branch
 `chore/finalize-resumable-task-state`
 
 ## Active PR
-none
+#183 — open
 
 ## CI
-Current branch CI not run yet. Existing `ci.yml` contains blocking `ai-governance`; `scripts/check_ai_assets.py` validates required `TASK_STATE.md` headings and the 120-line limit.
+PR #183 CI not yet observed after PR creation. Existing `ci.yml` has blocking `ai-governance`; `scripts/check_ai_assets.py` validates required `TASK_STATE.md` headings and the 120-line limit.
 
 ## Production / Artifact
 No production change is intended. Verified persisted `data/opportunity_snapshots/candidate_lifecycle_state.json` blob: `b8207c0db854a9aef0c9e7aef00326c1bab82654`.
@@ -29,16 +29,18 @@ No production change is intended. Verified persisted `data/opportunity_snapshots
 - Verified Copilot instructions require live GitHub recovery and stable-phase checkpoints.
 - Verified existing CI validates `TASK_STATE.md`; no new workflow/database/service is needed.
 - Confirmed the resumable-execution implementation commit is already present on current `main`.
+- Repaired the stale checkpoint on a branch whose diff is only `TASK_STATE.md`.
+- Opened PR #183.
 
 ## Current Findings
 - Previous `TASK_STATE.md` was stale: it still said PR #181 needed merging although its implementation commit is already on `main`.
-- Only checkpoint-state repair is required; stock business logic must remain untouched.
+- Only checkpoint-state repair is required; stock business logic remains untouched.
 
 ## Blockers
 none
 
 ## Next Action
-Open a PR containing only the checkpoint-state repair, run CI, merge when green, then verify live `main` and production/artifact state.
+Check PR #183 CI; if green, merge it, then re-read live `main` and production/artifact state.
 
 ## Do Not Repeat
 - Do not rebuild the resumable-task mechanism already present on `main`.
