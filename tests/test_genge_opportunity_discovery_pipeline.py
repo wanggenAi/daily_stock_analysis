@@ -533,6 +533,14 @@ def test_material_event_collector_preserves_status_timezone_and_inventory(
             })
 
     monkeypatch.setattr(company_announcements.requests, "Session", FakeSession)
+    monkeypatch.setattr(
+        company_announcements,
+        "extract_text_from_response",
+        lambda content, _content_type, _source_url="": (
+            content.decode("utf-8"),
+            "fixture_text",
+        ),
+    )
     cache = EvidenceCache(tmp_path / "cache")
     inputs = [{"code": "000088", "stock_name": "盐田港", "normalized_industry": "港口"}]
     evidence_rows, audit_rows, summary = company_announcements.collect_company_material_events(
