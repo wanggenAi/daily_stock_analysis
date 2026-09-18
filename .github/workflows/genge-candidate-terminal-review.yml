@@ -443,7 +443,7 @@ jobs:
           assert summary['no_auto_trade'] is True
           assert lineage['formal_authority_unchanged'] is True
           assert lineage['no_auto_trade'] is True
-          assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','REJECT'} for row in rows)
+          assert all(row['terminal_decision'] in {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'} for row in rows)
           assert all(row['decision_authority'] == 'RESEARCH_TERMINAL_VIEW' for row in rows)
           assert all(row['formal_signal_eligible'] == 'False' for row in rows)
           assert all(row['automatic_promotion_allowed'] == 'False' for row in rows)

@@ -131,8 +131,23 @@ def build_review_rows(
 ) -> list[dict[str, Any]]:
     priority_map = priority_map or {}
     selected = sorted((dict(row) for row in valuation_rows if _code(row.get("code"))), key=lambda r: _sort_key(r, priority_map))
+    regular_limit = max(0, int(limit))
+    admitted = list(selected[:regular_limit])
+    admitted_codes = {_code(row.get("code")) for row in admitted}
+    # Durable ACTIVE lifecycle recall is a memory contract, not a ranking bonus.
+    # Preserve those rows beyond the ordinary review limit so an existing
+    # candidate cannot disappear merely because today's broad ranking changed.
+    for row in selected[regular_limit:]:
+        code = _code(row.get("code"))
+        recalled = str(row.get("ledger_candidate_recall") or "").strip().lower() in {
+            "1", "true", "yes", "y"
+        }
+        if recalled and code and code not in admitted_codes:
+            admitted.append(row)
+            admitted_codes.add(code)
+
     rows: list[dict[str, Any]] = []
-    for raw in selected[: max(0, int(limit))]:
+    for raw in admitted:
         code = _code(raw.get("code"))
         plan = dict(plan_map.get(code) or {})
         priority = dict(priority_map.get(code) or {})
@@ -202,6 +217,11 @@ def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path
         writer.writeheader(); writer.writerows(rows)
     summary = {
         "candidate_count": len(rows),
+        "ordinary_limit": max(0, int(limit)),
+        "durable_lifecycle_recall_count": sum(
+            str(row.get("ledger_candidate_recall") or "").strip().lower() in {"1", "true", "yes", "y"}
+            for row in rows
+        ),
         "research_required_count": sum(row.get("v31_review_status") == "RESEARCH_REQUIRED" for row in rows),
         "valuation_strategy_unfinished_count": sum(row.get("v31_valuation_completion_status") == "UNFINISHED" for row in rows),
         "valuation_strategy_completed_no_anchor_count": sum(row.get("v31_valuation_completion_status") == "COMPLETED_NO_ANCHOR" for row in rows),

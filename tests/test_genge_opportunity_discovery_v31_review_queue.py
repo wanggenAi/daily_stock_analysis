@@ -57,3 +57,35 @@ def test_high_legacy_scores_never_manufacture_v31_pass():
     assert row["v31_buy_ready"] is False
     assert row["formal_signal_eligible"] is False
     assert row["automatic_promotion_allowed"] is False
+
+
+def test_active_lifecycle_recall_survives_ordinary_queue_limit():
+    valuation = [
+        {
+            "code": "600001",
+            "stock_name": "Top",
+            "industry": "制造业",
+            "valuation_research_rank": "1",
+            "quant_score": "99",
+        },
+        {
+            "code": "002120",
+            "stock_name": "韵达股份",
+            "industry": "物流",
+            "valuation_research_rank": "999",
+            "quant_score": "10",
+            "ledger_candidate_recall": "True",
+            "candidate_memory_source": "LIFECYCLE_STATE_JSON",
+        },
+    ]
+
+    rows = build_review_rows(valuation, plan_map={}, limit=1)
+    codes = [row["code"] for row in rows]
+
+    assert codes == ["600001", "002120"]
+    recalled = rows[1]
+    assert recalled["ledger_candidate_recall"] == "True"
+    assert recalled["candidate_memory_source"] == "LIFECYCLE_STATE_JSON"
+    assert recalled["formal_signal_eligible"] is False
+    assert recalled["automatic_promotion_allowed"] is False
+

@@ -87,9 +87,9 @@ def test_buy_only_mirrors_formal_and_frozen_production_buy():
     assert row["no_auto_trade"] is True
 
 
-def test_production_buy_without_formal_authority_is_rejected():
+def test_production_buy_without_formal_authority_is_research_gap():
     row = terminalize_candidate(_master(), {}, _production("BUY"))
-    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_decision"] == "RESEARCH_GAP"
     assert row["terminal_formal_buy_authorized"] is False
 
 
@@ -110,7 +110,7 @@ def test_high_confidence_price_only_wait_uses_frozen_080_ceiling():
     assert row["wait_price_semantics"] == "frozen_formal_buy_ceiling"
 
 
-def test_low_confidence_wait_is_reject_not_wait_price():
+def test_low_confidence_wait_is_research_gap_not_wait_price():
     row = terminalize_candidate(
         _master(),
         _formal(),
@@ -122,14 +122,14 @@ def test_low_confidence_wait_is_reject_not_wait_price():
             current_price="9",
         ),
     )
-    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_decision"] == "RESEARCH_GAP"
 
 
-def test_unknown_hard_gate_is_terminal_evidence_reject():
+def test_unknown_hard_gate_is_explicit_research_gap():
     master = _master()
     master.pop("v31_moat_status")
     row = terminalize_candidate(master, _formal(), _production("WAIT"))
-    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_decision"] == "RESEARCH_GAP"
     assert row["terminal_reason_class"] == "EVIDENCE_INSUFFICIENT"
     assert "hard_gate_unknown:moat" in row["terminal_reason_codes"]
 
@@ -143,9 +143,9 @@ def test_hard_gate_failure_is_terminal_reject():
     assert row["terminal_retryable_next_cycle"] is False
 
 
-def test_master_candidate_outside_strict_formal_review_is_not_left_in_limbo():
+def test_master_candidate_outside_strict_formal_review_remains_research_gap():
     row = terminalize_candidate(_master(), None, None)
-    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_decision"] == "RESEARCH_GAP"
     assert row["terminal_reason_class"] == "FORMAL_REVIEW_NOT_PROVEN"
     assert row["terminal_full_review_attempted"] is True
 
@@ -177,8 +177,8 @@ def test_every_master_row_gets_exactly_one_terminal_state_and_duplicates_collaps
         ],
     )
     assert len(rows) == 3
-    assert [row["terminal_decision"] for row in rows] == ["BUY", "WAIT_PRICE", "REJECT"]
-    assert all(row["terminal_decision"] in {"BUY", "WAIT_PRICE", "REJECT"} for row in rows)
+    assert [row["terminal_decision"] for row in rows] == ["BUY", "WAIT_PRICE", "RESEARCH_GAP"]
+    assert all(row["terminal_decision"] in {"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"} for row in rows)
     assert all(row["no_auto_trade"] is True for row in rows)
 
 
@@ -221,10 +221,10 @@ def test_terminal_report_exposes_actionable_fields_in_plain_job_log_source(tmp_p
     assert "authority=RESEARCH_TERMINAL_VIEW" in text
 
 
-def test_evidence_exhaustion_is_retryable_reject_not_unknown_pass():
+def test_evidence_exhaustion_is_retryable_research_gap_not_unknown_pass():
     master = _master()
     master.pop("v31_moat_status")
     row = terminalize_candidate(master, _formal(), _production("WAIT"))
-    assert row["terminal_decision"] == "REJECT"
+    assert row["terminal_decision"] == "RESEARCH_GAP"
     assert row["terminal_retryable_next_cycle"] is True
     assert row["terminal_formal_buy_authorized"] is False

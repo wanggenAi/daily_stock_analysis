@@ -3,15 +3,15 @@
 This module never creates trade authority.  It consumes the broad postscan
 Master Opportunity Ranking as the candidate universe, then overlays existing
 Formal-BUY and GenGe V3.1.1 Production outputs.  Every candidate ends the current
-cycle as exactly BUY, WAIT_PRICE, or REJECT.
+cycle as BUY, WAIT_PRICE, RESEARCH_GAP, or REJECT.
 
 Safety invariants:
 * BUY only mirrors an already-authorized Formal BUY + frozen Production BUY.
 * WAIT_PRICE only mirrors a HIGH-confidence Production WAIT whose blocker is
   the frozen formal-BUY price gate; the wait price is the production 0.80 x
   neutral-value ceiling, never the looser V3.1 diagnostic bands.
-* UNKNOWN/missing evidence remains non-pass and becomes a retryable current-cycle
-  REJECT rather than indefinite RESEARCH_CANDIDATE / RAISE_ONLY limbo.
+* UNKNOWN/missing evidence remains non-pass and becomes an explicit retryable
+  RESEARCH_GAP. REJECT is reserved for explicit logical/policy failure.
 * Canonical Authority, Hard Gate, Confidence Gate and no-auto-trade are unchanged.
 """
 from __future__ import annotations
@@ -28,9 +28,9 @@ from .production_model import FORMAL_BUY_MAX_PRICE_TO_NEUTRAL
 from .selection_framework_v31 import assess_v31, execution_universe_status, merge_research_inputs
 
 DISCLAIMER = "仅用于公开数据长期研究与人工复核，不构成买入或卖出建议，不应自动交易。"
-POLICY_VERSION = "candidate_terminal_decision_v2_master_production_overlay"
+POLICY_VERSION = "candidate_terminal_decision_v3_research_gap_lifecycle"
 DECISION_AUTHORITY = "RESEARCH_TERMINAL_VIEW"
-TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "REJECT"})
+TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
 PRICE_ONLY_REASON_CODES = frozenset(
     {"BUY_MARGIN_OF_SAFETY_INSUFFICIENT", "PRICE_TOO_CLOSE_TO_BASE_VALUE"}
 )
@@ -166,7 +166,7 @@ def terminalize_candidate(
     full_review_attempted = _attempted_deep_review(master)
     evidence_complete = _evidence_complete(assessment)
 
-    decision = "REJECT"
+    decision = "RESEARCH_GAP"
     reason_class = "EVIDENCE_INSUFFICIENT"
     reason_codes: list[str] = []
     retryable = True
@@ -174,6 +174,7 @@ def terminalize_candidate(
     formal_authorized = False
 
     if execution_universe_status(code) != "EXECUTION_ELIGIBLE":
+        decision = "REJECT"
         reason_class = "EXECUTION_UNIVERSE_RESEARCH_ONLY"
         reason_codes = [f"execution_universe:{execution_universe_status(code)}"]
         retryable = False
@@ -210,8 +211,9 @@ def terminalize_candidate(
                 wait_price = candidate_wait
                 retryable = True
 
-        if decision == "REJECT":
+        if decision == "RESEARCH_GAP":
             if assessment.hard_gate_failures:
+                decision = "REJECT"
                 reason_class = "HARD_GATE_FAILED"
                 reason_codes = [f"hard_gate_failed:{name}" for name in assessment.hard_gate_failures]
                 retryable = False
@@ -243,6 +245,10 @@ def terminalize_candidate(
             elif action == "WAIT":
                 reason_class = "NON_PRICE_WAIT"
                 reason_codes = sorted(reasons) or ["wait_reason_unavailable"]
+            elif action == "REJECT":
+                decision = "REJECT"
+                reason_class = "NON_BUY_PRODUCTION_ACTION"
+                reason_codes = ["production_action:REJECT"]
             else:
                 reason_class = "NON_BUY_PRODUCTION_ACTION"
                 reason_codes = [f"production_action:{action or 'UNKNOWN'}"]
@@ -298,7 +304,7 @@ def build_terminal_rows(
             continue
         rows.append(terminalize_candidate(raw, formal_map.get(code), production_map.get(code)))
         seen.add(code)
-    priority = {"BUY": 0, "WAIT_PRICE": 1, "REJECT": 2}
+    priority = {"BUY": 0, "WAIT_PRICE": 1, "RESEARCH_GAP": 2, "REJECT": 3}
     rows.sort(key=lambda row: (priority[row["terminal_decision"]], float(row.get("master_research_rank") or 10**9), row["code"]))
     return rows
 
@@ -337,6 +343,7 @@ def write_report(master_csv: Path, formal_csv: Path, production_csv: Path, outpu
         "terminalized_count": len(rows),
         "buy_count": counts["BUY"],
         "wait_price_count": counts["WAIT_PRICE"],
+        "research_gap_count": counts["RESEARCH_GAP"],
         "reject_count": counts["REJECT"],
         "reason_counts": dict(sorted(reasons.items())),
         "research_limbo_count": 0,
@@ -357,7 +364,7 @@ def write_report(master_csv: Path, formal_csv: Path, production_csv: Path, outpu
     lines = [
         "# Candidate Terminal Decisions", "", DISCLAIMER, "",
         f"- candidates: {len(rows)}", f"- BUY: {counts['BUY']}",
-        f"- WAIT_PRICE: {counts['WAIT_PRICE']}", f"- REJECT: {counts['REJECT']}",
+        f"- WAIT_PRICE: {counts['WAIT_PRICE']}", f"- RESEARCH_GAP: {counts['RESEARCH_GAP']}", f"- REJECT: {counts['REJECT']}",
         "- research limbo: 0",
         f"- WAIT_PRICE ceiling: frozen Production gate <= {FORMAL_BUY_MAX_PRICE_TO_NEUTRAL:.2f} x neutral value",
         "- BUY authority: mirror of existing Formal BUY + frozen Production BUY only", "",
