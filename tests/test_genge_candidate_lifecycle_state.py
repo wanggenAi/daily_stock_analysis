@@ -7,6 +7,7 @@ from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import
     INVALIDATED,
     apply_explicit_transition,
     apply_snapshot,
+    apply_terminal_memory,
     empty_state,
 )
 from src.strategies.genge_opportunity_discovery.canonical_snapshot import (
@@ -192,6 +193,109 @@ def test_upgrade_does_not_reactivate_invalidated_candidate() -> None:
 
     assert event is not None
     assert state["candidates"]["600312"]["lifecycle_state"] == INVALIDATED
+
+
+def test_terminal_research_gap_preserves_existing_wait_price_memory() -> None:
+    state = empty_state()
+    state["candidates"]["002120"] = {
+        "code": "002120",
+        "stock_name": "韵达股份",
+        "lifecycle_state": ACTIVE,
+        "research_tier": "PENDING",
+        "seen_count": 1,
+        "history": [],
+        "applied_evidence_ids": [],
+    }
+    state, first_events = apply_terminal_memory(
+        state,
+        [
+            {
+                "code": "002120",
+                "terminal_decision": "WAIT_PRICE",
+                "terminal_reason_class": "HIGH_CONFIDENCE_PRICE_ONLY_BLOCK",
+                "terminal_reason_codes": "PRICE_TOO_CLOSE_TO_BASE_VALUE",
+                "terminal_current_price": 9.0,
+                "wait_price_max": 8.0,
+                "source_production_action": "WAIT",
+                "source_valuation_confidence": "HIGH",
+            }
+        ],
+        memory_id="terminal-day-1",
+        observed_at="2026-09-16T10:00:00+00:00",
+    )
+    assert len(first_events) == 1
+    assert state["candidates"]["002120"]["last_terminal_decision"] == "WAIT_PRICE"
+    assert state["candidates"]["002120"]["last_wait_price_max"] == 8.0
+
+    state, second_events = apply_terminal_memory(
+        state,
+        [
+            {
+                "code": "002120",
+                "terminal_decision": "RESEARCH_GAP",
+                "terminal_reason_class": "EVIDENCE_INSUFFICIENT",
+                "terminal_reason_codes": "hard_gate_unknown:financial_safety",
+                "source_production_action": "",
+                "source_valuation_confidence": "",
+            }
+        ],
+        memory_id="terminal-day-2",
+        observed_at="2026-09-17T10:00:00+00:00",
+    )
+
+    candidate = state["candidates"]["002120"]
+    assert len(second_events) == 1
+    assert second_events[0]["event"] == "TERMINAL_RESEARCH_GAP_PRESERVED_WAIT_PRICE"
+    assert candidate["last_terminal_decision"] == "WAIT_PRICE"
+    assert candidate["last_wait_price_max"] == 8.0
+    assert candidate["price_zone"] == "WAIT_PRICE"
+    assert candidate["next_action"] == "CONTINUE_RESEARCH_WAIT_PRICE"
+    assert candidate["last_research_gap_reason_class"] == "EVIDENCE_INSUFFICIENT"
+
+
+def test_terminal_memory_rejects_unauthorized_buy_or_invalid_wait_price() -> None:
+    state = empty_state()
+    state["candidates"]["002120"] = {
+        "code": "002120",
+        "stock_name": "韵达股份",
+        "lifecycle_state": ACTIVE,
+        "research_tier": "PENDING",
+        "seen_count": 1,
+        "history": [],
+        "applied_evidence_ids": [],
+    }
+
+    with pytest.raises(ValueError, match="unauthorized terminal BUY"):
+        apply_terminal_memory(
+            state,
+            [
+                {
+                    "code": "002120",
+                    "terminal_decision": "BUY",
+                    "terminal_formal_buy_authorized": False,
+                    "source_production_action": "BUY",
+                    "source_valuation_confidence": "HIGH",
+                }
+            ],
+            memory_id="terminal-invalid-buy",
+            observed_at="2026-09-17T10:00:00+00:00",
+        )
+
+    with pytest.raises(ValueError, match="invalid terminal WAIT_PRICE"):
+        apply_terminal_memory(
+            state,
+            [
+                {
+                    "code": "002120",
+                    "terminal_decision": "WAIT_PRICE",
+                    "wait_price_max": "",
+                    "source_production_action": "WAIT",
+                    "source_valuation_confidence": "HIGH",
+                }
+            ],
+            memory_id="terminal-invalid-wait",
+            observed_at="2026-09-17T10:00:00+00:00",
+        )
 
 
 def test_out_of_order_snapshot_is_rejected() -> None:
