@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-18T05:41:57+00:00",
+  "generated_at": "2026-09-18T05:43:40+00:00",
   "canonical_snapshot_id": "a8f2042fdb64536b8baf",
   "canonical_source_run_id": "35309172034",
   "latest_trade_date": "2026-09-17",
@@ -355,17 +355,8 @@
     "rows": []
   },
   "event_review": {
-    "triggered": true,
-    "trigger_codes": [
-      "001316",
-      "601318",
-      "603993",
-      "002941"
-    ],
-    "signal_digest": "bac77a2c5bdb7665eb345e8a161427185058a8d341aa5247911892997a05e645",
-    "closure_status": "EVENT_TRIGGER_FAILED",
-    "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-    "formal_action_recomputed": false
+    "triggered": false,
+    "trigger_codes": []
   },
   "hourly_context": {
     "available": false,
@@ -405,7 +396,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-18T05:41:57+00:00",
+    "evaluated_at": "2026-09-18T05:43:40+00:00",
     "canonical_generated_at": "2026-09-18T05:15:18+00:00",
     "canonical_latest_trade_date": "2026-09-17",
     "canonical_source_run_id": "35309172034",
@@ -413,160 +404,5 @@
     "market_as_of": "2026-09-17",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
-  "formal_new_exposure_allowed": true,
-  "execution_consumption_reconciliation": {
-    "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "a8f2042fdb64536b8baf",
-    "canonical_source_run_id": "35309172034",
-    "matching_consumption_count": 0,
-    "applied_consumption_count": 0,
-    "applied": [],
-    "formal_action_mutation_allowed": false,
-    "automatic_order_allowed": false,
-    "no_auto_trade": true
-  },
-  "event_deep_review_closure": {
-    "contract_version": "GEN_GE_INVESTOR_EVENT_CLOSURE_V1",
-    "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-    "formal_action_recomputed": false,
-    "no_auto_trade": true,
-    "signal_digest": "bac77a2c5bdb7665eb345e8a161427185058a8d341aa5247911892997a05e645",
-    "event_source_snapshot_id": "d401864a095af9369712",
-    "event_source_run_id": "35244446308",
-    "closure_status": "EVENT_TRIGGER_FAILED",
-    "event_research_source_run_id": "",
-    "event_finalizer_run_id": "",
-    "event_finalized_snapshot_id": "",
-    "rows": [
-      {
-        "code": "001316",
-        "name": "润贝航科",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD_REVIEW",
-        "formal_action_after": "HOLD_REVIEW",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 28.04,
-        "latest_price_observed_at": "2026-09-18T13:13:51+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "002941",
-        "name": "新疆交建",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "KEEP",
-        "trigger_reasons": [
-          "NEW_EVIDENCE_REUNDERWRITE_LEAD",
-          "REUNDERWRITE_REQUIRED"
-        ],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 10.51,
-        "latest_price_observed_at": "2026-09-18T13:13:51+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "601318",
-        "name": "中国平安",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD",
-        "formal_action_after": "HOLD",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 53.41,
-        "latest_price_observed_at": "2026-09-18T13:13:50+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "603993",
-        "name": "洛阳钼业",
-        "event_result_state": "EVENT_TRIGGER_FAILED",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD",
-        "formal_action_after": "HOLD",
-        "formal_action_changed": null,
-        "result": "事件要求深算，但完整生产链未成功闭环；不得把研究信号当作正式交易动作。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 17.49,
-        "latest_price_observed_at": "2026-09-18T13:13:50+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "002612",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 17.39,
-        "latest_price_observed_at": "2026-09-18T13:13:51+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "600406",
-        "name": "国电南瑞",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "REDUCE_25",
-        "formal_action_after": "REDUCE_25",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。",
-        "latest_price": 22.06,
-        "latest_price_observed_at": "2026-09-18T13:13:52+08:00",
-        "price_evidence_status": "PRICE_GATE_NOT_MET"
-      },
-      {
-        "code": "600640",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 12.06,
-        "latest_price_observed_at": "2026-09-18T13:13:48+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "603105",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 8.17,
-        "latest_price_observed_at": "2026-09-18T13:13:52+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      }
-    ]
-  }
+  "formal_new_exposure_allowed": true
 }
