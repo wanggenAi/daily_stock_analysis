@@ -1,9 +1,9 @@
 """Terminal research-only decisions for requested V3.1 deep-calculation worksets.
 
-Every requested code converges to BUY, WAIT_PRICE, or REJECT at research authority.
-UNKNOWN hard gates are never promoted: after bounded evidence recovery they converge
-fail-closed to REJECT_EVIDENCE_INSUFFICIENT and may be reopened only by a new
-evidence epoch. Formal/Production trading authority is never created here.
+Every requested code converges to BUY, WAIT_PRICE, RESEARCH_GAP, or REJECT at research authority.
+UNKNOWN hard gates are never promoted: after bounded evidence recovery they remain
+explicit RESEARCH_GAP and may be reopened by new evidence. REJECT is reserved for
+explicit hard-gate failure. Formal/Production trading authority is never created here.
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from typing import Any, Iterable, Mapping
 from .public_material_gate_recovery import merge_recovered_gates
 
 CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
-DECISIONS = {"BUY", "WAIT_PRICE", "REJECT"}
+DECISIONS = {"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"}
 GATES = ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")
 PE_BUY_RATIO = 0.80
 SPECIALIZED_INDUSTRY_PREFIXES = ("J66", "J67", "J68", "B08", "B09", "C32")
@@ -101,11 +101,11 @@ def _valuation_decision(row: Mapping[str, Any]) -> tuple[str, str, dict[str, Any
         "required_profit_growth_pct": _num(row.get("required_profit_growth_pct")),
     }
     if industry.startswith(SPECIALIZED_INDUSTRY_PREFIXES):
-        return "REJECT", "SPECIALIZED_VALUATION_REQUIRED", snapshot
+        return "RESEARCH_GAP", "SPECIALIZED_VALUATION_REQUIRED", snapshot
     if financial_status != "OK" or quality_conf != "HIGH":
-        return "REJECT", "VALUATION_FINANCIAL_EVIDENCE_INCOMPLETE", snapshot
+        return "RESEARCH_GAP", "VALUATION_FINANCIAL_EVIDENCE_INCOMPLETE", snapshot
     if current_pe is None or median_pe is None or current_pe <= 0 or median_pe <= 0:
-        return "REJECT", "VALUATION_REFERENCE_INCOMPLETE", snapshot
+        return "RESEARCH_GAP", "VALUATION_REFERENCE_INCOMPLETE", snapshot
     ratio = current_pe / median_pe
     if ratio <= PE_BUY_RATIO and expectation == "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE":
         return "BUY", "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT", snapshot
@@ -141,18 +141,18 @@ def build_terminal_decisions(
         valuation = valuation_by_code.get(code, {})
         priority = priority_by_code.get(code, {})
         if not profile:
-            decision, reason = "REJECT", "DEEP_PROFILE_MISSING"
+            decision, reason = "RESEARCH_GAP", "DEEP_PROFILE_MISSING"
         elif failed:
             decision, reason = "REJECT", "HARD_GATE_FAIL"
         elif unknown:
-            decision, reason = "REJECT", "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
+            decision, reason = "RESEARCH_GAP", "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
         else:
             decision, reason, _ = _valuation_decision(valuation)
 
         _, _, valuation_snapshot = _valuation_decision(valuation)
         quant_score = _num(valuation.get("quant_score"))
         pe_ratio = valuation_snapshot.get("pe_to_history_ratio")
-        evidence_blocked = decision == "REJECT" and reason == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
+        evidence_blocked = decision == "RESEARCH_GAP" and reason == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
         attractive_screen = bool(
             evidence_blocked
             and quant_score is not None
@@ -195,7 +195,7 @@ def build_terminal_decisions(
             }
         )
 
-    order = {"BUY": 0, "WAIT_PRICE": 1, "REJECT": 2}
+    order = {"BUY": 0, "WAIT_PRICE": 1, "RESEARCH_GAP": 2, "REJECT": 3}
     rows.sort(key=lambda r: (order[r["research_decision"]], -(r.get("quant_score") or -1.0), r["code"]))
     urgent = [r for r in rows if r.get("urgent_research") is True]
     urgent.sort(
@@ -223,7 +223,7 @@ def build_terminal_decisions(
         "no_auto_trade": True,
         "terminal_rows": rows,
         "urgent_research_queue": urgent,
-        "interpretation": "BUY/WAIT_PRICE are research-only outputs and never create Formal/Production authority. UNKNOWN hard gates converge fail-closed to REJECT after bounded evidence recovery and may reopen only on new evidence.",
+        "interpretation": "BUY/WAIT_PRICE are research-only outputs and never create Formal/Production authority. UNKNOWN hard gates remain explicit RESEARCH_GAP after bounded evidence recovery; only explicit hard-gate failure is REJECT.",
     }
 
 
@@ -233,7 +233,7 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
         "# GenGe V3.1 Terminal Research Decisions",
         "",
         f"- requested: **{payload.get('requested_count', 0)}**",
-        f"- BUY: **{counts.get('BUY', 0)}** / WAIT_PRICE: **{counts.get('WAIT_PRICE', 0)}** / REJECT: **{counts.get('REJECT', 0)}**",
+        f"- BUY: **{counts.get('BUY', 0)}** / WAIT_PRICE: **{counts.get('WAIT_PRICE', 0)}** / RESEARCH_GAP: **{counts.get('RESEARCH_GAP', 0)}** / REJECT: **{counts.get('REJECT', 0)}**",
         f"- all requested terminal: **{payload.get('all_requested_terminal') is True}**",
         "- authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.",
         "",
@@ -276,7 +276,7 @@ def main() -> int:
         deep_status=_read_json(args.deep_status_json) if args.deep_status_json.is_file() else {},
     )
     if payload["all_requested_terminal"] is not True:
-        raise ValueError("not every requested code reached BUY/WAIT_PRICE/REJECT")
+        raise ValueError("not every requested code reached BUY/WAIT_PRICE/RESEARCH_GAP/REJECT")
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     args.output_md.write_text(render_markdown(payload), encoding="utf-8")
