@@ -201,3 +201,130 @@ def test_out_of_order_snapshot_is_rejected() -> None:
 
     with pytest.raises(ValueError, match="out-of-order canonical snapshot"):
         apply_snapshot(state, earlier)
+
+
+def test_wait_price_terminal_memory_survives_retryable_gap_and_authorized_buy_can_replace_it() -> None:
+    from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+        apply_terminal_memory,
+        empty_state,
+    )
+
+    state = empty_state()
+    state["candidates"]["002120"] = {
+        "code": "002120",
+        "stock_name": "韵达股份",
+        "lifecycle_state": ACTIVE,
+        "research_tier": "PENDING",
+        "seen_count": 1,
+        "history": [],
+        "applied_evidence_ids": [],
+    }
+
+    state, day1_events = apply_terminal_memory(
+        state,
+        [{
+            "code": "002120",
+            "terminal_decision": "WAIT_PRICE",
+            "terminal_reason_class": "HIGH_CONFIDENCE_PRICE_ONLY_BLOCK",
+            "terminal_reason_codes": "PRICE_TOO_CLOSE_TO_BASE_VALUE",
+            "terminal_current_price": "9.0",
+            "wait_price_max": "8.0",
+            "source_production_action": "WAIT",
+            "source_valuation_confidence": "HIGH",
+            "terminal_formal_buy_authorized": False,
+        }],
+        memory_id="terminal-day-1",
+        observed_at="2026-09-16T10:00:00+00:00",
+    )
+    assert len(day1_events) == 1
+    candidate = state["candidates"]["002120"]
+    assert candidate["last_terminal_decision"] == "WAIT_PRICE"
+    assert candidate["price_zone"] == "WAIT_PRICE"
+    assert candidate["last_wait_price_max"] == 8.0
+
+    state, day2_events = apply_terminal_memory(
+        state,
+        [{
+            "code": "002120",
+            "terminal_decision": "RESEARCH_GAP",
+            "terminal_reason_class": "EVIDENCE_INSUFFICIENT",
+            "terminal_reason_codes": "hard_gate_unknown:financial_safety",
+            "terminal_retryable_next_cycle": True,
+            "terminal_formal_buy_authorized": False,
+        }],
+        memory_id="terminal-day-2",
+        observed_at="2026-09-17T10:00:00+00:00",
+    )
+    assert len(day2_events) == 1
+    candidate = state["candidates"]["002120"]
+    assert candidate["last_terminal_decision"] == "WAIT_PRICE"
+    assert candidate["last_wait_price_max"] == 8.0
+    assert candidate["next_action"] == "CONTINUE_RESEARCH_WAIT_PRICE"
+    assert candidate["last_research_gap_reason_class"] == "EVIDENCE_INSUFFICIENT"
+
+    state, day3_events = apply_terminal_memory(
+        state,
+        [{
+            "code": "002120",
+            "terminal_decision": "BUY",
+            "terminal_reason_class": "FORMAL_BUY_READY",
+            "terminal_current_price": "7.9",
+            "source_production_action": "BUY",
+            "source_valuation_confidence": "HIGH",
+            "terminal_formal_buy_authorized": True,
+        }],
+        memory_id="terminal-day-3",
+        observed_at="2026-09-18T10:00:00+00:00",
+    )
+    assert len(day3_events) == 1
+    candidate = state["candidates"]["002120"]
+    assert candidate["last_terminal_decision"] == "BUY"
+    assert candidate["price_zone"] == "BUY_READY"
+    assert candidate["next_action"] == "BUY_READY_REVIEW"
+    assert candidate["last_price"] == 7.9
+
+
+def test_terminal_memory_rejects_unauthorized_buy_and_does_not_admit_unknown_names() -> None:
+    import pytest
+    from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+        apply_terminal_memory,
+        empty_state,
+    )
+
+    state = empty_state()
+    state["candidates"]["002120"] = {
+        "code": "002120",
+        "stock_name": "韵达股份",
+        "lifecycle_state": ACTIVE,
+        "research_tier": "PENDING",
+        "seen_count": 1,
+        "history": [],
+        "applied_evidence_ids": [],
+    }
+
+    with pytest.raises(ValueError, match="unauthorized terminal BUY memory rejected"):
+        apply_terminal_memory(
+            state,
+            [{
+                "code": "002120",
+                "terminal_decision": "BUY",
+                "source_production_action": "BUY",
+                "source_valuation_confidence": "HIGH",
+                "terminal_formal_buy_authorized": False,
+            }],
+            memory_id="unauthorized-buy",
+            observed_at="2026-09-18T10:00:00+00:00",
+        )
+
+    next_state, events = apply_terminal_memory(
+        state,
+        [{
+            "code": "000589",
+            "terminal_decision": "RESEARCH_GAP",
+            "terminal_reason_class": "DEEP_PROFILE_MISSING",
+        }],
+        memory_id="unknown-name-gap",
+        observed_at="2026-09-18T10:05:00+00:00",
+    )
+    assert events == []
+    assert "000589" not in next_state["candidates"]
