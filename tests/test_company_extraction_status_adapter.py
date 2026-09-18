@@ -58,7 +58,7 @@ def test_document_parse_failure_survives_numeric_stage(monkeypatch) -> None:
     monkeypatch.setattr(
         company_extraction_status,
         "extract_text_from_response_detailed",
-        lambda _content, _content_type: {
+        lambda _content, _content_type, _source_url="": {
             "status": PARSE_FAILED,
             "text": "",
             "parser": "pdf_parse_failed:FixtureError",
