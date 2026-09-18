@@ -775,7 +775,11 @@ def collect_company_announcements(
             response = session.get(url, headers={**REQUEST_HEADERS, "Referer": referer}, timeout=timeout)
             network_fetches += 1
             response.raise_for_status()
-            text, parser = extract_text_from_response(response.content, response.headers.get("content-type", ""))
+            text, parser = extract_text_from_response(
+                response.content,
+                response.headers.get("content-type", ""),
+                url,
+            )
         except Exception as exc:
             task_audit.append(
                 _audit_row(
