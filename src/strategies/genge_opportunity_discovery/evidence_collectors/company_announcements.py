@@ -705,9 +705,11 @@ def collect_company_announcements(
             continue
         task_count += 1
         collector = (
-            "cninfo_company_announcement"
+            "sse_company_announcement"
+            if code.startswith("6")
+            else "cninfo_company_announcement"
             if cninfo_org_ids.get(code)
-            else "sse_company_announcement"
+            else "official_company_announcement_unavailable"
         )
         report_period = str(as_of.year - 1)
         key = cache.key_for(
@@ -893,7 +895,13 @@ def collect_company_material_events(
         if not code:
             continue
         task_count += 1
-        provider_collector = "cninfo_material_event" if cninfo_org_ids.get(code) else "sse_material_event"
+        provider_collector = (
+            "sse_material_event"
+            if code.startswith("6")
+            else "cninfo_material_event"
+            if cninfo_org_ids.get(code)
+            else "official_material_event_unavailable"
+        )
         audit_collector = "official_material_event_scan"
         key = cache.key_for({
             "collector": audit_collector,
