@@ -276,9 +276,14 @@ def _szse_attachment_url(value: Any) -> str:
     if text.startswith("//"):
         text = "https:" + text
     if text.startswith(("http://", "https://")):
-        if "disc.static.szse.cn" not in text.lower():
+        normalized = re.sub(r"^http://", "https://", text, flags=re.IGNORECASE)
+        prefix = SZSE_STATIC_HOST + "/"
+        if not normalized.lower().startswith(prefix.lower()):
             return ""
-        return re.sub(r"^http://", "https://", text, flags=re.IGNORECASE)
+        relative = normalized[len(SZSE_STATIC_HOST):]
+        if relative.startswith("/download/"):
+            return normalized
+        return SZSE_STATIC_HOST + "/download/" + relative.lstrip("/")
     path = "/" + text.lstrip("/")
     if path.startswith("/download/"):
         return SZSE_STATIC_HOST + path
