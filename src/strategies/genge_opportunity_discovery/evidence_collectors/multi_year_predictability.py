@@ -20,6 +20,7 @@ from .company_announcements import (
     _clean_title,
     _cninfo_publish_date,
     SZSE_ANNUAL_REPORT_CATEGORY,
+    SZSE_PERIODIC_REPORT_REFERER,
     _load_cninfo_org_ids,
     _query_sse,
     _query_szse_announcements,
@@ -269,6 +270,8 @@ def _query_szse_history(
         session=session,
         timeout=timeout,
         big_category_id=SZSE_ANNUAL_REPORT_CATEGORY,
+        channel_code="fixed_disc",
+        referer=SZSE_PERIODIC_REPORT_REFERER,
         max_pages=5,
         page_size=30,
     )
