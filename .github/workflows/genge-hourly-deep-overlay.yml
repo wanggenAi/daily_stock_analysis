@@ -178,6 +178,13 @@ jobs:
             echo "hourly replay attempt ${attempt}/4"
             git fetch origin main
             git reset --hard origin/main
+
+            industry_source="$RUNNER_TEMP/hourly-overlay-industry-source.csv"
+            rm -f "$industry_source"
+            if [ -s data/research_mapping/company_industry_map.csv ]; then
+              cp data/research_mapping/company_industry_map.csv "$industry_source"
+            fi
+
             git clean -fdx -- data/hourly_deep_overlay data/evidence_events data/hourly_research_state data/research_mapping
 
             # Fail closed if the selected Finalizer is older than durable hourly state.
@@ -221,7 +228,15 @@ jobs:
               --authoritative-root "$AUTH_ROOT" \
               --output-root data/hourly_deep_overlay
 
+            industry_args=()
+            if [ -s "$industry_source" ]; then
+              industry_args=(
+                --industry-source-csv "$industry_source"
+                --industry-source-label "hourly-overlay:persisted-research-mapping"
+              )
+            fi
             python -m src.strategies.genge_opportunity_discovery.research_mapping_coverage \
+              "${industry_args[@]}" \
               --coverage-output data/research_mapping/coverage.json \
               --industry-csv-output data/research_mapping/company_industry_map.csv
 
