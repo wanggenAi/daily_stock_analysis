@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
+  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
   "market": {
     "as_of_date": "2026-09-17",
     "status": "YELLOW",
@@ -95,7 +95,8 @@
           "no_auto_trade": true
         },
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "new_exposure_currently_usable": false
+        "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "001316",
@@ -136,7 +137,8 @@
           "no_auto_trade": true
         },
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "new_exposure_currently_usable": false
+        "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "601318",
@@ -177,7 +179,8 @@
           "no_auto_trade": true
         },
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00",
-        "new_exposure_currently_usable": false
+        "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "603993",
@@ -218,7 +221,8 @@
           "no_auto_trade": true
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
-        "new_exposure_currently_usable": false
+        "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE"
       }
     ]
   },
@@ -379,5 +383,45 @@
     "market_as_of": "2026-09-17",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
-  "formal_new_exposure_allowed": false
+  "formal_new_exposure_allowed": false,
+  "live_execution_overlay": {
+    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
+    "available": false,
+    "market_data_status": "OFF_SESSION",
+    "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": true,
+    "formal_new_exposure_allowed": false,
+    "freshness_fail_closed_reasserted": true,
+    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
+    "market_session_state": "CLOSED",
+    "market_session_active": false,
+    "retry_attempts": 3,
+    "refreshed_at": "2026-09-18T09:18:48.844150+00:00",
+    "refreshed_at_beijing": "2026-09-18T17:18:48.844150+08:00"
+  }
 }
