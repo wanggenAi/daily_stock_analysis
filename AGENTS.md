@@ -335,6 +335,7 @@ For ChatGPT Plus web sessions and any other long-running agent session that can 
 - The state-file blob SHA plus monotonically increasing `generation` is the writer fence. On a CAS/SHA conflict, the losing worker must stop mutating, re-read live GitHub and reacquire state; never force-overwrite.
 - Before any non-idempotent external action, persist a `pending_operation` write-ahead intent. If the outcome becomes ambiguous, reconcile provider-side evidence before retrying; never blindly repeat payments, outreach, submissions or other irreversible actions.
 - If GitHub proves that a commit, PR, CI result, merge, production run or artifact already exists, consume that evidence and continue from the first unfinished stage.
+- On every resume, classify the volatile checkpoint as `FRESH`, `STALE`, or `CONFLICTED` against live GitHub before mutating anything; reconcile stale state forward and stop on unresolved conflicts.
 - If recovery storage is unavailable, existing business execution continues unaffected. Read-only work may continue; unsafe non-idempotent mutations pause until durable intent/reconciliation is possible.
 - Recovery state is bounded and secret-free: schema v2, <=16 KiB, compact references instead of logs/transcripts, no credentials or sensitive tokens.
 - If the state file is corrupt, recover the newest valid state-branch revision and reconcile with live GitHub; if the branch is missing, recreate from live repository truth rather than chat memory.
