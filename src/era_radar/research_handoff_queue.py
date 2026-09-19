@@ -19,6 +19,7 @@ FORMAL_ACTION_SOURCE = "FINALIZED_CANONICAL_ONLY"
 ELIGIBLE_LIFECYCLES = {"ACCELERATING", "CONFIRMED"}
 TRUSTED_SOURCE_TIERS = {"PRIMARY", "OFFICIAL", "HIGH_QUALITY_SECONDARY"}
 REVIEWED_MAPPING_SOURCE_TYPE = "reviewed_research_mapping"
+MIN_HANDOFF_CONFIDENCE = 58.0
 
 
 def _market(code: str) -> str | None:
@@ -80,22 +81,39 @@ def build_handoff_queue(
 
     companies = _validated_company_rows(company_rows)
     queue: list[dict[str, Any]] = []
+    diagnostics: list[dict[str, Any]] = []
     seen: set[tuple[str, str]] = set()
 
     for trend in snapshot.get("trends") or []:
         if not isinstance(trend, Mapping):
             continue
         trend_id = str(trend.get("trend_id") or "").strip()
+        if not trend_id:
+            continue
         lifecycle = str(trend.get("lifecycle") or "").strip().upper()
+        blockers: list[str] = []
         try:
             confidence_score = float(trend.get("confidence_score"))
         except (TypeError, ValueError):
-            continue
-        if lifecycle not in ELIGIBLE_LIFECYCLES or confidence_score < 58.0:
-            continue
-        industries = {str(item).strip() for item in (links.get(trend_id) or []) if str(item).strip()}
+            confidence_score = None
+            blockers.append("CONFIDENCE_UNAVAILABLE")
+
+        lifecycle_eligible = lifecycle in ELIGIBLE_LIFECYCLES
+        confidence_eligible = (
+            confidence_score is not None and confidence_score >= MIN_HANDOFF_CONFIDENCE
+        )
+        if not lifecycle_eligible:
+            blockers.append("LIFECYCLE_NOT_HANDOFF_READY")
+        if confidence_score is not None and not confidence_eligible:
+            blockers.append("CONFIDENCE_BELOW_58")
+
+        industries = {
+            str(item).strip()
+            for item in (links.get(trend_id) or [])
+            if str(item).strip()
+        }
         if not industries:
-            continue
+            blockers.append("TREND_INDUSTRY_LINK_MISSING")
 
         trend_evidence = evidence_by_trend.get(trend_id) or []
         provenance_ok = bool(trend_evidence) and all(
@@ -103,13 +121,44 @@ def build_handoff_queue(
             and str(item.get("source_url") or "").startswith("https://")
             for item in trend_evidence
         )
-        freshness_ok = any(str(item.get("freshness") or "") == "FRESH" for item in trend_evidence)
-        if not provenance_ok or not freshness_ok:
+        freshness_ok = any(
+            str(item.get("freshness") or "") == "FRESH" for item in trend_evidence
+        )
+        if not trend_evidence:
+            blockers.append("TREND_EVIDENCE_MISSING")
+        elif not provenance_ok:
+            blockers.append("PROVENANCE_NOT_TRUSTED")
+        if trend_evidence and not freshness_ok:
+            blockers.append("FRESH_EVIDENCE_MISSING")
+
+        matching_companies = [
+            company for company in companies if company["industry"] in industries
+        ]
+        if industries and not matching_companies:
+            blockers.append("REVIEWED_COMPANY_MAPPING_MISSING")
+
+        diagnostic = {
+            "trend_id": trend_id,
+            "lifecycle": lifecycle or "UNKNOWN",
+            "confidence_score": confidence_score,
+            "minimum_confidence": MIN_HANDOFF_CONFIDENCE,
+            "lifecycle_eligible": lifecycle_eligible,
+            "confidence_eligible": confidence_eligible,
+            "mapped_industries": sorted(industries),
+            "evidence_count": len(trend_evidence),
+            "provenance_ok": provenance_ok,
+            "freshness_ok": freshness_ok,
+            "reviewed_company_match_count": len(matching_companies),
+            "blockers": list(dict.fromkeys(blockers)),
+            "handoff_count": 0,
+            "handoff_ready": False,
+        }
+        if diagnostic["blockers"]:
+            diagnostics.append(diagnostic)
             continue
 
-        for company in companies:
-            if company["industry"] not in industries:
-                continue
+        before_count = len(queue)
+        for company in matching_companies:
             key = (trend_id, company["code"])
             if key in seen:
                 continue
@@ -141,6 +190,12 @@ def build_handoff_queue(
             })
             queue.append(row)
 
+        diagnostic["handoff_count"] = len(queue) - before_count
+        diagnostic["handoff_ready"] = diagnostic["handoff_count"] > 0
+        if not diagnostic["handoff_ready"]:
+            diagnostic["blockers"] = ["HANDOFF_CONTRACT_REJECTED"]
+        diagnostics.append(diagnostic)
+
     queue.sort(key=lambda row: (-float(row["confidence_score"]), row["trend_id"], row["code"]))
     return {
         "contract_version": "ERA_RADAR_A_SHARE_RESEARCH_HANDOFF_V1",
@@ -148,6 +203,10 @@ def build_handoff_queue(
         "research_as_of": str(snapshot.get("research_as_of") or ""),
         "queue_count": len(queue),
         "trigger_full_authority_research": bool(queue),
+        "trend_diagnostic_count": len(diagnostics),
+        "handoff_ready_trend_count": sum(bool(row["handoff_ready"]) for row in diagnostics),
+        "blocked_trend_count": sum(not bool(row["handoff_ready"]) for row in diagnostics),
+        "trend_diagnostics": diagnostics,
         "formal_action_source": FORMAL_ACTION_SOURCE,
         "formal_action_recomputed": False,
         "formal_action_eligible": False,
