@@ -125,10 +125,19 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
     requested_profile_count = _int(raw.get("requested_profile_count"))
     exhausted_count = _int(raw.get("evidence_exhausted_requested_count"))
     processed = _int(raw.get("processed_requested_count"))
+    terminal_process = terminal in {"COMPLETE", "EVIDENCE_EXHAUSTED"}
     if not processed and requested_profile_count_available:
         processed = requested_profile_count
+    elif not processed and requested and terminal_process:
+        processed = requested
     elif not processed and requested and missing_available and not missing:
         processed = requested
+    processed_available = (
+        available("processed_requested_count")
+        or requested_profile_count_available
+        or (requested_available and terminal_process)
+        or (requested_available and missing_available and not missing)
+    )
     partial = _int(raw.get("partial_requested_count"))
     if not partial and terminal == "EVIDENCE_EXHAUSTED":
         partial = exhausted_count or max(0, requested - _int(raw.get("complete_requested_count")))
@@ -136,7 +145,6 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
     if not isinstance(unresolved_reasons, Mapping):
         unresolved_reasons = {}
     immediate_retry = raw.get("immediate_retry_required") is True
-    terminal_process = terminal in {"COMPLETE", "EVIDENCE_EXHAUSTED"}
     return {
         "contract": RUNTIME_CONTRACT,
         "lambda_workflow": str(raw.get("lambda_workflow") or "GenGe V3.1 Deep Calculation Lambda"),
@@ -152,9 +160,7 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
         "requested_count": requested,
         "requested_count_available": requested_available,
         "processed_requested_count": processed,
-        "processed_requested_count_available": (
-            available("processed_requested_count") or requested_profile_count_available
-        ),
+        "processed_requested_count_available": processed_available,
         "complete_requested_count": _int(raw.get("complete_requested_count")),
         "complete_requested_count_available": available("complete_requested_count"),
         "partial_requested_count": partial,
