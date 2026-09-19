@@ -16,7 +16,7 @@ def _terminal():
     row = {
         "code": "600406",
         "name": "国电南瑞",
-        "research_decision": "REJECT",
+        "research_decision": "RESEARCH_GAP",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "research_authority": "RESEARCH_ONLY",
         "formal_buy_authorized": False,
@@ -34,7 +34,7 @@ def _terminal():
         "unknown_is_pass": False,
         "no_auto_trade": True,
         "requested_count": 1,
-        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 1},
+        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 1, "REJECT": 0},
         "terminal_rows": [row],
         "urgent_research_queue": [row],
         "source_deep_lambda_run_id": "123",
@@ -49,7 +49,8 @@ def test_overlay_exposes_research_without_mutating_formal_authority():
     assert out["no_auto_trade"] is True
     assert out["terminal_research_snapshot"]["research_authority"] == "RESEARCH_ONLY"
     assert out["terminal_research_snapshot"]["formal_trading_authority"] is False
-    assert out["decision_summary"]["research_reject_count"] == 1
+    assert out["decision_summary"]["research_gap_count"] == 1
+    assert out["decision_summary"]["research_reject_count"] == 0
     assert out["decision_summary"]["urgent_research_count"] == 1
     assert "terminal_research" in out["presentation_contract"]["section_order"]
 
@@ -60,6 +61,7 @@ def test_markdown_surfaces_holding_and_urgent_research():
     assert "深算研究终态" in md
     assert "国电南瑞 600406" in md
     assert "P0_EVIDENCE_BLOCKED" in md
+    assert "RESEARCH_GAP" in md
     assert "RESEARCH_ONLY" in md
 
 
@@ -72,3 +74,16 @@ def test_overlay_refuses_fake_formal_buy_authority():
         assert "forbidden authority" in str(exc)
     else:
         raise AssertionError("expected authority violation")
+
+
+def test_overlay_refuses_urgent_queue_that_is_not_research_gap():
+    terminal = _terminal()
+    terminal["terminal_rows"][0]["research_decision"] = "REJECT"
+    terminal["decision_counts"] = {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 0, "REJECT": 1}
+    terminal["urgent_research_queue"][0]["research_decision"] = "REJECT"
+    try:
+        apply_overlay(_dashboard(), terminal)
+    except ValueError as exc:
+        assert "urgent research must remain RESEARCH_GAP" in str(exc)
+    else:
+        raise AssertionError("expected urgent research semantic violation")
