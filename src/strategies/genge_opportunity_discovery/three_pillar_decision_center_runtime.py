@@ -336,6 +336,54 @@ def _attach_terminal_research(
     )
 
 
+def _mark_stale_profile_lineage(payload: dict[str, Any]) -> None:
+    """Prevent last-terminal profiles from masquerading as the newest runtime."""
+
+    holdings = payload.get("pillar_1_holdings_deep_analysis")
+    if isinstance(holdings, dict):
+        holding_count = _int(holdings.get("holding_count"))
+        holdings["last_profile_explicit_deep_review_count"] = _int(
+            holdings.get("explicit_deep_review_count")
+        )
+        holdings["last_profile_complete_deep_review_count"] = _int(
+            holdings.get("complete_deep_review_count")
+        )
+        holdings["explicit_deep_review_count"] = 0
+        holdings["complete_deep_review_count"] = 0
+        holdings["deep_review_gap_count"] = holding_count
+        for row in holdings.get("rows") or []:
+            if not isinstance(row, dict):
+                continue
+            deep = row.get("deep_review")
+            if not isinstance(deep, dict):
+                continue
+            deep["last_profile_status"] = deep.get("status") or "DEEP_REVIEW_MISSING"
+            deep["status"] = "STALE_PROFILE_LAST_TERMINAL"
+            deep["current_for_runtime"] = False
+
+        summary = payload.get("executive_summary")
+        if isinstance(summary, dict):
+            summary["holdings_complete_deep_review"] = 0
+            summary["holdings_deep_review_gaps"] = holding_count
+
+        readiness = payload.get("decision_readiness")
+        if isinstance(readiness, dict):
+            readiness["all_holdings_explicit_deep_review_complete"] = holding_count == 0
+
+    opportunities = payload.get("pillar_3_deep_opportunities")
+    if isinstance(opportunities, dict):
+        for key in ("buy_now", "wait_price"):
+            for row in opportunities.get(key) or []:
+                if not isinstance(row, dict):
+                    continue
+                deep = row.get("deep_review")
+                if not isinstance(deep, dict):
+                    continue
+                deep["last_profile_status"] = deep.get("status") or "DEEP_REVIEW_MISSING"
+                deep["status"] = "STALE_PROFILE_LAST_TERMINAL"
+                deep["current_for_runtime"] = False
+
+
 def build_runtime_decision_center(
     *,
     dashboard: Mapping[str, Any],
@@ -378,11 +426,24 @@ def build_runtime_decision_center(
         and runtime_run_id
         and profile_run_id == runtime_run_id
     )
+    if (
+        profile_source == "AUTOMATIC_DEEP_CALCULATION"
+        and runtime_run_id
+        and not profile_current_for_runtime
+    ):
+        _mark_stale_profile_lineage(payload)
     terminal = normalize_terminal_research(terminal_research_decisions)
     payload["deep_calculation_runtime"] = runtime
     payload["deep_review_profile_source"] = profile_source
     payload["deep_review_profile_lambda_run_id"] = profile_run_id
     payload["deep_review_profile_current_for_runtime"] = profile_current_for_runtime
+    payload["deep_review_profile_lineage_state"] = (
+        "CURRENT"
+        if profile_current_for_runtime
+        else "STALE_LAST_TERMINAL"
+        if profile_source == "AUTOMATIC_DEEP_CALCULATION" and runtime_run_id
+        else "UNVERIFIED"
+    )
     payload["executive_summary"].update(
         {
             "deep_calculation_execution_status": runtime["execution_status"],
@@ -469,6 +530,14 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         "",
         f"- 当前运行状态来源：**{runtime.get('status_source') or 'NOT_AVAILABLE'}**",
         f"- 深算资料来源：**{source}**；资料 Lambda：`{profile_run_id or '—'}`；与当前运行一致：**{profile_current}**",
+        (
+            "- ⚠️ 最新自动 profiles 属于上一轮 Deep runtime；顶部持仓/机会的深算完整度已按当前 runtime 视为未完成，"
+            "旧 profile 状态仅保留为 last_profile_status 供审计。"
+            if source == "AUTOMATIC_DEEP_CALCULATION" and runtime.get("lambda_run_id") and not profile_current
+            else "- 深算 profile lineage 与当前 runtime 一致。"
+            if profile_current
+            else "- 深算 profile lineage 尚未被证明与当前 runtime 一致。"
+        ),
         f"- Lambda run：`{runtime.get('lambda_run_id') or '—'}`",
         f"- 触发来源：`{runtime.get('trigger_source') or '—'}`",
         f"- 计算执行：**{runtime.get('execution_status') or 'NOT_AVAILABLE'}**",
