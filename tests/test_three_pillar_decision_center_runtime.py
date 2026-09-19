@@ -6,6 +6,7 @@ from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_run
     normalize_runtime,
     normalize_terminal_research,
     render_runtime_markdown,
+    select_latest_deep_calculation_status,
 )
 
 
@@ -61,6 +62,7 @@ def _automatic_profiles():
         "automatic_formal_buy_allowed": False,
         "unknown_is_pass": False,
         "no_auto_trade": True,
+        "lambda_run_id": "987654",
         "profiles": {
             "600406": {
                 "gates": {
@@ -89,6 +91,23 @@ def _status():
         "partial_requested_count": 1,
         "unresolved_requested_gate_count": 3,
         "missing_requested_codes": [],
+    }
+
+
+def _partial_status():
+    return {
+        "contract": "GEN_GE_V31_DEEP_PARTIAL_CHECKPOINT_V1",
+        "execution_status": "PARTIAL",
+        "research_terminal_state": "NOT_COMPLETED",
+        "research_outcome": "INITIAL_PASS_PRESERVED",
+        "generated_at": "2026-09-19T02:39:24+00:00",
+        "lambda_run_id": "1000001",
+        "source_run_id": "123456",
+        "trigger_source": "EVIDENCE_LAYER_CHANGE",
+        "initial_pass_complete": True,
+        "unknown_is_pass": False,
+        "automatic_formal_buy_allowed": False,
+        "no_auto_trade": True,
     }
 
 
@@ -225,6 +244,8 @@ def test_runtime_is_exposed_in_final_decision_center():
     assert out["deep_calculation_runtime"]["research_outcome"] == "PARTIAL_GAPS_REMAIN"
     assert out["decision_readiness"]["deep_calculation_last_run_successful"] is True
     assert out["decision_readiness"]["deep_calculation_requested_research_complete"] is False
+    assert out["deep_review_profile_current_for_runtime"] is True
+    assert out["deep_review_profile_lineage_state"] == "CURRENT"
     deep = out["pillar_1_holdings_deep_analysis"]["rows"][0]["deep_review"]
     assert deep["status"] == "DEEP_REVIEW_PARTIAL"
     assert deep["pass_count"] == 2
@@ -332,3 +353,73 @@ def test_runtime_markdown_makes_finished_but_partial_obvious():
     assert "执行 SUCCESS 不等于研究 COMPLETE" in md
     assert "## 深算终态研究决策" in md
     assert "终态快照存在：**False**" in md
+
+
+
+def test_newer_partial_checkpoint_overrides_older_terminal_status_for_current_runtime():
+    terminal = _terminal_status()
+    terminal["generated_at"] = "2026-09-19T01:49:27+00:00"
+    selected, source = select_latest_deep_calculation_status(terminal, _partial_status())
+    assert source == "PARTIAL_CHECKPOINT"
+    assert selected["lambda_run_id"] == "1000001"
+
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=terminal,
+        partial_deep_calculation_status=_partial_status(),
+        terminal_research_decisions=_terminal_research(),
+        industry_links={},
+        era_handoff={},
+    )
+    runtime = out["deep_calculation_runtime"]
+    assert runtime["lambda_run_id"] == "1000001"
+    assert runtime["execution_status"] == "PARTIAL"
+    assert runtime["run_state"] == "PARTIAL_CHECKPOINT"
+    assert runtime["status_source"] == "PARTIAL_CHECKPOINT"
+    assert runtime["last_terminal_run_id"] == "999999"
+    assert out["decision_readiness"]["deep_calculation_last_run_successful"] is False
+    assert out["deep_review_profile_current_for_runtime"] is False
+    assert out["deep_review_profile_lineage_state"] == "STALE_LAST_TERMINAL"
+    holdings = out["pillar_1_holdings_deep_analysis"]
+    assert holdings["explicit_deep_review_count"] == 0
+    assert holdings["complete_deep_review_count"] == 0
+    assert holdings["deep_review_gap_count"] == 1
+    deep = holdings["rows"][0]["deep_review"]
+    assert deep["status"] == "STALE_PROFILE_LAST_TERMINAL"
+    assert deep["last_profile_status"] == "DEEP_REVIEW_PARTIAL"
+    assert out["decision_readiness"]["all_holdings_explicit_deep_review_complete"] is False
+    assert out["pillar_3_deep_opportunities"]["terminal_research_snapshot"]["current_for_deep_runtime"] is False
+
+    md = render_runtime_markdown(out)
+    assert "顶部持仓/机会的深算完整度已按当前 runtime 视为未完成" in md
+    assert "当前运行状态来源：**PARTIAL_CHECKPOINT**" in md
+    assert "1000001" in md
+    assert "上一次完整终态 run：`999999`" in md
+
+
+def test_unresolved_markdown_is_bounded_summary_not_full_dump():
+    terminal = _terminal_status()
+    terminal["unresolved_reasons"] = {
+        f"{i:06d}": {
+            "moat": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE",
+            "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+        }
+        for i in range(20)
+    }
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=terminal,
+        industry_links={},
+        era_handoff={},
+    )
+    md = render_runtime_markdown(out)
+    assert "涉及 20 只" in md
+    assert "Top原因" in md
+    assert "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE×20" in md
+    assert "000019[" not in md

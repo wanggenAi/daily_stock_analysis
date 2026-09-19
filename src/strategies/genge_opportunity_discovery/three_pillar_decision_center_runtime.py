@@ -15,6 +15,8 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -41,6 +43,50 @@ def _int(value: Any) -> int:
         return 0
 
 
+def _timestamp(value: Any) -> datetime:
+    text = str(value or "").strip()
+    if text.endswith("Z"):
+        text = text[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return datetime.min.replace(tzinfo=timezone.utc)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def select_latest_deep_calculation_status(
+    terminal_status: Mapping[str, Any] | None,
+    partial_status: Mapping[str, Any] | None,
+) -> tuple[dict[str, Any], str]:
+    """Choose the newest durable runtime checkpoint, including failed/partial runs.
+
+    latest_status.json is the last terminal run, while latest_partial_status.json
+    can be newer when evidence closure failed after the initial checkpoint. The
+    user-facing decision center must describe the newest actual run instead of
+    silently presenting an older SUCCESS as if it were current.
+    """
+    candidates: list[tuple[str, dict[str, Any]]] = []
+    for source, raw in (
+        ("TERMINAL_STATUS", terminal_status),
+        ("PARTIAL_CHECKPOINT", partial_status),
+    ):
+        payload = dict(raw or {})
+        if payload:
+            candidates.append((source, payload))
+    if not candidates:
+        return {}, "NOT_AVAILABLE"
+    source, payload = max(
+        candidates,
+        key=lambda item: (
+            _timestamp(item[1].get("generated_at")),
+            _int(item[1].get("lambda_run_id")),
+        ),
+    )
+    return payload, source
+
+
 def choose_deep_review_config(
     automatic_profiles: Mapping[str, Any] | None,
     static_profiles: Mapping[str, Any] | None,
@@ -63,6 +109,8 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
     research = str(raw.get("research_outcome") or "NOT_AVAILABLE").upper()
     terminal = str(raw.get("research_terminal_state") or research or "NOT_AVAILABLE").upper()
     run_state = str(raw.get("run_state") or "NOT_AVAILABLE").upper()
+    if execution == "PARTIAL" and run_state == "NOT_AVAILABLE":
+        run_state = "PARTIAL_CHECKPOINT"
     missing = list(raw.get("missing_requested_codes") or [])
     requested = _int(raw.get("requested_count"))
     exhausted_count = _int(raw.get("evidence_exhausted_requested_count"))
@@ -288,6 +336,54 @@ def _attach_terminal_research(
     )
 
 
+def _mark_stale_profile_lineage(payload: dict[str, Any]) -> None:
+    """Prevent last-terminal profiles from masquerading as the newest runtime."""
+
+    holdings = payload.get("pillar_1_holdings_deep_analysis")
+    if isinstance(holdings, dict):
+        holding_count = _int(holdings.get("holding_count"))
+        holdings["last_profile_explicit_deep_review_count"] = _int(
+            holdings.get("explicit_deep_review_count")
+        )
+        holdings["last_profile_complete_deep_review_count"] = _int(
+            holdings.get("complete_deep_review_count")
+        )
+        holdings["explicit_deep_review_count"] = 0
+        holdings["complete_deep_review_count"] = 0
+        holdings["deep_review_gap_count"] = holding_count
+        for row in holdings.get("rows") or []:
+            if not isinstance(row, dict):
+                continue
+            deep = row.get("deep_review")
+            if not isinstance(deep, dict):
+                continue
+            deep["last_profile_status"] = deep.get("status") or "DEEP_REVIEW_MISSING"
+            deep["status"] = "STALE_PROFILE_LAST_TERMINAL"
+            deep["current_for_runtime"] = False
+
+        summary = payload.get("executive_summary")
+        if isinstance(summary, dict):
+            summary["holdings_complete_deep_review"] = 0
+            summary["holdings_deep_review_gaps"] = holding_count
+
+        readiness = payload.get("decision_readiness")
+        if isinstance(readiness, dict):
+            readiness["all_holdings_explicit_deep_review_complete"] = holding_count == 0
+
+    opportunities = payload.get("pillar_3_deep_opportunities")
+    if isinstance(opportunities, dict):
+        for key in ("buy_now", "wait_price"):
+            for row in opportunities.get(key) or []:
+                if not isinstance(row, dict):
+                    continue
+                deep = row.get("deep_review")
+                if not isinstance(deep, dict):
+                    continue
+                deep["last_profile_status"] = deep.get("status") or "DEEP_REVIEW_MISSING"
+                deep["status"] = "STALE_PROFILE_LAST_TERMINAL"
+                deep["current_for_runtime"] = False
+
+
 def build_runtime_decision_center(
     *,
     dashboard: Mapping[str, Any],
@@ -295,6 +391,7 @@ def build_runtime_decision_center(
     automatic_profiles: Mapping[str, Any] | None = None,
     static_profiles: Mapping[str, Any] | None = None,
     deep_calculation_status: Mapping[str, Any] | None = None,
+    partial_deep_calculation_status: Mapping[str, Any] | None = None,
     terminal_research_decisions: Mapping[str, Any] | None = None,
     industry_links: Mapping[str, Any] | None = None,
     era_handoff: Mapping[str, Any] | None = None,
@@ -309,10 +406,44 @@ def build_runtime_decision_center(
         era_handoff=era_handoff,
         generated_at=generated_at,
     )
-    runtime = normalize_runtime(deep_calculation_status)
+    selected_status, status_source = select_latest_deep_calculation_status(
+        deep_calculation_status,
+        partial_deep_calculation_status,
+    )
+    runtime = normalize_runtime(selected_status)
+    last_terminal_runtime = normalize_runtime(deep_calculation_status)
+    runtime["status_source"] = status_source
+    runtime["last_terminal_run_id"] = last_terminal_runtime.get("lambda_run_id") or ""
+    runtime["last_terminal_execution_status"] = last_terminal_runtime.get("execution_status") or "NOT_AVAILABLE"
+    runtime["last_terminal_research_terminal_state"] = (
+        last_terminal_runtime.get("research_terminal_state") or "NOT_AVAILABLE"
+    )
+    profile_run_id = str((automatic_profiles or {}).get("lambda_run_id") or "")
+    runtime_run_id = str(runtime.get("lambda_run_id") or "")
+    profile_current_for_runtime = bool(
+        profile_source == "AUTOMATIC_DEEP_CALCULATION"
+        and profile_run_id
+        and runtime_run_id
+        and profile_run_id == runtime_run_id
+    )
+    if (
+        profile_source == "AUTOMATIC_DEEP_CALCULATION"
+        and runtime_run_id
+        and not profile_current_for_runtime
+    ):
+        _mark_stale_profile_lineage(payload)
     terminal = normalize_terminal_research(terminal_research_decisions)
     payload["deep_calculation_runtime"] = runtime
     payload["deep_review_profile_source"] = profile_source
+    payload["deep_review_profile_lambda_run_id"] = profile_run_id
+    payload["deep_review_profile_current_for_runtime"] = profile_current_for_runtime
+    payload["deep_review_profile_lineage_state"] = (
+        "CURRENT"
+        if profile_current_for_runtime
+        else "STALE_LAST_TERMINAL"
+        if profile_source == "AUTOMATIC_DEEP_CALCULATION" and runtime_run_id
+        else "UNVERIFIED"
+    )
     payload["executive_summary"].update(
         {
             "deep_calculation_execution_status": runtime["execution_status"],
@@ -329,6 +460,7 @@ def build_runtime_decision_center(
             "deep_calculation_process_terminal": runtime["research_process_terminal"],
             "deep_calculation_requested_research_complete": runtime["research_complete"],
             "deep_calculation_manual_next_round_required": runtime["manual_next_round_required"],
+            "deep_review_profile_current_for_runtime": profile_current_for_runtime,
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
@@ -337,15 +469,38 @@ def build_runtime_decision_center(
 
 def _unresolved_text(reasons: Mapping[str, Any]) -> str:
     if not reasons:
-        return "无"
-    parts: list[str] = []
+        return "当前 checkpoint 未携带逐股未决明细"
+    reason_counts: Counter[str] = Counter()
+    gate_counts: Counter[str] = Counter()
+    examples: list[str] = []
     for code, gates in reasons.items():
         if isinstance(gates, Mapping):
-            names = "、".join(f"{gate}:{reason}" for gate, reason in gates.items())
-            parts.append(f"{code}[{names}]")
+            for gate, reason in gates.items():
+                gate_counts[str(gate)] += 1
+                reason_counts[str(reason)] += 1
+            if len(examples) < 5:
+                names = "、".join(f"{gate}:{reason}" for gate, reason in list(gates.items())[:3])
+                examples.append(f"{code}[{names}]")
         else:
-            parts.append(f"{code}[{gates}]")
-    return "；".join(parts)
+            reason_counts[str(gates)] += 1
+            if len(examples) < 5:
+                examples.append(f"{code}[{gates}]")
+    top_reasons = "、".join(f"{reason}×{count}" for reason, count in reason_counts.most_common(5))
+    top_gates = "、".join(f"{gate}×{count}" for gate, count in gate_counts.most_common(5))
+    sample = "；".join(examples) or "无"
+    return (
+        f"涉及 {len(reasons)} 只；门槛分布：{top_gates or '无'}；"
+        f"Top原因：{top_reasons or '无'}；样例：{sample}"
+    )
+
+
+def _code_list_text(codes: list[Any], limit: int = 12) -> str:
+    normalized = [str(code) for code in codes if str(code or "").strip()]
+    if not normalized:
+        return "无"
+    shown = "、".join(normalized[:limit])
+    remaining = len(normalized) - limit
+    return f"{shown}（另 {remaining} 只）" if remaining > 0 else shown
 
 
 def _urgent_text(rows: list[Mapping[str, Any]]) -> str:
@@ -364,6 +519,8 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
     base = render_markdown(payload).rstrip()
     runtime = payload.get("deep_calculation_runtime") or {}
     source = payload.get("deep_review_profile_source") or "UNKNOWN"
+    profile_run_id = payload.get("deep_review_profile_lambda_run_id") or ""
+    profile_current = payload.get("deep_review_profile_current_for_runtime") is True
     missing = runtime.get("missing_requested_codes") or []
     opportunities = payload.get("pillar_3_deep_opportunities") or {}
     terminal = opportunities.get("terminal_research_snapshot") or {}
@@ -371,7 +528,16 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         "",
         "## 自动深算运行状态",
         "",
-        f"- 深算资料来源：**{source}**",
+        f"- 当前运行状态来源：**{runtime.get('status_source') or 'NOT_AVAILABLE'}**",
+        f"- 深算资料来源：**{source}**；资料 Lambda：`{profile_run_id or '—'}`；与当前运行一致：**{profile_current}**",
+        (
+            "- ⚠️ 最新自动 profiles 属于上一轮 Deep runtime；顶部持仓/机会的深算完整度已按当前 runtime 视为未完成，"
+            "旧 profile 状态仅保留为 last_profile_status 供审计。"
+            if source == "AUTOMATIC_DEEP_CALCULATION" and runtime.get("lambda_run_id") and not profile_current
+            else "- 深算 profile lineage 与当前 runtime 一致。"
+            if profile_current
+            else "- 深算 profile lineage 尚未被证明与当前 runtime 一致。"
+        ),
         f"- Lambda run：`{runtime.get('lambda_run_id') or '—'}`",
         f"- 触发来源：`{runtime.get('trigger_source') or '—'}`",
         f"- 计算执行：**{runtime.get('execution_status') or 'NOT_AVAILABLE'}**",
@@ -380,8 +546,9 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         f"- 请求深算：**{runtime.get('requested_count', 0)}**；已处理：**{runtime.get('processed_requested_count', 0)}**；完整：**{runtime.get('complete_requested_count', 0)}**；证据穷尽：**{runtime.get('evidence_exhausted_requested_count', 0)}**。",
         f"- 同轮补证据尝试：**{runtime.get('gap_closure_attempt_count', 0)}**；取得证据：**{runtime.get('new_evidence_count', 0)}**；推进硬门槛：**{runtime.get('progressed_gate_count', 0)}**。",
         f"- 尚未解决硬门槛：**{runtime.get('unresolved_requested_gate_count', 0)}**。",
-        f"- 未决原因：{_unresolved_text(runtime.get('unresolved_reasons') or {})}",
-        f"- 请求但未进入本次研究工件：**{'、'.join(missing) if missing else '无'}**。",
+        f"- 未决原因摘要：{_unresolved_text(runtime.get('unresolved_reasons') or {})}",
+        f"- 请求但未进入本次研究工件：**{_code_list_text(missing)}**。",
+        f"- 上一次完整终态 run：`{runtime.get('last_terminal_run_id') or '—'}`；执行 **{runtime.get('last_terminal_execution_status') or 'NOT_AVAILABLE'}**；研究终态 **{runtime.get('last_terminal_research_terminal_state') or 'NOT_AVAILABLE'}**。",
         f"- 是否需要你手工开启下一轮：**{runtime.get('manual_next_round_required', True)}**。",
         "- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 是流程已自动收口，不代表 UNKNOWN 被当成 PASS。",
         "",
@@ -407,6 +574,7 @@ def main() -> int:
     parser.add_argument("--automatic-deep-reviews", type=Path, default=Path("data/deep_calculation/latest_profiles.json"))
     parser.add_argument("--static-deep-reviews", type=Path, default=Path("config/v31_explicit_deep_reviews.json"))
     parser.add_argument("--deep-calculation-status", type=Path, default=Path("data/deep_calculation/latest_status.json"))
+    parser.add_argument("--deep-calculation-partial-status", type=Path, default=Path("data/deep_calculation/latest_partial_status.json"))
     parser.add_argument("--terminal-research-decisions", type=Path, default=Path("data/deep_calculation/latest_research_decisions.json"))
     parser.add_argument("--industry-links", type=Path, default=Path("config/era_radar_industry_links.json"))
     parser.add_argument("--output-json", type=Path, default=Path("data/decision_center/latest.json"))
@@ -419,6 +587,7 @@ def main() -> int:
         automatic_profiles=_json(args.automatic_deep_reviews),
         static_profiles=_json(args.static_deep_reviews),
         deep_calculation_status=_json(args.deep_calculation_status),
+        partial_deep_calculation_status=_json(args.deep_calculation_partial_status),
         terminal_research_decisions=_json(args.terminal_research_decisions),
         industry_links=_json(args.industry_links),
         era_handoff=_json(args.era_handoff),
