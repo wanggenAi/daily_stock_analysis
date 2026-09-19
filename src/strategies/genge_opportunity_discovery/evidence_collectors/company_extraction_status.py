@@ -23,7 +23,7 @@ from .evidence_normalization import (
 )
 from .validators import extract_numeric_context_detailed, extract_text_from_response_detailed
 
-_TYPED_CACHE_VERSION = 6
+_TYPED_CACHE_VERSION = 7
 _EXTRACTION_META: ContextVar[dict[str, Any]] = ContextVar(
     "company_announcement_extraction_meta", default={}
 )
