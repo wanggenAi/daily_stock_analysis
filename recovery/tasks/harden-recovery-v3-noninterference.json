@@ -1,13 +1,13 @@
 {
   "schema_version": 2,
-  "generation": 6,
+  "generation": 7,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "IN_PROGRESS",
   "task_key": "harden-recovery-v3-noninterference",
   "stage": "V3_READY_FOR_PR_AFTER_MAIN_CI",
   "last_observed_main_sha": "d6cba697780b3939e880a8b76ef6dcbcb13e33f5",
   "work_branch": "chore/web-session-recovery-v3",
-  "work_head_sha": "2ffd92756122569a42a77321d10c6d78c892e4fc",
+  "work_head_sha": "351c856854e628cd79454fdba6a3ff2df5b785c0",
   "active_pr": null,
   "ci": {
     "run_id": 35414972374,
@@ -28,9 +28,11 @@
     "v2 recovery PR #191 passed PR CI and merged",
     "confirmed state/chatgpt-recovery has zero workflow runs",
     "implemented v3 adaptive checkpoint sizing, runtime isolation, fencing, write-ahead intent, bounded schema validation",
-    "added paths-ignore so future recovery-only PRs do not run stock opportunity/risk-capped business workflows"
+    "added paths-ignore so future recovery-only PRs do not run stock opportunity/risk-capped business workflows",
+    "migrated recovery to task-scoped checkpoints so independent tasks cannot overwrite one another",
+    "added public-repo privacy guardrails and filesystem-safe task identities"
   ],
-  "next_action": "Wait for v2 main CI #1222 to finish so recovery hardening does not overlap another heavy CI run; then open one v3 PR and validate it.",
+  "next_action": "Wait for v2 main CI #1222 to finish before opening the v3 PR, avoiding overlapping heavy CI. Then open one PR and validate the final head.",
   "do_not_repeat": [
     "do not put recovery reads or writes on any business runtime path",
     "do not trigger production workflows from checkpoint commits",
