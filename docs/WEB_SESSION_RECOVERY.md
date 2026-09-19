@@ -9,7 +9,7 @@ The repository does not try to resurrect an interrupted model invocation. Instea
 The precedence order is:
 
 1. live GitHub facts: default-branch HEAD/history, open PRs, branch heads, Actions/checks, artifacts, persisted production data;
-2. `state/chatgpt-recovery:RECOVERY_STATE.json`, the volatile machine-readable checkpoint;
+2. task-scoped checkpoints under `state/chatgpt-recovery:recovery/tasks/<task_key>.json`;
 3. `TASK_STATE.md`, the compact stable mission/handoff summary on the default branch;
 4. prior chat text, only as a locator.
 
@@ -17,9 +17,9 @@ If any lower layer disagrees with a higher layer, reconcile toward live GitHub.
 
 ## Permanent recovery branch
 
-A permanent branch named `state/chatgpt-recovery` carries `RECOVERY_STATE.json`.
+A permanent branch named `state/chatgpt-recovery` carries a static bootstrap manifest at `RECOVERY_STATE.json` plus one volatile file per active task under `recovery/tasks/<task_key>.json`.
 
-This branch is intentionally separate from normal feature branches and from `main`:
+The root manifest is not the mutable task state. It only declares task-scoped mode and the task directory, so independent tasks do not overwrite each other. This branch is intentionally separate from normal feature branches and from `main`:
 
 - checkpoint writes do not compete with business PRs;
 - high-frequency production commits on `main` do not invalidate the checkpoint transport;
@@ -27,6 +27,17 @@ This branch is intentionally separate from normal feature branches and from `mai
 - GitHub Contents API updates use the current blob SHA, providing compare-and-swap semantics against accidental concurrent overwrite.
 
 The state branch must never be merged as application code merely to "apply" a checkpoint.
+
+## Task-scoped concurrency
+
+Each active logical task owns exactly one file at `recovery/tasks/<task_key>.json`.
+
+- Different tasks write different files and therefore do not contend on a singleton state blob.
+- Multiple workers attempting the **same** task share the same file and are fenced by its blob SHA plus monotonically increasing `generation`.
+- `task_key` must be deterministic, stable for the logical task and filesystem-safe: lowercase letters, digits, dots, underscores and hyphens only.
+- On resume, list the task directory first. If exactly one unfinished task matches live GitHub refs, use it. If several unfinished tasks exist, match by work branch/PR/mission; never merge unrelated task state.
+- When a task is fully verified and its durable outcome is represented by live GitHub plus `TASK_STATE.md`, its task file may be pruned from the current state-branch tree. Git history remains the audit trail.
+- The root `RECOVERY_STATE.json` manifest should rarely change, which removes a central write hotspot.
 
 ## Required checkpoint fields
 
@@ -50,7 +61,7 @@ The state branch must never be merged as application code merely to "apply" a ch
 - `next_action`
 - `do_not_repeat`
 
-The current schema is version 2. Allowed status values are `IDLE`, `IN_PROGRESS`, `WAITING_CI`, `WAITING_PRODUCTION`, `BLOCKED`, and `DONE`. The machine-checkable example is `.github/recovery/RECOVERY_STATE.example.json`; `scripts/validate_recovery_state.py` validates shape, bounds and obvious secret leakage without third-party dependencies.
+The current schema is version 2. Allowed status values are `IDLE`, `IN_PROGRESS`, `WAITING_CI`, `WAITING_PRODUCTION`, `BLOCKED`, and `DONE`. The machine-checkable task example is `.github/recovery/TASK_CHECKPOINT.example.json`; `scripts/validate_recovery_state.py` validates shape, bounds and obvious secret leakage without third-party dependencies.
 
 ## Adaptive checkpoint sizing
 
@@ -75,7 +86,7 @@ The invariant is: a crash may lose transient reasoning, but it should not force 
 
 Recovery is a **control-plane concern only**.
 
-- Application/runtime code must not import, parse, poll or write `RECOVERY_STATE.json`.
+- Application/runtime code must not import, parse, poll or write the recovery manifest or any task checkpoint.
 - Production jobs, scanners, APIs, market analysis, commercial discovery and user-facing request paths must not wait on recovery writes.
 - Recovery files must not become a database, cache, queue, lock service or dependency of business logic.
 - A checkpoint write failure may degrade agent recoverability, but it must not slow or fail an already-running business workload.
@@ -88,12 +99,12 @@ For a recovery-only PR, run the required PR checks on the head commit, then use 
 
 ## Fenced single-writer and compare-and-swap
 
-The state-file blob SHA plus monotonically increasing `generation` form the writer fence.
+The task-file blob SHA plus monotonically increasing `generation` form the writer fence.
 
 For a checkpoint update:
 
 1. read live GitHub facts needed for the current stage;
-2. fetch the latest state file and its blob SHA;
+2. fetch the latest task-scoped checkpoint file and its blob SHA;
 3. reconcile drift;
 4. increment `generation`;
 5. write with the exact blob SHA;
@@ -134,7 +145,7 @@ This strict rule applies especially to email/outreach, payments, submissions, ex
 For every checkpoint write:
 
 1. re-read live GitHub state needed for the current stage;
-2. fetch the latest `RECOVERY_STATE.json` from `state/chatgpt-recovery`;
+2. fetch the latest `recovery/tasks/<task_key>.json` from `state/chatgpt-recovery`;
 3. reconcile any drift before writing;
 4. increment `generation`;
 5. update only facts that were actually observed;
@@ -156,7 +167,7 @@ The recovery state is deliberately small:
 
 Git already provides content-addressed integrity and history; a separate database is unnecessary for this use case.
 
-If the current JSON is corrupt, inspect prior commits on `state/chatgpt-recovery` and recover the newest valid version, then reconcile with live GitHub. If the branch/file is missing, recreate it from current live repository truth. Never reconstruct missing durable state from chat memory alone.
+If a task checkpoint is corrupt, inspect prior commits on `state/chatgpt-recovery` and recover the newest valid version for that task, then reconcile with live GitHub. If the branch/manifest/task file is missing, recreate only the missing structure from current live repository truth. Never reconstruct missing durable state from chat memory alone.
 
 ## Degraded recovery mode
 
@@ -176,7 +187,7 @@ A new chat or worker must:
 2. inspect live default-branch HEAD/history;
 3. inspect relevant open PRs and their current head SHAs;
 4. inspect relevant Actions/checks and artifacts/persisted data;
-5. read `state/chatgpt-recovery:RECOVERY_STATE.json`;
+5. read the root recovery manifest, list `recovery/tasks/`, and select the checkpoint whose task identity matches the live branch/PR/mission;
 6. read `TASK_STATE.md`;
 7. classify the checkpoint as `FRESH`, `STALE`, or `CONFLICTED`;
 8. reconcile toward live GitHub;
@@ -198,7 +209,7 @@ For repositories with automated commits to `main`, a changed main SHA alone does
 
 ## Stable vs volatile state
 
-`RECOVERY_STATE.json` is the volatile execution cursor. `TASK_STATE.md` is the stable mission summary.
+Each `recovery/tasks/<task_key>.json` file is a volatile execution cursor for one task. The root manifest is static bootstrap metadata. `TASK_STATE.md` is the stable mission summary.
 
 Do not rewrite `TASK_STATE.md` for every tiny transition. Fold durable milestone facts into it when a stage materially changes the mission, blocker, active PR, verified artifact, or next action.
 
