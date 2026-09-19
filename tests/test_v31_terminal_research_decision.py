@@ -161,13 +161,14 @@ def test_urgent_queue_does_not_drop_qualified_names_after_first_ten():
     assert {row["code"] for row in out["urgent_research_queue"]} == set(codes)
 
 
-def test_terminal_workflow_refreshes_three_pillar_only_after_persistence() -> None:
+def test_terminal_workflow_refreshes_investor_overlay_only_after_persistence() -> None:
     workflow = Path(".github/workflows/genge-v31-terminal-research-decision.yml").read_text(encoding="utf-8")
 
     persist_at = workflow.index("- name: Persist terminal research decisions with optimistic replay")
-    refresh_at = workflow.index("- name: Refresh three-pillar decision center after terminal convergence")
+    refresh_at = workflow.index("- name: Refresh investor terminal overlay after terminal convergence")
     assert persist_at < refresh_at
-    assert "gh workflow run genge-three-pillar-decision-center.yml" in workflow[refresh_at:]
+    assert "gh workflow run genge-investor-terminal-research-overlay.yml" in workflow[refresh_at:]
+    assert "gh workflow run genge-three-pillar-decision-center.yml" not in workflow[refresh_at:]
 
 
 def test_terminal_production_has_actions_write_for_explicit_dispatch() -> None:

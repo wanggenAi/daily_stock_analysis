@@ -1,11 +1,6 @@
 name: GenGe Investor Terminal Research Overlay
 
 on:
-  workflow_run:
-    workflows:
-      - "GenGe V3.1 Terminal Research Decision"
-      - "GenGe Investor Decision Brief"
-    types: [completed]
   workflow_dispatch:
   pull_request:
     paths:
@@ -15,7 +10,7 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
 
 concurrency:
   group: genge-investor-terminal-research-overlay
@@ -41,9 +36,7 @@ jobs:
         run: python -m pytest -q tests/test_investor_terminal_research_overlay.py
 
   production:
-    if: >-
-      github.event_name != 'pull_request' &&
-      (github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success')
+    if: github.event_name != 'pull_request'
     needs: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -100,6 +93,13 @@ jobs:
             fi
             [ "$attempt" -lt 4 ] || exit 1
           done
+
+      - name: Refresh three-pillar decision center after research overlay
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Publish overlaid investor summary
         if: always()

@@ -87,3 +87,14 @@ def test_dashboard_consumes_reconciliation_from_same_authorized_artifact_and_fai
     assert "assert all(not x.get('formal_action') for x in p['stock_portfolio']['rows'])" in build
     assert "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD" in build
     assert "tests/test_v311_dynamic_holding_profit_protection.py" in workflow
+
+
+def test_dashboard_explicitly_dispatches_terminal_overlay_after_persistence() -> None:
+    workflow = _workflow()
+    build_at = workflow.index("- name: Build and persist investor-first action dashboard")
+    dispatch_at = workflow.index("- name: Dispatch terminal research overlay after investor brief persistence")
+    summary_at = workflow.index("- name: Publish investor-first summary")
+
+    assert "permissions:\n  contents: write\n  actions: write" in workflow
+    assert build_at < dispatch_at < summary_at
+    assert "gh workflow run genge-investor-terminal-research-overlay.yml" in workflow[dispatch_at:summary_at]
