@@ -93,3 +93,58 @@ def test_insufficient_or_untrusted_trend_evidence_fails_closed():
     evidence = _evidence()
     evidence[0]["source_tier"] = "SECONDARY"
     assert build_handoff_queue(_snapshot(), evidence, _companies(), _links())["queue_count"] == 0
+
+
+def test_handoff_diagnostics_explain_why_zero_queue_without_relaxing_rules():
+    snapshot = _snapshot()
+    snapshot["trends"][0]["lifecycle"] = "EMERGING"
+    snapshot["trends"][0]["confidence_score"] = 33.69
+    links = _links()
+    links["links"] = {}
+
+    payload = build_handoff_queue(snapshot, _evidence(), _companies(), links)
+
+    assert payload["queue_count"] == 0
+    assert payload["trigger_full_authority_research"] is False
+    assert payload["handoff_ready_trend_count"] == 0
+    assert payload["blocked_trend_count"] == 1
+    diagnostic = payload["trend_diagnostics"][0]
+    assert diagnostic["trend_id"] == "electrification_infrastructure"
+    assert diagnostic["handoff_ready"] is False
+    assert diagnostic["minimum_confidence"] == 58.0
+    assert diagnostic["blockers"] == [
+        "LIFECYCLE_NOT_HANDOFF_READY",
+        "CONFIDENCE_BELOW_58",
+        "TREND_INDUSTRY_LINK_MISSING",
+    ]
+
+
+def test_handoff_diagnostics_surface_provenance_and_mapping_gaps():
+    evidence = _evidence()
+    evidence[0]["source_tier"] = "SECONDARY"
+    companies = deepcopy(_companies())
+    companies[0]["industry"] = "银行"
+
+    payload = build_handoff_queue(_snapshot(), evidence, companies, _links())
+
+    assert payload["queue_count"] == 0
+    diagnostic = payload["trend_diagnostics"][0]
+    assert diagnostic["provenance_ok"] is False
+    assert diagnostic["freshness_ok"] is True
+    assert diagnostic["reviewed_company_match_count"] == 0
+    assert "PROVENANCE_NOT_TRUSTED" in diagnostic["blockers"]
+    assert "REVIEWED_COMPANY_MAPPING_MISSING" in diagnostic["blockers"]
+
+
+def test_successful_handoff_has_ready_diagnostic_and_does_not_change_authority():
+    payload = build_handoff_queue(_snapshot(), _evidence(), _companies(), _links())
+
+    assert payload["queue_count"] == 1
+    assert payload["handoff_ready_trend_count"] == 1
+    diagnostic = payload["trend_diagnostics"][0]
+    assert diagnostic["handoff_ready"] is True
+    assert diagnostic["blockers"] == []
+    assert diagnostic["handoff_count"] == 1
+    assert payload["formal_action_eligible"] is False
+    assert payload["automatic_promotion_allowed"] is False
+    assert payload["no_auto_trade"] is True
