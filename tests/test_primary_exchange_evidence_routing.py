@@ -36,15 +36,21 @@ def test_shanghai_material_events_use_sse(monkeypatch):
 
 
 def test_predictability_sse_history_keeps_distinct_complete_years(monkeypatch):
-    def fake_sse(code, as_of, session, timeout):
-        return [
+    def fake_sse(code, *, start, as_of, session, timeout, **kwargs):
+        assert code == "600406"
+        assert start == date(2020, 9, 10)
+        assert as_of == date(2026, 9, 18)
+        assert kwargs["report_type"] == "YEARLY"
+        assert kwargs["report_type2"] == "DQBG"
+        assert kwargs["max_pages"] == 5
+        return ([
             {"title": "公司2025年年度报告", "publish_date": "2026-03-30", "url": "https://static.sse.com.cn/2025.pdf"},
             {"title": "公司2025年年度报告摘要", "publish_date": "2026-03-30", "url": "https://static.sse.com.cn/2025-summary.pdf"},
             {"title": "公司2024年年度报告", "publish_date": "2025-03-30", "url": "https://static.sse.com.cn/2024.pdf"},
             {"title": "公司2023年年度报告", "publish_date": "2024-03-30", "url": "https://static.sse.com.cn/2023.pdf"},
-        ]
+        ], {"pages_fetched": 1, "truncated": False})
 
-    monkeypatch.setattr(predictability, "_query_sse", fake_sse)
+    monkeypatch.setattr(predictability, "_query_sse_announcements", fake_sse)
     rows = predictability._query_sse_history(
         "600406", date(2026, 9, 18), object(), 8
     )
@@ -191,8 +197,16 @@ def test_sse_annual_query_rejects_half_year_summaries_and_notices():
             }
 
     class Session:
-        def get(self, _url, *, params, **_kwargs):
+        def get(self, url, *, params, headers, timeout):
+            assert url == company_module.SSE_ANNOUNCEMENT_URL
+            assert headers["Referer"] == company_module.SSE_DISCLOSURE_REFERER
+            assert params["productId"] == "600406"
+            assert params["reportType"] == "YEARLY"
+            assert params["reportType2"] == "DQBG"
             assert params["pageHelp.pageSize"] == "30"
+            assert "beginDate" not in params
+            assert "endDate" not in params
+            assert timeout == 8
             return Response()
 
     rows = company_module._query_sse(
@@ -338,3 +352,111 @@ def test_predictability_unknown_provenance_tracks_primary_exchange():
 
     assert sh["source_domain"] == "sse.com.cn"
     assert sz["source_domain"] == "szse.cn"
+
+
+
+def test_sse_current_endpoint_pages_and_filters_dates_client_side():
+    class Response:
+        def __init__(self, payload):
+            self._payload = payload
+
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return self._payload
+
+    class Session:
+        pages = []
+
+        def get(self, url, *, params, headers, timeout):
+            assert url == company_module.SSE_ANNOUNCEMENT_URL
+            assert headers["Referer"] == company_module.SSE_DISCLOSURE_REFERER
+            assert "beginDate" not in params
+            assert "endDate" not in params
+            page = int(params["pageHelp.pageNo"])
+            self.pages.append(page)
+            rows = {
+                1: [
+                    {"SECURITY_CODE": "600406", "TITLE": "公司2025年年度报告", "SSEDATE": "2026-03-30", "URL": "/2025.pdf"},
+                    {"SECURITY_CODE": "600406", "TITLE": "公司2024年年度报告", "SSEDATE": "2025-03-30", "URL": "/2024.pdf"},
+                ],
+                2: [
+                    {"SECURITY_CODE": "600406", "TITLE": "公司2023年年度报告", "SSEDATE": "2024-03-30", "URL": "/2023.pdf"},
+                    {"SECURITY_CODE": "600406", "TITLE": "公司2022年年度报告", "SSEDATE": "2023-03-30", "URL": "/2022.pdf"},
+                ],
+            }[page]
+            return Response({"pageHelp": {"pageCount": 2, "data": rows}})
+
+    session = Session()
+    rows, meta = company_module._query_sse_announcements(
+        "600406",
+        start=date(2024, 1, 1),
+        as_of=date(2026, 9, 18),
+        session=session,
+        timeout=8,
+        report_type="YEARLY",
+        report_type2="DQBG",
+        max_pages=5,
+        page_size=2,
+    )
+
+    assert session.pages == [1, 2]
+    assert [row["title"] for row in rows] == [
+        "公司2025年年度报告",
+        "公司2024年年度报告",
+        "公司2023年年度报告",
+    ]
+    assert all(row["url"].startswith(company_module.SSE_STATIC_HOST) for row in rows)
+    assert meta["truncated"] is False
+
+
+def test_sse_material_events_use_current_endpoint_without_server_date_params():
+    class Response:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {
+                "pageHelp": {
+                    "pageCount": 1,
+                    "data": [
+                        {
+                            "SECURITY_CODE": "603993",
+                            "TITLE": "关于重大事项的公告",
+                            "SSEDATE": "2026-09-10",
+                            "URL": "/event.pdf",
+                        }
+                    ],
+                }
+            }
+
+    class Session:
+        def get(self, url, *, params, headers, timeout):
+            assert url == company_module.SSE_ANNOUNCEMENT_URL
+            assert headers["Referer"] == company_module.SSE_DISCLOSURE_REFERER
+            assert params["productId"] == "603993"
+            assert "reportType" not in params
+            assert "reportType2" not in params
+            assert "beginDate" not in params
+            assert "endDate" not in params
+            return Response()
+
+    rows, meta = company_module._query_sse_material_events(
+        "603993", date(2026, 9, 18), Session(), 8
+    )
+
+    assert [row["title"] for row in rows] == ["关于重大事项的公告"]
+    assert meta["pages_fetched"] == 1
+    assert meta["truncated"] is False
+
+
+def test_sse_jsonp_payload_is_decoded_fail_closed():
+    class Response:
+        def json(self):
+            raise ValueError("not plain json")
+
+        text = 'jsonpCallback({"pageHelp":{"data":[]}});'
+
+    payload = company_module._sse_response_payload(Response())
+    assert payload["pageHelp"]["data"] == []
