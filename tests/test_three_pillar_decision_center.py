@@ -7,6 +7,22 @@ def _dashboard():
         "formal_action_source": "FINALIZED_CANONICAL_ONLY",
         "latest_trade_date": "2026-09-07",
         "canonical_snapshot_id": "snap-1",
+        "market": {
+            "as_of_date": "2026-09-07",
+            "status": "GREEN",
+            "data_quality": "OK",
+            "allow_new_buy": True,
+            "score": 73.8,
+            "position_multiplier": 1.0,
+            "advance_ratio": 0.7569,
+            "median_return_1d_pct": 1.04,
+            "above_ma20_ratio": 0.3962,
+            "above_ma60_ratio": 0.5254,
+            "distribution_ratio": 0.0115,
+            "limit_up_count": 67,
+            "limit_down_count": 0,
+            "risk_reasons": [],
+        },
         "stock_portfolio": {
             "status": "CONFIRMED",
             "rows": [
@@ -143,6 +159,8 @@ def test_world_social_trend_and_tactical_proxy_remain_separate():
     assert capital["structural_world_social_trends"][0]["trend_id"] == "digital_infrastructure"
     assert capital["structural_world_social_trends"][0]["a_share_research_industries"] == ["电力设备", "通信"]
     assert capital["tactical_market_behavior_proxy"][0]["industry"] == "电力设备"
+    assert capital["a_share_market_snapshot"]["status"] == "GREEN"
+    assert capital["a_share_market_snapshot"]["advance_ratio"] == 0.7569
     assert capital["validated_handoff_count"] == 0
     assert capital["intersection_status"] == "NO_VALIDATED_A_SHARE_HANDOFF"
 
@@ -174,5 +192,8 @@ def test_markdown_leads_with_three_investor_questions():
     md = render_markdown(out)
     assert "## 1. 我的持仓：深算后到底怎么办" in md
     assert "## 2. 世界/社会/市场：钱可能在哪里" in md
+    assert "### 今日A股大盘脉搏" in md
+    assert "上涨家数占比 **75.69%**" in md
+    assert "短周期尚未全面修复，但中期广度仍有支撑" in md
     assert "## 3. 新机会：润贝型以及其他机会深算结果" in md
     assert "UNKNOWN != PASS" in md
