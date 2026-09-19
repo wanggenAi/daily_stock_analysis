@@ -20,11 +20,11 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          # 2026-09-11: post-PR #144 current-main validation reusing successful, non-expired Opportunity Discovery run 34489909299.
+          # 2026-09-19: explicit post-#188 production continuity proof from Opportunity Discovery run 35427591974.
           gh workflow run genge-v31-industry-research.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
-            -f upstream_run_id=34489909299 \
+            -f upstream_run_id=35427591974 \
             -f explicit_finalizer=true
           sleep 8
           RUN_ID="$(gh run list \
@@ -44,4 +44,4 @@ jobs:
           git push
           echo "V31_INDUSTRY_RUN_ID=$RUN_ID"
 
-# Closure trigger: post-PR #147 generic strict-PIT holding valuation range validation, 2026-09-11 (run 2).
+# Closure trigger: post-#188 production continuity verification.
