@@ -805,13 +805,16 @@ def collect_multi_year_predictability_evidence(
         return []
 
     session = requests.Session()
-    # Load CNINFO metadata once as a best-effort fallback for every A-share.
-    # Primary exchange disclosure remains preferred; CNINFO is used only when
-    # the primary route errors or yields no annual-report candidates.
-    try:
-        org_ids = _load_cninfo_org_ids(session, timeout)
-    except Exception:
-        org_ids = {}
+    org_ids_cache: dict[str, str] | None = None
+
+    def cninfo_org_ids() -> dict[str, str]:
+        nonlocal org_ids_cache
+        if org_ids_cache is None:
+            try:
+                org_ids_cache = _load_cninfo_org_ids(session, timeout)
+            except Exception:
+                org_ids_cache = {}
+        return org_ids_cache
 
     results: list[dict[str, Any]] = []
     for row in selected:
@@ -820,38 +823,66 @@ def collect_multi_year_predictability_evidence(
         candidates: list[dict[str, Any]] = []
         query_source = ""
         query_errors: list[str] = []
+        primary_exchange = code.startswith(("0", "2", "3", "6"))
 
-        try:
-            if code.startswith("6"):
-                candidates = _query_sse_history(code, as_of, session, timeout)
-                query_source = "SSE_PRIMARY"
-            elif code.startswith(("0", "2", "3")):
-                candidates = _query_szse_history(code, as_of, session, timeout)
-                query_source = "SZSE_PRIMARY"
-        except Exception as exc:
-            query_errors.append(f"PRIMARY:{type(exc).__name__}")
-            candidates = []
-
-        if not candidates:
-            org_id = org_ids.get(code)
-            if org_id:
-                try:
-                    fallback = _query_cninfo_history(code, org_id, as_of, session, timeout)
-                except Exception as exc:
-                    query_errors.append(f"CNINFO:{type(exc).__name__}")
+        if primary_exchange:
+            try:
+                if code.startswith("6"):
+                    candidates = _query_sse_history(code, as_of, session, timeout)
+                    query_source = "SSE_PRIMARY"
                 else:
-                    if fallback:
-                        candidates = fallback
-                        query_source = "CNINFO_FALLBACK"
+                    candidates = _query_szse_history(code, as_of, session, timeout)
+                    query_source = "SZSE_PRIMARY"
+            except Exception as exc:
+                query_errors.append(f"PRIMARY:{type(exc).__name__}")
 
-        if not candidates:
-            reason = (
-                "ANNUAL_REPORT_QUERY_FAILED:" + ",".join(query_errors)
-                if query_errors
-                else "OFFICIAL_ANNUAL_REPORTS_NOT_FOUND"
-            )
-            results.append(_unknown_row(code, industry, reason))
-            continue
+            # Preserve the primary-exchange contract on a clean empty result:
+            # an empty but successful official query is evidence insufficiency,
+            # not a transport failure and not a reason to consult CNINFO.
+            if query_errors:
+                org_id = cninfo_org_ids().get(code)
+                if org_id:
+                    try:
+                        fallback = _query_cninfo_history(
+                            code, org_id, as_of, session, timeout
+                        )
+                    except Exception as exc:
+                        query_errors.append(f"CNINFO:{type(exc).__name__}")
+                    else:
+                        if fallback:
+                            candidates = fallback
+                            query_source = "CNINFO_FALLBACK"
+
+                if not candidates:
+                    results.append(
+                        _unknown_row(
+                            code,
+                            industry,
+                            "ANNUAL_REPORT_QUERY_FAILED:" + ",".join(query_errors),
+                        )
+                    )
+                    continue
+        else:
+            org_id = cninfo_org_ids().get(code)
+            if not org_id:
+                results.append(
+                    _unknown_row(
+                        code, industry, "OFFICIAL_ANNOUNCEMENT_PROVIDER_UNAVAILABLE"
+                    )
+                )
+                continue
+            try:
+                candidates = _query_cninfo_history(code, org_id, as_of, session, timeout)
+                query_source = "CNINFO_PRIMARY"
+            except Exception as exc:
+                results.append(
+                    _unknown_row(
+                        code,
+                        industry,
+                        f"ANNUAL_REPORT_QUERY_FAILED:CNINFO:{type(exc).__name__}",
+                    )
+                )
+                continue
 
         metrics: list[dict[str, Any]] = []
         source_rows: list[dict[str, Any]] = []
@@ -875,7 +906,9 @@ def collect_multi_year_predictability_evidence(
             source_rows.append({**candidate, "extraction_method": extraction_method})
 
         cyclical = _is_cyclical_or_resource(industry, report_texts)
-        classification, reason = classify_multi_year_metrics(metrics, cyclical_or_resource=cyclical)
+        classification, reason = classify_multi_year_metrics(
+            metrics, cyclical_or_resource=cyclical
+        )
         coverage_years = sorted(
             int(item["fiscal_year"]) for item in metrics if _complete_record(item)
         )
@@ -903,16 +936,26 @@ def collect_multi_year_predictability_evidence(
             "source_urls": [item.get("url") for item in source_rows],
             "query_source": query_source,
             "query_diagnostic": ",".join(query_errors),
-            "evidence_status": "VERIFIED" if classification in {"PASS", "FAIL"} else "OBSERVED_CONTEXT",
+            "evidence_status": (
+                "VERIFIED"
+                if classification in {"PASS", "FAIL"}
+                else "OBSERVED_CONTEXT"
+            ),
             "source_type": "OFFICIAL_REPORT",
-            "source_domain": source_domain(latest.get("url") or "https://www.cninfo.com.cn/"),
+            "source_domain": (
+                source_domain(latest.get("url") or "")
+                if latest.get("url")
+                else _official_report_source_domain(code)
+            ),
             "publish_date": latest.get("publish_date") or "",
             "original_url": latest.get("url") or "",
             "normalized_summary": (
                 f"{classification}:{reason}; years={coverage_years}; "
                 "unit_provenance=required; normalization=CNY_YUAN"
             ),
-            "content_hash": content_hash(json.dumps(digest_payload, ensure_ascii=False, sort_keys=True)),
+            "content_hash": content_hash(
+                json.dumps(digest_payload, ensure_ascii=False, sort_keys=True)
+            ),
             "unit_provenance_required": True,
             "normalization_unit": "CNY_YUAN",
             "authority_crossed": False,
