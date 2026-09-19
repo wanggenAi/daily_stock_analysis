@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] Deep Calculation 将“请求代码未进入 profile”的上游 handoff 缺口从 `EVIDENCE_EXHAUSTED` 中分离为 `HANDOFF_INCOMPLETE`，终态同时持久化 requested/profile/processed/missing 覆盖度；未进入研究工件的代码不再冒充已完成补证，也不再计入未解决硬门槛，UNKNOWN、Formal Authority 与 no-auto-trade 规则不变。
 - [修复] Deep Calculation partial checkpoint 持久化请求 workset/profile 覆盖度，并让三支柱决策中心区分“字段未携带”和真实 0；部分运行不再把缺失计数误报为请求 0，且不改变任何证据门槛、Formal Authority、UNKNOWN 判定或 no-auto-trade。
 - [改进] 三支柱投资决策中心收敛现有能力：Pillar 2 直接展示 A 股市场广度/MA20/MA60/涨跌停脉搏；Deep Runtime 同时读取 terminal 与 partial checkpoint，以最新真实运行状态为准并显式校验 profile lineage；几千条 UNKNOWN 明细压缩为门槛/原因分布和少量样例，不改变任何 Formal/Production Authority、估值公式、BUY/WAIT_PRICE/REJECT 门槛或 no-auto-trade。
 - [改进] Near-BUY observer overlay 在 V3.1 正式证据缺失时新增只读 Evidence Recovery Priority A/B/C 队列，按已完成财务/估值研究、非退出型二次门槛和现有研究优先级确定补证顺序；UNKNOWN 仍不视为 PASS、缺证据对象不得获得 starter 仓位或自动晋级，并在 Near-BUY 代码合入 main 时用最近成功 Terminal artifact 自动重跑验证。
