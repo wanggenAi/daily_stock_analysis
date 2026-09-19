@@ -23,7 +23,7 @@ from .company_announcements import (
     SZSE_ANNUAL_REPORT_CATEGORY,
     SZSE_PERIODIC_REPORT_REFERER,
     _load_cninfo_org_ids,
-    _query_sse,
+    _query_sse_announcements,
     _query_szse_announcements,
 )
 from .validators import content_hash, extract_text_from_response, source_domain, utc_now
@@ -235,10 +235,21 @@ def _query_sse_history(
     timeout: int,
 ) -> list[dict[str, Any]]:
     """Return strict annual-report bodies from the issuer's primary SSE source."""
+    rows, _ = _query_sse_announcements(
+        code,
+        start=as_of - timedelta(days=HISTORY_DAYS),
+        as_of=as_of,
+        session=session,
+        timeout=timeout,
+        report_type="YEARLY",
+        report_type2="DQBG",
+        max_pages=5,
+        page_size=30,
+    )
     by_year: dict[int, dict[str, Any]] = {}
-    for item in _query_sse(code, as_of, session, timeout):
+    for item in rows:
         title = _clean_title(item.get("title"))
-        if "摘要" in title or "英文" in title or "取消" in title:
+        if not _is_full_annual_report_title(title):
             continue
         year = _fiscal_year(title)
         published = str(item.get("publish_date") or "").strip()
