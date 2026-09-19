@@ -320,3 +320,16 @@ CI 通过只能说明自动检查通过，不能替代人工语义收敛，也�
 - 自动 tag 默认不触发，只有 commit title 包含 `#patch`、`#minor`、`#major` 才会触发版本号更新。
 - 手动打 tag 必须使用 annotated tag。
 - 用户可见变更优先通过 PR 合入，并补齐 label 与验证说明。
+
+## Durable web-session checkpoint branch — LOCKED
+
+For ChatGPT Plus web sessions and any other long-running agent session that can stall or disappear, use the repository-level recovery protocol in `docs/WEB_SESSION_RECOVERY.md`.
+
+- The permanent volatile checkpoint is `state/chatgpt-recovery:RECOVERY_STATE.json`.
+- Recovery precedence is: live GitHub refs/PRs/Actions/artifacts/persisted data > recovery checkpoint > `TASK_STATE.md` > chat history.
+- Before a long wait or external run, and after each remotely durable milestone, update the recovery checkpoint. Do not defer all checkpointing until task completion.
+- Checkpoint updates are compare-and-swap writes: fetch the latest state-file blob SHA, reconcile live GitHub, increment `generation`, then update using that SHA. On conflict, re-read; never force-overwrite.
+- On a new chat, first classify the checkpoint as `FRESH`, `STALE`, or `CONFLICTED` by comparing it with live GitHub. A moved `main` alone is not failure, especially when automated workflows persist runtime data.
+- If GitHub proves that a commit, PR, CI result, merge, production run, or artifact already exists, consume that evidence and continue from the first unfinished stage. Never repeat work merely because the previous chat ended before writing its next checkpoint.
+- `TASK_STATE.md` remains the stable mission handoff; the recovery-state branch is the volatile execution cursor. Keep both concise and never let either override live GitHub truth.
+
