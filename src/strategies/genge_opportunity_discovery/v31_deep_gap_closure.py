@@ -97,6 +97,8 @@ def _official_exchange_domain(value: Any) -> bool:
         or domain.endswith(".cninfo.com.cn")
         or domain == "sse.com.cn"
         or domain.endswith(".sse.com.cn")
+        or domain == "szse.cn"
+        or domain.endswith(".szse.cn")
     )
 
 

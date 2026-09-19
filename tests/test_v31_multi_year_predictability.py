@@ -1,6 +1,12 @@
 from __future__ import annotations
 
+import requests
+
+from src.strategies.genge_opportunity_discovery.evidence_collectors import (
+    multi_year_predictability as predictability_module,
+)
 from src.strategies.genge_opportunity_discovery.evidence_collectors.multi_year_predictability import (
+    collect_multi_year_predictability_evidence,
     classify_multi_year_metrics,
     extract_report_metrics,
 )
@@ -381,3 +387,93 @@ def test_close_profiles_preserves_research_only_authority_and_existing_fail():
     assert status["automatic_formal_buy_allowed"] is False
     assert status["unknown_is_pass"] is False
     assert status["no_auto_trade"] is True
+
+
+def test_primary_szse_official_domain_can_resolve_predictability():
+    row = _strict_row()
+    row["source_domain"] = "disc.static.szse.cn"
+    row["original_url"] = "https://disc.static.szse.cn/download/example.pdf"
+    decision, rationale, evidence = infer_predictability("000001", [row])
+    assert decision == "PASS"
+    assert "Strict multi-year official-report" in rationale
+    assert evidence[0]["source_domain"] == "disc.static.szse.cn"
+
+
+def test_multi_year_collector_uses_cninfo_when_primary_exchange_query_fails(monkeypatch):
+    report_text = {
+        2023: """
+        单位：万元
+        营业收入 10,000.00
+        归属于上市公司股东的净利润 1,000.00
+        经营活动产生的现金流量净额 1,200.00
+        """,
+        2024: """
+        单位：万元
+        营业收入 10,800.00
+        归属于上市公司股东的净利润 1,100.00
+        经营活动产生的现金流量净额 1,300.00
+        """,
+        2025: """
+        单位：万元
+        营业收入 11,600.00
+        归属于上市公司股东的净利润 1,200.00
+        经营活动产生的现金流量净额 1,400.00
+        """,
+    }
+    candidates = [
+        {
+            "fiscal_year": year,
+            "title": f"{year}年年度报告",
+            "publish_date": f"{year + 1}-03-31",
+            "url": f"https://static.cninfo.com.cn/finalpage/{year}/fixture.pdf",
+        }
+        for year in (2025, 2024, 2023)
+    ]
+
+    class FakeResponse:
+        def __init__(self, year):
+            self.content = str(year).encode()
+            self.headers = {"Content-Type": "application/pdf"}
+
+        def raise_for_status(self):
+            return None
+
+    class FakeSession:
+        def get(self, url, **kwargs):
+            year = int(url.split("/")[-2])
+            return FakeResponse(year)
+
+    monkeypatch.setattr(predictability_module.requests, "Session", lambda: FakeSession())
+    monkeypatch.setattr(
+        predictability_module,
+        "_load_cninfo_org_ids",
+        lambda session, timeout: {"000001": "gssz0000001"},
+    )
+    monkeypatch.setattr(
+        predictability_module,
+        "_query_szse_history",
+        lambda *args, **kwargs: (_ for _ in ()).throw(requests.ConnectionError("primary unavailable")),
+    )
+    monkeypatch.setattr(
+        predictability_module,
+        "_query_cninfo_history",
+        lambda *args, **kwargs: candidates,
+    )
+    monkeypatch.setattr(
+        predictability_module,
+        "extract_text_from_response",
+        lambda content, content_type, url: (report_text[int(content.decode())], "fixture"),
+    )
+
+    rows = collect_multi_year_predictability_evidence(
+        priority_rows=[{"code": "000001", "industry": "J66货币金融服务"}],
+        as_of=predictability_module.date(2026, 9, 19),
+        timeout=1,
+    )
+    assert len(rows) == 1
+    assert rows[0]["predictability_classification"] == "PASS"
+    assert rows[0]["evidence_status"] == "VERIFIED"
+    assert rows[0]["query_source"] == "CNINFO_FALLBACK"
+    assert rows[0]["query_diagnostic"] == "PRIMARY:ConnectionError"
+    assert rows[0]["coverage_years"] == [2023, 2024, 2025]
+    assert rows[0]["source_domain"] == "static.cninfo.com.cn"
