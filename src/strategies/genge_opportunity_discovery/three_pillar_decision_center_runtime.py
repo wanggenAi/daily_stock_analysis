@@ -124,8 +124,9 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
     requested_profile_count_available = available("requested_profile_count")
     requested_profile_count = _int(raw.get("requested_profile_count"))
     exhausted_count = _int(raw.get("evidence_exhausted_requested_count"))
+    handoff_incomplete_count = _int(raw.get("handoff_incomplete_requested_count"))
     processed = _int(raw.get("processed_requested_count"))
-    terminal_process = terminal in {"COMPLETE", "EVIDENCE_EXHAUSTED"}
+    terminal_process = terminal in {"COMPLETE", "EVIDENCE_EXHAUSTED", "HANDOFF_INCOMPLETE"}
     if not processed and requested_profile_count_available:
         processed = requested_profile_count
     elif not processed and requested and terminal_process:
@@ -139,8 +140,8 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
         or (requested_available and missing_available and not missing)
     )
     partial = _int(raw.get("partial_requested_count"))
-    if not partial and terminal == "EVIDENCE_EXHAUSTED":
-        partial = exhausted_count or max(0, requested - _int(raw.get("complete_requested_count")))
+    if not partial and terminal in {"EVIDENCE_EXHAUSTED", "HANDOFF_INCOMPLETE"}:
+        partial = exhausted_count
     unresolved_reasons = raw.get("unresolved_reasons")
     if not isinstance(unresolved_reasons, Mapping):
         unresolved_reasons = {}
@@ -167,6 +168,8 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
         "partial_requested_count_available": available("partial_requested_count"),
         "evidence_exhausted_requested_count": exhausted_count,
         "evidence_exhausted_requested_count_available": available("evidence_exhausted_requested_count"),
+        "handoff_incomplete_requested_count": handoff_incomplete_count,
+        "handoff_incomplete_requested_count_available": available("handoff_incomplete_requested_count"),
         "profile_count": profile_count,
         "profile_count_available": profile_count_available,
         "requested_profile_count": requested_profile_count,
@@ -192,7 +195,8 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
         "no_auto_trade": True,
         "interpretation": (
             "execution_succeeded means compute finished; COMPLETE means all requested hard gates resolved; "
-            "EVIDENCE_EXHAUSTED means bounded same-run recovery finished while unresolved UNKNOWN gates remain."
+            "EVIDENCE_EXHAUSTED means bounded same-run recovery finished for materialized profiles while unresolved UNKNOWN gates remain; "
+            "HANDOFF_INCOMPLETE means the run finished but one or more requested codes never entered the Deep profile workset."
         ),
     }
 
@@ -583,7 +587,7 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         f"- 运行状态：**{runtime.get('run_state') or 'NOT_AVAILABLE'}**",
         f"- 研究过程终态：**{runtime.get('research_terminal_state') or 'NOT_AVAILABLE'}**",
         f"- 请求深算：**{_runtime_metric_text(runtime, 'requested_count')}**；已处理：**{_runtime_metric_text(runtime, 'processed_requested_count')}**；完整：**{_runtime_metric_text(runtime, 'complete_requested_count')}**；证据穷尽：**{_runtime_metric_text(runtime, 'evidence_exhausted_requested_count')}**。",
-        f"- Workset profile：总数 **{_runtime_metric_text(runtime, 'profile_count')}**；请求代码已落 profile **{_runtime_metric_text(runtime, 'requested_profile_count')}**；覆盖可审计：**{runtime.get('workset_coverage_known') is True}**；完整覆盖：**{runtime.get('workset_coverage_complete') is True}**。",
+        f"- Workset profile：总数 **{_runtime_metric_text(runtime, 'profile_count')}**；请求代码已落 profile **{_runtime_metric_text(runtime, 'requested_profile_count')}**；handoff 未完成 **{_runtime_metric_text(runtime, 'handoff_incomplete_requested_count')}**；覆盖可审计：**{runtime.get('workset_coverage_known') is True}**；完整覆盖：**{runtime.get('workset_coverage_complete') is True}**。",
         f"- 同轮补证据尝试：**{runtime.get('gap_closure_attempt_count', 0)}**；取得证据：**{runtime.get('new_evidence_count', 0)}**；推进硬门槛：**{runtime.get('progressed_gate_count', 0)}**。",
         f"- 尚未解决硬门槛：**{_runtime_metric_text(runtime, 'unresolved_requested_gate_count')}**。",
         f"- 未决原因摘要：{_unresolved_text(runtime.get('unresolved_reasons') or {})}",
@@ -594,7 +598,7 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         ),
         f"- 上一次完整终态 run：`{runtime.get('last_terminal_run_id') or '—'}`；执行 **{runtime.get('last_terminal_execution_status') or 'NOT_AVAILABLE'}**；研究终态 **{runtime.get('last_terminal_research_terminal_state') or 'NOT_AVAILABLE'}**。",
         f"- 是否需要你手工开启下一轮：**{runtime.get('manual_next_round_required', True)}**。",
-        "- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 是流程已自动收口，不代表 UNKNOWN 被当成 PASS。",
+        "- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。",
         "",
         "## 深算终态研究决策",
         "",
