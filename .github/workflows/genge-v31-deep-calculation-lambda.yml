@@ -42,6 +42,7 @@ on:
       - "tests/test_v31_multi_year_predictability.py"
       - "tests/test_v31_deep_provenance_audit.py"
       - "tests/test_runbei_archetype_deep_handoff.py"
+      - "tests/test_genge_v31_deep_calculation_workflow_contract.py"
       - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
       - ".github/workflows/genge-v31-deep-provenance-audit.yml"
   workflow_run:
@@ -92,7 +93,8 @@ jobs:
             tests/test_v31_deep_workset.py \
             tests/test_v31_multi_year_predictability.py \
             tests/test_v31_deep_provenance_audit.py \
-            tests/test_runbei_archetype_deep_handoff.py
+            tests/test_runbei_archetype_deep_handoff.py \
+            tests/test_genge_v31_deep_calculation_workflow_contract.py
 
   deep-calculate:
     needs: contracts
@@ -403,6 +405,7 @@ jobs:
         env:
           RESEARCH_RUN_ID: ${{ steps.resolve.outputs.research_run_id }}
           TRIGGER_SOURCE: ${{ steps.resolve.outputs.trigger_source }}
+          REQUESTED_CODES: ${{ steps.resolve.outputs.requested_codes }}
         run: |
           set -u
           python - <<'PY'
@@ -410,6 +413,14 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
           root=Path('reports/deep_calculation_lambda')
+          requested=list(dict.fromkeys(
+              code.strip() for code in os.environ.get('REQUESTED_CODES','').split(',') if code.strip()
+          ))
+          profiles_payload=json.loads((root/'deep_review_profiles.json').read_text(encoding='utf-8'))
+          profiles=profiles_payload.get('profiles') if isinstance(profiles_payload.get('profiles'),dict) else {}
+          profile_codes={str(code).strip() for code in profiles}
+          requested_profiles=[code for code in requested if code in profile_codes]
+          missing_requested=[code for code in requested if code not in profile_codes]
           payload={
               'contract':'GEN_GE_V31_DEEP_PARTIAL_CHECKPOINT_V1',
               'execution_status':'PARTIAL',
@@ -421,12 +432,21 @@ jobs:
               'lambda_run_id':os.environ.get('GITHUB_RUN_ID',''),
               'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
               'initial_pass_complete':(root/'initial_checkpoint_status.json').is_file(),
+              'profile_count':len(profiles),
+              'workset_coverage_known':bool(requested),
               'runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1',
               'formal_trading_authority':False,
               'automatic_formal_buy_allowed':False,
               'unknown_is_pass':False,
               'no_auto_trade':True,
           }
+          if requested:
+              payload.update({
+                  'requested_count':len(requested),
+                  'requested_profile_count':len(requested_profiles),
+                  'missing_requested_codes':missing_requested,
+                  'workset_coverage_complete':not missing_requested,
+              })
           (root/'partial_status.json').write_text(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
           mkdir -p /tmp/genge-deep-partial

@@ -423,3 +423,63 @@ def test_unresolved_markdown_is_bounded_summary_not_full_dump():
     assert "Top原因" in md
     assert "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE×20" in md
     assert "000019[" not in md
+
+def test_partial_checkpoint_without_workset_metrics_does_not_claim_zero() -> None:
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_terminal_status(),
+        partial_deep_calculation_status=_partial_status(),
+        industry_links={},
+        era_handoff={},
+    )
+    runtime = out["deep_calculation_runtime"]
+    assert runtime["requested_count_available"] is False
+    assert runtime["profile_count_available"] is False
+    assert runtime["missing_requested_codes_available"] is False
+    md = render_runtime_markdown(out)
+    assert "请求深算：**未携带**" in md
+    assert "Workset profile：总数 **未携带**" in md
+    assert "请求但未进入本次研究工件：**未携带**" in md
+    assert "请求深算：**0**" not in md
+
+
+def test_partial_checkpoint_exposes_workset_coverage_when_persisted() -> None:
+    partial = _partial_status()
+    partial.update(
+        {
+            "requested_count": 850,
+            "profile_count": 850,
+            "requested_profile_count": 850,
+            "missing_requested_codes": [],
+            "workset_coverage_known": True,
+            "workset_coverage_complete": True,
+        }
+    )
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_terminal_status(),
+        partial_deep_calculation_status=partial,
+        industry_links={},
+        era_handoff={},
+    )
+    runtime = out["deep_calculation_runtime"]
+    assert runtime["requested_count"] == 850
+    assert runtime["requested_count_available"] is True
+    assert runtime["profile_count"] == 850
+    assert runtime["requested_profile_count"] == 850
+    assert runtime["processed_requested_count"] == 850
+    assert runtime["workset_coverage_known"] is True
+    assert runtime["workset_coverage_complete"] is True
+    assert runtime["missing_requested_codes"] == []
+    md = render_runtime_markdown(out)
+    assert "请求深算：**850**；已处理：**850**" in md
+    assert "Workset profile：总数 **850**；请求代码已落 profile **850**" in md
+    assert "覆盖可审计：**True**；完整覆盖：**True**" in md
+    assert "请求但未进入本次研究工件：**无**" in md
+

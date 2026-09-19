@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+- [修复] Deep Calculation partial checkpoint 持久化请求 workset/profile 覆盖度，并让三支柱决策中心区分“字段未携带”和真实 0；部分运行不再把缺失计数误报为请求 0，且不改变任何证据门槛、Formal Authority、UNKNOWN 判定或 no-auto-trade。
 - [改进] 三支柱投资决策中心收敛现有能力：Pillar 2 直接展示 A 股市场广度/MA20/MA60/涨跌停脉搏；Deep Runtime 同时读取 terminal 与 partial checkpoint，以最新真实运行状态为准并显式校验 profile lineage；几千条 UNKNOWN 明细压缩为门槛/原因分布和少量样例，不改变任何 Formal/Production Authority、估值公式、BUY/WAIT_PRICE/REJECT 门槛或 no-auto-trade。
 - [改进] Near-BUY observer overlay 在 V3.1 正式证据缺失时新增只读 Evidence Recovery Priority A/B/C 队列，按已完成财务/估值研究、非退出型二次门槛和现有研究优先级确定补证顺序；UNKNOWN 仍不视为 PASS、缺证据对象不得获得 starter 仓位或自动晋级，并在 Near-BUY 代码合入 main 时用最近成功 Terminal artifact 自动重跑验证。
 - [新功能] GenGe 候选终态后新增 observer-only Near-BUY 研究叠加层：按 SUFFICIENT/MISSING/CONFLICTED/CONFIRMED_NEGATIVE 区分证据质量，仅对无 Hard Gate FAIL、无 confirmed-negative 且满足研究条件的对象标记 NEAR_BUY；提供 20%–30%（默认 25%）研究型 starter-position advisory，并支持 5/10/20/60 交易日前向收益、基准超额、胜率、盈亏比与 60 日最大回撤评估；不改变 Canonical/Production Authority、Formal BUY 门槛、BUY/WAIT_PRICE/REJECT 三态、UNKNOWN 非 PASS 与 no-auto-trade。
