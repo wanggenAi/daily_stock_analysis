@@ -16,7 +16,7 @@ Current branch contains the SSE transport implementation and regression tests; C
 `fix/sse-bulletin-403-transport`
 
 ## Active PR
-not opened yet at this checkpoint
+#189 — `fix: recover current SSE bulletin transport`
 
 ## CI
 - #185 full CI `35406705085`: green; merged as `1710ff74203cf79cbeb306f9153783b6de490ac3`.
@@ -27,9 +27,10 @@ not opened yet at this checkpoint
 ## Production / Artifact
 - Research mapping durability remains verified at 118/118 mapped, 0 unmapped.
 - Pre-#185 Deep baseline `35403919220`: predictability VERIFIED 0; company status 280 SOURCE_DATA_ABSENT + 219 SOURCE_FETCH_FAILED.
-- Post-#185 Deep run `35408711645`, generated `2026-09-19T00:30:04Z`: predictability VERIFIED 0; company status 2 SOURCE_DATA_ABSENT + 497 SOURCE_FETCH_FAILED; material-event failure 499; all 499 predictability reasons are `ANNUAL_REPORT_QUERY_FAILED:HTTPError`.
-- Persisted evidence for `35408711645` identifies SSE metadata-query 403 on `query.sse.com.cn/security/stock/queryCompanyBulletin.do` for Shanghai issuers such as 600406/601318/603993. This failure occurs before PDF download/parsing.
-- No post-#187 persisted Deep result has been verified yet.
+- Bound Deep history run `35408711645`, generated `2026-09-19T00:30:04Z`: 497 SOURCE_FETCH_FAILED + 2 SOURCE_DATA_ABSENT; its run-specific evidence records HTTP 403 from the legacy SSE `queryCompanyBulletin.do` metadata query for Shanghai issuers and CNINFO 403 for Shenzhen issuers.
+- Bound Deep history run `35407967652`, generated `2026-09-19T00:47:32Z`: 277 PARSE_FAILED + 3 SOURCE_DATA_ABSENT + 219 SOURCE_FETCH_FAILED. Its run-specific evidence shows Shanghai metadata/material-event queries succeeded and reached official static SSE PDFs (then failed at `PdfStreamError` for sampled annual reports), while sampled Shenzhen issuer 001316 still used CNINFO and failed 403.
+- These concurrent histories prove the legacy SSE query transport is unstable across runs rather than deterministically unavailable. They do not yet prove #187 production routing because the Shenzhen samples in both bound histories still use CNINFO.
+- No run-specific persisted Deep evidence has yet been verified as originating from the post-#187 merge code path.
 
 ## Completed
 - #179 moved Shanghai metadata routing from CNINFO to SSE.
@@ -42,7 +43,7 @@ not opened yet at this checkpoint
 - UNKNOWN remains fail-closed; no investment decision threshold or authority changed.
 
 ## Current Findings
-- Production evidence rules out the PDF parser as the current Shanghai blocker: the request is rejected at SSE bulletin metadata query with HTTP 403.
+- Production history exposes two sequential Shanghai bottlenecks depending on run: the legacy metadata query can 403, and when it succeeds the sampled annual-report fetch reaches the static PDF but pypdf can raise `PdfStreamError`. The transport instability is the current engineering target; parser work must wait for post-transport production evidence.
 - Current public endpoint research indicates the active SSE bulletin path requires `queryCompanyBulletinNew.do`, `productId`, and the exact listed-announcement Referer; server-side begin/end date filters are not relied upon.
 - A transport recovery is successful only when a post-merge Deep run moves SSE/SZSE failures to verified evidence or to a later honest UNKNOWN reason.
 
