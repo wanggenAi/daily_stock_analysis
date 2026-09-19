@@ -1,17 +1,17 @@
 {
   "schema_version": 1,
-  "generation": 3,
+  "generation": 4,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "install-web-session-recovery-v2",
-  "stage": "PR_OPEN_CI_PENDING",
+  "stage": "PR_CI_RUNNING",
   "last_observed_main_sha": "bbb958728a8efa130e7e1a67d9feb1a475167507",
   "work_branch": "chore/web-session-recovery-v2",
   "work_head_sha": "301f0b4d3438ee95a513c5863225bfb0bd177281",
   "active_pr": 191,
   "ci": {
-    "run_id": null,
-    "status": "PENDING_DISCOVERY",
+    "run_id": 35413811443,
+    "status": "IN_PROGRESS",
     "conclusion": null
   },
   "production_or_artifact": {
@@ -25,7 +25,7 @@
     "extended scripts/check_ai_assets.py so CI enforces the recovery contract",
     "opened recovery-hardening PR #191"
   ],
-  "next_action": "Read CI/checks for PR #191; fix only real failures. If green and mergeable, merge, verify live main, then mark recovery state DONE/IDLE.",
+  "next_action": "Consume blocking CI #1221 (run 35413811443) for PR #191. If green and mergeable, merge #191, then verify the merged main revision and main CI.",
   "do_not_repeat": [
     "do not restart repository analysis from chat history",
     "do not overwrite unrelated active business work",
