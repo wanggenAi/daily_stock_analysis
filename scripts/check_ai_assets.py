@@ -13,8 +13,21 @@ CLAUDE = ROOT / "CLAUDE.md"
 COPILOT = ROOT / ".github" / "copilot-instructions.md"
 TASK_STATE = ROOT / "TASK_STATE.md"
 RECOVERY_DOC = ROOT / "docs" / "WEB_SESSION_RECOVERY.md"
+RECOVERY_EXAMPLE = ROOT / ".github" / "recovery" / "TASK_CHECKPOINT.example.json"
+RECOVERY_VALIDATOR = ROOT / "scripts" / "validate_recovery_state.py"
 INSTRUCTIONS_DIR = ROOT / ".github" / "instructions"
 CLAUDE_SKILLS_DIR = ROOT / ".claude" / "skills"
+RECOVERY_IGNORED_BUSINESS_WORKFLOWS = (
+    ROOT / ".github" / "workflows" / "genge-opportunity-discovery.yml",
+    ROOT / ".github" / "workflows" / "genge-risk-capped-opportunity-discovery.yml",
+)
+RECOVERY_ONLY_PATHS = (
+    "AGENTS.md",
+    "docs/WEB_SESSION_RECOVERY.md",
+    "scripts/check_ai_assets.py",
+    "scripts/validate_recovery_state.py",
+    ".github/recovery/**",
+)
 
 REQUIRED_INSTRUCTION_FILES = {
     "backend.instructions.md",
@@ -104,31 +117,84 @@ def ensure_task_state() -> None:
 
 def ensure_recovery_protocol() -> None:
     ensure_file_exists(RECOVERY_DOC, "web-session recovery protocol")
+    ensure_file_exists(RECOVERY_EXAMPLE, "recovery state schema example")
+    ensure_file_exists(RECOVERY_VALIDATOR, "recovery state validator")
     agents = AGENTS.read_text(encoding="utf-8")
     protocol = RECOVERY_DOC.read_text(encoding="utf-8")
 
     required_agent_fragments = (
         "## Durable web-session checkpoint branch — LOCKED",
-        "state/chatgpt-recovery:RECOVERY_STATE.json",
+        "recovery/tasks/<task_key>.json",
         "live GitHub refs/PRs/Actions/artifacts/persisted data > recovery checkpoint",
-        "FRESH",
-        "STALE",
-        "CONFLICTED",
+        "Runtime latency tax must remain zero",
+        "[skip ci] recovery:",
+        "pending_operation",
     )
     for fragment in required_agent_fragments:
         if fragment not in agents:
             fail(f"AGENTS.md is missing recovery contract text: {fragment!r}")
 
     required_protocol_fragments = (
+        "## Adaptive checkpoint sizing",
+        "## Task-scoped concurrency",
+        "## Non-interference invariant — zero business-runtime tax",
+        "## Fenced single-writer and compare-and-swap",
+        "## Write-ahead intent and ambiguous outcomes",
+        "## Idempotent recovery rules",
         "## Atomic checkpoint procedure",
-        "## Mandatory checkpoint boundaries",
+        "## State bounds, integrity and secret hygiene",
+        "## Degraded recovery mode",
         "## Resume algorithm",
         "## Crash-window rule",
-        "GitHub Contents API updates use the current blob SHA",
+        "maximum serialized size: 16 KiB",
+        "no private customer/user PII",
+        "recovery-only PR",
     )
     for fragment in required_protocol_fragments:
         if fragment not in protocol:
             fail(f"docs/WEB_SESSION_RECOVERY.md is missing required text: {fragment!r}")
+
+    result = subprocess.run(
+        [sys.executable, str(RECOVERY_VALIDATOR), str(RECOVERY_EXAMPLE)],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        fail(result.stderr.strip() or result.stdout.strip() or "recovery-state validation failed")
+
+    isolation = subprocess.run(
+        [
+            "git", "grep", "-l",
+            "-e", "RECOVERY_STATE.json",
+            "-e", "state/chatgpt-recovery",
+            "--", "main.py", "src", "api", "bot", "data_provider", "apps", ".github/workflows",
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if isolation.returncode not in (0, 1):
+        fail(isolation.stderr.strip() or "git grep failed while checking recovery isolation")
+    matches = [line.strip() for line in isolation.stdout.splitlines() if line.strip()]
+    if matches:
+        fail("recovery leaked into business/runtime paths: " + ", ".join(matches))
+
+
+def ensure_recovery_workflow_isolation() -> None:
+    for workflow in RECOVERY_IGNORED_BUSINESS_WORKFLOWS:
+        ensure_file_exists(workflow, "business workflow")
+        text = workflow.read_text(encoding="utf-8")
+        if "paths-ignore:" not in text:
+            fail(f"{workflow.relative_to(ROOT)} must exclude recovery-only PR paths")
+        for recovery_path in RECOVERY_ONLY_PATHS:
+            if recovery_path not in text:
+                fail(
+                    f"{workflow.relative_to(ROOT)} is missing recovery-only path exclusion: "
+                    f"{recovery_path!r}"
+                )
 
 
 def ensure_instruction_files() -> None:
@@ -179,6 +245,7 @@ def main() -> None:
     ensure_copilot_entry()
     ensure_task_state()
     ensure_recovery_protocol()
+    ensure_recovery_workflow_isolation()
     ensure_instruction_files()
     ensure_skill_files()
     ensure_gitignore_rules()
