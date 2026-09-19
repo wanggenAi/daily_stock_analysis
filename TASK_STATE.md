@@ -29,7 +29,7 @@ None for this mission. #195 — `fix: separate deep handoff gaps from evidence e
 - Post-merge Deep run `35427088755` was automatically triggered from #195 merge SHA `54b0e52696534cf04b7b5b8066b9db5aa6512092` and is currently running evidence closure.
 - Its persisted initial-pass artifact `genge-v31-deep-initial-35427088755` has been verified: source_run_id=`35403243897` (pre-#188), requested_count=850, processed_requested_count=499, profile_count=500 total, missing_requested_codes=351, unresolved_requested_gate_count=2285. Therefore this run is valid #195 terminal-semantics proof but not valid #188 continuity proof.
 - The expected #195 terminal behavior for this old 500-profile upstream artifact is `HANDOFF_INCOMPLETE`, with 351 missing requested profiles separated from evidence-exhausted materialized profiles and excluded from unresolved hard-gate counts.
-- No genuine post-#188 production Opportunity Discovery run from `schedule` or `workflow_dispatch` has completed yet. Push/PR Opportunity Discovery runs are fixture validation only and must not be treated as production All-A evidence.
+- A genuine post-#188 production Opportunity Discovery has now been explicitly dispatched: run `35427591974`, event=`workflow_dispatch`, head SHA `023c514ce8900f98b00053b2c7cb413c1619cf53`. It is the required production chain root. The simultaneous push run `35427584313` is fixture validation only and must not be used as production evidence.
 
 ## Completed
 - #188 continuity materialization is merged.
@@ -58,14 +58,14 @@ Merged. #195 implemented:
 
 ## Blockers
 - Post-merge Deep run `35427088755` must complete and demonstrate the #195 terminal semantics on live main. Its initial artifact already proves 499 requested profiles / 351 handoff gaps from pre-#188 source `35403243897`.
-- A genuine post-#188 production Opportunity Discovery → Every-Industry → Deep chain is still required to validate that retained workset materialization removes the structural 351 missing-profile gap.
+- Production chain `35427591974` (Opportunity Discovery workflow_dispatch) is now active. Follow its automatic workflow_run handoff into Every-Industry and then the Deep Lambda to validate whether retained workset materialization removes the structural 351 missing-profile gap.
 - Do not use push/PR fixture artifacts as production proof.
 
 ## Next Action
 1. Finish verifying post-merge main CI and Deep run `35427088755`.
 2. Confirm terminal persistence for the already-verified pre-#188 source `35403243897`: expect `HANDOFF_INCOMPLETE`, requested=850, processed_requested=499, handoff_incomplete=351, hard-gate unresolved count excluding synthetic profile reasons, and evidence-exhausted count limited to materialized unresolved profiles.
-3. Verify the first later production `schedule` or `workflow_dispatch` Every-Industry source is post-#188 and includes continuity summary fields.
-4. Verify the downstream Deep run against the old baseline: requested 850 / profiles 500 / missing-profile 351.
+3. Follow production Opportunity Discovery run `35427591974` to SUCCESS and capture its `genge-all-a-production-report` artifact; then verify the automatically triggered Every-Industry run is post-#188 and includes continuity summary fields.
+4. Follow that Every-Industry run into its automatically dispatched Deep Lambda and verify against the old baseline: requested 850 / profiles 500 / missing-profile 351.
 5. If missing-profile count reaches zero, continue from measured evidence bottlenecks; if not, diagnose remaining same-run source coverage rather than loosening gates.
 
 ## Do Not Repeat
