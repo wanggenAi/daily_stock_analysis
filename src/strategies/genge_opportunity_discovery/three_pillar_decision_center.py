@@ -204,10 +204,28 @@ def _trend_pillar(
     )
     tactical = list(dashboard.get("capital_direction", {}).get("strongest_industries") or [])
     queue = list(era_handoff.get("queue") or []) if isinstance(era_handoff, Mapping) else []
+    market_raw = dashboard.get("market") if isinstance(dashboard.get("market"), Mapping) else {}
+    market_snapshot = {
+        "as_of_date": market_raw.get("as_of_date") or dashboard.get("latest_trade_date") or "",
+        "status": market_raw.get("status") or "UNAVAILABLE",
+        "data_quality": market_raw.get("data_quality") or "UNAVAILABLE",
+        "allow_new_buy": market_raw.get("allow_new_buy"),
+        "score": _num(market_raw.get("score")),
+        "position_multiplier": _num(market_raw.get("position_multiplier")),
+        "advance_ratio": _num(market_raw.get("advance_ratio")),
+        "median_return_1d_pct": _num(market_raw.get("median_return_1d_pct")),
+        "above_ma20_ratio": _num(market_raw.get("above_ma20_ratio")),
+        "above_ma60_ratio": _num(market_raw.get("above_ma60_ratio")),
+        "distribution_ratio": _num(market_raw.get("distribution_ratio")),
+        "limit_up_count": int(_num(market_raw.get("limit_up_count")) or 0),
+        "limit_down_count": int(_num(market_raw.get("limit_down_count")) or 0),
+        "risk_reasons": list(market_raw.get("risk_reasons") or []),
+    }
     return {
         "question": "世界和社会正在往哪里走，钱可能流向哪里，A股该研究什么？",
         "research_as_of": era_radar.get("research_as_of") or "",
         "direct_fund_flow_claimed": False,
+        "a_share_market_snapshot": market_snapshot,
         "structural_world_social_trends": trends[:10],
         "tactical_market_behavior_proxy": tactical,
         "validated_a_share_research_handoffs": queue,
@@ -310,6 +328,38 @@ def _fmt(value: Any) -> str:
     return "—" if n is None else f"{n:.2f}"
 
 
+def _pct(value: Any) -> str:
+    n = _num(value)
+    return "—" if n is None else f"{n * 100:.2f}%"
+
+
+def _market_read(snapshot: Mapping[str, Any]) -> str:
+    advance = _num(snapshot.get("advance_ratio"))
+    ma20 = _num(snapshot.get("above_ma20_ratio"))
+    ma60 = _num(snapshot.get("above_ma60_ratio"))
+    distribution = _num(snapshot.get("distribution_ratio"))
+    observations: list[str] = []
+    if advance is not None:
+        if advance >= 0.65:
+            observations.append("当日上涨面较广")
+        elif advance <= 0.40:
+            observations.append("当日上涨面偏弱")
+        else:
+            observations.append("当日涨跌广度中性")
+    if ma20 is not None and ma60 is not None:
+        if ma20 >= 0.60 and ma60 >= 0.60:
+            observations.append("短中期趋势广度同步偏强")
+        elif ma20 < 0.50 <= ma60:
+            observations.append("短周期尚未全面修复，但中期广度仍有支撑")
+        elif ma20 < 0.40 and ma60 < 0.40:
+            observations.append("短中期趋势广度都偏弱")
+        else:
+            observations.append("短中期趋势仍有分化")
+    if distribution is not None and distribution <= 0.05:
+        observations.append("极端分化/派发代理暂不高")
+    return "；".join(observations) or "市场脉搏数据不足，保持中性解读"
+
+
 def render_markdown(payload: Mapping[str, Any]) -> str:
     h = payload["pillar_1_holdings_deep_analysis"]
     m = payload["pillar_2_world_social_market_capital_map"]
@@ -332,8 +382,23 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
             f"**{x.get('investor_action') or '—'}** | {x.get('valuation_confidence') or '—'} | {x['deep_review']['status']} |"
         )
     lines += ["", "## 2. 世界/社会/市场：钱可能在哪里", ""]
-    lines.append("### 中长期结构趋势")
-    lines.append("")
+    market = m.get("a_share_market_snapshot") or {}
+    lines += ["### 今日A股大盘脉搏", ""]
+    if market and market.get("status") != "UNAVAILABLE":
+        lines.append(
+            f"- {market.get('as_of_date') or '—'}：市场 **{market.get('status')}**；"
+            f"数据质量 **{market.get('data_quality')}**；市场分数 **{_fmt(market.get('score'))}**；"
+            f"仓位倍率 **{_fmt(market.get('position_multiplier'))}**。"
+        )
+        lines.append(
+            f"- 上涨家数占比 **{_pct(market.get('advance_ratio'))}**；中位涨跌 **{_fmt(market.get('median_return_1d_pct'))}%**；"
+            f"MA20 上方 **{_pct(market.get('above_ma20_ratio'))}**；MA60 上方 **{_pct(market.get('above_ma60_ratio'))}**；"
+            f"涨停/跌停 **{market.get('limit_up_count', 0)}/{market.get('limit_down_count', 0)}**。"
+        )
+        lines.append(f"- 市场读法：**{_market_read(market)}**。这只是市场环境解释，不自行创造个股 BUY 权限。")
+    else:
+        lines.append("- 最新A股市场脉搏不可用；不据此放宽买入。")
+    lines += ["", "### 中长期结构趋势", ""]
     lines.append("| 趋势 | 信心 | 结构 | 产业 | A股研究映射 |")
     lines.append("|---|---:|---:|---:|---|")
     for x in m["structural_world_social_trends"][:8]:
