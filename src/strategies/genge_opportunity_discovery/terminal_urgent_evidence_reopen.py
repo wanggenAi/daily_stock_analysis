@@ -152,10 +152,10 @@ def build_reopen_plan(payload: Mapping[str, Any]) -> dict[str, Any]:
         terminal = terminal_by_code[code]
         if raw.get("urgent_research") is not True or terminal.get("urgent_research") is not True:
             raise ValueError(f"urgent queue row is not marked urgent: {code}")
-        if terminal.get("research_decision") != "RESEARCH_GAP":
-            raise ValueError(f"urgent reopen row must remain RESEARCH_GAP: {code}")
         if terminal.get("research_reason") != EVIDENCE_BLOCKED_REASON:
             raise ValueError(f"urgent reopen row is not evidence-blocked: {code}")
+        if terminal.get("research_decision") != "RESEARCH_GAP":
+            raise ValueError(f"urgent reopen row must remain RESEARCH_GAP: {code}")
         if terminal.get("reopen_on_new_evidence") is not True:
             raise ValueError(f"urgent row is not reopenable on evidence: {code}")
         if terminal.get("hard_gate_failures"):
