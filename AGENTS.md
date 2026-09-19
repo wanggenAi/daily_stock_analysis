@@ -323,13 +323,20 @@ CI 通过只能说明自动检查通过，不能替代人工语义收敛，也�
 
 ## Durable web-session checkpoint branch — LOCKED
 
-For ChatGPT Plus web sessions and any other long-running agent session that can stall or disappear, use the repository-level recovery protocol in `docs/WEB_SESSION_RECOVERY.md`.
+For ChatGPT Plus web sessions and any other long-running agent session that can stall or disappear, use `docs/WEB_SESSION_RECOVERY.md`.
 
 - The permanent volatile checkpoint is `state/chatgpt-recovery:RECOVERY_STATE.json`.
 - Recovery precedence is: live GitHub refs/PRs/Actions/artifacts/persisted data > recovery checkpoint > `TASK_STATE.md` > chat history.
-- Before a long wait or external run, and after each remotely durable milestone, update the recovery checkpoint. Do not defer all checkpointing until task completion.
-- Checkpoint updates are compare-and-swap writes: fetch the latest state-file blob SHA, reconcile live GitHub, increment `generation`, then update using that SHA. On conflict, re-read; never force-overwrite.
-- On a new chat, first classify the checkpoint as `FRESH`, `STALE`, or `CONFLICTED` by comparing it with live GitHub. A moved `main` alone is not failure, especially when automated workflows persist runtime data.
-- If GitHub proves that a commit, PR, CI result, merge, production run, or artifact already exists, consume that evidence and continue from the first unfinished stage. Never repeat work merely because the previous chat ended before writing its next checkpoint.
-- `TASK_STATE.md` remains the stable mission handoff; the recovery-state branch is the volatile execution cursor. Keep both concise and never let either override live GitHub truth.
+- Recovery is **control-plane only**. Business/runtime code and production workflows must not read, wait on or depend on the recovery state. Runtime latency tax must remain zero.
+- Checkpoint size is adaptive: checkpoint on long waits, non-idempotent/ambiguous side effects, merge/production verification, stage identity changes, roughly >8 minutes of redo risk, or several durable conclusions. Do not checkpoint reads, polling, every tool call or transient reasoning.
+- Coalesce safe, discoverable GitHub steps into one checkpoint before the next long wait rather than producing one commit per micro-step.
+- Checkpoint commits live only on the state branch and must use `[skip ci] recovery:` commit messages. The state branch is never opened as a PR or merged into `main`.
+- Recovery-only PRs must complete their PR-head checks before merge; then the merge/squash commit should include `[skip ci]` so the control-plane-only integration does not launch duplicate main-push CI, scans, tagging or production workflows. Never apply this shortcut to business/runtime changes.
+- The state-file blob SHA plus monotonically increasing `generation` is the writer fence. On a CAS/SHA conflict, the losing worker must stop mutating, re-read live GitHub and reacquire state; never force-overwrite.
+- Before any non-idempotent external action, persist a `pending_operation` write-ahead intent. If the outcome becomes ambiguous, reconcile provider-side evidence before retrying; never blindly repeat payments, outreach, submissions or other irreversible actions.
+- If GitHub proves that a commit, PR, CI result, merge, production run or artifact already exists, consume that evidence and continue from the first unfinished stage.
+- If recovery storage is unavailable, existing business execution continues unaffected. Read-only work may continue; unsafe non-idempotent mutations pause until durable intent/reconciliation is possible.
+- Recovery state is bounded and secret-free: schema v2, <=16 KiB, compact references instead of logs/transcripts, no credentials or sensitive tokens.
+- If the state file is corrupt, recover the newest valid state-branch revision and reconcile with live GitHub; if the branch is missing, recreate from live repository truth rather than chat memory.
+- `TASK_STATE.md` remains the stable mission handoff; the recovery-state branch is the volatile execution cursor. Neither may override live GitHub truth.
 
