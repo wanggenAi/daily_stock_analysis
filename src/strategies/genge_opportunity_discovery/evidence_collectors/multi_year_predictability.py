@@ -805,37 +805,52 @@ def collect_multi_year_predictability_evidence(
         return []
 
     session = requests.Session()
-    # Primary-exchange routes do not depend on CNINFO orgId metadata. Keep the
-    # legacy lookup best-effort only for unsupported/fallback code families.
-    needs_cninfo = any(
-        not _code(row.get("code")).startswith(("0", "2", "3", "6"))
-        for row in selected
-    )
-    if needs_cninfo:
-        try:
-            org_ids = _load_cninfo_org_ids(session, timeout)
-        except Exception:
-            org_ids = {}
-    else:
+    # Load CNINFO metadata once as a best-effort fallback for every A-share.
+    # Primary exchange disclosure remains preferred; CNINFO is used only when
+    # the primary route errors or yields no annual-report candidates.
+    try:
+        org_ids = _load_cninfo_org_ids(session, timeout)
+    except Exception:
         org_ids = {}
 
     results: list[dict[str, Any]] = []
     for row in selected:
         code = _code(row.get("code"))
         industry = str(row.get("normalized_industry") or row.get("industry") or "")
-        org_id = org_ids.get(code)
+        candidates: list[dict[str, Any]] = []
+        query_source = ""
+        query_errors: list[str] = []
+
         try:
             if code.startswith("6"):
                 candidates = _query_sse_history(code, as_of, session, timeout)
+                query_source = "SSE_PRIMARY"
             elif code.startswith(("0", "2", "3")):
                 candidates = _query_szse_history(code, as_of, session, timeout)
-            elif org_id:
-                candidates = _query_cninfo_history(code, org_id, as_of, session, timeout)
-            else:
-                results.append(_unknown_row(code, industry, "OFFICIAL_ANNOUNCEMENT_PROVIDER_UNAVAILABLE"))
-                continue
+                query_source = "SZSE_PRIMARY"
         except Exception as exc:
-            results.append(_unknown_row(code, industry, f"ANNUAL_REPORT_QUERY_FAILED:{type(exc).__name__}"))
+            query_errors.append(f"PRIMARY:{type(exc).__name__}")
+            candidates = []
+
+        if not candidates:
+            org_id = org_ids.get(code)
+            if org_id:
+                try:
+                    fallback = _query_cninfo_history(code, org_id, as_of, session, timeout)
+                except Exception as exc:
+                    query_errors.append(f"CNINFO:{type(exc).__name__}")
+                else:
+                    if fallback:
+                        candidates = fallback
+                        query_source = "CNINFO_FALLBACK"
+
+        if not candidates:
+            reason = (
+                "ANNUAL_REPORT_QUERY_FAILED:" + ",".join(query_errors)
+                if query_errors
+                else "OFFICIAL_ANNUAL_REPORTS_NOT_FOUND"
+            )
+            results.append(_unknown_row(code, industry, reason))
             continue
 
         metrics: list[dict[str, Any]] = []
@@ -886,6 +901,8 @@ def collect_multi_year_predictability_evidence(
             "metrics_by_year": metrics,
             "cyclical_or_resource": cyclical,
             "source_urls": [item.get("url") for item in source_rows],
+            "query_source": query_source,
+            "query_diagnostic": ",".join(query_errors),
             "evidence_status": "VERIFIED" if classification in {"PASS", "FAIL"} else "OBSERVED_CONTEXT",
             "source_type": "OFFICIAL_REPORT",
             "source_domain": source_domain(latest.get("url") or "https://www.cninfo.com.cn/"),
