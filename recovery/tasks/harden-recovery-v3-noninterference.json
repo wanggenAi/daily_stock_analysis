@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generation": 7,
+  "generation": 8,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "IN_PROGRESS",
   "task_key": "harden-recovery-v3-noninterference",
@@ -30,7 +30,9 @@
     "implemented v3 adaptive checkpoint sizing, runtime isolation, fencing, write-ahead intent, bounded schema validation",
     "added paths-ignore so future recovery-only PRs do not run stock opportunity/risk-capped business workflows",
     "migrated recovery to task-scoped checkpoints so independent tasks cannot overwrite one another",
-    "added public-repo privacy guardrails and filesystem-safe task identities"
+    "added public-repo privacy guardrails and filesystem-safe task identities",
+    "verified state/chatgpt-recovery still triggers zero workflow runs after task-scoped migration",
+    "reviewed v3 diff: recovery/control-plane files plus PR-trigger exclusions only; no stock runtime files changed"
   ],
   "next_action": "Wait for v2 main CI #1222 to finish before opening the v3 PR, avoiding overlapping heavy CI. Then open one PR and validate the final head.",
   "do_not_repeat": [
