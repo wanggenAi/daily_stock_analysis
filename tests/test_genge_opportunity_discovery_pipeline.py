@@ -433,7 +433,7 @@ def test_company_collector_prefers_sse_official_pdf_for_shanghai(
                 return FakeResponse(
                     payload={"stockList": [{"code": "600519", "orgId": "gssh0600519"}]},
                 )
-            if url == "https://query.sse.com.cn/security/stock/queryCompanyBulletin.do":
+            if url == company_announcements.SSE_ANNOUNCEMENT_URL:
                 return FakeResponse(
                     payload={
                         "pageHelp": {
