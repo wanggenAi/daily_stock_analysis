@@ -4,65 +4,71 @@
 Make the existing stock system converge into one trustworthy daily decision surface before adding new models. Deep runtime must distinguish actual evidence exhaustion from upstream workset/profile handoff loss without changing valuation, selection thresholds, Candidate Lifecycle, Formal authority, or no-auto-trade.
 
 ## Current Phase
-Deep terminal truthfulness and post-#188 production continuity verification.
+Post-#195 production verification and post-#188 continuity proof.
 
 ## Last Verified Main
-`0fd28170a2c76bfb7378a8771785e07480782a6b` when branch `fix/deep-handoff-terminal-truth` was created. Live `main` remains authoritative and may advance through persisted-state bot commits.
+`54b0e52696534cf04b7b5b8066b9db5aa6512092` is the verified merge commit for #195. Live `main` remains authoritative and may advance through persisted-state bot commits.
 
 ## Active Branch
-`fix/deep-handoff-terminal-truth`.
+None. #195 is merged.
 
 ## Active PR
-#195 — `fix: separate deep handoff gaps from evidence exhaustion`.
+None for this mission. #195 — `fix: separate deep handoff gaps from evidence exhaustion` — is merged.
 
 ## CI
-- PR #194 is merged as `b2f4f4e58f3db83cbb2ec7cb74b9e75a27aac26b`; its blocking CI was green.
-- PR #195 adds regression coverage for missing-profile handoff semantics plus the Deep workflow terminal-state contract.
-- Merge #195 only after focused Deep/Three-Pillar checks and blocking CI are green.
+- PR #195 blocking CI completed SUCCESS.
+- PR #195 focused Three-Pillar Decision Center completed SUCCESS.
+- PR #195 Opportunity Discovery fixture validation completed SUCCESS.
+- PR #195 Legacy Risk-Capped Research completed SUCCESS.
+- Post-merge main CI for `54b0e52696534cf04b7b5b8066b9db5aa6512092` is running; no failure has been observed at this checkpoint.
 
 ## Production / Artifact
-- Latest persisted terminal Deep run is `35422187150`, execution SUCCESS.
-- It requested 850 codes, persisted 500 total profiles, and reports 351 requested codes as `REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE`.
-- That Deep run used Every-Industry source `35403243897`, created 2026-09-18T22:50:01Z, before #188 merged at 2026-09-19T01:37:38Z.
-- Therefore run `35422187150` is not valid post-#188 proof of the continuity materialization fix.
-- No post-#188 production Opportunity Discovery run from `schedule` or `workflow_dispatch` has completed yet. Push/PR Opportunity Discovery runs are fixture validation only and must not be treated as production All-A evidence.
+- Latest persisted terminal Deep run at this checkpoint is `35424878380`, execution SUCCESS.
+- It still uses Every-Industry source `35403243897`, which predates #188, so it is not valid post-#188 continuity proof.
+- Run `35424878380` requested 850 codes, has 500 profiles, and still contains 351 `REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE` reasons under the pre-#195 terminal semantics.
+- Post-merge Deep run `35427088755` was automatically triggered from #195 merge SHA `54b0e52696534cf04b7b5b8066b9db5aa6512092` and is currently running.
+- The expected #195 behavior for an old 500-profile upstream artifact is `HANDOFF_INCOMPLETE`, with missing profiles separated from evidence-exhausted profiles and excluded from unresolved hard-gate counts.
+- No genuine post-#188 production Opportunity Discovery run from `schedule` or `workflow_dispatch` has completed yet. Push/PR Opportunity Discovery runs are fixture validation only and must not be treated as production All-A evidence.
 
 ## Completed
 - #188 continuity materialization is merged.
 - #193 decision-center convergence is merged.
 - #194 partial-checkpoint workset observability is merged.
-- Production lineage was traced far enough to prove the latest 850→500 result consumed a pre-#188 Every-Industry artifact.
-- PR #195 now separates missing-profile handoff gaps from genuine evidence exhaustion in terminal status and the decision center.
+- #195 deep handoff terminal truthfulness is merged as `54b0e52696534cf04b7b5b8066b9db5aa6512092`.
+- #195 regression coverage now distinguishes materialized-profile evidence exhaustion from requested codes that never entered a profile.
+- #195 terminal status persists requested/profile/processed/missing coverage and excludes profile-handoff reasons from the hard-gate unresolved count.
+- Production lineage was traced far enough to prove the recent 850→500 Deep runs still consumed pre-#188 Every-Industry source `35403243897`.
 
 ## Current Findings
-- `v31_review_queue --limit 500` is an ordinary review budget, not by itself the post-#188 defect: current #188 code additively materializes retained Deep continuity codes beyond that limit from same-run All-A sources.
-- The latest production Deep artifact is stale with respect to that fix, so continuity still needs a fresh production-chain proof.
-- Independent correctness bug: `close_profiles()` previously appended missing profiles to `exhausted_codes`, causing 351 codes that never entered a profile to be reported as evidence exhausted.
-- The same bug inflated `unresolved_requested_gate_count` by counting `profile` handoff reasons as hard gates.
-- Terminal Research already maps absent profiles to research-only `RESEARCH_GAP / DEEP_PROFILE_MISSING`; no Formal or trading authority expansion is needed.
+- `v31_review_queue --limit 500` is an ordinary review budget, not by itself proof that #188 failed. Current #188 code additively materializes retained Deep continuity codes beyond that limit from same-run All-A sources.
+- The latest completed production Deep artifacts are stale with respect to #188, so continuity still needs a fresh schedule/workflow_dispatch production-chain proof.
+- Before #195, `close_profiles()` incorrectly counted requested codes with no profile as `EVIDENCE_EXHAUSTED` and also inflated `unresolved_requested_gate_count` with the synthetic `profile` reason.
+- After #195, missing profiles use terminal state `HANDOFF_INCOMPLETE`; only materialized profiles whose hard gates remain UNKNOWN after bounded recovery count as evidence exhausted.
+- Terminal Research continues to map absent profiles to research-only `RESEARCH_GAP / DEEP_PROFILE_MISSING`; no Formal or trading authority expansion was introduced.
 
 ## This Branch
-1. Add terminal state `HANDOFF_INCOMPLETE` when requested codes are missing from the Deep profile workset.
-2. Keep `EVIDENCE_EXHAUSTED` only for materialized profiles whose hard gates remain UNKNOWN after bounded recovery.
-3. Persist `profile_count`, `requested_profile_count`, `processed_requested_count`, `handoff_incomplete_requested_count`, `missing_requested_codes`, and workset coverage flags in terminal status.
-4. Exclude profile-handoff reasons from the unresolved hard-gate count.
-5. Render handoff incompleteness separately in the Three-Pillar decision center.
-6. Preserve idempotence: HANDOFF_INCOMPLETE is a completed run state that waits for newer compatible upstream work rather than looping the same stale artifact.
+Merged. #195 implemented:
+1. `HANDOFF_INCOMPLETE` when requested codes are missing from the Deep profile workset.
+2. `EVIDENCE_EXHAUSTED` only for materialized profiles whose hard gates remain UNKNOWN after bounded recovery.
+3. Terminal `profile_count`, `requested_profile_count`, `processed_requested_count`, `handoff_incomplete_requested_count`, `missing_requested_codes`, and workset coverage flags.
+4. Hard-gate unresolved counts that exclude profile-handoff reasons.
+5. Separate handoff incompleteness rendering in the Three-Pillar decision center.
+6. Completed/idempotent handoff-incomplete semantics that wait for a newer compatible upstream artifact instead of looping the same stale artifact.
 
 ## Blockers
-- PR #195 CI must pass.
+- Post-merge Deep run `35427088755` must complete and demonstrate the #195 terminal semantics on live main.
 - A genuine post-#188 production Opportunity Discovery → Every-Industry → Deep chain is still required to validate that retained workset materialization removes the structural 351 missing-profile gap.
 - Do not use push/PR fixture artifacts as production proof.
 
 ## Next Action
-1. Observe/fix PR #195 CI until all blocking checks are green.
-2. Merge #195 and verify live main.
+1. Verify post-merge main CI and Deep run `35427088755`.
+2. Confirm that, if the run still consumes pre-#188 source `35403243897`, it reports `HANDOFF_INCOMPLETE` and truthful requested/profile/processed/missing counts rather than `EVIDENCE_EXHAUSTED=850`.
 3. Verify the first later production `schedule` or `workflow_dispatch` Every-Industry source is post-#188 and includes continuity summary fields.
-4. Verify the downstream Deep run reports truthful requested/profile/processed/handoff counts.
-5. If missing-profile count reaches zero, continue from the measured evidence bottlenecks; if not, diagnose the remaining same-run source coverage rather than loosening gates.
+4. Verify the downstream Deep run against the old baseline: requested 850 / profiles 500 / missing-profile 351.
+5. If missing-profile count reaches zero, continue from measured evidence bottlenecks; if not, diagnose remaining same-run source coverage rather than loosening gates.
 
 ## Do Not Repeat
-- Do not claim #188 failed from Deep run `35422187150`; its Every-Industry source predates #188.
+- Do not claim #188 failed from Deep runs whose Every-Industry source is `35403243897`; that source predates #188.
 - Do not remove the Every-Industry guard that rejects push/PR fixture Opportunity Discovery runs.
 - Do not change valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle semantics, or Formal authority.
 - Do not classify `REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE` as evidence exhaustion.
