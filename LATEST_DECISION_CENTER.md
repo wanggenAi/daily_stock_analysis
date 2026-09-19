@@ -60,29 +60,29 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35424878380`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35427088755`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`35424878380`
-- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
+- Lambda run：`35427088755`
+- 触发来源：`PUSH_CHANGE`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
-- 研究过程终态：**EVIDENCE_EXHAUSTED**
-- 请求深算：**850**；已处理：**850**；完整：**0**；证据穷尽：**850**。
-- Workset profile：总数 **500**；请求代码已落 profile **未携带**；handoff 未完成 **未携带**；覆盖可审计：**False**；完整覆盖：**False**。
-- 同轮补证据尝试：**2**；取得证据：**666**；推进硬门槛：**0**。
-- 尚未解决硬门槛：**2636**。
-- 未决原因摘要：涉及 850 只；门槛分布：predictability×499、long_term_demand×498、moat×498、earnings_authenticity×395、financial_safety×395；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×498、NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE×498、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×475、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×395、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×395；样例：000001[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000019[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000035[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000088[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000089[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]
-- 请求但未进入本次研究工件：**未携带**。
-- 上一次完整终态 run：`35424878380`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 研究过程终态：**HANDOFF_INCOMPLETE**
+- 请求深算：**850**；已处理：**499**；完整：**0**；证据穷尽：**499**。
+- Workset profile：总数 **500**；请求代码已落 profile **499**；handoff 未完成 **351**；覆盖可审计：**True**；完整覆盖：**False**。
+- 同轮补证据尝试：**2**；取得证据：**894**；推进硬门槛：**0**。
+- 尚未解决硬门槛：**2285**。
+- 未决原因摘要：涉及 850 只；门槛分布：predictability×499、long_term_demand×498、moat×498、earnings_authenticity×395、financial_safety×395；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×498、NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE×498、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×395、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×395、REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE×351；样例：000001[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000019[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000035[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000088[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]；000089[profile:REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE]
+- 请求但未进入本次研究工件：**000001、000019、000035、000088、000089、000096、000159、000333、000400、000501、000507、000528（另 339 只）**。
+- 上一次完整终态 run：`35427088755`；执行 **SUCCESS**；研究终态 **HANDOFF_INCOMPLETE**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`35424878380`；当前 Lambda：`35424878380`。
-- 请求：**850**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**849**；研究 REJECT：**1**。
-- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=37.7717)；001316 润贝航科(quant=35.5701)；601318 中国平安(quant=33.0392)；603993 洛阳钼业(quant=31.0177)；603613 国联股份(quant=81.0239)；603055 台华新材(quant=80.3262)；600609 金杯汽车(quant=76.2566)；603233 大参林(quant=75.6873)；000576 甘化科工(quant=75.2261)；002906 华阳集团(quant=74.3695)
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
+- 终态来源 Lambda：`35424878380`；当前 Lambda：`35427088755`。
+- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
