@@ -22,7 +22,7 @@ Decision-center state convergence and post-#188 production verification.
 - First full-CI attempt exposed this checkpoint document missing the required `## CI` recovery heading; this update restores the repository contract.
 - Merge only after focused and blocking checks are green.
 
-## Production / Artifact Truth
+## Production / Artifact
 - #188 (`fix: preserve deep workset through bounded review handoff`) is merged.
 - The latest terminal Deep state on main is still run `35412424204`, head `aaac167ce81102fc8397822f840c7c9f6088f5a0`: SUCCESS / EVIDENCE_EXHAUSTED, requested 850, profiles 500, unresolved gates 2636.
 - That run predates the #188 merge, so it is **not** production proof that the 850→500 continuity defect is fixed.
