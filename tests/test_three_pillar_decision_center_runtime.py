@@ -62,6 +62,7 @@ def _automatic_profiles():
         "automatic_formal_buy_allowed": False,
         "unknown_is_pass": False,
         "no_auto_trade": True,
+        "lambda_run_id": "987654",
         "profiles": {
             "600406": {
                 "gates": {
@@ -243,6 +244,8 @@ def test_runtime_is_exposed_in_final_decision_center():
     assert out["deep_calculation_runtime"]["research_outcome"] == "PARTIAL_GAPS_REMAIN"
     assert out["decision_readiness"]["deep_calculation_last_run_successful"] is True
     assert out["decision_readiness"]["deep_calculation_requested_research_complete"] is False
+    assert out["deep_review_profile_current_for_runtime"] is True
+    assert out["deep_review_profile_lineage_state"] == "CURRENT"
     deep = out["pillar_1_holdings_deep_analysis"]["rows"][0]["deep_review"]
     assert deep["status"] == "DEEP_REVIEW_PARTIAL"
     assert deep["pass_count"] == 2
@@ -378,9 +381,20 @@ def test_newer_partial_checkpoint_overrides_older_terminal_status_for_current_ru
     assert runtime["status_source"] == "PARTIAL_CHECKPOINT"
     assert runtime["last_terminal_run_id"] == "999999"
     assert out["decision_readiness"]["deep_calculation_last_run_successful"] is False
+    assert out["deep_review_profile_current_for_runtime"] is False
+    assert out["deep_review_profile_lineage_state"] == "STALE_LAST_TERMINAL"
+    holdings = out["pillar_1_holdings_deep_analysis"]
+    assert holdings["explicit_deep_review_count"] == 0
+    assert holdings["complete_deep_review_count"] == 0
+    assert holdings["deep_review_gap_count"] == 1
+    deep = holdings["rows"][0]["deep_review"]
+    assert deep["status"] == "STALE_PROFILE_LAST_TERMINAL"
+    assert deep["last_profile_status"] == "DEEP_REVIEW_PARTIAL"
+    assert out["decision_readiness"]["all_holdings_explicit_deep_review_complete"] is False
     assert out["pillar_3_deep_opportunities"]["terminal_research_snapshot"]["current_for_deep_runtime"] is False
 
     md = render_runtime_markdown(out)
+    assert "顶部持仓/机会的深算完整度已按当前 runtime 视为未完成" in md
     assert "当前运行状态来源：**PARTIAL_CHECKPOINT**" in md
     assert "1000001" in md
     assert "上一次完整终态 run：`999999`" in md
