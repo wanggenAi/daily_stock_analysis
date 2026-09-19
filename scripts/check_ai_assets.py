@@ -147,6 +147,7 @@ def ensure_recovery_protocol() -> None:
         "## Resume algorithm",
         "## Crash-window rule",
         "maximum serialized size: 16 KiB",
+        "no private customer/user PII",
         "recovery-only PR",
     )
     for fragment in required_protocol_fragments:
