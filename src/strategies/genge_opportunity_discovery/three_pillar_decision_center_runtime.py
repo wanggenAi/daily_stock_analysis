@@ -111,11 +111,23 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
     run_state = str(raw.get("run_state") or "NOT_AVAILABLE").upper()
     if execution == "PARTIAL" and run_state == "NOT_AVAILABLE":
         run_state = "PARTIAL_CHECKPOINT"
+
+    def available(key: str) -> bool:
+        return key in raw and raw.get(key) is not None and str(raw.get(key)).strip() != ""
+
+    missing_available = "missing_requested_codes" in raw
     missing = list(raw.get("missing_requested_codes") or [])
+    requested_available = available("requested_count")
     requested = _int(raw.get("requested_count"))
+    profile_count_available = available("profile_count")
+    profile_count = _int(raw.get("profile_count"))
+    requested_profile_count_available = available("requested_profile_count")
+    requested_profile_count = _int(raw.get("requested_profile_count"))
     exhausted_count = _int(raw.get("evidence_exhausted_requested_count"))
     processed = _int(raw.get("processed_requested_count"))
-    if not processed and requested and not missing:
+    if not processed and requested_profile_count_available:
+        processed = requested_profile_count
+    elif not processed and requested and missing_available and not missing:
         processed = requested
     partial = _int(raw.get("partial_requested_count"))
     if not partial and terminal == "EVIDENCE_EXHAUSTED":
@@ -138,12 +150,27 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
         "research_outcome": research,
         "research_terminal_state": terminal,
         "requested_count": requested,
+        "requested_count_available": requested_available,
         "processed_requested_count": processed,
+        "processed_requested_count_available": (
+            available("processed_requested_count") or requested_profile_count_available
+        ),
         "complete_requested_count": _int(raw.get("complete_requested_count")),
+        "complete_requested_count_available": available("complete_requested_count"),
         "partial_requested_count": partial,
+        "partial_requested_count_available": available("partial_requested_count"),
         "evidence_exhausted_requested_count": exhausted_count,
+        "evidence_exhausted_requested_count_available": available("evidence_exhausted_requested_count"),
+        "profile_count": profile_count,
+        "profile_count_available": profile_count_available,
+        "requested_profile_count": requested_profile_count,
+        "requested_profile_count_available": requested_profile_count_available,
+        "workset_coverage_known": raw.get("workset_coverage_known") is True,
+        "workset_coverage_complete": raw.get("workset_coverage_complete") is True,
         "unresolved_requested_gate_count": _int(raw.get("unresolved_requested_gate_count")),
+        "unresolved_requested_gate_count_available": available("unresolved_requested_gate_count"),
         "missing_requested_codes": missing,
+        "missing_requested_codes_available": missing_available,
         "unresolved_reasons": dict(unresolved_reasons),
         "gap_closure_attempt_count": _int(raw.get("gap_closure_attempt_count")),
         "new_evidence_count": _int(raw.get("new_evidence_count")),
@@ -494,6 +521,12 @@ def _unresolved_text(reasons: Mapping[str, Any]) -> str:
     )
 
 
+def _runtime_metric_text(runtime: Mapping[str, Any], key: str) -> str:
+    if runtime.get(f"{key}_available") is not True:
+        return "未携带"
+    return str(runtime.get(key, 0))
+
+
 def _code_list_text(codes: list[Any], limit: int = 12) -> str:
     normalized = [str(code) for code in codes if str(code or "").strip()]
     if not normalized:
@@ -543,11 +576,16 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         f"- 计算执行：**{runtime.get('execution_status') or 'NOT_AVAILABLE'}**",
         f"- 运行状态：**{runtime.get('run_state') or 'NOT_AVAILABLE'}**",
         f"- 研究过程终态：**{runtime.get('research_terminal_state') or 'NOT_AVAILABLE'}**",
-        f"- 请求深算：**{runtime.get('requested_count', 0)}**；已处理：**{runtime.get('processed_requested_count', 0)}**；完整：**{runtime.get('complete_requested_count', 0)}**；证据穷尽：**{runtime.get('evidence_exhausted_requested_count', 0)}**。",
+        f"- 请求深算：**{_runtime_metric_text(runtime, 'requested_count')}**；已处理：**{_runtime_metric_text(runtime, 'processed_requested_count')}**；完整：**{_runtime_metric_text(runtime, 'complete_requested_count')}**；证据穷尽：**{_runtime_metric_text(runtime, 'evidence_exhausted_requested_count')}**。",
+        f"- Workset profile：总数 **{_runtime_metric_text(runtime, 'profile_count')}**；请求代码已落 profile **{_runtime_metric_text(runtime, 'requested_profile_count')}**；覆盖可审计：**{runtime.get('workset_coverage_known') is True}**；完整覆盖：**{runtime.get('workset_coverage_complete') is True}**。",
         f"- 同轮补证据尝试：**{runtime.get('gap_closure_attempt_count', 0)}**；取得证据：**{runtime.get('new_evidence_count', 0)}**；推进硬门槛：**{runtime.get('progressed_gate_count', 0)}**。",
-        f"- 尚未解决硬门槛：**{runtime.get('unresolved_requested_gate_count', 0)}**。",
+        f"- 尚未解决硬门槛：**{_runtime_metric_text(runtime, 'unresolved_requested_gate_count')}**。",
         f"- 未决原因摘要：{_unresolved_text(runtime.get('unresolved_reasons') or {})}",
-        f"- 请求但未进入本次研究工件：**{_code_list_text(missing)}**。",
+        (
+            f"- 请求但未进入本次研究工件：**{_code_list_text(missing)}**。"
+            if runtime.get("missing_requested_codes_available") is True
+            else "- 请求但未进入本次研究工件：**未携带**。"
+        ),
         f"- 上一次完整终态 run：`{runtime.get('last_terminal_run_id') or '—'}`；执行 **{runtime.get('last_terminal_execution_status') or 'NOT_AVAILABLE'}**；研究终态 **{runtime.get('last_terminal_research_terminal_state') or 'NOT_AVAILABLE'}**。",
         f"- 是否需要你手工开启下一轮：**{runtime.get('manual_next_round_required', True)}**。",
         "- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 是流程已自动收口，不代表 UNKNOWN 被当成 PASS。",
