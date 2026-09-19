@@ -1,17 +1,17 @@
 {
   "schema_version": 2,
-  "generation": 8,
+  "generation": 9,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "IN_PROGRESS",
+  "status": "WAITING_CI",
   "task_key": "harden-recovery-v3-noninterference",
-  "stage": "V3_READY_FOR_PR_AFTER_MAIN_CI",
+  "stage": "V3_PR_CI",
   "last_observed_main_sha": "d6cba697780b3939e880a8b76ef6dcbcb13e33f5",
   "work_branch": "chore/web-session-recovery-v3",
   "work_head_sha": "351c856854e628cd79454fdba6a3ff2df5b785c0",
-  "active_pr": null,
+  "active_pr": 192,
   "ci": {
-    "run_id": 35414972374,
-    "head_sha": "d6cba697780b3939e880a8b76ef6dcbcb13e33f5",
+    "run_id": 35415607762,
+    "head_sha": "351c856854e628cd79454fdba6a3ff2df5b785c0",
     "status": "IN_PROGRESS",
     "conclusion": null
   },
@@ -32,9 +32,10 @@
     "migrated recovery to task-scoped checkpoints so independent tasks cannot overwrite one another",
     "added public-repo privacy guardrails and filesystem-safe task identities",
     "verified state/chatgpt-recovery still triggers zero workflow runs after task-scoped migration",
-    "reviewed v3 diff: recovery/control-plane files plus PR-trigger exclusions only; no stock runtime files changed"
+    "reviewed v3 diff: recovery/control-plane files plus PR-trigger exclusions only; no stock runtime files changed",
+    "opened final recovery-hardening PR #192; one-time installation PR triggered legacy business PR workflows under old base rules"
   ],
-  "next_action": "Wait for v2 main CI #1222 to finish before opening the v3 PR, avoiding overlapping heavy CI. Then open one PR and validate the final head.",
+  "next_action": "Consume PR #192 CI #1223. Do not merge until blocking CI is green and PR remains mergeable. Then squash-merge with [skip ci] so main push does not launch duplicate business workflows, verify live main, and prune this completed task checkpoint.",
   "do_not_repeat": [
     "do not put recovery reads or writes on any business runtime path",
     "do not trigger production workflows from checkpoint commits",
