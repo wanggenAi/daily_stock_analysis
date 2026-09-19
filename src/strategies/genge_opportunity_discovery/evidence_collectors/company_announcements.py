@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from datetime import date, datetime, timedelta
 from typing import Any, Mapping
@@ -17,6 +18,9 @@ REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
 }
 CNINFO_STOCK_LIST_URL = "https://www.cninfo.com.cn/new/data/szse_stock.json"
+SSE_ANNOUNCEMENT_URL = "https://query.sse.com.cn/security/stock/queryCompanyBulletinNew.do"
+SSE_DISCLOSURE_REFERER = "https://www.sse.com.cn/disclosure/listedinfo/announcement/"
+SSE_STATIC_HOST = "https://static.sse.com.cn"
 SZSE_ANNOUNCEMENT_URL = "https://www.szse.cn/api/disc/announcement/annList"
 SZSE_DISCLOSURE_REFERER = "https://www.szse.cn/disclosure/listed/notice/index.html"
 SZSE_PERIODIC_REPORT_REFERER = "https://www.szse.cn/disclosure/listed/fixed/index.html"
@@ -534,49 +538,223 @@ def _is_full_annual_report_title(value: Any) -> bool:
     )
 
 
-def _query_sse(code: str, as_of: date, session: requests.Session, timeout: int) -> list[dict[str, Any]]:
-    params = {
-        "jsonCallBack": "",
-        "isPagination": "true",
-        "productId": code,
-        "keyWord": "年度报告",
-        "securityType": "0101,120100,020100,020200,120200",
-        "reportType2": "DQBG",
-        "pageHelp.pageSize": "30",
-        "pageHelp.pageNo": "1",
-        "pageHelp.beginPage": "1",
-        "pageHelp.cacheSize": "1",
-        "pageHelp.endPage": "1",
-    }
-    response = session.get(
-        "https://query.sse.com.cn/security/stock/queryCompanyBulletin.do",
-        params=params,
-        headers={**REQUEST_HEADERS, "Referer": "https://www.sse.com.cn/"},
-        timeout=timeout,
-    )
-    response.raise_for_status()
-    data = response.json().get("pageHelp", {}).get("data") or []
+def _sse_response_payload(response: Any) -> Mapping[str, Any]:
+    """Decode SSE JSON/JSONP without weakening response-schema validation."""
+    try:
+        payload = response.json()
+    except Exception as json_exc:
+        raw = str(getattr(response, "text", "") or "").strip()
+        match = re.match(r"^[^(]*\((.*)\)\s*;?\s*$", raw, flags=re.DOTALL)
+        if not match:
+            raise ValueError("sse_announcement_response_not_json_or_jsonp") from json_exc
+        try:
+            payload = json.loads(match.group(1))
+        except Exception as exc:
+            raise ValueError("sse_announcement_jsonp_invalid") from exc
+    if not isinstance(payload, Mapping):
+        raise ValueError("sse_announcement_response_not_object")
+    return payload
+
+
+def _sse_attachment_url(value: Any) -> str:
+    """Normalize SSE disclosure attachments onto the official static host."""
+    text = str(value or "").strip()
+    if not text:
+        return ""
+    if text.startswith("//"):
+        text = "https:" + text
+    if text.startswith(("http://", "https://")):
+        normalized = re.sub(r"^http://", "https://", text, flags=re.IGNORECASE)
+        lowered = normalized.lower()
+        for host in ("https://static.sse.com.cn", "https://www.sse.com.cn"):
+            if lowered.startswith(host):
+                return SSE_STATIC_HOST + normalized[len(host):]
+        return ""
+    return SSE_STATIC_HOST + "/" + text.lstrip("/")
+
+
+def _query_sse_announcements(
+    code: str,
+    *,
+    start: date,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+    report_type: str = "",
+    report_type2: str = "",
+    key_word: str = "",
+    max_pages: int = 1,
+    page_size: int = MATERIAL_EVENT_PAGE_SIZE,
+) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """Query the current first-party SSE bulletin endpoint and filter dates locally.
+
+    The current SSE bulletin endpoint requires the exact disclosure-page Referer.
+    Its server-side date parameters are intentionally not used: pagination walks
+    newest-to-oldest rows and this adapter applies the requested date interval to
+    SSEDATE locally.
+    """
     result: list[dict[str, Any]] = []
-    for item in data:
-        title = _clean_title(item.get("TITLE"))
-        if not _is_full_annual_report_title(title):
-            continue
-        publish_date = str(item.get("SSEDATE") or "")[:10]
-        if publish_date and publish_date > as_of.isoformat():
-            continue
-        url = str(item.get("URL") or "")
-        if not url:
-            continue
-        result.append(
-            {
-                "title": title,
-                "publish_date": publish_date,
-                "url": f"https://www.sse.com.cn{url}",
-                "source_type": "EXCHANGE_DISCLOSURE",
-                "source_name": "sse",
-            }
-        )
-    return result
+    pages_fetched = 0
+    query_error = ""
+    reported_pages = 0
+    reported_total = 0
+    last_page_count = 0
+    coverage_reached_start = False
+
+    for page in range(1, max(1, int(max_pages)) + 1):
+        params: dict[str, Any] = {
+            "jsonCallBack": "",
+            "isPagination": "true",
+            "productId": code,
+            "keyWord": key_word,
+            "securityType": "0101,120100,020100,020200,120200",
+            "pageHelp.pageSize": str(page_size),
+            "pageHelp.pageNo": str(page),
+            "pageHelp.beginPage": str(page),
+            "pageHelp.cacheSize": "1",
+            "pageHelp.endPage": str(page),
+        }
+        if report_type:
+            params["reportType"] = report_type
+        if report_type2:
+            params["reportType2"] = report_type2
+
+        try:
+            response = session.get(
+                SSE_ANNOUNCEMENT_URL,
+                params=params,
+                headers={
+                    **REQUEST_HEADERS,
+                    "Accept": "application/json, text/javascript, */*; q=0.01",
+                    "Referer": SSE_DISCLOSURE_REFERER,
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            payload = _sse_response_payload(response)
+            page_help = payload.get("pageHelp")
+            if not isinstance(page_help, Mapping) or "data" not in page_help:
+                raise ValueError("sse_announcement_response_schema_missing")
+            raw_rows = page_help.get("data")
+            if raw_rows is None:
+                raw_rows = []
+            if not isinstance(raw_rows, list):
+                raise ValueError("sse_announcement_data_invalid")
+
+            raw_page_count = page_help.get("pageCount")
+            if raw_page_count not in (None, ""):
+                try:
+                    page_count = int(raw_page_count)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("sse_announcement_page_count_invalid") from exc
+                if page_count < 0:
+                    raise ValueError("sse_announcement_page_count_invalid")
+                reported_pages = max(reported_pages, page_count)
+
+            raw_total = page_help.get("total")
+            if raw_total in (None, ""):
+                raw_total = payload.get("total")
+            if raw_total not in (None, ""):
+                try:
+                    total = int(raw_total)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("sse_announcement_total_invalid") from exc
+                if total < 0:
+                    raise ValueError("sse_announcement_total_invalid")
+                reported_total = max(reported_total, total)
+        except Exception as exc:
+            if not pages_fetched:
+                raise
+            query_error = f"{type(exc).__name__}: {exc}"
+            break
+
+        pages_fetched += 1
+        last_page_count = len(raw_rows)
+        page_dates: list[date] = []
+        for item in raw_rows:
+            if not isinstance(item, Mapping):
+                continue
+            raw_item_code = str(
+                item.get("SECURITY_CODE")
+                or item.get("SECURITY_CODE_A")
+                or item.get("PRODUCTID")
+                or ""
+            ).strip()
+            if raw_item_code and _normalize_code(raw_item_code) != code:
+                continue
+            title = _clean_title(item.get("TITLE"))
+            try:
+                published = date.fromisoformat(str(item.get("SSEDATE") or "")[:10])
+            except ValueError:
+                continue
+            page_dates.append(published)
+            url = _sse_attachment_url(item.get("URL"))
+            if (
+                not title
+                or "英文" in title
+                or published < start
+                or published > as_of
+                or not url
+            ):
+                continue
+            result.append(
+                {
+                    "title": title,
+                    "publish_date": published.isoformat(),
+                    "url": url,
+                    "source_type": "EXCHANGE_DISCLOSURE",
+                    "source_name": "sse",
+                }
+            )
+
+        if page_dates and min(page_dates) < start:
+            coverage_reached_start = True
+        if not raw_rows or coverage_reached_start:
+            break
+        if reported_pages and page >= reported_pages:
+            break
+        if len(raw_rows) < int(page_size):
+            break
+
+    deduped = list({str(item["url"]): item for item in result}.values())
+    hit_cap_with_more_possible = bool(
+        pages_fetched >= max(1, int(max_pages))
+        and last_page_count >= int(page_size)
+        and not coverage_reached_start
+        and (not reported_pages or pages_fetched < reported_pages)
+    )
+    return sorted(
+        deduped,
+        key=lambda item: str(item.get("publish_date") or ""),
+        reverse=True,
+    ), {
+        "pages_fetched": pages_fetched,
+        "reported_pages": reported_pages,
+        "reported_total": reported_total,
+        "query_error": query_error,
+        "truncated": bool(query_error or hit_cap_with_more_possible),
+    }
+
+
+def _query_sse(
+    code: str,
+    as_of: date,
+    session: requests.Session,
+    timeout: int,
+) -> list[dict[str, Any]]:
+    rows, _ = _query_sse_announcements(
+        code,
+        start=as_of - timedelta(days=560),
+        as_of=as_of,
+        session=session,
+        timeout=timeout,
+        report_type="YEARLY",
+        report_type2="DQBG",
+        max_pages=3,
+        page_size=30,
+    )
+    return [row for row in rows if _is_full_annual_report_title(row.get("title"))]
 
 
 def _query_cninfo_material_events(
@@ -694,90 +872,15 @@ def _query_sse_material_events(
     session: requests.Session,
     timeout: int,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    start = as_of - timedelta(days=MATERIAL_EVENT_WINDOW_DAYS)
-    result: list[dict[str, Any]] = []
-    pages_fetched = 0
-    reported_pages = 1
-    query_error = ""
-    for page in range(1, MATERIAL_EVENT_MAX_PAGES + 1):
-        params = {
-            "jsonCallBack": "",
-            "isPagination": "true",
-            "productId": code,
-            "keyWord": "",
-            "securityType": "0101,120100,020100,020200,120200",
-            "reportType2": "",
-            "pageHelp.pageSize": str(MATERIAL_EVENT_PAGE_SIZE),
-            "pageHelp.pageNo": str(page),
-            "pageHelp.beginPage": str(page),
-            "pageHelp.cacheSize": "1",
-            "pageHelp.endPage": str(page),
-            "beginDate": start.isoformat(),
-            "endDate": as_of.isoformat(),
-        }
-        try:
-            response = session.get(
-                "https://query.sse.com.cn/security/stock/queryCompanyBulletin.do",
-                params=params,
-                headers={**REQUEST_HEADERS, "Referer": "https://www.sse.com.cn/"},
-                timeout=timeout,
-            )
-            response.raise_for_status()
-            payload = response.json()
-            if not isinstance(payload, Mapping) or not isinstance(payload.get("pageHelp"), Mapping):
-                raise ValueError("sse_material_event_response_schema_missing")
-            page_help = payload["pageHelp"]
-            if "data" not in page_help or "pageCount" not in page_help:
-                raise ValueError("sse_material_event_page_schema_missing")
-            raw_announcements = page_help.get("data")
-            if raw_announcements is None:
-                raw_announcements = []
-            if not isinstance(raw_announcements, list):
-                raise ValueError("sse_material_event_data_invalid")
-            try:
-                current_page_count = int(page_help.get("pageCount") or 0)
-            except (TypeError, ValueError) as exc:
-                raise ValueError("sse_material_event_page_count_invalid") from exc
-            if current_page_count < 0:
-                raise ValueError("sse_material_event_page_count_invalid")
-            if raw_announcements and current_page_count == 0:
-                raise ValueError("sse_material_event_page_count_inconsistent")
-        except Exception as exc:
-            if not pages_fetched:
-                raise
-            query_error = f"{type(exc).__name__}: {exc}"
-            break
-        announcements = raw_announcements
-        pages_fetched += 1
-        try:
-            reported_pages = max(reported_pages, current_page_count or 1)
-        except (TypeError, ValueError):
-            pass
-        for item in announcements:
-            title = _clean_title(item.get("TITLE"))
-            try:
-                parsed_date = date.fromisoformat(str(item.get("SSEDATE") or "")[:10])
-            except ValueError:
-                continue
-            url = str(item.get("URL") or "").strip()
-            if not title or parsed_date < start or parsed_date > as_of or not url:
-                continue
-            result.append({
-                "title": title,
-                "publish_date": parsed_date.isoformat(),
-                "url": url if url.startswith(("http://", "https://")) else f"https://www.sse.com.cn{url}",
-                "source_type": "EXCHANGE_DISCLOSURE",
-                "source_name": "sse",
-            })
-        if not announcements or page >= reported_pages:
-            break
-    deduped = list({str(item["url"]): item for item in result}.values())
-    return deduped, {
-        "pages_fetched": pages_fetched,
-        "reported_total": "",
-        "query_error": query_error,
-        "truncated": bool(query_error or reported_pages > MATERIAL_EVENT_MAX_PAGES),
-    }
+    return _query_sse_announcements(
+        code,
+        start=as_of - timedelta(days=MATERIAL_EVENT_WINDOW_DAYS),
+        as_of=as_of,
+        session=session,
+        timeout=timeout,
+        max_pages=MATERIAL_EVENT_MAX_PAGES,
+        page_size=MATERIAL_EVENT_PAGE_SIZE,
+    )
 
 
 def _query_szse_material_events(
