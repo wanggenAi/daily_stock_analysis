@@ -1,43 +1,40 @@
 {
   "schema_version": 2,
-  "generation": 5,
+  "generation": 6,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
-  "task_key": "install-web-session-recovery-v2",
-  "stage": "V2_MERGED_MAIN_VERIFY",
+  "status": "IN_PROGRESS",
+  "task_key": "harden-recovery-v3-noninterference",
+  "stage": "V3_READY_FOR_PR_AFTER_MAIN_CI",
   "last_observed_main_sha": "d6cba697780b3939e880a8b76ef6dcbcb13e33f5",
-  "work_branch": null,
-  "work_head_sha": null,
+  "work_branch": "chore/web-session-recovery-v3",
+  "work_head_sha": "2ffd92756122569a42a77321d10c6d78c892e4fc",
   "active_pr": null,
   "ci": {
-    "run_id": null,
+    "run_id": 35414972374,
     "head_sha": "d6cba697780b3939e880a8b76ef6dcbcb13e33f5",
-    "status": "PENDING_DISCOVERY",
+    "status": "IN_PROGRESS",
     "conclusion": null
   },
   "production_or_artifact": {
     "status": "NOT_APPLICABLE",
     "evidence": []
   },
-  "completed": [
-    "created permanent state/chatgpt-recovery branch and seeded RECOVERY_STATE.json",
-    "added docs/WEB_SESSION_RECOVERY.md",
-    "locked recovery precedence, checkpoint boundaries, CAS writes, stale detection, and crash-window reconciliation in AGENTS.md",
-    "extended scripts/check_ai_assets.py so CI enforces the recovery contract",
-    "opened recovery-hardening PR #191",
-    "PR #191 passed CI #1221 and squash-merged as d6cba697780b3939e880a8b76ef6dcbcb13e33f5"
-  ],
-  "next_action": "Verify merged v2 on live main, then start v3 hardening for adaptive checkpoints, write-ahead intent, concurrency fencing, integrity bounds and zero-runtime-coupling.",
-  "do_not_repeat": [
-    "do not restart repository analysis from chat history",
-    "do not overwrite unrelated active business work",
-    "do not treat this checkpoint as stronger than live GitHub refs, PRs, Actions, artifacts, or persisted data"
-  ],
-  "concurrent_context": "PR #190 is an existing state-only checkpoint PR; do not overwrite its business task state.",
-  "updated_at_utc": null,
   "pending_operation": null,
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
-  }
+  },
+  "completed": [
+    "v2 recovery PR #191 passed PR CI and merged",
+    "confirmed state/chatgpt-recovery has zero workflow runs",
+    "implemented v3 adaptive checkpoint sizing, runtime isolation, fencing, write-ahead intent, bounded schema validation",
+    "added paths-ignore so future recovery-only PRs do not run stock opportunity/risk-capped business workflows"
+  ],
+  "next_action": "Wait for v2 main CI #1222 to finish so recovery hardening does not overlap another heavy CI run; then open one v3 PR and validate it.",
+  "do_not_repeat": [
+    "do not put recovery reads or writes on any business runtime path",
+    "do not trigger production workflows from checkpoint commits",
+    "do not checkpoint read-only polling or every tool call",
+    "do not retry ambiguous non-idempotent external side effects without provider-side reconciliation"
+  ]
 }
