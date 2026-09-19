@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 9,
+  "generation": 10,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "harden-recovery-v3-noninterference",
-  "stage": "V3_PR_CI",
+  "stage": "V3_PR_BLOCKING_CI_OFFLINE_TESTS",
   "last_observed_main_sha": "d6cba697780b3939e880a8b76ef6dcbcb13e33f5",
   "work_branch": "chore/web-session-recovery-v3",
   "work_head_sha": "351c856854e628cd79454fdba6a3ff2df5b785c0",
@@ -33,9 +33,11 @@
     "added public-repo privacy guardrails and filesystem-safe task identities",
     "verified state/chatgpt-recovery still triggers zero workflow runs after task-scoped migration",
     "reviewed v3 diff: recovery/control-plane files plus PR-trigger exclusions only; no stock runtime files changed",
-    "opened final recovery-hardening PR #192; one-time installation PR triggered legacy business PR workflows under old base rules"
+    "opened final recovery-hardening PR #192; one-time installation PR triggered legacy business PR workflows under old base rules",
+    "PR #192 ai-governance passed, proving the recovery contract/validator/runtime-isolation checks are green",
+    "PR #192 docker-build passed; backend-gate remains in the pre-existing offline test suite"
   ],
-  "next_action": "Consume PR #192 CI #1223. Do not merge until blocking CI is green and PR remains mergeable. Then squash-merge with [skip ci] so main push does not launch duplicate business workflows, verify live main, and prune this completed task checkpoint.",
+  "next_action": "Resume by reading PR #192 and CI #1223. If backend-gate completes green and PR remains mergeable, squash-merge with [skip ci], verify no Actions runs were spawned for the merge SHA, verify recovery files on live main, mark DONE, then prune this task checkpoint.",
   "do_not_repeat": [
     "do not put recovery reads or writes on any business runtime path",
     "do not trigger production workflows from checkpoint commits",
