@@ -338,7 +338,7 @@ For ChatGPT Plus web sessions and any other long-running agent session that can 
 - On every resume, classify the volatile checkpoint as `FRESH`, `STALE`, or `CONFLICTED` against live GitHub before mutating anything; reconcile stale state forward and stop on unresolved conflicts.
 - On resume, list `recovery/tasks/` and match task identity to live branch/PR/mission. Never let one active task overwrite or absorb another task's checkpoint.
 - If recovery storage is unavailable, existing business execution continues unaffected. Read-only work may continue; unsafe non-idempotent mutations pause until durable intent/reconciliation is possible.
-- Recovery state is bounded and secret-free: schema v2, <=16 KiB, compact references instead of logs/transcripts, no credentials or sensitive tokens.
+- Recovery state is bounded and secret-free: schema v2, <=16 KiB, compact references instead of logs/transcripts, no credentials, sensitive tokens, private customer/user PII or unpublished sensitive business content.
 - If the state file is corrupt, recover the newest valid state-branch revision and reconcile with live GitHub; if the branch is missing, recreate from live repository truth rather than chat memory.
 - `TASK_STATE.md` remains the stable mission handoff; the recovery-state branch is the volatile execution cursor. Neither may override live GitHub truth.
 
