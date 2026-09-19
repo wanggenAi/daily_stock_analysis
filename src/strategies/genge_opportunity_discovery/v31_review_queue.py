@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from src.strategies.genge_opportunity_discovery import selection_framework_v31
+from src.strategies.genge_opportunity_discovery.deep_workset import load_retained_deep_codes
 from src.strategies.genge_opportunity_discovery.specialized_valuation_authoritative_merge import (
     merge_report as merge_specialized_valuation_report,
 )
@@ -128,6 +129,8 @@ def _sort_key(row: Mapping[str, Any], priority_map: Mapping[str, Mapping[str, An
 def build_review_rows(
     valuation_rows: Iterable[Mapping[str, Any]], *, plan_map: Mapping[str, Mapping[str, Any]],
     priority_map: Mapping[str, Mapping[str, Any]] | None = None, limit: int = 100,
+    continuity_codes: Iterable[str] = (),
+    continuity_source_rows: Iterable[Mapping[str, Any]] = (),
 ) -> list[dict[str, Any]]:
     priority_map = priority_map or {}
     selected = sorted((dict(row) for row in valuation_rows if _code(row.get("code"))), key=lambda r: _sort_key(r, priority_map))
@@ -145,6 +148,37 @@ def build_review_rows(
         if recalled and code and code not in admitted_codes:
             admitted.append(row)
             admitted_codes.add(code)
+
+    # Deep continuity is additive to the ordinary V3.1 review budget. The Deep
+    # Lambda may legitimately retain more unresolved historical codes than the
+    # bounded valuation queue emits in the current run. Re-materialize those
+    # codes only from the same-run All-A source/universe so they can keep being
+    # researched instead of becoming permanent REQUESTED_CODE_NOT_PRESENT gaps.
+    # This path is research-only and never manufactures valuation facts or PASS.
+    continuity_by_code: dict[str, dict[str, Any]] = {}
+    for source in continuity_source_rows:
+        code = _code(source.get("code"))
+        if code:
+            continuity_by_code[code] = dict(source)
+    for raw_code in continuity_codes:
+        code = _code(raw_code)
+        if not code or code in admitted_codes:
+            continue
+        source = continuity_by_code.get(code)
+        if not source:
+            continue
+        row = dict(source)
+        row["code"] = code
+        row["deep_continuity_recall"] = True
+        row["deep_continuity_research_only"] = True
+        row["valuation_source_channel"] = (
+            row.get("valuation_source_channel") or "DEEP_CONTINUITY_RECALL"
+        )
+        row["formal_signal_eligible"] = False
+        row["automatic_promotion_allowed"] = False
+        row["no_auto_trade"] = True
+        admitted.append(row)
+        admitted_codes.add(code)
 
     rows: list[dict[str, Any]] = []
     for raw in admitted:
@@ -200,10 +234,31 @@ def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path
     valuation_dir = _latest_valuation_dir(valuation_root)
     all_a_dir = _latest_all_a_dir(all_a_report_root)
     priority_map = load_priority_map(priority_json)
-    rows = build_review_rows(_read(valuation_dir / "valuation_research_routed.csv"), plan_map=_plan_map(all_a_dir), priority_map=priority_map, limit=limit)
+    continuity_codes = load_retained_deep_codes()
+    # Universe rows provide a safe metadata-only fallback for listed names that
+    # have no same-day quant row (for example, no current trade observation).
+    # Current quant rows are appended last so they override universe metadata.
+    continuity_source_rows: list[dict[str, Any]] = []
+    for source_name, path in (
+        ("CURRENT_ALL_A_UNIVERSE", all_a_dir / "all_a_universe.csv"),
+        ("CURRENT_ALL_A_QUANT", all_a_dir / "all_a_quant_screen.csv"),
+    ):
+        for raw in _read(path):
+            row = dict(raw)
+            row["deep_continuity_source"] = source_name
+            continuity_source_rows.append(row)
+    rows = build_review_rows(
+        _read(valuation_dir / "valuation_research_routed.csv"),
+        plan_map=_plan_map(all_a_dir),
+        priority_map=priority_map,
+        limit=limit,
+        continuity_codes=continuity_codes,
+        continuity_source_rows=continuity_source_rows,
+    )
     output_dir.mkdir(parents=True, exist_ok=True)
     preferred = [
         "v31_review_rank", "code", "stock_name", "industry", "valuation_research_rank", "valuation_source_channel", "quant_score",
+        "deep_continuity_recall", "deep_continuity_source", "deep_continuity_research_only",
         "research_priority", "research_priority_score", "research_priority_reason_codes", "research_priority_mapping_gaps", "research_priority_is_ordering_only",
         "valuation_diagnostic_status", "financial_review_status", "earnings_quality_score_source", "earnings_quality_confidence_source",
         "required_profit_growth_vs_reference_source", "v31_valuation_completion_status", "v31_valuation_followup_reason", *PREFILL_FIELDS, *JUDGEMENT_FIELDS,
@@ -218,6 +273,18 @@ def write_report(valuation_root: Path, all_a_report_root: Path, output_dir: Path
     summary = {
         "candidate_count": len(rows),
         "ordinary_limit": max(0, int(limit)),
+        "deep_continuity_requested_count": len(continuity_codes),
+        "deep_continuity_covered_count": len(
+            set(continuity_codes) & {str(row.get("code") or "") for row in rows}
+        ),
+        "deep_continuity_materialized_additive_count": sum(
+            str(row.get("deep_continuity_recall") or "").strip().lower()
+            in {"1", "true", "yes", "y"}
+            for row in rows
+        ),
+        "deep_continuity_unavailable_count": len(
+            set(continuity_codes) - {str(row.get("code") or "") for row in rows}
+        ),
         "durable_lifecycle_recall_count": sum(
             str(row.get("ledger_candidate_recall") or "").strip().lower() in {"1", "true", "yes", "y"}
             for row in rows
