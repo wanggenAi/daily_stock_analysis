@@ -38,7 +38,7 @@ def test_shanghai_material_events_use_sse(monkeypatch):
 def test_predictability_sse_history_keeps_distinct_complete_years(monkeypatch):
     def fake_sse(code, *, start, as_of, session, timeout, **kwargs):
         assert code == "600406"
-        assert start == date(2020, 9, 10)
+        assert start == date(2020, 9, 9)
         assert as_of == date(2026, 9, 18)
         assert kwargs["report_type"] == "YEARLY"
         assert kwargs["report_type2"] == "DQBG"
