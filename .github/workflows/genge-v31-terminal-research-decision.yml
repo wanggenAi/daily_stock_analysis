@@ -154,6 +154,13 @@ jobs:
           echo 'terminal research persistence failed after 4 replays' >&2
           exit 1
 
+      - name: Refresh three-pillar decision center after terminal convergence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
+
       - name: Publish terminal decision summary
         if: always()
         run: |
