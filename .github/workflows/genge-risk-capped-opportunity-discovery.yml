@@ -7,6 +7,12 @@ on:
   workflow_dispatch:
   pull_request:
     branches: [main]
+    paths-ignore:
+      - 'AGENTS.md'
+      - 'docs/WEB_SESSION_RECOVERY.md'
+      - 'scripts/check_ai_assets.py'
+      - 'scripts/validate_recovery_state.py'
+      - '.github/recovery/**'
 
 permissions:
   contents: read
