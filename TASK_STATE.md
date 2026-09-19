@@ -1,122 +1,86 @@
 # Current Mission
 
 ## Goal
-Make the existing stock system converge into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority, UNKNOWN != PASS, and no_auto_trade=true.
-
-## Current Phase
-Post-#188 continuity production proof is established at the workset/initial-Deep boundary. Finish the post-#188 Deep terminal chain, then move to measured evidence bottlenecks instead of changing thresholds.
+Converge the existing stock system into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
 
 ## Live Source Of Truth
-GitHub current main / Actions / artifacts / persisted data are authoritative. This checkpoint was written after live main advanced through persisted-state bot commits; latest observed main commit before this checkpoint was `f4f33bd94da179f01b4d9b4f164a78ec76f92308`.
+GitHub live main / PRs / Actions / artifacts / persisted data are authoritative. Chat history and this file are secondary recovery aids.
 
-## Active Branch / PR
-None for the current mission.
+## Current Phase
+Candidate continuity is production-proven. The current blocker is downstream decision convergence: a completed Deep run can persist new terminal state while Terminal Research Decision remains on an older Deep lineage, causing Three-Pillar to fail closed and expose zero research actions.
 
-## Completed Production Proofs
+## Active Change
+- Branch: `fix/deep-terminal-decision-convergence`
+- PR: #196 — Fix deterministic Deep → Terminal → Three-Pillar convergence
+- Base observed when branch was created: `a8979d560f6ed505aa5abe0094ca072936a1212b`
+- Scope: workflow convergence + regression tests only; no investment-model thresholds or authority semantics changed.
 
-### #195 — truthful Deep terminal semantics
-- Merge commit: `54b0e52696534cf04b7b5b8066b9db5aa6512092`.
-- Production Deep run `35427088755` completed SUCCESS using stale pre-#188 Every-Industry source `35403243897`.
-- Final persisted terminal truth:
-  - research_terminal_state=`HANDOFF_INCOMPLETE`
-  - requested_count=850
-  - profile_count=500
-  - requested_profile_count=499
-  - processed_requested_count=499
-  - evidence_exhausted_requested_count=499
-  - handoff_incomplete_requested_count=351
-  - missing_requested_codes=351
-  - unresolved_requested_gate_count=2285
-  - workset_coverage_known=true
-  - workset_coverage_complete=false
-- Provenance Audit run `35427944994` completed SUCCESS.
-- Terminal Research Decision run `35427944773` completed SUCCESS: BUY=0, WAIT_PRICE=0, RESEARCH_GAP=849, REJECT=1.
-- Three-Pillar Decision Center subsequently converged to the same Deep lineage and no longer displayed the old run.
-- Therefore #195 is production-proven: missing profiles are no longer mislabeled as evidence exhaustion and no synthetic profile reason is counted as a hard gate.
+## Production Proofs
 
-### #188 — continuity materialization
+### #188 — durable continuity materialization
 - Merge commit: `4457ca8234b43f9ba55ad989fe2737382f999a56`.
-- Fresh production Opportunity Discovery run `35427591974`, event=`workflow_dispatch`, completed SUCCESS.
-- Its `genge-all-a-production-report` artifact is valid production evidence:
-  - as_of_date=2026-09-18
-  - official_universe_count=5221
-  - effective_scan_count=4505
-  - price_data_coverage_ratio=1.0
-  - fatal_data_failure_count=0
-  - recoverable_price_failure_count=0
-  - market_regime_status=GREEN
-  - market_regime_score=73.83
-  - acceptance_enum=`PASS_ALL_A_PRODUCTION_RESEARCH_READY`
-- Old 351 missing Deep codes were checked against this same-run source:
-  - 351/351 are present in current All-A universe.
-  - 349/351 are present in current All-A quant screen.
-  - `601995` and `605050` are universe-only and therefore exercise the intended metadata fallback.
-- Automatic workflow_run handoff did not appear promptly, so the existing production bridge was explicitly pointed at upstream run `35427591974`.
-- Fresh Every-Industry run `35433551939`, event=`workflow_dispatch`, completed SUCCESS and consumed the fresh All-A production artifact.
-- Its `v31_review_queue_summary.json` proves:
-  - candidate_count=853
-  - ordinary_limit=500
-  - deep_continuity_requested_count=850
-  - deep_continuity_covered_count=850
-  - deep_continuity_materialized_additive_count=353
-  - deep_continuity_unavailable_count=0
-  - durable_lifecycle_recall_count=118
-  - research_required_count=853
-  - formal_signal_eligible=false
-  - automatic_promotion_allowed=false
-  - no_auto_trade=true
-- The two universe-only codes `601995` and `605050` were materialized with:
-  - deep_continuity_recall=true
-  - deep_continuity_source=`CURRENT_ALL_A_UNIVERSE`
-  - deep_continuity_research_only=true
-  - formal_signal_eligible=false
-  - automatic_promotion_allowed=false
-  - no_auto_trade=true
-- Every-Industry inline Deep produced 853 profiles and no missing requested profiles.
-- All old 351 missing codes are present in the new queue and in the new profiles.
-- Therefore the old structural `850 requested -> 500 profiles -> 351 missing` handoff defect is production-proven fixed at the Every-Industry boundary.
+- Production Opportunity Discovery: `35427591974`.
+- Production Every-Industry: `35433551939`.
+- candidate_count=853; ordinary_limit=500.
+- deep_continuity_requested_count=850; covered=850; materialized_additive=353; unavailable=0.
+- durable_lifecycle_recall_count=118; research_required_count=853.
+- Every-Industry inline Deep produced 853 profiles.
+- Former 351 missing requested codes are present; old 850→500→351 profile-loss defect is fixed.
+- Same-run universe fallback remains research-only; no Formal/trading authority.
 
-## Active Deep Verification
-- Fresh Deep Lambda: `35434165730`
-- Trigger: `EVERY_INDUSTRY_READY`
-- Exact Every-Industry source: `35433551939`
-- Initial checkpoint artifact `genge-v31-deep-initial-35434165730` is verified:
-  - source_run_id=35433551939
-  - requested_count=850
-  - processed_requested_count=850
-  - profiles_count=853
-  - missing_requested_codes=0
-  - complete_requested_count=0
-  - partial_requested_count=850
-  - unresolved_requested_gate_count=4036
-- It is currently in bounded official-evidence closure.
-- This independent Lambda initial checkpoint confirms #188 continuity survives the separate downstream handoff: the former 351 profile holes are zero.
+### #195 — truthful terminal semantics
+- Merge commit: `54b0e52696534cf04b7b5b8066b9db5aa6512092`.
+- Pre-#188 Deep `35427088755` correctly reported HANDOFF_INCOMPLETE instead of mislabeling missing profiles as evidence exhaustion.
+- Provenance `35427944994` and Terminal `35427944773` converged on that lineage.
+- Terminal decisions then were BUY=0, WAIT_PRICE=0, RESEARCH_GAP=849, REJECT=1.
 
-## Current Findings
-- `--limit 500` is only the ordinary V3.1 review budget. It must not cap retained Deep continuity.
-- Same-run universe fallback is necessary for listed codes without same-day quant rows; it is research-only and carries no Formal/trading authority.
-- #188 and #195 now solve different defects:
-  - #188 prevents retained requested codes from disappearing before Deep profiles are created.
-  - #195 truthfully distinguishes any future handoff loss from genuine evidence exhaustion.
-- Remaining bottleneck is now substantive evidence closure, not profile/workset handoff.
-- New initial Deep has 4036 unresolved requested hard gates across 850 requested codes; do not loosen gates just to manufacture BUY/WAIT_PRICE output.
+### Fresh post-#188 Deep
+- Deep Lambda: `35434165730`; source Every-Industry: `35433551939`.
+- Workflow conclusion: SUCCESS.
+- Terminal artifact: `genge-v31-deep-calculation-35434165730`.
+- research_terminal_state=EVIDENCE_EXHAUSTED.
+- requested=850; processed_requested=850; profile_count=853.
+- missing_requested_codes=0; handoff_incomplete_requested_count=0.
+- workset_coverage_known=true; workset_coverage_complete=true.
+- evidence_exhausted_requested_count=850; complete_requested_count=0.
+- evidence_collection_attempts=2; new_evidence_rows=1565; progressed_gates=0.
+- unresolved_requested_gate_count=4036.
+- Gate distribution: predictability×850; long_term_demand×849; moat×849; earnings_authenticity×744; financial_safety×744.
+
+## Current Defect
+- Three-Pillar run `35436456897` consumed current Deep `35434165730`.
+- Persisted Terminal Research Decision still points to old Deep `35427088755`.
+- Therefore terminal snapshot current_for_deep_runtime=false.
+- Three-Pillar correctly fails closed: research BUY/WAIT_PRICE/REJECT/urgent queue are hidden rather than exposing stale decisions.
+- Root cause: Deep directly refreshed Three-Pillar while Terminal/Provenance still depended on implicit downstream `workflow_run` propagation.
+
+## PR #196 Fix
+- Deep success explicitly dispatches Deep Provenance Audit and Terminal Research Decision.
+- Deep no longer directly refreshes Three-Pillar before Terminal convergence.
+- Terminal Research Decision explicitly refreshes Three-Pillar only after terminal decisions persist.
+- Existing workflow_run triggers and scheduled Deep Terminal Reconciler remain idempotent fallbacks.
+- Regression tests enforce both ordering contracts.
+
+## CI
+- First PR #196 CI run: `35437454217`.
+- Initial blocker was ai-governance because this TASK_STATE.md exceeded the repository maximum of 120 lines.
+- This checkpoint intentionally condenses the file instead of weakening governance.
 
 ## Next Action
-1. Follow Deep run `35434165730` through terminal persistence and artifact upload.
-2. Verify terminal state has missing_requested_codes=0 and handoff_incomplete_requested_count=0.
-3. Verify terminal evidence-exhausted/complete counts apply only to the 850 fully materialized requested profiles.
-4. Verify Provenance Audit, Terminal Research Decision, and Three-Pillar Decision Center converge to Deep `35434165730`.
-5. Then quantify the real evidence bottlenecks (predictability, long_term_demand, moat, earnings_authenticity, financial_safety) and improve evidence acquisition/interpretation without changing formal thresholds or fabricating evidence.
-6. After continuity/evidence closure, revisit unrelated recurring Terminal Research Overlay reliability failures separately.
+1. Re-run/observe PR #196 CI after this checkpoint update.
+2. Fix any real CI/review failures.
+3. Merge #196 only after blocking checks pass.
+4. Verify live main and post-merge workflow chain.
+5. Require Provenance + Terminal + Three-Pillar to converge on the same current Deep lineage.
+6. Verify terminal current_for_deep_runtime=true and research decisions are visible again without changing Formal authority.
+7. Then quantify and improve the real evidence bottlenecks; do not loosen hard gates to manufacture BUY/WAIT_PRICE.
 
 ## Do Not Repeat
-- Do not diagnose #188 from pre-#188 source `35403243897`.
-- Do not treat push/PR Opportunity Discovery fixtures as production evidence.
-- Do not remove the Every-Industry guard rejecting fixture upstreams.
-- Do not raise/remove the ordinary 500 limit merely to hide continuity defects.
+- Do not reopen the solved 351-profile continuity defect using pre-#188 evidence.
+- Do not raise/remove ordinary limit=500 to hide lifecycle problems.
 - Do not change valuation formulas or BUY/WAIT_PRICE/REJECT thresholds to force output.
 - Do not change Candidate Lifecycle or Formal authority.
-- Do not classify profile-handoff absence as evidence exhaustion.
+- Do not classify missing handoff as evidence exhaustion.
 - Do not manufacture evidence or treat UNKNOWN as PASS.
 
 ## Guardrails
