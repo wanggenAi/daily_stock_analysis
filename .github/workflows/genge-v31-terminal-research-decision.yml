@@ -50,7 +50,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      actions: read
+      actions: write
       contents: write
     steps:
       - uses: actions/checkout@v5
@@ -153,6 +153,13 @@ jobs:
           done
           echo 'terminal research persistence failed after 4 replays' >&2
           exit 1
+
+      - name: Refresh three-pillar decision center after terminal convergence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Publish terminal decision summary
         if: always()

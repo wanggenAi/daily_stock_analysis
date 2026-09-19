@@ -476,12 +476,14 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Refresh three-pillar decision center immediately
+      - name: Dispatch provenance and terminal convergence immediately
         if: steps.closure.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
+          set -euo pipefail
+          gh workflow run genge-v31-deep-provenance-audit.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run genge-v31-terminal-research-decision.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Publish Lambda status
         if: always()
