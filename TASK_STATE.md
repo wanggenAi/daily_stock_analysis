@@ -4,64 +4,66 @@
 Continue deep calculation for historical/current candidates and close only engineering-repairable evidence gaps without changing valuation, Candidate Lifecycle, BUY/WAIT_PRICE/REJECT, or Formal authority.
 
 ## Current Phase
-Clean integration of SSE bulletin transport recovery (#189) onto live main after production-state commits diverged the original branch.
+Deep workset continuity recovery: preserve retained historical/current research codes through the bounded valuation/V3.1 handoff so requested Deep work cannot silently collapse from 850 codes to 500 profiles.
 
 ## Last Verified Main
-`2229793793b5ac6ed10c7ccb17b40717a6e64a28` at clean-integration base; live `main` remains authoritative.
+`aaac167ce81102fc8397822f840c7c9f6088f5a0` (#189 merged); live `main` remains authoritative.
 
 ## Last Verified Code Checkpoint
-Original #189 head `067a6beef38210677ab157fbebd9936aab40adda` contains the intended SSE transport code/tests. Its targeted Opportunity run `35410799477` and risk-capped run `35410799605` are green; blocking CI `35410799511` had ai-governance and Docker green with backend offline tests still running when the clean integration was created.
+#188 code checkpoint `3ae4578ff46867a24fceee1990bb27d9027a8a06` passed full CI `35410349544`, targeted Opportunity `35410349351`, risk-capped `35410349397`, and Candidate Terminal `35410349437`. Old lineage is preserved at `checkpoint/deep-continuity-pre-reconcile-b51963e`.
 
 ## Active Branch
-`fix/sse-bulletin-403-transport`; original lineage preserved at `checkpoint/sse-pre-reconcile-067a6be`.
+`fix/deep-continuity-materialization`.
 
 ## Active PR
-#189 — `fix: recover current SSE bulletin transport`.
+#188 — `fix: preserve deep workset through bounded review handoff`.
 
 ## CI
-- #187 is merged after fresh green CI.
-- Original #189 targeted Opportunity and risk-capped checks are green.
-- Fresh blocking + targeted CI is required on the clean integration head before merge.
+- #189 clean integration head passed CI `35411251999`, Opportunity `35411252058`, and risk-capped `35411252021`; merged as `aaac167ce81102fc8397822f840c7c9f6088f5a0`.
+- #188 pre-reconcile code checkpoint is fully green.
+- Fresh CI is required on this clean #188 integration head before merge.
 
 ## Production / Artifact
-- Research mapping durability remains 118/118 mapped, 0 unmapped.
-- Deep run `35408711645` exposed legacy SSE metadata HTTP 403 and the structural 850-requested / 500-profile continuity gap.
-- Deep run `35407967652` reached official SSE PDFs for sampled Shanghai issuers but exposed later PDF parse failures; sampled Shenzhen still reflected pre-#187 CNINFO routing.
-- Latest decision-center refresh references Deep run `35407972654` from EVIDENCE_LAYER_CHANGE with requested=0 and a mismatched prior terminal snapshot; it is not evidence that #189 provider recovery works.
-- No post-#189 merged Deep evidence exists yet.
+- Mapping durability remains 118/118 mapped, 0 unmapped.
+- Production Deep run `35408711645` requested 850 codes but produced only 500 profiles; 351 requested codes were absent from the Deep profile set.
+- Reconciliation proved 349/351 missing profiles were present in the same-run 4,505-row All-A quant source; the remaining 2 (601995, 605050) were present in the same-run universe. Missing-nowhere = 0.
+- Therefore the 850→500 loss is an upstream bounded handoff/materialization defect, not absence from the current market universe.
+- #189 post-merge production Deep runs `35412424204` (push) and `35412428540` (EVIDENCE_LAYER_CHANGE) are running; provider recovery is not yet claimed until persisted evidence is inspected.
 
 ## Completed
-- #185 repaired SSE PDF URL-aware extraction and strict annual-report filtering.
+- #185 repaired SSE PDF URL-aware extraction and annual-report filtering.
 - #186 preserved industry mapping; production remains 118/118.
-- #187 moved Shenzhen primary evidence to SZSE and is merged.
-- #189 code replaces legacy SSE `queryCompanyBulletin.do` with `queryCompanyBulletinNew.do`, exact disclosure Referer + productId, client-side SSEDATE filtering, bounded fail-closed pagination, JSON/JSONP decoding, official static URL normalization, 2200-day predictability history, and cache invalidation.
-- Original #189 lineage is preserved before reconciliation.
-- UNKNOWN remains fail-closed; no decision threshold or authority changed.
+- #187 moved Shenzhen primary evidence to SZSE.
+- #189 repaired current SSE bulletin transport and is merged after clean full CI.
+- #188 implementation makes ACTIVE lifecycle recall additive in valuation research, preserves recall provenance, and re-materializes retained Deep continuity codes beyond the ordinary V3.1 review limit from the exact same-run All-A quant source with universe fallback.
+- Re-materialized continuity rows are research-only: formal_signal_eligible=false, automatic_promotion_allowed=false, no_auto_trade=true; no PASS/valuation fact is synthesized.
+- UNKNOWN remains fail-closed.
 
 ## Current Findings
-- #189's pre-reconcile merge failure was branch topology / TASK_STATE divergence after production-state commits, not a newly observed business-code conflict.
-- Provider transport and Deep workset continuity are separate defects. #189 should close transport first; #188 remains the workset-continuity follow-up.
-- PDF parser changes remain deferred until post-#189 production evidence proves the next bottleneck is parsing.
+- Deep continuity is a memory/materialization contract, not a ranking bonus.
+- Ordinary bounded review limits may still govern new daily discovery, but already-retained unresolved Deep codes must remain additive until explicitly resolved/retired.
+- #188 and #189 are independent: #189 repairs provider transport; #188 repairs the structural workset drop.
 
 ## Blockers
-- Fresh CI must pass on the clean #189 integration head.
-- Production recovery requires a non-empty post-merge Deep run and persisted evidence.
+- Fresh CI must pass on the clean #188 integration head.
+- Production verification must show the requested/profile gap materially closes; unit tests alone are not proof.
+- #189 provider production evidence is concurrently running and should be inspected before attributing remaining UNKNOWN reasons.
 
 ## Next Action
-1. Run/observe fresh targeted and blocking CI on the clean #189 head; fix only real failures.
-2. Merge #189 only when green and mergeable.
-3. Inspect the first non-empty post-merge Deep persisted evidence, separating Shanghai/SZSE outcomes.
-4. Then reconcile #188 onto live main and verify the 850-requested / 500-profile structural gap is removed.
-5. Continue only from the next measured evidence bottleneck.
+1. Run/observe fresh targeted + blocking CI for #188; fix only real failures.
+2. Merge only when green and mergeable.
+3. Inspect post-merge Deep persisted evidence and compare requested_count, profile_count, REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE, and continuity coverage against the 850/500/351 baseline.
+4. Separately inspect #189 Shanghai/SZSE provider outcomes from the first non-empty post-merge Deep evidence.
+5. Continue from the next measured bottleneck without loosening gates.
 
 ## Do Not Repeat
 - Do not change valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Capital Flow Routing, or Formal authority.
-- Do not route Shanghai or Shenzhen primary-exchange evidence back through CNINFO.
+- Do not turn retained continuity into automatic promotion or trading authority.
+- Do not manufacture valuation evidence for re-materialized rows.
 - Do not treat HTTP/parser/coverage UNKNOWN as PASS.
 - Do not redo the resolved 118/118 mapping investigation.
-- Do not modify the PDF parser without new production evidence.
 
 ## Guardrails
 - Live GitHub main / PR / Actions / artifacts / persisted data are the source of truth.
-- Keep provider changes fail-closed with exact issuer/date/document provenance.
-- Tests are necessary but not production proof.
+- Preserve same-run provenance for continuity materialization.
+- Tests are necessary but production artifact evidence is required.
