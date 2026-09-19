@@ -17,6 +17,17 @@ RECOVERY_EXAMPLE = ROOT / ".github" / "recovery" / "RECOVERY_STATE.example.json"
 RECOVERY_VALIDATOR = ROOT / "scripts" / "validate_recovery_state.py"
 INSTRUCTIONS_DIR = ROOT / ".github" / "instructions"
 CLAUDE_SKILLS_DIR = ROOT / ".claude" / "skills"
+RECOVERY_IGNORED_BUSINESS_WORKFLOWS = (
+    ROOT / ".github" / "workflows" / "genge-opportunity-discovery.yml",
+    ROOT / ".github" / "workflows" / "genge-risk-capped-opportunity-discovery.yml",
+)
+RECOVERY_ONLY_PATHS = (
+    "AGENTS.md",
+    "docs/WEB_SESSION_RECOVERY.md",
+    "scripts/check_ai_assets.py",
+    "scripts/validate_recovery_state.py",
+    ".github/recovery/**",
+)
 
 REQUIRED_INSTRUCTION_FILES = {
     "backend.instructions.md",
@@ -169,6 +180,21 @@ def ensure_recovery_protocol() -> None:
     if matches:
         fail("recovery leaked into business/runtime paths: " + ", ".join(matches))
 
+
+def ensure_recovery_workflow_isolation() -> None:
+    for workflow in RECOVERY_IGNORED_BUSINESS_WORKFLOWS:
+        ensure_file_exists(workflow, "business workflow")
+        text = workflow.read_text(encoding="utf-8")
+        if "paths-ignore:" not in text:
+            fail(f"{workflow.relative_to(ROOT)} must exclude recovery-only PR paths")
+        for recovery_path in RECOVERY_ONLY_PATHS:
+            if recovery_path not in text:
+                fail(
+                    f"{workflow.relative_to(ROOT)} is missing recovery-only path exclusion: "
+                    f"{recovery_path!r}"
+                )
+
+
 def ensure_instruction_files() -> None:
     ensure_file_exists(INSTRUCTIONS_DIR, "instructions directory")
     actual = {path.name for path in INSTRUCTIONS_DIR.glob("*.instructions.md")}
@@ -217,6 +243,7 @@ def main() -> None:
     ensure_copilot_entry()
     ensure_task_state()
     ensure_recovery_protocol()
+    ensure_recovery_workflow_isolation()
     ensure_instruction_files()
     ensure_skill_files()
     ensure_gitignore_rules()
