@@ -12,6 +12,7 @@ AGENTS = ROOT / "AGENTS.md"
 CLAUDE = ROOT / "CLAUDE.md"
 COPILOT = ROOT / ".github" / "copilot-instructions.md"
 TASK_STATE = ROOT / "TASK_STATE.md"
+RECOVERY_DOC = ROOT / "docs" / "WEB_SESSION_RECOVERY.md"
 INSTRUCTIONS_DIR = ROOT / ".github" / "instructions"
 CLAUDE_SKILLS_DIR = ROOT / ".claude" / "skills"
 
@@ -100,6 +101,36 @@ def ensure_task_state() -> None:
             fail(f"TASK_STATE.md is missing required heading: {heading!r}")
 
 
+
+def ensure_recovery_protocol() -> None:
+    ensure_file_exists(RECOVERY_DOC, "web-session recovery protocol")
+    agents = AGENTS.read_text(encoding="utf-8")
+    protocol = RECOVERY_DOC.read_text(encoding="utf-8")
+
+    required_agent_fragments = (
+        "## Durable web-session checkpoint branch — LOCKED",
+        "state/chatgpt-recovery:RECOVERY_STATE.json",
+        "live GitHub refs/PRs/Actions/artifacts/persisted data > recovery checkpoint",
+        "FRESH",
+        "STALE",
+        "CONFLICTED",
+    )
+    for fragment in required_agent_fragments:
+        if fragment not in agents:
+            fail(f"AGENTS.md is missing recovery contract text: {fragment!r}")
+
+    required_protocol_fragments = (
+        "## Atomic checkpoint procedure",
+        "## Mandatory checkpoint boundaries",
+        "## Resume algorithm",
+        "## Crash-window rule",
+        "GitHub Contents API updates use the current blob SHA",
+    )
+    for fragment in required_protocol_fragments:
+        if fragment not in protocol:
+            fail(f"docs/WEB_SESSION_RECOVERY.md is missing required text: {fragment!r}")
+
+
 def ensure_instruction_files() -> None:
     ensure_file_exists(INSTRUCTIONS_DIR, "instructions directory")
     actual = {path.name for path in INSTRUCTIONS_DIR.glob("*.instructions.md")}
@@ -147,6 +178,7 @@ def main() -> None:
     ensure_symlink()
     ensure_copilot_entry()
     ensure_task_state()
+    ensure_recovery_protocol()
     ensure_instruction_files()
     ensure_skill_files()
     ensure_gitignore_rules()
