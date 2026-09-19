@@ -13,7 +13,7 @@ CLAUDE = ROOT / "CLAUDE.md"
 COPILOT = ROOT / ".github" / "copilot-instructions.md"
 TASK_STATE = ROOT / "TASK_STATE.md"
 RECOVERY_DOC = ROOT / "docs" / "WEB_SESSION_RECOVERY.md"
-RECOVERY_EXAMPLE = ROOT / ".github" / "recovery" / "RECOVERY_STATE.example.json"
+RECOVERY_EXAMPLE = ROOT / ".github" / "recovery" / "TASK_CHECKPOINT.example.json"
 RECOVERY_VALIDATOR = ROOT / "scripts" / "validate_recovery_state.py"
 INSTRUCTIONS_DIR = ROOT / ".github" / "instructions"
 CLAUDE_SKILLS_DIR = ROOT / ".claude" / "skills"
@@ -124,7 +124,7 @@ def ensure_recovery_protocol() -> None:
 
     required_agent_fragments = (
         "## Durable web-session checkpoint branch — LOCKED",
-        "state/chatgpt-recovery:RECOVERY_STATE.json",
+        "recovery/tasks/<task_key>.json",
         "live GitHub refs/PRs/Actions/artifacts/persisted data > recovery checkpoint",
         "Runtime latency tax must remain zero",
         "[skip ci] recovery:",
@@ -136,6 +136,7 @@ def ensure_recovery_protocol() -> None:
 
     required_protocol_fragments = (
         "## Adaptive checkpoint sizing",
+        "## Task-scoped concurrency",
         "## Non-interference invariant — zero business-runtime tax",
         "## Fenced single-writer and compare-and-swap",
         "## Write-ahead intent and ambiguous outcomes",
