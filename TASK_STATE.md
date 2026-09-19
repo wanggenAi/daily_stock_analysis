@@ -31,6 +31,16 @@ Decision-center state convergence and post-#188 production verification.
 - Era Radar has structural trend evidence, but validated trend→A-share handoff queue is currently 0.
 - Current decision output has no new Formal BUY and no WAIT_PRICE; holdings all still have incomplete Deep review.
 
+## Completed
+- #188 continuity implementation is merged.
+- #191 web-session recovery hardening is merged.
+- This branch now surfaces the existing A-share pulse, selects the newest terminal/partial Deep runtime, exposes profile lineage, and bounds evidence-gap rendering.
+
+## Current Findings
+- The dominant problem is convergence, not absence of capability: market, structural-trend, lifecycle, Deep, terminal, holdings, capital-planning and learning layers all exist, but their freshness and user-facing composition are inconsistent.
+- Safety contracts are stronger than usability: UNKNOWN stays fail-closed and Formal authority is isolated, but the system can therefore look “stuck” when evidence closure and handoff quality are weak.
+- The next proof point is production behavior after #188, not another model or another dashboard.
+
 ## This Branch
 1. Surface the existing A-share market pulse at the top of Pillar 2 without creating new trading authority.
 2. Select the newest durable Deep runtime checkpoint across terminal and partial states.
