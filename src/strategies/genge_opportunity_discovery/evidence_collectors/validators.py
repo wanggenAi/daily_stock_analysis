@@ -50,8 +50,18 @@ def strip_html(html: str) -> str:
         return re.sub(r"<[^>]+>", " ", html)
 
 
-def extract_text_from_response_detailed(content: bytes, content_type: str) -> dict[str, Any]:
-    """Extract source text while preserving parse-vs-absence failure semantics."""
+def extract_text_from_response_detailed(
+    content: bytes,
+    content_type: str,
+    source_url: str = "",
+) -> dict[str, Any]:
+    """Extract source text while preserving parse-vs-absence failure semantics.
+
+    Some first-party exchange download hosts serve PDF filings with a generic or
+    missing Content-Type.  A `.pdf` disclosure URL is therefore an explicit
+    format hint; parse failure still fails closed instead of falling back to
+    HTML or treating the document as verified text.
+    """
     if not content:
         return {
             "status": SOURCE_DATA_ABSENT,
@@ -61,7 +71,9 @@ def extract_text_from_response_detailed(content: bytes, content_type: str) -> di
         }
 
     ctype = str(content_type or "").lower()
-    if content.startswith(b"%PDF") or "pdf" in ctype:
+    source_path = urlparse(str(source_url or "")).path.lower()
+    pdf_url_hint = source_path.endswith(".pdf")
+    if content.startswith(b"%PDF") or "pdf" in ctype or pdf_url_hint:
         try:
             from pypdf import PdfReader
 
@@ -106,9 +118,13 @@ def extract_text_from_response_detailed(content: bytes, content_type: str) -> di
     }
 
 
-def extract_text_from_response(content: bytes, content_type: str) -> tuple[str, str]:
+def extract_text_from_response(
+    content: bytes,
+    content_type: str,
+    source_url: str = "",
+) -> tuple[str, str]:
     """Backward-compatible text API; detailed status is available separately."""
-    result = extract_text_from_response_detailed(content, content_type)
+    result = extract_text_from_response_detailed(content, content_type, source_url)
     return str(result["text"]), str(result["parser"])
 
 

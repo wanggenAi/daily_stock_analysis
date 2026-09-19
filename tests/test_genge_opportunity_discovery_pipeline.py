@@ -320,6 +320,19 @@ def test_pdf_fixture_extracts_text_and_numeric_context() -> None:
     assert numeric["unit"] == ""
 
 
+def test_pdf_url_hint_recovers_generic_content_type() -> None:
+    content = Path("tests/fixtures/genge_opportunity_discovery/evidence_numeric.pdf").read_bytes()
+
+    text, parser = extract_text_from_response(
+        content,
+        "application/octet-stream",
+        "https://static.sse.com.cn/disclosure/example.PDF",
+    )
+
+    assert parser == "pdf_pypdf"
+    assert "operating revenue" in text
+
+
 def test_numeric_evidence_does_not_fall_back_to_unrelated_year() -> None:
     assert extract_numeric_context(
         "纳思达股份有限公司 2025 年年度报告全文",
@@ -438,7 +451,11 @@ def test_company_collector_prefers_sse_official_pdf_for_shanghai(
                 "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/"
                 "2026-04-17/report.PDF"
             )
-            return FakeResponse(content="营业收入 100亿元，同比增长 5%".encode("utf-8"))
+            return FakeResponse(
+                content=Path(
+                    "tests/fixtures/genge_opportunity_discovery/evidence_numeric.pdf"
+                ).read_bytes()
+            )
 
         def post(self, url: str, **_kwargs) -> FakeResponse:
             raise AssertionError(f"Shanghai collector must not query CNINFO: {url}")

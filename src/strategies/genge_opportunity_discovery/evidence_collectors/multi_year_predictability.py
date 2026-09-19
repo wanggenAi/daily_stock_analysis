@@ -779,7 +779,9 @@ def collect_multi_year_predictability_evidence(
                 response = session.get(candidate["url"], headers=REQUEST_HEADERS, timeout=timeout)
                 response.raise_for_status()
                 text, extraction_method = extract_text_from_response(
-                    response.content, response.headers.get("Content-Type", "")
+                    response.content,
+                    response.headers.get("Content-Type", ""),
+                    str(candidate.get("url") or ""),
                 )
             except Exception:
                 continue

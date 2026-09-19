@@ -23,7 +23,7 @@ from .evidence_normalization import (
 )
 from .validators import extract_numeric_context_detailed, extract_text_from_response_detailed
 
-_TYPED_CACHE_VERSION = 5
+_TYPED_CACHE_VERSION = 6
 _EXTRACTION_META: ContextVar[dict[str, Any]] = ContextVar(
     "company_announcement_extraction_meta", default={}
 )
@@ -60,9 +60,13 @@ def _fingerprint(row: Mapping[str, Any]) -> tuple[str, str, str]:
     )
 
 
-def _typed_text_extractor(content: bytes, content_type: str) -> tuple[str, str]:
+def _typed_text_extractor(
+    content: bytes,
+    content_type: str,
+    source_url: str = "",
+) -> tuple[str, str]:
     """Keep the document-parser outcome available to downstream numeric recovery."""
-    detail = extract_text_from_response_detailed(content, content_type)
+    detail = extract_text_from_response_detailed(content, content_type, source_url)
     _SOURCE_TEXT_META.set(dict(detail))
     return str(detail.get("text") or ""), str(detail.get("parser") or "")
 
