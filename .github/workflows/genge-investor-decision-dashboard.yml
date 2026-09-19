@@ -45,7 +45,7 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
 
 concurrency:
   group: genge-investor-decision-dashboard
@@ -309,6 +309,13 @@ jobs:
             if git push origin HEAD:main; then break; fi
             [ "$attempt" -lt 4 ] || exit 1
           done
+
+      - name: Dispatch terminal research overlay after investor brief persistence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-investor-terminal-research-overlay.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Publish investor-first summary
         if: always()
