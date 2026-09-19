@@ -1278,7 +1278,7 @@ def collect_company_material_events(
             "announcement_type": "material_events",
             "as_of_date": as_of.isoformat(),
             "window_days": MATERIAL_EVENT_WINDOW_DAYS,
-            "version": 2,
+            "version": 3,
         })
         cached = cache.get(key)
         if cached is not None:
