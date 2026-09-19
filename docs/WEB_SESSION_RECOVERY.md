@@ -163,6 +163,7 @@ The recovery state is deliberately small:
 - bounded summary lists: at most 20 entries each;
 - no raw logs, chat transcripts, large diffs, model traces or copied artifacts;
 - no tokens, passwords, cookies, credentials, authorization headers, private keys or other secrets;
+- no private customer/user PII, personal email/phone/address data, unpublished sensitive business content or private URLs; use opaque durable identifiers where a target must be referenced;
 - store references/IDs/SHAs instead of bulky evidence whenever possible.
 
 Git already provides content-addressed integrity and history; a separate database is unnecessary for this use case.
