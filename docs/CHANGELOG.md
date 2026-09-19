@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] Terminal Urgent Evidence Reopen 接受 `RESEARCH_GAP` 证据不足终态，恢复慢车道新证据 → Deep 重算的持续研究反馈链。
 - [修复] Investor Terminal Research Overlay 支持 Terminal 的 RESEARCH_GAP 终态，恢复深算研究结果到投资驾驶舱的生产交接。
 
 - [修复] Deep Calculation 将“请求代码未进入 profile”的上游 handoff 缺口从 `EVIDENCE_EXHAUSTED` 中分离为 `HANDOFF_INCOMPLETE`，终态同时持久化 requested/profile/processed/missing 覆盖度；未进入研究工件的代码不再冒充已完成补证，也不再计入未解决硬门槛，UNKNOWN、Formal Authority 与 no-auto-trade 规则不变。
