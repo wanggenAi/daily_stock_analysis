@@ -3,12 +3,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from pathlib import Path
 from typing import Any
 
 MAX_BYTES = 16 * 1024
 MAX_LIST_ITEMS = 20
 MAX_STRING = 2048
+TASK_KEY_RE = re.compile(r"^[a-z0-9][a-z0-9._-]{0,95}$")
 ALLOWED_STATUS = {
     "IDLE", "IN_PROGRESS", "WAITING_CI", "WAITING_PRODUCTION", "BLOCKED", "DONE"
 }
@@ -62,6 +64,12 @@ def validate(data: dict[str, Any], raw_size: int) -> None:
         fail("repository must be owner/name")
     if data["status"] not in ALLOWED_STATUS:
         fail(f"unsupported status: {data['status']!r}")
+    task_key = data["task_key"]
+    if task_key is not None:
+        if not isinstance(task_key, str) or not TASK_KEY_RE.fullmatch(task_key):
+            fail("task_key must be filesystem-safe lowercase [a-z0-9._-], maximum 96 chars")
+    elif data["status"] not in {"IDLE", "DONE"}:
+        fail("active recovery state requires a task_key")
     if not isinstance(data["ci"], dict):
         fail("ci must be an object")
     if not isinstance(data["production_or_artifact"], dict):
