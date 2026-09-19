@@ -197,3 +197,55 @@ def test_markdown_leads_with_three_investor_questions():
     assert "短周期尚未全面修复，但中期广度仍有支撑" in md
     assert "## 3. 新机会：润贝型以及其他机会深算结果" in md
     assert "UNKNOWN != PASS" in md
+
+
+def test_zero_macro_handoff_explains_blockers_instead_of_looking_idle():
+    handoff = {
+        "queue": [],
+        "trend_diagnostics": [
+            {
+                "trend_id": "digital_infrastructure",
+                "lifecycle": "EMERGING",
+                "confidence_score": 33.69,
+                "minimum_confidence": 58.0,
+                "lifecycle_eligible": False,
+                "confidence_eligible": False,
+                "mapped_industries": ["电力设备", "通信"],
+                "evidence_count": 3,
+                "provenance_ok": True,
+                "freshness_ok": True,
+                "reviewed_company_match_count": 2,
+                "blockers": [
+                    "LIFECYCLE_NOT_HANDOFF_READY",
+                    "CONFIDENCE_BELOW_58",
+                ],
+                "handoff_count": 0,
+                "handoff_ready": False,
+            }
+        ],
+    }
+    out = build_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        deep_review_config=_deep_reviews(),
+        industry_links={"links": {"digital_infrastructure": ["电力设备", "通信"]}},
+        era_handoff=handoff,
+    )
+    capital = out["pillar_2_world_social_market_capital_map"]
+    assert capital["validated_handoff_count"] == 0
+    assert capital["handoff_diagnostic_count"] == 1
+    trend = capital["structural_world_social_trends"][0]
+    assert trend["handoff_readiness"]["handoff_ready"] is False
+    assert trend["handoff_readiness"]["blockers"] == [
+        "LIFECYCLE_NOT_HANDOFF_READY",
+        "CONFIDENCE_BELOW_58",
+    ]
+    assert capital["handoff_blocker_summary"] == [
+        {"blocker": "CONFIDENCE_BELOW_58", "trend_count": 1},
+        {"blocker": "LIFECYCLE_NOT_HANDOFF_READY", "trend_count": 1},
+    ]
+    md = render_markdown(out)
+    assert "交接状态" in md
+    assert "LIFECYCLE_NOT_HANDOFF_READY" in md
+    assert "CONFIDENCE_BELOW_58" in md
+    assert "交接未成立的主要原因" in md
