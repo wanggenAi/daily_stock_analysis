@@ -1,19 +1,19 @@
 {
   "schema_version": 2,
-  "generation": 10,
+  "generation": 11,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
+  "status": "DONE",
   "task_key": "harden-recovery-v3-noninterference",
-  "stage": "V3_PR_BLOCKING_CI_OFFLINE_TESTS",
-  "last_observed_main_sha": "d6cba697780b3939e880a8b76ef6dcbcb13e33f5",
-  "work_branch": "chore/web-session-recovery-v3",
-  "work_head_sha": "351c856854e628cd79454fdba6a3ff2df5b785c0",
-  "active_pr": 192,
+  "stage": "V3_MERGED_VERIFIED",
+  "last_observed_main_sha": "c2314996b38c54fdab35f597c115b20da9087b3d",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
     "run_id": 35415607762,
     "head_sha": "351c856854e628cd79454fdba6a3ff2df5b785c0",
-    "status": "IN_PROGRESS",
-    "conclusion": null
+    "status": "COMPLETED",
+    "conclusion": "SUCCESS"
   },
   "production_or_artifact": {
     "status": "NOT_APPLICABLE",
@@ -35,9 +35,13 @@
     "reviewed v3 diff: recovery/control-plane files plus PR-trigger exclusions only; no stock runtime files changed",
     "opened final recovery-hardening PR #192; one-time installation PR triggered legacy business PR workflows under old base rules",
     "PR #192 ai-governance passed, proving the recovery contract/validator/runtime-isolation checks are green",
-    "PR #192 docker-build passed; backend-gate remains in the pre-existing offline test suite"
+    "PR #192 docker-build passed; backend-gate remains in the pre-existing offline test suite",
+    "PR #192 passed CI #1223",
+    "squash-merged with [skip ci] as c2314996b38c54fdab35f597c115b20da9087b3d",
+    "verified merge SHA triggered zero Actions runs",
+    "verified task-scoped recovery protocol, validator, governance guard, and recovery-only workflow exclusions on live main"
   ],
-  "next_action": "Resume by reading PR #192 and CI #1223. If backend-gate completes green and PR remains mergeable, squash-merge with [skip ci], verify no Actions runs were spawned for the merge SHA, verify recovery files on live main, mark DONE, then prune this task checkpoint.",
+  "next_action": "Resume the stock mission from live GitHub and TASK_STATE.md; no recovery-hardening task remains active.",
   "do_not_repeat": [
     "do not put recovery reads or writes on any business runtime path",
     "do not trigger production workflows from checkpoint commits",
