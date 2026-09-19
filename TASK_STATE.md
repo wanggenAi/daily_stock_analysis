@@ -1,75 +1,75 @@
 # Current Mission
 
 ## Goal
-Make the existing stock system converge into one trustworthy daily decision surface before adding new models: expose the real A-share market regime, show the newest Deep runtime truth, keep historical/current candidates continuous, and turn evidence gaps into bounded diagnostics instead of an unreadable wall of UNKNOWN reasons.
-
-Do not change valuation formulas, Candidate Lifecycle semantics, BUY/WAIT_PRICE/REJECT thresholds, Formal authority, or no-auto-trade.
+Make the existing stock system converge into one trustworthy daily decision surface before adding new models. Deep runtime must distinguish actual evidence exhaustion from upstream workset/profile handoff loss without changing valuation, selection thresholds, Candidate Lifecycle, Formal authority, or no-auto-trade.
 
 ## Current Phase
-Decision-center state convergence and post-#188 production verification.
+Deep terminal truthfulness and post-#188 production continuity verification.
 
 ## Last Verified Main
-`6d43ce93ee4e96df1e8cbea87adddf639cb5d1db` when this branch was created. Live `main` remains authoritative and may advance through persisted-state bot commits.
+`0fd28170a2c76bfb7378a8771785e07480782a6b` when branch `fix/deep-handoff-terminal-truth` was created. Live `main` remains authoritative and may advance through persisted-state bot commits.
 
 ## Active Branch
-`fix/decision-center-state-convergence`.
+`fix/deep-handoff-terminal-truth`.
 
 ## Active PR
-#193 — `fix: converge decision center on current system truth`.
+#195 — `fix: separate deep handoff gaps from evidence exhaustion`.
 
 ## CI
-- PR #193 runs focused Three-Pillar, Opportunity Discovery, legacy risk-capped, PR Review, and full CI.
-- First full-CI attempt exposed this checkpoint document missing the required `## CI` recovery heading; this update restores the repository contract.
-- Merge only after focused and blocking checks are green.
+- PR #194 is merged as `b2f4f4e58f3db83cbb2ec7cb74b9e75a27aac26b`; its blocking CI was green.
+- PR #195 adds regression coverage for missing-profile handoff semantics plus the Deep workflow terminal-state contract.
+- Merge #195 only after focused Deep/Three-Pillar checks and blocking CI are green.
 
 ## Production / Artifact
-- #188 (`fix: preserve deep workset through bounded review handoff`) is merged.
-- The latest terminal Deep state on main is still run `35412424204`, head `aaac167ce81102fc8397822f840c7c9f6088f5a0`: SUCCESS / EVIDENCE_EXHAUSTED, requested 850, profiles 500, unresolved gates 2636.
-- That run predates the #188 merge, so it is **not** production proof that the 850→500 continuity defect is fixed.
-- A newer Deep run `35412428540` persisted `latest_partial_status.json`: PARTIAL / NOT_COMPLETED after the initial checkpoint. The old decision center ignored this newer partial checkpoint and therefore could display the older SUCCESS run as if it were current.
-- Current investor dashboard has usable A-share market breadth data (GREEN, advance ratio, MA20/MA60 breadth, limit-up/down counts), but the three-pillar report previously buried it and led with structural trend IDs / industry proxies instead.
-- Era Radar has structural trend evidence, but validated trend→A-share handoff queue is currently 0.
-- Current decision output has no new Formal BUY and no WAIT_PRICE; holdings all still have incomplete Deep review.
+- Latest persisted terminal Deep run is `35422187150`, execution SUCCESS.
+- It requested 850 codes, persisted 500 total profiles, and reports 351 requested codes as `REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE`.
+- That Deep run used Every-Industry source `35403243897`, created 2026-09-18T22:50:01Z, before #188 merged at 2026-09-19T01:37:38Z.
+- Therefore run `35422187150` is not valid post-#188 proof of the continuity materialization fix.
+- No post-#188 production Opportunity Discovery run from `schedule` or `workflow_dispatch` has completed yet. Push/PR Opportunity Discovery runs are fixture validation only and must not be treated as production All-A evidence.
 
 ## Completed
-- #188 continuity implementation is merged.
-- #191 web-session recovery hardening is merged.
-- This branch now surfaces the existing A-share pulse, selects the newest terminal/partial Deep runtime, exposes profile lineage, and bounds evidence-gap rendering.
+- #188 continuity materialization is merged.
+- #193 decision-center convergence is merged.
+- #194 partial-checkpoint workset observability is merged.
+- Production lineage was traced far enough to prove the latest 850→500 result consumed a pre-#188 Every-Industry artifact.
+- PR #195 now separates missing-profile handoff gaps from genuine evidence exhaustion in terminal status and the decision center.
 
 ## Current Findings
-- The dominant problem is convergence, not absence of capability: market, structural-trend, lifecycle, Deep, terminal, holdings, capital-planning and learning layers all exist, but their freshness and user-facing composition are inconsistent.
-- Safety contracts are stronger than usability: UNKNOWN stays fail-closed and Formal authority is isolated, but the system can therefore look “stuck” when evidence closure and handoff quality are weak.
-- The next proof point is production behavior after #188, not another model or another dashboard.
+- `v31_review_queue --limit 500` is an ordinary review budget, not by itself the post-#188 defect: current #188 code additively materializes retained Deep continuity codes beyond that limit from same-run All-A sources.
+- The latest production Deep artifact is stale with respect to that fix, so continuity still needs a fresh production-chain proof.
+- Independent correctness bug: `close_profiles()` previously appended missing profiles to `exhausted_codes`, causing 351 codes that never entered a profile to be reported as evidence exhausted.
+- The same bug inflated `unresolved_requested_gate_count` by counting `profile` handoff reasons as hard gates.
+- Terminal Research already maps absent profiles to research-only `RESEARCH_GAP / DEEP_PROFILE_MISSING`; no Formal or trading authority expansion is needed.
 
 ## This Branch
-1. Surface the existing A-share market pulse at the top of Pillar 2 without creating new trading authority.
-2. Select the newest durable Deep runtime checkpoint across terminal and partial states.
-3. Make profile/runtime lineage explicit so an older completed profile cannot masquerade as the current failed/partial run.
-4. Collapse unresolved evidence output into bounded reason/gate distributions plus a few examples.
-5. Preserve all fail-closed authority rules.
+1. Add terminal state `HANDOFF_INCOMPLETE` when requested codes are missing from the Deep profile workset.
+2. Keep `EVIDENCE_EXHAUSTED` only for materialized profiles whose hard gates remain UNKNOWN after bounded recovery.
+3. Persist `profile_count`, `requested_profile_count`, `processed_requested_count`, `handoff_incomplete_requested_count`, `missing_requested_codes`, and workset coverage flags in terminal status.
+4. Exclude profile-handoff reasons from the unresolved hard-gate count.
+5. Render handoff incompleteness separately in the Three-Pillar decision center.
+6. Preserve idempotence: HANDOFF_INCOMPLETE is a completed run state that waits for newer compatible upstream work rather than looping the same stale artifact.
 
 ## Blockers
-- Post-#188 production Deep verification is still required. Compare requested_count, profile_count, REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE and continuity coverage against the old 850/500/351 baseline.
-- The current evidence-closure path can still end in PARTIAL after the initial checkpoint; after continuity is verified, diagnose the measured top evidence bottlenecks rather than loosening gates.
-- The full legacy Daily Market Review capability exists separately from GenGe; this branch exposes the deterministic market pulse first. A later integration should persist/hand off the richer daily market narrative only if it can reuse existing components rather than build a parallel system.
+- PR #195 CI must pass.
+- A genuine post-#188 production Opportunity Discovery → Every-Industry → Deep chain is still required to validate that retained workset materialization removes the structural 351 missing-profile gap.
+- Do not use push/PR fixture artifacts as production proof.
 
 ## Next Action
-1. Run branch CI and the focused three-pillar tests.
-2. Merge only when green.
-3. Let the merged decision-center workflow regenerate `LATEST_DECISION_CENTER.md` from live persisted state and verify it shows run `35412428540` as the newest PARTIAL checkpoint while retaining `35412424204` as the last terminal run.
-4. Trigger/observe the first post-#188 Deep production run on current main and verify the 850→500 profile-loss defect is actually closed.
-5. Continue from the next measured bottleneck: profile continuity first, then official-evidence coverage, then trend→A-share handoff quality.
-6. After the main chain is healthy, clean stale PRs and legacy root reports without deleting audit history needed for reproducibility.
+1. Observe/fix PR #195 CI until all blocking checks are green.
+2. Merge #195 and verify live main.
+3. Verify the first later production `schedule` or `workflow_dispatch` Every-Industry source is post-#188 and includes continuity summary fields.
+4. Verify the downstream Deep run reports truthful requested/profile/processed/handoff counts.
+5. If missing-profile count reaches zero, continue from the measured evidence bottlenecks; if not, diagnose the remaining same-run source coverage rather than loosening gates.
 
 ## Do Not Repeat
-- Do not change valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Capital Flow Routing, or Formal authority as part of this convergence work.
-- Do not turn retained continuity, Era Radar, market breadth, Near-BUY, or research-only BUY into automatic promotion/trading authority.
-- Do not manufacture missing evidence or treat UNKNOWN as PASS.
-- Do not judge #188 fixed from unit tests alone; require post-merge production artifact evidence.
-- Do not add another parallel “latest dashboard” while `LATEST_DECISION_CENTER.md` can be improved in place.
+- Do not claim #188 failed from Deep run `35422187150`; its Every-Industry source predates #188.
+- Do not remove the Every-Industry guard that rejects push/PR fixture Opportunity Discovery runs.
+- Do not change valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle semantics, or Formal authority.
+- Do not classify `REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE` as evidence exhaustion.
+- Do not manufacture evidence or treat UNKNOWN as PASS.
 
 ## Guardrails
 - Live GitHub main / PR / Actions / artifacts / persisted data are the source of truth.
-- Preserve same-run provenance and explicit freshness/lineage.
-- Tests are necessary but production artifact evidence is required.
+- Preserve exact run/profile/source lineage.
+- Production artifact evidence is required in addition to unit/CI tests.
 - no_auto_trade=true.
