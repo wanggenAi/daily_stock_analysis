@@ -15,7 +15,12 @@ Decision-center state convergence and post-#188 production verification.
 `fix/decision-center-state-convergence`.
 
 ## Active PR
-Pending creation from the active branch.
+#193 — `fix: converge decision center on current system truth`.
+
+## CI
+- PR #193 runs focused Three-Pillar, Opportunity Discovery, legacy risk-capped, PR Review, and full CI.
+- First full-CI attempt exposed this checkpoint document missing the required `## CI` recovery heading; this update restores the repository contract.
+- Merge only after focused and blocking checks are green.
 
 ## Production / Artifact Truth
 - #188 (`fix: preserve deep workset through bounded review handoff`) is merged.
