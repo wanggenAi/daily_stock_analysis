@@ -173,6 +173,17 @@ def _trend_pillar(
     era_handoff: Mapping[str, Any],
 ) -> dict[str, Any]:
     links = industry_links.get("links") if isinstance(industry_links.get("links"), Mapping) else {}
+    raw_diagnostics = (
+        era_handoff.get("trend_diagnostics")
+        if isinstance(era_handoff, Mapping)
+        and isinstance(era_handoff.get("trend_diagnostics"), list)
+        else []
+    )
+    diagnostic_by_trend = {
+        str(row.get("trend_id") or ""): dict(row)
+        for row in raw_diagnostics
+        if isinstance(row, Mapping) and str(row.get("trend_id") or "")
+    }
     trends: list[dict[str, Any]] = []
     for raw in era_radar.get("trends") or []:
         if not isinstance(raw, Mapping):
@@ -192,6 +203,7 @@ def _trend_pillar(
                 "independent_families": int(_num(raw.get("independent_families")) or 0),
                 "a_share_research_industries": list(links.get(trend_id) or []),
                 "components": dict(raw.get("components") or {}),
+                "handoff_readiness": dict(diagnostic_by_trend.get(trend_id) or {}),
             }
         )
     trends.sort(
@@ -204,6 +216,18 @@ def _trend_pillar(
     )
     tactical = list(dashboard.get("capital_direction", {}).get("strongest_industries") or [])
     queue = list(era_handoff.get("queue") or []) if isinstance(era_handoff, Mapping) else []
+    blocker_counts: dict[str, int] = {}
+    for diagnostic in diagnostic_by_trend.values():
+        for blocker in diagnostic.get("blockers") or []:
+            key = str(blocker or "").strip()
+            if key:
+                blocker_counts[key] = blocker_counts.get(key, 0) + 1
+    handoff_blocker_summary = [
+        {"blocker": blocker, "trend_count": count}
+        for blocker, count in sorted(
+            blocker_counts.items(), key=lambda item: (-item[1], item[0])
+        )
+    ]
     market_raw = dashboard.get("market") if isinstance(dashboard.get("market"), Mapping) else {}
     market_snapshot = {
         "as_of_date": market_raw.get("as_of_date") or dashboard.get("latest_trade_date") or "",
@@ -230,6 +254,8 @@ def _trend_pillar(
         "tactical_market_behavior_proxy": tactical,
         "validated_a_share_research_handoffs": queue,
         "validated_handoff_count": len(queue),
+        "handoff_diagnostic_count": len(diagnostic_by_trend),
+        "handoff_blocker_summary": handoff_blocker_summary,
         "intersection_status": "VALIDATED_HANDOFFS_AVAILABLE" if queue else "NO_VALIDATED_A_SHARE_HANDOFF",
         "interpretation_rule": (
             "结构趋势回答中长期需求/利润池可能去哪里；市场行为代理回答近期风险偏好在哪里；"
@@ -399,20 +425,41 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
     else:
         lines.append("- 最新A股市场脉搏不可用；不据此放宽买入。")
     lines += ["", "### 中长期结构趋势", ""]
-    lines.append("| 趋势 | 信心 | 结构 | 产业 | A股研究映射 |")
-    lines.append("|---|---:|---:|---:|---|")
+    lines.append("| 趋势 | 信心 | 结构 | 产业 | A股研究映射 | 交接状态 |")
+    lines.append("|---|---:|---:|---:|---|---|")
     for x in m["structural_world_social_trends"][:8]:
         mapped = "、".join(x.get("a_share_research_industries") or []) or "尚未映射"
+        readiness = x.get("handoff_readiness") or {}
+        if readiness.get("handoff_ready") is True:
+            handoff_state = f"READY({int(readiness.get('handoff_count') or 0)})"
+        elif readiness:
+            handoff_state = " / ".join(str(item) for item in (readiness.get("blockers") or [])[:3]) or "BLOCKED"
+        else:
+            handoff_state = "诊断未提供"
         lines.append(
             f"| {x['trend_id']} | {_fmt(x.get('confidence_score'))} | {_fmt(x.get('structural_score'))} | "
-            f"{_fmt(x.get('industrial_score'))} | {mapped} |"
+            f"{_fmt(x.get('industrial_score'))} | {mapped} | {handoff_state} |"
         )
     lines += ["", "### 近期市场行为代理", ""]
     tactical = m["tactical_market_behavior_proxy"]
     lines.append("、".join(f"{x.get('industry')}({_fmt(x.get('score'))})" for x in tactical[:8]) if tactical else "暂无可用代理。")
-    lines += ["", f"- 已验证的趋势→A股研究交接：**{m['validated_handoff_count']}**。",
-              "- 这里不冒充‘主力净流入’；结构趋势、市场行为和个股深算必须分层验证。",
-              "", "## 3. 新机会：润贝型以及其他机会深算结果", ""]
+    lines += ["", f"- 已验证的趋势→A股研究交接：**{m['validated_handoff_count']}**。"]
+    blockers = m.get("handoff_blocker_summary") or []
+    if blockers:
+        lines.append(
+            "- 交接未成立的主要原因：" +
+            "；".join(
+                f"{row.get('blocker')}×{row.get('trend_count')}"
+                for row in blockers[:6]
+            ) +
+            "。"
+        )
+    lines += [
+        "- 这里不冒充‘主力净流入’；结构趋势、市场行为和个股深算必须分层验证。",
+        "",
+        "## 3. 新机会：润贝型以及其他机会深算结果",
+        "",
+    ]
     if o["buy_now"]:
         lines.append("### BUY NOW")
         for x in o["buy_now"]:
