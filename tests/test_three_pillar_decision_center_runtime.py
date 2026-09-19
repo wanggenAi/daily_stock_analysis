@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_runtime import (
@@ -516,3 +518,12 @@ def test_partial_checkpoint_exposes_workset_coverage_when_persisted() -> None:
     assert "覆盖可审计：**True**；完整覆盖：**True**" in md
     assert "请求但未进入本次研究工件：**无**" in md
 
+
+
+def test_three_pillar_does_not_race_investor_or_terminal_workflows():
+    workflow = Path(".github/workflows/genge-three-pillar-decision-center.yml").read_text(encoding="utf-8")
+    workflow_run = workflow.split("  workflow_run:", 1)[1].split("  pull_request:", 1)[0]
+
+    assert "Era Capital Trend Radar Live" in workflow_run
+    assert "GenGe Investor Decision Brief" not in workflow_run
+    assert "GenGe V3.1 Terminal Research Decision" not in workflow_run
