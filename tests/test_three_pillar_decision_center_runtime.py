@@ -207,6 +207,39 @@ def test_evidence_exhausted_is_terminal_without_requiring_manual_next_round():
     assert "600406" in runtime["unresolved_reasons"]
 
 
+def test_handoff_incomplete_is_terminal_but_not_research_complete():
+    status = _terminal_status()
+    status.update(
+        {
+            "research_outcome": "HANDOFF_INCOMPLETE",
+            "research_terminal_state": "HANDOFF_INCOMPLETE",
+            "requested_count": 2,
+            "profile_count": 1,
+            "requested_profile_count": 1,
+            "processed_requested_count": 1,
+            "partial_requested_count": 1,
+            "evidence_exhausted_requested_count": 1,
+            "handoff_incomplete_requested_count": 1,
+            "missing_requested_codes": ["600406"],
+            "workset_coverage_known": True,
+            "workset_coverage_complete": False,
+        }
+    )
+    runtime = normalize_runtime(status)
+
+    assert runtime["execution_succeeded"] is True
+    assert runtime["research_process_terminal"] is True
+    assert runtime["research_complete"] is False
+    assert runtime["research_terminal_state"] == "HANDOFF_INCOMPLETE"
+    assert runtime["manual_next_round_required"] is False
+    assert runtime["requested_count"] == 2
+    assert runtime["processed_requested_count"] == 1
+    assert runtime["evidence_exhausted_requested_count"] == 1
+    assert runtime["handoff_incomplete_requested_count"] == 1
+    assert runtime["missing_requested_codes"] == ["600406"]
+    assert runtime["workset_coverage_complete"] is False
+
+
 def test_terminal_research_contract_preserves_authority_separation():
     terminal = normalize_terminal_research(_terminal_research())
     assert terminal["available"] is True

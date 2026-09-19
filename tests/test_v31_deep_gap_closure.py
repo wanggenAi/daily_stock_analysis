@@ -115,6 +115,37 @@ def test_same_lambda_terminates_evidence_exhausted_without_fake_pass_or_retry():
     assert out["no_auto_trade"] is True
 
 
+def test_missing_profile_is_handoff_incomplete_not_evidence_exhausted():
+    _, status = close_profiles(
+        _profiles(),
+        [{"code": "001316", "industry": "航空装备", "stock_name": "润贝航科"}],
+        requested_codes=["001316", "600406"],
+        industry_evidence=[],
+        company_evidence=[],
+        evidence_audit=[],
+        evidence_summary={"verified_count": 0},
+    )
+
+    assert status["execution_status"] == "SUCCESS"
+    assert status["research_terminal_state"] == "HANDOFF_INCOMPLETE"
+    assert status["requested_count"] == 2
+    assert status["profile_count"] == 1
+    assert status["requested_profile_count"] == 1
+    assert status["processed_requested_count"] == 1
+    assert status["complete_requested_count"] == 0
+    assert status["partial_requested_count"] == 1
+    assert status["evidence_exhausted_requested_count"] == 1
+    assert status["handoff_incomplete_requested_count"] == 1
+    assert status["missing_requested_codes"] == ["600406"]
+    assert status["workset_coverage_known"] is True
+    assert status["workset_coverage_complete"] is False
+    assert status["unresolved_requested_gate_count"] == 3
+    assert status["unresolved_reasons"]["600406"] == {
+        "profile": "REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE"
+    }
+    assert status["immediate_retry_required"] is False
+
+
 def test_verified_corroboration_progresses_gate_but_does_not_invent_buy_authority():
     out, status = close_profiles(
         _profiles(),

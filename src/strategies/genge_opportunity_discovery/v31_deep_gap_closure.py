@@ -322,12 +322,13 @@ def close_profiles(
     unresolved: dict[str, dict[str, str]] = {}
     complete_codes: list[str] = []
     exhausted_codes: list[str] = []
+    missing_profile_codes: list[str] = []
 
     for code in requested:
         profile = profiles.get(code)
         if not isinstance(profile, dict):
             unresolved[code] = {"profile": "REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE"}
-            exhausted_codes.append(code)
+            missing_profile_codes.append(code)
             continue
         gates = profile.get("gates") if isinstance(profile.get("gates"), dict) else {}
         row = rows_by_code.get(code, {})
@@ -414,7 +415,13 @@ def close_profiles(
             profile["research_disposition"] = "DEEP_REVIEW_COMPLETE"
 
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    terminal_state = "COMPLETE" if not exhausted_codes else "EVIDENCE_EXHAUSTED"
+    if missing_profile_codes:
+        terminal_state = "HANDOFF_INCOMPLETE"
+    elif exhausted_codes:
+        terminal_state = "EVIDENCE_EXHAUSTED"
+    else:
+        terminal_state = "COMPLETE"
+    requested_profile_count = len(requested) - len(missing_profile_codes)
     attempt_count = int(evidence_summary.get("collection_attempt_count") or 1)
     new_evidence_count = int(
         evidence_summary.get("unique_evidence_count")
@@ -428,20 +435,37 @@ def close_profiles(
         "research_outcome": terminal_state,
         "generated_at": now,
         "requested_count": len(requested),
+        "profile_count": len(profiles),
+        "requested_profile_count": requested_profile_count,
+        "processed_requested_count": requested_profile_count,
         "complete_requested_count": len(complete_codes),
+        "partial_requested_count": len(exhausted_codes),
         "evidence_exhausted_requested_count": len(exhausted_codes),
+        "handoff_incomplete_requested_count": len(missing_profile_codes),
+        "missing_requested_codes": missing_profile_codes,
+        "workset_coverage_known": True,
+        "workset_coverage_complete": not missing_profile_codes,
         "progressed_gate_count": progressed,
         "predictability_resolved_gate_count": predictability_resolved_gates,
         "material_event_failed_gate_count": material_event_failed_gates,
         "material_event_pass_override_count": material_event_pass_overrides,
-        "unresolved_requested_gate_count": sum(len(v) for v in unresolved.values()),
+        "unresolved_requested_gate_count": sum(
+            1
+            for reasons in unresolved.values()
+            for gate in reasons
+            if gate in GATES
+        ),
         "unresolved_reasons": unresolved,
         "gap_closure_attempt_count": attempt_count,
         "new_evidence_count": new_evidence_count,
         "evidence_audit_count": len(evidence_audit),
         "evidence_collection_summary": dict(evidence_summary),
         "immediate_retry_required": False,
-        "retry_rule": "Transient source failures get bounded same-run refetch; identical evidence never loops. Future retry requires a new event/evidence epoch.",
+        "retry_rule": (
+            "Transient source failures get bounded same-run refetch; identical evidence never loops. "
+            "Missing profiles require a newer compatible upstream workset artifact; future evidence retry "
+            "requires a new event/evidence epoch."
+        ),
         "formal_trading_authority": False,
         "automatic_formal_buy_allowed": False,
         "unknown_is_pass": False,

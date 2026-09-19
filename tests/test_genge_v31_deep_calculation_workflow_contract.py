@@ -28,3 +28,10 @@ def test_deep_lambda_contract_suite_guards_partial_checkpoint_schema() -> None:
     workflow = WORKFLOW.read_text(encoding="utf-8")
 
     assert "tests/test_genge_v31_deep_calculation_workflow_contract.py" in workflow
+
+
+def test_terminal_observability_contract_allows_handoff_incomplete() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+
+    assert "HANDOFF_INCOMPLETE" in workflow
+    assert "status['research_terminal_state'] in {'COMPLETE','EVIDENCE_EXHAUSTED','HANDOFF_INCOMPLETE'}" in workflow
