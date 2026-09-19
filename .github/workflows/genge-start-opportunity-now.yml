@@ -1,0 +1,43 @@
+name: GenGe Start Opportunity Discovery Now
+
+on:
+  push:
+    branches: [main]
+    paths: [".github/workflows/genge-start-opportunity-now.yml"]
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Dispatch production Opportunity Discovery
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-opportunity-discovery.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f run_legacy_report=false
+          sleep 8
+          RUN_ID="$(gh run list \
+            --repo "$GITHUB_REPOSITORY" \
+            --workflow genge-opportunity-discovery.yml \
+            --event workflow_dispatch \
+            --branch main \
+            --limit 1 \
+            --json databaseId \
+            --jq '.[0].databaseId')"
+          test -n "$RUN_ID"
+          printf '%s\n' "$RUN_ID" > .github/last_opportunity_discovery_run.txt
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add .github/last_opportunity_discovery_run.txt
+          git commit -m "chore: record latest production opportunity discovery $RUN_ID [skip ci]" || true
+          git push
+          echo "OPPORTUNITY_DISCOVERY_RUN_ID=$RUN_ID"
