@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-19T01:28:25+00:00",
+  "generated_at": "2026-09-19T01:41:27+00:00",
   "canonical_snapshot_id": "dbe2947123155cda76e7",
   "canonical_source_run_id": "35403243897",
   "latest_trade_date": "2026-09-18",
@@ -225,7 +225,7 @@
     "available": true,
     "buy_now": [],
     "wait_price": [],
-    "reject_count": 111,
+    "reject_count": 100,
     "invalid_unauthorized_buy_count": 0,
     "decision_authority": "RESEARCH_TERMINAL_VIEW",
     "formal_buy_is_mirror_only": true
@@ -236,7 +236,7 @@
     "capital_as_of": "2026-09-15T11:38:01+08:00",
     "deployment_budget_cny": 39900.0,
     "effective_max_deployment_ratio": 0.7,
-    "planned_immediate_cash_cny": 0.0,
+    "planned_immediate_cash_cny": 0,
     "cash_after_immediate_plan_cny": 57000.0,
     "operations": [
       {
@@ -258,7 +258,7 @@
         "live_market_price": null,
         "price_observed_at": "",
         "price_provider": "",
-        "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
+        "execution_note": "LIVE_EXECUTION_QUOTE_UNAVAILABLE"
       }
     ],
     "wait_price_reservations": [],
@@ -297,7 +297,7 @@
       "live_market_price": null,
       "price_observed_at": "",
       "price_provider": "",
-      "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
+      "execution_note": "LIVE_EXECUTION_QUOTE_UNAVAILABLE"
     }
   ],
   "decision_summary": {
@@ -313,8 +313,8 @@
     "new_risk_reduction_action_count": 0,
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
-    "terminal_reject_count": 111,
-    "planned_immediate_cash_cny": 0.0
+    "terminal_reject_count": 100,
+    "planned_immediate_cash_cny": 0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -408,7 +408,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-19T01:28:25+00:00",
+    "evaluated_at": "2026-09-19T01:41:27+00:00",
     "canonical_generated_at": "2026-09-18T23:00:05+00:00",
     "canonical_latest_trade_date": "2026-09-18",
     "canonical_source_run_id": "35403243897",
@@ -418,9 +418,9 @@
   },
   "formal_new_exposure_allowed": true,
   "live_execution_overlay": {
-    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
     "available": false,
-    "market_data_status": "OFF_SESSION",
+    "market_data_status": "DEGRADED",
     "eligible_quote_count": 0,
     "expected_code_count": 4,
     "expected_codes": [
@@ -439,7 +439,7 @@
     ],
     "coverage_ratio": 0.0,
     "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 15,
+    "max_quote_age_minutes": 120,
     "canonical_snapshot_match": true,
     "formal_action_recomputed": false,
     "formal_action_mutation_allowed": false,
@@ -447,13 +447,6 @@
     "missing_quote_blocks_immediate_execution": true,
     "no_auto_trade": true,
     "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true,
-    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
-    "market_session_state": "CLOSED",
-    "market_session_active": false,
-    "retry_attempts": 3,
-    "refreshed_at": "2026-09-19T01:29:05.617966+00:00",
-    "refreshed_at_beijing": "2026-09-19T09:29:05.617966+08:00"
+    "formal_new_exposure_allowed": true
   }
 }
