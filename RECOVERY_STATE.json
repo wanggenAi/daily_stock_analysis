@@ -1,13 +1,13 @@
 {
   "schema_version": 1,
-  "generation": 1,
+  "generation": 2,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "IN_PROGRESS",
   "task_key": "install-web-session-recovery-v2",
-  "stage": "INSTALL_PROTOCOL",
+  "stage": "PR_READY",
   "last_observed_main_sha": "bbb958728a8efa130e7e1a67d9feb1a475167507",
   "work_branch": "chore/web-session-recovery-v2",
-  "work_head_sha": "bbb958728a8efa130e7e1a67d9feb1a475167507",
+  "work_head_sha": "301f0b4d3438ee95a513c5863225bfb0bd177281",
   "active_pr": null,
   "ci": {
     "run_id": null,
@@ -19,10 +19,12 @@
     "evidence": []
   },
   "completed": [
-    "created chore/web-session-recovery-v2 from observed main",
-    "created permanent state/chatgpt-recovery branch"
+    "created permanent state/chatgpt-recovery branch and seeded RECOVERY_STATE.json",
+    "added docs/WEB_SESSION_RECOVERY.md",
+    "locked recovery precedence, checkpoint boundaries, CAS writes, stale detection, and crash-window reconciliation in AGENTS.md",
+    "extended scripts/check_ai_assets.py so CI enforces the recovery contract"
   ],
-  "next_action": "Install and validate durable web-session recovery protocol on the work branch, open PR, run CI, merge if green, then checkpoint the merged main state.",
+  "next_action": "Open a dedicated recovery-hardening PR, checkpoint the PR identity, then consume CI instead of restarting work.",
   "do_not_repeat": [
     "do not restart repository analysis from chat history",
     "do not overwrite unrelated active business work",
