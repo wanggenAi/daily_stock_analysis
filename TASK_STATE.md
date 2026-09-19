@@ -29,7 +29,7 @@ None for this mission. #195 — `fix: separate deep handoff gaps from evidence e
 - Post-merge Deep run `35427088755` was automatically triggered from #195 merge SHA `54b0e52696534cf04b7b5b8066b9db5aa6512092` and is currently running evidence closure.
 - Its persisted initial-pass artifact `genge-v31-deep-initial-35427088755` has been verified: source_run_id=`35403243897` (pre-#188), requested_count=850, processed_requested_count=499, profile_count=500 total, missing_requested_codes=351, unresolved_requested_gate_count=2285. Therefore this run is valid #195 terminal-semantics proof but not valid #188 continuity proof.
 - The expected #195 terminal behavior for this old 500-profile upstream artifact is `HANDOFF_INCOMPLETE`, with 351 missing requested profiles separated from evidence-exhausted materialized profiles and excluded from unresolved hard-gate counts.
-- A genuine post-#188 production Opportunity Discovery has now been explicitly dispatched: run `35427591974`, event=`workflow_dispatch`, head SHA `023c514ce8900f98b00053b2c7cb413c1619cf53`. It is the required production chain root. The simultaneous push run `35427584313` is fixture validation only and must not be used as production evidence.
+- A genuine post-#188 production Opportunity Discovery has now been explicitly dispatched: run `35427591974`, event=`workflow_dispatch`, head SHA `023c514ce8900f98b00053b2c7cb413c1619cf53`. It is IN_PROGRESS and is the required production chain root. The first simultaneous push fixture `35427584313` completed; a second helper-generated push fixture `35427653244` was explicitly CANCELLED to release the shared concurrency group. Neither push run is production evidence.
 
 ## Completed
 - #188 continuity materialization is merged.
@@ -58,7 +58,7 @@ Merged. #195 implemented:
 
 ## Blockers
 - Post-merge Deep run `35427088755` must complete and demonstrate the #195 terminal semantics on live main. Its initial artifact already proves 499 requested profiles / 351 handoff gaps from pre-#188 source `35403243897`.
-- Production chain `35427591974` (Opportunity Discovery workflow_dispatch) is now active. Follow its automatic workflow_run handoff into Every-Industry and then the Deep Lambda to validate whether retained workset materialization removes the structural 351 missing-profile gap.
+- Production chain `35427591974` (Opportunity Discovery workflow_dispatch) is now IN_PROGRESS. It must pass its internal fixture gate before the `All-A production research report` job starts; do not bypass that `needs` gate. Follow its automatic workflow_run handoff into Every-Industry and then the Deep Lambda to validate whether retained workset materialization removes the structural 351 missing-profile gap.
 - Do not use push/PR fixture artifacts as production proof.
 
 ## Next Action
