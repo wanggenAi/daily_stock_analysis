@@ -89,3 +89,41 @@ def test_active_lifecycle_recall_survives_ordinary_queue_limit():
     assert recalled["formal_signal_eligible"] is False
     assert recalled["automatic_promotion_allowed"] is False
 
+
+def test_retained_deep_code_is_materialized_beyond_ordinary_limit_from_current_source():
+    valuation = [{
+        "code": "600001",
+        "stock_name": "Current top",
+        "industry": "制造业",
+        "valuation_research_rank": "1",
+        "quant_score": "99",
+    }]
+    continuity = [{
+        "code": "000001",
+        "stock_name": "平安银行",
+        "industry": "银行业",
+        "raw_latest_close": "10.50",
+        "deep_continuity_source": "CURRENT_ALL_A_QUANT",
+    }]
+
+    rows = build_review_rows(
+        valuation,
+        plan_map={},
+        limit=1,
+        continuity_codes=["000001"],
+        continuity_source_rows=continuity,
+    )
+    by_code = {row["code"]: row for row in rows}
+
+    assert [row["code"] for row in rows] == ["600001", "000001"]
+    recalled = by_code["000001"]
+    assert recalled["deep_continuity_recall"] is True
+    assert recalled["deep_continuity_source"] == "CURRENT_ALL_A_QUANT"
+    assert recalled["deep_continuity_research_only"] is True
+    assert recalled["valuation_source_channel"] == "DEEP_CONTINUITY_RECALL"
+    assert recalled["v31_review_status"] == "RESEARCH_REQUIRED"
+    assert recalled["v31_hard_gates_passed"] is False
+    assert recalled["v31_buy_ready"] is False
+    assert recalled["formal_signal_eligible"] is False
+    assert recalled["automatic_promotion_allowed"] is False
+    assert recalled["no_auto_trade"] is True

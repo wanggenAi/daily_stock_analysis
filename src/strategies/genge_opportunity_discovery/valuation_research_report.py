@@ -53,6 +53,14 @@ OUTPUT_COLUMNS = [
     "stock_name",
     "industry",
     "wide_recall_reason",
+    "ledger_candidate_recall",
+    "ledger_candidate_state",
+    "candidate_memory_source",
+    "candidate_lifecycle_recall",
+    "candidate_lifecycle_research_tier",
+    "candidate_lifecycle_last_seen_snapshot_id",
+    "candidate_lifecycle_last_seen_source_run_id",
+    "durable_recall_source_missing",
     "quant_status",
     "quant_rank",
     "quant_score",
@@ -146,16 +154,24 @@ def _quant_order_key(row: Mapping[str, Any]) -> tuple[float, float, str]:
     )
 
 
+def _is_durable_lifecycle_recall(source: Mapping[str, Any]) -> bool:
+    truthy = {"1", "true", "yes", "y"}
+    return any(
+        str(source.get(field) or "").strip().lower() in truthy
+        for field in (
+            "durable_recall_source_missing",
+            "ledger_candidate_recall",
+            "candidate_lifecycle_recall",
+        )
+    )
+
+
 def _wide_recall_reason(source: Mapping[str, Any]) -> str | None:
-    # Durable lifecycle recall is a continuation obligation, not a soft-filter
-    # recovery. Treat it as normal research so an ACTIVE historical candidate
-    # cannot be displaced solely because today's Discovery source row is absent.
-    # This remains research-only and grants no Formal/BUY authority.
-    if str(source.get("durable_recall_source_missing") or "").strip().lower() in {
-        "1",
-        "true",
-        "yes",
-    }:
+    # ACTIVE lifecycle recall is a continuation obligation, not a soft-filter
+    # recovery. Treat it as normal research even when today's row exists and
+    # carries an ordinary hard blocker. This remains research-only and grants
+    # no Formal/BUY authority.
+    if _is_durable_lifecycle_recall(source):
         return "NORMAL_RESEARCH_QUEUE"
 
     status = str(
@@ -210,11 +226,7 @@ def select_wide_recall_rows(
         row["source_hard_blockers"] = (
             row.get("hard_blockers") or row.get("hard_reject_blockers") or ""
         )
-        if str(row.get("durable_recall_source_missing") or "").strip().lower() in {
-            "1",
-            "true",
-            "yes",
-        }:
+        if _is_durable_lifecycle_recall(row):
             durable.append(row)
         elif reason == "NORMAL_RESEARCH_QUEUE":
             normal.append(row)
@@ -598,6 +610,14 @@ def _base_row(
             or ""
         ),
         "wide_recall_reason": source.get("wide_recall_reason") or "",
+        "ledger_candidate_recall": source.get("ledger_candidate_recall") or False,
+        "ledger_candidate_state": source.get("ledger_candidate_state") or "",
+        "candidate_memory_source": source.get("candidate_memory_source") or "",
+        "candidate_lifecycle_recall": source.get("candidate_lifecycle_recall") or False,
+        "candidate_lifecycle_research_tier": source.get("candidate_lifecycle_research_tier") or "",
+        "candidate_lifecycle_last_seen_snapshot_id": source.get("candidate_lifecycle_last_seen_snapshot_id") or "",
+        "candidate_lifecycle_last_seen_source_run_id": source.get("candidate_lifecycle_last_seen_source_run_id") or "",
+        "durable_recall_source_missing": source.get("durable_recall_source_missing") or False,
         "quant_status": source.get("quant_status") or source.get("quant_screen_status") or "",
         "quant_rank": source.get("quant_rank") or "",
         "quant_score": source.get("quant_score") or "",
