@@ -126,3 +126,12 @@ def test_investor_brief_reapplies_execution_consumption_before_persistence() -> 
     assert "routine_canonical_refresh_rearms_consumed_add" in block
     assert "explicit_rearm_required" in block
     assert build_at < consumption_at < validation_at < commit_at
+
+
+def test_investor_brief_pr_concurrency_is_isolated_from_production() -> None:
+    workflow = _workflow()
+    concurrency = workflow.split("concurrency:", 1)[1].split("env:", 1)[0]
+    assert "github.event_name == 'pull_request'" in concurrency
+    assert "github.event.pull_request.number" in concurrency
+    assert "|| 'production'" in concurrency
+    assert "cancel-in-progress: false" in concurrency
