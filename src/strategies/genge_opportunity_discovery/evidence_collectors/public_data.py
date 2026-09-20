@@ -89,6 +89,25 @@ def _industry_search_terms(industry: str, alias_map: Mapping[str, Any] | None) -
     ]
 
 
+def _specialized_source_specs(
+    search_terms: list[str],
+) -> list[tuple[str, str, str]]:
+    """Route normalized industries to specialized official sources via aliases."""
+    terms = {str(item or "").strip() for item in search_terms if str(item or "").strip()}
+    result: list[tuple[str, str, str]] = []
+    seen: set[tuple[str, str]] = set()
+    for routing_term, specs in SPECIALIZED_PUBLIC_SOURCES.items():
+        if routing_term not in terms:
+            continue
+        for spec in specs:
+            key = (spec[0], spec[1])
+            if key in seen:
+                continue
+            seen.add(key)
+            result.append(spec)
+    return result
+
+
 def _article_candidates(
     html: str, *, base_url: str, keywords: list[str], limit: int = 5,
 ) -> list[tuple[str, str, str]]:
@@ -252,7 +271,7 @@ def collect_public_industry_data(
         search_terms = _industry_search_terms(industry, industry_alias_map)
         if not search_terms:
             continue
-        source_specs = [*PUBLIC_SOURCES, *SPECIALIZED_PUBLIC_SOURCES.get(industry, [])]
+        source_specs = [*PUBLIC_SOURCES, *_specialized_source_specs(search_terms)]
         for collector, url, title in source_specs:
             task_count += 1
             key = cache.key_for({
