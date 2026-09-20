@@ -469,15 +469,17 @@ def _finalize_investor_report_readiness(payload: dict[str, Any]) -> None:
     terminal_available = (opportunities.get("terminal_research_snapshot") or {}).get("available") is True
     account_action_complete = bool(str(account.get("plain_language") or "").strip())
 
-    action_complete = bool(
-        holding_actions_complete
-        and account_action_complete
-        and (terminal_current or not terminal_available)
-    )
+    # A report can remain action-complete while a newer research generation is
+    # still running: stale research is not promoted, and the safe candidate
+    # action becomes "do not add new exposure yet". Evidence freshness remains
+    # a separate limitation below.
+    action_complete = bool(holding_actions_complete and account_action_complete)
 
     limitations: list[str] = []
     if runtime.get("research_complete") is not True:
         limitations.append("DEEP_RESEARCH_EVIDENCE_PARTIAL")
+    if terminal_available and not terminal_current:
+        limitations.append("TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP")
     if coverage.get("financial_capital_evidence_available") is not True:
         limitations.append("FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING")
     if payload.get("decision_readiness", {}).get("validated_macro_to_a_share_handoff_available") is not True:
