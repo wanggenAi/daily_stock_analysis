@@ -229,7 +229,7 @@ def test_dashboard_rejects_bad_authority_and_renders_investor_first_order():
 
     payload = _build(capital=_capital(), terminal_decisions=_terminal())
     text = render_markdown(payload)
-    sections = ["## 1. 今天市场怎么样", "## 2. 我的持仓怎么办", "## 3. 今天能直接买什么",
+    sections = ["## 1. 最新市场结构（日线）", "## 2. 我的持仓怎么办", "## 3. 今天能直接买什么",
                 "## 4. WAIT_PRICE：跌到多少钱再买", "## 5. 资金怎么花", "## 6. 最终操作表",
                 "## 9. 系统状态（最后看）"]
     positions = [text.index(x) for x in sections]
@@ -237,3 +237,21 @@ def test_dashboard_rejects_bad_authority_and_renders_investor_first_order():
     assert payload["presentation_contract"]["section_order"][:6] == [
         "market", "stock_portfolio", "terminal_buy_now", "terminal_wait_price", "capital_deployment", "final_operation_table"
     ]
+
+
+def test_market_markdown_exposes_eod_scope_and_data_date() -> None:
+    payload = _build(
+        market_regime={
+            "as_of_date": "2026-09-18",
+            "status": "GREEN",
+            "allow_new_buy": True,
+            "position_multiplier": 1.0,
+            "advance_ratio": 0.7569,
+            "data_quality": "OK",
+        }
+    )
+    assert payload["market"]["context_scope"] == "EOD_DAILY_STRUCTURE"
+    text = render_markdown(payload)
+    assert "## 1. 最新市场结构（日线）" in text
+    assert "数据日：**2026-09-18**" in text
+    assert "不是盘中全A广度" in text
