@@ -61,6 +61,20 @@ def _dashboard():
             "method": "MARKET_BEHAVIOR_PROXY",
             "strongest_industries": [{"industry": "电力设备", "status": "STRONG", "score": 92.0}],
         },
+        "capital_deployment": {
+            "available_cash_cny": 50000.0,
+            "deployment_budget_cny": 35000.0,
+            "planned_immediate_cash_cny": 0.0,
+            "cash_after_immediate_plan_cny": 50000.0,
+            "operations": [],
+        },
+        "final_operation_table": [],
+        "live_execution_overlay": {
+            "expected_code_count": 4,
+            "applied_code_count": 0,
+            "market_session_state": "CLOSED",
+            "market_data_status": "OFF_SESSION",
+        },
         "terminal_opportunities": {
             "available": True,
             "buy_now": [],
@@ -135,6 +149,7 @@ def test_three_pillars_are_first_class_and_fail_closed_on_deep_review_gaps():
         "pillar_1_holdings_deep_analysis",
         "pillar_2_world_social_market_capital_map",
         "pillar_3_deep_opportunities",
+        "today_account_plan",
     }
     holdings = out["pillar_1_holdings_deep_analysis"]
     assert holdings["holding_count"] == 2
@@ -144,6 +159,12 @@ def test_three_pillars_are_first_class_and_fail_closed_on_deep_review_gaps():
     assert holdings["rows"][0]["deep_review"]["status"] == "DEEP_REVIEW_PARTIAL"
     assert holdings["rows"][1]["deep_review"]["status"] == "DEEP_REVIEW_MISSING"
     assert out["decision_readiness"]["all_holdings_explicit_deep_review_complete"] is False
+    account = out["today_account_plan"]
+    assert account["available_cash_cny"] == 50000.0
+    assert account["planned_immediate_cash_cny"] == 0.0
+    assert account["cash_action"] == "KEEP_CASH"
+    assert account["live_quote_coverage_complete"] is False
+    assert "现金继续保留" in account["plain_language"]
 
 
 def test_world_social_trend_and_tactical_proxy_remain_separate():
@@ -197,5 +218,8 @@ def test_markdown_leads_with_three_investor_questions():
     assert "短周期尚未全面修复，但中期广度仍有支撑" in md
     assert "## 3. 新机会：润贝型以及其他机会深算结果" in md
     assert "Formal/Production Candidate Terminal REJECT：**499**" in md
+    assert "## 4. 今日账户资金怎么处理" in md
+    assert "可用现金：**¥50000.00**" in md
+    assert "现金继续保留" in md
     assert "与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级" in md
     assert "UNKNOWN != PASS" in md
