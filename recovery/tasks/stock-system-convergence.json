@@ -1,26 +1,27 @@
 {
   "schema_version": 2,
-  "generation": 3,
+  "generation": 4,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
+  "status": "WAITING_PRODUCTION_VERIFICATION",
   "task_key": "stock-system-convergence",
-  "stage": "PR205_TEST_CONTRACT_FIXED_WAITING_RERUN",
-  "last_observed_main_sha": "c2154f3752485bed19b1012b955123736dc61f23",
-  "work_branch": "fix/investor-report-layer-clarity-main-replay",
-  "work_head_sha": "a5399791902582d2897643feb2f0de76fe8a4636",
-  "active_pr": 205,
+  "stage": "PR205_PR206_MERGED_VERIFY_POST_MERGE",
+  "last_observed_main_sha": "262ecf4ae62a8d8ea58923300532942b9ba542bb",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
-    "run_id": null,
-    "head_sha": "a5399791902582d2897643feb2f0de76fe8a4636",
-    "status": "QUEUED_OR_STARTING",
+    "run_id": 35487990261,
+    "head_sha": "262ecf4ae62a8d8ea58923300532942b9ba542bb",
+    "status": "QUEUED_OR_RUNNING",
     "conclusion": null
   },
   "production_or_artifact": {
-    "status": "PENDING_POST_MERGE",
+    "status": "RUNNING",
     "evidence": [
-      "PR #202 merged as c01bfd25a603cf1150c9a2dc57036f4e61e6b3fb",
-      "PR #203 merged as 39c72255d139fed6309131a008853950e3d0d787",
-      "PR #205 replays #204 report-layer fix on latest main while preserving #203 regression"
+      "PR #205 merged as c058d91a28359ef44f3332de97ebcdf8c9d1cf2d; preserves Deep Research across rerenders and clarifies planned vs executable actions.",
+      "PR #206 merged as 262ecf4ae62a8d8ea58923300532942b9ba542bb; prevents routine/preventive disclosure titles from creating false ACTIVE/HIGH material-event FAILs.",
+      "Post-merge Deep Calculation Lambda 35487990313 started on main 262ecf4ae62a.",
+      "Post-merge Evidence Change Trigger 35487990274 and Opportunity Discovery 35487990265 started/pending on same main."
     ]
   },
   "pending_operation": null,
@@ -29,17 +30,16 @@
     "last_error": null
   },
   "completed": [
-    "Recovered live GitHub state; TASK_STATE.md was stale relative to merged #196/#197/#198.",
-    "Reviewed #202/#203/#204 scopes and source patches.",
-    "Merged PR #202 with green CI; urgent evidence reopen now requires RESEARCH_GAP for evidence-blocked rows.",
-    "PR #203 deterministic Investor Brief → Terminal Overlay → Three-Pillar convergence passed blocking CI and merged as 39c72255d139fed6309131a008853950e3d0d787.",
-    "Created PR #205 as clean replay of #204 on latest main; intended diff is six report/rendering regression files only.",
-    "PR #205 first contract run exposed an invalid test assumption: one stock may legitimately appear in both holdings-deep-review and urgent-evidence subsections. Fixed the regression to assert second render preserves the first render's mention count instead of forcing one mention; business code unchanged."
+    "Recovered from stale TASK_STATE/recovery using live GitHub truth.",
+    "Verified PR #205 and #206 blocking checks green and GitHub mergeability clean.",
+    "Merged PR #205 with squash commit c058d91a28359ef44f3332de97ebcdf8c9d1cf2d.",
+    "Merged PR #206 with squash commit 262ecf4ae62a8d8ea58923300532942b9ba542bb."
   ],
-  "next_action": "Wait for workflows on PR #205 head a5399791902582d2897643feb2f0de76fe8a4636. Require terminal-overlay contract and full CI green; then merge and verify production persisted report convergence.",
+  "next_action": "Verify post-merge CI and production chain. Require latest Deep/Provenance/Terminal/Investor Overlay/Three-Pillar lineage to converge on the post-#206 run; inspect REJECT and hard material-event reasons to confirm routine/preventive false positives disappeared. Then continue evidence-bottleneck analysis without loosening hard gates.",
   "do_not_repeat": [
     "Do not reopen solved 351-profile continuity defect.",
     "Do not loosen hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, or no_auto_trade.",
-    "Do not merge stale/superseded PR #200/#201 after their replay successors are integrated."
+    "Do not merge stale/superseded PR #204; #205 is its clean replay.",
+    "Do not treat routine disclosure titles as proof of funds occupation or non-standard audit."
   ]
 }
