@@ -9,6 +9,7 @@ from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_run
     normalize_terminal_research,
     render_runtime_markdown,
     select_latest_deep_calculation_status,
+    summarize_era_evidence,
 )
 
 
@@ -54,6 +55,18 @@ def _era():
         "no_auto_trade": True,
         "research_as_of": "2026-09-08T00:00:00Z",
         "trends": [],
+    }
+
+
+def _era_evidence():
+    return {
+        "schema_version": "ERA_RADAR_EVIDENCE_BUNDLE_V1",
+        "records": [
+            {"family": "POLICY_CAPITAL"},
+            {"family": "REAL_DEMAND"},
+            {"family": "REAL_DEMAND"},
+            {"family": "GLOBAL_STRUCTURE"},
+        ],
     }
 
 
@@ -314,6 +327,9 @@ def test_matching_terminal_research_is_exposed_separately_from_formal_actions():
     assert out["executive_summary"]["research_gap_count"] == 1
     assert out["executive_summary"]["research_reject_count"] == 0
     assert out["decision_readiness"]["terminal_research_current_for_deep_runtime"] is True
+    assert pillar["research_gap"][0]["account_action"] == "DO_NOT_BUY_YET"
+    assert "暂不买" in pillar["research_gap"][0]["investor_action"]
+    assert "predictability" in pillar["research_gap"][0]["investor_action"]
     assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
     assert out["no_auto_trade"] is True
 
@@ -518,6 +534,34 @@ def test_partial_checkpoint_exposes_workset_coverage_when_persisted() -> None:
     assert "覆盖可审计：**True**；完整覆盖：**True**" in md
     assert "请求但未进入本次研究工件：**无**" in md
 
+
+
+def test_era_evidence_coverage_is_explicit_and_does_not_fake_fund_flow():
+    coverage = summarize_era_evidence(_era_evidence())
+    assert coverage["status"] == "PARTIAL"
+    assert coverage["family_counts"]["POLICY_CAPITAL"] == 1
+    assert coverage["family_counts"]["REAL_DEMAND"] == 2
+    assert coverage["family_counts"]["FINANCIAL_CAPITAL"] == 0
+    assert coverage["financial_capital_evidence_available"] is False
+    assert coverage["direct_stock_fund_flow_claimed"] is False
+
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        era_evidence_bundle=_era_evidence(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_status(),
+        industry_links={},
+        era_handoff={},
+    )
+    capital = out["pillar_2_world_social_market_capital_map"]
+    assert capital["capital_evidence_coverage"]["status"] == "PARTIAL"
+    assert capital["direct_financial_capital_evidence_available"] is False
+    assert out["decision_readiness"]["financial_capital_evidence_available"] is False
+    md = render_runtime_markdown(out)
+    assert "## 4. 今日账户资金怎么处理" in md
+    assert "金融资本 live 证据尚未覆盖" in md
 
 
 def test_three_pillar_does_not_race_investor_or_terminal_workflows():
