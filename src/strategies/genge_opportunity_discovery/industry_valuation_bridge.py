@@ -87,6 +87,41 @@ def _read_curated_codes(path: Path | None) -> set[str]:
     return codes
 
 
+def _read_recovered_historical_codes(path: Path | None) -> set[str]:
+    """Read only the explicitly recovered historical-candidate section.
+
+    The broader curated pool remains bounded/static research recall. Only the
+    section backed by persisted historical research evidence may survive a
+    missing current All-A source row.
+    """
+    if path is None or not path.exists():
+        return set()
+
+    marker = "# Recovered historical candidate research lineage"
+    in_section = False
+    saw_code = False
+    codes: set[str] = set()
+    for raw in path.read_text(encoding="utf-8").splitlines():
+        line = raw.strip()
+        if line == marker:
+            in_section = True
+            saw_code = False
+            continue
+        if not in_section:
+            continue
+        if line.startswith("#"):
+            if saw_code:
+                break
+            continue
+        if not line:
+            continue
+        code = _code({"code": line.split("#", 1)[0].strip()})
+        if code:
+            codes.add(code)
+            saw_code = True
+    return codes
+
+
 def _read_candidate_state_memory(
     path: Path | None,
 ) -> tuple[dict[str, dict[str, Any]], set[str]] | None:
@@ -200,6 +235,7 @@ def merge_sources(
     curated_codes: Iterable[str] = (),
     excluded_codes: Iterable[str] = (),
     curated_metadata: Mapping[str, Mapping[str, Any]] | None = None,
+    recovered_historical_codes: Iterable[str] = (),
 ) -> list[dict[str, Any]]:
     """Return global + industry + durable curated research recall.
 
@@ -281,14 +317,19 @@ def merge_sources(
         by_code[code] = row
 
     metadata = curated_metadata or {}
-    # Only machine lifecycle ACTIVE candidates are allowed to survive a missing
-    # current-day All-A source row. Static curated codes keep their historical
-    # behavior and are recalled only when the current source actually contains
-    # them; this avoids silently turning a broad research pool into permanent
-    # lifecycle memory.
-    missing_lifecycle = sorted((set(metadata) - excluded) - set(by_code))
-    for code in missing_lifecycle:
+    recovered = {_code({"code": value}) for value in recovered_historical_codes}
+    recovered.discard("")
+    recovered -= excluded
+    # Machine lifecycle ACTIVE candidates always survive a missing current-day
+    # All-A source row. In addition, only the explicitly marked recovered
+    # historical-candidate section may survive source absence. The rest of the
+    # static curated pool keeps its bounded behavior and is never promoted into
+    # durable memory by this path.
+    durable_missing = (set(metadata) | recovered) - excluded - set(by_code)
+    for code in sorted(durable_missing):
         candidate = dict(metadata.get(code) or {})
+        lifecycle_recall = bool(candidate)
+        historical_recall = code in recovered
         row = {
             "code": code,
             "stock_name": str(candidate.get("stock_name") or ""),
@@ -297,13 +338,18 @@ def merge_sources(
             "quant_rank": "0",
             "quant_score": "",
             "hard_blockers": "",
-            "valuation_source_channel": "DURABLE_LIFECYCLE_RECALL",
+            "valuation_source_channel": (
+                "DURABLE_LIFECYCLE_RECALL"
+                if lifecycle_recall
+                else "RECOVERED_HISTORICAL_RECALL"
+            ),
             "curated_research_recall": True,
             "curated_research_reason": "DURABLE_V31_RESEARCH_POOL",
             "wide_recall_reason": "DURABLE_SOURCE_ROW_MISSING",
             "source_hard_blockers": "",
             "durable_recall_source_missing": True,
-            "candidate_lifecycle_recall": bool(candidate),
+            "candidate_lifecycle_recall": lifecycle_recall,
+            "historical_candidate_recall": historical_recall,
             "candidate_lifecycle_research_tier": str(candidate.get("research_tier") or ""),
             "candidate_lifecycle_last_seen_snapshot_id": str(
                 candidate.get("last_seen_snapshot_id") or ""
@@ -352,6 +398,7 @@ def write_merged_report(
         raise FileNotFoundError("missing industry coverage source")
 
     static_curated_codes = _read_curated_codes(curated_pool)
+    recovered_historical_codes = _read_recovered_historical_codes(curated_pool)
     lifecycle_memory = _read_candidate_state_memory(candidate_state)
     lifecycle_metadata: dict[str, dict[str, Any]] = {}
     if lifecycle_memory is not None:
@@ -372,6 +419,7 @@ def write_merged_report(
         curated_codes=curated_codes,
         excluded_codes=ledger_invalidated_codes,
         curated_metadata=lifecycle_metadata,
+        recovered_historical_codes=recovered_historical_codes,
     )
 
     for row in rows:
@@ -430,6 +478,13 @@ def write_merged_report(
         "curated_only_count": sum(r.get("valuation_source_channel") == "CURATED_RESEARCH_POOL" for r in rows),
         "curated_pool_missing_codes": missing_curated,
         "static_curated_pool_requested_count": len(static_curated_codes),
+        "recovered_historical_candidate_count": len(recovered_historical_codes),
+        "recovered_historical_candidate_codes": sorted(recovered_historical_codes),
+        "recovered_historical_materialized_without_all_a_count": sum(
+            bool(r.get("durable_recall_source_missing"))
+            and _code(r) in recovered_historical_codes
+            for r in rows
+        ),
         "candidate_memory_source": candidate_memory_source,
         "candidate_state_path": str(candidate_state or ""),
         "legacy_candidate_ledger_path": str(candidate_ledger or ""),
