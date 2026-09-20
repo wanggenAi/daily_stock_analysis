@@ -826,6 +826,7 @@ def collect_multi_year_predictability_evidence(
         primary_exchange = code.startswith(("0", "2", "3", "6"))
 
         if primary_exchange:
+            primary_query_failed = False
             try:
                 if code.startswith("6"):
                     candidates = _query_sse_history(code, as_of, session, timeout)
@@ -834,13 +835,25 @@ def collect_multi_year_predictability_evidence(
                     candidates = _query_szse_history(code, as_of, session, timeout)
                     query_source = "SZSE_PRIMARY"
             except Exception as exc:
+                primary_query_failed = True
                 query_errors.append(f"PRIMARY:{type(exc).__name__}")
 
-            # Preserve the primary-exchange contract on a clean empty result:
-            # an empty but successful official query is evidence insufficiency,
-            # not a transport failure and not a reason to consult CNINFO.
-            if query_errors:
+            # A syntactically successful exchange query is not sufficient proof
+            # of historical coverage. Production can return an empty/partial
+            # result when endpoint filters drift while still responding 200.
+            # Preserve the strict >=3-year gate, but use CNINFO as the already
+            # accepted official disclosure fallback whenever the primary source
+            # cannot supply enough annual-report candidates to possibly satisfy
+            # that gate.
+            primary_candidates = list(candidates)
+            needs_fallback = primary_query_failed or len(primary_candidates) < MIN_COMPLETE_YEARS
+            if needs_fallback:
+                if not primary_query_failed:
+                    query_errors.append(
+                        f"PRIMARY_INSUFFICIENT_REPORTS:{len(primary_candidates)}"
+                    )
                 org_id = cninfo_org_ids().get(code)
+                fallback: list[dict[str, Any]] = []
                 if org_id:
                     try:
                         fallback = _query_cninfo_history(
@@ -848,12 +861,29 @@ def collect_multi_year_predictability_evidence(
                         )
                     except Exception as exc:
                         query_errors.append(f"CNINFO:{type(exc).__name__}")
-                    else:
-                        if fallback:
-                            candidates = fallback
-                            query_source = "CNINFO_FALLBACK"
 
-                if not candidates:
+                if fallback:
+                    # Merge by fiscal year and keep a primary-exchange document
+                    # when both official sources provide the same year.
+                    by_year = {
+                        int(item["fiscal_year"]): item
+                        for item in fallback
+                        if item.get("fiscal_year") is not None
+                    }
+                    for item in primary_candidates:
+                        if item.get("fiscal_year") is not None:
+                            by_year[int(item["fiscal_year"])] = item
+                    candidates = [
+                        by_year[year]
+                        for year in sorted(by_year, reverse=True)[:MAX_REPORTS]
+                    ]
+                    query_source = (
+                        "PRIMARY_PLUS_CNINFO_FALLBACK"
+                        if primary_candidates
+                        else "CNINFO_FALLBACK"
+                    )
+
+                if primary_query_failed and not candidates:
                     results.append(
                         _unknown_row(
                             code,
