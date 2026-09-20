@@ -1,85 +1,50 @@
 {
   "schema_version": 2,
-  "generation": 12,
+  "generation": 13,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI_AND_PRODUCTION",
+  "status": "WAITING_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR219_PR220_BACKEND_CI_RUNNING_DEEP215_CANCELLED_BY_SKIPPED_TRIGGER",
-  "last_observed_main_sha": "ccd9531ac07b",
-  "work_branch": "fix/deep-latest-epoch-fence",
-  "work_head_sha": "c44594362192329f3edcd3006604009eae6aecd5",
-  "active_pr": 220,
+  "stage": "POST_MERGE_222_DEEP_35507967197_RUNNING",
+  "last_observed_main_sha": "0626380c5b68104cd66f86cc1387a0049fdc0735",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
+    "run_id": 35507963540,
+    "head_sha": "0626380c5b68104cd66f86cc1387a0049fdc0735",
     "status": "RUNNING",
-    "pending_prs": [
-      219,
-      220
-    ],
-    "note": "Both PRs have all observed checks green except backend-gate still in progress. PR220 latest head c445943 includes actual checked-out Deep epoch lineage and skipped workflow_run concurrency isolation."
+    "conclusion": null,
+    "note": "Post-merge main CI: change detection and ai-governance succeeded; backend-gate and docker-build are running; web-gate skipped."
   },
   "production_or_artifact": {
-    "status": "INVESTOR_CORE_VERIFIED_DEEP215_RETRY_REQUIRED",
+    "status": "POST_MERGE_DEEP_RUNNING",
     "evidence": [
-      "Investor dashboard production remains correct after #218/#213: 603993 quantity 1100, cost 18.6244, staged add CONSUMED, remaining executable shares 0.",
-      "PR #215 production Deep 35500482099 reached official-evidence closure but was cancelled before terminal persistence.",
-      "Cancellation root cause: workflow_run Deep 35500665318 was triggered from failed Hourly Deep Overlay 35500478086. Its jobs were skipped, but concurrency evaluation still cancelled valid Deep 35500482099 before job-level if.",
-      "PR #220 latest head c445943 fixes skipped/non-main workflow_run concurrency isolation, adds actual checked-out DEEP_CODE_EPOCH_SHA lineage, and fences superseded epochs from shared latest_* persistence while preserving history.",
-      "Older Deep run 35500463361 is still in progress on head 4f25654b; current persisted latest remains pre-#215 lambda 35493542938 and must not be treated as #215 verification.",
-      "PR #219 is fresh current-main market EOD presentation replay; backend-gate remains in progress."
+      "PR #222 merged as 0626380c5b68104cd66f86cc1387a0049fdc0735 after fresh PR CI success; stale #219/#220/#221 are closed.",
+      "Merge push triggered Deep 35507963520, then Evidence Change Trigger 35507963534 succeeded and dispatched same-epoch Deep 35507967197.",
+      "Deep 35507963520 was cancelled by the valid same-epoch dispatch replacement; Deep 35507967197 contracts succeeded and deep-calculate is in progress.",
+      "Deep 35507967197 has already captured the checked-out DEEP_CODE_EPOCH_SHA step successfully.",
+      "Pre-fix persisted Deep 35500463361 had 852 requested/processed, 4028 UNKNOWN gates; predictability had 377 transport-query failures plus 470 insufficient-complete-year cases."
     ]
   },
-  "pending_operation": {
-    "kind": "MERGE_219_220_THEN_FRESH_DEEP_VERIFY",
-    "pr_numbers": [
-      219,
-      220
-    ],
-    "cancelled_deep_run": 35500482099,
-    "stale_inflight_deep_run": 35500463361,
-    "expected_behavior": [
-      "Merge #219 only after backend-gate succeeds; production verify market.context_scope=EOD_DAILY_STRUCTURE and exact as_of_date wording.",
-      "Merge #220 only after all fresh checks succeed.",
-      "Use the post-#220 workflow-file push Deep as authoritative rerun for #215 specialized evidence routing.",
-      "Confirm failed/skipped workflow_run no longer cancels a valid Deep run.",
-      "Inspect exact fresh Deep artifact for G55 MOT / G60 SPB evidence opportunities and G58 fail-closed.",
-      "Do not treat old latest_status lambda 35493542938 as #215 evidence."
-    ]
-  },
+  "pending_operation": null,
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
   },
   "completed": [
-    "Recovered live GitHub state rather than trusting stale TASK_STATE.md.",
-    "Classified prior PR #208 recovery checkpoint as STALE against current main.",
-    "Verified #208/#209/#210 CI green but branches diverged and are no longer mergeable.",
-    "Verified #212 stale execution quote fix is fully green and mergeable.",
-    "Verified #214 sticky consumed staged-add fix is fully green and mergeable.",
-    "Verified #211/#213 have blocking backend-gate failures and are not merge-ready.",
-    "Merged #212 stale execution-quote fix.",
-    "Merged #214 sticky staged-add consumption fix.",
-    "Replayed stale #208/#209/#210 onto current-main PRs #215/#216/#217.",
-    "Diagnosed and retried unrelated #213 local-CLI CI flake.",
-    "Corrected #211 test contract without weakening production trade-universe guard.",
-    "Found production overwrite race where Investor Brief rebuild erased consumed staged-add state; opened #218.",
-    "Quantified current 4028 UNKNOWN hard-gate distribution and root reasons.",
-    "Merged #218 and production-verified consumed 603993 staged-add remains suppressed across Investor Brief rebuild.",
-    "Merged #213 and production-verified 603993 holdings parse as 1100 shares at 18.6244 cost.",
-    "Merged #216 epoch-based same-run Deep deduplication.",
-    "Merged #211 Formal main-board new-exposure guard.",
-    "Merged #215 specialized official industry evidence routing.",
-    "Closed stale conflicted #217 and replayed it as fresh PR #219.",
-    "Observed old/new Deep epochs running concurrently and opened #220 to fence stale epochs from shared latest persistence.",
-    "Root-caused #215 Deep cancellation: skipped workflow_run concurrency could cancel a valid same-epoch Deep before job-level if.",
-    "Extended #220 to isolate failed/non-main workflow_run concurrency groups.",
-    "Extended #220 to capture actual checked-out DEEP_CODE_EPOCH_SHA rather than assuming event GITHUB_SHA equals executed ref:main code.",
-    "Updated PR #220 description with observed production cancellation evidence and lineage semantics."
+    "Recovered live state from GitHub rather than stale TASK_STATE.",
+    "Verified source PRs #219/#220/#221 and replay PR #222.",
+    "Verified #222 ai-governance, backend-gate and docker-build green before merge.",
+    "Merged #222 with expected head SHA 27ce6286e24fd390f98ef5f544cbded99b798753.",
+    "Closed superseded PRs #219/#220/#221.",
+    "Confirmed #222 preserves UNKNOWN != PASS, Formal separation, Candidate Lifecycle and no_auto_trade=true.",
+    "Confirmed post-merge Deep trigger path is active and authoritative replacement run 35507967197 is progressing."
   ],
-  "next_action": "Poll #219/#220 backend-gate. Merge only when fully green. After #220 merge, track the fresh Deep triggered by the workflow-file push to completion and inspect exact artifact for #215 specialized source impact. Production latest currently remains lambda 35493542938.",
+  "next_action": "Track Deep 35507967197 to terminal persistence/artifact, then compare predictability transport failures against the pre-fix 377 baseline. Verify epoch fencing/history/latest pointers and downstream Provenance/Terminal/Investor convergence before opening the next evidence-acquisition change.",
   "do_not_repeat": [
-    "Do not reopen the solved 351-profile continuity defect.",
-    "Do not loosen evidence hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
-    "Do not force-merge stale/diverged PR branches.",
-    "Do not merge PRs with blocking backend-gate failures."
+    "Do not merge or reopen stale #219/#220/#221.",
+    "Do not reopen solved Candidate Lifecycle continuity defects.",
+    "Do not loosen hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
+    "Do not treat cancelled duplicate Deep 35507963520 as a production failure; authoritative same-epoch replacement is 35507967197."
   ]
 }
