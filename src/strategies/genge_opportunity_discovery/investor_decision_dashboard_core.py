@@ -674,18 +674,30 @@ def render_markdown(p: Mapping[str, Any]) -> str:
         "", "## 5. 资金怎么花", "",
         f"- 可规划现金：**¥{_f(plan.get('available_cash_cny'))}**；最高部署预算：**¥{_f(plan.get('deployment_budget_cny'))}**",
         f"- 计划立即投入：**¥{_f(plan.get('planned_immediate_cash_cny'))}**；计划后现金：**¥{_f(plan.get('cash_after_immediate_plan_cny'))}**",
-        "- 只有当前可用 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能立即分配；WAIT_PRICE 只预留，REJECT=0。",
+        "- 只有当前可用 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能进入计划；WAIT_PRICE 只预留，REJECT=0。",
+        "- 上方“计划立即投入”只统计当前具备执行条件的动作；缺少有效盘中价、现价高于授权上限等暂不可执行计划不计入。",
+        "- 最终操作表会保留已授权计划供审计，并明确标记执行状态；保留计划不等于新增 BUY/ADD 信号。",
         "", "## 6. 最终操作表", "",
-        "| 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 |",
-        "|---|---|---:|---:|---:|---:|",
+        "| 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 | 执行状态 |",
+        "|---|---|---:|---:|---:|---:|---|",
     ]
     for x in p.get("final_operation_table") or []:
         wait = x.get("action") == "WAIT_PRICE"
         shares = x.get("planned_trigger_shares") if wait else x.get("planned_shares")
         amount = x.get("reserved_cash_cny") if wait else x.get("estimated_cash_cny")
-        lines.append(f"| {x.get('name','')} {x.get('code','')} | **{x.get('action')}** | {shares or 0} | {_f(x.get('first_entry_max_price'))} | {_f(x.get('second_entry_max_price'))} | {_f(amount)} |")
+        if wait:
+            execution_status = "等待价格触发（非立即执行）"
+        elif x.get("immediate_execution_eligible") is True:
+            execution_status = "具备立即执行条件（仍需人工确认）"
+        elif x.get("execution_note") == "LIVE_EXECUTION_QUOTE_UNAVAILABLE":
+            execution_status = "暂不可立即执行：缺少有效盘中价"
+        elif x.get("execution_note") == "LIVE_PRICE_ABOVE_AUTHORIZED_LIMIT_USE_LIMIT_ORDER_ONLY":
+            execution_status = "暂不可立即执行：现价高于授权上限"
+        else:
+            execution_status = "暂不可立即执行"
+        lines.append(f"| {x.get('name','')} {x.get('code','')} | **{x.get('action')}** | {shares or 0} | {_f(x.get('first_entry_max_price'))} | {_f(x.get('second_entry_max_price'))} | {_f(amount)} | {execution_status} |")
     if not p.get("final_operation_table"):
-        lines.append("| — | — | 0 | — | — | 0 |")
+        lines.append("| — | — | 0 | — | — | 0 | — |")
     strong = p.get("capital_direction", {}).get("strongest_industries") or []
     lines += [
         "", "## 7. 当前强势方向（辅助，不代替BUY权限）", "",
@@ -701,7 +713,15 @@ def render_markdown(p: Mapping[str, Any]) -> str:
         "- 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。",
         "", "- **no-auto-trade：true；所有订单必须人工确认。**", "",
     ]
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    if p.get("terminal_research_snapshot"):
+        # Any downstream quote/event overlay may re-render this dashboard. Preserve
+        # the research-only terminal section whenever its validated JSON snapshot
+        # is still present instead of silently dropping it from the Markdown view.
+        from .investor_terminal_research_overlay import append_markdown
+
+        return append_markdown(text, p)
+    return text
 
 
 def write_dashboard(
