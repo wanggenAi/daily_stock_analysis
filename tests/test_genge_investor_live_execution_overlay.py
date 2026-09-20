@@ -155,3 +155,22 @@ def test_markdown_calls_out_live_quote_scope_and_keeps_system_last():
     assert "暂不可立即执行：现价高于授权上限" in text
     assert "保留计划不等于新增 BUY/ADD 信号" in text
     assert text.index("## 2. 我的持仓怎么办") < text.index("## 5. 资金怎么花")
+
+
+def test_live_rerender_preserves_existing_terminal_research_section():
+    dashboard = _dashboard()
+    dashboard["terminal_research_snapshot"] = {
+        "requested_count": 1,
+        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 1, "REJECT": 0},
+        "urgent_research_count": 0,
+        "terminal_rows": [],
+        "urgent_research_queue": [],
+    }
+    payload = apply_live_execution_overlay(
+        dashboard,
+        _hourly(),
+        now=_now(),
+    )
+    text = render_live_markdown(payload)
+    assert text.count("## 深算研究终态（Research-only，不等于正式交易授权）") == 1
+    assert "研究 RESEARCH_GAP **1**" in text
