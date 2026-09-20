@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from src.strategies.genge_opportunity_discovery.investor_terminal_research_overlay import apply_overlay, append_markdown
 
 
@@ -87,3 +89,14 @@ def test_overlay_refuses_urgent_queue_that_is_not_research_gap():
         assert "urgent research must remain RESEARCH_GAP" in str(exc)
     else:
         raise AssertionError("expected urgent research semantic violation")
+
+
+def test_overlay_is_explicit_handoff_and_dispatches_three_pillar_after_persistence():
+    workflow = Path(".github/workflows/genge-investor-terminal-research-overlay.yml").read_text(encoding="utf-8")
+    persist_at = workflow.index("- name: Overlay latest terminal research onto investor brief with optimistic replay")
+    dispatch_at = workflow.index("- name: Refresh three-pillar decision center after research overlay")
+
+    assert "workflow_run:" not in workflow
+    assert "permissions:\n  contents: write\n  actions: write" in workflow
+    assert persist_at < dispatch_at
+    assert "gh workflow run genge-three-pillar-decision-center.yml" in workflow[dispatch_at:]
