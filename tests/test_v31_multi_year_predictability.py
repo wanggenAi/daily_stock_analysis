@@ -625,3 +625,40 @@ def test_predictability_query_retries_transient_http_503_with_bounded_retry_afte
     assert calls["count"] == 2
     assert sleeps == [2.0]
     assert predictability_module._query_error_label(error) == "HTTPError:503"
+
+def test_cninfo_history_uses_browser_form_query_contract():
+    captured = {}
+
+    class FakeResponse:
+        def raise_for_status(self):
+            return None
+
+        def json(self):
+            return {"announcements": []}
+
+    class FakeSession:
+        def post(self, url, **kwargs):
+            captured["url"] = url
+            captured["kwargs"] = kwargs
+            return FakeResponse()
+
+    rows = predictability_module._query_cninfo_history(
+        "000001",
+        "gssz0000001",
+        predictability_module.date(2026, 9, 20),
+        FakeSession(),
+        1,
+    )
+
+    assert rows == []
+    assert captured["url"] == predictability_module.CNINFO_QUERY_URL
+    headers = captured["kwargs"]["headers"]
+    assert headers["Content-Type"] == "application/x-www-form-urlencoded; charset=UTF-8"
+    assert headers["X-Requested-With"] == "XMLHttpRequest"
+    assert headers["Origin"] == "https://www.cninfo.com.cn"
+    assert headers["Referer"].startswith(
+        "https://www.cninfo.com.cn/new/commonUrl/pageOfSearch"
+    )
+    assert captured["kwargs"]["data"]["stock"] == "000001,gssz0000001"
+    assert captured["kwargs"]["data"]["category"] == "category_ndbg_szsh"
+
