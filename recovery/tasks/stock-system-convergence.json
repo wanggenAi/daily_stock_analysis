@@ -1,0 +1,41 @@
+{
+  "schema_version": 2,
+  "generation": 1,
+  "repository": "wanggenAi/daily_stock_analysis",
+  "status": "WAITING_CI",
+  "task_key": "stock-system-convergence",
+  "stage": "MERGED_202_WAITING_203_204_CI",
+  "last_observed_main_sha": "c01bfd25a603cf1150c9a2dc57036f4e61e6b3fb",
+  "work_branch": "fix/investor-convergence-main-replay",
+  "work_head_sha": "15adb911800180c3cc005af177719fed4fbf38fc",
+  "active_pr": 203,
+  "ci": {
+    "run_id": 35485452917,
+    "head_sha": "15adb911800180c3cc005af177719fed4fbf38fc",
+    "status": "IN_PROGRESS",
+    "conclusion": null
+  },
+  "production_or_artifact": {
+    "status": "PENDING_POST_MERGE",
+    "evidence": [
+      "PR #202 merged as c01bfd25a603cf1150c9a2dc57036f4e61e6b3fb",
+      "PR #204 remains pending after #203"
+    ]
+  },
+  "pending_operation": null,
+  "health": {
+    "recovery": "HEALTHY",
+    "last_error": null
+  },
+  "completed": [
+    "Recovered live GitHub state; TASK_STATE.md was stale relative to merged #196/#197/#198.",
+    "Reviewed #202/#203/#204 scopes and source patches.",
+    "Merged PR #202 with green CI; urgent evidence reopen now requires RESEARCH_GAP for evidence-blocked rows."
+  ],
+  "next_action": "Wait for PR #203 and #204 backend-gate to finish; merge #203 if green, then reconcile/retest #204 on latest main and merge only if green; verify production workflow convergence and final investor report persistence.",
+  "do_not_repeat": [
+    "Do not reopen solved 351-profile continuity defect.",
+    "Do not loosen hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, or no_auto_trade.",
+    "Do not merge stale/superseded PR #200/#201 after their replay successors are integrated."
+  ]
+}
