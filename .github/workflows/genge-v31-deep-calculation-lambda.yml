@@ -113,6 +113,10 @@ jobs:
           ref: main
           fetch-depth: 0
 
+      - name: Capture checked-out Deep code epoch
+        shell: bash
+        run: echo "DEEP_CODE_EPOCH_SHA=$(git rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Synchronize provenance self-verification push
         id: provenance_gate
         if: github.event_name == 'push'
@@ -362,11 +366,11 @@ jobs:
           from pathlib import Path
           p=Path('reports/deep_calculation_lambda/deep_calculation_status.json')
           status=json.loads(p.read_text(encoding='utf-8'))
-          status.update({'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),'trigger_source':os.environ.get('TRIGGER_SOURCE',''),'lambda_run_id':os.environ['GITHUB_RUN_ID'],'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),'lambda_workflow':'GenGe V3.1 Deep Calculation Lambda','run_state':'COMPLETED','runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1'})
+          status.update({'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),'trigger_source':os.environ.get('TRIGGER_SOURCE',''),'lambda_run_id':os.environ['GITHUB_RUN_ID'],'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),'lambda_workflow':'GenGe V3.1 Deep Calculation Lambda','deep_code_epoch_sha':os.environ.get('DEEP_CODE_EPOCH_SHA',''),'run_state':'COMPLETED','runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1'})
           p.write_text(json.dumps(status,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           profiles_path=Path('reports/deep_calculation_lambda/deep_review_profiles.json')
           profiles=json.loads(profiles_path.read_text(encoding='utf-8'))
-          profiles.update({'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),'trigger_source':os.environ.get('TRIGGER_SOURCE',''),'lambda_run_id':os.environ['GITHUB_RUN_ID'],'run_state':'COMPLETED','runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1'})
+          profiles.update({'source_run_id':os.environ.get('RESEARCH_RUN_ID',''),'trigger_source':os.environ.get('TRIGGER_SOURCE',''),'lambda_run_id':os.environ['GITHUB_RUN_ID'],'deep_code_epoch_sha':os.environ.get('DEEP_CODE_EPOCH_SHA',''),'run_state':'COMPLETED','runtime_optimization':'PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1'})
           profiles_path.write_text(json.dumps(profiles,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           assert status['execution_status']=='SUCCESS'
           assert status['research_terminal_state'] in {'COMPLETE','EVIDENCE_EXHAUSTED','HANDOFF_INCOMPLETE'}
@@ -397,7 +401,7 @@ jobs:
             # Deep/evidence code epoch may advance the shared latest_* pointers.
             # Data-only [skip ci] persistence commits do not supersede a Deep epoch.
             superseded=false
-            if ! git diff --quiet "${GITHUB_SHA}"..origin/main -- \
+            if ! git diff --quiet "${DEEP_CODE_EPOCH_SHA}"..origin/main -- \
               .github/workflows/genge-v31-deep-calculation-lambda.yml \
               src/strategies/genge_opportunity_discovery/v31_deep_gap_closure.py \
               src/strategies/genge_opportunity_discovery/v31_deep_gap_closure_optimized.py \
@@ -405,7 +409,7 @@ jobs:
               config/industry_alias_map.yaml \
               config/industry_evidence_schema.yaml; then
               superseded=true
-              echo "Deep code epoch ${GITHUB_SHA} is superseded by newer Deep/evidence code on origin/main; preserving history only."
+              echo "Deep code epoch ${DEEP_CODE_EPOCH_SHA} is superseded by newer Deep/evidence code on origin/main; preserving history only."
             fi
 
             cp /tmp/genge-deep-calc/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
@@ -455,6 +459,7 @@ jobs:
               'trigger_source':os.environ.get('TRIGGER_SOURCE',''),
               'lambda_run_id':os.environ.get('GITHUB_RUN_ID',''),
               'lambda_run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT','1'),
+              'deep_code_epoch_sha':os.environ.get('DEEP_CODE_EPOCH_SHA',''),
               'initial_pass_complete':(root/'initial_checkpoint_status.json').is_file(),
               'profile_count':len(profiles),
               'workset_coverage_known':bool(requested),
