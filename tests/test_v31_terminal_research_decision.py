@@ -175,3 +175,15 @@ def test_terminal_production_has_actions_write_for_explicit_dispatch() -> None:
     workflow = Path(".github/workflows/genge-v31-terminal-research-decision.yml").read_text(encoding="utf-8")
     production = workflow.split("  production:", 1)[1]
     assert "permissions:\n      actions: write\n      contents: write" in production
+
+
+def test_terminal_workflow_requires_persisted_provenance_before_research_decision() -> None:
+    workflow = Path(".github/workflows/genge-v31-terminal-research-decision.yml").read_text(encoding="utf-8")
+    assert 'workflows:\n      - "GenGe V3.1 Deep Calculation Lambda"' not in workflow
+    source = workflow.split("- name: Resolve exact deep and Every-Industry lineage", 1)[1].split(
+        "- name: Download exact Every-Industry artifact", 1
+    )[0]
+    assert ".provenance_audit_complete" in source
+    assert ".all_pass_gates_have_verified_evidence" in source
+    assert "provenance_audit_run_id" in source
+    assert '= "true"' in source
