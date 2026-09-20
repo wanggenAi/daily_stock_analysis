@@ -63,7 +63,7 @@ def test_superseded_deep_epoch_preserves_history_without_replacing_latest() -> N
         "- name: Persist partial checkpoint when closure is incomplete", 1
     )[0]
 
-    assert 'git diff --quiet "${GITHUB_SHA}"..origin/main --' in block
+    assert 'git diff --quiet "${DEEP_CODE_EPOCH_SHA}"..origin/main --' in block
     assert "src/strategies/genge_opportunity_discovery/evidence_collectors" in block
     assert "config/industry_alias_map.yaml" in block
     assert 'superseded=true' in block
@@ -83,3 +83,14 @@ def test_skipped_workflow_run_cannot_cancel_valid_same_epoch_deep() -> None:
     assert "cancel-in-progress: true" in concurrency
     assert "github.event.workflow_run.conclusion == 'success'" in jobs
     assert "github.event.workflow_run.head_branch == 'main'" in jobs
+
+
+def test_deep_epoch_fence_uses_actual_checked_out_code_sha() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+
+    checkout = workflow.split("- name: Checkout current main", 1)[1].split(
+        "- name: Synchronize provenance self-verification push", 1
+    )[0]
+    assert 'DEEP_CODE_EPOCH_SHA=$(git rev-parse HEAD)' in checkout
+    assert 'git diff --quiet "${DEEP_CODE_EPOCH_SHA}"..origin/main --' in workflow
+    assert "'deep_code_epoch_sha':os.environ.get('DEEP_CODE_EPOCH_SHA','')" in workflow
