@@ -37,11 +37,12 @@ def test_terminal_observability_contract_allows_handoff_incomplete() -> None:
     assert "status['research_terminal_state'] in {'COMPLETE','EVIDENCE_EXHAUSTED','HANDOFF_INCOMPLETE'}" in workflow
 
 
-def test_completed_deep_dispatches_terminal_and_provenance_not_stale_decision_center() -> None:
+def test_completed_deep_dispatches_provenance_before_any_terminal_decision() -> None:
     workflow = WORKFLOW.read_text(encoding="utf-8")
 
+    assert "Dispatch provenance audit before terminal research" in workflow
     assert "gh workflow run genge-v31-deep-provenance-audit.yml" in workflow
-    assert "gh workflow run genge-v31-terminal-research-decision.yml" in workflow
+    assert "gh workflow run genge-v31-terminal-research-decision.yml" not in workflow
     assert "gh workflow run genge-three-pillar-decision-center.yml" not in workflow
 
 
