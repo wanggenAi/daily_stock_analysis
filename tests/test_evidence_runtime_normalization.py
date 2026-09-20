@@ -136,6 +136,7 @@ def test_cninfo_orgid_map_fails_closed_on_nonmatching_response():
     assert mapping.get("001316") is None
     assert len(session.calls) == 2
 
+
 def test_specialized_sources_follow_aliases_for_classified_transport_industries():
     industries = [
         "G55水上运输业",
