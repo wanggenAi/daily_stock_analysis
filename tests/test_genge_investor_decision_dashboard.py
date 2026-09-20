@@ -3,6 +3,7 @@ import copy
 import pytest
 
 from src.strategies.genge_opportunity_discovery.investor_decision_dashboard import build_dashboard, render_markdown
+from src.strategies.genge_opportunity_discovery.investor_decision_dashboard_core import load_confirmed_holdings
 
 
 def _decision(code, name, scope, action, price, value=60.0):
@@ -237,3 +238,40 @@ def test_dashboard_rejects_bad_authority_and_renders_investor_first_order():
     assert payload["presentation_contract"]["section_order"][:6] == [
         "market", "stock_portfolio", "terminal_buy_now", "terminal_wait_price", "capital_deployment", "final_operation_table"
     ]
+
+
+def test_confirmed_holdings_parser_accepts_markdown_emphasized_numeric_cells(tmp_path) -> None:
+    path = tmp_path / "CURRENT_HOLDINGS.md"
+    path.write_text(
+        """# CURRENT_HOLDINGS
+
+## Confirmed holdings
+
+| Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |
+| --- | --- | ---: | ---: | --- | --- |
+| 603993 | 洛阳钼业 | **1100** | **18.6244** | HELD | 2026-09-15 |
+| 601318 | 中国平安 | 400 | 55.9658 | HELD | 2026-09-15 |
+""",
+        encoding="utf-8",
+    )
+    holdings = load_confirmed_holdings(path)
+    assert holdings["603993"]["quantity"] == 1100
+    assert holdings["603993"]["average_cost"] == 18.6244
+    assert holdings["601318"]["quantity"] == 400
+
+
+def test_confirmed_holdings_parser_fails_closed_on_invalid_held_quantity(tmp_path) -> None:
+    path = tmp_path / "CURRENT_HOLDINGS.md"
+    path.write_text(
+        """# CURRENT_HOLDINGS
+
+## Confirmed holdings
+
+| Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |
+| --- | --- | ---: | ---: | --- | --- |
+| 603993 | 洛阳钼业 | **unknown** | **18.6244** | HELD | 2026-09-15 |
+""",
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="confirmed holding quantity is invalid for 603993"):
+        load_confirmed_holdings(path)
