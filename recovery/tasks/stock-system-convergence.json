@@ -1,25 +1,26 @@
 {
   "schema_version": 2,
-  "generation": 1,
+  "generation": 2,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "MERGED_202_WAITING_203_204_CI",
-  "last_observed_main_sha": "c01bfd25a603cf1150c9a2dc57036f4e61e6b3fb",
-  "work_branch": "fix/investor-convergence-main-replay",
-  "work_head_sha": "15adb911800180c3cc005af177719fed4fbf38fc",
-  "active_pr": 203,
+  "stage": "PR205_REPLAY_WAITING_CI",
+  "last_observed_main_sha": "c2154f3752485bed19b1012b955123736dc61f23",
+  "work_branch": "fix/investor-report-layer-clarity-main-replay",
+  "work_head_sha": "83a886e2e96d2b1b5e74d482679be30b3f4a2e0d",
+  "active_pr": 205,
   "ci": {
-    "run_id": 35485452917,
-    "head_sha": "15adb911800180c3cc005af177719fed4fbf38fc",
-    "status": "IN_PROGRESS",
+    "run_id": null,
+    "head_sha": "83a886e2e96d2b1b5e74d482679be30b3f4a2e0d",
+    "status": "QUEUED_OR_STARTING",
     "conclusion": null
   },
   "production_or_artifact": {
     "status": "PENDING_POST_MERGE",
     "evidence": [
       "PR #202 merged as c01bfd25a603cf1150c9a2dc57036f4e61e6b3fb",
-      "PR #204 remains pending after #203"
+      "PR #203 merged as 39c72255d139fed6309131a008853950e3d0d787",
+      "PR #205 replays #204 report-layer fix on latest main while preserving #203 regression"
     ]
   },
   "pending_operation": null,
@@ -30,9 +31,11 @@
   "completed": [
     "Recovered live GitHub state; TASK_STATE.md was stale relative to merged #196/#197/#198.",
     "Reviewed #202/#203/#204 scopes and source patches.",
-    "Merged PR #202 with green CI; urgent evidence reopen now requires RESEARCH_GAP for evidence-blocked rows."
+    "Merged PR #202 with green CI; urgent evidence reopen now requires RESEARCH_GAP for evidence-blocked rows.",
+    "PR #203 deterministic Investor Brief → Terminal Overlay → Three-Pillar convergence passed blocking CI and merged as 39c72255d139fed6309131a008853950e3d0d787.",
+    "Created PR #205 as clean replay of #204 on latest main; intended diff is six report/rendering regression files only."
   ],
-  "next_action": "Wait for PR #203 and #204 backend-gate to finish; merge #203 if green, then reconcile/retest #204 on latest main and merge only if green; verify production workflow convergence and final investor report persistence.",
+  "next_action": "Observe PR #205 CI; fix only real failures. If green, merge #205, verify production chain and persisted investor dashboard retains terminal_research_snapshot/Deep Research across later rerenders; then close superseded #200/#201/#204 and update TASK_STATE.md.",
   "do_not_repeat": [
     "Do not reopen solved 351-profile continuity defect.",
     "Do not loosen hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, or no_auto_trade.",
