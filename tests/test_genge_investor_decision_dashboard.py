@@ -230,7 +230,7 @@ def test_dashboard_rejects_bad_authority_and_renders_investor_first_order():
 
     payload = _build(capital=_capital(), terminal_decisions=_terminal())
     text = render_markdown(payload)
-    sections = ["## 1. 今天市场怎么样", "## 2. 我的持仓怎么办", "## 3. 今天能直接买什么",
+    sections = ["## 1. 最新市场结构（日线）", "## 2. 我的持仓怎么办", "## 3. 今天能直接买什么",
                 "## 4. WAIT_PRICE：跌到多少钱再买", "## 5. 资金怎么花", "## 6. 最终操作表",
                 "## 9. 系统状态（最后看）"]
     positions = [text.index(x) for x in sections]
@@ -275,3 +275,21 @@ def test_confirmed_holdings_parser_fails_closed_on_invalid_held_quantity(tmp_pat
     )
     with pytest.raises(ValueError, match="confirmed holding quantity is invalid for 603993"):
         load_confirmed_holdings(path)
+
+
+def test_market_markdown_exposes_eod_scope_and_data_date() -> None:
+    payload = _build(
+        market_regime={
+            "as_of_date": "2026-09-18",
+            "status": "GREEN",
+            "allow_new_buy": True,
+            "position_multiplier": 1.0,
+            "advance_ratio": 0.7569,
+            "data_quality": "OK",
+        }
+    )
+    assert payload["market"]["context_scope"] == "EOD_DAILY_STRUCTURE"
+    text = render_markdown(payload)
+    assert "## 1. 最新市场结构（日线）" in text
+    assert "数据日：**2026-09-18**" in text
+    assert "不是盘中全A广度" in text
