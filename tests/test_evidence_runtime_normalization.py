@@ -1,3 +1,8 @@
+from src.strategies.genge_opportunity_discovery.evidence_collectors.public_data import (
+    _industry_search_terms,
+    _specialized_source_specs,
+)
+
 from src.strategies.genge_opportunity_discovery.evidence_collectors import (
     _LazyCninfoOrgIdMap,
     canonical_industry_name,
@@ -130,3 +135,31 @@ def test_cninfo_orgid_map_fails_closed_on_nonmatching_response():
     assert mapping.get("001316") is None
     assert mapping.get("001316") is None
     assert len(session.calls) == 2
+
+
+def test_specialized_sources_follow_aliases_for_classified_transport_industries():
+    industries = [
+        "G55水上运输业",
+        "G58多式联运和运输代理业",
+        "G60邮政业",
+    ]
+    aliases = prepare_industry_alias_map(industries)
+
+    shipping_terms = _industry_search_terms(industries[0], aliases)
+    multimodal_terms = _industry_search_terms(industries[1], aliases)
+    postal_terms = _industry_search_terms(industries[2], aliases)
+
+    assert "航运" in shipping_terms
+    assert "物流" not in multimodal_terms
+    assert "物流" in postal_terms
+    assert [row[0] for row in _specialized_source_specs(shipping_terms)] == ["mot_public_data"]
+    assert _specialized_source_specs(multimodal_terms) == []
+    assert [row[0] for row in _specialized_source_specs(postal_terms)] == ["spb_public_data"]
+
+
+def test_specialized_sources_do_not_expand_unrelated_industries():
+    raw = "I65软件和信息技术服务业"
+    aliases = prepare_industry_alias_map([raw])
+    terms = _industry_search_terms(raw, aliases)
+    assert _specialized_source_specs(terms) == []
+
