@@ -4,79 +4,74 @@
 Converge the existing stock system into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
 
 ## Current Phase
-Recover the remaining Shenzhen/ChiNext strict multi-year predictability metadata transport without weakening the evidence gate.
+Production-verify the merged CNINFO strict multi-year predictability transport fix without weakening evidence requirements.
 
 ## Last Verified Main
-- PR #223 is merged and production-verified.
-- #223 merge/code epoch: `d06b040a6373054aa50b5ccda835a1a354f113a5`.
-- Live main observed before this branch: `a73828ccfd37862bbbdce5848424cf0c7179f3fb`.
+- PR #223 is merged and production-verified; periodic workflow_run triggers no longer cancel an active official-evidence closure.
+- PR #225 `fix: restore CNINFO predictability query contract` is merged at code epoch `9a681db9f52520d0d37e95c082c596c5735a0c1f`.
+- Main observed after #225 advanced through data-only investor persistence to `5c5da3ab705a440d5cb0ce1d466af07e39ab9bd4`.
+- The files changed after #225 were only `INVESTOR_DECISION_DASHBOARD.md`, `data/decision_center/latest.json`, and `data/investor_decision_dashboard/latest.json`; no Deep/evidence code changed.
 - Live GitHub refs / PRs / Actions / artifacts / persisted data always override this checkpoint.
 
 ## Active Branch
-`fix/cninfo-query-contract-20260920`
+`chore/checkpoint-cninfo-production-20260920`
 
 ## Active PR
-- #225 — `fix: restore CNINFO predictability query contract`.
-- Head before this checkpoint: `b1fcbaf826d347df44c5253e327fe32852f42001`.
-- Scope: CNINFO browser-form request transport + regressions + this checkpoint only.
+- Documentation-only checkpoint PR pending/open from this branch.
+- No business, evidence, valuation, threshold, Candidate Lifecycle, or Formal authority code change belongs in this PR.
 
 ## CI
-- PR #225 initial CI run `35513415635` failed only in `ai-governance` because this checkpoint omitted the repository-required `## CI` heading.
-- Change Detection passed.
-- Opportunity Discovery, risk-capped, and PR Review were still running when the documentation-only CI defect was found.
-- Fix the checkpoint structure only; do not weaken tests, governance, evidence gates, or fail-closed rules.
+- PR #225 final CI and blocking workflows passed before merge: CI `35513533475`, Legacy Risk-Capped `35513533478`, Opportunity Discovery `35513533417`, PR Review `35513532725`.
+- The active production verification is not to be replaced by a synthetic test or a fresh competing Deep run.
 
 ## Production / Artifact
-- Deep `35509192911` survived a successful periodic workflow_run trigger while its official-evidence closure was active.
-- Deep `35509192911` closure ran 11:58:13Z–12:49:11Z and completed successfully.
-- Hourly Deep Overlay `35510103689` completed at 12:16:55Z and triggered Deep `35510170838` while `35509192911` was still running.
-- `35509192911` was not cancelled; it persisted terminal state and dispatched downstream convergence.
-- Deep `35510170838` also completed and persisted terminal state.
-- Provenance converged to audit `35512219496`.
-- Terminal Research and Investor dashboard converged to Deep `35510170838`.
-- Investor research counts from that lineage: requested=852, RESEARCH_GAP=833, REJECT=19, WAIT_PRICE=0, BUY=0.
+- Authoritative pre-fix production baseline is Deep `35513686165`, generated 2026-09-20T14:33:31Z from Every-Industry `35513006839`.
+- Baseline: requested=852, unknown_gate_count=4021, new_evidence_count=1501, predictability_evidence=852, predictability_verified=0.
+- Baseline predictability unresolved reasons: 470 `ANNUAL_REPORT_QUERY_FAILED:PRIMARY:HTTPError:403,CNINFO:HTTPError:403`; 375 `INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS`.
+- Baseline final evidence collection: final_failed_count=999, final_missing_count=327, research_terminal_state=EVIDENCE_EXHAUSTED.
+- Post-#225 authoritative Deep is `35518154713`, event `workflow_dispatch`, trigger `EVIDENCE_LAYER_CHANGE`, head/code epoch `9a681db9f52520d0d37e95c082c596c5735a0c1f`.
+- Its contracts and initial pass succeeded; initial artifact `genge-v31-deep-initial-35518154713` exists.
+- Initial checkpoint source_run_id is `35513006839`, requested_count=852, so the production comparison is like-for-like with the baseline workset.
+- Initial profile gate snapshot: UNKNOWN=4044, PASS=217, FAIL=4; no transport result has been promoted to evidence PASS.
+- Deep `35518154713` is currently in `Close unresolved gates with optimized quality-preserving official evidence`.
+- No newer Deep run has superseded `35518154713`; the cancelled push run `35518145612` was replaced by the intended explicit EVIDENCE_LAYER_CHANGE run.
 - Research authority remains RESEARCH_ONLY; formal_trading_authority=false; automatic_formal_buy_allowed=false; unknown_is_pass=false; no_auto_trade=true.
 
-## Current Findings
-- #223 liveness defect is closed in production.
-- Latest measured Deep `35510170838` has unknown_gate_count=4021 and new_evidence_count=1501.
-- Predictability remains unresolved for 845 names:
-  - 375 metadata query failures: `ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403`.
-  - 470 strict evidence insufficiency: `INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS`.
-- The 375 transport failures are entirely Shenzhen/ChiNext:
-  - 267 codes beginning with 0.
-  - 108 codes beginning with 3.
-  - no 6-prefix Shanghai codes in this failure bucket.
-- The current CNINFO fallback POST had only generic User-Agent + homepage Referer while the browser/API form contract uses form Content-Type, X-Requested-With, Origin and disclosure-search Referer.
-- HTTP 403 remains non-transient and must not be blindly retried.
-
 ## Completed
-- #223 liveness fix is production-proven and downstream lineage converged.
-- PR #225 source patch introduces shared CNINFO browser-form request headers.
-- Strict multi-year predictability reuses the shared CNINFO request contract.
-- Regression coverage locks form Content-Type, X-Requested-With, Origin, Referer, stock/orgId and annual-report category.
-- No provider authority, MIN_COMPLETE_YEARS, gate logic, valuation logic, BUY/WAIT_PRICE/REJECT threshold, Candidate Lifecycle, or Formal authority change.
+- #223 liveness fix is production-proven.
+- #225 browser-form CNINFO query contract is merged.
+- Shared CNINFO metadata POST now supplies form Content-Type, X-Requested-With, Origin and disclosure-search Referer while keeping HTTP 403 non-transient.
+- Regression coverage locks the CNINFO request contract and stock/category payload.
+- The true latest pre-fix benchmark was corrected from older 375-query-failure data to Deep `35513686165`: 470 CNINFO/primary HTTP 403 failures.
+- Current main drift since the #225 code epoch is data-only and does not supersede the active Deep code epoch.
+
+## Current Findings
+- Production validation is still in progress; do not claim #225 is production-proven yet.
+- The first success criterion is CNINFO/primary HTTP 403 count falling below baseline=470.
+- The second success criterion is strict predictability_verified increasing above 0 only where official report source_urls and complete `metrics_by_year` satisfy the unchanged three-complete-fiscal-year rule.
+- Transport success alone is not PASS.
+- If 403 drops but predictability_verified remains 0, the next bottleneck is report-body extraction / complete-year metric parsing, not the transport layer.
 
 ## Blockers
-- PR #225 must pass fresh blocking CI, Opportunity Discovery, risk-capped and review checks.
-- Production must show whether the exact CNINFO 403 bucket falls below baseline=375.
-- Transport recovery alone is not evidence PASS; official annual-report bodies and strict complete-year metrics are still required.
+- Deep `35518154713` must finish its official-evidence closure and persist/upload the terminal result.
+- GitHub job logs for the running job are not downloadable until the job finishes; use steps/artifacts/persisted state meanwhile.
+- Do not trigger another Deep while this closure is active.
 
 ## Next Action
-1. Rerun fresh blocking CI / targeted Opportunity checks after the checkpoint-format fix.
-2. Fix only real failures without weakening evidence semantics.
-3. Merge #225 only after green checks.
-5. Observe fresh post-merge Deep triggered by the evidence collector change.
-6. Compare CNINFO 403 count against current baseline=375.
-7. Require actual official report source URLs / metrics_by_year before any predictability PASS.
-8. Verify Deep → Provenance → Terminal → Investor lineage converges.
-9. If 403 remains, inspect transport response and provider contract again; do not convert 403 to a retry/pass condition.
-10. Treat the remaining 470 insufficient-complete-year cases as UNKNOWN unless new verified official evidence exists.
+1. Follow Deep `35518154713` to completion without starting a competing run.
+2. Read `data/deep_calculation/history/35518154713.json` and `.evidence.json` or the final artifact.
+3. Compare exact post-fix metrics against baseline Deep `35513686165`: CNINFO 403 470→?, predictability_verified 0→?, unknown_gate_count 4021→?, new_evidence_count 1501→?, final_failed 999→?, final_missing 327→?.
+4. Inspect every newly verified predictability row for official `source_urls` and complete `metrics_by_year`; transport recovery alone must never count as PASS.
+5. Verify Deep → Provenance → Terminal Research → Investor lineage converges on this Deep run/code epoch.
+6. If 403 remains near 470, inspect the live CNINFO/provider transport contract again without retrying 403 or weakening source authority.
+7. If 403 falls but verified remains 0, investigate annual-report extraction/parser completeness under the existing strict rules.
+8. After production evidence is complete, checkpoint the final result and only then choose the next engineering bottleneck.
 
 ## Do Not Repeat
-- Do not reopen #223 liveness work unless fresh production evidence contradicts the completed proof.
-- Do not redo merged CNINFO/SSE/SZSE routing work from #175/#179/#187/#189/#198/#207.
-- Do not treat stale branch names `feature/deep-evidence-recovery-cninfo` or `fix/cninfo-announcement-403-recovery` as unfinished work; their intended PRs were merged.
+- Do not reopen #223 liveness work unless fresh production evidence contradicts its completed proof.
+- Do not redo merged CNINFO/SSE/SZSE routing work from #175/#179/#187/#189/#198/#207/#225.
+- Do not use older Deep `35510170838` and baseline=375 as the authoritative pre-#225 benchmark; use `35513686165` and baseline=470.
+- Do not treat stale branch names as unfinished work.
 - Do not loosen predictability, valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.
 - Do not promote transport success itself to evidence PASS.
 
