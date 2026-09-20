@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [改进] 最终三支柱决策中心新增资金流证据覆盖与5万元账户资金计划：政策资本、产业资本、金融资本、真实需求分层显示，缺少 FINANCIAL_CAPITAL 时明确禁止把行业强弱代理冒充直接资金流；RESEARCH_GAP 转译为“暂不买/等待补证”的投资动作。
+- [修复] Live Execution Quote 刷新持仓/候选盘中价后自动触发最终决策中心重建，避免 Investor Dashboard 已更新而最终汇报仍停留在旧价格代际。
+- [修复] Deep Calculation 默认 workset 按逻辑 workset 而非 runtime SHA 聚合并发，保留周期 workflow_run 不抢占活跃补证闭环，同时减少同一默认研究集重复抓取官方证据。
+- [改进] 当前股票账户规划现金按用户 2026-09-20 最新确认值收敛为 50,000 元；历史券商现金快照仅保留为审计参考，不扩大任何 Formal 交易权限。
 - [修复] Terminal Urgent Evidence Reopen 接受 `RESEARCH_GAP` 证据不足终态，恢复慢车道新证据 → Deep 重算的持续研究反馈链。
 - [修复] Investor Terminal Research Overlay 支持 Terminal 的 RESEARCH_GAP 终态，恢复深算研究结果到投资驾驶舱的生产交接。
 
