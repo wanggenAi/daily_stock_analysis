@@ -275,6 +275,15 @@ jobs:
                 --markdown-output INVESTOR_DECISION_DASHBOARD.md \
                 --max-age-minutes 120
             fi
+            # Re-apply durable execution consumption before every Investor Brief persistence.
+            # A fresh Canonical/dashboard rebuild must not silently recreate a one-shot staged ADD
+            # that CURRENT_EXECUTION_STATE.json proves has already been consumed.
+            if [ -s CURRENT_EXECUTION_STATE.json ]; then
+              python -m src.strategies.genge_opportunity_discovery.execution_consumption_overlay \
+                --dashboard data/investor_decision_dashboard/latest.json \
+                --execution-state CURRENT_EXECUTION_STATE.json \
+                --markdown INVESTOR_DECISION_DASHBOARD.md
+            fi
             python - <<'PY'
           import json
           from pathlib import Path
@@ -293,6 +302,13 @@ jobs:
               assert all(not x.get('formal_action') for x in p['stock_portfolio']['rows'])
               assert all(x['source'] not in {'AUTHORIZED_CANONICAL_HOLDING_ACTION','AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD'} for x in c['operations'])
           assert all(x['action']=='WAIT_PRICE' and x['immediate_execution_eligible'] is False for x in c['wait_price_reservations'])
+          consumption=p.get('execution_consumption_reconciliation') or {}
+          if consumption:
+              assert consumption['formal_action_mutation_allowed'] is False
+              assert consumption['automatic_order_allowed'] is False
+              assert consumption['no_auto_trade'] is True
+              assert consumption['routine_canonical_refresh_rearms_consumed_add'] is False
+              assert consumption['explicit_rearm_required'] is True
           live=p.get('live_execution_overlay') or {}
           if live:
               assert live['formal_action_recomputed'] is False
