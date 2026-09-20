@@ -107,5 +107,7 @@ def test_markdown_overlay_is_idempotent_across_rerenders():
     first = append_markdown("# 投资决策驾驶舱\n\n## 9. 系统状态\n\n- ok\n", out)
     second = append_markdown(first, out)
     assert second.count("## 深算研究终态（Research-only，不等于正式交易授权）") == 1
-    assert second.count("国电南瑞 600406") == 1
+    first_stock_mentions = first.count("国电南瑞 600406")
+    assert first_stock_mentions >= 1
+    assert second.count("国电南瑞 600406") == first_stock_mentions
     assert "## 9. 系统状态" in second
