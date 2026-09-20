@@ -137,6 +137,9 @@ def test_stale_or_mismatched_hourly_data_fails_closed():
     assert all(op["execution_note"] == "LIVE_EXECUTION_QUOTE_UNAVAILABLE" for op in operations)
     assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0
     assert payload["decision_summary"]["planned_immediate_cash_cny"] == 0
+    text = render_live_markdown(payload)
+    assert "计划立即投入”只统计当前具备执行条件的动作" in text
+    assert "暂不可立即执行：缺少有效盘中价" in text
 
     bad = _hourly(); bad["canonical_snapshot_id"] = "other"
     with pytest.raises(ValueError, match="canonical snapshot mismatch"):
@@ -149,4 +152,25 @@ def test_markdown_calls_out_live_quote_scope_and_keeps_system_last():
     assert "盘中执行价覆盖" in text
     assert "正式动作仍来自冻结 Canonical" in text
     assert "缺失/过期盘中价会阻断立即执行" in text
+    assert "暂不可立即执行：现价高于授权上限" in text
+    assert "保留计划不等于新增 BUY/ADD 信号" in text
     assert text.index("## 2. 我的持仓怎么办") < text.index("## 5. 资金怎么花")
+
+
+def test_live_rerender_preserves_existing_terminal_research_section():
+    dashboard = _dashboard()
+    dashboard["terminal_research_snapshot"] = {
+        "requested_count": 1,
+        "decision_counts": {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 1, "REJECT": 0},
+        "urgent_research_count": 0,
+        "terminal_rows": [],
+        "urgent_research_queue": [],
+    }
+    payload = apply_live_execution_overlay(
+        dashboard,
+        _hourly(),
+        now=_now(),
+    )
+    text = render_live_markdown(payload)
+    assert text.count("## 深算研究终态（Research-only，不等于正式交易授权）") == 1
+    assert "RESEARCH_GAP **1**" in text

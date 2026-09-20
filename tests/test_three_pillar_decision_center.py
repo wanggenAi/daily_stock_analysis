@@ -196,4 +196,6 @@ def test_markdown_leads_with_three_investor_questions():
     assert "上涨家数占比 **75.69%**" in md
     assert "短周期尚未全面修复，但中期广度仍有支撑" in md
     assert "## 3. 新机会：润贝型以及其他机会深算结果" in md
+    assert "Formal/Production Candidate Terminal REJECT：**499**" in md
+    assert "与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级" in md
     assert "UNKNOWN != PASS" in md

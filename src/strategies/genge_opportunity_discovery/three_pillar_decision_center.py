@@ -269,7 +269,7 @@ def _opportunity_pillar(dashboard: Mapping[str, Any], profiles: Mapping[str, Any
         "invalid_unauthorized_buy_count": int(_num(terminal.get("invalid_unauthorized_buy_count")) or 0),
         "macro_research_handoffs": handoffs,
         "actionable_count": len(buy) + len(wait),
-        "display_rule": "只展示通过终端研究形成 BUY/WAIT_PRICE 的个股；REJECT 只汇总数量和审计，不淹没最终决策页面。",
+        "display_rule": "这里只展示 Formal/Production Candidate Terminal 的 BUY/WAIT_PRICE 镜像；其 REJECT 只汇总审计。Deep Research Terminal 的 RESEARCH_GAP/REJECT 属于独立研究层，不与本计数混用。",
         "authority_rule": "BUY 必须是既有 Formal/Production BUY 的镜像；研究趋势和深算上下文不能自行创造 BUY。",
     }
 
@@ -426,7 +426,7 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
             lines.append(f"- **{x['name']} {x['code']}**：等待 ≤{_fmt(x.get('wait_price_max'))}；深算 {x['deep_review']['status']}。")
     else:
         lines.append("- **本轮没有合格 WAIT_PRICE。**")
-    lines += ["", f"- Terminal REJECT：**{o['terminal_reject_count']}**（只做汇总，不淹没决策页面）。",
+    lines += ["", f"- Formal/Production Candidate Terminal REJECT：**{o['terminal_reject_count']}**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。",
               "", "## 决策完整性", ""]
     readiness = payload["decision_readiness"]
     lines.append(f"- 全部持仓显式深算完整：**{readiness['all_holdings_explicit_deep_review_complete']}**")
