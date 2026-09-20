@@ -100,3 +100,12 @@ def test_overlay_is_explicit_handoff_and_dispatches_three_pillar_after_persisten
     assert "permissions:\n  contents: write\n  actions: write" in workflow
     assert persist_at < dispatch_at
     assert "gh workflow run genge-three-pillar-decision-center.yml" in workflow[dispatch_at:]
+
+
+def test_markdown_overlay_is_idempotent_across_rerenders():
+    out = apply_overlay(_dashboard(), _terminal())
+    first = append_markdown("# 投资决策驾驶舱\n\n## 9. 系统状态\n\n- ok\n", out)
+    second = append_markdown(first, out)
+    assert second.count("## 深算研究终态（Research-only，不等于正式交易授权）") == 1
+    assert second.count("国电南瑞 600406") == 1
+    assert "## 9. 系统状态" in second
