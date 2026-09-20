@@ -453,6 +453,54 @@ def _attach_terminal_research(
     )
 
 
+def _finalize_investor_report_readiness(payload: dict[str, Any]) -> None:
+    holdings = payload.get("pillar_1_holdings_deep_analysis") or {}
+    holding_rows = [row for row in (holdings.get("rows") or []) if isinstance(row, Mapping)]
+    opportunities = payload.get("pillar_3_deep_opportunities") or {}
+    account = payload.get("today_account_plan") or {}
+    capital = payload.get("pillar_2_world_social_market_capital_map") or {}
+    coverage = capital.get("capital_evidence_coverage") or {}
+    runtime = payload.get("deep_calculation_runtime") or {}
+
+    holding_actions_complete = all(
+        bool(str(row.get("investor_action") or "").strip()) for row in holding_rows
+    )
+    terminal_current = opportunities.get("research_terminal_current") is True
+    terminal_available = (opportunities.get("terminal_research_snapshot") or {}).get("available") is True
+    account_action_complete = bool(str(account.get("plain_language") or "").strip())
+
+    action_complete = bool(
+        holding_actions_complete
+        and account_action_complete
+        and (terminal_current or not terminal_available)
+    )
+
+    limitations: list[str] = []
+    if runtime.get("research_complete") is not True:
+        limitations.append("DEEP_RESEARCH_EVIDENCE_PARTIAL")
+    if coverage.get("financial_capital_evidence_available") is not True:
+        limitations.append("FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING")
+    if payload.get("decision_readiness", {}).get("validated_macro_to_a_share_handoff_available") is not True:
+        limitations.append("ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED")
+    if payload.get("decision_readiness", {}).get("live_execution_quote_coverage_complete") is not True:
+        limitations.append("LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION")
+
+    evidence_complete = not limitations
+    payload["investor_report_readiness"] = {
+        "status": "ACTION_COMPLETE" if action_complete else "ACTION_INCOMPLETE",
+        "action_complete": action_complete,
+        "evidence_complete": evidence_complete,
+        "limitations": limitations,
+        "interpretation": (
+            "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action "
+            "without promoting missing evidence. EVIDENCE completeness is tracked separately."
+        ),
+        "no_auto_trade": True,
+    }
+    payload["executive_summary"]["investor_action_report_complete"] = action_complete
+    payload["executive_summary"]["investor_evidence_complete"] = evidence_complete
+
+
 def _mark_stale_profile_lineage(payload: dict[str, Any]) -> None:
     """Prevent last-terminal profiles from masquerading as the newest runtime."""
 
@@ -595,6 +643,7 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
+    _finalize_investor_report_readiness(payload)
     return payload
 
 
@@ -662,7 +711,14 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
     missing = runtime.get("missing_requested_codes") or []
     opportunities = payload.get("pillar_3_deep_opportunities") or {}
     terminal = opportunities.get("terminal_research_snapshot") or {}
+    report_ready = payload.get("investor_report_readiness") or {}
     lines = [
+        "",
+        "## 今日汇报可执行性",
+        "",
+        f"- 行动结论完整：**{report_ready.get('action_complete') is True}**；证据完整：**{report_ready.get('evidence_complete') is True}**。",
+        f"- 当前限制：{_code_list_text(report_ready.get('limitations') or [], limit=10)}。",
+        "- 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。",
         "",
         "## 自动深算运行状态",
         "",
