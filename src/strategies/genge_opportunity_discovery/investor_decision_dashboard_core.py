@@ -388,6 +388,7 @@ def _market(raw: Mapping[str, Any]) -> dict[str, Any]:
               "above_ma20_ratio", "above_ma60_ratio", "distribution_ratio"):
         out[k] = _num(raw.get(k))
     out["risk_reasons"] = list(raw.get("risk_reasons") or [])
+    out["context_scope"] = "EOD_DAILY_STRUCTURE"
     return out
 
 
@@ -600,7 +601,7 @@ def build_dashboard(
         "research_overlay_may_mutate_formal_action": False,
         "no_auto_trade": True,
         "headline": (
-            f"市场={market.get('status','UNKNOWN')}；持仓Formal可用={holding_authority['formal_holding_actions_currently_usable']}；"
+            f"市场日线={market.get('status','UNKNOWN')}（{market.get('as_of_date') or '日期未知'}）；持仓Formal可用={holding_authority['formal_holding_actions_currently_usable']}；"
             f"持仓减仓/退出目标={urgent}；本轮新增减仓/退出={new_urgent}；新股正式BUY={len(terminal['buy_now'])}；"
             f"等价格={len(terminal['wait_price'])}；计划立即投入≈¥{plan['planned_immediate_cash_cny']:.0f}"
         ),
@@ -653,7 +654,8 @@ def render_markdown(p: Mapping[str, Any]) -> str:
     holding_usable = p.get("formal_holding_actions_currently_usable") is True
     lines = [
         "# 投资决策驾驶舱", "", f"> {p.get('headline','')}", "",
-        "## 1. 今天市场怎么样", "",
+        "## 1. 最新市场结构（日线）", "",
+        f"- 数据日：**{m.get('as_of_date') or '—'}**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。",
         f"- 市场状态：**{m.get('status','UNKNOWN')}**；是否允许新买：**{m.get('allow_new_buy')}**；仓位倍率：**{_f(m.get('position_multiplier'))}**",
         f"- 上涨家数比例：**{_f((_num(m.get('advance_ratio')) or 0)*100 if m.get('advance_ratio') is not None else None)}%**；数据质量：**{m.get('data_quality','UNKNOWN')}**",
         "", "## 2. 我的持仓怎么办", "",
