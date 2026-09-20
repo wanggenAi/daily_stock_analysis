@@ -167,6 +167,18 @@ The report is organized around the economy/era, not ticker symbols:
 11. What changed since the prior snapshot
 12. Counter-evidence and uncertainty
 
+## Investor decision-center coverage
+
+The investor-facing Decision Center reads the exact persisted evidence bundle for the current Radar snapshot and reports evidence coverage by family instead of implying that all forms of capital flow are already observed.
+
+For capital-direction interpretation, these layers remain distinct:
+
+- POLICY_CAPITAL — policy/fiscal/SOE direction.
+- INDUSTRIAL_CAPITAL — corporate capex, projects, orders, M&A and strategic investment.
+- FINANCIAL_CAPITAL — credit, financing, allocation and crowding evidence from validated financial sources.
+- REAL_DEMAND — sales, utilization, inventory, prices, trade and other demand confirmation.
+
+A market-strength or industry-strength proxy is not direct fund-flow evidence. If FINANCIAL_CAPITAL has no current validated live evidence, the Decision Center must say so explicitly and must not describe capital flow as fully covered. Adding a new live financial-capital collector requires the same source registration, PIT, provenance, parsing, freshness and fail-closed production validation as every other Radar live adapter.
 ## Investment handoff
 
 Radar may emit research-only handoffs when trend confidence, causal profit pool, provenance/freshness and Shanghai/Shenzhen A-share eligibility are satisfied.
