@@ -443,6 +443,8 @@ def test_newer_partial_checkpoint_overrides_older_terminal_status_for_current_ru
     assert deep["last_profile_status"] == "DEEP_REVIEW_PARTIAL"
     assert out["decision_readiness"]["all_holdings_explicit_deep_review_complete"] is False
     assert out["pillar_3_deep_opportunities"]["terminal_research_snapshot"]["current_for_deep_runtime"] is False
+    assert out["investor_report_readiness"]["action_complete"] is True
+    assert "TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP" in out["investor_report_readiness"]["limitations"]
 
     md = render_runtime_markdown(out)
     assert "顶部持仓/机会的深算完整度已按当前 runtime 视为未完成" in md
@@ -562,6 +564,11 @@ def test_era_evidence_coverage_is_explicit_and_does_not_fake_fund_flow():
     md = render_runtime_markdown(out)
     assert "## 4. 今日账户资金怎么处理" in md
     assert "金融资本 live 证据尚未覆盖" in md
+    assert out["investor_report_readiness"]["action_complete"] is True
+    assert out["investor_report_readiness"]["evidence_complete"] is False
+    assert "FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING" in out["investor_report_readiness"]["limitations"]
+    assert "## 今日汇报可执行性" in md
+    assert "行动结论完整：**True**" in md
 
 
 def test_three_pillar_does_not_race_investor_or_terminal_workflows():
