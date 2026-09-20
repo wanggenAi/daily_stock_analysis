@@ -6,7 +6,7 @@
 - complete: **0**
 - evidence exhausted: **852**
 - evidence collection attempts: **2**
-- new evidence rows: **1387**
+- new evidence rows: **1501**
 - progressed gates: **25**
 - predictability resolved gates: **0**
 - material-event failed gates: **25**
