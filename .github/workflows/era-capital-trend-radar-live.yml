@@ -47,6 +47,7 @@ jobs:
             tests/test_era_radar_live_miit.py \
             tests/test_era_radar_live_nbs_investment.py \
             tests/test_era_radar_live_pbc.py \
+            tests/test_era_radar_live_workflow_contract.py \
             tests/test_era_radar_live_production.py \
             tests/test_era_radar_research_handoff_queue.py \
             tests/test_era_radar_handoff.py \
@@ -83,6 +84,7 @@ jobs:
           git config user.name 'era-radar-live-bot'
           git config user.email '31836791+wanggenAi@users.noreply.github.com'
           echo 'should_dispatch=false' >> "$GITHUB_OUTPUT"
+          echo 'state_changed=false' >> "$GITHUB_OUTPUT"
 
           for attempt in 1 2 3 4; do
             echo "Era Radar production replay ${attempt}/4"
@@ -140,6 +142,7 @@ jobs:
             git commit -m 'Persist live Era Radar research state [skip ci]'
             if git push origin HEAD:main; then
               echo "queue_count=${queue_count}" >> "$GITHUB_OUTPUT"
+              echo 'state_changed=true' >> "$GITHUB_OUTPUT"
               if [ "$queue_count" -gt 0 ]; then
                 echo 'should_dispatch=true' >> "$GITHUB_OUTPUT"
               fi
@@ -150,6 +153,16 @@ jobs:
 
           echo 'Era Radar persistence failed after 4 optimistic replay attempts.' >&2
           exit 1
+
+      - name: Refresh final decision center after Era Radar persistence
+        if: steps.persist.outputs.state_changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-three-pillar-decision-center.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
 
       - name: Launch full authority research for new qualified Era handoffs
         if: steps.persist.outputs.should_dispatch == 'true'
@@ -178,7 +191,7 @@ jobs:
         if: always()
         run: |
           echo '# Era Capital Trend Radar Live' >> "$GITHUB_STEP_SUMMARY"
-          echo '- sources: World Bank structural indicators + MIIT policy + MIIT industrial-operation evidence' >> "$GITHUB_STEP_SUMMARY"
+          echo '- sources: World Bank structural + MIIT policy/demand + NBS industrial-capital + PBC financial-capital evidence' >> "$GITHUB_STEP_SUMMARY"
           echo '- publication: fail closed if any configured collector fails' >> "$GITHUB_STEP_SUMMARY"
           echo '- A-share mapping: explicit trend links + reviewed company-industry mappings only' >> "$GITHUB_STEP_SUMMARY"
           echo '- qualified new handoffs launch the existing full authority research chain' >> "$GITHUB_STEP_SUMMARY"
