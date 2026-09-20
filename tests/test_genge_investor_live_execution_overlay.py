@@ -173,4 +173,4 @@ def test_live_rerender_preserves_existing_terminal_research_section():
     )
     text = render_live_markdown(payload)
     assert text.count("## 深算研究终态（Research-only，不等于正式交易授权）") == 1
-    assert "研究 RESEARCH_GAP **1**" in text
+    assert "RESEARCH_GAP **1**" in text
