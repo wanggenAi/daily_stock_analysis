@@ -1,54 +1,56 @@
 {
   "schema_version": 2,
-  "generation": 6,
+  "generation": 7,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI_AND_PRODUCTION",
+  "status": "WAITING_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR207_CI_RUNNING_EVIDENCE_COVERAGE_ROOT_CAUSES_MAPPED",
-  "last_observed_main_sha": "d75b336735600a7a59aab309da8901d81a4ba87d",
-  "work_branch": "fix/predictability-empty-primary-fallback",
-  "work_head_sha": "5c3a5b8a2ed0bb10b041706eca95ad6cb09a0193",
-  "active_pr": 207,
+  "stage": "PR207_MERGED_PRODUCTION_DEEP_RUNNING_LONG_TERM_DEMAND_ROOT_CAUSE_QUANTIFIED",
+  "last_observed_main_sha": "4ab6ef97e8dcf712a00668065c2b0ef75d2d37d1",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
     "run_id": 35488275944,
     "head_sha": "5c3a5b8a2ed0bb10b041706eca95ad6cb09a0193",
-    "status": "RUNNING",
-    "conclusion": null
+    "status": "COMPLETED",
+    "conclusion": "SUCCESS"
   },
   "production_or_artifact": {
     "status": "PARTIALLY_VERIFIED",
     "evidence": [
-      "PR #205 merged as c058d91a28359ef44f3332de97ebcdf8c9d1cf2d.",
-      "Post-#205 persisted INVESTOR_DECISION_DASHBOARD.md now contains exactly one Deep Research terminal section, not the prior three mixed sections; execution-status column and executable-plan clarification are present.",
-      "PR #206 merged as 262ecf4ae62a8d8ea58923300532942b9ba542bb; post-merge Deep runs 35487990313 and 35487992684 are still running for material-event comparison.",
-      "Old production Deep artifact 35485262882 proves predictability source-routing defect: 852/852 rows UNKNOWN; SSE_PRIMARY=470, SZSE_PRIMARY=382; query_diagnostic empty for all; source_urls=0, metrics_by_year=0, coverage_count=0 for all.",
-      "PR #207 changes only official annual-report routing: when primary exchange returns fewer than MIN_COMPLETE_YEARS=3 candidates, consult CNINFO fallback, merge by fiscal year, prefer primary on duplicate years; thresholds remain frozen.",
-      "Old artifact attempt-1 proves industry alias expansion was active for all 852 targets; do not misdiagnose classification prefixes as disabling aliases.",
-      "Old artifact industry evidence coverage is sparse: 237 industry tasks produced 49 evidence rows; industry audit rows show 468 MISSING and 56 FAILED, dominated by industry_keyword_not_found=225 and industry_keyword_not_found_in_article=198.",
-      "long_term_demand old profile distribution is UNKNOWN 851 / PASS 2; moat is UNKNOWN 851 / PASS 2. Terminal has a public_material_gate_recovery consumer, but the old Deep evidence payload contains no public_material_gate_recovery root, so there is no automatic producer feeding that recovery path."
+      "PR #205 production report convergence remains verified: persisted investor dashboard keeps exactly one Deep Research terminal section.",
+      "PR #206 merged as 262ecf4ae62a8d8ea58923300532942b9ba542bb. Post-merge Deep 35487992684 completed SUCCESS; exact artifact 10599091248 shows material_event_failed_gate_count=0 versus old baseline 64, proving routine/preventive disclosures no longer create false material-event FAIL gates.",
+      "The same #206 artifact still has multi_year_predictability_verified_count=0 and predictability_resolved_gate_count=0, so predictability source routing remained structurally blocked before #207.",
+      "PR #207 CI was fully green and merged to main as 4ab6ef97e8dcf712a00668065c2b0ef75d2d37d1.",
+      "Merge-triggered Evidence Change Trigger succeeded and dispatched production Deep 35491580526 on main; that run is currently in progress.",
+      "Long-term-demand production bottleneck quantified from #206 artifact: 851 UNKNOWN / 2 PASS. Gap evidence distribution is 254 stocks with zero rows, 522 with one row, 76 with two rows, 1 with three rows. Source families are overwhelmingly stats.gov.cn, with limited miit.gov.cn and ndrc.gov.cn corroboration.",
+      "Industry evidence audit root causes: 287 industry_keyword_not_found, 259 industry_keyword_not_found_in_article, 33 specific_article_not_found, 32 numeric_value_not_located_in_article_context, 24 article_publish_date_missing, 18 stale_public_article_excluded.",
+      "Moat remains 851 UNKNOWN / 2 PASS and currently has no automatic strict producer for durable competitive-advantage proof."
     ]
   },
-  "pending_operation": null,
+  "pending_operation": {
+    "kind": "PRODUCTION_DEEP_VERIFY",
+    "run_id": 35491580526,
+    "expected_main_sha": "4ab6ef97e8dcf712a00668065c2b0ef75d2d37d1"
+  },
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
   },
   "completed": [
-    "Recovered live GitHub state and merged #205/#206.",
-    "Production-verified #205 report idempotence: terminal research section count converged from 3 to 1.",
-    "Downloaded and inspected exact Deep artifact 35485262882 instead of inferring from summaries.",
-    "Identified structural predictability root cause: successful-but-empty primary exchange history queries were treated as final evidence insufficiency and forbidden from using the existing CNINFO official fallback.",
-    "Created PR #207 with production-shaped regression for clean-empty primary fallback; MIN_COMPLETE_YEARS=3 and all authority/decision guardrails unchanged.",
-    "Mapped long_term_demand bottleneck to sparse official source-family coverage, not disabled alias expansion.",
-    "Confirmed moat/public-material recovery consumer exists in Terminal, while automatic Deep currently supplies no public_material_gate_recovery payload."
+    "Recovered live GitHub state instead of trusting stale TASK_STATE.md.",
+    "Verified PR #207 code and green ai-governance/backend-gate/docker-build CI.",
+    "Merged PR #207 to main.",
+    "Production-verified PR #206 material-event fix using exact Deep artifact: false material-event failures dropped from 64 to 0.",
+    "Quantified long-term-demand evidence-family coverage and concrete collector audit failure modes from exact production artifact."
   ],
-  "next_action": "Finish PR #207 backend-gate; merge only if green and clean. Finish post-#206 Deep production comparison against old material_event_failed_gate_count=64. After #207 production proof, expand long_term_demand official-source coverage while preserving the two-independent-source-family rule; separately design a provenance-strict automatic producer for moat/public-material recovery rather than weakening the qualitative hard gate.",
+  "next_action": "Finish production Deep 35491580526 and inspect exact artifact. Require non-zero official source URL/metrics coverage and non-structural predictability verification where qualifying evidence exists. Then improve long-term-demand official-source coverage without weakening the two-independent-source-family threshold; prioritize source discovery/routing for MIIT/NDRC and missing service/transport/finance sectors. Separately design a provenance-strict moat evidence producer rather than weakening the moat gate.",
   "do_not_repeat": [
     "Do not reopen solved 351-profile continuity defect.",
-    "Do not loosen MIN_COMPLETE_YEARS=3, hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
-    "Do not treat old pre-#205 duplicate dashboard as current after the production-verified single-section persistence.",
+    "Do not loosen MIN_COMPLETE_YEARS=3, long-term-demand two-source corroboration, moat gate, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
+    "Do not treat old pre-#205 duplicate dashboard as current.",
     "Do not classify routine/preventive disclosure titles as actual material incidents.",
-    "Do not diagnose predictability as a PDF-parser failure until source candidate routing is restored; old artifact had zero source URLs before parsing.",
-    "Do not claim industry classification prefixes disable alias expansion; attempt-1 recorded industry_alias_expansion_count=852."
+    "Do not diagnose predictability as a PDF-parser failure before checking source routing.",
+    "Do not claim industry alias expansion is disabled; production recorded alias expansion for all targets."
   ]
 }
