@@ -1,63 +1,52 @@
 {
   "schema_version": 2,
-  "generation": 8,
+  "generation": 9,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI_AND_PRODUCTION",
+  "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "PR208_STRICT_SPECIALIZED_SOURCE_ROUTING_CI_QUEUED_PR207_PRODUCTION_DEEP_RUNNING",
-  "last_observed_main_sha": "58aff356718f896b6b21931a565b07f10d7f8233",
-  "work_branch": "fix/industry-specialized-source-routing",
-  "work_head_sha": "1a3e6c87ea2b45b5674a43312e7746330f09f3a3",
-  "active_pr": 208,
+  "stage": "LIVE_MAIN_RECONCILED_MERGE_GREEN_INVESTOR_FIXES_THEN_REBASE_STALE_EVIDENCE_FIXES",
+  "last_observed_main_sha": "50d8fa687a9fc427a32cf3f1922cd9dd64f2cef5",
+  "work_branch": "",
+  "work_head_sha": "",
+  "active_pr": null,
   "ci": {
-    "run_id": 35491960469,
-    "head_sha": "1a3e6c87ea2b45b5674a43312e7746330f09f3a3",
-    "status": "QUEUED",
-    "conclusion": null
+    "status": "MIXED",
+    "green_prs": [208, 209, 210, 212, 214],
+    "blocking_failures": [211, 213]
   },
   "production_or_artifact": {
-    "status": "PARTIALLY_VERIFIED",
+    "status": "LIVE_CHAIN_ACTIVE",
     "evidence": [
-      "PR #205 production report convergence remains verified: persisted investor dashboard keeps exactly one Deep Research terminal section.",
-      "PR #206 merged as 262ecf4ae62a8d8ea58923300532942b9ba542bb. Post-merge Deep 35487992684 completed SUCCESS; exact artifact 10599091248 shows material_event_failed_gate_count=0 versus old baseline 64, proving routine/preventive disclosures no longer create false material-event FAIL gates.",
-      "The same #206 artifact still has multi_year_predictability_verified_count=0 and predictability_resolved_gate_count=0, so predictability source routing remained structurally blocked before #207.",
-      "PR #207 CI was fully green and merged to main as 4ab6ef97e8dcf712a00668065c2b0ef75d2d37d1.",
-      "Merge-triggered Evidence Change Trigger succeeded and dispatched production Deep 35491580526 on main; that run is currently in progress.",
-      "Long-term-demand production bottleneck quantified from #206 artifact: 851 UNKNOWN / 2 PASS. Gap evidence distribution is 254 stocks with zero rows, 522 with one row, 76 with two rows, 1 with three rows. Source families are overwhelmingly stats.gov.cn, with limited miit.gov.cn and ndrc.gov.cn corroboration.",
-      "Industry evidence audit root causes: 287 industry_keyword_not_found, 259 industry_keyword_not_found_in_article, 33 specific_article_not_found, 32 numeric_value_not_located_in_article_context, 24 article_publish_date_missing, 18 stale_public_article_excluded.",
-      "Moat remains 851 UNKNOWN / 2 PASS and currently has no automatic strict producer for durable competitive-advantage proof."
+      "Main persisted Deep run 35493542938 and downstream Provenance/Terminal artifacts on 2026-09-20.",
+      "PR #208/#209/#210 CI is green but all three are stale/diverged against current main and are not mergeable.",
+      "PR #212 and #214 are green and mergeable against current main.",
+      "PR #211 and #213 are mergeable but backend-gate failed; they must not be merged until the failure is understood and corrected."
     ]
   },
   "pending_operation": {
-    "kind": "CI_AND_PRODUCTION_VERIFY",
-    "pr_number": 208,
-    "ci_run_id": 35491960469,
-    "prior_production_deep_run_id": 35491580526,
-    "expected_main_before_merge": "58aff356718f896b6b21931a565b07f10d7f8233"
+    "kind": "MERGE_GREEN_INVESTOR_FIXES_AND_RECONCILE_STALE_PRS",
+    "merge_candidates": [212, 214],
+    "stale_rebase_candidates": [208, 209, 210],
+    "failed_ci_candidates": [211, 213],
+    "expected_main_before_merge": "50d8fa687a9fc427a32cf3f1922cd9dd64f2cef5"
   },
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
   },
   "completed": [
-    "Recovered live GitHub state instead of trusting stale TASK_STATE.md.",
-    "Verified PR #207 code and green ai-governance/backend-gate/docker-build CI.",
-    "Merged PR #207 to main.",
-    "Production-verified PR #206 material-event fix using exact Deep artifact: false material-event failures dropped from 64 to 0.",
-    "Quantified long-term-demand evidence-family coverage and concrete collector audit failure modes from exact production artifact.",
-    "Opened PR #208 to route specialized official industry sources through prepared aliases without changing gate thresholds.",
-    "Externally verified current official MOT and SPB quantitative operating reports exist for water transport and postal sectors.",
-    "Tightened PR #208 before merge: removed G58 multimodal transport -> SPB routing because postal/express operating data is not sufficiently specific; G58 remains fail-closed.",
-    "Production impact scope from #206 artifact: G55 water transport has 23 profiles with zero industry evidence; G60 postal has 4. These 27 profiles are the strict direct target of PR #208."
+    "Recovered live GitHub state rather than trusting stale TASK_STATE.md.",
+    "Classified prior PR #208 recovery checkpoint as STALE against current main.",
+    "Verified #208/#209/#210 CI green but branches diverged and are no longer mergeable.",
+    "Verified #212 stale execution quote fix is fully green and mergeable.",
+    "Verified #214 sticky consumed staged-add fix is fully green and mergeable.",
+    "Verified #211/#213 have blocking backend-gate failures and are not merge-ready."
   ],
-  "next_action": "Wait for PR #208 CI 35491960469 to finish; merge only if fully green. Independently finish PR #207 production Deep 35491580526 and inspect its exact final artifact for non-zero strict predictability evidence/resolution. After #208 merge, inspect the new Deep artifact for MOT evidence on G55 and SPB evidence on G60 without requiring PASS unless a second independent same-direction official family exists. Keep G58 fail-closed. Then address MIIT/NBS official-column short-name coverage (e.g. I65 software) from production evidence, and only after source coverage work design a provenance-strict moat producer.",
+  "next_action": "Merge #212 and #214 one at a time with live-main verification. Then re-evaluate #208/#209/#210 on the new main; reapply only missing minimal diffs on fresh current-main branches instead of forcing stale merges. Inspect #211/#213 backend-gate logs before changing code.",
   "do_not_repeat": [
-    "Do not reopen solved 351-profile continuity defect.",
-    "Do not loosen MIN_COMPLETE_YEARS=3, long-term-demand two-source corroboration, moat gate, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
-    "Do not treat old pre-#205 duplicate dashboard as current.",
-    "Do not classify routine/preventive disclosure titles as actual material incidents.",
-    "Do not diagnose predictability as a PDF-parser failure before checking source routing.",
-    "Do not claim industry alias expansion is disabled; production recorded alias expansion for all targets.",
-    "Do not route G58多式联运和运输代理业 to SPB solely through broad 物流 aliases; postal/express data is not sufficiently specific evidence for multimodal transport demand."
+    "Do not reopen the solved 351-profile continuity defect.",
+    "Do not loosen evidence hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
+    "Do not force-merge stale/diverged PR branches.",
+    "Do not merge PRs with blocking backend-gate failures."
   ]
 }
