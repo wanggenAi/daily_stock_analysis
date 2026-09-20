@@ -84,6 +84,7 @@ jobs:
         run: |
           echo "# GenGe Execution Consumption Reconciliation" >> "$GITHUB_STEP_SUMMARY"
           echo "- Canonical Formal action is never mutated" >> "$GITHUB_STEP_SUMMARY"
-          echo "- matching snapshot/source-run staged-add consumption prevents repeat planning" >> "$GITHUB_STEP_SUMMARY"
-          echo "- a new Canonical snapshot does not inherit an older consumption record" >> "$GITHUB_STEP_SUMMARY"
+          echo "- confirmed staged-add consumption prevents repeat planning" >> "$GITHUB_STEP_SUMMARY"
+          echo "- routine Canonical snapshot/source-run refresh does not silently re-arm a consumed one-shot add" >> "$GITHUB_STEP_SUMMARY"
+          echo "- re-arm requires explicit holding_add_rearm_after_consumption authority (or STAGED_ADD_REARM_AUTHORIZED)" >> "$GITHUB_STEP_SUMMARY"
           echo "- UNKNOWN != PASS; no automatic Formal BUY; no auto trade" >> "$GITHUB_STEP_SUMMARY"
