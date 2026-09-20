@@ -136,3 +136,12 @@ def test_live_quote_workflow_refreshes_final_decision_center():
     assert "actions: write" in workflow
     assert "gh workflow run genge-three-pillar-decision-center.yml" in workflow
     assert "Refresh final decision center after execution-price persistence" in workflow
+
+
+def test_live_quote_pr_concurrency_is_isolated_from_production():
+    workflow = Path(".github/workflows/genge-live-execution-quote-refresh.yml").read_text(encoding="utf-8")
+    concurrency = workflow.split("concurrency:", 1)[1].split("env:", 1)[0]
+    assert "github.event_name == 'pull_request'" in concurrency
+    assert "github.event.pull_request.number" in concurrency
+    assert "|| 'production'" in concurrency
+    assert "cancel-in-progress: false" in concurrency
