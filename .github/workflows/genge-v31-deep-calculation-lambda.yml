@@ -510,14 +510,13 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Dispatch provenance and terminal convergence immediately
+      - name: Dispatch provenance audit before terminal research
         if: steps.closure.outcome == 'success'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           gh workflow run genge-v31-deep-provenance-audit.yml --repo "$GITHUB_REPOSITORY" --ref main
-          gh workflow run genge-v31-terminal-research-decision.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Publish Lambda status
         if: always()
