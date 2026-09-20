@@ -13,13 +13,18 @@ def _row(
     industry="C36汽车制造业",
     urgent=True,
     reason="EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+    decision=None,
 ):
     return {
         "code": code,
         "name": f"stock-{code}",
         "industry": industry,
         "research_priority": priority,
-        "research_decision": "REJECT",
+        "research_decision": decision or (
+            "RESEARCH_GAP"
+            if reason == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
+            else "REJECT"
+        ),
         "research_reason": reason,
         "reopen_on_new_evidence": reason
         == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
@@ -47,7 +52,7 @@ def _payload(terminal_rows, urgent_rows=None):
         if urgent_rows is None
         else urgent_rows
     )
-    counts = {"BUY": 0, "WAIT_PRICE": 0, "REJECT": 0}
+    counts = {"BUY": 0, "WAIT_PRICE": 0, "RESEARCH_GAP": 0, "REJECT": 0}
     for row in terminal_rows:
         counts[row["research_decision"]] += 1
     return {
@@ -161,3 +166,9 @@ def test_evidence_epoch_fingerprint_changes_when_urgent_set_changes(tmp_path):
     first, _ = evidence_epoch_fingerprint(["600406"], root)
     changed, _ = evidence_epoch_fingerprint(["600406", "001316"], root)
     assert changed != first
+
+
+def test_legacy_reject_cannot_enter_urgent_reopen_after_research_gap_migration():
+    row = _row("600406", priority="P0", decision="REJECT")
+    with pytest.raises(ValueError, match="must remain RESEARCH_GAP"):
+        build_reopen_plan(_payload([row]))
