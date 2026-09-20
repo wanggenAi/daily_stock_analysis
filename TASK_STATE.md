@@ -26,7 +26,7 @@ Recover the remaining Shenzhen/ChiNext strict multi-year predictability metadata
 - Opportunity Discovery, risk-capped, and PR Review were still running when the documentation-only CI defect was found.
 - Fix the checkpoint structure only; do not weaken tests, governance, evidence gates, or fail-closed rules.
 
-## Production Proof Completed
+## Production / Artifact
 - Deep `35509192911` survived a successful periodic workflow_run trigger while its official-evidence closure was active.
 - Deep `35509192911` closure ran 11:58:13Z–12:49:11Z and completed successfully.
 - Hourly Deep Overlay `35510103689` completed at 12:16:55Z and triggered Deep `35510170838` while `35509192911` was still running.
@@ -37,7 +37,7 @@ Recover the remaining Shenzhen/ChiNext strict multi-year predictability metadata
 - Investor research counts from that lineage: requested=852, RESEARCH_GAP=833, REJECT=19, WAIT_PRICE=0, BUY=0.
 - Research authority remains RESEARCH_ONLY; formal_trading_authority=false; automatic_formal_buy_allowed=false; unknown_is_pass=false; no_auto_trade=true.
 
-## Current Production Findings
+## Current Findings
 - #223 liveness defect is closed in production.
 - Latest measured Deep `35510170838` has unknown_gate_count=4021 and new_evidence_count=1501.
 - Predictability remains unresolved for 845 names:
@@ -50,12 +50,17 @@ Recover the remaining Shenzhen/ChiNext strict multi-year predictability metadata
 - The current CNINFO fallback POST had only generic User-Agent + homepage Referer while the browser/API form contract uses form Content-Type, X-Requested-With, Origin and disclosure-search Referer.
 - HTTP 403 remains non-transient and must not be blindly retried.
 
-## Current Patch
-- Introduce shared `CNINFO_QUERY_URL`, `CNINFO_QUERY_REFERER`, and `CNINFO_QUERY_HEADERS`.
-- Use that request contract for shared CNINFO announcement POSTs.
-- Reuse the same contract in strict multi-year predictability fallback.
-- Add regression coverage asserting form Content-Type, X-Requested-With, Origin, Referer, stock/orgId and annual-report category.
-- Do not change provider authority, MIN_COMPLETE_YEARS, gate logic, valuation logic, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, or Formal authority.
+## Completed
+- #223 liveness fix is production-proven and downstream lineage converged.
+- PR #225 source patch introduces shared CNINFO browser-form request headers.
+- Strict multi-year predictability reuses the shared CNINFO request contract.
+- Regression coverage locks form Content-Type, X-Requested-With, Origin, Referer, stock/orgId and annual-report category.
+- No provider authority, MIN_COMPLETE_YEARS, gate logic, valuation logic, BUY/WAIT_PRICE/REJECT threshold, Candidate Lifecycle, or Formal authority change.
+
+## Blockers
+- PR #225 must pass fresh blocking CI, Opportunity Discovery, risk-capped and review checks.
+- Production must show whether the exact CNINFO 403 bucket falls below baseline=375.
+- Transport recovery alone is not evidence PASS; official annual-report bodies and strict complete-year metrics are still required.
 
 ## Next Action
 1. Rerun fresh blocking CI / targeted Opportunity checks after the checkpoint-format fix.
