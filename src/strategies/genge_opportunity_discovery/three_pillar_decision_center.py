@@ -514,6 +514,36 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
         f"- 盘中价覆盖：**{account.get('live_quote_applied_count',0)}/{account.get('live_quote_expected_count',0)}**；交易时段：**{account.get('market_session_state','UNKNOWN')}**；行情状态：**{account.get('market_data_status','UNAVAILABLE')}**。",
         f"- **{account.get('plain_language') or '资金计划不可用，保持现金。'}**",
         "",
+        "### 今日最终操作表",
+        "",
+        "| 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 | 执行状态 |",
+        "|---|---|---:|---:|---:|---:|---|",
+    ]
+    operations = account.get("operations") or []
+    for x in operations:
+        wait = str(x.get("action") or "").upper() == "WAIT_PRICE"
+        shares = x.get("planned_trigger_shares") if wait else x.get("planned_shares")
+        amount = x.get("reserved_cash_cny") if wait else x.get("estimated_cash_cny")
+        if wait:
+            execution_status = "等待价格触发，届时重新核验"
+        elif x.get("immediate_execution_eligible") is True:
+            execution_status = "具备执行条件，仍需人工确认"
+        elif x.get("execution_note") == "LIVE_EXECUTION_QUOTE_UNAVAILABLE":
+            execution_status = "暂不可执行：缺有效盘中价"
+        elif x.get("execution_note") == "MARKET_NOT_IN_CONTINUOUS_SESSION":
+            execution_status = "暂不可执行：非连续交易时段"
+        elif x.get("execution_note") == "LIVE_PRICE_ABOVE_AUTHORIZED_LIMIT_USE_LIMIT_ORDER_ONLY":
+            execution_status = "暂不可执行：现价高于授权上限"
+        else:
+            execution_status = "暂不可立即执行"
+        lines.append(
+            f"| {x.get('name','')} {x.get('code','')} | **{x.get('action') or '—'}** | {shares or 0} | "
+            f"{_fmt(x.get('first_entry_max_price'))} | {_fmt(x.get('second_entry_max_price'))} | {_fmt(amount)} | {execution_status} |"
+        )
+    if not operations:
+        lines.append("| — | 无新增资金动作 | 0 | — | — | 0 | 现金保留；持仓动作见第1节 |")
+    lines += [
+        "",
         "## 决策完整性",
         "",
     ]
