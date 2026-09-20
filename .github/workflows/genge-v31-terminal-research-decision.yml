@@ -8,11 +8,6 @@ on:
       - ".github/workflows/genge-v31-terminal-research-decision.yml"
       - "src/strategies/genge_opportunity_discovery/v31_terminal_research_decision.py"
       - "tests/test_v31_terminal_research_decision.py"
-  workflow_run:
-    workflows:
-      - "GenGe V3.1 Deep Calculation Lambda"
-    types: [completed]
-
 concurrency:
   group: genge-v31-terminal-research-decision-production
   cancel-in-progress: false
@@ -21,8 +16,7 @@ jobs:
   contracts:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'push' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+      github.event_name == 'push'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -44,8 +38,7 @@ jobs:
   production:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event_name == 'push' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+      github.event_name == 'push'
     needs: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 20
@@ -75,6 +68,10 @@ jobs:
           [[ "$lambda_run_id" =~ ^[0-9]+$ ]] || { echo "invalid lambda_run_id=$lambda_run_id" >&2; exit 1; }
           test "$(jq -r '.execution_status' data/deep_calculation/latest_status.json)" = "SUCCESS"
           test "$(jq -r '.immediate_retry_required' data/deep_calculation/latest_status.json)" = "false"
+          test "$(jq -r '.provenance_audit_complete' data/deep_calculation/latest_status.json)" = "true"
+          test "$(jq -r '.all_pass_gates_have_verified_evidence' data/deep_calculation/latest_status.json)" = "true"
+          audit_run_id=$(jq -r '.provenance_audit_run_id // empty' data/deep_calculation/latest_status.json)
+          [[ "$audit_run_id" =~ ^[0-9]+$ ]] || { echo "invalid provenance_audit_run_id=$audit_run_id" >&2; exit 1; }
           echo "source_run_id=$source_run_id" >> "$GITHUB_OUTPUT"
           echo "lambda_run_id=$lambda_run_id" >> "$GITHUB_OUTPUT"
 
