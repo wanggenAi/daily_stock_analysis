@@ -16,7 +16,15 @@ Recover the remaining Shenzhen/ChiNext strict multi-year predictability metadata
 `fix/cninfo-query-contract-20260920`
 
 ## Active PR
-Not opened yet at this checkpoint. Scope is CNINFO browser-form request transport + regressions + this checkpoint only.
+- #225 — `fix: restore CNINFO predictability query contract`.
+- Head before this checkpoint: `b1fcbaf826d347df44c5253e327fe32852f42001`.
+- Scope: CNINFO browser-form request transport + regressions + this checkpoint only.
+
+## CI
+- PR #225 initial CI run `35513415635` failed only in `ai-governance` because this checkpoint omitted the repository-required `## CI` heading.
+- Change Detection passed.
+- Opportunity Discovery, risk-capped, and PR Review were still running when the documentation-only CI defect was found.
+- Fix the checkpoint structure only; do not weaken tests, governance, evidence gates, or fail-closed rules.
 
 ## Production Proof Completed
 - Deep `35509192911` survived a successful periodic workflow_run trigger while its official-evidence closure was active.
@@ -50,10 +58,9 @@ Not opened yet at this checkpoint. Scope is CNINFO browser-form request transpor
 - Do not change provider authority, MIN_COMPLETE_YEARS, gate logic, valuation logic, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, or Formal authority.
 
 ## Next Action
-1. Open PR from this branch.
-2. Run fresh blocking CI / targeted Opportunity checks.
-3. Fix only real failures without weakening evidence semantics.
-4. Merge only after green checks.
+1. Rerun fresh blocking CI / targeted Opportunity checks after the checkpoint-format fix.
+2. Fix only real failures without weakening evidence semantics.
+3. Merge #225 only after green checks.
 5. Observe fresh post-merge Deep triggered by the evidence collector change.
 6. Compare CNINFO 403 count against current baseline=375.
 7. Require actual official report source URLs / metrics_by_year before any predictability PASS.
