@@ -1,17 +1,17 @@
 {
   "schema_version": 2,
-  "generation": 2,
+  "generation": 3,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "PR205_REPLAY_WAITING_CI",
+  "stage": "PR205_TEST_CONTRACT_FIXED_WAITING_RERUN",
   "last_observed_main_sha": "c2154f3752485bed19b1012b955123736dc61f23",
   "work_branch": "fix/investor-report-layer-clarity-main-replay",
-  "work_head_sha": "83a886e2e96d2b1b5e74d482679be30b3f4a2e0d",
+  "work_head_sha": "a5399791902582d2897643feb2f0de76fe8a4636",
   "active_pr": 205,
   "ci": {
     "run_id": null,
-    "head_sha": "83a886e2e96d2b1b5e74d482679be30b3f4a2e0d",
+    "head_sha": "a5399791902582d2897643feb2f0de76fe8a4636",
     "status": "QUEUED_OR_STARTING",
     "conclusion": null
   },
@@ -33,9 +33,10 @@
     "Reviewed #202/#203/#204 scopes and source patches.",
     "Merged PR #202 with green CI; urgent evidence reopen now requires RESEARCH_GAP for evidence-blocked rows.",
     "PR #203 deterministic Investor Brief → Terminal Overlay → Three-Pillar convergence passed blocking CI and merged as 39c72255d139fed6309131a008853950e3d0d787.",
-    "Created PR #205 as clean replay of #204 on latest main; intended diff is six report/rendering regression files only."
+    "Created PR #205 as clean replay of #204 on latest main; intended diff is six report/rendering regression files only.",
+    "PR #205 first contract run exposed an invalid test assumption: one stock may legitimately appear in both holdings-deep-review and urgent-evidence subsections. Fixed the regression to assert second render preserves the first render's mention count instead of forcing one mention; business code unchanged."
   ],
-  "next_action": "Observe PR #205 CI; fix only real failures. If green, merge #205, verify production chain and persisted investor dashboard retains terminal_research_snapshot/Deep Research across later rerenders; then close superseded #200/#201/#204 and update TASK_STATE.md.",
+  "next_action": "Wait for workflows on PR #205 head a5399791902582d2897643feb2f0de76fe8a4636. Require terminal-overlay contract and full CI green; then merge and verify production persisted report convergence.",
   "do_not_repeat": [
     "Do not reopen solved 351-profile continuity defect.",
     "Do not loosen hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, or no_auto_trade.",
