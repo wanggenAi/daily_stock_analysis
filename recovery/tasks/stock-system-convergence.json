@@ -1,29 +1,30 @@
 {
   "schema_version": 2,
-  "generation": 15,
+  "generation": 16,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "POST_MERGE_223_DEEP_35509192911_RUNNING",
-  "last_observed_main_sha": "d06b040a6373054aa50b5ccda835a1a354f113a5",
+  "stage": "POST_MERGE_223_LIVENESS_PROVEN_MAIN_DEEP_STILL_RUNNING",
+  "last_observed_main_sha": "2674346e0df5a26b92efe4ba9231b7088a05a53c",
   "work_branch": null,
   "work_head_sha": null,
   "active_pr": null,
   "ci": {
     "run_id": 35509192902,
     "head_sha": "d06b040a6373054aa50b5ccda835a1a354f113a5",
-    "status": "RUNNING",
-    "conclusion": null,
-    "note": "Post-merge main CI is running; #223 PR blocking CI passed before merge."
+    "status": "COMPLETED",
+    "conclusion": "success",
+    "note": "Post-merge main CI completed successfully."
   },
   "production_or_artifact": {
-    "status": "POST_MERGE_223_DEEP_RUNNING",
+    "status": "LIVENESS_AND_EPOCH_FENCE_PROVEN_TERMINAL_MAIN_PENDING",
     "evidence": [
-      "PR #223 merged as d06b040a6373054aa50b5ccda835a1a354f113a5 after fresh blocking CI success.",
-      "New #223-epoch Deep 35509192911 started from merge push and is the authoritative post-fix production run.",
-      "Pre-fix Deep 35508293335 is still running on an older code epoch; if it completes later, epoch fencing must preserve history without replacing new latest pointers.",
-      "Confirmed pre-fix liveness failure: Deep 35507967197 was cancelled during official evidence closure by successful periodic workflow_run replacement.",
-      "Post-fix validation requires Deep 35509192911 to survive successful workflow_run triggers through terminal persistence and downstream convergence."
+      "Post-#223 authoritative Deep 35509192911 remains in official evidence closure.",
+      "Hourly Deep Overlay 35510103689 completed successfully at 12:16:55Z and triggered periodic Deep 35510170838 at 12:16:57Z; Deep 35509192911 remained in_progress afterward, proving the successful workflow_run no longer cancels active closure.",
+      "Older pre-#223 Deep 35508293335 completed successfully at 12:20:29Z but persistence logged 'superseded ... preserving history only'; history/35508293335.json exists while shared latest_status did not advance to that stale epoch.",
+      "Run 35508293335 (contains #222 retry fix) reduced unresolved transport-query reasons from baseline 377 to zero, while predictability_verified_count remained 0 and 845 predictability gates were still unresolved for insufficient consecutive complete fiscal years.",
+      "Unresolved requested gates improved from 4028 to 4021 without loosening UNKNOWN/PASS semantics.",
+      "All commits after d06b040a through observed main 2674346e are runtime/persisted-data files only; no Deep/evidence code changed."
     ]
   },
   "pending_operation": null,
@@ -33,16 +34,18 @@
   },
   "completed": [
     "Merged #222 and closed superseded #219/#220/#221.",
-    "Production-reproduced successful workflow_run preemption of active Deep closure.",
-    "Created #223 with dynamic cancel-in-progress semantics for workflow_run triggers.",
-    "Verified #223 ai-governance, backend-gate and docker-build green.",
-    "Merged #223 with fixed expected head SHA a76ea5506a4a97da1e9e980896abd6383d344468.",
-    "Observed fresh post-merge Deep 35509192911 start on #223 code epoch."
+    "Production-reproduced successful workflow_run preemption and fixed it in #223.",
+    "Merged #223 after fresh blocking CI success.",
+    "Post-merge main CI completed successfully.",
+    "Production-proved active Deep survives a successful periodic workflow_run trigger.",
+    "Production-proved stale Deep epoch persists immutable history without overwriting shared latest pointers.",
+    "Measured #222 transient-query retry effect: query-failure unresolved reasons 377 -> 0, without converting missing evidence into PASS."
   ],
-  "next_action": "Track Deep 35509192911 through initial pass, official evidence closure, terminal persistence and downstream Provenance/Terminal/Investor convergence. Verify successful periodic workflow_run cannot cancel it. Verify older Deep 35508293335 cannot overwrite latest due epoch fence. Then compare predictability transport failures against baseline 377.",
+  "next_action": "Track authoritative Deep 35509192911 to terminal persistence and downstream Provenance/Terminal/Investor convergence. Confirm its latest pointers advance correctly. Then inspect whether periodic same-code-epoch Deep duplication should be coalesced to reduce official-source load without changing evidence semantics.",
   "do_not_repeat": [
     "Do not treat cancelled Deep 35507967197 as terminal production evidence.",
-    "Do not treat pre-fix Deep 35508293335 as #223 validation or allow it to overwrite latest.",
+    "Do not treat stale Deep 35508293335 as current latest; history-only persistence is correct.",
+    "Do not claim predictability passed: verified_count remains 0; transport failures were eliminated but evidence insufficiency remains.",
     "Do not reopen solved Candidate Lifecycle continuity defects.",
     "Do not loosen hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Formal authority, UNKNOWN != PASS, or no_auto_trade."
   ]
