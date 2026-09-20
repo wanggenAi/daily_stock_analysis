@@ -17,6 +17,8 @@ from typing import Any, Iterable, Mapping
 import requests
 
 from .company_announcements import (
+    CNINFO_QUERY_HEADERS,
+    CNINFO_QUERY_URL,
     REQUEST_HEADERS,
     _clean_title,
     _cninfo_publish_date,
@@ -247,8 +249,8 @@ def _query_cninfo_history(
         "isHLtitle": "true",
     }
     response = session.post(
-        "https://www.cninfo.com.cn/new/hisAnnouncement/query",
-        headers={**REQUEST_HEADERS, "Referer": "https://www.cninfo.com.cn/"},
+        CNINFO_QUERY_URL,
+        headers=CNINFO_QUERY_HEADERS,
         data=payload,
         timeout=timeout,
     )
