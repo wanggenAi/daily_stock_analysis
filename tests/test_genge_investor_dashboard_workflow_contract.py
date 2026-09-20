@@ -98,3 +98,13 @@ def test_dashboard_explicitly_dispatches_terminal_overlay_after_persistence() ->
     assert "permissions:\n  contents: write\n  actions: write" in workflow
     assert build_at < dispatch_at < summary_at
     assert "gh workflow run genge-investor-terminal-research-overlay.yml" in workflow[dispatch_at:summary_at]
+
+
+def test_investor_brief_cannot_reopen_stale_hourly_execution_quotes() -> None:
+    workflow = _workflow()
+    block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Dispatch terminal research overlay after investor brief persistence", 1
+    )[0]
+    live = block.split("investor_live_execution_overlay", 1)[1].split("if [ -s data/manual_execution_quotes/latest.json ]; then", 1)[0]
+    assert "--max-age-minutes 15" in live
+    assert "--max-age-minutes 120" not in live
