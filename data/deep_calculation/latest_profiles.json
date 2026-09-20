@@ -6,13 +6,13 @@
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-20T05:35:33+00:00",
-  "generated_at": "2026-09-20T05:04:35+00:00",
+  "gap_closure_generated_at": "2026-09-20T05:55:45+00:00",
+  "generated_at": "2026-09-20T05:26:17+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "35490639942",
-  "material_event_failed_gate_count": 18,
+  "lambda_run_id": "35491576929",
+  "material_event_failed_gate_count": 13,
   "material_event_pass_override_count": 2,
-  "new_evidence_count": 1416,
+  "new_evidence_count": 1385,
   "no_auto_trade": true,
   "predictability_resolved_gate_count": 0,
   "profiles": {
@@ -1382,22 +1382,17 @@
     "000506": {
       "gates": {
         "earnings_authenticity": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "NON_STANDARD_AUDIT",
-              "publish_date": "2025-04-29",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "*ST中润：董事会关于2023年度审计报告非标准审计意见及无法表示意见内控审计报告所涉及事项影响已消除的专项说明：非标准审计意见及无法表示意见内控审计报告所涉及事项影响已",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-29/9e0af5bd-87bc-4d67-90d8-ad2aa2b548fe.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with earnings_authenticity: NON_STANDARD_AUDIT.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -13112,22 +13107,17 @@
     "002268": {
       "gates": {
         "earnings_authenticity": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "NON_STANDARD_AUDIT",
-              "publish_date": "2025-04-29",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "电科网安：会计师事务所对非标意见涉及事项专项说明：《深圳证券交易所股票上市规则（2024 年修订）》等规定，现对导致非标意见的事项予以说明。",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-29/22c103d4-fac2-4e98-a60b-57316007aa6c.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with earnings_authenticity: NON_STANDARD_AUDIT.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -31230,40 +31220,30 @@
     "301251": {
       "gates": {
         "earnings_authenticity": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "ACCOUNTING_FRAUD",
-              "publish_date": "2026-07-17",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "威尔高：国联民生承销保荐关于威尔高是否存在财务造假、资金占用、募集资金违规等重大违法行为或公司治理是否出现重大异常且影响发行条件的核查意见：是否存在财务造假、资金占用、募集资金违规等重大违法行为或公",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-17/ae494576-0ca2-46e5-a66b-ed9fd9b84c22.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with earnings_authenticity: ACCOUNTING_FRAUD.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "FUNDS_OCCUPATION",
-              "publish_date": "2026-07-17",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "威尔高：国联民生承销保荐关于威尔高是否存在财务造假、资金占用、募集资金违规等重大违法行为或公司治理是否出现重大异常且影响发行条件的核查意见：是否存在财务造假、资金占用、募集资金违规等重大违法行为或公",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-17/ae494576-0ca2-46e5-a66b-ed9fd9b84c22.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
@@ -31294,22 +31274,29 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "HIGH",
-          "evidence": [
+          "confidence": "",
+          "evidence": [],
+          "gap_closure_evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "ACCOUNTING_FRAUD",
-              "publish_date": "2026-07-17",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "威尔高：国联民生承销保荐关于威尔高是否存在财务造假、资金占用、募集资金违规等重大违法行为或公司治理是否出现重大异常且影响发行条件的核查意见：是否存在财务造假、资金占用、募集资金违规等重大违法行为或公",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-17/ae494576-0ca2-46e5-a66b-ed9fd9b84c22.PDF"
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "szse.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError",
+              "url": null
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: ACCOUNTING_FRAUD.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "gap_closure_rationale": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError",
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError"
         }
       },
       "industry": "C39计算机、通信和其他电子设备制造业",
@@ -32136,20 +32123,20 @@
               "cyclical_or_resource": false,
               "metrics_by_year": [],
               "publish_date": null,
-              "reason_code": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError",
+              "reason_code": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError",
               "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
               "source_domain": "szse.cn",
               "source_type": "OFFICIAL_REPORT",
               "source_urls": [],
-              "summary": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError",
+              "summary": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError",
               "url": null
             }
           ],
-          "gap_closure_rationale": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError",
+          "gap_closure_rationale": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
           "status": "UNKNOWN",
-          "terminal_unresolved_reason": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError"
+          "terminal_unresolved_reason": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError"
         }
       },
       "industry": "C35专用设备制造业",
@@ -72197,14 +72184,14 @@
       "research_terminal_state": "EVIDENCE_EXHAUSTED"
     }
   },
-  "progressed_gate_count": 18,
+  "progressed_gate_count": 13,
   "research_outcome": "EVIDENCE_EXHAUSTED",
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
   "reverified_upstream_pass_count": 7,
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
   "source_run_id": "35443656183",
-  "trigger_source": "Era Capital Trend Radar Live",
+  "trigger_source": "PUSH_CHANGE",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
