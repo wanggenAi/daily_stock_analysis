@@ -225,3 +225,37 @@ def test_research_only_market_never_enters_production_candidate_output() -> None
         "valuation_confidence": "HIGH",
     }
     assert build_decisions([research_only]) == []
+
+
+def test_formal_buy_is_blocked_outside_sh_sz_main_board_without_shrinking_research() -> None:
+    for code in ("300693", "301589", "688019", "689009", "920001"):
+        row = complete_v311_row(current=70.0)
+        row["code"] = code
+        row["v32_has_position"] = False
+        payload = production_payload(row)
+        assert payload["production_action"] == "WAIT"
+        assert "FORMAL_NEW_EXPOSURE_SH_SZ_MAIN_BOARD_ONLY" in payload["reason_codes"]
+        assert payload["formal_new_exposure_trade_universe_eligible"] is False
+
+
+def test_formal_buy_remains_available_for_sh_sz_main_board_when_all_existing_gates_pass() -> None:
+    for code in ("600519", "601899", "603993", "605060", "000001", "001316", "002594", "003816"):
+        row = complete_v311_row(current=70.0)
+        row["code"] = code
+        row["v32_has_position"] = False
+        payload = production_payload(row)
+        assert payload["production_action"] == "BUY"
+        assert payload["formal_new_exposure_trade_universe_eligible"] is True
+
+
+def test_out_of_scope_existing_position_can_be_managed_but_not_staged_added() -> None:
+    row = complete_v311_row(current=70.0)
+    row["code"] = "688019"
+    row["v32_has_position"] = True
+    row["v311_expectation_input_status"] = "READY"
+    row["price_date_verification_status"] = "VERIFIED"
+    row["price_mapping_status"] = "OK"
+    payload = production_payload(row)
+    assert payload["production_action"] == "HOLD"
+    assert payload["holding_add_authorized"] is False
+    assert "FORMAL_NEW_EXPOSURE_SH_SZ_MAIN_BOARD_ONLY" in payload["holding_add_authorization_reason_codes"]
