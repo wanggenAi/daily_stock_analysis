@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from pathlib import Path
 
 from src.strategies.genge_opportunity_discovery.hourly_deep_overlay import Quote
 from src.strategies.genge_opportunity_discovery.investor_direct_execution_quote_overlay import (
@@ -128,3 +129,10 @@ def test_lunch_break_never_reports_immediate_execution_even_with_fresh_snapshot(
         and op["execution_note"] == "MARKET_NOT_IN_CONTINUOUS_SESSION"
         for op in payload["capital_deployment"]["operations"]
     )
+
+
+def test_live_quote_workflow_refreshes_final_decision_center():
+    workflow = Path(".github/workflows/genge-live-execution-quote-refresh.yml").read_text(encoding="utf-8")
+    assert "actions: write" in workflow
+    assert "gh workflow run genge-three-pillar-decision-center.yml" in workflow
+    assert "Refresh final decision center after execution-price persistence" in workflow
