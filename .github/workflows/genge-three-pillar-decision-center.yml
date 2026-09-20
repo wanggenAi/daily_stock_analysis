@@ -105,13 +105,25 @@ jobs:
           assert 'pillar_1_holdings_deep_analysis' in p
           assert 'pillar_2_world_social_market_capital_map' in p
           assert 'pillar_3_deep_opportunities' in p
+          assert 'today_account_plan' in p
           assert 'deep_calculation_runtime' in p
+          account=p['today_account_plan']
+          assert account['no_auto_trade'] is True
+          assert account['planned_immediate_cash_cny'] <= account['available_cash_cny']
+          capital_map=p['pillar_2_world_social_market_capital_map']
+          coverage=capital_map['capital_evidence_coverage']
+          assert coverage['direct_stock_fund_flow_claimed'] is False
+          assert set(coverage['family_counts']) == {
+              'POLICY_CAPITAL','INDUSTRIAL_CAPITAL','FINANCIAL_CAPITAL',
+              'REAL_DEMAND','TECHNOLOGY','GLOBAL_STRUCTURE'
+          }
           runtime=p['deep_calculation_runtime']
           assert runtime['unknown_is_pass'] is False
           assert runtime['automatic_formal_buy_allowed'] is False
           assert runtime['no_auto_trade'] is True
           assert p['deep_review_profile_source'] in {'AUTOMATIC_DEEP_CALCULATION','STATIC_BOOTSTRAP_FALLBACK'}
           assert p['pillar_2_world_social_market_capital_map']['direct_fund_flow_claimed'] is False
+          assert capital_map['direct_financial_capital_evidence_available'] == coverage['financial_capital_evidence_available']
 
           opp=p['pillar_3_deep_opportunities']
           terminal=opp['terminal_research_snapshot']
