@@ -146,14 +146,14 @@ def test_specialized_sources_follow_aliases_for_classified_transport_industries(
     aliases = prepare_industry_alias_map(industries)
 
     shipping_terms = _industry_search_terms(industries[0], aliases)
-    logistics_terms = _industry_search_terms(industries[1], aliases)
+    multimodal_terms = _industry_search_terms(industries[1], aliases)
     postal_terms = _industry_search_terms(industries[2], aliases)
 
     assert "航运" in shipping_terms
-    assert "物流" in logistics_terms
+    assert "物流" not in multimodal_terms
     assert "物流" in postal_terms
     assert [row[0] for row in _specialized_source_specs(shipping_terms)] == ["mot_public_data"]
-    assert [row[0] for row in _specialized_source_specs(logistics_terms)] == ["spb_public_data"]
+    assert _specialized_source_specs(multimodal_terms) == []
     assert [row[0] for row in _specialized_source_specs(postal_terms)] == ["spb_public_data"]
 
 
