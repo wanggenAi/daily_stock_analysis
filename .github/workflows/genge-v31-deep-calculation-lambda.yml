@@ -56,8 +56,12 @@ permissions:
   actions: write
 
 concurrency:
-  group: genge-v31-deep-calc-${{ inputs.research_run_id || github.event.workflow_run.id || github.run_id }}
-  cancel-in-progress: false
+  # Collapse duplicate triggers for the same code/evidence epoch. A push can
+  # dispatch an EVIDENCE_LAYER_CHANGE run for the same main SHA; allowing both
+  # to execute doubles exchange/CNINFO load and increases provider throttling.
+  # Distinct upstream head SHAs or explicit research runs remain independent.
+  group: genge-v31-deep-calc-${{ inputs.research_run_id || github.event.workflow_run.head_sha || github.sha }}-${{ inputs.requested_codes || 'default' }}
+  cancel-in-progress: true
 
 env:
   TZ: Asia/Shanghai
