@@ -43,3 +43,12 @@ def test_completed_deep_dispatches_terminal_and_provenance_not_stale_decision_ce
     assert "gh workflow run genge-v31-deep-provenance-audit.yml" in workflow
     assert "gh workflow run genge-v31-terminal-research-decision.yml" in workflow
     assert "gh workflow run genge-three-pillar-decision-center.yml" not in workflow
+
+
+def test_duplicate_deep_triggers_collapse_by_evidence_epoch() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+
+    assert "github.event.workflow_run.head_sha || github.sha" in workflow
+    assert "inputs.requested_codes || 'default'" in workflow
+    assert "cancel-in-progress: true" in workflow
+    assert "github.event.workflow_run.id || github.run_id" not in workflow
