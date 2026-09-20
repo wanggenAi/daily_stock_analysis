@@ -52,3 +52,18 @@ def test_duplicate_deep_triggers_collapse_by_evidence_epoch() -> None:
     assert "inputs.requested_codes || 'default'" in workflow
     assert "cancel-in-progress: true" in workflow
     assert "github.event.workflow_run.id || github.run_id" not in workflow
+
+
+def test_superseded_deep_epoch_preserves_history_without_replacing_latest() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    block = workflow.split("- name: Persist terminal deep-calculation state with optimistic replay", 1)[1].split(
+        "- name: Persist partial checkpoint when closure is incomplete", 1
+    )[0]
+
+    assert 'git diff --quiet "${GITHUB_SHA}"..origin/main --' in block
+    assert "src/strategies/genge_opportunity_discovery/evidence_collectors" in block
+    assert "config/industry_alias_map.yaml" in block
+    assert 'superseded=true' in block
+    assert 'if [ "$superseded" = false ]; then' in block
+    assert 'data/deep_calculation/history/${GITHUB_RUN_ID}.json' in block
+    assert "preserving history only" in block
