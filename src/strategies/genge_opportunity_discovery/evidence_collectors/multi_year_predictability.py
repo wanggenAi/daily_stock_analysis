@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import re
+import time
 from datetime import date, timedelta
 from typing import Any, Iterable, Mapping
 
@@ -32,6 +33,9 @@ RULE_VERSION = "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2"
 HISTORY_DAYS = 2200
 MAX_REPORTS = 5
 MIN_COMPLETE_YEARS = 3
+TRANSIENT_QUERY_ATTEMPTS = 2
+TRANSIENT_QUERY_BACKOFF_SECONDS = 0.25
+_RETRYABLE_HTTP_STATUS = {429, 500, 502, 503, 504}
 _METRIC_WINDOW = 1400
 _HEADER_WINDOW = 1600
 
@@ -171,6 +175,50 @@ def _code(value: Any) -> str:
 def _fiscal_year(title: Any) -> int | None:
     match = _FISCAL_YEAR_RE.search(str(title or ""))
     return int(match.group(1)) if match else None
+
+
+def _http_status(exc: BaseException) -> int | None:
+    response = getattr(exc, "response", None)
+    status = getattr(response, "status_code", None)
+    try:
+        return int(status) if status is not None else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _query_error_label(exc: BaseException) -> str:
+    status = _http_status(exc)
+    return f"{type(exc).__name__}:{status}" if status is not None else type(exc).__name__
+
+
+def _is_retryable_query_error(exc: BaseException) -> bool:
+    if isinstance(exc, (requests.ConnectionError, requests.Timeout)):
+        return True
+    if isinstance(exc, requests.HTTPError):
+        status = _http_status(exc)
+        return status in _RETRYABLE_HTTP_STATUS
+    return False
+
+
+def _with_transient_query_retry(call):
+    """Retry one transient official-metadata transport failure, then fail closed."""
+    for attempt in range(TRANSIENT_QUERY_ATTEMPTS):
+        try:
+            return call()
+        except Exception as exc:
+            if attempt + 1 >= TRANSIENT_QUERY_ATTEMPTS or not _is_retryable_query_error(exc):
+                raise
+            retry_after = None
+            response = getattr(exc, "response", None)
+            if response is not None:
+                raw = (getattr(response, "headers", {}) or {}).get("Retry-After")
+                try:
+                    retry_after = float(raw) if raw not in (None, "") else None
+                except (TypeError, ValueError):
+                    retry_after = None
+            delay = retry_after if retry_after is not None else TRANSIENT_QUERY_BACKOFF_SECONDS
+            time.sleep(max(0.0, min(delay, 2.0)))
+    raise RuntimeError("unreachable transient query retry state")
 
 
 def _query_cninfo_history(
@@ -811,7 +859,9 @@ def collect_multi_year_predictability_evidence(
         nonlocal org_ids_cache
         if org_ids_cache is None:
             try:
-                org_ids_cache = _load_cninfo_org_ids(session, timeout)
+                org_ids_cache = _with_transient_query_retry(
+                    lambda: _load_cninfo_org_ids(session, timeout)
+                )
             except Exception:
                 org_ids_cache = {}
         return org_ids_cache
@@ -829,14 +879,18 @@ def collect_multi_year_predictability_evidence(
             primary_query_failed = False
             try:
                 if code.startswith("6"):
-                    candidates = _query_sse_history(code, as_of, session, timeout)
+                    candidates = _with_transient_query_retry(
+                        lambda: _query_sse_history(code, as_of, session, timeout)
+                    )
                     query_source = "SSE_PRIMARY"
                 else:
-                    candidates = _query_szse_history(code, as_of, session, timeout)
+                    candidates = _with_transient_query_retry(
+                        lambda: _query_szse_history(code, as_of, session, timeout)
+                    )
                     query_source = "SZSE_PRIMARY"
             except Exception as exc:
                 primary_query_failed = True
-                query_errors.append(f"PRIMARY:{type(exc).__name__}")
+                query_errors.append(f"PRIMARY:{_query_error_label(exc)}")
 
             # A syntactically successful exchange query is not sufficient proof
             # of historical coverage. Production can return an empty/partial
@@ -856,11 +910,13 @@ def collect_multi_year_predictability_evidence(
                 fallback: list[dict[str, Any]] = []
                 if org_id:
                     try:
-                        fallback = _query_cninfo_history(
-                            code, org_id, as_of, session, timeout
+                        fallback = _with_transient_query_retry(
+                            lambda: _query_cninfo_history(
+                                code, org_id, as_of, session, timeout
+                            )
                         )
                     except Exception as exc:
-                        query_errors.append(f"CNINFO:{type(exc).__name__}")
+                        query_errors.append(f"CNINFO:{_query_error_label(exc)}")
 
                 if fallback:
                     # Merge by fiscal year and keep a primary-exchange document
@@ -902,14 +958,16 @@ def collect_multi_year_predictability_evidence(
                 )
                 continue
             try:
-                candidates = _query_cninfo_history(code, org_id, as_of, session, timeout)
+                candidates = _with_transient_query_retry(
+                    lambda: _query_cninfo_history(code, org_id, as_of, session, timeout)
+                )
                 query_source = "CNINFO_PRIMARY"
             except Exception as exc:
                 results.append(
                     _unknown_row(
                         code,
                         industry,
-                        f"ANNUAL_REPORT_QUERY_FAILED:CNINFO:{type(exc).__name__}",
+                        f"ANNUAL_REPORT_QUERY_FAILED:CNINFO:{_query_error_label(exc)}",
                     )
                 )
                 continue
