@@ -236,7 +236,7 @@
     "capital_as_of": "2026-09-15T11:38:01+08:00",
     "deployment_budget_cny": 39900.0,
     "effective_max_deployment_ratio": 0.7,
-    "planned_immediate_cash_cny": 0,
+    "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 57000.0,
     "operations": [
       {
@@ -258,7 +258,7 @@
         "live_market_price": null,
         "price_observed_at": "",
         "price_provider": "",
-        "execution_note": "LIVE_EXECUTION_QUOTE_UNAVAILABLE"
+        "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
       }
     ],
     "wait_price_reservations": [],
@@ -297,7 +297,7 @@
       "live_market_price": null,
       "price_observed_at": "",
       "price_provider": "",
-      "execution_note": "LIVE_EXECUTION_QUOTE_UNAVAILABLE"
+      "execution_note": "MARKET_NOT_IN_CONTINUOUS_SESSION"
     }
   ],
   "decision_summary": {
@@ -314,7 +314,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 171,
-    "planned_immediate_cash_cny": 0
+    "planned_immediate_cash_cny": 0.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -418,9 +418,9 @@
   },
   "formal_new_exposure_allowed": true,
   "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
     "available": false,
-    "market_data_status": "DEGRADED",
+    "market_data_status": "OFF_SESSION",
     "eligible_quote_count": 0,
     "expected_code_count": 4,
     "expected_codes": [
@@ -447,6 +447,13 @@
     "missing_quote_blocks_immediate_execution": true,
     "no_auto_trade": true,
     "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true
+    "formal_new_exposure_allowed": true,
+    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
+    "market_session_state": "CLOSED",
+    "market_session_active": false,
+    "retry_attempts": 3,
+    "refreshed_at": "2026-09-20T07:00:24.635275+00:00",
+    "refreshed_at_beijing": "2026-09-20T15:00:24.635275+08:00"
   }
 }
