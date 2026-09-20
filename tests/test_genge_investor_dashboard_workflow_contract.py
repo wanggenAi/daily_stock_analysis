@@ -108,3 +108,21 @@ def test_investor_brief_cannot_reopen_stale_hourly_execution_quotes() -> None:
     live = block.split("investor_live_execution_overlay", 1)[1].split("if [ -s data/manual_execution_quotes/latest.json ]; then", 1)[0]
     assert "--max-age-minutes 15" in live
     assert "--max-age-minutes 120" not in live
+
+
+def test_investor_brief_reapplies_execution_consumption_before_persistence() -> None:
+    workflow = _workflow()
+    block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Dispatch terminal research overlay after investor brief persistence", 1
+    )[0]
+
+    build_at = block.index("investor_decision_dashboard")
+    consumption_at = block.index("execution_consumption_overlay")
+    validation_at = block.index("p=json.loads(Path('data/investor_decision_dashboard/latest.json')")
+    commit_at = block.index('git commit -m "Persist investor decision brief [skip ci]"')
+
+    assert "CURRENT_EXECUTION_STATE.json" in block
+    assert "--execution-state CURRENT_EXECUTION_STATE.json" in block
+    assert "routine_canonical_refresh_rearms_consumed_add" in block
+    assert "explicit_rearm_required" in block
+    assert build_at < consumption_at < validation_at < commit_at
