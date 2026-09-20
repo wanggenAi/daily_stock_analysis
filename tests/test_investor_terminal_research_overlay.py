@@ -111,3 +111,12 @@ def test_markdown_overlay_is_idempotent_across_rerenders():
     assert first_stock_mentions >= 1
     assert second.count("国电南瑞 600406") == first_stock_mentions
     assert "## 9. 系统状态" in second
+
+
+def test_terminal_overlay_pr_concurrency_is_isolated_from_production():
+    workflow = Path(".github/workflows/genge-investor-terminal-research-overlay.yml").read_text(encoding="utf-8")
+    concurrency = workflow.split("concurrency:", 1)[1].split("env:", 1)[0]
+    assert "github.event_name == 'pull_request'" in concurrency
+    assert "github.event.pull_request.number" in concurrency
+    assert "|| 'production'" in concurrency
+    assert "cancel-in-progress: false" in concurrency
