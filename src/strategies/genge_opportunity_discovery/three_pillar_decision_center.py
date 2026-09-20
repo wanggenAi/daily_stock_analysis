@@ -274,6 +274,56 @@ def _opportunity_pillar(dashboard: Mapping[str, Any], profiles: Mapping[str, Any
     }
 
 
+
+def _account_plan(dashboard: Mapping[str, Any]) -> dict[str, Any]:
+    plan = dashboard.get("capital_deployment") if isinstance(dashboard.get("capital_deployment"), Mapping) else {}
+    live = dashboard.get("live_execution_overlay") if isinstance(dashboard.get("live_execution_overlay"), Mapping) else {}
+    available = _num(plan.get("available_cash_cny")) or 0.0
+    budget = _num(plan.get("deployment_budget_cny")) or 0.0
+    planned = _num(plan.get("planned_immediate_cash_cny")) or 0.0
+    cash_after = _num(plan.get("cash_after_immediate_plan_cny"))
+    if cash_after is None:
+        cash_after = max(0.0, available - planned)
+    expected_quotes = int(_num(live.get("expected_code_count")) or 0)
+    applied_quotes = int(_num(live.get("applied_code_count")) or 0)
+    session = str(live.get("market_session_state") or "UNKNOWN")
+    market_data = str(live.get("market_data_status") or "UNAVAILABLE")
+    quote_coverage_complete = expected_quotes == 0 or applied_quotes == expected_quotes
+    immediate_execution_ready = bool(
+        planned > 0
+        and session.startswith("ACTIVE_")
+        and market_data == "OK"
+        and quote_coverage_complete
+    )
+    if planned > 0:
+        plain = (
+            f"已有授权计划，预计立即使用约¥{planned:.0f}；"
+            f"执行后保留现金约¥{cash_after:.0f}。只有盘中价格覆盖和既有授权同时有效时才执行。"
+        )
+    else:
+        plain = (
+            f"本轮没有已授权的新资金投入，约¥{available:.0f}现金继续保留；"
+            "已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。"
+        )
+    return {
+        "question": "今天账户里的钱具体怎么处理？",
+        "available_cash_cny": available,
+        "deployment_budget_cny": budget,
+        "planned_immediate_cash_cny": planned,
+        "cash_after_immediate_plan_cny": cash_after,
+        "operations": list(dashboard.get("final_operation_table") or []),
+        "market_session_state": session,
+        "market_data_status": market_data,
+        "live_quote_applied_count": applied_quotes,
+        "live_quote_expected_count": expected_quotes,
+        "live_quote_coverage_complete": quote_coverage_complete,
+        "immediate_execution_ready": immediate_execution_ready,
+        "cash_action": "AUTHORIZED_DEPLOYMENT" if planned > 0 else "KEEP_CASH",
+        "plain_language": plain,
+        "no_auto_trade": True,
+    }
+
+
 def build_decision_center(
     *,
     dashboard: Mapping[str, Any],
@@ -291,6 +341,7 @@ def build_decision_center(
     holdings = _holding_pillar(dashboard, profiles)
     capital_map = _trend_pillar(dashboard, era_radar, links, handoff)
     opportunities = _opportunity_pillar(dashboard, profiles, handoff)
+    account_plan = _account_plan(dashboard)
     return {
         "contract_version": CONTRACT_VERSION,
         "generated_at": generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -299,7 +350,12 @@ def build_decision_center(
         "formal_action_source": "FINALIZED_CANONICAL_ONLY",
         "formal_action_recomputed": False,
         "no_auto_trade": True,
-        "decision_questions": [holdings["question"], capital_map["question"], opportunities["question"]],
+        "decision_questions": [
+            holdings["question"],
+            capital_map["question"],
+            opportunities["question"],
+            account_plan["question"],
+        ],
         "executive_summary": {
             "holding_count": holdings["holding_count"],
             "holdings_complete_deep_review": holdings["complete_deep_review_count"],
@@ -308,16 +364,21 @@ def build_decision_center(
             "new_buy_now_count": len(opportunities["buy_now"]),
             "new_wait_price_count": len(opportunities["wait_price"]),
             "terminal_reject_count": opportunities["terminal_reject_count"],
+            "available_cash_cny": account_plan["available_cash_cny"],
+            "planned_immediate_cash_cny": account_plan["planned_immediate_cash_cny"],
+            "cash_after_immediate_plan_cny": account_plan["cash_after_immediate_plan_cny"],
         },
         "pillar_1_holdings_deep_analysis": holdings,
         "pillar_2_world_social_market_capital_map": capital_map,
         "pillar_3_deep_opportunities": opportunities,
+        "today_account_plan": account_plan,
         "decision_readiness": {
             "portfolio_actions_available": holdings["holding_count"] > 0,
             "all_holdings_explicit_deep_review_complete": holdings["deep_review_gap_count"] == 0,
             "structural_trend_evidence_available": bool(capital_map["structural_world_social_trends"]),
             "validated_macro_to_a_share_handoff_available": capital_map["validated_handoff_count"] > 0,
             "terminal_opportunity_result_available": dashboard.get("terminal_opportunities", {}).get("available") is True,
+            "live_execution_quote_coverage_complete": account_plan["live_quote_coverage_complete"],
             "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
         },
     }
@@ -367,7 +428,7 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
     lines = [
         "# 三支柱投资决策中心",
         "",
-        "> 最终页面只回答三件事：我的持仓怎么办；钱可能往哪里去；还有什么股票值得行动。",
+        "> 最终页面回答四件事：我的持仓怎么办；社会/市场/资金往哪里去；哪些股票值得行动；今天账户里的钱具体怎么处理。",
         "",
         "## 1. 我的持仓：深算后到底怎么办",
         "",
@@ -407,6 +468,23 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
             f"| {x['trend_id']} | {_fmt(x.get('confidence_score'))} | {_fmt(x.get('structural_score'))} | "
             f"{_fmt(x.get('industrial_score'))} | {mapped} |"
         )
+    coverage = m.get("capital_evidence_coverage") or {}
+    family_counts = coverage.get("family_counts") or {}
+    lines += ["", "### 资金流证据覆盖", ""]
+    if coverage:
+        lines.append(
+            f"- 覆盖状态：**{coverage.get('status','UNAVAILABLE')}**；"
+            f"政策资本 **{family_counts.get('POLICY_CAPITAL',0)}**；"
+            f"产业资本 **{family_counts.get('INDUSTRIAL_CAPITAL',0)}**；"
+            f"金融资本 **{family_counts.get('FINANCIAL_CAPITAL',0)}**；"
+            f"真实需求 **{family_counts.get('REAL_DEMAND',0)}**。"
+        )
+        if coverage.get("financial_capital_evidence_available") is not True:
+            lines.append("- **金融资本 live 证据尚未覆盖，因此当前不能声称‘资金流已经看清’；行业强弱只作为市场行为代理。**")
+        else:
+            lines.append("- 金融资本已有直接证据，但仍需与政策、产业资本、真实需求和个股深算交叉验证。")
+    else:
+        lines.append("- 资金流证据覆盖状态不可用；不据此制造资金流结论。")
     lines += ["", "### 近期市场行为代理", ""]
     tactical = m["tactical_market_behavior_proxy"]
     lines.append("、".join(f"{x.get('industry')}({_fmt(x.get('score'))})" for x in tactical[:8]) if tactical else "暂无可用代理。")
@@ -426,8 +504,19 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
             lines.append(f"- **{x['name']} {x['code']}**：等待 ≤{_fmt(x.get('wait_price_max'))}；深算 {x['deep_review']['status']}。")
     else:
         lines.append("- **本轮没有合格 WAIT_PRICE。**")
-    lines += ["", f"- Formal/Production Candidate Terminal REJECT：**{o['terminal_reject_count']}**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。",
-              "", "## 决策完整性", ""]
+    lines += ["", f"- Formal/Production Candidate Terminal REJECT：**{o['terminal_reject_count']}**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。"]
+    account = payload.get("today_account_plan") or {}
+    lines += [
+        "",
+        "## 4. 今日账户资金怎么处理",
+        "",
+        f"- 可用现金：**¥{_fmt(account.get('available_cash_cny'))}**；可部署预算：**¥{_fmt(account.get('deployment_budget_cny'))}**；本轮计划立即投入：**¥{_fmt(account.get('planned_immediate_cash_cny'))}**；计划后现金：**¥{_fmt(account.get('cash_after_immediate_plan_cny'))}**。",
+        f"- 盘中价覆盖：**{account.get('live_quote_applied_count',0)}/{account.get('live_quote_expected_count',0)}**；交易时段：**{account.get('market_session_state','UNKNOWN')}**；行情状态：**{account.get('market_data_status','UNAVAILABLE')}**。",
+        f"- **{account.get('plain_language') or '资金计划不可用，保持现金。'}**",
+        "",
+        "## 决策完整性",
+        "",
+    ]
     readiness = payload["decision_readiness"]
     lines.append(f"- 全部持仓显式深算完整：**{readiness['all_holdings_explicit_deep_review_complete']}**")
     lines.append(f"- 世界/社会结构趋势证据可用：**{readiness['structural_trend_evidence_available']}**")
