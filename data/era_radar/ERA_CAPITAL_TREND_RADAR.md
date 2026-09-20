@@ -1,7 +1,7 @@
 # Era & Capital Trend Radar
 
-Snapshot: `bb1bebc251e7685c6f4a`
-Research as of: `2026-09-20T05:02:01Z`
+Snapshot: `0da3e0eae4a1525a58af`
+Research as of: `2026-09-20T11:36:00Z`
 
 > Research intelligence only. No Formal trading authority. No auto-trade.
 
