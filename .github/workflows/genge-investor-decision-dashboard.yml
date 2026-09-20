@@ -266,7 +266,7 @@ jobs:
                 --dashboard-json data/investor_decision_dashboard/latest.json \
                 --hourly-json "$hourly_overlay" \
                 --markdown-output INVESTOR_DECISION_DASHBOARD.md \
-                --max-age-minutes 120
+                --max-age-minutes 15
             fi
             if [ -s data/manual_execution_quotes/latest.json ]; then
               python -m src.strategies.genge_opportunity_discovery.investor_manual_execution_quote_overlay \
