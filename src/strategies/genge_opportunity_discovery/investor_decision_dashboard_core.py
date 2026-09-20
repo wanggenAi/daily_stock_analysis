@@ -45,6 +45,14 @@ ACTION_LIFECYCLES = {"NEW", "UNCHANGED", "CLEARED", "SUSPENDED"}
 
 
 def _num(value: Any) -> float | None:
+    if isinstance(value, str):
+        text = value.strip().replace(",", "")
+        # CURRENT_HOLDINGS / CURRENT_FUNDS are human-edited Markdown sources.
+        # Numeric cells may legitimately be emphasized without changing value.
+        for wrapper in ("**", "__", "`"):
+            while len(text) >= 2 * len(wrapper) and text.startswith(wrapper) and text.endswith(wrapper):
+                text = text[len(wrapper):-len(wrapper)].strip()
+        value = text
     try:
         value = float(value)
     except (TypeError, ValueError):
@@ -115,8 +123,12 @@ def load_confirmed_holdings(path: Path | None) -> dict[str, dict[str, Any]]:
         code = _code(row.get("Code"))
         if code and str(row.get("Status") or "").upper() == "HELD":
             q, cost = _num(row.get("Quantity")), _num(row.get("Average cost (CNY)"))
+            if q is None or q <= 0:
+                raise ValueError(f"confirmed holding quantity is invalid for {code}: {row.get('Quantity')!r}")
+            if cost is None or cost < 0:
+                raise ValueError(f"confirmed holding average cost is invalid for {code}: {row.get('Average cost (CNY)')!r}")
             result[code] = {"code": code, "name": row.get("Name", ""),
-                            "quantity": int(q) if q is not None else None,
+                            "quantity": int(q),
                             "average_cost": cost, "status": "HELD"}
     return result
 
