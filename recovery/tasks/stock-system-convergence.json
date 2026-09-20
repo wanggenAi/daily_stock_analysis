@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generation": 5,
+  "generation": 6,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI_AND_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR207_PREDICTABILITY_PRIMARY_EMPTY_FALLBACK",
-  "last_observed_main_sha": "e98ca4ec9e23f6fe99647731474a86484706405f",
+  "stage": "PR207_CI_RUNNING_EVIDENCE_COVERAGE_ROOT_CAUSES_MAPPED",
+  "last_observed_main_sha": "d75b336735600a7a59aab309da8901d81a4ba87d",
   "work_branch": "fix/predictability-empty-primary-fallback",
   "work_head_sha": "5c3a5b8a2ed0bb10b041706eca95ad6cb09a0193",
   "active_pr": 207,
@@ -22,7 +22,10 @@
       "Post-#205 persisted INVESTOR_DECISION_DASHBOARD.md now contains exactly one Deep Research terminal section, not the prior three mixed sections; execution-status column and executable-plan clarification are present.",
       "PR #206 merged as 262ecf4ae62a8d8ea58923300532942b9ba542bb; post-merge Deep runs 35487990313 and 35487992684 are still running for material-event comparison.",
       "Old production Deep artifact 35485262882 proves predictability source-routing defect: 852/852 rows UNKNOWN; SSE_PRIMARY=470, SZSE_PRIMARY=382; query_diagnostic empty for all; source_urls=0, metrics_by_year=0, coverage_count=0 for all.",
-      "PR #207 changes only official annual-report routing: when primary exchange returns fewer than MIN_COMPLETE_YEARS=3 candidates, consult CNINFO fallback, merge by fiscal year, prefer primary on duplicate years; thresholds remain frozen."
+      "PR #207 changes only official annual-report routing: when primary exchange returns fewer than MIN_COMPLETE_YEARS=3 candidates, consult CNINFO fallback, merge by fiscal year, prefer primary on duplicate years; thresholds remain frozen.",
+      "Old artifact attempt-1 proves industry alias expansion was active for all 852 targets; do not misdiagnose classification prefixes as disabling aliases.",
+      "Old artifact industry evidence coverage is sparse: 237 industry tasks produced 49 evidence rows; industry audit rows show 468 MISSING and 56 FAILED, dominated by industry_keyword_not_found=225 and industry_keyword_not_found_in_article=198.",
+      "long_term_demand old profile distribution is UNKNOWN 851 / PASS 2; moat is UNKNOWN 851 / PASS 2. Terminal has a public_material_gate_recovery consumer, but the old Deep evidence payload contains no public_material_gate_recovery root, so there is no automatic producer feeding that recovery path."
     ]
   },
   "pending_operation": null,
@@ -35,14 +38,17 @@
     "Production-verified #205 report idempotence: terminal research section count converged from 3 to 1.",
     "Downloaded and inspected exact Deep artifact 35485262882 instead of inferring from summaries.",
     "Identified structural predictability root cause: successful-but-empty primary exchange history queries were treated as final evidence insufficiency and forbidden from using the existing CNINFO official fallback.",
-    "Created PR #207 with production-shaped regression for clean-empty primary fallback; MIN_COMPLETE_YEARS=3 and all authority/decision guardrails unchanged."
+    "Created PR #207 with production-shaped regression for clean-empty primary fallback; MIN_COMPLETE_YEARS=3 and all authority/decision guardrails unchanged.",
+    "Mapped long_term_demand bottleneck to sparse official source-family coverage, not disabled alias expansion.",
+    "Confirmed moat/public-material recovery consumer exists in Terminal, while automatic Deep currently supplies no public_material_gate_recovery payload."
   ],
-  "next_action": "Finish PR #207 CI/review and merge only if blocking checks are green. In parallel finish post-#206 Deep verification and compare material_event_failed_gate_count against old baseline 64. After #207 merge, require a new Deep artifact with non-zero predictability source_urls/metrics coverage and verify Deep -> Provenance -> Terminal -> Investor Overlay -> Three-Pillar lineage. Then address long_term_demand and moat machine-evidence coverage (old profiles: long_term_demand UNKNOWN 851/853; moat UNKNOWN 851/853) without loosening gates.",
+  "next_action": "Finish PR #207 backend-gate; merge only if green and clean. Finish post-#206 Deep production comparison against old material_event_failed_gate_count=64. After #207 production proof, expand long_term_demand official-source coverage while preserving the two-independent-source-family rule; separately design a provenance-strict automatic producer for moat/public-material recovery rather than weakening the qualitative hard gate.",
   "do_not_repeat": [
     "Do not reopen solved 351-profile continuity defect.",
     "Do not loosen MIN_COMPLETE_YEARS=3, hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
     "Do not treat old pre-#205 duplicate dashboard as current after the production-verified single-section persistence.",
     "Do not classify routine/preventive disclosure titles as actual material incidents.",
-    "Do not diagnose predictability as a PDF-parser failure until source candidate routing is restored; old artifact had zero source URLs before parsing."
+    "Do not diagnose predictability as a PDF-parser failure until source candidate routing is restored; old artifact had zero source URLs before parsing.",
+    "Do not claim industry classification prefixes disable alias expansion; attempt-1 recorded industry_alias_expansion_count=852."
   ]
 }
