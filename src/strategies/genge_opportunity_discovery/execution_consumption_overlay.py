@@ -1,9 +1,11 @@
 """Consume one-shot Canonical holding-add authorizations after confirmed execution.
 
-Formal actions remain Canonical-only. This read-side overlay only prevents an
-already executed staged-add allowance from being planned again while the same
-Canonical snapshot remains active. A new Canonical snapshot/source-run key does
-not inherit an older consumption record.
+Formal actions remain Canonical-only. This read-side overlay prevents an already
+executed staged-add allowance from being planned again. Consumption is sticky
+across routine Canonical snapshot/source-run refreshes for the same security;
+a fresh snapshot is not, by itself, a new one-shot authorization. Re-arming
+a consumed staged add requires an explicit ``holding_add_rearm_after_consumption``
+flag (or ``STAGED_ADD_REARM_AUTHORIZED`` reason) on the current Canonical row.
 """
 from __future__ import annotations
 
@@ -17,6 +19,8 @@ CONTRACT = "GEN_GE_EXECUTION_CONSUMPTION_V1"
 LOT_SIZE = 100
 STAGED_ADD_SOURCE = "AUTHORIZED_CANONICAL_HOLDING_STAGED_ADD"
 CONSUMED_REASON = "STAGED_ADD_AUTHORIZATION_CONSUMED"
+REARM_REASON = "STAGED_ADD_REARM_AUTHORIZED"
+REARM_FIELD = "holding_add_rearm_after_consumption"
 
 
 def _code(value: Any) -> str:
@@ -44,34 +48,70 @@ def _float(value: Any) -> float:
         return 0.0
 
 
+def _explicit_rearm(row: Mapping[str, Any]) -> bool:
+    if row.get(REARM_FIELD) is True:
+        return True
+    reasons = {x.strip() for x in str(row.get("holding_add_reason_codes") or "").split(";") if x.strip()}
+    return REARM_REASON in reasons
+
+
 def _consumption_map(
     execution_state: Mapping[str, Any], *, snapshot_id: str, source_run_id: str
 ) -> dict[str, dict[str, Any]]:
+    """Return the authoritative latest staged-add consumption per security.
+
+    Exact current-lineage records take precedence. If there is no exact record,
+    the latest prior consumption is carried forward: routine Canonical refreshes
+    must not silently recreate a one-shot allowance. The current Canonical can
+    explicitly re-arm later; that decision is handled by ``_explicit_rearm``.
+    """
     if not execution_state:
         return {}
     if execution_state.get("contract_version") != CONTRACT:
         raise ValueError("execution consumption contract mismatch")
     if execution_state.get("no_auto_trade") is not True:
         raise ValueError("execution consumption state lost no-auto-trade")
+
     out: dict[str, dict[str, Any]] = {}
-    for raw in execution_state.get("consumptions") or []:
+    for index, raw in enumerate(execution_state.get("consumptions") or []):
         if not isinstance(raw, Mapping):
             continue
         if raw.get("no_auto_trade") is not True:
             raise ValueError("execution consumption row lost no-auto-trade")
-        if str(raw.get("canonical_snapshot_id") or "") != snapshot_id:
-            continue
-        if str(raw.get("canonical_source_run_id") or "") != source_run_id:
-            continue
         if str(raw.get("authorization_type") or "") != "HOLDING_STAGED_ADD":
             continue
         code = _code(raw.get("code"))
         if not code:
             continue
-        shares = max(0, _int(raw.get("consumed_shares")))
+
+        exact = (
+            str(raw.get("canonical_snapshot_id") or "") == snapshot_id
+            and str(raw.get("canonical_source_run_id") or "") == source_run_id
+        )
+        candidate = dict(raw)
+        candidate["_lineage_match"] = "EXACT" if exact else "CARRIED_FORWARD"
+        candidate["_ledger_index"] = index
+
         previous = out.get(code)
-        if previous is None or shares > _int(previous.get("consumed_shares")):
-            out[code] = dict(raw)
+        if previous is None:
+            out[code] = candidate
+            continue
+
+        previous_exact = previous.get("_lineage_match") == "EXACT"
+        if exact and not previous_exact:
+            out[code] = candidate
+            continue
+        if previous_exact and not exact:
+            continue
+
+        candidate_time = str(candidate.get("consumed_at") or "")
+        previous_time = str(previous.get("consumed_at") or "")
+        if (candidate_time, index, _int(candidate.get("consumed_shares"))) >= (
+            previous_time,
+            _int(previous.get("_ledger_index")),
+            _int(previous.get("consumed_shares")),
+        ):
+            out[code] = candidate
     return out
 
 
@@ -91,6 +131,7 @@ def apply_execution_consumption(
     )
 
     applied: list[dict[str, Any]] = []
+    rearm_skipped: list[str] = []
     rows = payload.get("stock_portfolio", {}).get("rows") or []
     for row in rows:
         if not isinstance(row, dict):
@@ -99,6 +140,12 @@ def apply_execution_consumption(
         record = consumptions.get(code)
         if record is None or row.get("holding_add_authorized") is not True:
             continue
+
+        lineage_match = str(record.get("_lineage_match") or "CARRIED_FORWARD")
+        if lineage_match != "EXACT" and _explicit_rearm(row):
+            rearm_skipped.append(code)
+            continue
+
         max_lots = max(1, _int(row.get("holding_add_max_lots")) or 1)
         allowance = max_lots * LOT_SIZE
         consumed = max(0, _int(record.get("consumed_shares")))
@@ -113,18 +160,28 @@ def apply_execution_consumption(
         row["holding_add_reason_codes"] = ";".join(reasons)
         row["holding_add_consumption"] = {
             "status": "CONSUMED",
-            "canonical_snapshot_id": snapshot_id,
-            "canonical_source_run_id": source_run_id,
+            "source_canonical_snapshot_id": str(record.get("canonical_snapshot_id") or ""),
+            "source_canonical_source_run_id": str(record.get("canonical_source_run_id") or ""),
+            "applied_to_canonical_snapshot_id": snapshot_id,
+            "applied_to_canonical_source_run_id": source_run_id,
+            "lineage_match": lineage_match,
             "consumed_shares": consumed,
             "allowance_shares": allowance,
+            "remaining_executable_shares": 0,
             "consumed_at": record.get("consumed_at") or "",
             "authority": "EXECUTION_STATE_ONLY",
+            "rearm_requires_explicit_authority": True,
             "formal_action_mutation_allowed": False,
             "no_auto_trade": True,
         }
         if str(row.get("formal_action") or "").upper() == "HOLD":
-            row["investor_action"] = "继续持有；当前Canonical的一手加仓授权已执行完毕，等待新Canonical重新授权"
-        applied.append({"code": code, "consumed_shares": consumed, "allowance_shares": allowance})
+            row["investor_action"] = "继续持有；历史分批加仓授权已消费，本轮新增可执行0股"
+        applied.append({
+            "code": code,
+            "consumed_shares": consumed,
+            "allowance_shares": allowance,
+            "lineage_match": lineage_match,
+        })
 
     applied_codes = {x["code"] for x in applied}
     plan = payload.get("capital_deployment") if isinstance(payload.get("capital_deployment"), dict) else {}
@@ -156,13 +213,21 @@ def apply_execution_consumption(
         headline = str(payload.get("headline") or "")
         payload["headline"] = re.sub(r"计划立即投入≈¥[0-9.]+", f"计划立即投入≈¥{deployed:.0f}", headline)
 
+    exact_count = sum(1 for x in consumptions.values() if x.get("_lineage_match") == "EXACT")
+    carried_count = sum(1 for x in consumptions.values() if x.get("_lineage_match") == "CARRIED_FORWARD")
     payload["execution_consumption_reconciliation"] = {
         "contract_version": CONTRACT,
         "canonical_snapshot_id": snapshot_id,
         "canonical_source_run_id": source_run_id,
         "matching_consumption_count": len(consumptions),
+        "exact_lineage_consumption_count": exact_count,
+        "carried_forward_consumption_count": carried_count,
+        "explicit_rearm_skipped_count": len(rearm_skipped),
+        "explicit_rearm_skipped_codes": rearm_skipped,
         "applied_consumption_count": len(applied),
         "applied": applied,
+        "routine_canonical_refresh_rearms_consumed_add": False,
+        "explicit_rearm_required": True,
         "formal_action_mutation_allowed": False,
         "automatic_order_allowed": False,
         "no_auto_trade": True,
@@ -186,8 +251,13 @@ def main(argv: list[str] | None = None) -> int:
         from .investor_decision_dashboard import render_markdown
         args.markdown.write_text(render_markdown(updated), encoding="utf-8")
 
-    applied = updated.get("execution_consumption_reconciliation", {}).get("applied_consumption_count", 0)
-    print(f"execution_consumption_applied={applied};snapshot={updated.get('canonical_snapshot_id','')}")
+    reconciliation = updated.get("execution_consumption_reconciliation", {})
+    applied = reconciliation.get("applied_consumption_count", 0)
+    carried = reconciliation.get("carried_forward_consumption_count", 0)
+    print(
+        f"execution_consumption_applied={applied};carried_forward={carried};"
+        f"snapshot={updated.get('canonical_snapshot_id','')}"
+    )
     return 0
 
 
