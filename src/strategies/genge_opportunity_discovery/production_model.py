@@ -11,6 +11,10 @@ from dataclasses import replace
 from typing import Any, Mapping
 
 from .holding_valuation_continuity import assess_holding_valuation_state, sell_review_required
+from .user_trade_universe import (
+    formal_new_exposure_rejection_reason,
+    is_formal_new_exposure_tradable,
+)
 from .selection_framework_v311 import (
     V311Decision,
     ValuationConfidence,
@@ -117,6 +121,8 @@ def _holding_add_assessment(
     blockers: list[str] = []
     if typed_insurer:
         blockers.append("TYPED_INSURER_POLICY_SEPARATE")
+    if not is_formal_new_exposure_tradable(data.get("code")):
+        blockers.append(formal_new_exposure_rejection_reason(data.get("code")))
     if decision.action != "HOLD":
         blockers.append("FORMAL_ACTION_NOT_HOLD")
     if not _has_position(data):
@@ -162,6 +168,17 @@ def _apply_formal_buy_gate(data: Mapping[str, Any], decision: V311Decision) -> V
             action="HOLD",
             target_position_fraction=1.0,
             reason_codes=("CORE_POOL_CONFERS_NO_BUY_PRIVILEGE", "EXISTING_POSITION_NOT_CANDIDATE_BUY"),
+        )
+    if not is_formal_new_exposure_tradable(data.get("code")):
+        return replace(
+            decision,
+            action="WAIT",
+            target_position_fraction=0.0,
+            reason_codes=(
+                "CORE_POOL_CONFERS_NO_BUY_PRIVILEGE",
+                formal_new_exposure_rejection_reason(data.get("code")),
+                *decision.reason_codes,
+            ),
         )
     if decision.valuation_confidence is not ValuationConfidence.HIGH:
         return replace(
@@ -278,6 +295,8 @@ def production_payload(data: Mapping[str, Any]) -> dict[str, Any]:
         "valuation_confidence_reason_codes": ";".join(confidence.reason_codes),
         "formal_buy_requires_high_confidence": True,
         "formal_buy_max_price_to_neutral": FORMAL_BUY_MAX_PRICE_TO_NEUTRAL,
+        "formal_new_exposure_trade_universe": "SH_SZ_MAIN_BOARD_A_ONLY",
+        "formal_new_exposure_trade_universe_eligible": is_formal_new_exposure_tradable(data.get("code")),
         "core_pool_confers_no_buy_privilege": True,
         "formal_sell_requires_explicit_rationale": True,
         "formal_sell_mechanical_valuation_only_forbidden": True,
