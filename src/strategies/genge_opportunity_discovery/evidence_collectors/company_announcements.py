@@ -17,6 +17,19 @@ from .validators import content_hash, direction_from_excerpt, extract_numeric_co
 REQUEST_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
 }
+CNINFO_QUERY_URL = "https://www.cninfo.com.cn/new/hisAnnouncement/query"
+CNINFO_QUERY_REFERER = (
+    "https://www.cninfo.com.cn/new/commonUrl/pageOfSearch"
+    "?url=disclosure/list/search"
+)
+CNINFO_QUERY_HEADERS = {
+    **REQUEST_HEADERS,
+    "Accept": "application/json, text/plain, */*",
+    "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+    "Origin": "https://www.cninfo.com.cn",
+    "Referer": CNINFO_QUERY_REFERER,
+    "X-Requested-With": "XMLHttpRequest",
+}
 CNINFO_STOCK_LIST_URL = "https://www.cninfo.com.cn/new/data/szse_stock.json"
 SSE_ANNOUNCEMENT_URL = "https://query.sse.com.cn/security/stock/queryCompanyBulletinNew.do"
 SSE_DISCLOSURE_REFERER = "https://www.sse.com.cn/disclosure/listedinfo/announcement/"
@@ -508,8 +521,8 @@ def _query_cninfo(
         "isHLtitle": "true",
     }
     response = session.post(
-        "https://www.cninfo.com.cn/new/hisAnnouncement/query",
-        headers={**REQUEST_HEADERS, "Referer": "https://www.cninfo.com.cn/"},
+        CNINFO_QUERY_URL,
+        headers=CNINFO_QUERY_HEADERS,
         data=data,
         timeout=timeout,
     )
@@ -802,8 +815,8 @@ def _query_cninfo_material_events(
         }
         try:
             response = session.post(
-                "https://www.cninfo.com.cn/new/hisAnnouncement/query",
-                headers={**REQUEST_HEADERS, "Referer": "https://www.cninfo.com.cn/"},
+                CNINFO_QUERY_URL,
+                headers=CNINFO_QUERY_HEADERS,
                 data=data,
                 timeout=timeout,
             )
