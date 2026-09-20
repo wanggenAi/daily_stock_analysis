@@ -558,3 +558,70 @@ def test_multi_year_collector_uses_cninfo_when_primary_exchange_query_fails(monk
     assert rows[0]["query_diagnostic"] == "PRIMARY:ConnectionError"
     assert rows[0]["coverage_years"] == [2023, 2024, 2025]
     assert rows[0]["source_domain"] == "static.cninfo.com.cn"
+
+
+
+def test_transient_predictability_query_retries_connection_once(monkeypatch):
+    calls = {"count": 0}
+    sleeps = []
+
+    def query():
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise requests.ConnectionError("temporary transport failure")
+        return ["recovered"]
+
+    monkeypatch.setattr(predictability_module.time, "sleep", lambda seconds: sleeps.append(seconds))
+    result = predictability_module._with_transient_query_retry(query)
+
+    assert result == ["recovered"]
+    assert calls["count"] == 2
+    assert sleeps == [predictability_module.TRANSIENT_QUERY_BACKOFF_SECONDS]
+
+
+def test_predictability_query_does_not_retry_nontransient_403(monkeypatch):
+    calls = {"count": 0}
+    response = requests.Response()
+    response.status_code = 403
+    error = requests.HTTPError("forbidden", response=response)
+
+    def query():
+        calls["count"] += 1
+        raise error
+
+    monkeypatch.setattr(
+        predictability_module.time,
+        "sleep",
+        lambda _seconds: (_ for _ in ()).throw(AssertionError("403 must not be retried")),
+    )
+    try:
+        predictability_module._with_transient_query_retry(query)
+    except requests.HTTPError as exc:
+        assert predictability_module._query_error_label(exc) == "HTTPError:403"
+    else:
+        raise AssertionError("non-transient HTTP 403 must fail closed")
+
+    assert calls["count"] == 1
+
+
+def test_predictability_query_retries_transient_http_503_with_bounded_retry_after(monkeypatch):
+    calls = {"count": 0}
+    sleeps = []
+    response = requests.Response()
+    response.status_code = 503
+    response.headers["Retry-After"] = "9"
+    error = requests.HTTPError("unavailable", response=response)
+
+    def query():
+        calls["count"] += 1
+        if calls["count"] == 1:
+            raise error
+        return ["recovered"]
+
+    monkeypatch.setattr(predictability_module.time, "sleep", lambda seconds: sleeps.append(seconds))
+    result = predictability_module._with_transient_query_retry(query)
+
+    assert result == ["recovered"]
+    assert calls["count"] == 2
+    assert sleeps == [2.0]
+    assert predictability_module._query_error_label(error) == "HTTPError:503"
