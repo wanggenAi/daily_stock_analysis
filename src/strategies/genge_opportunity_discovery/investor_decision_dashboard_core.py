@@ -713,7 +713,15 @@ def render_markdown(p: Mapping[str, Any]) -> str:
         "- 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。",
         "", "- **no-auto-trade：true；所有订单必须人工确认。**", "",
     ]
-    return "\n".join(lines)
+    text = "\n".join(lines)
+    if p.get("terminal_research_snapshot"):
+        # Any downstream quote/event overlay may re-render this dashboard. Preserve
+        # the research-only terminal section whenever its validated JSON snapshot
+        # is still present instead of silently dropping it from the Markdown view.
+        from .investor_terminal_research_overlay import append_markdown
+
+        return append_markdown(text, p)
+    return text
 
 
 def write_dashboard(
