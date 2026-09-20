@@ -26,8 +26,8 @@
 | 趋势 | 信心 | 结构 | 产业 | A股研究映射 |
 |---|---:|---:|---:|---|
 | digital_infrastructure | 33.69 | 57.06 | 62.50 | 尚未映射 |
+| software_digital_economy | 31.92 | 50.00 | 62.44 | 尚未映射 |
 | automotive_industry | 16.09 | 50.00 | 62.50 | 汽车 |
-| software_digital_economy | 15.03 | 50.00 | 58.81 | 尚未映射 |
 | demographic_longevity | 14.64 | 60.32 | 50.00 | 医药 |
 | urbanization_services | 14.18 | 58.08 | 50.00 | 尚未映射 |
 | research_intensity | 13.95 | 55.04 | 50.00 | 尚未映射 |
