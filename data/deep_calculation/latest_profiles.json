@@ -2,18 +2,18 @@
   "authority": "RESEARCH_ONLY",
   "automatic_formal_buy_allowed": false,
   "contract": "GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1",
-  "deep_code_epoch_sha": "b2ed8005926cef69f7a1e547f1d0000353220572",
+  "deep_code_epoch_sha": "bd1697b06843eacb6fc6270f99cc7f21ce3f07b3",
   "execution_status": "SUCCESS",
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-20T12:59:56+00:00",
-  "generated_at": "2026-09-20T12:19:01+00:00",
+  "gap_closure_generated_at": "2026-09-20T13:36:29+00:00",
+  "generated_at": "2026-09-20T12:56:13+00:00",
   "immediate_retry_required": false,
-  "lambda_run_id": "35510170838",
-  "material_event_failed_gate_count": 25,
+  "lambda_run_id": "35511922236",
+  "material_event_failed_gate_count": 18,
   "material_event_pass_override_count": 2,
-  "new_evidence_count": 1501,
+  "new_evidence_count": 1423,
   "no_auto_trade": true,
   "predictability_resolved_gate_count": 0,
   "profiles": {
@@ -10283,22 +10283,17 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "BANKRUPTCY_RESTRUCTURING",
-              "publish_date": "2025-11-14",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "旺能环境：关于法院裁定受理子公司预重整并指定预重整管理人的公告：关于法院裁定受理子公司预重整并指定预重整管理人的公告",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-11-14/8d500a5d-cd6b-4a88-895f-377d8ee634f4.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: BANKRUPTCY_RESTRUCTURING.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
@@ -10329,22 +10324,29 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "HIGH",
-          "evidence": [
+          "confidence": "",
+          "evidence": [],
+          "gap_closure_evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "BANKRUPTCY_RESTRUCTURING",
-              "publish_date": "2025-11-14",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "旺能环境：关于法院裁定受理子公司预重整并指定预重整管理人的公告：关于法院裁定受理子公司预重整并指定预重整管理人的公告",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-11-14/8d500a5d-cd6b-4a88-895f-377d8ee634f4.PDF"
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "szse.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403",
+              "url": null
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: BANKRUPTCY_RESTRUCTURING.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "gap_closure_rationale": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403",
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403"
         }
       },
       "industry": "D44电力、热力生产和供应业",
@@ -11127,22 +11129,17 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "FUNDS_OCCUPATION",
-              "publish_date": "2025-08-27",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "东港股份：防止大股东及关联方占用资金制度（2025.8）：防止大股东及关联方占用资金制度",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-08-27/4542d5e0-7cd3-4965-bd2b-ae7e33598b96.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
@@ -15360,22 +15357,17 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "FUNDS_OCCUPATION",
-              "publish_date": "2026-04-29",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "康盛股份：控股股东及其他关联方占用资金情况的专项审计说明：控股股东及其他关联方占用资金情况的",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/915b0157-f2bc-403c-a3ab-fbca58cf6e79.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
@@ -15626,22 +15618,17 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "FUNDS_OCCUPATION",
-              "publish_date": "2026-04-29",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "尤夫股份：防止大股东及关联方占用资金制度：防止大股东及关联方占用资金制度",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/4473ff75-c3d2-4bcb-b3a7-ec50cee8dfec.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
@@ -15814,22 +15801,17 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "HIGH",
+          "confidence": "MACHINE",
           "evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "BANKRUPTCY_RESTRUCTURING",
-              "publish_date": "2026-07-14",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "杭氧股份：关于公司全资子公司拟申请破产清算的公告：关于公司全资子公司拟申请破产清算的公告",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-14/fdcb3ec2-42d0-47fd-9412-29978fee391d.PDF"
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: BANKRUPTCY_RESTRUCTURING.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
@@ -15860,22 +15842,29 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "HIGH",
-          "evidence": [
+          "confidence": "",
+          "evidence": [],
+          "gap_closure_evidence": [
             {
-              "event_severity": "HIGH",
-              "event_status": "ACTIVE",
-              "event_type": "BANKRUPTCY_RESTRUCTURING",
-              "publish_date": "2026-07-14",
-              "source_domain": "disc.static.szse.cn",
-              "source_type": "EXCHANGE_DISCLOSURE",
-              "summary": "杭氧股份：关于公司全资子公司拟申请破产清算的公告：关于公司全资子公司拟申请破产清算的公告",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-14/fdcb3ec2-42d0-47fd-9412-29978fee391d.PDF"
+              "classification": "UNKNOWN",
+              "coverage_years": [],
+              "cyclical_or_resource": false,
+              "metrics_by_year": [],
+              "publish_date": null,
+              "reason_code": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "szse.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [],
+              "summary": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403",
+              "url": null
             }
           ],
-          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: BANKRUPTCY_RESTRUCTURING.",
-          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
-          "status": "FAIL"
+          "gap_closure_rationale": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403",
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403"
         }
       },
       "industry": "C35专用设备制造业",
@@ -72479,14 +72468,14 @@
       "research_terminal_state": "EVIDENCE_EXHAUSTED"
     }
   },
-  "progressed_gate_count": 25,
+  "progressed_gate_count": 18,
   "research_outcome": "EVIDENCE_EXHAUSTED",
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
   "reverified_upstream_pass_count": 7,
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
-  "source_run_id": "35443656183",
-  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
+  "source_run_id": "35511241203",
+  "trigger_source": "EVERY_INDUSTRY_READY",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
