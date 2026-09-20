@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generation": 17,
+  "generation": 18,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "PR224_CI_AND_POST223_MAIN_DEEP_TERMINAL_PENDING",
-  "last_observed_main_sha": "0ed434556342ae2d9c4cee947bc737d537a7f42e",
+  "stage": "PR224_CI_POST223_END_TO_END_VERIFIED",
+  "last_observed_main_sha": "1470ab2b4401c84d402fdee515252fb22a14dc8e",
   "work_branch": "fix/deep-default-workset-coalescing-20260920",
   "work_head_sha": "cd6b70914cffbd88f518f8f2b139e73ee4fba334",
   "active_pr": 224,
@@ -14,17 +14,21 @@
     "head_sha": "cd6b70914cffbd88f518f8f2b139e73ee4fba334",
     "status": "RUNNING",
     "conclusion": null,
-    "note": "PR #224 CI running. Branch changes only Deep concurrency grouping and workflow-contract tests."
+    "note": "PR #224 ai-governance/change detection/docker green; backend-gate full offline suite still running; web-gate skipped."
   },
   "production_or_artifact": {
-    "status": "POST223_MAIN_DEEP_RUNNING_LIVENESS_PROVEN_DUPLICATE_LOAD_FIX_IN_CI",
+    "status": "POST223_END_TO_END_VERIFIED_PR224_DUPLICATE_COALESCING_PENDING",
     "evidence": [
-      "PR #223 merged as d06b040a6373054aa50b5ccda835a1a354f113a5 and post-merge main CI succeeded.",
-      "Authoritative Deep 35509192911 remains in official evidence closure with full workset initial artifact: requested=852, processed=852, profiles=853, missing=0, unresolved before closure=4044.",
-      "Hourly Deep Overlay 35510103689 successfully triggered periodic Deep 35510170838 while 35509192911 was active; 35509192911 remained running, proving #223 liveness behavior.",
-      "Older Deep 35508293335 completed but epoch fence logged superseded/preserving history only; history persisted without replacing shared latest.",
-      "Run 35508293335 reduced ANNUAL_REPORT_QUERY_FAILED unresolved reasons from 377 to 0; predictability_verified_count remained 0 and 845 gates remained insufficient-years, so UNKNOWN was not converted to PASS.",
-      "Production exposed duplicate same-semantics closures because concurrency group still used runtime SHA. PR #224 removes runtime SHA from the default-workset group while preserving explicit research_run_id/requested_codes isolation and #223 cancellation semantics."
+      "Authoritative Deep 35509192911 completed SUCCESS at 12:49:22Z; all closure/persistence/dispatch steps succeeded.",
+      "latest_status and history/35509192911.json both point to lambda 35509192911, source Every-Industry 35443656183, code epoch d06b040a6373054aa50b5ccda835a1a354f113a5, requested/processed=852, profiles=853, unresolved=4021.",
+      "Deep safety remained intact: verified_pass_gate_count=215, unverified_pass_gate_count=0, unknown_is_pass=false, automatic_formal_buy_allowed=false, formal_trading_authority=false, no_auto_trade=true.",
+      "Provenance audit for 35509192911 succeeded; all_pass_gates_have_verified_evidence=true and unknown_gate_count=4021.",
+      "Terminal Research converged exactly from source_deep_lambda_run_id=35509192911: BUY=0, WAIT_PRICE=0, RESEARCH_GAP=833, REJECT=19, requested=852, all_requested_terminal=true, research-only authority.",
+      "Investor terminal_research_snapshot now points to 35509192911 with 833/19 counts. Formal terminal remains unavailable by design; terminal_research_available=true and terminal_research_formal_mutation_allowed=false.",
+      "Run 35508293335 measured transient query fix: ANNUAL_REPORT_QUERY_FAILED unresolved count 377->0 without any predictability PASS; 845 still insufficient complete fiscal years.",
+      "Evidence for predictability is mostly acquisition/extraction constrained: 470 SSE rows had no report URLs with primary insufficient + CNINFO 403; among SZSE rows only 24/382 had successfully retained source URLs and most complete-year coverage remained zero.",
+      "Current duplicate periodic Deep 35510170838 uses the exact same Every-Industry source 35443656183 and same 852/852 workset as 35509192911, proving it is duplicate work rather than fresher research input.",
+      "PR #224 removes runtime SHA from default Deep concurrency grouping while retaining explicit research_run_id/requested_codes isolation and #223 non-preemption semantics."
     ]
   },
   "pending_operation": null,
@@ -33,18 +37,20 @@
     "last_error": null
   },
   "completed": [
-    "Merged #222 and verified predictability retry separation.",
-    "Merged #223 and production-proved successful periodic workflow_run cannot cancel active Deep closure.",
-    "Production-proved stale epoch history-only persistence fence.",
-    "Created PR #224 to coalesce default Deep work by logical workset instead of runtime SHA.",
-    "Started fresh PR #224 CI without changing main."
+    "Merged #222; bounded transient metadata retry eliminated transport-query unresolved reasons without weakening gates.",
+    "Merged #223; production-proved successful periodic workflow_run cannot cancel active official-evidence closure.",
+    "Production-proved stale code epochs preserve immutable history without overwriting latest pointers.",
+    "Completed and end-to-end verified authoritative Deep 35509192911 through Provenance, Terminal Research and Investor research overlay.",
+    "Created PR #224 to coalesce logically identical default-workset Deep runs across runtime/persisted-data SHAs.",
+    "Quantified next predictability bottleneck as report acquisition/body extraction observability rather than threshold strictness."
   ],
-  "next_action": "Whichever completes first: (a) verify authoritative Deep 35509192911 terminal persistence and downstream Provenance/Terminal/Investor lineage; (b) consume PR #224 CI and fix only real failures. Merge #224 only after blocking CI is green and after considering current main Deep terminal state. Then production-verify no concurrent duplicate default-workset closure.",
+  "next_action": "Consume PR #224 backend-gate. Merge #224 only when all blocking checks are green, preferably while duplicate Deep 35510170838 is still running so the workflow-file epoch fence prevents it from overwriting latest. Then production-verify default-workset periodic triggers queue/coalesce instead of running a second closure. After that, fix predictability acquisition observability/source coverage before changing any gate logic.",
   "do_not_repeat": [
-    "Do not treat cancelled Deep 35507967197 as terminal evidence.",
-    "Do not treat history-only Deep 35508293335 as current latest.",
-    "Do not claim predictability passed: transport failures are gone but verified_count remains 0.",
-    "Do not modify PR #224 head unnecessarily while CI is running.",
-    "Do not loosen evidence hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade."
+    "Do not reopen solved Candidate Lifecycle continuity defects.",
+    "Do not treat history-only stale epochs as latest.",
+    "Do not claim predictability passed: verified_count remains 0.",
+    "Do not conflate formal Terminal availability with terminal research snapshot availability.",
+    "Do not modify PR #224 head unless CI reveals a real defect.",
+    "Do not loosen hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Formal authority, UNKNOWN != PASS, or no_auto_trade."
   ]
 }
