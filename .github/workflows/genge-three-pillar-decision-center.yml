@@ -14,9 +14,7 @@ on:
     - cron: '32 * * * 1-5'
   workflow_run:
     workflows:
-      - "GenGe Investor Decision Brief"
       - "Era Capital Trend Radar Live"
-      - "GenGe V3.1 Terminal Research Decision"
     types: [completed]
   pull_request:
     paths:
