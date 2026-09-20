@@ -1,27 +1,28 @@
 {
   "schema_version": 2,
-  "generation": 4,
+  "generation": 5,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_PRODUCTION_VERIFICATION",
+  "status": "WAITING_CI_AND_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR205_PR206_MERGED_VERIFY_POST_MERGE",
-  "last_observed_main_sha": "262ecf4ae62a8d8ea58923300532942b9ba542bb",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "stage": "PR207_PREDICTABILITY_PRIMARY_EMPTY_FALLBACK",
+  "last_observed_main_sha": "e98ca4ec9e23f6fe99647731474a86484706405f",
+  "work_branch": "fix/predictability-empty-primary-fallback",
+  "work_head_sha": "5c3a5b8a2ed0bb10b041706eca95ad6cb09a0193",
+  "active_pr": 207,
   "ci": {
-    "run_id": 35487990261,
-    "head_sha": "262ecf4ae62a8d8ea58923300532942b9ba542bb",
-    "status": "QUEUED_OR_RUNNING",
+    "run_id": 35488275944,
+    "head_sha": "5c3a5b8a2ed0bb10b041706eca95ad6cb09a0193",
+    "status": "RUNNING",
     "conclusion": null
   },
   "production_or_artifact": {
-    "status": "RUNNING",
+    "status": "PARTIALLY_VERIFIED",
     "evidence": [
-      "PR #205 merged as c058d91a28359ef44f3332de97ebcdf8c9d1cf2d; preserves Deep Research across rerenders and clarifies planned vs executable actions.",
-      "PR #206 merged as 262ecf4ae62a8d8ea58923300532942b9ba542bb; prevents routine/preventive disclosure titles from creating false ACTIVE/HIGH material-event FAILs.",
-      "Post-merge Deep Calculation Lambda 35487990313 started on main 262ecf4ae62a.",
-      "Post-merge Evidence Change Trigger 35487990274 and Opportunity Discovery 35487990265 started/pending on same main."
+      "PR #205 merged as c058d91a28359ef44f3332de97ebcdf8c9d1cf2d.",
+      "Post-#205 persisted INVESTOR_DECISION_DASHBOARD.md now contains exactly one Deep Research terminal section, not the prior three mixed sections; execution-status column and executable-plan clarification are present.",
+      "PR #206 merged as 262ecf4ae62a8d8ea58923300532942b9ba542bb; post-merge Deep runs 35487990313 and 35487992684 are still running for material-event comparison.",
+      "Old production Deep artifact 35485262882 proves predictability source-routing defect: 852/852 rows UNKNOWN; SSE_PRIMARY=470, SZSE_PRIMARY=382; query_diagnostic empty for all; source_urls=0, metrics_by_year=0, coverage_count=0 for all.",
+      "PR #207 changes only official annual-report routing: when primary exchange returns fewer than MIN_COMPLETE_YEARS=3 candidates, consult CNINFO fallback, merge by fiscal year, prefer primary on duplicate years; thresholds remain frozen."
     ]
   },
   "pending_operation": null,
@@ -30,16 +31,18 @@
     "last_error": null
   },
   "completed": [
-    "Recovered from stale TASK_STATE/recovery using live GitHub truth.",
-    "Verified PR #205 and #206 blocking checks green and GitHub mergeability clean.",
-    "Merged PR #205 with squash commit c058d91a28359ef44f3332de97ebcdf8c9d1cf2d.",
-    "Merged PR #206 with squash commit 262ecf4ae62a8d8ea58923300532942b9ba542bb."
+    "Recovered live GitHub state and merged #205/#206.",
+    "Production-verified #205 report idempotence: terminal research section count converged from 3 to 1.",
+    "Downloaded and inspected exact Deep artifact 35485262882 instead of inferring from summaries.",
+    "Identified structural predictability root cause: successful-but-empty primary exchange history queries were treated as final evidence insufficiency and forbidden from using the existing CNINFO official fallback.",
+    "Created PR #207 with production-shaped regression for clean-empty primary fallback; MIN_COMPLETE_YEARS=3 and all authority/decision guardrails unchanged."
   ],
-  "next_action": "Verify post-merge CI and production chain. Require latest Deep/Provenance/Terminal/Investor Overlay/Three-Pillar lineage to converge on the post-#206 run; inspect REJECT and hard material-event reasons to confirm routine/preventive false positives disappeared. Then continue evidence-bottleneck analysis without loosening hard gates.",
+  "next_action": "Finish PR #207 CI/review and merge only if blocking checks are green. In parallel finish post-#206 Deep verification and compare material_event_failed_gate_count against old baseline 64. After #207 merge, require a new Deep artifact with non-zero predictability source_urls/metrics coverage and verify Deep -> Provenance -> Terminal -> Investor Overlay -> Three-Pillar lineage. Then address long_term_demand and moat machine-evidence coverage (old profiles: long_term_demand UNKNOWN 851/853; moat UNKNOWN 851/853) without loosening gates.",
   "do_not_repeat": [
     "Do not reopen solved 351-profile continuity defect.",
-    "Do not loosen hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, or no_auto_trade.",
-    "Do not merge stale/superseded PR #204; #205 is its clean replay.",
-    "Do not treat routine disclosure titles as proof of funds occupation or non-standard audit."
+    "Do not loosen MIN_COMPLETE_YEARS=3, hard gates, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
+    "Do not treat old pre-#205 duplicate dashboard as current after the production-verified single-section persistence.",
+    "Do not classify routine/preventive disclosure titles as actual material incidents.",
+    "Do not diagnose predictability as a PDF-parser failure until source candidate routing is restored; old artifact had zero source URLs before parsing."
   ]
 }
