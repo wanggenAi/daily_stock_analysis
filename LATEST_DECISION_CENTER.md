@@ -46,14 +46,14 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 - **本轮没有已授权新股 BUY。**
 - **本轮没有合格 WAIT_PRICE。**
 
-- Formal/Production Candidate Terminal REJECT：**0**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
+- Formal/Production Candidate Terminal REJECT：**171**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
 
 ## 决策完整性
 
 - 全部持仓显式深算完整：**False**
 - 世界/社会结构趋势证据可用：**True**
 - 已验证趋势→A股交接可用：**False**
-- Terminal 机会结果可用：**False**
+- Terminal 机会结果可用：**True**
 
 > UNKNOWN != PASS；研究趋势不自动变成 BUY；no_auto_trade=true。
 
