@@ -5,10 +5,6 @@ run-name: >-
 
 on:
   workflow_dispatch:
-  workflow_run:
-    workflows:
-      - "GenGe V3.1 Deep Calculation Lambda"
-    types: [completed]
   push:
     branches: [main]
     paths:
@@ -26,9 +22,6 @@ concurrency:
 
 jobs:
   audit:
-    if: >-
-      github.event_name != 'workflow_run' ||
-      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -150,6 +143,14 @@ jobs:
           done
           echo "provenance persistence failed after optimistic replay" >&2
           exit 1
+
+      - name: Dispatch terminal research only after verified provenance
+        if: steps.resolve.outputs.superseded != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-v31-terminal-research-decision.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Publish provenance audit summary
         if: always() && steps.resolve.outputs.superseded != 'true'
