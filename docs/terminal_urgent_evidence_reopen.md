@@ -6,7 +6,7 @@ A successful Slow Lane completion is **not** automatically treated as new eviden
 
 The bridge does **not** claim that Deep directly consumes the persisted Evidence Event store as hard-gate proof. Slow-lane policy and competitive events are research context, not automatic PASS evidence. When a genuine evidence-content epoch changes, the bridge reopens research and lets Deep execute its own same-run official-source collection and verification under the existing strict provenance rules.
 
-The bridge validates the persisted terminal snapshot and requires at least one `urgent_research_queue` row that remains `REJECT / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY`, is explicitly reopenable on new evidence, has no known hard-gate failure, and retains `RESEARCH_ONLY` / no-auto-trade authority.
+The bridge validates the persisted terminal snapshot and requires at least one `urgent_research_queue` row that remains `RESEARCH_GAP / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY`, is explicitly reopenable on new evidence, has no known hard-gate failure, and retains `RESEARCH_ONLY` / no-auto-trade authority.
 
 When such urgent rows exist and the evidence epoch is eligible, Deep receives the **complete previous terminal workset**, not only the urgent subset. This preserves terminal snapshot continuity: if 34 names were terminal before the evidence epoch and 11 are urgent, the Deep request remains 34 names while the 11 urgent names are separately identified as the reason for reopening. The following Terminal run therefore cannot silently shrink to 11 merely because the reopen trigger was urgent-focused.
 
