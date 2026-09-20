@@ -221,5 +221,7 @@ def test_markdown_leads_with_three_investor_questions():
     assert "## 4. 今日账户资金怎么处理" in md
     assert "可用现金：**¥50000.00**" in md
     assert "现金继续保留" in md
+    assert "### 今日最终操作表" in md
+    assert "无新增资金动作" in md
     assert "与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级" in md
     assert "UNKNOWN != PASS" in md
