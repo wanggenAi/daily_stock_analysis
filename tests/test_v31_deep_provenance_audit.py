@@ -179,3 +179,14 @@ def test_provenance_self_verification_uses_native_push_then_workflow_run():
     assert "PROVENANCE_AUDIT_PUSH_REFRESH" in lambda_workflow
     assert "GenGe V3.1 Deep Provenance Audit" in lambda_workflow
     assert "gh workflow run genge-v31-deep-calculation-lambda.yml" not in audit_workflow
+
+
+def test_provenance_workflow_dispatches_terminal_only_after_persisted_audit():
+    workflow = Path(".github/workflows/genge-v31-deep-provenance-audit.yml").read_text(encoding="utf-8")
+    assert 'workflows:\n      - "GenGe V3.1 Deep Calculation Lambda"' not in workflow
+    persist_at = workflow.index("- name: Persist provenance proof with optimistic replay")
+    dispatch_at = workflow.index("- name: Dispatch terminal research only after verified provenance")
+    assert persist_at < dispatch_at
+    dispatch = workflow[dispatch_at:]
+    assert "gh workflow run genge-v31-terminal-research-decision.yml" in dispatch
+    assert "steps.resolve.outputs.superseded != 'true'" in dispatch
