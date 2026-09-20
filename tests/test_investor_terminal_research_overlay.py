@@ -87,3 +87,12 @@ def test_overlay_refuses_urgent_queue_that_is_not_research_gap():
         assert "urgent research must remain RESEARCH_GAP" in str(exc)
     else:
         raise AssertionError("expected urgent research semantic violation")
+
+
+def test_markdown_overlay_is_idempotent_across_rerenders():
+    out = apply_overlay(_dashboard(), _terminal())
+    first = append_markdown("# 投资决策驾驶舱\n\n## 9. 系统状态\n\n- ok\n", out)
+    second = append_markdown(first, out)
+    assert second.count("## 深算研究终态（Research-only，不等于正式交易授权）") == 1
+    assert second.count("国电南瑞 600406") == 1
+    assert "## 9. 系统状态" in second
