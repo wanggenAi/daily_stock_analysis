@@ -1,29 +1,29 @@
 {
   "schema_version": 2,
-  "generation": 13,
+  "generation": 14,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_PRODUCTION",
+  "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "POST_MERGE_222_DEEP_35507967197_RUNNING",
-  "last_observed_main_sha": "0626380c5b68104cd66f86cc1387a0049fdc0735",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "stage": "PR223_DEEP_WORKFLOW_RUN_LIVENESS_CI",
+  "last_observed_main_sha": "5e5c40ae4ae15243318d63414fab5ea0c0f33498",
+  "work_branch": "fix/deep-workflow-run-liveness-20260920",
+  "work_head_sha": "a76ea5506a4a97da1e9e980896abd6383d344468",
+  "active_pr": 223,
   "ci": {
-    "run_id": 35507963540,
-    "head_sha": "0626380c5b68104cd66f86cc1387a0049fdc0735",
-    "status": "RUNNING",
+    "run_id": 35508450498,
+    "head_sha": "a76ea5506a4a97da1e9e980896abd6383d344468",
+    "status": "QUEUED",
     "conclusion": null,
-    "note": "Post-merge main CI: change detection and ai-governance succeeded; backend-gate and docker-build are running; web-gate skipped."
+    "note": "Fresh #223 CI queued after TASK_STATE checkpoint. PR is currently mergeable=true."
   },
   "production_or_artifact": {
-    "status": "POST_MERGE_DEEP_RUNNING",
+    "status": "PRE_FIX_LIVENESS_FAILURE_CONFIRMED",
     "evidence": [
-      "PR #222 merged as 0626380c5b68104cd66f86cc1387a0049fdc0735 after fresh PR CI success; stale #219/#220/#221 are closed.",
-      "Merge push triggered Deep 35507963520, then Evidence Change Trigger 35507963534 succeeded and dispatched same-epoch Deep 35507967197.",
-      "Deep 35507963520 was cancelled by the valid same-epoch dispatch replacement; Deep 35507967197 contracts succeeded and deep-calculate is in progress.",
-      "Deep 35507967197 has already captured the checked-out DEEP_CODE_EPOCH_SHA step successfully.",
-      "Pre-fix persisted Deep 35500463361 had 852 requested/processed, 4028 UNKNOWN gates; predictability had 377 transport-query failures plus 470 insufficient-complete-year cases."
+      "Post-#222 Deep 35507967197 processed the full initial workset (requested=852, processed=852, profiles=853, unresolved gates before closure=4044).",
+      "Era Capital Trend Radar Live 35508146541 completed successfully at 11:36:05Z and triggered Deep 35508293335 at 11:36:07Z.",
+      "Active Deep 35507967197 was cancelled during official evidence closure; logs report closure outcome=cancelled and terminal persistence / convergence dispatch were skipped.",
+      "PR #223 changes workflow_run cancel-in-progress semantics so periodic successful workflow_run triggers queue/coalesce instead of preempting an active closure.",
+      "Pre-fix replacement Deep 35508293335 is still in progress but runs under old main concurrency semantics and is not sufficient validation for #223."
     ]
   },
   "pending_operation": null,
@@ -32,19 +32,19 @@
     "last_error": null
   },
   "completed": [
-    "Recovered live state from GitHub rather than stale TASK_STATE.",
-    "Verified source PRs #219/#220/#221 and replay PR #222.",
-    "Verified #222 ai-governance, backend-gate and docker-build green before merge.",
-    "Merged #222 with expected head SHA 27ce6286e24fd390f98ef5f544cbded99b798753.",
-    "Closed superseded PRs #219/#220/#221.",
-    "Confirmed #222 preserves UNKNOWN != PASS, Formal separation, Candidate Lifecycle and no_auto_trade=true.",
-    "Confirmed post-merge Deep trigger path is active and authoritative replacement run 35507967197 is progressing."
+    "Merged #222 and closed superseded #219/#220/#221.",
+    "Verified #222 dated EOD market-structure wording reached production.",
+    "Verified #222 post-merge Deep initial workset completeness.",
+    "Root-caused remaining successful workflow_run preemption liveness defect from production timestamps and completed job logs.",
+    "Created #223 with dynamic workflow_run cancellation semantics and regression coverage.",
+    "Updated TASK_STATE.md for the #223 mission."
   ],
-  "next_action": "Track Deep 35507967197 to terminal persistence/artifact, then compare predictability transport failures against the pre-fix 377 baseline. Verify epoch fencing/history/latest pointers and downstream Provenance/Terminal/Investor convergence before opening the next evidence-acquisition change.",
+  "next_action": "Observe #223 CI. Fix only real failures. Merge when blocking checks are green, then verify a fresh Deep survives periodic successful workflow_run triggers through terminal persistence, Provenance/Terminal convergence, and compare predictability transport failures against baseline 377.",
   "do_not_repeat": [
-    "Do not merge or reopen stale #219/#220/#221.",
+    "Do not treat cancelled Deep 35507967197 as terminal production evidence.",
+    "Do not treat pre-fix replacement Deep 35508293335 as #223 validation.",
     "Do not reopen solved Candidate Lifecycle continuity defects.",
     "Do not loosen hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
-    "Do not treat cancelled duplicate Deep 35507963520 as a production failure; authoritative same-epoch replacement is 35507967197."
+    "Do not merge stale superseded #219/#220/#221."
   ]
 }
