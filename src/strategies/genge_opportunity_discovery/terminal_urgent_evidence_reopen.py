@@ -23,7 +23,7 @@ from typing import Any, Iterable, Mapping
 CONTRACT = "GEN_GE_TERMINAL_URGENT_EVIDENCE_REOPEN_V1"
 TERMINAL_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 EVIDENCE_BLOCKED_REASON = "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
-TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "REJECT"})
+TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
 EVIDENCE_FINGERPRINT_SCHEMA = b"GEN_GE_URGENT_EVIDENCE_EPOCH_V1\0"
 
 
@@ -152,10 +152,10 @@ def build_reopen_plan(payload: Mapping[str, Any]) -> dict[str, Any]:
         terminal = terminal_by_code[code]
         if raw.get("urgent_research") is not True or terminal.get("urgent_research") is not True:
             raise ValueError(f"urgent queue row is not marked urgent: {code}")
-        if terminal.get("research_decision") != "REJECT":
-            raise ValueError(f"urgent reopen row must remain REJECT: {code}")
         if terminal.get("research_reason") != EVIDENCE_BLOCKED_REASON:
             raise ValueError(f"urgent reopen row is not evidence-blocked: {code}")
+        if terminal.get("research_decision") != "RESEARCH_GAP":
+            raise ValueError(f"urgent reopen row must remain RESEARCH_GAP: {code}")
         if terminal.get("reopen_on_new_evidence") is not True:
             raise ValueError(f"urgent row is not reopenable on evidence: {code}")
         if terminal.get("hard_gate_failures"):
