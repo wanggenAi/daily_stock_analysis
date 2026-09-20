@@ -53,7 +53,7 @@ def test_duplicate_deep_triggers_collapse_by_evidence_epoch() -> None:
     assert "github.event.workflow_run.head_branch != 'main'" in workflow
     assert "&& github.run_id || inputs.research_run_id" in workflow
     assert "inputs.requested_codes || 'default'" in workflow
-    assert "cancel-in-progress: true" in workflow
+    assert "cancel-in-progress: ${{ github.event_name != 'workflow_run' }}" in workflow
     assert "github.event.workflow_run.id || github.run_id" not in workflow
 
 
@@ -80,9 +80,18 @@ def test_skipped_workflow_run_cannot_cancel_valid_same_epoch_deep() -> None:
     assert "github.event.workflow_run.conclusion != 'success'" in concurrency
     assert "github.event.workflow_run.head_branch != 'main'" in concurrency
     assert "github.run_id" in concurrency
-    assert "cancel-in-progress: true" in concurrency
+    assert "cancel-in-progress: ${{ github.event_name != 'workflow_run' }}" in concurrency
     assert "github.event.workflow_run.conclusion == 'success'" in jobs
     assert "github.event.workflow_run.head_branch == 'main'" in jobs
+
+
+def test_successful_workflow_run_cannot_preempt_active_official_evidence_closure() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    concurrency = workflow.split("concurrency:", 1)[1].split("env:", 1)[0]
+
+    assert "cancel-in-progress: ${{ github.event_name != 'workflow_run' }}" in concurrency
+    assert "cancel-in-progress: true" not in concurrency
+    assert "github.event.workflow_run.head_sha || github.sha" in concurrency
 
 
 def test_deep_epoch_fence_uses_actual_checked_out_code_sha() -> None:
