@@ -34,7 +34,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: genge-live-execution-quote-refresh
+  group: genge-live-execution-quote-refresh-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
   cancel-in-progress: false
 
 env:
