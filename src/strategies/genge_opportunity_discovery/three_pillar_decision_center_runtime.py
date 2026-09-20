@@ -26,6 +26,58 @@ RUNTIME_CONTRACT = "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2"
 TERMINAL_RESEARCH_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
 
+ERA_EVIDENCE_FAMILIES = (
+    "POLICY_CAPITAL",
+    "INDUSTRIAL_CAPITAL",
+    "FINANCIAL_CAPITAL",
+    "REAL_DEMAND",
+    "TECHNOLOGY",
+    "GLOBAL_STRUCTURE",
+)
+CAPITAL_FLOW_FAMILIES = (
+    "POLICY_CAPITAL",
+    "INDUSTRIAL_CAPITAL",
+    "FINANCIAL_CAPITAL",
+    "REAL_DEMAND",
+)
+
+
+def summarize_era_evidence(evidence_bundle: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Expose actual evidence coverage instead of implying fund-flow knowledge."""
+    raw = dict(evidence_bundle or {})
+    rows = [row for row in (raw.get("records") or []) if isinstance(row, Mapping)]
+    counts = {family: 0 for family in ERA_EVIDENCE_FAMILIES}
+    for row in rows:
+        family = str(row.get("family") or "").upper()
+        if family in counts:
+            counts[family] += 1
+
+    covered = [family for family in CAPITAL_FLOW_FAMILIES if counts[family] > 0]
+    missing = [family for family in CAPITAL_FLOW_FAMILIES if counts[family] == 0]
+    status = (
+        "MULTI_LAYER_COVERED"
+        if not missing
+        else "PARTIAL"
+        if covered
+        else "UNAVAILABLE"
+    )
+    return {
+        "status": status,
+        "evidence_count": len(rows),
+        "family_counts": counts,
+        "covered_capital_layers": covered,
+        "missing_capital_layers": missing,
+        "policy_capital_evidence_available": counts["POLICY_CAPITAL"] > 0,
+        "industrial_capital_evidence_available": counts["INDUSTRIAL_CAPITAL"] > 0,
+        "financial_capital_evidence_available": counts["FINANCIAL_CAPITAL"] > 0,
+        "real_demand_evidence_available": counts["REAL_DEMAND"] > 0,
+        "direct_stock_fund_flow_claimed": False,
+        "interpretation": (
+            "Policy/industrial/financial capital and real-demand evidence are separate layers. "
+            "Missing FINANCIAL_CAPITAL must remain explicit; market-strength proxies never become direct fund-flow evidence."
+        ),
+    }
+
 
 def _json(path: Path | None) -> dict[str, Any]:
     if path is None or not path.is_file():
@@ -430,6 +482,7 @@ def build_runtime_decision_center(
     deep_calculation_status: Mapping[str, Any] | None = None,
     partial_deep_calculation_status: Mapping[str, Any] | None = None,
     terminal_research_decisions: Mapping[str, Any] | None = None,
+    era_evidence_bundle: Mapping[str, Any] | None = None,
     industry_links: Mapping[str, Any] | None = None,
     era_handoff: Mapping[str, Any] | None = None,
     generated_at: str | None = None,
@@ -442,6 +495,19 @@ def build_runtime_decision_center(
         industry_links=industry_links,
         era_handoff=era_handoff,
         generated_at=generated_at,
+    )
+    capital_coverage = summarize_era_evidence(era_evidence_bundle)
+    capital_map = payload["pillar_2_world_social_market_capital_map"]
+    capital_map["capital_evidence_coverage"] = capital_coverage
+    capital_map["direct_financial_capital_evidence_available"] = capital_coverage[
+        "financial_capital_evidence_available"
+    ]
+    payload["executive_summary"]["capital_flow_evidence_status"] = capital_coverage["status"]
+    payload["decision_readiness"]["financial_capital_evidence_available"] = capital_coverage[
+        "financial_capital_evidence_available"
+    ]
+    payload["decision_readiness"]["capital_flow_multi_layer_covered"] = (
+        capital_coverage["status"] == "MULTI_LAYER_COVERED"
     )
     selected_status, status_source = select_latest_deep_calculation_status(
         deep_calculation_status,
@@ -618,6 +684,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dashboard", type=Path, default=Path("data/investor_decision_dashboard/latest.json"))
     parser.add_argument("--era-radar", type=Path, default=Path("data/era_radar/latest.json"))
+    parser.add_argument("--era-evidence", type=Path, default=None)
     parser.add_argument("--era-handoff", type=Path, default=Path("data/era_radar/research_handoff/latest.json"))
     parser.add_argument("--automatic-deep-reviews", type=Path, default=Path("data/deep_calculation/latest_profiles.json"))
     parser.add_argument("--static-deep-reviews", type=Path, default=Path("config/v31_explicit_deep_reviews.json"))
@@ -629,14 +696,25 @@ def main() -> int:
     parser.add_argument("--output-md", type=Path, default=Path("LATEST_DECISION_CENTER.md"))
     args = parser.parse_args()
 
+    era_radar = _json(args.era_radar)
+    era_evidence_path = args.era_evidence
+    if era_evidence_path is None:
+        snapshot_id = str(era_radar.get("snapshot_id") or "").strip()
+        era_evidence_path = (
+            args.era_radar.parent / "evidence" / f"{snapshot_id}.json"
+            if snapshot_id
+            else None
+        )
+
     payload = build_runtime_decision_center(
         dashboard=_json(args.dashboard),
-        era_radar=_json(args.era_radar),
+        era_radar=era_radar,
         automatic_profiles=_json(args.automatic_deep_reviews),
         static_profiles=_json(args.static_deep_reviews),
         deep_calculation_status=_json(args.deep_calculation_status),
         partial_deep_calculation_status=_json(args.deep_calculation_partial_status),
         terminal_research_decisions=_json(args.terminal_research_decisions),
+        era_evidence_bundle=_json(era_evidence_path),
         industry_links=_json(args.industry_links),
         era_handoff=_json(args.era_handoff),
     )
