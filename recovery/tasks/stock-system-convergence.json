@@ -1,34 +1,64 @@
 {
   "schema_version": 2,
-  "generation": 9,
+  "generation": 10,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "ACTIVE",
+  "status": "WAITING_CI_AND_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "LIVE_MAIN_RECONCILED_MERGE_GREEN_INVESTOR_FIXES_THEN_REBASE_STALE_EVIDENCE_FIXES",
-  "last_observed_main_sha": "50d8fa687a9fc427a32cf3f1922cd9dd64f2cef5",
-  "work_branch": "",
-  "work_head_sha": "",
-  "active_pr": null,
+  "stage": "PR211_213_215_216_217_218_CI_RUNNING_EXECUTION_CONSUMPTION_RACE_FOUND",
+  "last_observed_main_sha": "cbc811d3537f",
+  "work_branch": "fix/investor-brief-preserve-execution-consumption",
+  "work_head_sha": "842c76c7d6c30c66d8c04b4b6937ac3205f648a3",
+  "active_pr": 218,
   "ci": {
-    "status": "MIXED",
-    "green_prs": [208, 209, 210, 212, 214],
-    "blocking_failures": [211, 213]
+    "status": "RUNNING",
+    "pending_prs": [
+      211,
+      213,
+      215,
+      216,
+      217,
+      218
+    ],
+    "note": "All observed non-backend checks are green after PR211 test correction; backend-gate remains in progress on all six at checkpoint time."
   },
   "production_or_artifact": {
-    "status": "LIVE_CHAIN_ACTIVE",
+    "status": "PARTIALLY_VERIFIED_WITH_ACTIVE_DEFECT",
     "evidence": [
-      "Main persisted Deep run 35493542938 and downstream Provenance/Terminal artifacts on 2026-09-20.",
-      "PR #208/#209/#210 CI is green but all three are stale/diverged against current main and are not mergeable.",
-      "PR #212 and #214 are green and mergeable against current main.",
-      "PR #211 and #213 are mergeable but backend-gate failed; they must not be merged until the failure is understood and corrected."
+      "PR #212 merged as 91ee9524a45541968b208cc2f1062e2c9677c0c3: Investor Brief hourly execution quote max age is 15 minutes.",
+      "PR #214 merged as 83c7752fc7dae27158b0dc314f4f6254c7b12cbe and Execution Consumption Reconciliation correctly suppresses consumed 603993 one-lot ADD.",
+      "Live production race proven: consumption commits c776956/368c914/bc62ce56 suppress 603993 ADD, but later Investor Decision Brief commits 191a46b/9bdb2ad recreate it because base dashboard rebuild omitted CURRENT_EXECUTION_STATE overlay.",
+      "PR #218 adds execution_consumption_overlay inside every Investor Decision Brief rebuild before validation/persistence.",
+      "CURRENT_HOLDINGS.md truth is 603993 quantity=1100, average_cost=18.6244; live dashboard still shows null/null until PR #213 parser fix reaches production.",
+      "Latest terminal overlay: 852 researched, BUY=0, WAIT_PRICE=0, RESEARCH_GAP=838, REJECT=14.",
+      "Latest deep closure: 4028 UNKNOWN gates = long_term_demand 851, moat 851, predictability 847, earnings_authenticity 740, financial_safety 739.",
+      "Predictability unknown reasons: 470 insufficient consecutive complete fiscal years; 377 PRIMARY ConnectionError + CNINFO HTTPError.",
+      "Moat has no strict producer: 851 unresolved reason NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE."
     ]
   },
   "pending_operation": {
-    "kind": "MERGE_GREEN_INVESTOR_FIXES_AND_RECONCILE_STALE_PRS",
-    "merge_candidates": [212, 214],
-    "stale_rebase_candidates": [208, 209, 210],
-    "failed_ci_candidates": [211, 213],
-    "expected_main_before_merge": "50d8fa687a9fc427a32cf3f1922cd9dd64f2cef5"
+    "kind": "CI_MERGE_AND_PRODUCTION_VERIFY",
+    "pr_numbers": [
+      211,
+      213,
+      215,
+      216,
+      217,
+      218
+    ],
+    "required_order_hint": [
+      218,
+      213,
+      211,
+      215,
+      216,
+      217
+    ],
+    "expected_behavior": [
+      "Never merge with blocking backend failure.",
+      "After #218, verify an Investor Brief rebuild cannot recreate consumed 603993 ADD.",
+      "After #213, verify dashboard reads 603993 1100 shares / 18.6244 average cost.",
+      "After #215, verify G55/G60 specialized official evidence opportunities while G58 stays fail-closed."
+    ]
   },
   "health": {
     "recovery": "HEALTHY",
@@ -40,9 +70,16 @@
     "Verified #208/#209/#210 CI green but branches diverged and are no longer mergeable.",
     "Verified #212 stale execution quote fix is fully green and mergeable.",
     "Verified #214 sticky consumed staged-add fix is fully green and mergeable.",
-    "Verified #211/#213 have blocking backend-gate failures and are not merge-ready."
+    "Verified #211/#213 have blocking backend-gate failures and are not merge-ready.",
+    "Merged #212 stale execution-quote fix.",
+    "Merged #214 sticky staged-add consumption fix.",
+    "Replayed stale #208/#209/#210 onto current-main PRs #215/#216/#217.",
+    "Diagnosed and retried unrelated #213 local-CLI CI flake.",
+    "Corrected #211 test contract without weakening production trade-universe guard.",
+    "Found production overwrite race where Investor Brief rebuild erased consumed staged-add state; opened #218.",
+    "Quantified current 4028 UNKNOWN hard-gate distribution and root reasons."
   ],
-  "next_action": "Merge #212 and #214 one at a time with live-main verification. Then re-evaluate #208/#209/#210 on the new main; reapply only missing minimal diffs on fresh current-main branches instead of forcing stale merges. Inspect #211/#213 backend-gate logs before changing code.",
+  "next_action": "Wait only on live CI evidence, merge each PR only after blocking checks are green. Prioritize #218 and #213 because they repair currently visible investor-dashboard safety/truth defects. Then production-verify 603993 consumed ADD remains suppressed across a subsequent Investor Brief rebuild and holdings parse becomes 1100 / 18.6244. Continue evidence work with #215 source routing; do not design/merge a moat producer until current production chain is stable and #215 impact is measured.",
   "do_not_repeat": [
     "Do not reopen the solved 351-profile continuity defect.",
     "Do not loosen evidence hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
