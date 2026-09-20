@@ -1,19 +1,19 @@
 {
   "schema_version": 2,
-  "generation": 7,
+  "generation": 8,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_PRODUCTION",
+  "status": "WAITING_CI_AND_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR207_MERGED_PRODUCTION_DEEP_RUNNING_LONG_TERM_DEMAND_ROOT_CAUSE_QUANTIFIED",
-  "last_observed_main_sha": "4ab6ef97e8dcf712a00668065c2b0ef75d2d37d1",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "stage": "PR208_STRICT_SPECIALIZED_SOURCE_ROUTING_CI_QUEUED_PR207_PRODUCTION_DEEP_RUNNING",
+  "last_observed_main_sha": "58aff356718f896b6b21931a565b07f10d7f8233",
+  "work_branch": "fix/industry-specialized-source-routing",
+  "work_head_sha": "1a3e6c87ea2b45b5674a43312e7746330f09f3a3",
+  "active_pr": 208,
   "ci": {
-    "run_id": 35488275944,
-    "head_sha": "5c3a5b8a2ed0bb10b041706eca95ad6cb09a0193",
-    "status": "COMPLETED",
-    "conclusion": "SUCCESS"
+    "run_id": 35491960469,
+    "head_sha": "1a3e6c87ea2b45b5674a43312e7746330f09f3a3",
+    "status": "QUEUED",
+    "conclusion": null
   },
   "production_or_artifact": {
     "status": "PARTIALLY_VERIFIED",
@@ -29,9 +29,11 @@
     ]
   },
   "pending_operation": {
-    "kind": "PRODUCTION_DEEP_VERIFY",
-    "run_id": 35491580526,
-    "expected_main_sha": "4ab6ef97e8dcf712a00668065c2b0ef75d2d37d1"
+    "kind": "CI_AND_PRODUCTION_VERIFY",
+    "pr_number": 208,
+    "ci_run_id": 35491960469,
+    "prior_production_deep_run_id": 35491580526,
+    "expected_main_before_merge": "58aff356718f896b6b21931a565b07f10d7f8233"
   },
   "health": {
     "recovery": "HEALTHY",
@@ -42,15 +44,20 @@
     "Verified PR #207 code and green ai-governance/backend-gate/docker-build CI.",
     "Merged PR #207 to main.",
     "Production-verified PR #206 material-event fix using exact Deep artifact: false material-event failures dropped from 64 to 0.",
-    "Quantified long-term-demand evidence-family coverage and concrete collector audit failure modes from exact production artifact."
+    "Quantified long-term-demand evidence-family coverage and concrete collector audit failure modes from exact production artifact.",
+    "Opened PR #208 to route specialized official industry sources through prepared aliases without changing gate thresholds.",
+    "Externally verified current official MOT and SPB quantitative operating reports exist for water transport and postal sectors.",
+    "Tightened PR #208 before merge: removed G58 multimodal transport -> SPB routing because postal/express operating data is not sufficiently specific; G58 remains fail-closed.",
+    "Production impact scope from #206 artifact: G55 water transport has 23 profiles with zero industry evidence; G60 postal has 4. These 27 profiles are the strict direct target of PR #208."
   ],
-  "next_action": "Finish production Deep 35491580526 and inspect exact artifact. Require non-zero official source URL/metrics coverage and non-structural predictability verification where qualifying evidence exists. Then improve long-term-demand official-source coverage without weakening the two-independent-source-family threshold; prioritize source discovery/routing for MIIT/NDRC and missing service/transport/finance sectors. Separately design a provenance-strict moat evidence producer rather than weakening the moat gate.",
+  "next_action": "Wait for PR #208 CI 35491960469 to finish; merge only if fully green. Independently finish PR #207 production Deep 35491580526 and inspect its exact final artifact for non-zero strict predictability evidence/resolution. After #208 merge, inspect the new Deep artifact for MOT evidence on G55 and SPB evidence on G60 without requiring PASS unless a second independent same-direction official family exists. Keep G58 fail-closed. Then address MIIT/NBS official-column short-name coverage (e.g. I65 software) from production evidence, and only after source coverage work design a provenance-strict moat producer.",
   "do_not_repeat": [
     "Do not reopen solved 351-profile continuity defect.",
     "Do not loosen MIN_COMPLETE_YEARS=3, long-term-demand two-source corroboration, moat gate, valuation, BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.",
     "Do not treat old pre-#205 duplicate dashboard as current.",
     "Do not classify routine/preventive disclosure titles as actual material incidents.",
     "Do not diagnose predictability as a PDF-parser failure before checking source routing.",
-    "Do not claim industry alias expansion is disabled; production recorded alias expansion for all targets."
+    "Do not claim industry alias expansion is disabled; production recorded alias expansion for all targets.",
+    "Do not route G58多式联运和运输代理业 to SPB solely through broad 物流 aliases; postal/express data is not sufficiently specific evidence for multimodal transport demand."
   ]
 }
