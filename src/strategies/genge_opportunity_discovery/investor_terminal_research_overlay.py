@@ -115,12 +115,30 @@ def apply_overlay(dashboard: Mapping[str, Any], terminal_payload: Mapping[str, A
     return out
 
 
+def _strip_existing_terminal_research(markdown: str) -> str:
+    """Remove a previously rendered terminal-research section without touching later sections."""
+    marker = "## 深算研究终态（Research-only，不等于正式交易授权）"
+    lines = markdown.splitlines()
+    out: list[str] = []
+    skipping = False
+    for line in lines:
+        if line.strip() == marker:
+            skipping = True
+            continue
+        if skipping and line.startswith("## "):
+            skipping = False
+        if not skipping:
+            out.append(line)
+    return "\n".join(out).rstrip()
+
+
 def append_markdown(markdown: str, dashboard: Mapping[str, Any]) -> str:
     research = dashboard.get("terminal_research_snapshot") or {}
     if not research:
         return markdown
+    markdown = _strip_existing_terminal_research(markdown)
     counts = research.get("decision_counts") or {}
-    lines = [markdown.rstrip(), "", "## 深算研究终态（Research-only，不等于正式交易授权）", "",
+    lines = [markdown, "", "## 深算研究终态（Research-only，不等于正式交易授权）", "",
              f"- 本轮深算：**{research.get('requested_count', 0)}** 只；研究 BUY **{counts.get('BUY', 0)}** / WAIT_PRICE **{counts.get('WAIT_PRICE', 0)}** / RESEARCH_GAP **{counts.get('RESEARCH_GAP', 0)}** / REJECT **{counts.get('REJECT', 0)}**。",
              f"- urgent research：**{research.get('urgent_research_count', 0)}** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。",
              "- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。", "", "### 我的持仓深算", "",
