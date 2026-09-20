@@ -64,7 +64,7 @@ MATERIAL_EVENT_RULES: tuple[tuple[str, re.Pattern[str], int, str], ...] = (
         120,
         "MEDIUM",
     ),
-    ("NON_STANDARD_AUDIT", re.compile(r"非标准审计意见|非标意见|保留意见|无法表示意见|否定意见"), 730, "HIGH"),
+    ("NON_STANDARD_AUDIT", re.compile(r"非标准审计意见|非标意见|(?<!无)保留意见|无法表示意见|否定意见"), 730, "HIGH"),
     ("DEBT_DEFAULT", re.compile(r"债务违约|债务逾期|贷款逾期|票据逾期|未能清偿"), 730, "HIGH"),
     (
         "FUNDS_OCCUPATION",
@@ -155,11 +155,19 @@ FULL_RESOLUTION_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
     "ILLEGAL_GUARANTEE": RESOLVED_EVENT_PATTERNS["ILLEGAL_GUARANTEE"],
 }
 
+FUNDS_OCCUPATION_PREVENTIVE_POLICY_RE = re.compile(
+    r"(?:防范|防止|杜绝).{0,40}(?:资金占用|占用(?:上市)?公司资金)"
+    r"|(?:资金占用|占用(?:上市)?公司资金).{0,24}(?:管理办法|管理制度|制度|规则)"
+)
 FUNDS_OCCUPATION_ROUTINE_REPORT_RE = re.compile(
     r"专项(?:说明|审计报告|审核报告|核查意见|报告)|鉴证报告"
+    r"|(?:资金占用|占用资金).{0,20}(?:情况(?:汇总)?表|汇总表|专项公告|报告)$"
 )
 FUNDS_OCCUPATION_INCIDENT_ASSERTION_RE = re.compile(
-    r"存在|发生|形成|新增|发现|涉及|违规|事项|问题|风险|整改|归还|清偿|解决"
+    r"(?:存在|发生|形成|新增|发现|涉及违规|违规).{0,24}(?:非经营性)?(?:资金占用|占用资金)"
+    r"|(?:非经营性)?(?:资金占用|占用资金).{0,24}(?:整改|已归还|尚未归还|未归还|已清偿|尚未清偿|未清偿|已解决|未解决|占用金额|占用余额)"
+    r"|(?:非经营性)?资金占用(?:事项|问题|行为)"
+    r"|(?:实际发生|违规).{0,8}占用(?:上市)?公司资金"
 )
 
 
@@ -206,14 +214,18 @@ def _classify_material_events(title: Any, *, publish_date: date, as_of: date) ->
         match = pattern.search(text)
         if not match or event_type in seen_types:
             continue
-        if (
-            event_type == "FUNDS_OCCUPATION"
-            and FUNDS_OCCUPATION_ROUTINE_REPORT_RE.search(text)
-            and not FUNDS_OCCUPATION_INCIDENT_ASSERTION_RE.search(text)
-        ):
-            # Annual auditor/accountant verification titles describe the scope
-            # of a routine review, not a finding that occupation occurred.
-            continue
+        if event_type == "FUNDS_OCCUPATION":
+            has_incident_assertion = bool(FUNDS_OCCUPATION_INCIDENT_ASSERTION_RE.search(text))
+            non_incident_context = bool(
+                FUNDS_OCCUPATION_PREVENTIVE_POLICY_RE.search(text)
+                or FUNDS_OCCUPATION_ROUTINE_REPORT_RE.search(text)
+            )
+            if non_incident_context and not has_incident_assertion:
+                # Preventive governance rules and routine verification/reporting
+                # titles describe a control or review scope, not proof that funds
+                # occupation actually occurred.  Hard FAIL requires an explicit
+                # incident/remediation assertion in the announcement title.
+                continue
         seen_types.add(event_type)
         resolved = any(
             candidate.search(text) for candidate in RESOLVED_EVENT_PATTERNS.get(event_type, ())
