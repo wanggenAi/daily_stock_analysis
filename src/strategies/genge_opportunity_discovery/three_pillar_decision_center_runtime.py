@@ -366,6 +366,26 @@ def normalize_terminal_research(
     }
 
 
+def _research_investor_view(row: Mapping[str, Any]) -> dict[str, Any]:
+    item = dict(row)
+    decision = str(item.get("research_decision") or "").upper()
+    unknowns = [str(x) for x in (item.get("hard_gate_unknowns") or []) if str(x)]
+    if decision == "RESEARCH_GAP":
+        waiting = "、".join(unknowns) or "缺失证据"
+        item["investor_action"] = f"暂不买；等待补齐：{waiting}"
+        item["account_action"] = "DO_NOT_BUY_YET"
+    elif decision == "BUY":
+        item["investor_action"] = "研究层达到BUY条件，但未获得Formal BUY授权；不得直接下单"
+        item["account_action"] = "RESEARCH_BUY_NOT_FORMAL"
+    elif decision == "WAIT_PRICE":
+        item["investor_action"] = "研究层等待价格；未获得Formal BUY授权，达到价格也需重新核验正式权限"
+        item["account_action"] = "WAIT_PRICE_RESEARCH_ONLY"
+    else:
+        item["investor_action"] = "不买；研究层已淘汰"
+        item["account_action"] = "DO_NOT_BUY"
+    return item
+
+
 def _attach_terminal_research(
     payload: dict[str, Any],
     terminal: dict[str, Any],
@@ -384,12 +404,20 @@ def _attach_terminal_research(
     opportunities["canonical_formal_buy_now"] = list(opportunities.get("buy_now") or [])
     opportunities["canonical_formal_wait_price"] = list(opportunities.get("wait_price") or [])
     opportunities["terminal_research_snapshot"] = terminal
-    opportunities["research_buy"] = list(terminal.get("research_buy") or []) if current else []
-    opportunities["research_wait_price"] = list(terminal.get("research_wait_price") or []) if current else []
-    opportunities["research_gap"] = list(terminal.get("research_gap") or []) if current else []
+    opportunities["research_buy"] = [
+        _research_investor_view(row) for row in (terminal.get("research_buy") or [])
+    ] if current else []
+    opportunities["research_wait_price"] = [
+        _research_investor_view(row) for row in (terminal.get("research_wait_price") or [])
+    ] if current else []
+    opportunities["research_gap"] = [
+        _research_investor_view(row) for row in (terminal.get("research_gap") or [])
+    ] if current else []
     opportunities["research_gap_count"] = _int(terminal.get("research_gap_count")) if current else 0
     opportunities["research_reject_count"] = _int(terminal.get("research_reject_count")) if current else 0
-    opportunities["urgent_evidence_queue"] = list(terminal.get("urgent_research_queue") or []) if current else []
+    opportunities["urgent_evidence_queue"] = [
+        _research_investor_view(row) for row in (terminal.get("urgent_research_queue") or [])
+    ] if current else []
     opportunities["research_actionable_count"] = (
         len(opportunities["research_buy"]) + len(opportunities["research_wait_price"])
     )
@@ -620,7 +648,8 @@ def _urgent_text(rows: list[Mapping[str, Any]]) -> str:
         code = str(row.get("code") or "")
         name = str(row.get("name") or "")
         score = row.get("quant_score")
-        parts.append(f"{code} {name}(quant={score})".strip())
+        action = str(row.get("investor_action") or "暂不买")
+        parts.append(f"{code} {name}(quant={score}；{action})".strip())
     return "；".join(parts)
 
 
