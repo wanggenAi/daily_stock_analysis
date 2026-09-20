@@ -67,3 +67,10 @@ def test_non_buy_actions_are_not_changed_by_buy_gate():
         _buy_decision(ratio=1.30), action="REDUCE_25", target_position_fraction=0.75
     )
     assert _apply_formal_buy_gate({"v311_has_position": True}, reduce_decision) is reduce_decision
+
+
+def test_formal_buy_blocks_out_of_scope_new_exposure_with_auditable_reason():
+    decision = _apply_formal_buy_gate({"code": "688019"}, _buy_decision(ratio=0.70))
+    assert decision.action == "WAIT"
+    assert decision.target_position_fraction == 0.0
+    assert "FORMAL_NEW_EXPOSURE_SH_SZ_MAIN_BOARD_ONLY" in decision.reason_codes
