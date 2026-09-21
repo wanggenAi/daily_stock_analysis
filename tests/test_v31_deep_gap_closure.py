@@ -352,6 +352,70 @@ def test_historical_loader_revalidates_old_active_label_with_current_title_seman
     assert rows == []
 
 
+def test_complete_risk_ledger_revalidation_drops_production_false_positive_titles(tmp_path):
+    stale = [
+        _material_event(
+            "FUNDS_OCCUPATION",
+            code="000722",
+            title="董事会关于拟购买资产资金占用问题的说明",
+        ),
+        _material_event(
+            "ILLEGAL_GUARANTEE",
+            code="000420",
+            title="关联方非经营性资金占用及清偿情况和违规担保及解除情况的专项报告",
+        ),
+        _material_event(
+            "FUNDS_OCCUPATION",
+            code="002418",
+            title="控股股东及其他关联方占用资金情况的专项审计说明",
+        ),
+        _material_event(
+            "FUNDS_OCCUPATION",
+            code="002427",
+            title="防止大股东及关联方占用资金制度",
+        ),
+        _material_event(
+            "FUNDS_OCCUPATION",
+            code="002117",
+            title="防止大股东及关联方占用资金制度（2025.8）",
+        ),
+    ]
+    valid = _material_event(
+        "BANKRUPTCY_RESTRUCTURING",
+        code="000557",
+        title="关于子公司破产清算进展情况的公告",
+    )
+    history = tmp_path / "history"
+    history.mkdir()
+    (history / "200.json").write_text(
+        json.dumps({
+            "material_event_risk_ledger_complete": True,
+            "material_event_risk_ledger_count": 6,
+        }),
+        encoding="utf-8",
+    )
+    (history / "200.evidence.json").write_text(
+        json.dumps({
+            "formal_trading_authority": False,
+            "automatic_formal_buy_allowed": False,
+            "unknown_is_pass": False,
+            "no_auto_trade": True,
+            "material_event_risk_ledger": [*stale, valid],
+        }, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    rows = _load_historical_verified_material_events(
+        history,
+        ["000557", "000722", "000420", "002418", "002427", "002117"],
+        as_of=date(2026, 9, 21),
+    )
+
+    assert [(row["code"], row["event_type"]) for row in rows] == [
+        ("000557", "BANKRUPTCY_RESTRUCTURING")
+    ]
+
+
 def test_newest_complete_risk_ledger_blocks_resurrection_from_older_runs(tmp_path):
     history = tmp_path / "history"
     history.mkdir()
