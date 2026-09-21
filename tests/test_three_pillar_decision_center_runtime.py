@@ -622,11 +622,31 @@ def test_candidate_lifecycle_and_system_capabilities_are_visible_in_final_report
         "provenance_audit_complete": True,
         "provenance_audit_run_id": "audit-1",
     })
+    valuation_continuity = {
+        "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
+        "latest_applied_snapshot_id": "snap-value",
+        "holdings": {
+            "600406": {
+                "action": "REDUCE_25",
+                "value_low": "12.83",
+                "neutral_value": "24.0",
+                "value_high": "26.09",
+                "current_price": "22.5",
+                "valuation_confidence": "HIGH",
+                "valuation_change": "STABLE",
+                "price_value_zone": "UPPER_VALUE",
+                "reason_codes": "SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+                "decision_date": "2026-09-20",
+            }
+        },
+        "no_auto_trade": True,
+    }
     out = build_runtime_decision_center(
         dashboard=_dashboard(),
         era_radar=_era(),
         era_evidence_bundle=_era_evidence(),
         candidate_lifecycle_state=lifecycle,
+        holding_valuation_continuity_state=valuation_continuity,
         automatic_profiles=_automatic_profiles(),
         static_profiles={},
         deep_calculation_status=status,
@@ -638,11 +658,17 @@ def test_candidate_lifecycle_and_system_capabilities_are_visible_in_final_report
     assert holding["candidate_lifecycle"]["seen_count"] == 176
     assert out["candidate_lifecycle"]["active_candidate_count"] == 2
     caps = {row["capability"]: row for row in out["system_capability_visibility"]["capabilities"]}
+    assert caps["持仓估值连续性 / 价值区间"]["status"] == "ACTIVE"
     assert caps["Candidate Lifecycle 持续研究记忆"]["status"] == "ACTIVE"
     assert caps["Deep Provenance 证据审计"]["status"] == "ACTIVE"
+    assert holding["valuation_continuity"]["price_value_zone"] == "UPPER_VALUE"
+    assert holding["valuation_continuity"]["value_low"] == 12.83
+    assert out["holding_valuation_continuity"]["formal_action_recomputed"] is False
     assert "verified-pass=217" in caps["Deep 五类硬门槛 + 官方证据"]["result"]
     md = render_runtime_markdown(out)
     assert "## 本次汇报真正用了哪些系统能力" in md
     assert "Candidate Lifecycle 持续研究记忆" in md
     assert "当前 ACTIVE **2**；累计生命周期事件 **3**" in md
     assert "国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 176 次" in md
+    assert "价值区间 12.83–26.09" in md
+    assert "区位 **UPPER_VALUE**" in md
