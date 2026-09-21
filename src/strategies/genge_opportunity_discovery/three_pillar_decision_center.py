@@ -462,10 +462,24 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
             if lifecycle
             else "未接入当前生命周期快照"
         )
-        reason = str(x.get("reason_codes") or "无显式原因码")
+        continuity = x.get("valuation_continuity") if isinstance(x.get("valuation_continuity"), Mapping) else {}
+        low = _num(continuity.get("value_low"))
+        high = _num(continuity.get("value_high"))
+        zone = str(continuity.get("price_value_zone") or "UNKNOWN")
+        value_range = (
+            f"{_fmt(low)}–{_fmt(high)}"
+            if low is not None or high is not None
+            else "未形成完整区间"
+        )
+        reason = str(
+            continuity.get("reason_codes")
+            or x.get("reason_codes")
+            or "无显式原因码"
+        )
         lines.append(
             f"- **{x.get('name','')} {x.get('code','')}**：现价 {_fmt(price)} / 价值中枢 {_fmt(neutral)}"
-            f"（价/值 {_fmt(price_to_value)}）；估值信心 **{x.get('valuation_confidence') or '—'}**；"
+            f"（价/值 {_fmt(price_to_value)}；价值区间 {value_range}；区位 **{zone}**）；"
+            f"估值信心 **{x.get('valuation_confidence') or continuity.get('valuation_confidence') or '—'}**；"
             f"Formal **{x.get('formal_action') or '—'}**；Deep **PASS {deep.get('pass_count',0)} / FAIL {deep.get('fail_count',0)} / UNKNOWN {deep.get('unknown_count',0)}**；"
             f"Lifecycle **{lifecycle_text}**；原因码：`{reason}`。"
         )
