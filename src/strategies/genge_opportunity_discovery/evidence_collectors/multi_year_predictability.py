@@ -85,6 +85,17 @@ _SCOPED_METRIC_TOKENS = (
     "按地区", "按区域", "矿山端", "贸易端", "冶炼端", "单项业务", "单一业务",
 )
 
+_QUARTER_PERIOD_RE = re.compile(
+    r"(?:季度数据|分季度|第一季度|第二季度|第三季度|第四季度|"
+    r"一季度|二季度|三季度|四季度|Q[1-4])",
+    flags=re.IGNORECASE,
+)
+_ANNUAL_METRIC_SECTION_TOKENS = (
+    "主要会计数据和财务指标",
+    "主要财务数据",
+    "年度主要财务数据",
+)
+
 _FULLWIDTH_TRANSLATION = str.maketrans(
     {
         "０": "0", "１": "1", "２": "2", "３": "3", "４": "4",
@@ -408,6 +419,29 @@ def _metric_label_unit(text: str, label_end: int) -> str | None:
     return match.group(1) if match else None
 
 
+def _metric_context_is_non_annual_period(text: str, label_start: int) -> bool:
+    """Reject quarterly-table rows before they can masquerade as annual totals.
+
+    Annual reports commonly include a four-quarter table using the same metric
+    labels as the annual summary. PDF extraction can place those quarterly
+    values close enough to the label that the generic row fallback would accept
+    Q1 as the fiscal-year value. Only the local section before the label is
+    inspected, so a later quarterly-data heading cannot invalidate a preceding
+    annual-summary row.
+    """
+    before = text[max(0, label_start - 600):label_start]
+    quarter_matches = list(_QUARTER_PERIOD_RE.finditer(before))
+    if not quarter_matches:
+        return False
+
+    last_quarter = quarter_matches[-1].start()
+    last_annual_anchor = max(
+        (before.rfind(token) for token in _ANNUAL_METRIC_SECTION_TOKENS),
+        default=-1,
+    )
+    return last_quarter > last_annual_anchor
+
+
 def _metric_context_is_scoped(text: str, label_start: int, label_end: int) -> bool:
     prefix = text[max(0, label_start - 100):label_start]
     prefix_clause = re.split(r"[。；;\n]", prefix)[-1]
@@ -645,6 +679,9 @@ def _metric_measurement(text: str, labels: Iterable[str], fiscal_year: int) -> d
 
     for label in labels:
         for label_match in _label_pattern(label).finditer(normalized):
+            if _metric_context_is_non_annual_period(normalized, label_match.start()):
+                reasons.append("NON_ANNUAL_PERIOD_NOT_FISCAL_YEAR_METRIC")
+                continue
             if _metric_context_is_scoped(normalized, label_match.start(), label_match.end()):
                 reasons.append("SCOPED_SUBTOTAL_NOT_COMPANY_METRIC")
                 continue
