@@ -63,7 +63,7 @@
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**852** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **850** / REJECT **2**。
+- 本轮深算：**852** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **837** / REJECT **15**。
 - urgent research：**26** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
 
