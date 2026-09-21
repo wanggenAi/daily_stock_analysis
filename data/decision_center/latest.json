@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-21T14:37:19+00:00",
+  "generated_at": "2026-09-21T14:44:13+00:00",
   "latest_trade_date": "2026-09-18",
   "canonical_snapshot_id": "698f36f290a29ae41124",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -9,7 +9,8 @@
   "decision_questions": [
     "我手里的股票，现在该怎么办？",
     "世界和社会正在往哪里走，钱可能流向哪里，A股该研究什么？",
-    "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？"
+    "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
+    "今天账户里的钱具体怎么处理？"
   ],
   "executive_summary": {
     "holding_count": 4,
@@ -19,6 +20,10 @@
     "new_buy_now_count": 0,
     "new_wait_price_count": 0,
     "terminal_reject_count": 171,
+    "available_cash_cny": 57000.0,
+    "planned_immediate_cash_cny": 0.0,
+    "cash_after_immediate_plan_cny": 57000.0,
+    "capital_flow_evidence_status": "PARTIAL",
     "deep_calculation_execution_status": "PARTIAL",
     "deep_calculation_research_outcome": "INITIAL_PASS_PRESERVED",
     "deep_calculation_terminal_state": "NOT_COMPLETED",
@@ -29,7 +34,12 @@
     "research_wait_price_count": 0,
     "research_gap_count": 0,
     "research_reject_count": 0,
-    "urgent_evidence_queue_count": 0
+    "urgent_evidence_queue_count": 0,
+    "holding_valuation_continuity_match_count": 4,
+    "active_candidate_lifecycle_count": 118,
+    "lifecycle_event_count": 7749,
+    "investor_action_report_complete": true,
+    "investor_evidence_complete": false
   },
   "pillar_1_holdings_deep_analysis": {
     "question": "我手里的股票，现在该怎么办？",
@@ -97,6 +107,30 @@
           ],
           "last_profile_status": "DEEP_REVIEW_PARTIAL",
           "current_for_runtime": false
+        },
+        "valuation_continuity": {
+          "action": "REDUCE_25",
+          "value_low": 12.835466291779003,
+          "neutral_value": 17.457807170543802,
+          "value_high": 26.087004962365256,
+          "current_price": 22.05,
+          "valuation_confidence": "HIGH",
+          "valuation_change": "STABLE",
+          "price_value_zone": "UPPER_VALUE",
+          "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+          "decision_date": "2026-09-21",
+          "canonical_snapshot_id": "698f36f290a29ae41124"
+        },
+        "candidate_lifecycle": {
+          "code": "600406",
+          "name": "国电南瑞",
+          "lifecycle_state": "ACTIVE",
+          "research_tier": "PENDING",
+          "seen_count": 177,
+          "last_event": "RESEEN",
+          "last_event_at": "2026-09-21T07:05:03Z",
+          "last_formal_action": "",
+          "last_valuation_confidence": ""
         }
       },
       {
@@ -157,6 +191,30 @@
           ],
           "last_profile_status": "DEEP_REVIEW_PARTIAL",
           "current_for_runtime": false
+        },
+        "valuation_continuity": {
+          "action": "HOLD_REVIEW",
+          "value_low": 21.644645478526556,
+          "neutral_value": 49.36957125214809,
+          "value_high": 70.29254879749493,
+          "current_price": 28.11,
+          "valuation_confidence": "LOW",
+          "valuation_change": "STABLE",
+          "price_value_zone": "FAIR_VALUE",
+          "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+          "decision_date": "2026-09-21",
+          "canonical_snapshot_id": "698f36f290a29ae41124"
+        },
+        "candidate_lifecycle": {
+          "code": "001316",
+          "name": "润贝航科",
+          "lifecycle_state": "ACTIVE",
+          "research_tier": "PENDING",
+          "seen_count": 179,
+          "last_event": "RESEEN",
+          "last_event_at": "2026-09-21T07:05:03Z",
+          "last_formal_action": "",
+          "last_valuation_confidence": ""
         }
       },
       {
@@ -217,6 +275,30 @@
           ],
           "last_profile_status": "DEEP_REVIEW_PARTIAL",
           "current_for_runtime": false
+        },
+        "valuation_continuity": {
+          "action": "HOLD",
+          "value_low": null,
+          "neutral_value": 83.07,
+          "value_high": null,
+          "current_price": 53.37,
+          "valuation_confidence": "MEDIUM",
+          "valuation_change": "STABLE",
+          "price_value_zone": "UNKNOWN",
+          "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00",
+          "decision_date": "2026-09-21",
+          "canonical_snapshot_id": "698f36f290a29ae41124"
+        },
+        "candidate_lifecycle": {
+          "code": "601318",
+          "name": "中国平安",
+          "lifecycle_state": "ACTIVE",
+          "research_tier": "PENDING",
+          "seen_count": 104,
+          "last_event": "RESEEN",
+          "last_event_at": "2026-09-21T07:05:03Z",
+          "last_formal_action": "",
+          "last_valuation_confidence": ""
         }
       },
       {
@@ -277,6 +359,30 @@
           ],
           "last_profile_status": "DEEP_REVIEW_PARTIAL",
           "current_for_runtime": false
+        },
+        "valuation_continuity": {
+          "action": "HOLD",
+          "value_low": 18.02971886915772,
+          "neutral_value": 28.12766979232306,
+          "value_high": 43.065691192510116,
+          "current_price": 17.51,
+          "valuation_confidence": "HIGH",
+          "valuation_change": "STABLE",
+          "price_value_zone": "BELOW_VALUE",
+          "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+          "decision_date": "2026-09-21",
+          "canonical_snapshot_id": "698f36f290a29ae41124"
+        },
+        "candidate_lifecycle": {
+          "code": "603993",
+          "name": "洛阳钼业",
+          "lifecycle_state": "ACTIVE",
+          "research_tier": "PENDING",
+          "seen_count": 146,
+          "last_event": "RESEEN",
+          "last_event_at": "2026-09-21T07:05:03Z",
+          "last_formal_action": "",
+          "last_valuation_confidence": ""
         }
       }
     ],
@@ -544,7 +650,34 @@
     "validated_a_share_research_handoffs": [],
     "validated_handoff_count": 0,
     "intersection_status": "NO_VALIDATED_A_SHARE_HANDOFF",
-    "interpretation_rule": "结构趋势回答中长期需求/利润池可能去哪里；市场行为代理回答近期风险偏好在哪里；只有经过映射和后续全权限深算的交集，才能进入个股决策。"
+    "interpretation_rule": "结构趋势回答中长期需求/利润池可能去哪里；市场行为代理回答近期风险偏好在哪里；只有经过映射和后续全权限深算的交集，才能进入个股决策。",
+    "capital_evidence_coverage": {
+      "status": "PARTIAL",
+      "evidence_count": 12,
+      "family_counts": {
+        "POLICY_CAPITAL": 1,
+        "INDUSTRIAL_CAPITAL": 0,
+        "FINANCIAL_CAPITAL": 0,
+        "REAL_DEMAND": 5,
+        "TECHNOLOGY": 0,
+        "GLOBAL_STRUCTURE": 6
+      },
+      "covered_capital_layers": [
+        "POLICY_CAPITAL",
+        "REAL_DEMAND"
+      ],
+      "missing_capital_layers": [
+        "INDUSTRIAL_CAPITAL",
+        "FINANCIAL_CAPITAL"
+      ],
+      "policy_capital_evidence_available": true,
+      "industrial_capital_evidence_available": false,
+      "financial_capital_evidence_available": false,
+      "real_demand_evidence_available": true,
+      "direct_stock_fund_flow_claimed": false,
+      "interpretation": "Policy/industrial/financial capital and real-demand evidence are separate layers. Missing FINANCIAL_CAPITAL must remain explicit; market-strength proxies never become direct fund-flow evidence."
+    },
+    "direct_financial_capital_evidence_available": false
   },
   "pillar_3_deep_opportunities": {
     "question": "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
@@ -1886,13 +2019,33 @@
     "research_actionable_count": 0,
     "research_terminal_current": false
   },
+  "today_account_plan": {
+    "question": "今天账户里的钱具体怎么处理？",
+    "available_cash_cny": 57000.0,
+    "deployment_budget_cny": 0.0,
+    "planned_immediate_cash_cny": 0.0,
+    "cash_after_immediate_plan_cny": 57000.0,
+    "operations": [],
+    "market_session_state": "UNKNOWN",
+    "market_data_status": "DEGRADED",
+    "live_quote_applied_count": 0,
+    "live_quote_expected_count": 4,
+    "live_quote_coverage_complete": false,
+    "immediate_execution_ready": false,
+    "cash_action": "KEEP_CASH",
+    "plain_language": "本轮没有已授权的新资金投入，约¥57000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。",
+    "no_auto_trade": true
+  },
   "decision_readiness": {
     "portfolio_actions_available": true,
     "all_holdings_explicit_deep_review_complete": false,
     "structural_trend_evidence_available": true,
     "validated_macro_to_a_share_handoff_available": false,
     "terminal_opportunity_result_available": true,
+    "live_execution_quote_coverage_complete": false,
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
+    "financial_capital_evidence_available": false,
+    "capital_flow_multi_layer_covered": false,
     "deep_calculation_last_run_completed": false,
     "deep_calculation_last_run_successful": false,
     "deep_calculation_process_terminal": false,
@@ -1941,6 +2094,18 @@
     "gap_closure_attempt_count": 0,
     "new_evidence_count": 0,
     "progressed_gate_count": 0,
+    "hard_gate_count": 0,
+    "pass_gate_count": 0,
+    "fail_gate_count": 0,
+    "verified_pass_gate_count": 0,
+    "unverified_pass_gate_count": 0,
+    "provenance_audit_complete": false,
+    "provenance_audit_run_id": "",
+    "material_event_failed_gate_count": 0,
+    "historical_material_event_evidence_count": 0,
+    "historical_material_event_failed_gate_count": 0,
+    "material_event_risk_ledger_complete": false,
+    "material_event_risk_ledger_count": 0,
     "immediate_retry_required": false,
     "execution_completed": false,
     "execution_succeeded": false,
@@ -1959,5 +2124,303 @@
   "deep_review_profile_source": "AUTOMATIC_DEEP_CALCULATION",
   "deep_review_profile_lambda_run_id": "35609598979",
   "deep_review_profile_current_for_runtime": false,
-  "deep_review_profile_lineage_state": "STALE_LAST_TERMINAL"
+  "deep_review_profile_lineage_state": "STALE_LAST_TERMINAL",
+  "holding_valuation_continuity": {
+    "available": true,
+    "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
+    "latest_applied_snapshot_id": "698f36f290a29ae41124",
+    "latest_applied_source_run_id": "35570184481",
+    "tracked_holding_count": 6,
+    "current_portfolio_match_count": 4,
+    "formal_action_recomputed": false,
+    "no_auto_trade": true,
+    "interpretation": "Persisted valuation continuity explains value-zone and causal action history; this report never recomputes or escalates Formal actions from the state file."
+  },
+  "candidate_lifecycle": {
+    "available": true,
+    "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
+    "latest_applied_snapshot_id": "698f36f290a29ae41124",
+    "latest_research_as_of": "2026-09-21T07:05:03Z",
+    "active_candidate_count": 118,
+    "archived_or_invalidated_count": 0,
+    "lifecycle_event_count": 7749,
+    "tier_counts": {
+      "PENDING": 117,
+      "WATCH / NEW": 1
+    },
+    "focus_candidates": [
+      {
+        "code": "600406",
+        "name": "国电南瑞",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 177,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "001316",
+        "name": "润贝航科",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 179,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "601318",
+        "name": "中国平安",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 104,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "603993",
+        "name": "洛阳钼业",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 146,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      }
+    ],
+    "focus_by_code": {
+      "600406": {
+        "code": "600406",
+        "name": "国电南瑞",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 177,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      "001316": {
+        "code": "001316",
+        "name": "润贝航科",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 179,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      "601318": {
+        "code": "601318",
+        "name": "中国平安",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 104,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      "603993": {
+        "code": "603993",
+        "name": "洛阳钼业",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 146,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      }
+    },
+    "most_persistent_candidates": [
+      {
+        "code": "002420",
+        "name": "毅昌科技",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 189,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "002612",
+        "name": "朗姿股份",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 189,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "600754",
+        "name": "锦江酒店",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 189,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "600958",
+        "name": "东方证券",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 189,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "601808",
+        "name": "中海油服",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 189,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "603605",
+        "name": "珀莱雅",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 189,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "000526",
+        "name": "学大教育",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 187,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "003039",
+        "name": "顺控发展",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 187,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "601375",
+        "name": "中原证券",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 187,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      },
+      {
+        "code": "001316",
+        "name": "润贝航科",
+        "lifecycle_state": "ACTIVE",
+        "research_tier": "PENDING",
+        "seen_count": 179,
+        "last_event": "RESEEN",
+        "last_event_at": "2026-09-21T07:05:03Z",
+        "last_formal_action": "",
+        "last_valuation_confidence": ""
+      }
+    ],
+    "discovery_is_filtered_by_lifecycle": false,
+    "formal_authority_granted": false,
+    "no_auto_trade": true,
+    "interpretation": "Candidate Lifecycle preserves research continuity across scans; it does not filter broad discovery and cannot create Formal trading authority."
+  },
+  "system_capability_visibility": {
+    "status": "ACTIVE_WITH_LIMITATIONS",
+    "capabilities": [
+      {
+        "capability": "市场大趋势 / 全A脉搏",
+        "status": "ACTIVE",
+        "result": "GREEN / score=73.83 / 2026-09-18"
+      },
+      {
+        "capability": "持仓 + 估值 + Formal Action",
+        "status": "ACTIVE",
+        "result": "holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY"
+      },
+      {
+        "capability": "持仓估值连续性 / 价值区间",
+        "status": "ACTIVE",
+        "result": "matched=4 / tracked=6 / formal-recomputed=False"
+      },
+      {
+        "capability": "Candidate Lifecycle 持续研究记忆",
+        "status": "ACTIVE",
+        "result": "active=118 / events=7749 / focus=4"
+      },
+      {
+        "capability": "Deep 五类硬门槛 + 官方证据",
+        "status": "PARTIAL",
+        "result": "requested=852 / verified-pass=0 / unresolved=0"
+      },
+      {
+        "capability": "Deep Provenance 证据审计",
+        "status": "PARTIAL",
+        "result": "audit=False / run=— / unverified-pass=0"
+      },
+      {
+        "capability": "世界 / 社会 / 资本趋势雷达",
+        "status": "PARTIAL",
+        "result": "POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6"
+      },
+      {
+        "capability": "Deep Research Terminal",
+        "status": "PARTIAL",
+        "result": "BUY=0 / WAIT=0 / GAP=0 / REJECT=0"
+      },
+      {
+        "capability": "资金计划 + 执行价覆盖",
+        "status": "ACTIVE",
+        "result": "cash=57000.0 / immediate=0.0 / quotes=0/4"
+      }
+    ],
+    "interpretation": "Only production-wired capabilities are shown here. A design doc or isolated module does not count as active.",
+    "no_auto_trade": true
+  },
+  "investor_report_readiness": {
+    "status": "ACTION_COMPLETE",
+    "action_complete": true,
+    "evidence_complete": false,
+    "limitations": [
+      "DEEP_RESEARCH_EVIDENCE_PARTIAL",
+      "TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP",
+      "FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING",
+      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED",
+      "LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION"
+    ],
+    "interpretation": "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action without promoting missing evidence. EVIDENCE completeness is tracked separately.",
+    "no_auto_trade": true
+  }
 }
