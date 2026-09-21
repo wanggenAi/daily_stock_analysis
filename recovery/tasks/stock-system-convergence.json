@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 20,
+  "generation": 21,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_PRODUCTION",
+  "status": "ACTIVE_MULTI_TRACK_CONVERGENCE",
   "task_key": "stock-system-convergence",
-  "stage": "POST232_MERGED_PRODUCTION_VALIDATION",
+  "stage": "POST232_PRODUCTION_PLUS_REPORT_AND_LIFECYCLE_FIXES",
   "last_observed_main_sha": "a89e69c66ba769ed17f68a121700d3a1f9c4b275",
   "business_code_baseline_sha": "07dd4ca72e94c7576e3f2672a5df38266c1deddb",
   "work_branch": null,
@@ -51,14 +51,39 @@
     "Evidence Change Trigger run 35556361159 succeeded and launched Deep production run 35556365712.",
     "TASK_STATE.md was checkpointed on main via [skip ci] commit a89e69c66ba769ed17f68a121700d3a1f9c4b275."
   ],
-  "next_action": "Resume live Deep run 35556365712. If it fails, repair only the demonstrated cause. If it succeeds, inspect terminal artifact/history ledger and verify the 8-row/12-gate carry-forward set, 000557 financial_safety=FAIL, 000603/301251 not resurrected, complete risk-ledger counters, Deep -> Provenance -> Terminal -> Investor convergence, UNKNOWN != PASS, and no_auto_trade=true. Only then rebase/replay #230 and #231 onto current main and continue their isolated production verification.",
+  "next_action": "Continue all three tracks from live GitHub. Do not merge #230/#231 evidence expansion before #232 production verification. Prepare fresh current-main replacements for stale #230/#231, run CI, then merge/production-verify sequentially after #232 passes. Continue end-to-end report capability inventory; only production-wired capabilities may be labeled ACTIVE.",
   "do_not_repeat": [
-    "Do not reopen Candidate Lifecycle continuity.",
-    "Do not recreate or reopen #229 or #232; both are merged.",
-    "Do not merge #230 or #231 before #232 is production-proven.",
-    "Do not treat current-source unavailability as proof that a previously VERIFIED/ACTIVE/HIGH material risk disappeared.",
-    "Do not propagate historical PASS evidence.",
-    "Do not convert transport/query success or failure into evidence PASS.",
-    "Do not loosen predictability, valuation, BUY/WAIT_PRICE/REJECT, Formal authority, UNKNOWN != PASS, or no_auto_trade."
+    "Do not reopen or recreate merged #229/#232.",
+    "Do not merge stale #227/#228/#230/#231 directly; use current-main replacements.",
+    "Do not merge #230/#231 replacements before #232 production verification.",
+    "Do not count design docs or isolated modules as active report capabilities.",
+    "Do not propagate historical PASS evidence or promote UNKNOWN to PASS.",
+    "Do not change valuation or BUY/WAIT_PRICE/REJECT thresholds while fixing evidence/report wiring.",
+    "Do not expand Formal authority; no_auto_trade=true remains mandatory."
+  ],
+  "active_tracks": [
+    {
+      "track": "evidence-safety",
+      "production_run_id": 35556365712,
+      "state": "RUNNING_STEP_13",
+      "merge_sha": "07dd4ca72e94c7576e3f2672a5df38266c1deddb",
+      "next": "Verify 8-row/12-gate carry-forward, 000557 FAIL, 000603/301251 excluded, risk ledger and downstream convergence."
+    },
+    {
+      "track": "report-readiness",
+      "pr": 233,
+      "branch": "fix/report-readiness-convergence-20260921",
+      "head": "45fbe0e89e436a97000d7c47589933969f26159d",
+      "state": "CI_RUNNING_MOST_CHECKS_GREEN",
+      "next": "Finish CI, merge when green, production-verify 50k cash/NBS-PBC/lifecycle/capability visibility."
+    },
+    {
+      "track": "candidate-continuity",
+      "pr": 234,
+      "branch": "fix/recovered-historical-continuity-current-20260921",
+      "head": "f44c7f8bee238ca77c3f2f78d7ee9de65464cc4c",
+      "state": "CI_PENDING",
+      "next": "Finish CI and merge independently if green; then close stale #228 as superseded."
+    }
   ]
 }
