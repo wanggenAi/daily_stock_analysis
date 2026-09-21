@@ -92,3 +92,9 @@ This lets the repository test whether Jev identifies evidence gaps consistently,
 ## Local execution
 
 Local execution is optional and is not required for normal use. The intended execution environment is GitHub Actions.
+## Phase 2: durable advisory routing
+
+The shadow output can now be transformed by `tools/build_jev_routing_bridge.py` into a durable advisory research-routing queue. See `docs/JEV_ROUTING_BRIDGE.md` for the route contract, persistence behavior, and authority boundary.
+
+This does not promote Jev to an authoritative decision engine: automatic dispatch remains disabled, deterministic research obligations cannot be suppressed, Formal actions are unchanged, UNKNOWN is not PASS, and no_auto_trade remains true.
+
