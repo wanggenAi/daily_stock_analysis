@@ -15,6 +15,7 @@ CONTRACT = "GEN_GE_JEV_RESEARCH_ORCHESTRATION_V1"
 ROUTING_CONTRACT = "GEN_GE_JEV_ROUTING_BRIDGE_V1"
 AUTO_RESEARCH_ROUTES = {"EVIDENCE_REFRESH", "DEEP_RESEARCH"}
 ALLOWED_PRIORITIES = {"HIGH", "MEDIUM", "LOW"}
+MIN_AUTO_ROUTE_CONFIDENCE = 0.5
 _DETERMINISTIC_PRIORITY = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 _ATTENTION_RANK = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
 _ROUTE_RANK = {"DEEP_RESEARCH": 0, "EVIDENCE_REFRESH": 1}
@@ -105,6 +106,7 @@ def build_orchestration_plan(
         "unknown_is_pass": False,
         "no_auto_trade": True,
         "max_dispatch": max_dispatch,
+        "min_auto_route_confidence": MIN_AUTO_ROUTE_CONFIDENCE,
         "selected": [],
         "human_review": [],
         "skipped": [],
@@ -150,15 +152,25 @@ def build_orchestration_plan(
         }
 
         if route == "HUMAN_REVIEW":
+            row["review_reason"] = "JEV_ROUTE_HUMAN_REVIEW"
             base["human_review"].append(row)
             continue
 
         deterministic_eligible = _eligible_by_deterministic_triage(raw)
+        route_confidence = raw.get("route_confidence")
+        route_confidence_ok = (
+            isinstance(route_confidence, (int, float))
+            and float(route_confidence) >= MIN_AUTO_ROUTE_CONFIDENCE
+        )
         if (
             route in AUTO_RESEARCH_ROUTES
             and attention in {"HIGH", "MEDIUM"}
             and deterministic_eligible
         ):
+            if not route_confidence_ok:
+                row["review_reason"] = "LOW_OR_MISSING_ROUTE_CONFIDENCE"
+                base["human_review"].append(row)
+                continue
             candidates.append(row)
             continue
 
