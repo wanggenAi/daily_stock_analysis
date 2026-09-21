@@ -71,3 +71,35 @@ def test_true_qualified_audit_opinion_is_still_detected():
     assert "NON_STANDARD_AUDIT" in _event_types("2025年度财务报表审计报告出具保留意见")
     assert "NON_STANDARD_AUDIT" in _event_types("审计机构出具无法表示意见的审计报告")
 
+
+
+def test_resolved_funds_occupation_title_is_not_active():
+    title = "关于公司自查发现控股股东及其附属企业资金占用并已解决等情况的公告"
+    events = _classify_material_events(title, publish_date=PUBLISH_DATE, as_of=AS_OF)
+    funds = [row for row in events if row.get("event_type") == "FUNDS_OCCUPATION"]
+    assert len(funds) == 1
+    assert funds[0]["event_status"] == "RESOLVED"
+    assert funds[0]["event_resolution_scope"] == "FULL"
+    assert funds[0]["direction"] == "NEUTRAL"
+
+
+def test_non_standard_audit_impact_eliminated_is_resolved_even_without_nearby_nonstandard_word():
+    title = (
+        "关于公司2024年度审计报告带强调事项段的保留意见和内部控制审计报告"
+        "带强调事项段的无保留意见涉及事项影响已消除的专项说明的审核报告"
+    )
+    events = _classify_material_events(title, publish_date=PUBLISH_DATE, as_of=AS_OF)
+    audit = [row for row in events if row.get("event_type") == "NON_STANDARD_AUDIT"]
+    assert len(audit) == 1
+    assert audit[0]["event_status"] == "RESOLVED"
+    assert audit[0]["event_resolution_scope"] == "FULL"
+
+
+def test_whether_risk_exists_due_diligence_title_is_not_incident_assertion():
+    title = (
+        "国联民生承销保荐关于公司是否存在财务造假、资金占用、募集资金违规"
+        "等重大违法行为或公司治理是否出现重大异常且影响发行条件的核查意见"
+    )
+    types = _event_types(title)
+    assert "ACCOUNTING_FRAUD" not in types
+    assert "FUNDS_OCCUPATION" not in types

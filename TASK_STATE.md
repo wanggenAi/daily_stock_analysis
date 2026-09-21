@@ -4,7 +4,19 @@
 Converge the existing stock system into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
 
 ## Current Phase
-Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-year predictability. Do not weaken evidence semantics.
+Repair the production fail-closed regression discovered while verifying #229: a later official-source fetch failure must not erase previously VERIFIED/ACTIVE/HIGH exchange material-event FAILs. Do not weaken evidence semantics.
+
+## Active Branch
+`fix/preserve-verified-material-event-fails-20260921`
+
+## Active PR
+- #232 — `fix: preserve verified material-event failures across deep runs`.
+- Safety scope only: persisted negative evidence is revalidated through the current title semantics + VERIFIED + ACTIVE + HIGH + official-exchange hard-FAIL rule before reuse; historical PASS is never reused.
+- #230 (SSE annual-report discovery) and #231 (MIIT industry evidence depth) remain separate and must not be merged ahead of this fail-closed repair.
+
+## CI
+- #232 initial CI run `35554179025` failed only in `ai-governance` because this checkpoint lacked required headings; fixed.
+- Current #232 head `6fa80dea086700b22900bc1eea50bc0592c97732`: CI run `35554594958` is running; ai-governance is green and backend/docker gates have started.
 
 ## Last Verified Main
 - PR #229 merged into main as `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
@@ -12,20 +24,25 @@ Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-ye
 - Live GitHub refs / PRs / Actions / artifacts / persisted data always override this checkpoint.
 
 ## PR / CI State
+- #232 — `fix: preserve verified material-event failures across deep runs` — open; blocking CI/review required before merge.
+- #230 — `fix: restore SSE multi-year annual-report discovery` — open; its latest observed CI is green, but merge is held behind #232.
+- #231 — `fix: deepen MIIT industry evidence discovery` — open and independent; merge is held behind #232.
 - #229 — `fix: front-load strict predictability evidence collection` — is merged.
 - Final PR head: `3493029639c2ec64a20eca4231c574d222ce18c4`.
 - Required CI/review checks were green before merge.
 - Scope remained scheduling-only; no evidence gate, provider authority, MIN_COMPLETE_YEARS, valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade semantics changed.
 
 ## Production / Artifact
-- Fresh post-merge Deep run: `35551673513`.
-- Run code baseline: `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
-- Contracts job succeeded.
-- Deep steps 1-12 succeeded, including exact input/workset resolution, initial calculation, checkpoint, and initial artifact upload.
-- Current step at checkpoint: step 13 `Close unresolved gates with optimized quality-preserving official evidence` = IN_PROGRESS.
-- Initial artifact exists: `genge-v31-deep-initial-35551673513`.
-- No terminal Deep artifact exists yet at this checkpoint.
-- Do not attribute current `data/deep_calculation/latest_status.json` to run `35551673513` until its lineage/run_id updates.
+- Post-#229 Deep run `35551673513` completed successfully at code baseline `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
+- Terminal artifact: `genge-v31-deep-calculation-35551673513`.
+- requested=852; processed=852; complete=0; evidence_exhausted=852.
+- predictability verified=0; predictability_resolved_gate_count=0.
+- All 852 predictability rows ended `INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS`: 273 0-prefix, 109 3-prefix, 470 6-prefix.
+- #229 materially changed Shenzhen/ChiNext transport behavior: the old 0/3-prefix query-failure shape disappeared and 23 0-prefix rows obtained report metrics/source URLs, but none reached the strict multi-year resolution threshold.
+- Raw same-workset comparison to terminal run `35549602593` exposed 18 disappeared historical material-event FAIL gates: 16 became UNKNOWN and 2 became PASS.
+- Revalidating the 13 underlying historical rows with corrected current title semantics removes 5 stale/non-assertive rows: 3 explicit resolution rows and 2 "是否存在..." due-diligence classifications.
+- The strict carry-forward set is therefore 8 still-active official rows mapping to 12 hard-gate FAILs.
+- After semantic correction, the demonstrated true FAIL -> PASS regression is `000557 financial_safety`; `000603` must not be restored because its disclosure says the funds occupation was already resolved.
 
 ## Locked Comparison Baseline
 - Prior terminal run: `35549602593`.
@@ -46,6 +63,13 @@ Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-ye
 - The optimized runtime patch was re-read after merge and confirmed not to bypass this order.
 - Transport/query recovery is never evidence PASS; verified annual-report bodies and complete strict metrics remain mandatory.
 - Shanghai strict incomplete-consecutive-year cases stay UNKNOWN unless verified official evidence resolves them.
+- The prior terminal artifact stored 13 rows as VERIFIED/ACTIVE/HIGH and generated 18 hard-gate FAILs; artifact review showed 5 of those labels were semantically stale/non-assertive under the corrected rules.
+- In `35551673513`, SZSE announcement metadata still surfaced those risks, but `disc.static.szse.cn` PDF downloads returned HTTP 403 and later retries sometimes hit SZSE transport failure; the fresh run therefore failed to recreate the verified rows.
+- Current closure logic uses only same-run material-event evidence, so transient refetch failure can erase an earlier verified negative gate. This is the demonstrated root cause addressed by #232.
+- #232 revalidates persisted rows with the current material-event title classifier before reuse, including expiry at the run as-of date.
+- #232 fixes title semantics for explicit "已解决/影响已消除" resolutions and "是否存在..." due-diligence questions so keyword presence alone cannot create a hard FAIL.
+- #232 uses compact status files as the bootstrap index instead of scanning every multi-megabyte evidence payload, then writes a cumulative complete risk ledger for future runs.
+- Historical PASS evidence, ordinary evidence, resolved/expired events, non-assertive titles, unofficial domains, and lower-severity events are never reused.
 
 ## Completed
 - #223 Deep liveness fix remains production-proven.
@@ -54,18 +78,17 @@ Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-ye
 - Main production code path was verified after merge.
 - Volatile web-session checkpoint is stored on `state/chatgpt-recovery` at `recovery/tasks/stock-system-convergence.json`; live GitHub remains authoritative.
 
-## Blocker
-Fresh terminal production evidence from Deep run `35551673513` is still required before #229 can be classified as production-proven.
+## Blockers
+#232 must pass blocking CI/review, merge, and receive fresh production Deep verification before #230/#231 transport/evidence expansion is allowed to merge.
 
 ## Next Action
-1. Resume from live Deep run `35551673513`.
-2. If step 13 fails, inspect the exact failure and repair only the demonstrated cause.
-3. If it succeeds, inspect the fresh terminal artifact and persisted lineage.
-4. Recount exact predictability failures against post-#225 baseline=377 and pre-#225 baseline=375, split by 0/3/6 prefix.
-5. Check predictability verified/resolved counts, source URLs, and `metrics_by_year` for every newly resolved gate.
-6. Verify Deep -> Provenance -> Terminal -> Investor lineage convergence.
-7. Re-verify all PASS evidence provenance and the safety invariants.
-8. If Shenzhen/ChiNext failures remain systemic, continue at provider/session/pacing/runner-network transport level without weakening gates.
+1. Let #232 blocking CI/review complete; fix only demonstrated failures.
+2. Merge #232 when green.
+3. Run a fresh production Deep on main.
+4. Verify the revalidated 8-row / 12-gate historical risk set remains fail-closed when current refetch fails.
+5. Specifically verify `000557 financial_safety` returns to FAIL, while resolved/non-assertive historical rows such as `000603` and `301251` are not resurrected.
+6. Verify cumulative risk-ledger counters, Deep -> Provenance -> Terminal -> Investor convergence, UNKNOWN != PASS, and no_auto_trade=true.
+7. Only after #232 is production-proven, resume #230 Shanghai SSE annual-report discovery verification and then #231 long-term-demand evidence depth.
 
 ## Do Not Repeat
 - Do not reopen solved Candidate Lifecycle continuity work.
@@ -73,7 +96,9 @@ Fresh terminal production evidence from Deep run `35551673513` is still required
 - Do not recreate or reopen #229; it is merged.
 - Do not restart from generic CNINFO-header speculation.
 - Do not use stale `latest_status.json` as the result of run `35551673513`.
-- Do not change multiple transport variables while the #229 production experiment is still running.
+- Do not merge #230 or #231 ahead of the #232 fail-closed safety repair.
+- Do not treat current-source unavailability as evidence that a previously VERIFIED/ACTIVE/HIGH material risk disappeared.
+- Do not change multiple transport variables while a production experiment is being isolated.
 - Do not promote metadata/query success itself to evidence PASS.
 - Do not loosen predictability, valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.
 
