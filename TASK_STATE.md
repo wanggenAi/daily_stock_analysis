@@ -118,3 +118,61 @@ Fresh post-merge Deep production evidence for #232 is still required before #230
 - Authority remains non-trading and fail-closed: `automatic_dispatch_allowed=false`, `formal_trading_authority=false`, `mutates_authoritative_decision=false`, `UNKNOWN != PASS`, `no_auto_trade=true`.
 - Current main does not yet contain `data/jev_shadow/latest.json`, `data/jev_shadow/latest_routing.json`, or `JEV_RESEARCH_ROUTING.md`; a successful manual `GenGe Jev Shadow Evaluation` workflow_dispatch is still required to persist the first production advisory snapshot.
 - Do not let Jev override deterministic research obligations or Formal BUY/WAIT_PRICE/REJECT. Promotion to automatic research dispatch requires repeated calibration first.
+
+
+## Jev Automatic Research Orchestration — Current Checkpoint
+
+### Mission
+Turn the already-built Jev layer into a usable closed research loop instead of a standalone advisory report.
+
+### Target Chain
+`GenGe Jev Shadow Evaluation -> GenGe Jev Research Orchestrator -> GenGe V3.1 Deep Calculation Lambda -> GenGe V3.1 Terminal Research Decision -> GenGe Investor Terminal Research Overlay -> GenGe Three-Pillar Decision Center`
+
+### Durable State
+- Jev advisory truth: `data/jev_shadow/latest.json`, `data/jev_shadow/latest_routing.json`, `JEV_RESEARCH_ROUTING.md`.
+- Automatic research-loop cursor: `data/jev_shadow/orchestration/latest.json`.
+- The cursor must record `source_workflow_run_id`, lifecycle state, selected codes, and accepted Deep run id when dispatch occurs.
+- Same Jev source run must never dispatch Deep twice.
+
+### Lifecycle
+`JEV_READY -> ORCHESTRATION_PENDING -> DEEP_DISPATCH_ACCEPTED -> DEEP_COMPLETE -> TERMINAL_COMPLETE -> INVESTOR_OVERLAY_COMPLETE -> DECISION_CENTER_REFRESHED`
+
+The persisted cursor directly stores the first three states. Later stages are reconciled from GitHub Actions and persisted downstream data.
+
+### Resume Rule
+When the user says only "继续" in a future session:
+1. Read current live main / PRs / Actions.
+2. Read this file.
+3. Read `data/jev_shadow/latest_routing.json`.
+4. Read `data/jev_shadow/orchestration/latest.json` if present.
+5. If cursor is `ORCHESTRATION_PENDING`, search Actions for the exact `JEV_ORCHESTRATOR_<source_workflow_run_id>` Deep run before any retry.
+6. If cursor is `DEEP_DISPATCH_ACCEPTED`, follow its `deep_run_id`; then follow the automatically chained Terminal -> Investor Overlay -> Three-Pillar runs.
+7. If the chain has completed, inspect the newest terminal decisions and investor-facing result, then decide the next research action from real persisted evidence.
+8. Never ask the user to restate this project background and never restart completed stages.
+
+### Authority
+- Jev direct dispatch: false.
+- Deterministic bounded research dispatch: allowed by the orchestrator only when Jev route and existing deterministic triage agree.
+- Formal trading authority: false.
+- Automatic Formal BUY: false.
+- UNKNOWN != PASS.
+- no_auto_trade=true.
+
+### Current Engineering Work
+- Phase 1 (#237) and Phase 2 (#240) are merged.
+- First manual production Jev run `35569181282` succeeded 25/25 on `jev-1.13.0` and persisted its advisory.
+- The first production sample showed 25/25 `EVIDENCE_REFRESH`, exposing overly homogeneous input selection.
+- Phase 3 priority-triage logic was validated on PR smoke: current holdings became `needs_deep_research=true`, while route uncertainty remained visible rather than being hidden.
+- Replacement implementation branch: `feat/jev-auto-orchestrator-20260921`.
+- This branch replays Phase 3 onto current main and adds deterministic bounded auto-research orchestration with write-ahead intent, exact Jev run lineage, duplicate-dispatch reconciliation, and automatic Deep handoff.
+- Old PR #241 is superseded by this combined implementation and should not be merged separately.
+
+### Next Action
+Finish CI for the combined Jev auto-orchestration PR, merge only when green, then verify on main that the merge-triggered 25-entity Jev production run:
+1. persists exact source workflow lineage,
+2. triggers the Jev Research Orchestrator,
+3. selects only deterministically eligible bounded research codes,
+4. dispatches exactly one Deep run,
+5. persists `DEEP_DISPATCH_ACCEPTED`,
+6. automatically continues through Terminal -> Investor Overlay -> Three-Pillar,
+7. produces a fresh investor-facing research result without changing Formal authority or enabling auto trade.
