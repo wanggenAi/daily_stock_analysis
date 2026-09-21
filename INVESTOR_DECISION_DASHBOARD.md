@@ -1,7 +1,3 @@
-# ⚠️ 数据代际陈旧：STALE_UPSTREAM
-
-> 新增仓位已 fail-closed；Formal 决策仅保留作审计/研究显示。原因：`CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION`
-
 # 投资决策驾驶舱
 
 > 市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
@@ -9,20 +5,18 @@
 ## 1. 最新市场结构（日线）
 
 - 数据日：**2026-09-21**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。
-- 市场状态：**GREEN**；是否允许新买：**False**；仓位倍率：**1.00**
+- 市场状态：**GREEN**；是否允许新买：**True**；仓位倍率：**1.00**
 - 上涨家数比例：**81.14%**；数据质量：**OK**
-
-- 盘中执行价覆盖：**0/4只**；行情状态：**OFF_SESSION**；最新行情时间：**—**；正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。
 
 ## 2. 我的持仓怎么办
 
 - 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。
 | 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作/权限 | 动作状态 | 现在怎么办 |
 |---|---:|---:|---:|---:|---|---|---|
-| 国电南瑞 600406 | 200 | 23.13 | 22.05 | -4.65 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
-| 润贝航科 001316 | 200 | 25.75 | 28.11 | 9.19 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
-| 中国平安 601318 | 400 | 55.97 | 53.37 | -4.64 | HOLD | **UNCHANGED** | **继续持有** |
-| 洛阳钼业 603993 | 1100 | 18.62 | 17.51 | -5.98 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
+| 国电南瑞 600406 | 200 | 23.13 | 22.10 | -4.43 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
+| 润贝航科 001316 | 200 | 25.75 | 29.62 | 15.05 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
+| 中国平安 601318 | 400 | 55.97 | 53.98 | -3.55 | HOLD | **UNCHANGED** | **继续持有** |
+| 洛阳钼业 603993 | 1100 | 18.62 | 17.59 | -5.55 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
 
 ## 3. 今天能直接买什么
 
@@ -38,7 +32,7 @@
 
 ## 5. 资金怎么花
 
-- 可规划现金：**¥50000.00**；最高部署预算：**¥0.00**
+- 可规划现金：**¥50000.00**；最高部署预算：**¥35000.00**
 - 计划立即投入：**¥0.00**；计划后现金：**¥50000.00**
 - 只有当前可用 Canonical 持仓分批加仓授权或授权 Terminal BUY 才能进入计划；WAIT_PRICE 只预留，REJECT=0。
 - 上方“计划立即投入”只统计当前具备执行条件的动作；缺少有效盘中价、现价高于授权上限等暂不可执行计划不计入。
@@ -60,35 +54,9 @@ M73研究和试验发展(STRONG)、O81机动车、电子产品和日用产品修
 
 ## 9. 系统状态（最后看）
 
-- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**暂无可用产物**；资金源：**USER_CONFIRMED_FLOOR**
+- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**可用**；资金源：**USER_CONFIRMED_FLOOR**
 - Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。
 - Profit Protection Overlay 只展示盈利与价值/风险上下文；**profit alone 不是 SELL rationale，overlay 不得改写 Formal Action。**
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**16** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **16** / REJECT **0**。
-- urgent research：**8** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
-| 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
-
-### Urgent evidence queue
-
-- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
-- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
-- 巨一科技 688162: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 甘化科工 000576: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 顺控发展 003039: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 兴通股份 603209: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
