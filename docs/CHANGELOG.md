@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] Deep 历史重大事件重校验继续排除“防止…占用资金制度”、拟购买资产资金占用说明、例行资金占用专项审计及资金占用清偿/违规担保解除报告等非事件标题，避免累计风险账本把治理、尽调或审计披露错误复活为 ACTIVE/HIGH 硬门槛 FAIL；真实整改中的资金占用/违规担保事件仍保持 fail-closed。
 - [修复] Deep Calculation 将仍满足当前语义校验的 VERIFIED/ACTIVE/HIGH 官方重大风险持久化为累计风险 ledger；后续官方附件瞬时 403/抓取失败不再抹掉已验证硬门槛 FAIL，同时损坏或缺失的新 ledger 会安全回退到上一份可信历史，UNKNOWN、Formal Authority 与 no-auto-trade 规则不变。
 - [修复] 官方重大事件标题语义补强：明确“资金占用已解决/非标影响已消除”按 RESOLVED 处理，“是否存在财务造假/资金占用”的核查问句不再仅凭关键词判为已发生风险，并在历史风险复用前按当前规则和 as-of 重新校验。
 - [修复] Terminal Urgent Evidence Reopen 接受 `RESEARCH_GAP` 证据不足终态，恢复慢车道新证据 → Deep 重算的持续研究反馈链。
