@@ -36,23 +36,39 @@ def test_shanghai_material_events_use_sse(monkeypatch):
 
 
 def test_predictability_sse_history_keeps_distinct_complete_years(monkeypatch):
+    calls = []
+    source_rows = [
+        {"title": "公司2025年年度报告", "publish_date": "2026-03-30", "url": "https://static.sse.com.cn/2025.pdf"},
+        {"title": "公司2025年年度报告摘要", "publish_date": "2026-03-30", "url": "https://static.sse.com.cn/2025-summary.pdf"},
+        {"title": "公司2024年年度报告", "publish_date": "2025-03-30", "url": "https://static.sse.com.cn/2024.pdf"},
+        {"title": "公司2023年年度报告", "publish_date": "2024-03-30", "url": "https://static.sse.com.cn/2023.pdf"},
+    ]
+
     def fake_sse(code, *, start, as_of, session, timeout, **kwargs):
         assert code == "600406"
-        assert start == date(2020, 9, 9)
-        assert as_of == date(2026, 9, 18)
         assert kwargs["report_type"] == "YEARLY"
         assert kwargs["report_type2"] == "DQBG"
         assert kwargs["max_pages"] == 5
-        return ([
-            {"title": "公司2025年年度报告", "publish_date": "2026-03-30", "url": "https://static.sse.com.cn/2025.pdf"},
-            {"title": "公司2025年年度报告摘要", "publish_date": "2026-03-30", "url": "https://static.sse.com.cn/2025-summary.pdf"},
-            {"title": "公司2024年年度报告", "publish_date": "2025-03-30", "url": "https://static.sse.com.cn/2024.pdf"},
-            {"title": "公司2023年年度报告", "publish_date": "2024-03-30", "url": "https://static.sse.com.cn/2023.pdf"},
-        ], {"pages_fetched": 1, "truncated": False})
+        calls.append((start, as_of))
+        rows = [
+            row for row in source_rows
+            if start.isoformat() <= row["publish_date"] <= as_of.isoformat()
+        ]
+        return rows, {"pages_fetched": 1, "truncated": False}
 
     monkeypatch.setattr(predictability, "_query_sse_announcements", fake_sse)
     rows = predictability._query_sse_history(
         "600406", date(2026, 9, 18), object(), 8
+    )
+    assert calls[0][0] == date(2020, 9, 9)
+    assert calls[-1][1] == date(2026, 9, 18)
+    assert all(
+        (end - start).days <= predictability.SSE_MAX_QUERY_SPAN_DAYS
+        for start, end in calls
+    )
+    assert all(
+        next_start == end + predictability.timedelta(days=1)
+        for (_, end), (next_start, _) in zip(calls, calls[1:])
     )
     assert [row["fiscal_year"] for row in rows] == [2025, 2024, 2023]
     assert all("摘要" not in row["title"] for row in rows)
@@ -204,8 +220,8 @@ def test_sse_annual_query_rejects_half_year_summaries_and_notices():
             assert params["reportType"] == "YEARLY"
             assert params["reportType2"] == "DQBG"
             assert params["pageHelp.pageSize"] == "30"
-            assert "beginDate" not in params
-            assert "endDate" not in params
+            assert params["beginDate"] == "2025-03-07"
+            assert params["endDate"] == "2026-09-18"
             assert timeout == 8
             return Response()
 
@@ -355,7 +371,7 @@ def test_predictability_unknown_provenance_tracks_primary_exchange():
 
 
 
-def test_sse_current_endpoint_pages_and_filters_dates_client_side():
+def test_sse_typed_query_sends_server_dates_and_still_filters_locally():
     class Response:
         def __init__(self, payload):
             self._payload = payload
@@ -372,8 +388,8 @@ def test_sse_current_endpoint_pages_and_filters_dates_client_side():
         def get(self, url, *, params, headers, timeout):
             assert url == company_module.SSE_ANNOUNCEMENT_URL
             assert headers["Referer"] == company_module.SSE_DISCLOSURE_REFERER
-            assert "beginDate" not in params
-            assert "endDate" not in params
+            assert params["beginDate"] == "2024-01-01"
+            assert params["endDate"] == "2026-09-18"
             page = int(params["pageHelp.pageNo"])
             self.pages.append(page)
             rows = {
