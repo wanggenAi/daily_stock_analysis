@@ -26,6 +26,58 @@ RUNTIME_CONTRACT = "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2"
 TERMINAL_RESEARCH_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
 
+ERA_EVIDENCE_FAMILIES = (
+    "POLICY_CAPITAL",
+    "INDUSTRIAL_CAPITAL",
+    "FINANCIAL_CAPITAL",
+    "REAL_DEMAND",
+    "TECHNOLOGY",
+    "GLOBAL_STRUCTURE",
+)
+CAPITAL_FLOW_FAMILIES = (
+    "POLICY_CAPITAL",
+    "INDUSTRIAL_CAPITAL",
+    "FINANCIAL_CAPITAL",
+    "REAL_DEMAND",
+)
+
+
+def summarize_era_evidence(evidence_bundle: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Expose actual evidence coverage instead of implying fund-flow knowledge."""
+    raw = dict(evidence_bundle or {})
+    rows = [row for row in (raw.get("records") or []) if isinstance(row, Mapping)]
+    counts = {family: 0 for family in ERA_EVIDENCE_FAMILIES}
+    for row in rows:
+        family = str(row.get("family") or "").upper()
+        if family in counts:
+            counts[family] += 1
+
+    covered = [family for family in CAPITAL_FLOW_FAMILIES if counts[family] > 0]
+    missing = [family for family in CAPITAL_FLOW_FAMILIES if counts[family] == 0]
+    status = (
+        "MULTI_LAYER_COVERED"
+        if not missing
+        else "PARTIAL"
+        if covered
+        else "UNAVAILABLE"
+    )
+    return {
+        "status": status,
+        "evidence_count": len(rows),
+        "family_counts": counts,
+        "covered_capital_layers": covered,
+        "missing_capital_layers": missing,
+        "policy_capital_evidence_available": counts["POLICY_CAPITAL"] > 0,
+        "industrial_capital_evidence_available": counts["INDUSTRIAL_CAPITAL"] > 0,
+        "financial_capital_evidence_available": counts["FINANCIAL_CAPITAL"] > 0,
+        "real_demand_evidence_available": counts["REAL_DEMAND"] > 0,
+        "direct_stock_fund_flow_claimed": False,
+        "interpretation": (
+            "Policy/industrial/financial capital and real-demand evidence are separate layers. "
+            "Missing FINANCIAL_CAPITAL must remain explicit; market-strength proxies never become direct fund-flow evidence."
+        ),
+    }
+
 
 def _json(path: Path | None) -> dict[str, Any]:
     if path is None or not path.is_file():
@@ -41,6 +93,13 @@ def _int(value: Any) -> int:
         return int(float(value))
     except (TypeError, ValueError):
         return 0
+
+
+def _num(value: Any) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _timestamp(value: Any) -> datetime:
@@ -184,6 +243,18 @@ def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
         "gap_closure_attempt_count": _int(raw.get("gap_closure_attempt_count")),
         "new_evidence_count": _int(raw.get("new_evidence_count")),
         "progressed_gate_count": _int(raw.get("progressed_gate_count")),
+        "hard_gate_count": _int(raw.get("hard_gate_count")),
+        "pass_gate_count": _int(raw.get("pass_gate_count")),
+        "fail_gate_count": _int(raw.get("fail_gate_count")),
+        "verified_pass_gate_count": _int(raw.get("verified_pass_gate_count")),
+        "unverified_pass_gate_count": _int(raw.get("unverified_pass_gate_count")),
+        "provenance_audit_complete": raw.get("provenance_audit_complete") is True,
+        "provenance_audit_run_id": str(raw.get("provenance_audit_run_id") or ""),
+        "material_event_failed_gate_count": _int(raw.get("material_event_failed_gate_count")),
+        "historical_material_event_evidence_count": _int(raw.get("historical_material_event_evidence_count")),
+        "historical_material_event_failed_gate_count": _int(raw.get("historical_material_event_failed_gate_count")),
+        "material_event_risk_ledger_complete": raw.get("material_event_risk_ledger_complete") is True,
+        "material_event_risk_ledger_count": _int(raw.get("material_event_risk_ledger_count")),
         "immediate_retry_required": immediate_retry,
         "execution_completed": run_state == "COMPLETED",
         "execution_succeeded": execution == "SUCCESS",
@@ -314,6 +385,26 @@ def normalize_terminal_research(
     }
 
 
+def _research_investor_view(row: Mapping[str, Any]) -> dict[str, Any]:
+    item = dict(row)
+    decision = str(item.get("research_decision") or "").upper()
+    unknowns = [str(x) for x in (item.get("hard_gate_unknowns") or []) if str(x)]
+    if decision == "RESEARCH_GAP":
+        waiting = "、".join(unknowns) or "缺失证据"
+        item["investor_action"] = f"暂不买；等待补齐：{waiting}"
+        item["account_action"] = "DO_NOT_BUY_YET"
+    elif decision == "BUY":
+        item["investor_action"] = "研究层达到BUY条件，但未获得Formal BUY授权；不得直接下单"
+        item["account_action"] = "RESEARCH_BUY_NOT_FORMAL"
+    elif decision == "WAIT_PRICE":
+        item["investor_action"] = "研究层等待价格；未获得Formal BUY授权，达到价格也需重新核验正式权限"
+        item["account_action"] = "WAIT_PRICE_RESEARCH_ONLY"
+    else:
+        item["investor_action"] = "不买；研究层已淘汰"
+        item["account_action"] = "DO_NOT_BUY"
+    return item
+
+
 def _attach_terminal_research(
     payload: dict[str, Any],
     terminal: dict[str, Any],
@@ -332,12 +423,20 @@ def _attach_terminal_research(
     opportunities["canonical_formal_buy_now"] = list(opportunities.get("buy_now") or [])
     opportunities["canonical_formal_wait_price"] = list(opportunities.get("wait_price") or [])
     opportunities["terminal_research_snapshot"] = terminal
-    opportunities["research_buy"] = list(terminal.get("research_buy") or []) if current else []
-    opportunities["research_wait_price"] = list(terminal.get("research_wait_price") or []) if current else []
-    opportunities["research_gap"] = list(terminal.get("research_gap") or []) if current else []
+    opportunities["research_buy"] = [
+        _research_investor_view(row) for row in (terminal.get("research_buy") or [])
+    ] if current else []
+    opportunities["research_wait_price"] = [
+        _research_investor_view(row) for row in (terminal.get("research_wait_price") or [])
+    ] if current else []
+    opportunities["research_gap"] = [
+        _research_investor_view(row) for row in (terminal.get("research_gap") or [])
+    ] if current else []
     opportunities["research_gap_count"] = _int(terminal.get("research_gap_count")) if current else 0
     opportunities["research_reject_count"] = _int(terminal.get("research_reject_count")) if current else 0
-    opportunities["urgent_evidence_queue"] = list(terminal.get("urgent_research_queue") or []) if current else []
+    opportunities["urgent_evidence_queue"] = [
+        _research_investor_view(row) for row in (terminal.get("urgent_research_queue") or [])
+    ] if current else []
     opportunities["research_actionable_count"] = (
         len(opportunities["research_buy"]) + len(opportunities["research_wait_price"])
     )
@@ -371,6 +470,271 @@ def _attach_terminal_research(
             ),
         }
     )
+
+
+def _stock_code(value: Any) -> str:
+    text = str(value or "").strip().upper()
+    if "." in text:
+        base, suffix = text.rsplit(".", 1)
+        if suffix in {"SH", "SZ", "BJ"}:
+            text = base
+    for prefix in ("SH", "SZ", "BJ"):
+        if text.startswith(prefix) and text[len(prefix):].isdigit():
+            text = text[len(prefix):]
+            break
+    return text.zfill(6) if text.isdigit() else text
+
+
+def summarize_candidate_lifecycle(
+    state: Mapping[str, Any] | None,
+    focus_codes: list[str] | None = None,
+) -> dict[str, Any]:
+    """Expose durable candidate-memory health and the lifecycle of report-relevant names."""
+    raw = dict(state or {})
+    candidates = raw.get("candidates") if isinstance(raw.get("candidates"), Mapping) else {}
+    active_rows: list[dict[str, Any]] = []
+    archived_count = 0
+    event_count = 0
+    tier_counts: Counter[str] = Counter()
+    by_code: dict[str, dict[str, Any]] = {}
+    for key, value in candidates.items():
+        if not isinstance(value, Mapping):
+            continue
+        row = dict(value)
+        code = _stock_code(row.get("code") or key)
+        state_name = str(row.get("lifecycle_state") or "UNKNOWN").upper()
+        history = row.get("history") if isinstance(row.get("history"), list) else []
+        event_count += len(history)
+        item = {
+            "code": code,
+            "name": str(row.get("stock_name") or ""),
+            "lifecycle_state": state_name,
+            "research_tier": str(row.get("research_tier") or "UNKNOWN"),
+            "seen_count": _int(row.get("seen_count")),
+            "last_event": str(row.get("last_event") or ""),
+            "last_event_at": str(row.get("last_event_at") or ""),
+            "last_formal_action": str(row.get("last_formal_action") or ""),
+            "last_valuation_confidence": str(row.get("last_valuation_confidence") or ""),
+        }
+        by_code[code] = item
+        if state_name == "ACTIVE":
+            active_rows.append(item)
+            tier_counts[item["research_tier"]] += 1
+        else:
+            archived_count += 1
+    active_rows.sort(key=lambda row: (-row["seen_count"], row["code"]))
+    focus = []
+    for code in focus_codes or []:
+        normalized = _stock_code(code)
+        if normalized in by_code:
+            focus.append(dict(by_code[normalized]))
+    return {
+        "available": bool(candidates),
+        "contract_version": str(raw.get("contract_version") or ""),
+        "latest_applied_snapshot_id": str(raw.get("latest_applied_snapshot_id") or ""),
+        "latest_research_as_of": str(raw.get("latest_research_as_of") or ""),
+        "active_candidate_count": len(active_rows),
+        "archived_or_invalidated_count": archived_count,
+        "lifecycle_event_count": event_count,
+        "tier_counts": dict(tier_counts),
+        "focus_candidates": focus,
+        "focus_by_code": {row["code"]: row for row in focus},
+        "most_persistent_candidates": active_rows[:10],
+        "discovery_is_filtered_by_lifecycle": False,
+        "formal_authority_granted": False,
+        "no_auto_trade": True,
+        "interpretation": (
+            "Candidate Lifecycle preserves research continuity across scans; it does not filter broad discovery "
+            "and cannot create Formal trading authority."
+        ),
+    }
+
+
+def _attach_holding_valuation_continuity(
+    payload: dict[str, Any],
+    state: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    raw = dict(state or {})
+    holdings_state = raw.get("holdings") if isinstance(raw.get("holdings"), Mapping) else {}
+    holding_rows = [
+        row
+        for row in ((payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or [])
+        if isinstance(row, dict)
+    ]
+    matched = 0
+    for row in holding_rows:
+        code = _stock_code(row.get("code"))
+        source = holdings_state.get(code) if isinstance(holdings_state, Mapping) else None
+        if not isinstance(source, Mapping):
+            row["valuation_continuity"] = {}
+            continue
+        matched += 1
+        row["valuation_continuity"] = {
+            "action": str(source.get("action") or ""),
+            "value_low": _num(source.get("value_low")),
+            "neutral_value": _num(source.get("neutral_value")),
+            "value_high": _num(source.get("value_high")),
+            "current_price": _num(source.get("current_price")),
+            "valuation_confidence": str(source.get("valuation_confidence") or ""),
+            "valuation_change": str(source.get("valuation_change") or ""),
+            "price_value_zone": str(source.get("price_value_zone") or "UNKNOWN"),
+            "reason_codes": str(source.get("reason_codes") or ""),
+            "decision_date": str(source.get("decision_date") or ""),
+            "canonical_snapshot_id": str(source.get("canonical_snapshot_id") or ""),
+        }
+    summary = {
+        "available": bool(holdings_state),
+        "contract_version": str(raw.get("contract_version") or ""),
+        "latest_applied_snapshot_id": str(raw.get("latest_applied_snapshot_id") or ""),
+        "latest_applied_source_run_id": str(raw.get("latest_applied_source_run_id") or ""),
+        "tracked_holding_count": len(holdings_state),
+        "current_portfolio_match_count": matched,
+        "formal_action_recomputed": False,
+        "no_auto_trade": True,
+        "interpretation": (
+            "Persisted valuation continuity explains value-zone and causal action history; "
+            "this report never recomputes or escalates Formal actions from the state file."
+        ),
+    }
+    payload["holding_valuation_continuity"] = summary
+    payload["executive_summary"]["holding_valuation_continuity_match_count"] = matched
+    return summary
+
+
+def _attach_capability_visibility(
+    payload: dict[str, Any],
+    candidate_lifecycle_state: Mapping[str, Any] | None,
+    valuation_continuity: Mapping[str, Any] | None = None,
+) -> None:
+    holdings = payload.get("pillar_1_holdings_deep_analysis") or {}
+    holding_rows = [row for row in (holdings.get("rows") or []) if isinstance(row, dict)]
+    opportunities = payload.get("pillar_3_deep_opportunities") or {}
+    focus_codes = [str(row.get("code") or "") for row in holding_rows]
+    focus_codes.extend(str(row.get("code") or "") for row in (opportunities.get("urgent_evidence_queue") or []))
+    lifecycle = summarize_candidate_lifecycle(candidate_lifecycle_state, focus_codes)
+    focus_by_code = lifecycle.get("focus_by_code") or {}
+    for row in holding_rows:
+        row["candidate_lifecycle"] = dict(focus_by_code.get(_stock_code(row.get("code"))) or {})
+
+    runtime = payload.get("deep_calculation_runtime") or {}
+    capital = payload.get("pillar_2_world_social_market_capital_map") or {}
+    market = capital.get("a_share_market_snapshot") or {}
+    coverage = capital.get("capital_evidence_coverage") or {}
+    terminal = opportunities.get("terminal_research_snapshot") or {}
+    account = payload.get("today_account_plan") or {}
+    valuation_covered = sum(
+        1
+        for row in holding_rows
+        if row.get("neutral_value") is not None or bool(str(row.get("valuation_confidence") or "").strip())
+    )
+    capabilities = [
+        {
+            "capability": "市场大趋势 / 全A脉搏",
+            "status": "ACTIVE" if market.get("status") not in {None, "", "UNAVAILABLE"} else "MISSING",
+            "result": f"{market.get('status') or 'UNAVAILABLE'} / score={market.get('score') if market.get('score') is not None else '—'} / {market.get('as_of_date') or '—'}",
+        },
+        {
+            "capability": "持仓 + 估值 + Formal Action",
+            "status": "ACTIVE" if holding_rows else "MISSING",
+            "result": f"holdings={len(holding_rows)} / valuation-covered={valuation_covered} / formal-source={payload.get('formal_action_source') or '—'}",
+        },
+        {
+            "capability": "持仓估值连续性 / 价值区间",
+            "status": "ACTIVE" if (valuation_continuity or {}).get("current_portfolio_match_count", 0) > 0 else "MISSING",
+            "result": f"matched={(valuation_continuity or {}).get('current_portfolio_match_count',0)} / tracked={(valuation_continuity or {}).get('tracked_holding_count',0)} / formal-recomputed=False",
+        },
+        {
+            "capability": "Candidate Lifecycle 持续研究记忆",
+            "status": "ACTIVE" if lifecycle.get("available") else "MISSING",
+            "result": f"active={lifecycle.get('active_candidate_count', 0)} / events={lifecycle.get('lifecycle_event_count', 0)} / focus={len(lifecycle.get('focus_candidates') or [])}",
+        },
+        {
+            "capability": "Deep 五类硬门槛 + 官方证据",
+            "status": "ACTIVE" if runtime.get("execution_succeeded") else "PARTIAL",
+            "result": f"requested={runtime.get('requested_count', 0)} / verified-pass={runtime.get('verified_pass_gate_count', 0)} / unresolved={runtime.get('unresolved_requested_gate_count', 0)}",
+        },
+        {
+            "capability": "Deep Provenance 证据审计",
+            "status": "ACTIVE" if runtime.get("provenance_audit_complete") is True else "PARTIAL",
+            "result": f"audit={runtime.get('provenance_audit_complete') is True} / run={runtime.get('provenance_audit_run_id') or '—'} / unverified-pass={runtime.get('unverified_pass_gate_count', 0)}",
+        },
+        {
+            "capability": "世界 / 社会 / 资本趋势雷达",
+            "status": str(coverage.get("status") or "UNAVAILABLE"),
+            "result": " / ".join(
+                f"{name}={count}" for name, count in (coverage.get("family_counts") or {}).items()
+            ) or "no live evidence families",
+        },
+        {
+            "capability": "Deep Research Terminal",
+            "status": "ACTIVE" if terminal.get("available") is True and terminal.get("current_for_deep_runtime") is True else "PARTIAL",
+            "result": f"BUY={len(opportunities.get('research_buy') or [])} / WAIT={len(opportunities.get('research_wait_price') or [])} / GAP={opportunities.get('research_gap_count', 0)} / REJECT={opportunities.get('research_reject_count', 0)}",
+        },
+        {
+            "capability": "资金计划 + 执行价覆盖",
+            "status": "ACTIVE" if account else "MISSING",
+            "result": f"cash={account.get('available_cash_cny', 0)} / immediate={account.get('planned_immediate_cash_cny', 0)} / quotes={account.get('live_quote_applied_count', 0)}/{account.get('live_quote_expected_count', 0)}",
+        },
+    ]
+    payload["candidate_lifecycle"] = lifecycle
+    payload["system_capability_visibility"] = {
+        "status": "ACTIVE_WITH_LIMITATIONS" if any(row["status"] in {"PARTIAL", "MISSING", "UNAVAILABLE"} for row in capabilities) else "ACTIVE",
+        "capabilities": capabilities,
+        "interpretation": "Only production-wired capabilities are shown here. A design doc or isolated module does not count as active.",
+        "no_auto_trade": True,
+    }
+    payload["executive_summary"]["active_candidate_lifecycle_count"] = lifecycle.get("active_candidate_count", 0)
+    payload["executive_summary"]["lifecycle_event_count"] = lifecycle.get("lifecycle_event_count", 0)
+
+
+def _finalize_investor_report_readiness(payload: dict[str, Any]) -> None:
+    holdings = payload.get("pillar_1_holdings_deep_analysis") or {}
+    holding_rows = [row for row in (holdings.get("rows") or []) if isinstance(row, Mapping)]
+    opportunities = payload.get("pillar_3_deep_opportunities") or {}
+    account = payload.get("today_account_plan") or {}
+    capital = payload.get("pillar_2_world_social_market_capital_map") or {}
+    coverage = capital.get("capital_evidence_coverage") or {}
+    runtime = payload.get("deep_calculation_runtime") or {}
+
+    holding_actions_complete = all(
+        bool(str(row.get("investor_action") or "").strip()) for row in holding_rows
+    )
+    terminal_current = opportunities.get("research_terminal_current") is True
+    terminal_available = (opportunities.get("terminal_research_snapshot") or {}).get("available") is True
+    account_action_complete = bool(str(account.get("plain_language") or "").strip())
+
+    # A report can remain action-complete while a newer research generation is
+    # still running: stale research is not promoted, and the safe candidate
+    # action becomes "do not add new exposure yet". Evidence freshness remains
+    # a separate limitation below.
+    action_complete = bool(holding_actions_complete and account_action_complete)
+
+    limitations: list[str] = []
+    if runtime.get("research_complete") is not True:
+        limitations.append("DEEP_RESEARCH_EVIDENCE_PARTIAL")
+    if terminal_available and not terminal_current:
+        limitations.append("TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP")
+    if coverage.get("financial_capital_evidence_available") is not True:
+        limitations.append("FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING")
+    if payload.get("decision_readiness", {}).get("validated_macro_to_a_share_handoff_available") is not True:
+        limitations.append("ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED")
+    if payload.get("decision_readiness", {}).get("live_execution_quote_coverage_complete") is not True:
+        limitations.append("LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION")
+
+    evidence_complete = not limitations
+    payload["investor_report_readiness"] = {
+        "status": "ACTION_COMPLETE" if action_complete else "ACTION_INCOMPLETE",
+        "action_complete": action_complete,
+        "evidence_complete": evidence_complete,
+        "limitations": limitations,
+        "interpretation": (
+            "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action "
+            "without promoting missing evidence. EVIDENCE completeness is tracked separately."
+        ),
+        "no_auto_trade": True,
+    }
+    payload["executive_summary"]["investor_action_report_complete"] = action_complete
+    payload["executive_summary"]["investor_evidence_complete"] = evidence_complete
 
 
 def _mark_stale_profile_lineage(payload: dict[str, Any]) -> None:
@@ -430,6 +794,9 @@ def build_runtime_decision_center(
     deep_calculation_status: Mapping[str, Any] | None = None,
     partial_deep_calculation_status: Mapping[str, Any] | None = None,
     terminal_research_decisions: Mapping[str, Any] | None = None,
+    era_evidence_bundle: Mapping[str, Any] | None = None,
+    candidate_lifecycle_state: Mapping[str, Any] | None = None,
+    holding_valuation_continuity_state: Mapping[str, Any] | None = None,
     industry_links: Mapping[str, Any] | None = None,
     era_handoff: Mapping[str, Any] | None = None,
     generated_at: str | None = None,
@@ -442,6 +809,19 @@ def build_runtime_decision_center(
         industry_links=industry_links,
         era_handoff=era_handoff,
         generated_at=generated_at,
+    )
+    capital_coverage = summarize_era_evidence(era_evidence_bundle)
+    capital_map = payload["pillar_2_world_social_market_capital_map"]
+    capital_map["capital_evidence_coverage"] = capital_coverage
+    capital_map["direct_financial_capital_evidence_available"] = capital_coverage[
+        "financial_capital_evidence_available"
+    ]
+    payload["executive_summary"]["capital_flow_evidence_status"] = capital_coverage["status"]
+    payload["decision_readiness"]["financial_capital_evidence_available"] = capital_coverage[
+        "financial_capital_evidence_available"
+    ]
+    payload["decision_readiness"]["capital_flow_multi_layer_covered"] = (
+        capital_coverage["status"] == "MULTI_LAYER_COVERED"
     )
     selected_status, status_source = select_latest_deep_calculation_status(
         deep_calculation_status,
@@ -501,6 +881,11 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
+    valuation_continuity = _attach_holding_valuation_continuity(
+        payload, holding_valuation_continuity_state
+    )
+    _attach_capability_visibility(payload, candidate_lifecycle_state, valuation_continuity)
+    _finalize_investor_report_readiness(payload)
     return payload
 
 
@@ -554,7 +939,8 @@ def _urgent_text(rows: list[Mapping[str, Any]]) -> str:
         code = str(row.get("code") or "")
         name = str(row.get("name") or "")
         score = row.get("quant_score")
-        parts.append(f"{code} {name}(quant={score})".strip())
+        action = str(row.get("investor_action") or "暂不买")
+        parts.append(f"{code} {name}(quant={score}；{action})".strip())
     return "；".join(parts)
 
 
@@ -567,7 +953,35 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
     missing = runtime.get("missing_requested_codes") or []
     opportunities = payload.get("pillar_3_deep_opportunities") or {}
     terminal = opportunities.get("terminal_research_snapshot") or {}
+    report_ready = payload.get("investor_report_readiness") or {}
     lines = [
+        "",
+        "## 今日汇报可执行性",
+        "",
+        f"- 行动结论完整：**{report_ready.get('action_complete') is True}**；证据完整：**{report_ready.get('evidence_complete') is True}**。",
+        f"- 当前限制：{_code_list_text(report_ready.get('limitations') or [], limit=10)}。",
+        "- 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。",
+        "",
+        "## 本次汇报真正用了哪些系统能力",
+        "",
+        "| 能力 | 状态 | 当前真正产出的结果 |",
+        "|---|---|---|",
+        *[
+            f"| {row.get('capability','—')} | **{row.get('status','UNKNOWN')}** | {row.get('result','—')} |"
+            for row in ((payload.get("system_capability_visibility") or {}).get("capabilities") or [])
+        ],
+        "",
+        f"- Candidate Lifecycle：当前 ACTIVE **{(payload.get('candidate_lifecycle') or {}).get('active_candidate_count', 0)}**；累计生命周期事件 **{(payload.get('candidate_lifecycle') or {}).get('lifecycle_event_count', 0)}**。这意味着历史候选会持续研究，而不是第二天扫描不到就消失。",
+        "- 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。",
+        "",
+        "### 当前持仓的持续研究记忆",
+        "",
+        *(
+            [
+                f"- {row.get('name','')} {row.get('code','')}：{(row.get('candidate_lifecycle') or {}).get('lifecycle_state','未进入生命周期')} / tier={(row.get('candidate_lifecycle') or {}).get('research_tier','—')} / 历史被系统重新看见 {(row.get('candidate_lifecycle') or {}).get('seen_count',0)} 次。"
+                for row in ((payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or [])
+            ]
+        ),
         "",
         "## 自动深算运行状态",
         "",
@@ -618,6 +1032,9 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dashboard", type=Path, default=Path("data/investor_decision_dashboard/latest.json"))
     parser.add_argument("--era-radar", type=Path, default=Path("data/era_radar/latest.json"))
+    parser.add_argument("--era-evidence", type=Path, default=None)
+    parser.add_argument("--candidate-lifecycle", type=Path, default=Path("data/opportunity_snapshots/candidate_lifecycle_state.json"))
+    parser.add_argument("--holding-valuation-continuity", type=Path, default=Path("data/opportunity_snapshots/holding_valuation_continuity_state.json"))
     parser.add_argument("--era-handoff", type=Path, default=Path("data/era_radar/research_handoff/latest.json"))
     parser.add_argument("--automatic-deep-reviews", type=Path, default=Path("data/deep_calculation/latest_profiles.json"))
     parser.add_argument("--static-deep-reviews", type=Path, default=Path("config/v31_explicit_deep_reviews.json"))
@@ -629,14 +1046,27 @@ def main() -> int:
     parser.add_argument("--output-md", type=Path, default=Path("LATEST_DECISION_CENTER.md"))
     args = parser.parse_args()
 
+    era_radar = _json(args.era_radar)
+    era_evidence_path = args.era_evidence
+    if era_evidence_path is None:
+        snapshot_id = str(era_radar.get("snapshot_id") or "").strip()
+        era_evidence_path = (
+            args.era_radar.parent / "evidence" / f"{snapshot_id}.json"
+            if snapshot_id
+            else None
+        )
+
     payload = build_runtime_decision_center(
         dashboard=_json(args.dashboard),
-        era_radar=_json(args.era_radar),
+        era_radar=era_radar,
         automatic_profiles=_json(args.automatic_deep_reviews),
         static_profiles=_json(args.static_deep_reviews),
         deep_calculation_status=_json(args.deep_calculation_status),
         partial_deep_calculation_status=_json(args.deep_calculation_partial_status),
         terminal_research_decisions=_json(args.terminal_research_decisions),
+        era_evidence_bundle=_json(era_evidence_path),
+        candidate_lifecycle_state=_json(args.candidate_lifecycle),
+        holding_valuation_continuity_state=_json(args.holding_valuation_continuity),
         industry_links=_json(args.industry_links),
         era_handoff=_json(args.era_handoff),
     )

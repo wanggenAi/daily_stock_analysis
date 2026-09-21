@@ -9,6 +9,8 @@ from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_run
     normalize_terminal_research,
     render_runtime_markdown,
     select_latest_deep_calculation_status,
+    summarize_era_evidence,
+    summarize_candidate_lifecycle,
 )
 
 
@@ -54,6 +56,18 @@ def _era():
         "no_auto_trade": True,
         "research_as_of": "2026-09-08T00:00:00Z",
         "trends": [],
+    }
+
+
+def _era_evidence():
+    return {
+        "schema_version": "ERA_RADAR_EVIDENCE_BUNDLE_V1",
+        "records": [
+            {"family": "POLICY_CAPITAL"},
+            {"family": "REAL_DEMAND"},
+            {"family": "REAL_DEMAND"},
+            {"family": "GLOBAL_STRUCTURE"},
+        ],
     }
 
 
@@ -314,6 +328,9 @@ def test_matching_terminal_research_is_exposed_separately_from_formal_actions():
     assert out["executive_summary"]["research_gap_count"] == 1
     assert out["executive_summary"]["research_reject_count"] == 0
     assert out["decision_readiness"]["terminal_research_current_for_deep_runtime"] is True
+    assert pillar["research_gap"][0]["account_action"] == "DO_NOT_BUY_YET"
+    assert "暂不买" in pillar["research_gap"][0]["investor_action"]
+    assert "predictability" in pillar["research_gap"][0]["investor_action"]
     assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
     assert out["no_auto_trade"] is True
 
@@ -427,6 +444,8 @@ def test_newer_partial_checkpoint_overrides_older_terminal_status_for_current_ru
     assert deep["last_profile_status"] == "DEEP_REVIEW_PARTIAL"
     assert out["decision_readiness"]["all_holdings_explicit_deep_review_complete"] is False
     assert out["pillar_3_deep_opportunities"]["terminal_research_snapshot"]["current_for_deep_runtime"] is False
+    assert out["investor_report_readiness"]["action_complete"] is True
+    assert "TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP" in out["investor_report_readiness"]["limitations"]
 
     md = render_runtime_markdown(out)
     assert "顶部持仓/机会的深算完整度已按当前 runtime 视为未完成" in md
@@ -520,6 +539,39 @@ def test_partial_checkpoint_exposes_workset_coverage_when_persisted() -> None:
 
 
 
+def test_era_evidence_coverage_is_explicit_and_does_not_fake_fund_flow():
+    coverage = summarize_era_evidence(_era_evidence())
+    assert coverage["status"] == "PARTIAL"
+    assert coverage["family_counts"]["POLICY_CAPITAL"] == 1
+    assert coverage["family_counts"]["REAL_DEMAND"] == 2
+    assert coverage["family_counts"]["FINANCIAL_CAPITAL"] == 0
+    assert coverage["financial_capital_evidence_available"] is False
+    assert coverage["direct_stock_fund_flow_claimed"] is False
+
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        era_evidence_bundle=_era_evidence(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_status(),
+        industry_links={},
+        era_handoff={},
+    )
+    capital = out["pillar_2_world_social_market_capital_map"]
+    assert capital["capital_evidence_coverage"]["status"] == "PARTIAL"
+    assert capital["direct_financial_capital_evidence_available"] is False
+    assert out["decision_readiness"]["financial_capital_evidence_available"] is False
+    md = render_runtime_markdown(out)
+    assert "## 4. 今日账户资金怎么处理" in md
+    assert "金融资本 live 证据尚未覆盖" in md
+    assert out["investor_report_readiness"]["action_complete"] is True
+    assert out["investor_report_readiness"]["evidence_complete"] is False
+    assert "FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING" in out["investor_report_readiness"]["limitations"]
+    assert "## 今日汇报可执行性" in md
+    assert "行动结论完整：**True**" in md
+
+
 def test_three_pillar_does_not_race_investor_or_terminal_workflows():
     workflow = Path(".github/workflows/genge-three-pillar-decision-center.yml").read_text(encoding="utf-8")
     workflow_run = workflow.split("  workflow_run:", 1)[1].split("  pull_request:", 1)[0]
@@ -527,3 +579,96 @@ def test_three_pillar_does_not_race_investor_or_terminal_workflows():
     assert "Era Capital Trend Radar Live" in workflow_run
     assert "GenGe Investor Decision Brief" not in workflow_run
     assert "GenGe V3.1 Terminal Research Decision" not in workflow_run
+
+
+def test_candidate_lifecycle_and_system_capabilities_are_visible_in_final_report():
+    lifecycle = {
+        "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
+        "latest_applied_snapshot_id": "snap-life",
+        "latest_research_as_of": "2026-09-20T13:30:04Z",
+        "candidates": {
+            "600406": {
+                "code": "600406",
+                "stock_name": "国电南瑞",
+                "lifecycle_state": "ACTIVE",
+                "research_tier": "PENDING",
+                "seen_count": 176,
+                "last_event": "RESEEN",
+                "last_event_at": "2026-09-20T13:30:04Z",
+                "history": [{"event": "RESEEN"}, {"event": "RESEEN"}],
+            },
+            "001316": {
+                "code": "001316",
+                "stock_name": "润贝航科",
+                "lifecycle_state": "ACTIVE",
+                "research_tier": "PENDING",
+                "seen_count": 178,
+                "last_event": "RESEEN",
+                "history": [{"event": "RESEEN"}],
+            },
+        },
+    }
+    summary = summarize_candidate_lifecycle(lifecycle, ["600406"])
+    assert summary["active_candidate_count"] == 2
+    assert summary["lifecycle_event_count"] == 3
+    assert summary["focus_candidates"][0]["seen_count"] == 176
+    assert summary["formal_authority_granted"] is False
+
+    status = _status()
+    status.update({
+        "verified_pass_gate_count": 217,
+        "unverified_pass_gate_count": 0,
+        "hard_gate_count": 4265,
+        "provenance_audit_complete": True,
+        "provenance_audit_run_id": "audit-1",
+    })
+    valuation_continuity = {
+        "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
+        "latest_applied_snapshot_id": "snap-value",
+        "holdings": {
+            "600406": {
+                "action": "REDUCE_25",
+                "value_low": "12.83",
+                "neutral_value": "24.0",
+                "value_high": "26.09",
+                "current_price": "22.5",
+                "valuation_confidence": "HIGH",
+                "valuation_change": "STABLE",
+                "price_value_zone": "UPPER_VALUE",
+                "reason_codes": "SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+                "decision_date": "2026-09-20",
+            }
+        },
+        "no_auto_trade": True,
+    }
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        era_evidence_bundle=_era_evidence(),
+        candidate_lifecycle_state=lifecycle,
+        holding_valuation_continuity_state=valuation_continuity,
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=status,
+        industry_links={},
+        era_handoff={},
+    )
+    holding = out["pillar_1_holdings_deep_analysis"]["rows"][0]
+    assert holding["candidate_lifecycle"]["lifecycle_state"] == "ACTIVE"
+    assert holding["candidate_lifecycle"]["seen_count"] == 176
+    assert out["candidate_lifecycle"]["active_candidate_count"] == 2
+    caps = {row["capability"]: row for row in out["system_capability_visibility"]["capabilities"]}
+    assert caps["持仓估值连续性 / 价值区间"]["status"] == "ACTIVE"
+    assert caps["Candidate Lifecycle 持续研究记忆"]["status"] == "ACTIVE"
+    assert caps["Deep Provenance 证据审计"]["status"] == "ACTIVE"
+    assert holding["valuation_continuity"]["price_value_zone"] == "UPPER_VALUE"
+    assert holding["valuation_continuity"]["value_low"] == 12.83
+    assert out["holding_valuation_continuity"]["formal_action_recomputed"] is False
+    assert "verified-pass=217" in caps["Deep 五类硬门槛 + 官方证据"]["result"]
+    md = render_runtime_markdown(out)
+    assert "## 本次汇报真正用了哪些系统能力" in md
+    assert "Candidate Lifecycle 持续研究记忆" in md
+    assert "当前 ACTIVE **2**；累计生命周期事件 **3**" in md
+    assert "国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 176 次" in md
+    assert "价值区间 12.83–26.09" in md
+    assert "区位 **UPPER_VALUE**" in md

@@ -106,13 +106,36 @@ jobs:
           assert 'pillar_1_holdings_deep_analysis' in p
           assert 'pillar_2_world_social_market_capital_map' in p
           assert 'pillar_3_deep_opportunities' in p
+          assert 'today_account_plan' in p
           assert 'deep_calculation_runtime' in p
+          assert 'candidate_lifecycle' in p
+          assert 'holding_valuation_continuity' in p
+          assert 'system_capability_visibility' in p
+          assert p['holding_valuation_continuity']['formal_action_recomputed'] is False
+          assert p['holding_valuation_continuity']['no_auto_trade'] is True
+          lifecycle=p['candidate_lifecycle']
+          assert lifecycle['formal_authority_granted'] is False
+          assert lifecycle['no_auto_trade'] is True
+          capabilities=p['system_capability_visibility']['capabilities']
+          assert any(row['capability'] == 'Candidate Lifecycle 持续研究记忆' for row in capabilities)
+          assert any(row['capability'] == 'Deep Provenance 证据审计' for row in capabilities)
+          account=p['today_account_plan']
+          assert account['no_auto_trade'] is True
+          assert account['planned_immediate_cash_cny'] <= account['available_cash_cny']
+          capital_map=p['pillar_2_world_social_market_capital_map']
+          coverage=capital_map['capital_evidence_coverage']
+          assert coverage['direct_stock_fund_flow_claimed'] is False
+          assert set(coverage['family_counts']) == {
+              'POLICY_CAPITAL','INDUSTRIAL_CAPITAL','FINANCIAL_CAPITAL',
+              'REAL_DEMAND','TECHNOLOGY','GLOBAL_STRUCTURE'
+          }
           runtime=p['deep_calculation_runtime']
           assert runtime['unknown_is_pass'] is False
           assert runtime['automatic_formal_buy_allowed'] is False
           assert runtime['no_auto_trade'] is True
           assert p['deep_review_profile_source'] in {'AUTOMATIC_DEEP_CALCULATION','STATIC_BOOTSTRAP_FALLBACK'}
           assert p['pillar_2_world_social_market_capital_map']['direct_fund_flow_claimed'] is False
+          assert capital_map['direct_financial_capital_evidence_available'] == coverage['financial_capital_evidence_available']
 
           opp=p['pillar_3_deep_opportunities']
           terminal=opp['terminal_research_snapshot']
@@ -171,4 +194,5 @@ jobs:
           echo '- Pillar 3: Canonical Formal actions and terminal research-only BUY / WAIT_PRICE / REJECT are separate' >> "$GITHUB_STEP_SUMMARY"
           echo '- Terminal research is exposed only when its Deep Lambda lineage matches the current runtime; stale research is fail-closed' >> "$GITHUB_STEP_SUMMARY"
           echo '- Deep Calculation Lambda status is visible separately from research completeness' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Candidate Lifecycle continuity and production-wired capability visibility are first-class report contracts' >> "$GITHUB_STEP_SUMMARY"
           echo '- Authority: Canonical Formal actions only; research authority cannot escalate; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
