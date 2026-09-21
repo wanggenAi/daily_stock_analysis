@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=GREEN；盘中价仅用于展示/审计；计划立即投入≈¥0",
+  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
   "market": {
     "as_of_date": "2026-09-18",
     "status": "GREEN",
@@ -401,10 +401,34 @@
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
   "formal_new_exposure_allowed": false,
+  "execution_consumption_reconciliation": {
+    "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
+    "canonical_snapshot_id": "698f36f290a29ae41124",
+    "canonical_source_run_id": "35570184481",
+    "matching_consumption_count": 1,
+    "exact_lineage_consumption_count": 0,
+    "carried_forward_consumption_count": 1,
+    "explicit_rearm_skipped_count": 0,
+    "explicit_rearm_skipped_codes": [],
+    "applied_consumption_count": 1,
+    "applied": [
+      {
+        "code": "603993",
+        "consumed_shares": 100,
+        "allowance_shares": 100,
+        "lineage_match": "CARRIED_FORWARD"
+      }
+    ],
+    "routine_canonical_refresh_rearms_consumed_add": false,
+    "explicit_rearm_required": true,
+    "formal_action_mutation_allowed": false,
+    "automatic_order_allowed": false,
+    "no_auto_trade": true
+  },
   "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
     "available": false,
-    "market_data_status": "DEGRADED",
+    "market_data_status": "OFF_SESSION",
     "eligible_quote_count": 0,
     "expected_code_count": 4,
     "expected_codes": [
@@ -432,30 +456,13 @@
     "no_auto_trade": true,
     "freshness_blocks_new_exposure": true,
     "formal_new_exposure_allowed": false,
-    "freshness_fail_closed_reasserted": true
-  },
-  "execution_consumption_reconciliation": {
-    "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "698f36f290a29ae41124",
-    "canonical_source_run_id": "35570184481",
-    "matching_consumption_count": 1,
-    "exact_lineage_consumption_count": 0,
-    "carried_forward_consumption_count": 1,
-    "explicit_rearm_skipped_count": 0,
-    "explicit_rearm_skipped_codes": [],
-    "applied_consumption_count": 1,
-    "applied": [
-      {
-        "code": "603993",
-        "consumed_shares": 100,
-        "allowance_shares": 100,
-        "lineage_match": "CARRIED_FORWARD"
-      }
-    ],
-    "routine_canonical_refresh_rearms_consumed_add": false,
-    "explicit_rearm_required": true,
-    "formal_action_mutation_allowed": false,
-    "automatic_order_allowed": false,
-    "no_auto_trade": true
+    "freshness_fail_closed_reasserted": true,
+    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
+    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
+    "market_session_state": "CLOSED",
+    "market_session_active": false,
+    "retry_attempts": 3,
+    "refreshed_at": "2026-09-21T14:45:14.281002+00:00",
+    "refreshed_at_beijing": "2026-09-21T22:45:14.281002+08:00"
   }
 }
