@@ -212,6 +212,7 @@ def test_markdown_leads_with_three_investor_questions():
     )
     md = render_markdown(out)
     assert "## 1. 我的持仓：深算后到底怎么办" in md
+    assert "| 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |" in md
     assert "## 2. 世界/社会/市场：钱可能在哪里" in md
     assert "### 今日A股大盘脉搏" in md
     assert "上涨家数占比 **75.69%**" in md
