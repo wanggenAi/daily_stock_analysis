@@ -543,9 +543,61 @@ def summarize_candidate_lifecycle(
     }
 
 
+def _attach_holding_valuation_continuity(
+    payload: dict[str, Any],
+    state: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    raw = dict(state or {})
+    holdings_state = raw.get("holdings") if isinstance(raw.get("holdings"), Mapping) else {}
+    holding_rows = [
+        row
+        for row in ((payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or [])
+        if isinstance(row, dict)
+    ]
+    matched = 0
+    for row in holding_rows:
+        code = _stock_code(row.get("code"))
+        source = holdings_state.get(code) if isinstance(holdings_state, Mapping) else None
+        if not isinstance(source, Mapping):
+            row["valuation_continuity"] = {}
+            continue
+        matched += 1
+        row["valuation_continuity"] = {
+            "action": str(source.get("action") or ""),
+            "value_low": _num(source.get("value_low")),
+            "neutral_value": _num(source.get("neutral_value")),
+            "value_high": _num(source.get("value_high")),
+            "current_price": _num(source.get("current_price")),
+            "valuation_confidence": str(source.get("valuation_confidence") or ""),
+            "valuation_change": str(source.get("valuation_change") or ""),
+            "price_value_zone": str(source.get("price_value_zone") or "UNKNOWN"),
+            "reason_codes": str(source.get("reason_codes") or ""),
+            "decision_date": str(source.get("decision_date") or ""),
+            "canonical_snapshot_id": str(source.get("canonical_snapshot_id") or ""),
+        }
+    summary = {
+        "available": bool(holdings_state),
+        "contract_version": str(raw.get("contract_version") or ""),
+        "latest_applied_snapshot_id": str(raw.get("latest_applied_snapshot_id") or ""),
+        "latest_applied_source_run_id": str(raw.get("latest_applied_source_run_id") or ""),
+        "tracked_holding_count": len(holdings_state),
+        "current_portfolio_match_count": matched,
+        "formal_action_recomputed": False,
+        "no_auto_trade": True,
+        "interpretation": (
+            "Persisted valuation continuity explains value-zone and causal action history; "
+            "this report never recomputes or escalates Formal actions from the state file."
+        ),
+    }
+    payload["holding_valuation_continuity"] = summary
+    payload["executive_summary"]["holding_valuation_continuity_match_count"] = matched
+    return summary
+
+
 def _attach_capability_visibility(
     payload: dict[str, Any],
     candidate_lifecycle_state: Mapping[str, Any] | None,
+    valuation_continuity: Mapping[str, Any] | None = None,
 ) -> None:
     holdings = payload.get("pillar_1_holdings_deep_analysis") or {}
     holding_rows = [row for row in (holdings.get("rows") or []) if isinstance(row, dict)]
@@ -578,6 +630,11 @@ def _attach_capability_visibility(
             "capability": "持仓 + 估值 + Formal Action",
             "status": "ACTIVE" if holding_rows else "MISSING",
             "result": f"holdings={len(holding_rows)} / valuation-covered={valuation_covered} / formal-source={payload.get('formal_action_source') or '—'}",
+        },
+        {
+            "capability": "持仓估值连续性 / 价值区间",
+            "status": "ACTIVE" if (valuation_continuity or {}).get("current_portfolio_match_count", 0) > 0 else "MISSING",
+            "result": f"matched={(valuation_continuity or {}).get('current_portfolio_match_count',0)} / tracked={(valuation_continuity or {}).get('tracked_holding_count',0)} / formal-recomputed=False",
         },
         {
             "capability": "Candidate Lifecycle 持续研究记忆",
@@ -732,6 +789,7 @@ def build_runtime_decision_center(
     terminal_research_decisions: Mapping[str, Any] | None = None,
     era_evidence_bundle: Mapping[str, Any] | None = None,
     candidate_lifecycle_state: Mapping[str, Any] | None = None,
+    holding_valuation_continuity_state: Mapping[str, Any] | None = None,
     industry_links: Mapping[str, Any] | None = None,
     era_handoff: Mapping[str, Any] | None = None,
     generated_at: str | None = None,
@@ -816,7 +874,10 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
-    _attach_capability_visibility(payload, candidate_lifecycle_state)
+    valuation_continuity = _attach_holding_valuation_continuity(
+        payload, holding_valuation_continuity_state
+    )
+    _attach_capability_visibility(payload, candidate_lifecycle_state, valuation_continuity)
     _finalize_investor_report_readiness(payload)
     return payload
 
@@ -966,6 +1027,7 @@ def main() -> int:
     parser.add_argument("--era-radar", type=Path, default=Path("data/era_radar/latest.json"))
     parser.add_argument("--era-evidence", type=Path, default=None)
     parser.add_argument("--candidate-lifecycle", type=Path, default=Path("data/opportunity_snapshots/candidate_lifecycle_state.json"))
+    parser.add_argument("--holding-valuation-continuity", type=Path, default=Path("data/opportunity_snapshots/holding_valuation_continuity_state.json"))
     parser.add_argument("--era-handoff", type=Path, default=Path("data/era_radar/research_handoff/latest.json"))
     parser.add_argument("--automatic-deep-reviews", type=Path, default=Path("data/deep_calculation/latest_profiles.json"))
     parser.add_argument("--static-deep-reviews", type=Path, default=Path("config/v31_explicit_deep_reviews.json"))
@@ -997,6 +1059,7 @@ def main() -> int:
         terminal_research_decisions=_json(args.terminal_research_decisions),
         era_evidence_bundle=_json(era_evidence_path),
         candidate_lifecycle_state=_json(args.candidate_lifecycle),
+        holding_valuation_continuity_state=_json(args.holding_valuation_continuity),
         industry_links=_json(args.industry_links),
         era_handoff=_json(args.era_handoff),
     )
