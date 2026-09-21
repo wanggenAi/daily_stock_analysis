@@ -4,15 +4,13 @@
 
 # 投资决策驾驶舱
 
-> 市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
+> 数据代际=STALE_UPSTREAM；禁止新增仓位；市场=GREEN；盘中价仅用于展示/审计；计划立即投入≈¥0
 
 ## 1. 最新市场结构（日线）
 
 - 数据日：**2026-09-18**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。
 - 市场状态：**GREEN**；是否允许新买：**False**；仓位倍率：**1.00**
 - 上涨家数比例：**75.69%**；数据质量：**OK**
-
-- 盘中执行价覆盖：**0/4只**；行情状态：**OFF_SESSION**；最新行情时间：**—**；正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。
 
 ## 2. 我的持仓怎么办
 
@@ -60,35 +58,9 @@ O81机动车、电子产品和日用产品修理业(STRONG)、E49建筑安装业
 
 ## 9. 系统状态（最后看）
 
-- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**可用**；资金源：**USER_CONFIRMED_FLOOR**
+- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**暂无可用产物**；资金源：**USER_CONFIRMED_FLOOR**
 - Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。
 - Profit Protection Overlay 只展示盈利与价值/风险上下文；**profit alone 不是 SELL rationale，overlay 不得改写 Formal Action。**
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**16** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **16** / REJECT **0**。
-- urgent research：**8** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
-| 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
-
-### Urgent evidence queue
-
-- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
-- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
-- 甘化科工 000576: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 兴通股份 603209: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 汇顶科技 603160: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 巨一科技 688162: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
