@@ -1,9 +1,12 @@
+import json
+
 from src.strategies.genge_opportunity_discovery.evidence_collectors import (
     canonical_industry_name,
     normalize_sse_attachment_url,
     prepare_industry_alias_map,
 )
 from src.strategies.genge_opportunity_discovery.v31_deep_gap_closure import (
+    _load_historical_verified_material_events,
     close_profiles,
     infer_long_term_demand,
     infer_material_event_gate_failures,
@@ -230,6 +233,65 @@ def test_resolved_or_unofficial_material_event_never_creates_fail():
     assert out["profiles"]["001316"]["gates"]["predictability"]["status"] == "UNKNOWN"
     assert status["progressed_gate_count"] == 0
     assert status["material_event_failed_gate_count"] == 0
+
+
+def test_historical_verified_material_event_survives_current_refetch_failure():
+    historical = _material_event("BANKRUPTCY_RESTRUCTURING")
+
+    out, status = close_profiles(
+        _profiles(),
+        [{"code": "001316", "industry": "航空装备", "stock_name": "润贝航科"}],
+        requested_codes=["001316"],
+        industry_evidence=[],
+        company_evidence=[],
+        evidence_audit=[],
+        evidence_summary={"verified_count": 0},
+        historical_material_event_evidence=[historical],
+    )
+
+    gates = out["profiles"]["001316"]["gates"]
+    assert gates["predictability"]["status"] == "FAIL"
+    assert gates["financial_safety"]["status"] == "FAIL"
+    assert gates["predictability"]["source"] == "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE"
+    assert gates["financial_safety"]["source"] == "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE"
+    assert gates["predictability"]["evidence_persistence"] == "HISTORICAL_VERIFIED_ACTIVE_HIGH"
+    assert gates["financial_safety"]["evidence_persistence"] == "HISTORICAL_VERIFIED_ACTIVE_HIGH"
+    assert status["material_event_failed_gate_count"] == 2
+    assert status["historical_material_event_evidence_count"] == 1
+    assert status["historical_material_event_failed_gate_count"] == 2
+    assert status["material_event_pass_override_count"] == 1
+    assert status["automatic_formal_buy_allowed"] is False
+    assert status["unknown_is_pass"] is False
+    assert status["no_auto_trade"] is True
+
+
+def test_historical_material_event_loader_reuses_only_strict_fail_eligible_rows(tmp_path):
+    valid = _material_event("DEBT_DEFAULT")
+    resolved = _material_event("FUNDS_OCCUPATION", event_status="RESOLVED")
+    unofficial = _material_event("BANKRUPTCY_RESTRUCTURING", domain="example.com")
+    medium = _material_event("ILLEGAL_GUARANTEE", severity="MEDIUM")
+    payload = {
+        "contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
+        "formal_trading_authority": False,
+        "automatic_formal_buy_allowed": False,
+        "unknown_is_pass": False,
+        "no_auto_trade": True,
+        "company_evidence": [valid, resolved, unofficial, medium],
+    }
+    history = tmp_path / "history"
+    history.mkdir()
+    (history / "123.evidence.json").write_text(
+        json.dumps(payload, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    rows = _load_historical_verified_material_events(history, ["001316"])
+
+    assert len(rows) == 1
+    assert rows[0]["event_type"] == "DEBT_DEFAULT"
+    assert rows[0]["evidence_status"] == "VERIFIED"
+    assert rows[0]["event_status"] == "ACTIVE"
+    assert rows[0]["event_severity"] == "HIGH"
 
 
 def test_all_resolved_profiles_finish_complete():
