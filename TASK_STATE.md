@@ -4,14 +4,15 @@
 Converge the existing stock system into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
 
 ## Current Phase
-Production-verify merged #232 fail-closed material-event persistence on a fresh Deep run. Do not merge #230/#231 until this safety repair is proven in production.
+Repair the production-discovered historical material-event title false positives exposed by post-#232 Deep run `35556365712`. Do not merge #230/#231 until #238 is merged and a fresh Deep run proves the corrected cumulative risk ledger.
 
 ## Active Branch
-None for the current safety repair; #232 has merged.
+`fix/material-event-historical-semantic-v2`
 
 ## Active PR
-- #232 — `fix: preserve verified material-event failures across deep runs` — merged as `07dd4ca72e94c7576e3f2672a5df38266c1deddb`.
-- #230 (SSE annual-report discovery) and #231 (MIIT industry evidence depth) remain open and held until #232 production verification passes.
+- #238 — `fix: exclude non-assertive historical risk titles` — open; production-follow-up repair for #232.
+- #232 — `fix: preserve verified material-event failures across deep runs` — merged as `07dd4ca72e94c7576e3f2672a5df38266c1deddb`; persistence works, but production exposed incomplete title-semantic filtering.
+- #230 (SSE annual-report discovery) and #231 (MIIT industry evidence depth) remain open and held until #238 production verification passes.
 
 ## CI
 - #232 final PR head `dabfb27a1e74b3ce21641d1bf54993505e4e266f` completed PR CI successfully before merge.
@@ -32,6 +33,10 @@ None for the current safety repair; #232 has merged.
 - Scope remained scheduling-only; no evidence gate, provider authority, MIN_COMPLETE_YEARS, valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade semantics changed.
 
 ## Production / Artifact
+- Post-#232 Deep run `35556365712` completed successfully; terminal artifact `genge-v31-deep-calculation-35556365712` was inspected.
+- Run `35556365712`: requested=852; processed=852; material-event ledger=13 historical rows; historical material-event FAIL gates=19; current material-event evidence rows=0.
+- `000557` correctly remained fail-closed; `000603` and `301251` were not resurrected.
+- Five historical titles were still false-positive ACTIVE risks: `000722`, `000420`, `002418`, `002427`, `002117`. These explain the 13/19 result versus the expected strict 8/12 set.
 - Post-#229 Deep run `35551673513` completed successfully at code baseline `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
 - Terminal artifact: `genge-v31-deep-calculation-35551673513`.
 - requested=852; processed=852; complete=0; evidence_exhausted=852.
@@ -56,6 +61,9 @@ None for the current safety repair; #232 has merged.
 - #225 therefore did not improve the production transport bucket.
 
 ## Current Findings
+- #232 persistence itself is working: the fresh run reused verified historical negative evidence when current refetch produced zero material-event rows.
+- Production verification failed semantic acceptance because five governance/due-diligence/routine assurance titles were still classified ACTIVE solely by keywords.
+- #238 narrows only title semantics: reversed `占用资金` preventive policy wording, acquisition due-diligence explanations, routine funds-occupation audit/clearance reports, and illegal-guarantee release reports are not live incidents without an explicit incident assertion.
 - #225 browser-form CNINFO headers alone were insufficient in production.
 - Previous production showed first-party SZSE transport degrading later in long Deep runs, followed by CNINFO 403 fallback.
 - #229 tests the scheduling/transport-liveness hypothesis by running the unchanged strict predictability collector before high-volume general evidence collection.
@@ -80,16 +88,16 @@ None for the current safety repair; #232 has merged.
 - Volatile web-session checkpoint is stored on `state/chatgpt-recovery` at `recovery/tasks/stock-system-convergence.json`; live GitHub remains authoritative.
 
 ## Blockers
-Fresh post-merge Deep production evidence for #232 is still required before #230/#231 may merge.
+#238 must pass CI, merge, and then pass fresh Deep production verification before #230/#231 may merge.
 
 ## Next Action
-1. Resume production Deep run `35556365712` on main baseline `07dd4ca72e94c7576e3f2672a5df38266c1deddb` (triggered by Evidence Change Trigger run `35556361159`).
-2. If it fails, inspect the exact failing job/step and repair only the demonstrated cause.
-3. If it succeeds, inspect terminal artifact and persisted history/ledger.
-4. Verify the revalidated 8-row / 12-gate historical risk set remains fail-closed when current refetch fails.
-5. Specifically verify `000557 financial_safety` is FAIL, while resolved/non-assertive historical rows such as `000603` and `301251` are not resurrected.
-6. Verify cumulative risk-ledger counters, Deep -> Provenance -> Terminal -> Investor convergence, UNKNOWN != PASS, and no_auto_trade=true.
-7. Only after #232 is production-proven, resume #230 Shanghai SSE annual-report discovery verification and then #231 long-term-demand evidence depth.
+1. Run PR #238 CI and inspect any failure at the exact test/job level.
+2. Merge #238 only after required checks are green.
+3. Trigger/observe a fresh Deep production run on the merged main.
+4. Inspect terminal artifact and persisted ledger; with no genuinely new verified active events, require historical ledger=8 rows and historical material-event FAIL gates=12.
+5. Verify `000557 financial_safety` remains FAIL, while `000603`, `301251`, `000722`, `000420`, `002418`, `002427`, and `002117` are not falsely resurrected.
+6. Verify Deep -> Provenance -> Terminal -> Investor convergence, all PASS gates verified, UNKNOWN != PASS, and no_auto_trade=true.
+7. Only then resume #230 and #231.
 
 ## Do Not Repeat
 - Do not reopen solved Candidate Lifecycle continuity work.
