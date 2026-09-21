@@ -534,6 +534,7 @@ def calculate_rows(
         "trigger_source": str(trigger_source or "UNKNOWN"),
         "candidate_count": len(reviewed),
         "requested_count": len(requested),
+        "requested_codes": sorted(requested),
         "processed_requested_count": len(requested & all_codes),
         "missing_requested_codes": missing_requested,
         "complete_requested_count": complete_count,
