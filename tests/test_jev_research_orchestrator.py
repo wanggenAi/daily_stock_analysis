@@ -103,6 +103,7 @@ def test_plan_requires_jev_and_deterministic_triage_agreement():
     assert plan["should_dispatch"] is True
     assert plan["requested_codes"] == ["600406", "000576"]
     assert [row["entity_id"] for row in plan["human_review"]] == ["601318"]
+    assert plan["min_auto_route_confidence"] == 0.5
     assert {row["entity_id"] for row in plan["skipped"]} == {"000001", "000420"}
     assert plan["jev_direct_dispatch_allowed"] is False
     assert plan["automatic_research_dispatch_allowed"] is True
@@ -165,3 +166,19 @@ def test_workflow_auto_chains_research_without_trading_authority():
     assert "DEEP_DISPATCH_ACCEPTED" in workflow
     assert "Formal trading authority=false" in workflow
     assert "no_auto_trade=true" in workflow
+
+
+def test_low_or_missing_route_confidence_never_auto_dispatches():
+    payload = _routing()
+    payload["routing_queue"][0]["route_confidence"] = 0.49
+    payload["routing_queue"][1].pop("route_confidence", None)
+
+    plan = build_orchestration_plan(payload, max_dispatch=12)
+
+    assert plan["requested_codes"] == []
+    reviews = {row["entity_id"]: row for row in plan["human_review"]}
+    assert reviews["600406"]["review_reason"] == "LOW_OR_MISSING_ROUTE_CONFIDENCE"
+    assert reviews["000576"]["review_reason"] == "LOW_OR_MISSING_ROUTE_CONFIDENCE"
+    assert reviews["601318"]["review_reason"] == "JEV_ROUTE_HUMAN_REVIEW"
+    assert plan["formal_trading_authority"] is False
+    assert plan["no_auto_trade"] is True
