@@ -23,32 +23,75 @@ def _code(value: Any) -> str | None:
     return text if _CODE_RE.fullmatch(text) else None
 
 
+
+def _codes(values: Any) -> list[str]:
+    if isinstance(values, (str, bytes)) or not isinstance(values, (list, tuple, set)):
+        return []
+    result: list[str] = []
+    for value in values:
+        code = _code(value)
+        if code:
+            result.append(code)
+    return list(dict.fromkeys(result))
+
+
+def _positive_int(value: Any) -> int | None:
+    try:
+        number = int(value)
+    except (TypeError, ValueError):
+        return None
+    return number if number >= 0 else None
+
+
 def retained_deep_codes(
     status_payload: Mapping[str, Any] | None,
     profiles_payload: Mapping[str, Any] | None,
 ) -> list[str]:
     """Return prior-lineage codes that still require deterministic continuity.
 
-    Retain codes named by unresolved_reasons plus every persisted profile with
-    any non-PASS gate. In the Deep contract a missing/unrecognized gate status
-    is not authority to drop work, so it is retained fail-closed just like
-    UNKNOWN/FAIL. Preserve first-seen order and never infer a PASS or Formal
-    action.
+    New Deep states persist the exact requested_codes scope. Only profiles
+    inside that scope may be retained by gate status.
+
+    Legacy final states may have requested_count and profile_count but not the
+    exact list. When requested_count < profile_count, the persisted profiles
+    contain a broader universe than the actual Deep request. In that case,
+    retain only the codes explicitly named by unresolved_reasons instead of
+    sweeping the full profile universe.
+
+    Truly unscoped legacy states keep the historical behavior: every persisted
+    profile with a non-PASS gate is retained. This changes only workset scope;
+    it never infers PASS or grants Formal authority.
     """
+    status = status_payload or {}
     retained: list[str] = []
 
-    unresolved = (status_payload or {}).get("unresolved_reasons") or {}
+    unresolved = status.get("unresolved_reasons") or {}
     if isinstance(unresolved, Mapping):
         for raw_code in unresolved:
             code = _code(raw_code)
             if code:
                 retained.append(code)
 
+    exact_scope = _codes(status.get("requested_codes"))
+    requested_count = _positive_int(status.get("requested_count"))
+    profile_count = _positive_int(status.get("profile_count"))
+    legacy_bounded_scope = bool(
+        not exact_scope
+        and requested_count is not None
+        and profile_count is not None
+        and 0 < requested_count < profile_count
+    )
+
     profiles = (profiles_payload or {}).get("profiles") or {}
-    if isinstance(profiles, Mapping):
+    if isinstance(profiles, Mapping) and not legacy_bounded_scope:
+        allowed = set(exact_scope) if exact_scope else None
         for raw_code, profile in profiles.items():
             code = _code(raw_code)
-            if not code or not isinstance(profile, Mapping):
+            if (
+                not code
+                or not isinstance(profile, Mapping)
+                or (allowed is not None and code not in allowed)
+            ):
                 continue
             gates = profile.get("gates") or {}
             if not isinstance(gates, Mapping):
