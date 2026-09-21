@@ -149,3 +149,19 @@ def test_no_eligible_rows_is_healthy_noop():
     assert plan["execution_status"] == "NOOP"
     assert plan["should_dispatch"] is False
     assert plan["requested_codes_csv"] == ""
+
+
+def test_workflow_auto_chains_research_without_trading_authority():
+    from pathlib import Path
+
+    workflow = Path(".github/workflows/genge-jev-research-orchestrator.yml").read_text(
+        encoding="utf-8"
+    )
+    assert '"GenGe Jev Shadow Evaluation"' in workflow
+    assert "actions: write" in workflow
+    assert "gh workflow run genge-v31-deep-calculation-lambda.yml" in workflow
+    assert "JEV_ORCHESTRATOR_" in workflow
+    assert "ORCHESTRATION_PENDING" in workflow
+    assert "DEEP_DISPATCH_ACCEPTED" in workflow
+    assert "Formal trading authority=false" in workflow
+    assert "no_auto_trade=true" in workflow
