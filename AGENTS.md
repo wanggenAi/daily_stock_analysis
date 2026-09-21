@@ -342,3 +342,33 @@ For ChatGPT Plus web sessions and any other long-running agent session that can 
 - If the state file is corrupt, recover the newest valid state-branch revision and reconcile with live GitHub; if the branch is missing, recreate from live repository truth rather than chat memory.
 - `TASK_STATE.md` remains the stable mission handoff; the recovery-state branch is the volatile execution cursor. Neither may override live GitHub truth.
 
+
+
+## Jev Automatic Research Loop — LOCKED
+
+For the stock system, Jev is now a durable research-routing layer, not a standalone report.
+
+1. The intended production chain is:
+   `Jev Shadow Evaluation -> deterministic Jev Research Orchestrator -> V3.1 Deep Calculation Lambda -> V3.1 Terminal Research Decision -> Investor Terminal Research Overlay -> Three-Pillar Decision Center`.
+2. Jev itself remains advisory-only and must never directly mutate Formal actions or authorize trades.
+3. Automatic execution is allowed only for bounded **research dispatch** after the deterministic orchestrator independently confirms eligibility from existing system state. The orchestrator must preserve:
+   - `formal_trading_authority=false`
+   - `automatic_formal_buy_allowed=false`
+   - `UNKNOWN != PASS`
+   - `no_auto_trade=true`
+4. The durable orchestration cursor is `data/jev_shadow/orchestration/latest.json`.
+5. On every future "继续", resume, reconnect, or new web session for this task:
+   - read live `main`, open PRs, Actions, `TASK_STATE.md`, `data/jev_shadow/latest_routing.json`, and `data/jev_shadow/orchestration/latest.json` when present;
+   - reconcile those facts before mutating anything;
+   - continue from the first unfinished lifecycle stage;
+   - never redo a completed Jev run or Deep dispatch merely because chat context is missing.
+6. Lifecycle interpretation:
+   - `ORCHESTRATION_PENDING`: a Deep dispatch intent was persisted; reconcile GitHub Actions for the matching `JEV_ORCHESTRATOR_<source_run_id>` before retrying.
+   - `DEEP_DISPATCH_ACCEPTED`: follow the recorded `deep_run_id`; do not dispatch another Deep run for the same Jev source run.
+   - after Deep succeeds, verify the automatic Terminal Research Decision run;
+   - after Terminal succeeds, verify Investor Terminal Overlay and Three-Pillar refresh;
+   - `NOOP`: no deterministic auto-research dispatch was warranted; inspect any human-review queue and wait for new research state.
+7. A Jev source run is identified by persisted `source_workflow_run_id`. The orchestrator may only consume routing whose persisted lineage exactly matches the triggering Jev run.
+8. The orchestrator is bounded: current default maximum dispatch is 12 codes per Jev research cycle. Increasing this bound requires explicit engineering justification and tests.
+9. Human-review routes are never auto-promoted into trading or Formal decisions.
+10. Recovery precedence remains: live GitHub refs/Actions/artifacts/persisted data > orchestration cursor > recovery checkpoint > `TASK_STATE.md` > chat history.
