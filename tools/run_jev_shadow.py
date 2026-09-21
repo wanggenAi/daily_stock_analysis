@@ -3,7 +3,15 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
+
+# Direct script execution puts tools/ rather than the repository root on
+# sys.path. Add the root explicitly so GitHub Actions and local CLI execution
+# resolve the in-repo src package deterministically.
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
 
 from src.strategies.genge_opportunity_discovery.jev_shadow import (
     JevShadowConfig,
