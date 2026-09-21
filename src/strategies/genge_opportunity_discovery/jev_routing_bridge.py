@@ -175,6 +175,9 @@ def build_routing_bridge(shadow_payload: Mapping[str, Any]) -> dict[str, Any]:
                 "entity_name": str(raw_row.get("entity_name") or ""),
                 "is_current_holding": raw_row.get("is_current_holding") is True,
                 "existing_engine_action": str(raw_row.get("existing_engine_action") or ""),
+                "triage_context": dict(raw_row.get("triage_context") or {})
+                if isinstance(raw_row.get("triage_context"), Mapping)
+                else {},
                 "route": route,
                 "route_confidence": route_confidence,
                 "route_probabilities": route_probabilities,
@@ -202,6 +205,7 @@ def build_routing_bridge(shadow_payload: Mapping[str, Any]) -> dict[str, Any]:
 
     base["routing_queue"].sort(
         key=lambda row: (
+            0 if row.get("is_current_holding") is True else 1,
             _PRIORITY_RANK.get(str(row["attention_priority"]), 99),
             _ROUTE_RANK.get(str(row["route"]), 99),
             str(row["entity_id"]),

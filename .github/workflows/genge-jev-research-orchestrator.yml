@@ -1,0 +1,324 @@
+name: GenGe Jev Research Orchestrator
+
+run-name: GenGe Jev Research Orchestrator / ${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }}
+
+on:
+  workflow_run:
+    workflows:
+      - "GenGe Jev Shadow Evaluation"
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Optional exact Jev workflow run id; persisted lineage is used when omitted"
+        required: false
+        type: string
+      max_dispatch:
+        description: "Maximum deterministically eligible research codes to dispatch"
+        required: true
+        default: "12"
+        type: choice
+        options: ["4", "8", "12", "20"]
+  pull_request:
+    paths:
+      - ".github/workflows/genge-jev-research-orchestrator.yml"
+      - "src/strategies/genge_opportunity_discovery/jev_research_orchestrator.py"
+      - "tests/test_jev_research_orchestrator.py"
+      - ".github/workflows/genge-jev-shadow-evaluation.yml"
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-jev-research-orchestrator.yml"
+      - "src/strategies/genge_opportunity_discovery/jev_research_orchestrator.py"
+      - "tests/test_jev_research_orchestrator.py"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: genge-jev-research-orchestrator-${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }}
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  contracts:
+    if: >-
+      github.event_name == 'pull_request' ||
+      github.event_name == 'push' ||
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        (
+          github.event.workflow_run.event == 'workflow_dispatch' ||
+          github.event.workflow_run.event == 'push'
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Validate deterministic Jev orchestration contracts
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+          python -m pytest -q tests/test_jev_research_orchestrator.py
+          python -m py_compile src/strategies/genge_opportunity_discovery/jev_research_orchestrator.py
+
+  plan-and-dispatch:
+    needs: contracts
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (
+        github.event_name == 'workflow_run' &&
+        github.event.workflow_run.conclusion == 'success' &&
+        github.event.workflow_run.head_branch == 'main' &&
+        (
+          github.event.workflow_run.event == 'workflow_dispatch' ||
+          github.event.workflow_run.event == 'push'
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+
+      - name: Resolve exact Jev source lineage
+        id: source
+        shell: bash
+        env:
+          EVENT_SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+          MANUAL_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          test -s data/jev_shadow/latest_routing.json
+          persisted="$(jq -r '.source_workflow_run_id // ""' data/jev_shadow/latest_routing.json)"
+          expected=""
+          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
+            expected="$EVENT_SOURCE_RUN_ID"
+          elif [[ "$MANUAL_SOURCE_RUN_ID" =~ ^[0-9]+$ ]]; then
+            expected="$MANUAL_SOURCE_RUN_ID"
+          else
+            expected="$persisted"
+          fi
+          [[ "$expected" =~ ^[0-9]+$ ]] || { echo "No valid Jev source run id available." >&2; exit 1; }
+          [ "$persisted" = "$expected" ] || {
+            echo "Persisted Jev lineage mismatch: expected=$expected persisted=$persisted" >&2
+            exit 1
+          }
+          echo "source_run_id=$expected" >> "$GITHUB_OUTPUT"
+          echo "trigger_source=JEV_ORCHESTRATOR_$expected" >> "$GITHUB_OUTPUT"
+
+      - name: Build bounded deterministic research plan
+        id: plan
+        shell: bash
+        env:
+          MAX_DISPATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.max_dispatch || '12' }}
+        run: |
+          set -euo pipefail
+          python -m src.strategies.genge_opportunity_discovery.jev_research_orchestrator             --routing-json data/jev_shadow/latest_routing.json             --output-json "$RUNNER_TEMP/jev-orchestration-plan.json"             --max-dispatch "$MAX_DISPATCH"             --require-ready
+          test "$(jq -r '.authority' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "DETERMINISTIC_RESEARCH_ORCHESTRATOR"
+          test "$(jq -r '.jev_direct_dispatch_allowed' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "false"
+          test "$(jq -r '.automatic_research_dispatch_allowed' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "true"
+          test "$(jq -r '.formal_trading_authority' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "false"
+          test "$(jq -r '.automatic_formal_buy_allowed' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "false"
+          test "$(jq -r '.unknown_is_pass' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "false"
+          test "$(jq -r '.no_auto_trade' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "true"
+          echo "should_dispatch=$(jq -r '.should_dispatch' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
+          echo "requested_codes=$(jq -r '.requested_codes_csv' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
+          echo "selected_count=$(jq -r '.summary.selected_count // 0' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
+          echo "human_review_count=$(jq -r '.summary.human_review_count // 0' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
+
+      - name: Reconcile prior dispatch for this Jev run
+        id: reconcile
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}
+        run: |
+          set -euo pipefail
+          existing=""
+          marker="data/jev_shadow/orchestration/latest.json"
+          if [ -s "$marker" ]; then
+            marker_source="$(jq -r '.source_workflow_run_id // ""' "$marker")"
+            marker_state="$(jq -r '.lifecycle_state // ""' "$marker")"
+            marker_deep="$(jq -r '.deep_run_id // ""' "$marker")"
+            if [ "$marker_source" = "$SOURCE_RUN_ID" ] &&
+               [ "$marker_state" = "DEEP_DISPATCH_ACCEPTED" ] &&
+               [[ "$marker_deep" =~ ^[0-9]+$ ]]; then
+              existing="$marker_deep"
+            fi
+          fi
+          if [ -z "$existing" ]; then
+            existing="$(
+              gh api "repos/$GITHUB_REPOSITORY/actions/workflows/genge-v31-deep-calculation-lambda.yml/runs?branch=main&event=workflow_dispatch&per_page=100"                 --jq ".workflow_runs[] | select(.display_title | contains(\"$TRIGGER_SOURCE\")) | .id"                 | head -1
+            )"
+          fi
+          echo "existing_deep_run_id=$existing" >> "$GITHUB_OUTPUT"
+          if [ -n "$existing" ]; then
+            echo "needs_dispatch=false" >> "$GITHUB_OUTPUT"
+          elif [ "${{ steps.plan.outputs.should_dispatch }}" = "true" ]; then
+            echo "needs_dispatch=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_dispatch=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Persist write-ahead orchestration intent
+        if: steps.reconcile.outputs.needs_dispatch == 'true'
+        shell: bash
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}
+        run: |
+          set -euo pipefail
+          PLAN="$RUNNER_TEMP/jev-orchestration-plan.json" SOURCE_RUN_ID="$SOURCE_RUN_ID" TRIGGER_SOURCE="$TRIGGER_SOURCE" python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          plan = json.loads(Path(os.environ["PLAN"]).read_text(encoding="utf-8"))
+          plan["lifecycle_state"] = "ORCHESTRATION_PENDING"
+          plan["trigger_source"] = os.environ["TRIGGER_SOURCE"]
+          plan["orchestrator_run_id"] = os.environ.get("GITHUB_RUN_ID", "")
+          plan["pending_operation"] = {
+              "operation": "DISPATCH_DEEP_CALCULATION",
+              "source_workflow_run_id": os.environ["SOURCE_RUN_ID"],
+              "requested_codes": plan["requested_codes"],
+              "target_workflow": plan["dispatch_target"],
+          }
+          plan["updated_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+          Path("/tmp/jev-orchestration-marker.json").write_text(
+              json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          git config user.name "genge-jev-orchestrator-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/jev_shadow/orchestration
+            cp /tmp/jev-orchestration-marker.json data/jev_shadow/orchestration/latest.json
+            git add -f data/jev_shadow/orchestration/latest.json
+            if git diff --cached --quiet; then break; fi
+            git commit -m "Persist Jev orchestration intent [skip ci]"
+            if git push origin HEAD:main; then break; fi
+            [ "$attempt" -lt 4 ] || exit 1
+          done
+
+      - name: Dispatch bounded Deep Calculation workset
+        if: steps.reconcile.outputs.needs_dispatch == 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REQUESTED_CODES: ${{ steps.plan.outputs.requested_codes }}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-v31-deep-calculation-lambda.yml             --repo "$GITHUB_REPOSITORY"             --ref main             -f requested_codes="$REQUESTED_CODES"             -f trigger_source="$TRIGGER_SOURCE"
+
+      - name: Resolve accepted Deep run
+        id: deep
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EXISTING_DEEP_RUN_ID: ${{ steps.reconcile.outputs.existing_deep_run_id }}
+          SHOULD_DISPATCH: ${{ steps.plan.outputs.should_dispatch }}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}
+        run: |
+          set -euo pipefail
+          deep="$EXISTING_DEEP_RUN_ID"
+          if [ "$SHOULD_DISPATCH" = "true" ] && [ -z "$deep" ]; then
+            for attempt in $(seq 1 20); do
+              deep="$(
+                gh api "repos/$GITHUB_REPOSITORY/actions/workflows/genge-v31-deep-calculation-lambda.yml/runs?branch=main&event=workflow_dispatch&per_page=100"                   --jq ".workflow_runs[] | select(.display_title | contains(\"$TRIGGER_SOURCE\")) | .id"                   | head -1
+              )"
+              [ -n "$deep" ] && break
+              sleep 3
+            done
+            [[ "$deep" =~ ^[0-9]+$ ]] || {
+              echo "Deep dispatch outcome is ambiguous; preserving pending marker for reconciliation." >&2
+              exit 1
+            }
+          fi
+          echo "deep_run_id=$deep" >> "$GITHUB_OUTPUT"
+
+      - name: Persist accepted orchestration state
+        if: always() && steps.plan.outcome == 'success' && steps.deep.outcome == 'success'
+        shell: bash
+        env:
+          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}
+          DEEP_RUN_ID: ${{ steps.deep.outputs.deep_run_id }}
+          SHOULD_DISPATCH: ${{ steps.plan.outputs.should_dispatch }}
+        run: |
+          set -euo pipefail
+          PLAN="$RUNNER_TEMP/jev-orchestration-plan.json" SOURCE_RUN_ID="$SOURCE_RUN_ID" TRIGGER_SOURCE="$TRIGGER_SOURCE" DEEP_RUN_ID="$DEEP_RUN_ID" SHOULD_DISPATCH="$SHOULD_DISPATCH" python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          plan = json.loads(Path(os.environ["PLAN"]).read_text(encoding="utf-8"))
+          dispatched = os.environ.get("SHOULD_DISPATCH") == "true"
+          deep_run_id = os.environ.get("DEEP_RUN_ID", "")
+          if dispatched:
+              plan["lifecycle_state"] = "DEEP_DISPATCH_ACCEPTED"
+              plan["deep_run_id"] = deep_run_id
+              plan["next_expected_stage"] = "DEEP_COMPLETE_THEN_TERMINAL_AUTO_CHAIN"
+          else:
+              plan["lifecycle_state"] = "NOOP"
+              plan["deep_run_id"] = ""
+              plan["next_expected_stage"] = (
+                  "HUMAN_REVIEW" if plan.get("human_review") else "WAIT_FOR_NEW_RESEARCH_STATE"
+              )
+          plan["trigger_source"] = os.environ["TRIGGER_SOURCE"]
+          plan["orchestrator_run_id"] = os.environ.get("GITHUB_RUN_ID", "")
+          plan["pending_operation"] = None
+          plan["updated_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+          Path("/tmp/jev-orchestration-final.json").write_text(
+              json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+          git config user.name "genge-jev-orchestrator-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/jev_shadow/orchestration
+            cp /tmp/jev-orchestration-final.json data/jev_shadow/orchestration/latest.json
+            git add -f data/jev_shadow/orchestration/latest.json
+            if git diff --cached --quiet; then break; fi
+            git commit -m "Persist Jev orchestration state [skip ci]"
+            if git push origin HEAD:main; then break; fi
+            [ "$attempt" -lt 4 ] || exit 1
+          done
+
+      - name: Publish orchestration summary
+        if: always()
+        run: |
+          echo "# GenGe Jev Research Orchestrator" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Jev source run: ${{ steps.source.outputs.source_run_id || 'unresolved' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- selected research codes: ${{ steps.plan.outputs.selected_count || '0' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- human-review queue: ${{ steps.plan.outputs.human_review_count || '0' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- requested codes: ${{ steps.plan.outputs.requested_codes || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deep run: ${{ steps.deep.outputs.deep_run_id || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- chain: Jev -> deterministic research orchestrator -> Deep Calculation -> Terminal Research Decision -> Investor Terminal Overlay -> Three-Pillar Decision Center" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Jev direct dispatch=false; Formal trading authority=false; UNKNOWN != PASS; no_auto_trade=true" >> "$GITHUB_STEP_SUMMARY"
