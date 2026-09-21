@@ -15,12 +15,13 @@ Recover Shenzhen/ChiNext strict multi-year predictability transport by fixing pr
 `fix/frontload-predictability-20260921`
 
 ## Active PR
-- Not opened yet at this checkpoint.
+- #229 — `fix: front-load strict predictability evidence collection`.
 - Scope: scheduling only — run the unchanged strict multi-year predictability collector before the high-volume general evidence collection.
 
 ## CI
-- Fresh PR CI is required.
-- Add a regression proving predictability collection executes before general evidence collection.
+- PR #229 first CI run `35549629306`: governance, change detection and Docker passed; backend offline suite had exactly one failure in the newly-added scheduling regression fixture.
+- Offline suite result: 5370 passed, 1 failed, 2 deselected; the failure was test setup producing an empty selected workset, not a production-code assertion.
+- Regression fixture was corrected by mocking parsed profile/candidate inputs directly; fresh CI is running on the corrected head.
 - Do not weaken tests, governance, evidence gates, retry semantics, or fail-closed rules.
 
 ## Production / Artifact
