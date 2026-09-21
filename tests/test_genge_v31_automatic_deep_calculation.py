@@ -88,6 +88,7 @@ def test_machine_financial_gates_resolve_but_qualitative_gates_fail_closed():
     assert financial_gate["evidence"]
     assert status["execution_status"] == "SUCCESS"
     assert status["research_outcome"] == "PARTIAL_GAPS_REMAIN"
+    assert status["requested_codes"] == ["600406"]
     assert status["unresolved_requested_gate_count"] == 3
     assert status["unverified_pass_gate_count"] == 0
     assert status["no_auto_trade"] is True
