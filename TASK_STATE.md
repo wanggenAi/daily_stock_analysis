@@ -4,27 +4,26 @@
 Converge the existing stock system into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
 
 ## Current Phase
-Repair the production fail-closed regression discovered while verifying #229: a later official-source fetch failure must not erase previously VERIFIED/ACTIVE/HIGH exchange material-event FAILs. Do not weaken evidence semantics.
+Production-verify merged #232 fail-closed material-event persistence on a fresh Deep run. Do not merge #230/#231 until this safety repair is proven in production.
 
 ## Active Branch
-`fix/preserve-verified-material-event-fails-20260921`
+None for the current safety repair; #232 has merged.
 
 ## Active PR
-- #232 — `fix: preserve verified material-event failures across deep runs`.
-- Safety scope only: persisted negative evidence is revalidated through the current title semantics + VERIFIED + ACTIVE + HIGH + official-exchange hard-FAIL rule before reuse; historical PASS is never reused.
-- #230 (SSE annual-report discovery) and #231 (MIIT industry evidence depth) remain separate and must not be merged ahead of this fail-closed repair.
+- #232 — `fix: preserve verified material-event failures across deep runs` — merged as `07dd4ca72e94c7576e3f2672a5df38266c1deddb`.
+- #230 (SSE annual-report discovery) and #231 (MIIT industry evidence depth) remain open and held until #232 production verification passes.
 
 ## CI
-- #232 initial CI run `35554179025` failed only in `ai-governance` because this checkpoint lacked required headings; fixed.
-- Current #232 head `6fa80dea086700b22900bc1eea50bc0592c97732`: CI run `35554594958` is running; ai-governance is green and backend/docker gates have started.
+- #232 final PR head `dabfb27a1e74b3ce21641d1bf54993505e4e266f` completed PR CI successfully before merge.
+- Main merge commit `07dd4ca72e94c7576e3f2672a5df38266c1deddb` triggered push CI run `35556361160` and production evidence workflows.
 
 ## Last Verified Main
 - PR #229 merged into main as `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
-- Latest observed main at checkpoint: `7744b46b8e8b188f3bc209bad6a9efe6bf59440f`; later `[skip ci]` investor persistence commits do not modify Deep calculation code.
+- Current business-code main baseline for this verification: `07dd4ca72e94c7576e3f2672a5df38266c1deddb` (#232 squash merge).
 - Live GitHub refs / PRs / Actions / artifacts / persisted data always override this checkpoint.
 
 ## PR / CI State
-- #232 — `fix: preserve verified material-event failures across deep runs` — open; blocking CI/review required before merge.
+- #232 — `fix: preserve verified material-event failures across deep runs` — merged; production verification in progress.
 - #230 — `fix: restore SSE multi-year annual-report discovery` — open; its latest observed CI is green, but merge is held behind #232.
 - #231 — `fix: deepen MIIT industry evidence discovery` — open and independent; merge is held behind #232.
 - #229 — `fix: front-load strict predictability evidence collection` — is merged.
@@ -75,18 +74,20 @@ Repair the production fail-closed regression discovered while verifying #229: a 
 - #223 Deep liveness fix remains production-proven.
 - #225 was merged, production-tested, and correctly classified as unsuccessful for its intended transport recovery.
 - #229 passed required CI/review and merged.
+- #232 passed PR CI and merged as `07dd4ca72e94c7576e3f2672a5df38266c1deddb`.
+- Evidence Change Trigger run `35556361159` succeeded and launched Deep production run `35556365712`.
 - Main production code path was verified after merge.
 - Volatile web-session checkpoint is stored on `state/chatgpt-recovery` at `recovery/tasks/stock-system-convergence.json`; live GitHub remains authoritative.
 
 ## Blockers
-#232 must pass blocking CI/review, merge, and receive fresh production Deep verification before #230/#231 transport/evidence expansion is allowed to merge.
+Fresh post-merge Deep production evidence for #232 is still required before #230/#231 may merge.
 
 ## Next Action
-1. Let #232 blocking CI/review complete; fix only demonstrated failures.
-2. Merge #232 when green.
-3. Run a fresh production Deep on main.
+1. Resume production Deep run `35556365712` on main baseline `07dd4ca72e94c7576e3f2672a5df38266c1deddb` (triggered by Evidence Change Trigger run `35556361159`).
+2. If it fails, inspect the exact failing job/step and repair only the demonstrated cause.
+3. If it succeeds, inspect terminal artifact and persisted history/ledger.
 4. Verify the revalidated 8-row / 12-gate historical risk set remains fail-closed when current refetch fails.
-5. Specifically verify `000557 financial_safety` returns to FAIL, while resolved/non-assertive historical rows such as `000603` and `301251` are not resurrected.
+5. Specifically verify `000557 financial_safety` is FAIL, while resolved/non-assertive historical rows such as `000603` and `301251` are not resurrected.
 6. Verify cumulative risk-ledger counters, Deep -> Provenance -> Terminal -> Investor convergence, UNKNOWN != PASS, and no_auto_trade=true.
 7. Only after #232 is production-proven, resume #230 Shanghai SSE annual-report discovery verification and then #231 long-term-demand evidence depth.
 
