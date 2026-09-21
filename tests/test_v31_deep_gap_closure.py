@@ -144,6 +144,7 @@ def test_missing_profile_is_handoff_incomplete_not_evidence_exhausted():
     assert status["execution_status"] == "SUCCESS"
     assert status["research_terminal_state"] == "HANDOFF_INCOMPLETE"
     assert status["requested_count"] == 2
+    assert status["requested_codes"] == ["001316", "600406"]
     assert status["profile_count"] == 1
     assert status["requested_profile_count"] == 1
     assert status["processed_requested_count"] == 1
