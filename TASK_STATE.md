@@ -18,7 +18,7 @@ Production-verify the merged #229 scheduling fix for Shenzhen/ChiNext while repa
 - Latest observed main at checkpoint: `7744b46b8e8b188f3bc209bad6a9efe6bf59440f`; later `[skip ci]` investor persistence commits do not modify Deep calculation code.
 - Live GitHub refs / PRs / Actions / artifacts / persisted data always override this checkpoint.
 
-## PR / CI State
+## CI
 - #229 — `fix: front-load strict predictability evidence collection` — is merged.
 - Final PR head: `3493029639c2ec64a20eca4231c574d222ce18c4`.
 - Required CI/review checks were green before merge.
@@ -64,7 +64,7 @@ Production-verify the merged #229 scheduling fix for Shenzhen/ChiNext while repa
 - Main production code path was verified after merge.
 - Volatile web-session checkpoint is stored on `state/chatgpt-recovery` at `recovery/tasks/stock-system-convergence.json`; live GitHub remains authoritative.
 
-## Blocker
+## Blockers
 - Fresh terminal production evidence from Deep run `35551673513` is still required before #229 can be classified as production-proven.
 - #230 requires green blocking CI/review before merge; first CI attempt failed only because this checkpoint lacked the repository-required `## Active Branch` heading, now corrected.
 
