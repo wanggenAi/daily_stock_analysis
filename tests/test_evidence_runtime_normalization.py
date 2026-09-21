@@ -158,7 +158,7 @@ def test_specialized_sources_follow_aliases_for_classified_transport_industries(
 
 
 def test_specialized_sources_do_not_expand_unrelated_industries():
-    raw = "I65软件和信息技术服务业"
+    raw = "J68保险业"
     aliases = prepare_industry_alias_map([raw])
     terms = _industry_search_terms(raw, aliases)
     assert _specialized_source_specs(terms) == []
