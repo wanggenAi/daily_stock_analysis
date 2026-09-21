@@ -36,6 +36,16 @@ _FUNDS_OCCUPATION_TRUE_INCIDENT_RE = re.compile(
     r"|(?:非经营性)?资金占用(?:事项|问题|行为).{0,18}(?:整改|进展|归还|清偿|解决)"
     r"|占用(?:上市)?公司资金"
 )
+_MATERIAL_EVENT_NON_ASSERTION_RE = re.compile(
+    r"是否存在.{0,48}(?:财务造假|虚假记载|欺诈发行|虚假陈述|(?:非经营性)?资金占用)"
+)
+_FUNDS_OCCUPATION_FULL_RESOLUTION_RE = re.compile(
+    r"(?:非经营性)?资金占用.{0,20}(?:已解决|已全部解决|已全部归还|已全部清偿)"
+)
+_NON_STANDARD_AUDIT_FULL_RESOLUTION_RE = re.compile(
+    r"(?:非标准审计意见|非标意见|保留意见|无法表示意见|否定意见).{0,80}"
+    r"(?:影响已消除|事项已消除)"
+)
 
 
 def normalize_sse_attachment_url(value: Any) -> str:
@@ -102,16 +112,52 @@ def is_preventive_funds_occupation_policy(title: Any) -> bool:
 def _classify_material_events_with_policy_guard(
     title: Any, *, publish_date: date, as_of: date
 ) -> list[dict[str, Any]]:
+    """Apply semantic guards after the base keyword classifier.
+
+    Hard FAIL evidence must represent an asserted, still-active event. Titles
+    that explicitly ask whether a risk exists are not assertions, while titles
+    that explicitly say the issue was solved/eliminated are resolution evidence.
+    """
+    text = _company_announcements._clean_title(title)
     events = _ORIGINAL_CLASSIFY_MATERIAL_EVENTS(
         title, publish_date=publish_date, as_of=as_of
     )
-    if not is_preventive_funds_occupation_policy(title):
-        return events
-    return [
-        event
-        for event in events
-        if str(event.get("event_type") or "") != "FUNDS_OCCUPATION"
-    ]
+    if is_preventive_funds_occupation_policy(title):
+        events = [
+            event
+            for event in events
+            if str(event.get("event_type") or "") != "FUNDS_OCCUPATION"
+        ]
+
+    non_assertive = bool(_MATERIAL_EVENT_NON_ASSERTION_RE.search(text))
+    result: list[dict[str, Any]] = []
+    for raw in events:
+        event = dict(raw)
+        event_type = str(event.get("event_type") or "")
+        if non_assertive and event_type in {"ACCOUNTING_FRAUD", "FUNDS_OCCUPATION"}:
+            continue
+        fully_resolved = (
+            event_type == "FUNDS_OCCUPATION"
+            and bool(_FUNDS_OCCUPATION_FULL_RESOLUTION_RE.search(text))
+        ) or (
+            event_type == "NON_STANDARD_AUDIT"
+            and bool(_NON_STANDARD_AUDIT_FULL_RESOLUTION_RE.search(text))
+        )
+        if fully_resolved:
+            event["event_status"] = "RESOLVED"
+            event["event_resolution_scope"] = "FULL"
+            event["direction"] = "NEUTRAL"
+        result.append(event)
+    return result
+
+
+def classify_material_event_title(
+    title: Any, *, publish_date: date, as_of: date
+) -> list[dict[str, Any]]:
+    """Public semantic classifier used to revalidate persisted event evidence."""
+    return _classify_material_events_with_policy_guard(
+        title, publish_date=publish_date, as_of=as_of
+    )
 
 
 class _LazyCninfoOrgIdMap(dict[str, str]):
