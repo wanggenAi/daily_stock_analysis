@@ -1,6 +1,6 @@
 name: GenGe Jev Research Orchestrator
 
-run-name: GenGe Jev Research Orchestrator / ${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }
+run-name: GenGe Jev Research Orchestrator / ${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }}}
 
 on:
   workflow_run:
@@ -37,7 +37,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: genge-jev-research-orchestrator-${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }
+  group: genge-jev-research-orchestrator-${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }}}
   cancel-in-progress: false
 
 env:
@@ -105,8 +105,8 @@ jobs:
         id: source
         shell: bash
         env:
-          EVENT_SOURCE_RUN_ID: ${{ github.event.workflow_run.id }
-          MANUAL_SOURCE_RUN_ID: ${{ inputs.source_run_id }
+          EVENT_SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}}
+          MANUAL_SOURCE_RUN_ID: ${{ inputs.source_run_id }}}
         run: |
           set -euo pipefail
           test -s data/jev_shadow/latest_routing.json
@@ -131,7 +131,7 @@ jobs:
         id: plan
         shell: bash
         env:
-          MAX_DISPATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.max_dispatch || '12' }
+          MAX_DISPATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.max_dispatch || '12' }}}
         run: |
           set -euo pipefail
           python -m src.strategies.genge_opportunity_discovery.jev_research_orchestrator             --routing-json data/jev_shadow/latest_routing.json             --output-json "$RUNNER_TEMP/jev-orchestration-plan.json"             --max-dispatch "$MAX_DISPATCH"             --require-ready
@@ -151,9 +151,9 @@ jobs:
         id: reconcile
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }
-          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }
-          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}}
+          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }}}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}}
         run: |
           set -euo pipefail
           existing=""
@@ -176,7 +176,7 @@ jobs:
           echo "existing_deep_run_id=$existing" >> "$GITHUB_OUTPUT"
           if [ -n "$existing" ]; then
             echo "needs_dispatch=false" >> "$GITHUB_OUTPUT"
-          elif [ "${{ steps.plan.outputs.should_dispatch }" = "true" ]; then
+          elif [ "${{ steps.plan.outputs.should_dispatch }}}" = "true" ]; then
             echo "needs_dispatch=true" >> "$GITHUB_OUTPUT"
           else
             echo "needs_dispatch=false" >> "$GITHUB_OUTPUT"
@@ -186,8 +186,8 @@ jobs:
         if: steps.reconcile.outputs.needs_dispatch == 'true'
         shell: bash
         env:
-          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }
-          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }
+          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }}}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}}
         run: |
           set -euo pipefail
           PLAN="$RUNNER_TEMP/jev-orchestration-plan.json" SOURCE_RUN_ID="$SOURCE_RUN_ID" TRIGGER_SOURCE="$TRIGGER_SOURCE" python - <<'PY'
@@ -228,9 +228,9 @@ jobs:
         if: steps.reconcile.outputs.needs_dispatch == 'true'
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }
-          REQUESTED_CODES: ${{ steps.plan.outputs.requested_codes }
-          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}}
+          REQUESTED_CODES: ${{ steps.plan.outputs.requested_codes }}}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}}
         run: |
           set -euo pipefail
           gh workflow run genge-v31-deep-calculation-lambda.yml             --repo "$GITHUB_REPOSITORY"             --ref main             -f requested_codes="$REQUESTED_CODES"             -f trigger_source="$TRIGGER_SOURCE"
@@ -239,10 +239,10 @@ jobs:
         id: deep
         shell: bash
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }
-          EXISTING_DEEP_RUN_ID: ${{ steps.reconcile.outputs.existing_deep_run_id }
-          SHOULD_DISPATCH: ${{ steps.plan.outputs.should_dispatch }
-          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}}
+          EXISTING_DEEP_RUN_ID: ${{ steps.reconcile.outputs.existing_deep_run_id }}}
+          SHOULD_DISPATCH: ${{ steps.plan.outputs.should_dispatch }}}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}}
         run: |
           set -euo pipefail
           deep="$EXISTING_DEEP_RUN_ID"
@@ -265,10 +265,10 @@ jobs:
         if: always() && steps.plan.outcome == 'success' && steps.deep.outcome == 'success'
         shell: bash
         env:
-          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }
-          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }
-          DEEP_RUN_ID: ${{ steps.deep.outputs.deep_run_id }
-          SHOULD_DISPATCH: ${{ steps.plan.outputs.should_dispatch }
+          SOURCE_RUN_ID: ${{ steps.source.outputs.source_run_id }}}
+          TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}}
+          DEEP_RUN_ID: ${{ steps.deep.outputs.deep_run_id }}}
+          SHOULD_DISPATCH: ${{ steps.plan.outputs.should_dispatch }}}
         run: |
           set -euo pipefail
           PLAN="$RUNNER_TEMP/jev-orchestration-plan.json" SOURCE_RUN_ID="$SOURCE_RUN_ID" TRIGGER_SOURCE="$TRIGGER_SOURCE" DEEP_RUN_ID="$DEEP_RUN_ID" SHOULD_DISPATCH="$SHOULD_DISPATCH" python - <<'PY'
@@ -315,10 +315,10 @@ jobs:
         if: always()
         run: |
           echo "# GenGe Jev Research Orchestrator" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Jev source run: ${{ steps.source.outputs.source_run_id || 'unresolved' }" >> "$GITHUB_STEP_SUMMARY"
-          echo "- selected research codes: ${{ steps.plan.outputs.selected_count || '0' }" >> "$GITHUB_STEP_SUMMARY"
-          echo "- human-review queue: ${{ steps.plan.outputs.human_review_count || '0' }" >> "$GITHUB_STEP_SUMMARY"
-          echo "- requested codes: ${{ steps.plan.outputs.requested_codes || 'none' }" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Deep run: ${{ steps.deep.outputs.deep_run_id || 'none' }" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Jev source run: ${{ steps.source.outputs.source_run_id || 'unresolved' }}}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- selected research codes: ${{ steps.plan.outputs.selected_count || '0' }}}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- human-review queue: ${{ steps.plan.outputs.human_review_count || '0' }}}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- requested codes: ${{ steps.plan.outputs.requested_codes || 'none' }}}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Deep run: ${{ steps.deep.outputs.deep_run_id || 'none' }}}" >> "$GITHUB_STEP_SUMMARY"
           echo "- chain: Jev -> deterministic research orchestrator -> Deep Calculation -> Terminal Research Decision -> Investor Terminal Overlay -> Three-Pillar Decision Center" >> "$GITHUB_STEP_SUMMARY"
           echo "- Jev direct dispatch=false; Formal trading authority=false; UNKNOWN != PASS; no_auto_trade=true" >> "$GITHUB_STEP_SUMMARY"
