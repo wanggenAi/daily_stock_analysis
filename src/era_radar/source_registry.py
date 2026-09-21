@@ -26,6 +26,7 @@ DEFAULT_SOURCE_REGISTRY = (
     SourceSpec("mof", "POLICY_CAPITAL", "OFFICIAL", "CN", "Ministry of Finance expenditure and fiscal support evidence"),
     SourceSpec("pbc", "FINANCIAL_CAPITAL", "OFFICIAL", "CN", "PBOC aggregate financing and monetary/credit structure"),
     SourceSpec("stats_cn", "REAL_DEMAND", "OFFICIAL", "CN", "National Bureau of Statistics demand, output, population and investment series"),
+    SourceSpec("stats_cn_investment", "INDUSTRIAL_CAPITAL", "OFFICIAL", "CN", "National Bureau of Statistics fixed-asset and industry investment releases"),
     SourceSpec("customs_cn", "REAL_DEMAND", "OFFICIAL", "CN", "China customs trade flows"),
     SourceSpec("sse_szse_disclosures", "INDUSTRIAL_CAPITAL", "PRIMARY", "CN", "Listed-company capex, orders, projects and strategic investment disclosures"),
     SourceSpec("company_reports", "INDUSTRIAL_CAPITAL", "PRIMARY", "GLOBAL", "Company annual/interim reports and presentations"),

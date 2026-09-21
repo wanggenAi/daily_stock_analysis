@@ -31,10 +31,10 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
 
 concurrency:
-  group: genge-live-execution-quote-refresh
+  group: genge-live-execution-quote-refresh-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
   cancel-in-progress: false
 
 env:
@@ -146,6 +146,13 @@ jobs:
 
           echo "live execution quote refresh failed after 4 optimistic replay attempts" >&2
           exit 1
+
+      - name: Refresh final decision center after execution-price persistence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
 
       - name: Publish quote coverage summary
         if: always()
