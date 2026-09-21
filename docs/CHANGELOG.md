@@ -2014,3 +2014,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 [1.2.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/wanggenAi/daily_stock_analysis/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/wanggenAi/daily_stock_analysis/releases/tag/v1.0.0
+- [新功能] 增加 Jev Shadow Decision Layer 与 GitHub Actions 手动评估工作流；仅用于研究路由校准，不改变 Formal 决策、硬门槛、Candidate Lifecycle 或交易权限。\n
