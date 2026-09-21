@@ -103,3 +103,41 @@ def test_whether_risk_exists_due_diligence_title_is_not_incident_assertion():
     types = _event_types(title)
     assert "ACCOUNTING_FRAUD" not in types
     assert "FUNDS_OCCUPATION" not in types
+
+
+def test_production_historical_non_assertive_titles_do_not_reactivate_risk():
+    cases = (
+        (
+            "董事会关于拟购买资产资金占用问题的说明",
+            {"FUNDS_OCCUPATION"},
+        ),
+        (
+            "关联方非经营性资金占用及清偿情况和违规担保及解除情况的专项报告",
+            {"FUNDS_OCCUPATION", "ILLEGAL_GUARANTEE"},
+        ),
+        (
+            "控股股东及其他关联方占用资金情况的专项审计说明",
+            {"FUNDS_OCCUPATION"},
+        ),
+        (
+            "防止大股东及关联方占用资金制度",
+            {"FUNDS_OCCUPATION"},
+        ),
+        (
+            "防止大股东及关联方占用资金制度（2025.8）",
+            {"FUNDS_OCCUPATION"},
+        ),
+    )
+    for title, forbidden in cases:
+        assert forbidden.isdisjoint(_event_types(title)), title
+
+
+def test_reversed_wording_true_funds_occupation_incident_remains_detected():
+    title = "关于发现控股股东占用资金事项及整改进展的公告"
+    assert "FUNDS_OCCUPATION" in _event_types(title)
+
+
+def test_true_illegal_guarantee_incident_remains_detected():
+    title = "关于发现违规担保事项及整改进展的公告"
+    assert "ILLEGAL_GUARANTEE" in _event_types(title)
+
