@@ -59,6 +59,11 @@ def main() -> int:
     )
     parser.add_argument("--max-entities", type=int, default=25)
     parser.add_argument(
+        "--require-success",
+        action="store_true",
+        help="Return non-zero unless the live Jev execution status is SUCCESS.",
+    )
+    parser.add_argument(
         "--output-dir",
         type=Path,
         default=Path(".artifacts/jev-shadow"),
@@ -87,6 +92,15 @@ def main() -> int:
     )
     md_path.write_text(render_shadow_markdown(payload), encoding="utf-8")
     print(json.dumps(payload.get("summary") or {}, ensure_ascii=False, sort_keys=True))
+    if args.require_success and payload.get("execution_status") != "SUCCESS":
+        print(
+            json.dumps(
+                {"execution_status": payload.get("execution_status") or "UNKNOWN"},
+                ensure_ascii=False,
+                sort_keys=True,
+            )
+        )
+        return 2
     return 0
 
 

@@ -80,13 +80,15 @@ jobs:
           )
           client.close()
           PY
-      - name: Validate Jev shadow guardrails without network
-        run: python -m pytest -q tests/test_jev_shadow.py
+      - name: Validate Jev runner entrypoint and shadow guardrails without network
+        run: |
+          python tools/run_jev_shadow.py --help > /dev/null
+          python -m pytest -q tests/test_jev_shadow.py
 
   live-shadow:
-    # Same-repository PRs get a bounded live smoke when the secret is available.
-    # Fork PRs receive no repository secret and the runner safely reports SKIPPED_NO_SECRET.
-    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
+    # Same-repository PRs get a bounded live smoke. Fork PRs never receive the secret
+    # and are excluded explicitly rather than relying only on GitHub secret behavior.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -113,7 +115,8 @@ jobs:
           python tools/run_jev_shadow.py \
             --scope '${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'combined' }}' \
             --max-entities '${{ github.event_name == 'workflow_dispatch' && inputs.max_entities || '4' }}' \
-            --output-dir .artifacts/jev-shadow
+            --output-dir .artifacts/jev-shadow \
+            --require-success
       - name: Publish Jev shadow summary
         if: always()
         shell: bash
