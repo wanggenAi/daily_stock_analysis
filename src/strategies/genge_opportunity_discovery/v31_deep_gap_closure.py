@@ -372,16 +372,16 @@ def _load_historical_verified_material_events(
             continue
         evidence_path = history_root / f"{status_path.stem}.evidence.json"
         if not evidence_path.is_file():
-            return []
+            continue
         try:
             payload = _read_json(evidence_path)
         except (OSError, ValueError, json.JSONDecodeError):
-            return []
+            continue
         if not _safe_historical_evidence_payload(payload):
-            return []
+            continue
         rows = payload.get("material_event_risk_ledger")
         if not isinstance(rows, list):
-            return []
+            continue
         return _dedupe(
             dict(raw)
             for raw in rows
