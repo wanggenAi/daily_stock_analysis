@@ -160,6 +160,10 @@ jobs:
         run: |
           set -euo pipefail
           gh workflow run genge-investor-terminal-research-overlay.yml --repo "$GITHUB_REPOSITORY" --ref main
+          marker="data/jev_shadow/orchestration/latest.json"
+          if [ -s "$marker" ] && [ "$(jq -r '.production_verification_complete // false' "$marker")" != "true" ]; then
+            gh workflow run genge-jev-orchestration-reconciler.yml --repo "$GITHUB_REPOSITORY" --ref main
+          fi
 
       - name: Publish terminal decision summary
         if: always()
