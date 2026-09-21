@@ -104,6 +104,7 @@ def test_whether_risk_exists_due_diligence_title_is_not_incident_assertion():
     assert "ACCOUNTING_FRAUD" not in types
     assert "FUNDS_OCCUPATION" not in types
 
+
 def test_production_historical_non_assertive_titles_do_not_reactivate_risk():
     cases = (
         (
