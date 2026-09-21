@@ -303,6 +303,20 @@ def test_quarterly_section_cannot_contaminate_annual_metrics():
     assert "183,465,857.89" not in metrics["metric_provenance"]["operating_cash_flow"]["excerpt"]
 
 
+def test_single_quarter_narrative_does_not_hide_annual_metric_row():
+    text = """
+    公司第四季度订单恢复良好。
+    单位：元
+    营业收入 4,735,621,902.73
+    归属于上市公司股东的净利润 836,099,254.25
+    经营活动产生的现金流量净额 1,087,737,899.28
+    """
+    metrics = extract_report_metrics(text, 2025)
+    assert metrics["revenue"] == 4_735_621_902.73
+    assert metrics["net_profit"] == 836_099_254.25
+    assert metrics["operating_cash_flow"] == 1_087_737_899.28
+
+
 def test_quarterly_only_table_cannot_supply_annual_metrics():
     text = """
     九、 2025年分季度主要财务数据
