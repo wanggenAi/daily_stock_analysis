@@ -80,6 +80,14 @@ WEB_SETTINGS_HIDDEN_FROM_UI = {
     "USE_PROXY",
     "PROXY_HOST",
     "PROXY_PORT",
+    # Jev is a GitHub-Actions-only shadow experiment. Keep its controls and secret
+    # out of the application Web settings surface; the live workflow owns them.
+    "JEV_ENABLED",
+    "JEV_SHADOW_MODE",
+    "JEV_MODEL",
+    "JEV_TIMEOUT_SECONDS",
+    "JEV_MAX_RETRIES",
+    "TYPESAFE_API_KEY",
 }
 
 _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
