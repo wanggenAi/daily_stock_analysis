@@ -107,7 +107,13 @@ MOT_REPORT_TITLE_TOKENS = (
 )
 MIIT_OPERATIONAL_TITLE_TOKENS = ("运行情况", "运行分析", "经济运行", "主要指标")
 _MIIT_DATED_TITLE_RE = re.compile(r"20\d{2}年")
-OFFICIAL_DOMAIN_FAMILIES = ("mot.gov.cn",)
+OFFICIAL_DOMAIN_FAMILIES = (
+    "mot.gov.cn",
+    "miit.gov.cn",
+    "stats.gov.cn",
+    "ndrc.gov.cn",
+    "spb.gov.cn",
+)
 
 
 def _same_source_family(url: str, base_url: str) -> bool:
