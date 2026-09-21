@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-21T08:42:51+00:00",
+  "generated_at": "2026-09-21T11:49:33+00:00",
   "canonical_snapshot_id": "698f36f290a29ae41124",
   "canonical_source_run_id": "35570184481",
   "latest_trade_date": "2026-09-18",
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
+  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=GREEN；盘中价仅用于展示/审计；计划立即投入≈¥0",
   "market": {
     "as_of_date": "2026-09-18",
     "status": "GREEN",
@@ -292,13 +292,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 171,
-    "planned_immediate_cash_cny": 0.0,
-    "research_terminal_requested_count": 4,
-    "research_buy_count": 0,
-    "research_wait_price_count": 0,
-    "research_gap_count": 4,
-    "research_reject_count": 0,
-    "urgent_research_count": 4
+    "planned_immediate_cash_cny": 0.0
   },
   "capital_direction": {
     "direct_fund_flow_claimed": false,
@@ -371,17 +365,13 @@
       "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
       "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
     ],
-    "formal_new_exposure_allowed": false,
-    "terminal_research_available": true,
-    "terminal_research_authority": "RESEARCH_ONLY",
-    "terminal_research_formal_mutation_allowed": false
+    "formal_new_exposure_allowed": false
   },
   "presentation_contract": {
     "investor_first": true,
     "section_order": [
       "market",
       "stock_portfolio",
-      "terminal_research",
       "terminal_buy_now",
       "terminal_wait_price",
       "capital_deployment",
@@ -402,7 +392,7 @@
       "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
       "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
     ],
-    "evaluated_at": "2026-09-21T08:42:51+00:00",
+    "evaluated_at": "2026-09-21T11:49:33+00:00",
     "canonical_generated_at": "2026-09-21T07:05:03+00:00",
     "canonical_latest_trade_date": "2026-09-18",
     "canonical_source_run_id": "35570184481",
@@ -411,377 +401,10 @@
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
   "formal_new_exposure_allowed": false,
-  "execution_consumption_reconciliation": {
-    "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "698f36f290a29ae41124",
-    "canonical_source_run_id": "35570184481",
-    "matching_consumption_count": 1,
-    "exact_lineage_consumption_count": 0,
-    "carried_forward_consumption_count": 1,
-    "explicit_rearm_skipped_count": 0,
-    "explicit_rearm_skipped_codes": [],
-    "applied_consumption_count": 1,
-    "applied": [
-      {
-        "code": "603993",
-        "consumed_shares": 100,
-        "allowance_shares": 100,
-        "lineage_match": "CARRIED_FORWARD"
-      }
-    ],
-    "routine_canonical_refresh_rearms_consumed_add": false,
-    "explicit_rearm_required": true,
-    "formal_action_mutation_allowed": false,
-    "automatic_order_allowed": false,
-    "no_auto_trade": true
-  },
-  "terminal_research_snapshot": {
-    "available": true,
-    "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-    "source_deep_lambda_run_id": "35574223501",
-    "source_every_industry_run_id": "35570184481",
-    "requested_count": 4,
-    "decision_counts": {
-      "WAIT_PRICE": 0,
-      "BUY": 0,
-      "REJECT": 0,
-      "RESEARCH_GAP": 4
-    },
-    "research_authority": "RESEARCH_ONLY",
-    "formal_trading_authority": false,
-    "automatic_formal_buy_allowed": false,
-    "unknown_is_pass": false,
-    "no_auto_trade": true,
-    "terminal_rows": [
-      {
-        "code": "000576",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "name": "甘化科工",
-        "no_auto_trade": true,
-        "quant_score": 75.2261,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P1",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 45.91,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 34.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 60.81,
-          "pe_to_history_ratio": 0.7549745107712547,
-          "required_profit_growth_pct": -24.502548922874535
-        }
-      },
-      {
-        "code": "603209",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "G55水上运输业",
-        "name": "兴通股份",
-        "no_auto_trade": true,
-        "quant_score": 68.2587,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P2",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 14.37,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 69.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 18.5,
-          "pe_to_history_ratio": 0.7767567567567567,
-          "required_profit_growth_pct": -22.32432432432433
-        }
-      },
-      {
-        "code": "603160",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "name": "汇顶科技",
-        "no_auto_trade": true,
-        "quant_score": 65.9223,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 38.03,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 54.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 48.8,
-          "pe_to_history_ratio": 0.7793032786885247,
-          "required_profit_growth_pct": -22.069672131147534
-        }
-      },
-      {
-        "code": "688162",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "C35专用设备制造业",
-        "name": "巨一科技",
-        "no_auto_trade": true,
-        "quant_score": 65.7322,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 39.25,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 69.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 56.21,
-          "pe_to_history_ratio": 0.6982743284113146,
-          "required_profit_growth_pct": -30.172567158868535
-        }
-      }
-    ],
-    "urgent_research_queue": [
-      {
-        "code": "000576",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "name": "甘化科工",
-        "no_auto_trade": true,
-        "quant_score": 75.2261,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P1",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 45.91,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 34.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 60.81,
-          "pe_to_history_ratio": 0.7549745107712547,
-          "required_profit_growth_pct": -24.502548922874535
-        }
-      },
-      {
-        "code": "603209",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "G55水上运输业",
-        "name": "兴通股份",
-        "no_auto_trade": true,
-        "quant_score": 68.2587,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P2",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 14.37,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 69.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 18.5,
-          "pe_to_history_ratio": 0.7767567567567567,
-          "required_profit_growth_pct": -22.32432432432433
-        }
-      },
-      {
-        "code": "603160",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "name": "汇顶科技",
-        "no_auto_trade": true,
-        "quant_score": 65.9223,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 38.03,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 54.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 48.8,
-          "pe_to_history_ratio": 0.7793032786885247,
-          "required_profit_growth_pct": -22.069672131147534
-        }
-      },
-      {
-        "code": "688162",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "C35专用设备制造业",
-        "name": "巨一科技",
-        "no_auto_trade": true,
-        "quant_score": 65.7322,
-        "quant_status": "PRIORITY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "HIGH",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 39.25,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 69.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 56.21,
-          "pe_to_history_ratio": 0.6982743284113146,
-          "required_profit_growth_pct": -30.172567158868535
-        }
-      }
-    ],
-    "urgent_research_count": 4
-  },
   "live_execution_overlay": {
-    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
     "available": false,
-    "market_data_status": "OFF_SESSION",
+    "market_data_status": "DEGRADED",
     "eligible_quote_count": 0,
     "expected_code_count": 4,
     "expected_codes": [
@@ -809,13 +432,30 @@
     "no_auto_trade": true,
     "freshness_blocks_new_exposure": true,
     "formal_new_exposure_allowed": false,
-    "freshness_fail_closed_reasserted": true,
-    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
-    "market_session_state": "CLOSED",
-    "market_session_active": false,
-    "retry_attempts": 3,
-    "refreshed_at": "2026-09-21T10:19:13.853075+00:00",
-    "refreshed_at_beijing": "2026-09-21T18:19:13.853075+08:00"
+    "freshness_fail_closed_reasserted": true
+  },
+  "execution_consumption_reconciliation": {
+    "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
+    "canonical_snapshot_id": "698f36f290a29ae41124",
+    "canonical_source_run_id": "35570184481",
+    "matching_consumption_count": 1,
+    "exact_lineage_consumption_count": 0,
+    "carried_forward_consumption_count": 1,
+    "explicit_rearm_skipped_count": 0,
+    "explicit_rearm_skipped_codes": [],
+    "applied_consumption_count": 1,
+    "applied": [
+      {
+        "code": "603993",
+        "consumed_shares": 100,
+        "allowance_shares": 100,
+        "lineage_match": "CARRIED_FORWARD"
+      }
+    ],
+    "routine_canonical_refresh_rearms_consumed_add": false,
+    "explicit_rearm_required": true,
+    "formal_action_mutation_allowed": false,
+    "automatic_order_allowed": false,
+    "no_auto_trade": true
   }
 }
