@@ -65,6 +65,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
+      actions: write
       contents: write
     steps:
       - uses: actions/checkout@v5
@@ -150,6 +151,16 @@ jobs:
 
           echo 'Three-pillar persistence failed after 4 optimistic replay attempts.' >&2
           exit 1
+
+      - name: Refresh Jev orchestration cursor after decision-center convergence
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          marker="data/jev_shadow/orchestration/latest.json"
+          if [ -s "$marker" ] && [ "$(jq -r '.production_verification_complete // false' "$marker")" != "true" ]; then
+            gh workflow run genge-jev-orchestration-reconciler.yml --repo "$GITHUB_REPOSITORY" --ref main
+          fi
 
       - name: Publish summary
         if: always()

@@ -3,6 +3,9 @@ from pathlib import Path
 
 RECONCILER = Path(".github/workflows/genge-jev-orchestration-reconciler.yml")
 DEEP = Path(".github/workflows/genge-v31-deep-calculation-lambda.yml")
+TERMINAL = Path(".github/workflows/genge-v31-terminal-research-decision.yml")
+INVESTOR = Path(".github/workflows/genge-investor-terminal-research-overlay.yml")
+DECISION_CENTER = Path(".github/workflows/genge-three-pillar-decision-center.yml")
 
 
 def test_reconciler_tracks_the_exact_jev_deep_lineage() -> None:
@@ -67,3 +70,24 @@ def test_workflow_contract_edits_do_not_self_trigger_expensive_production_deep()
     assert '"tests/test_genge_v31_deep_calculation_workflow_contract.py"' not in push_block
     assert '"src/strategies/genge_opportunity_discovery/v31_deep_gap_closure.py"' in push_block
     assert '"src/strategies/genge_opportunity_discovery/evidence_collectors/public_data.py"' in push_block
+
+
+def test_downstream_convergence_explicitly_wakes_jev_reconciler() -> None:
+    dispatch = 'gh workflow run genge-jev-orchestration-reconciler.yml --repo "$GITHUB_REPOSITORY" --ref main'
+
+    terminal = TERMINAL.read_text(encoding="utf-8")
+    investor = INVESTOR.read_text(encoding="utf-8")
+    center = DECISION_CENTER.read_text(encoding="utf-8")
+
+    assert dispatch in terminal
+    assert dispatch in investor
+    assert dispatch in center
+    assert terminal.index("Persist terminal research decisions with optimistic replay") < terminal.index(dispatch)
+    assert investor.index("Overlay latest terminal research onto investor brief with optimistic replay") < investor.index(dispatch)
+    assert center.index("Build and persist runtime-aware decision center with optimistic replay") < center.index(dispatch)
+    assert ".production_verification_complete // false" in terminal
+    assert ".production_verification_complete // false" in investor
+    assert ".production_verification_complete // false" in center
+
+    production = center.split("  production:", 1)[1]
+    assert "actions: write" in production.split("    steps:", 1)[0]
