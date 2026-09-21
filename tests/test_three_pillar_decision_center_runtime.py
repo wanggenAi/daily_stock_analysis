@@ -10,6 +10,7 @@ from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_run
     render_runtime_markdown,
     select_latest_deep_calculation_status,
     summarize_era_evidence,
+    summarize_candidate_lifecycle,
 )
 
 
@@ -578,3 +579,70 @@ def test_three_pillar_does_not_race_investor_or_terminal_workflows():
     assert "Era Capital Trend Radar Live" in workflow_run
     assert "GenGe Investor Decision Brief" not in workflow_run
     assert "GenGe V3.1 Terminal Research Decision" not in workflow_run
+
+
+def test_candidate_lifecycle_and_system_capabilities_are_visible_in_final_report():
+    lifecycle = {
+        "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
+        "latest_applied_snapshot_id": "snap-life",
+        "latest_research_as_of": "2026-09-20T13:30:04Z",
+        "candidates": {
+            "600406": {
+                "code": "600406",
+                "stock_name": "国电南瑞",
+                "lifecycle_state": "ACTIVE",
+                "research_tier": "PENDING",
+                "seen_count": 176,
+                "last_event": "RESEEN",
+                "last_event_at": "2026-09-20T13:30:04Z",
+                "history": [{"event": "RESEEN"}, {"event": "RESEEN"}],
+            },
+            "001316": {
+                "code": "001316",
+                "stock_name": "润贝航科",
+                "lifecycle_state": "ACTIVE",
+                "research_tier": "PENDING",
+                "seen_count": 178,
+                "last_event": "RESEEN",
+                "history": [{"event": "RESEEN"}],
+            },
+        },
+    }
+    summary = summarize_candidate_lifecycle(lifecycle, ["600406"])
+    assert summary["active_candidate_count"] == 2
+    assert summary["lifecycle_event_count"] == 3
+    assert summary["focus_candidates"][0]["seen_count"] == 176
+    assert summary["formal_authority_granted"] is False
+
+    status = _status()
+    status.update({
+        "verified_pass_gate_count": 217,
+        "unverified_pass_gate_count": 0,
+        "hard_gate_count": 4265,
+        "provenance_audit_complete": True,
+        "provenance_audit_run_id": "audit-1",
+    })
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        era_evidence_bundle=_era_evidence(),
+        candidate_lifecycle_state=lifecycle,
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=status,
+        industry_links={},
+        era_handoff={},
+    )
+    holding = out["pillar_1_holdings_deep_analysis"]["rows"][0]
+    assert holding["candidate_lifecycle"]["lifecycle_state"] == "ACTIVE"
+    assert holding["candidate_lifecycle"]["seen_count"] == 176
+    assert out["candidate_lifecycle"]["active_candidate_count"] == 2
+    caps = {row["capability"]: row for row in out["system_capability_visibility"]["capabilities"]}
+    assert caps["Candidate Lifecycle 持续研究记忆"]["status"] == "ACTIVE"
+    assert caps["Deep Provenance 证据审计"]["status"] == "ACTIVE"
+    assert "verified-pass=217" in caps["Deep 五类硬门槛 + 官方证据"]["result"]
+    md = render_runtime_markdown(out)
+    assert "## 本次汇报真正用了哪些系统能力" in md
+    assert "Candidate Lifecycle 持续研究记忆" in md
+    assert "当前 ACTIVE **2**；累计生命周期事件 **3**" in md
+    assert "国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 176 次" in md
