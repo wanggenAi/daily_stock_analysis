@@ -105,6 +105,12 @@ _DANGLING_GROUP_RE = re.compile(
 _SECTION_HEADING_RE = re.compile(
     r"(?:^|\n)\s*(?:第[一二三四五六七八九十百]+[章节]|[一二三四五六七八九十]+、)"
 )
+_QUARTER_SECTION_RE = re.compile(r"(?:季度数据|分季度)")
+_QUARTER_COLUMN_RE = re.compile(
+    r"(?:第一季度|第二季度|第三季度|第四季度|"
+    r"一季度|二季度|三季度|四季度|Q[1-4])",
+    flags=re.IGNORECASE,
+)
 
 
 def _repair_split_grouped_numbers(text: str) -> str:
@@ -379,9 +385,40 @@ def _query_szse_history(
     return [by_year[year] for year in sorted(by_year, reverse=True)[:MAX_REPORTS]]
 
 
+def _current_section_prefix(
+    text: str, label_start: int, *, window: int = _HEADER_WINDOW
+) -> str:
+    """Return only the current numbered report section before a metric label.
+
+    Annual-report PDF extraction can place a valid annual table immediately
+    before a later quarterly table. Looking backward across the numbered
+    section boundary lets annual year headers leak into quarterly rows. Keep
+    header/unit discovery section-local so a later table cannot borrow metadata
+    from an earlier one.
+    """
+    before = text[max(0, label_start - window):label_start]
+    headings = list(_SECTION_HEADING_RE.finditer(before))
+    if headings:
+        before = before[headings[-1].start():]
+    return before
+
+
+def _metric_context_is_quarterly(text: str, label_start: int) -> bool:
+    """Reject quarterly tables without treating one narrative quarter mention as a table."""
+    section = _current_section_prefix(text, label_start)
+    local = section[-900:]
+    if _QUARTER_SECTION_RE.search(local):
+        return True
+    quarter_labels = {
+        match.group(0).upper()
+        for match in _QUARTER_COLUMN_RE.finditer(local)
+    }
+    return len(quarter_labels) >= 2
+
+
 def _nearby_header_unit(text: str, label_start: int) -> tuple[str | None, str]:
-    """Use the closest coherent unit header; ignore remote unrelated tables."""
-    before = text[max(0, label_start - _HEADER_WINDOW):label_start]
+    """Use the closest coherent unit header inside the current report section."""
+    before = _current_section_prefix(text, label_start)
     matches = list(_UNIT_HEADER_RE.finditer(before))
     if not matches:
         return None, "NO_TRUSTED_UNIT_HEADER"
@@ -474,8 +511,8 @@ def _next_metric_position(window: str) -> int | None:
 
 
 def _nearby_header_years(text: str, label_start: int) -> list[int]:
-    """Recover fiscal-year columns even when the PDF emits one header per line."""
-    before = text[max(0, label_start - _HEADER_WINDOW):label_start]
+    """Recover fiscal-year columns from the metric's current report section."""
+    before = _current_section_prefix(text, label_start)
     block = before[-900:]
     found: list[int] = []
     for match in re.finditer(r"(?<!\d)(20\d{2})\s*年?(?!\s*\d{1,2}\s*月|\d)", block):
@@ -645,6 +682,9 @@ def _metric_measurement(text: str, labels: Iterable[str], fiscal_year: int) -> d
 
     for label in labels:
         for label_match in _label_pattern(label).finditer(normalized):
+            if _metric_context_is_quarterly(normalized, label_match.start()):
+                reasons.append("QUARTERLY_METRIC_NOT_ANNUAL")
+                continue
             if _metric_context_is_scoped(normalized, label_match.start(), label_match.end()):
                 reasons.append("SCOPED_SUBTOTAL_NOT_COMPANY_METRIC")
                 continue
