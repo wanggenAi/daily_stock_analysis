@@ -110,3 +110,11 @@ Fresh post-merge Deep production evidence for #232 is still required before #230
 - Formal/Production authority remains separate from Research outputs.
 - UNKNOWN != PASS.
 - no_auto_trade=true.
+
+## Parallel Jev Integration Checkpoint
+- TypeSafe AI Jev Phase 1 merged in PR #237: live API path and shadow-only typed research-routing judgments were validated; real smoke served model `jev-1.13.0`.
+- Jev Phase 2 merged in PR #240 as `a14b3b0c4b7efcdfd0e85d2b7e402105327d3cb3`.
+- Phase 2 adds `GEN_GE_JEV_ROUTING_BRIDGE_V1`: typed advisory routes `NO_ESCALATION / EVIDENCE_REFRESH / DEEP_RESEARCH / HUMAN_REVIEW`, priority/evidence-state/confidence metadata, artifact generation, and manual persistence support.
+- Authority remains non-trading and fail-closed: `automatic_dispatch_allowed=false`, `formal_trading_authority=false`, `mutates_authoritative_decision=false`, `UNKNOWN != PASS`, `no_auto_trade=true`.
+- Current main does not yet contain `data/jev_shadow/latest.json`, `data/jev_shadow/latest_routing.json`, or `JEV_RESEARCH_ROUTING.md`; a successful manual `GenGe Jev Shadow Evaluation` workflow_dispatch is still required to persist the first production advisory snapshot.
+- Do not let Jev override deterministic research obligations or Formal BUY/WAIT_PRICE/REJECT. Promotion to automatic research dispatch requires repeated calibration first.
