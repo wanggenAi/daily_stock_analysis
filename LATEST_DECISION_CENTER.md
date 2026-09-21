@@ -8,10 +8,10 @@
 
 | 股票 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 深算状态 |
 |---|---:|---|---|---|---|
-| 国电南瑞 600406 | -4.65 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 9.19 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | -4.64 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_PARTIAL |
-| 洛阳钼业 603993 | -5.98 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | DEEP_REVIEW_PARTIAL |
+| 国电南瑞 600406 | -4.43 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 15.05 | HOLD_REVIEW | **持有观察** | LOW | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | -3.55 | HOLD | **继续持有** | MEDIUM | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | -5.55 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | DEEP_REVIEW_PARTIAL |
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -46,14 +46,14 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 - **本轮没有已授权新股 BUY。**
 - **本轮没有合格 WAIT_PRICE。**
 
-- Formal/Production Candidate Terminal REJECT：**0**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
+- Formal/Production Candidate Terminal REJECT：**171**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
 
 ## 决策完整性
 
 - 全部持仓显式深算完整：**False**
 - 世界/社会结构趋势证据可用：**True**
 - 已验证趋势→A股交接可用：**False**
-- Terminal 机会结果可用：**False**
+- Terminal 机会结果可用：**True**
 
 > UNKNOWN != PASS；研究趋势不自动变成 BUY；no_auto_trade=true。
 
