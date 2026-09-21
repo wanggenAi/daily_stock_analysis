@@ -85,8 +85,9 @@ _SCOPED_METRIC_TOKENS = (
     "按地区", "按区域", "矿山端", "贸易端", "冶炼端", "单项业务", "单一业务",
 )
 
-_QUARTER_PERIOD_RE = re.compile(
-    r"(?:季度数据|分季度|第一季度|第二季度|第三季度|第四季度|"
+_QUARTER_SECTION_RE = re.compile(r"(?:季度数据|分季度)")
+_QUARTER_COLUMN_RE = re.compile(
+    r"(?:第一季度|第二季度|第三季度|第四季度|"
     r"一季度|二季度|三季度|四季度|Q[1-4])",
     flags=re.IGNORECASE,
 )
@@ -422,24 +423,27 @@ def _metric_label_unit(text: str, label_end: int) -> str | None:
 def _metric_context_is_non_annual_period(text: str, label_start: int) -> bool:
     """Reject quarterly-table rows before they can masquerade as annual totals.
 
-    Annual reports commonly include a four-quarter table using the same metric
-    labels as the annual summary. PDF extraction can place those quarterly
-    values close enough to the label that the generic row fallback would accept
-    Q1 as the fiscal-year value. Only the local section before the label is
-    inspected, so a later quarterly-data heading cannot invalidate a preceding
-    annual-summary row.
+    A single narrative mention of Q4/第四季度 is not enough to reject a later
+    metric row. The local context must either contain an explicit quarterly-data
+    section marker or at least two distinct quarter-column labels. An annual
+    summary heading appearing after the quarterly marker resets the context.
     """
     before = text[max(0, label_start - 600):label_start]
-    quarter_matches = list(_QUARTER_PERIOD_RE.finditer(before))
-    if not quarter_matches:
-        return False
-
-    last_quarter = quarter_matches[-1].start()
-    last_annual_anchor = max(
+    annual_anchor = max(
         (before.rfind(token) for token in _ANNUAL_METRIC_SECTION_TOKENS),
         default=-1,
     )
-    return last_quarter > last_annual_anchor
+    local = before[annual_anchor + 1:] if annual_anchor >= 0 else before
+
+    section_match = _QUARTER_SECTION_RE.search(local)
+    if section_match:
+        return True
+
+    quarter_labels = {
+        match.group(0).upper()
+        for match in _QUARTER_COLUMN_RE.finditer(local)
+    }
+    return len(quarter_labels) >= 2
 
 
 def _metric_context_is_scoped(text: str, label_start: int, label_end: int) -> bool:
