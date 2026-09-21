@@ -260,3 +260,113 @@ def test_markdown_makes_shadow_authority_visible():
     assert "SHADOW ONLY" in rendered
     assert "authoritative decision mutation: **False**" in rendered
     assert "UNKNOWN != PASS" in rendered
+
+
+def test_unresolved_selection_prefers_urgent_priority_and_quant_context():
+    status = {
+        "execution_status": "SUCCESS",
+        "research_terminal_state": "EVIDENCE_EXHAUSTED",
+        "unresolved_reasons": {
+            "000001": {"moat": "UNKNOWN"},
+            "000002": {"moat": "UNKNOWN"},
+            "000003": {"moat": "UNKNOWN"},
+            "000004": {"moat": "UNKNOWN"},
+        },
+    }
+    research_decisions = {
+        "terminal_rows": [
+            {
+                "code": "000001",
+                "name": "普通候选",
+                "research_decision": "RESEARCH_GAP",
+                "quant_score": 90.0,
+                "screening_attractiveness": "HIGH",
+                "urgent_research": False,
+            },
+            {
+                "code": "000002",
+                "name": "紧急P2",
+                "research_decision": "RESEARCH_GAP",
+                "research_priority": "P2",
+                "quant_score": 60.0,
+                "screening_attractiveness": "HIGH",
+                "urgent_research": True,
+                "urgent_research_reasons": ["QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"],
+            },
+            {
+                "code": "000003",
+                "name": "紧急P1",
+                "research_decision": "RESEARCH_GAP",
+                "research_priority": "P1",
+                "quant_score": 55.0,
+                "screening_attractiveness": "NORMAL",
+                "urgent_research": True,
+            },
+            {
+                "code": "000004",
+                "name": "P1非紧急",
+                "research_decision": "RESEARCH_GAP",
+                "research_priority": "P1",
+                "quant_score": 99.0,
+                "screening_attractiveness": "HIGH",
+                "urgent_research": False,
+                "valuation": {
+                    "current_pe": 12.0,
+                    "historical_median_pe_reference": 24.0,
+                    "pe_to_history_ratio": 0.5,
+                },
+            },
+        ]
+    }
+
+    states = build_stock_shadow_states(
+        dashboard={},
+        deep_status=status,
+        research_decisions=research_decisions,
+        scope="unresolved",
+        max_entities=4,
+    )
+
+    assert [row["entity"]["code"] for row in states] == [
+        "000003",
+        "000002",
+        "000004",
+        "000001",
+    ]
+    assert states[0]["triage_context"]["urgent_research"] is True
+    assert states[0]["triage_context"]["research_priority"] == "P1"
+    assert states[2]["triage_context"]["valuation"]["pe_to_history_ratio"] == 0.5
+
+
+def test_live_row_carries_non_authoritative_triage_context():
+    research_decisions = {
+        "terminal_rows": [
+            {
+                "code": "600406",
+                "name": "国电南瑞",
+                "research_decision": "RESEARCH_GAP",
+                "research_priority": "P1",
+                "urgent_research": True,
+                "urgent_research_reasons": ["TEST_URGENT"],
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_score": 88.0,
+                "screening_attractiveness": "HIGH",
+            }
+        ]
+    }
+    states = build_stock_shadow_states(
+        dashboard=_dashboard(),
+        deep_status=_status(),
+        research_decisions=research_decisions,
+        max_entities=1,
+    )
+    payload = evaluate_stock_shadow(
+        states=states,
+        config=JevShadowConfig(enabled=True, shadow_mode=True),
+        provider=FakeProvider(),
+    )
+    row = payload["rows"][0]
+    assert row["triage_context"]["research_priority"] == "P1"
+    assert row["triage_context"]["urgent_research"] is True
+    assert row["triage_context"]["quant_score"] == 88.0
+    assert row["mutates_authoritative_decision"] is False
