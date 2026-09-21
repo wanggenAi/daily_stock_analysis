@@ -97,7 +97,7 @@ jobs:
   live-shadow:
     # Same-repository PRs get a bounded live smoke. Fork PRs never receive the secret
     # and are excluded explicitly rather than relying only on GitHub secret behavior.
-    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == github.repository)
     needs: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -123,7 +123,7 @@ jobs:
         run: |
           python tools/run_jev_shadow.py \
             --scope '${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'combined' }}' \
-            --max-entities '${{ github.event_name == 'workflow_dispatch' && inputs.max_entities || '4' }}' \
+            --max-entities '${{ github.event_name == 'workflow_dispatch' && inputs.max_entities || github.event_name == 'push' && '25' || '4' }}' \
             --output-dir .artifacts/jev-shadow \
             --require-success
       - name: Build Jev advisory routing bridge
@@ -153,7 +153,7 @@ jobs:
           retention-days: 30
 
   persist-routing-advisory:
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push'
     needs: live-shadow
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -172,19 +172,50 @@ jobs:
           name: genge-jev-shadow-${{ github.run_id }}-${{ github.run_attempt }}
           path: /tmp/jev-shadow
 
+      - name: Stamp exact Jev workflow lineage
+        shell: bash
+        env:
+          SOURCE_RUN_ID: ${{ github.run_id }}
+          SOURCE_RUN_ATTEMPT: ${{ github.run_attempt }}
+          SOURCE_HEAD_SHA: ${{ github.sha }}
+          SOURCE_EVENT: ${{ github.event_name }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          for name in ('jev_shadow.json', 'jev_routing.json'):
+              path = Path('/tmp/jev-shadow') / name
+              payload = json.loads(path.read_text(encoding='utf-8'))
+              payload['source_workflow_run_id'] = str(os.environ['SOURCE_RUN_ID'])
+              payload['source_workflow_run_attempt'] = str(os.environ['SOURCE_RUN_ATTEMPT'])
+              payload['source_workflow_head_sha'] = str(os.environ['SOURCE_HEAD_SHA'])
+              payload['source_workflow_event'] = str(os.environ['SOURCE_EVENT'])
+              path.write_text(
+                  json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + '\n',
+                  encoding='utf-8',
+              )
+          PY
+
       - name: Validate persisted advisory contract
         shell: bash
+        env:
+          SOURCE_RUN_ID: ${{ github.run_id }}
         run: |
           set -euo pipefail
           test -s /tmp/jev-shadow/jev_shadow.json
           test -s /tmp/jev-shadow/jev_routing.json
           test -s /tmp/jev-shadow/jev_routing.md
           python - <<'PY'
-          import json
+          import json, os
           from pathlib import Path
 
           shadow=json.loads(Path('/tmp/jev-shadow/jev_shadow.json').read_text(encoding='utf-8'))
           routing=json.loads(Path('/tmp/jev-shadow/jev_routing.json').read_text(encoding='utf-8'))
+
+          assert shadow['source_workflow_run_id'] == os.environ['SOURCE_RUN_ID']
+          assert routing['source_workflow_run_id'] == os.environ['SOURCE_RUN_ID']
 
           assert shadow['execution_status'] == 'SUCCESS'
           assert shadow['authority'] == 'SHADOW_ONLY'
