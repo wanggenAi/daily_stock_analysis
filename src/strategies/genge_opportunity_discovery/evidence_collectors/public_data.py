@@ -255,7 +255,9 @@ def _calendar_noise_match(text: str, match: re.Match[str]) -> bool:
         number = 0.0
     if 1900 <= number <= 2100 and re.match(r"\s*年", following):
         return True
-    if re.match(r"\d{1,4}\s*[-—－/.]\s*\d{1,2}(?:\s*[-—－/.]\s*\d{1,2})?", fragment):
+    if re.match(r"\d{1,4}\s*[-—－/]\s*\d{1,2}(?:\s*[-—－/]\s*\d{1,2})?", fragment):
+        return True
+    if re.match(r"\d{4}\s*\.\s*\d{1,2}(?:\s*\.\s*\d{1,2})?", fragment):
         return True
     if re.match(r"\d{1,2}\s*[-—－]\s*\d{1,2}\s*月", fragment):
         return True
