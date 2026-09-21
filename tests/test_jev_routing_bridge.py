@@ -26,6 +26,7 @@ def _shadow():
                 "entity_name": "国电南瑞",
                 "is_current_holding": True,
                 "existing_engine_action": "FORMAL:HOLD",
+                "triage_context": {"research_priority": "P1", "urgent_research": True},
                 "state_fingerprint": "abc",
                 "status": "SUCCESS",
                 "served_model": "jev-1.13.0",
@@ -128,6 +129,8 @@ def test_bridge_builds_sorted_advisory_queue_without_authority():
     assert payload["execution_status"] == "SUCCESS"
     assert [row["entity_id"] for row in payload["routing_queue"]] == ["600406", "000001"]
     assert payload["routing_queue"][0]["route"] == "EVIDENCE_REFRESH"
+    assert payload["routing_queue"][0]["triage_context"]["research_priority"] == "P1"
+    assert payload["routing_queue"][0]["triage_context"]["urgent_research"] is True
     assert payload["routing_queue"][0]["route_probabilities"]["EVIDENCE_REFRESH"] == 0.72
     assert payload["routing_queue"][0]["attention_probabilities"]["HIGH"] == 0.8
     assert payload["routing_queue"][0]["evidence_state_probabilities"]["INSUFFICIENT"] == 0.94
