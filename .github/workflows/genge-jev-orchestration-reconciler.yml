@@ -1,0 +1,303 @@
+name: GenGe Jev Orchestration Reconciler
+
+run-name: >-
+  GenGe Jev Orchestration Reconciler / ${{ github.event.workflow_run.id || github.run_id }}
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-jev-orchestration-reconciler.yml"
+      - "tests/test_jev_orchestration_reconciler_workflow.py"
+  workflow_run:
+    workflows:
+      - "GenGe V3.1 Deep Calculation Lambda"
+      - "GenGe V3.1 Terminal Research Decision"
+      - "GenGe Investor Terminal Research Overlay"
+      - "GenGe Three-Pillar Decision Center"
+    types: [completed]
+  pull_request:
+    paths:
+      - ".github/workflows/genge-jev-orchestration-reconciler.yml"
+      - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
+      - "tests/test_jev_orchestration_reconciler_workflow.py"
+      - "tests/test_genge_v31_deep_calculation_workflow_contract.py"
+
+permissions:
+  contents: write
+  actions: write
+
+concurrency:
+  group: genge-jev-orchestration-reconciler
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  contracts:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Validate Jev lineage reconciliation contract
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+          python -m pytest -q \
+            tests/test_jev_orchestration_reconciler_workflow.py \
+            tests/test_genge_v31_deep_calculation_workflow_contract.py
+
+  reconcile:
+    if: >-
+      github.event_name != 'pull_request' &&
+      (
+        github.event_name != 'workflow_run' ||
+        (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+      )
+    needs: contracts
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Inspect exact Jev Deep lineage and prepare recovery artifact
+        id: inspect
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          echo "active=false" >> "$GITHUB_OUTPUT"
+          echo "recover=false" >> "$GITHUB_OUTPUT"
+
+          marker="data/jev_shadow/orchestration/latest.json"
+          [ -s "$marker" ] || { echo "No Jev orchestration marker; healthy no-op."; exit 0; }
+
+          source_run_id="$(jq -r '.source_workflow_run_id // ""' "$marker")"
+          deep_run_id="$(jq -r '.deep_run_id // ""' "$marker")"
+          [[ "$source_run_id" =~ ^[0-9]+$ ]] || { echo "Invalid Jev source run id."; exit 0; }
+          [[ "$deep_run_id" =~ ^[0-9]+$ ]] || { echo "No accepted Jev Deep run yet."; exit 0; }
+
+          test "$(jq -r '.jev_direct_dispatch_allowed' "$marker")" = "false"
+          test "$(jq -r '.formal_trading_authority' "$marker")" = "false"
+          test "$(jq -r '.automatic_formal_buy_allowed' "$marker")" = "false"
+          test "$(jq -r '.unknown_is_pass' "$marker")" = "false"
+          test "$(jq -r '.no_auto_trade' "$marker")" = "true"
+
+          deep_json="$(gh api -X GET "repos/$GITHUB_REPOSITORY/actions/runs/$deep_run_id")"
+          test "$(printf '%s' "$deep_json" | jq -r '.path // ""')" = ".github/workflows/genge-v31-deep-calculation-lambda.yml"
+          deep_status="$(printf '%s' "$deep_json" | jq -r '.status // ""')"
+          deep_conclusion="$(printf '%s' "$deep_json" | jq -r '.conclusion // ""')"
+          if [ "$deep_status" != "completed" ]; then
+            echo "Exact Jev Deep $deep_run_id is not completed yet."
+            exit 0
+          fi
+          [ "$deep_conclusion" = "success" ] || {
+            echo "Exact Jev Deep $deep_run_id concluded $deep_conclusion; fail closed."
+            exit 0
+          }
+
+          current_run_id="0"
+          if [ -s data/deep_calculation/latest_status.json ]; then
+            candidate="$(jq -r '.lambda_run_id // "0"' data/deep_calculation/latest_status.json 2>/dev/null || echo "0")"
+            [[ "$candidate" =~ ^[0-9]+$ ]] && current_run_id="$candidate"
+          fi
+
+          if [ "$current_run_id" -gt "$deep_run_id" ]; then
+            echo "A newer Deep $current_run_id legitimately supersedes Jev Deep $deep_run_id; not rolling latest backward."
+            exit 0
+          fi
+
+          recover=false
+          if [ "$current_run_id" -lt "$deep_run_id" ]; then
+            recover=true
+            recovery_dir="$RUNNER_TEMP/jev-deep-recovery"
+            rm -rf "$recovery_dir"
+            mkdir -p "$recovery_dir"
+            gh run download "$deep_run_id" \
+              --repo "$GITHUB_REPOSITORY" \
+              --name "genge-v31-deep-calculation-$deep_run_id" \
+              --dir "$recovery_dir"
+
+            for file in deep_calculation_status.json deep_review_profiles.json deep_calculation.md gap_closure_evidence.json initial_checkpoint_status.json; do
+              test -s "$recovery_dir/$file"
+            done
+
+            test "$(jq -r '.lambda_run_id // ""' "$recovery_dir/deep_calculation_status.json")" = "$deep_run_id"
+            test "$(jq -r '.trigger_source // ""' "$recovery_dir/deep_calculation_status.json")" = "JEV_ORCHESTRATOR_$source_run_id"
+            test "$(jq -r '.execution_status' "$recovery_dir/deep_calculation_status.json")" = "SUCCESS"
+            test "$(jq -r '.unknown_is_pass' "$recovery_dir/deep_calculation_status.json")" = "false"
+            test "$(jq -r '.automatic_formal_buy_allowed' "$recovery_dir/deep_calculation_status.json")" = "false"
+            test "$(jq -r '.formal_trading_authority' "$recovery_dir/deep_calculation_status.json")" = "false"
+            test "$(jq -r '.no_auto_trade' "$recovery_dir/deep_calculation_status.json")" = "true"
+
+            expected_codes="$(jq -r '.requested_codes_csv // (.requested_codes // [] | join(","))' "$marker")"
+            artifact_codes="$(jq -r '.requested_codes // ""' "$recovery_dir/initial_checkpoint_status.json")"
+            [ "$artifact_codes" = "$expected_codes" ] || {
+              echo "Exact Jev artifact workset mismatch: marker=$expected_codes artifact=$artifact_codes" >&2
+              exit 1
+            }
+          fi
+
+          echo "active=true" >> "$GITHUB_OUTPUT"
+          echo "recover=$recover" >> "$GITHUB_OUTPUT"
+          echo "source_run_id=$source_run_id" >> "$GITHUB_OUTPUT"
+          echo "deep_run_id=$deep_run_id" >> "$GITHUB_OUTPUT"
+
+      - name: Restore exact Deep ownership when needed and advance orchestration cursor
+        id: persist
+        if: steps.inspect.outputs.active == 'true'
+        shell: bash
+        env:
+          SOURCE_RUN_ID: ${{ steps.inspect.outputs.source_run_id }}
+          DEEP_RUN_ID: ${{ steps.inspect.outputs.deep_run_id }}
+          RECOVER: ${{ steps.inspect.outputs.recover }}
+        run: |
+          set -euo pipefail
+          git config user.name "genge-jev-reconciler-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+
+            marker="data/jev_shadow/orchestration/latest.json"
+            [ -s "$marker" ] || exit 0
+            [ "$(jq -r '.source_workflow_run_id // ""' "$marker")" = "$SOURCE_RUN_ID" ] || {
+              echo "A newer Jev source replaced $SOURCE_RUN_ID; reconciliation is superseded."
+              exit 0
+            }
+            [ "$(jq -r '.deep_run_id // ""' "$marker")" = "$DEEP_RUN_ID" ] || {
+              echo "Jev Deep lineage changed; reconciliation is superseded."
+              exit 0
+            }
+
+            current_run_id="0"
+            if [ -s data/deep_calculation/latest_status.json ]; then
+              candidate="$(jq -r '.lambda_run_id // "0"' data/deep_calculation/latest_status.json 2>/dev/null || echo "0")"
+              [[ "$candidate" =~ ^[0-9]+$ ]] && current_run_id="$candidate"
+            fi
+            if [ "$current_run_id" -gt "$DEEP_RUN_ID" ]; then
+              echo "A newer Deep $current_run_id superseded Jev Deep $DEEP_RUN_ID during reconciliation."
+              echo "owns_latest=false" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+
+            if [ "$RECOVER" = "true" ] && [ "$current_run_id" -lt "$DEEP_RUN_ID" ]; then
+              recovery_dir="$RUNNER_TEMP/jev-deep-recovery"
+              cp "$recovery_dir/deep_calculation_status.json" data/deep_calculation/latest_status.json
+              cp "$recovery_dir/deep_review_profiles.json" data/deep_calculation/latest_profiles.json
+              cp "$recovery_dir/deep_calculation.md" data/deep_calculation/latest.md
+              cp "$recovery_dir/gap_closure_evidence.json" data/deep_calculation/latest_evidence.json
+            fi
+
+            actual="$(jq -r '.lambda_run_id // ""' data/deep_calculation/latest_status.json)"
+            [ "$actual" = "$DEEP_RUN_ID" ] || {
+              echo "Exact Jev Deep does not own latest after recovery; fail closed." >&2
+              exit 1
+            }
+
+            stage="DEEP_COMPLETE"
+            next_expected="TERMINAL_COMPLETE"
+            if [ -s data/deep_calculation/latest_research_decisions.json ] &&
+               [ "$(jq -r '.source_deep_lambda_run_id // ""' data/deep_calculation/latest_research_decisions.json)" = "$DEEP_RUN_ID" ]; then
+              stage="TERMINAL_COMPLETE"
+              next_expected="INVESTOR_OVERLAY_COMPLETE"
+            fi
+            if [ -s data/investor_decision_dashboard/latest.json ] &&
+               [ "$(jq -r '.terminal_research_snapshot.source_deep_lambda_run_id // ""' data/investor_decision_dashboard/latest.json)" = "$DEEP_RUN_ID" ]; then
+              stage="INVESTOR_OVERLAY_COMPLETE"
+              next_expected="DECISION_CENTER_REFRESHED"
+            fi
+            if [ -s data/decision_center/latest.json ] &&
+               [ "$(jq -r '.deep_calculation_runtime.lambda_run_id // ""' data/decision_center/latest.json)" = "$DEEP_RUN_ID" ] &&
+               [ "$(jq -r '.pillar_3_deep_opportunities.terminal_research_snapshot.source_deep_lambda_run_id // ""' data/decision_center/latest.json)" = "$DEEP_RUN_ID" ] &&
+               [ "$(jq -r '.pillar_3_deep_opportunities.terminal_research_snapshot.current_for_deep_runtime // false' data/decision_center/latest.json)" = "true" ]; then
+              stage="DECISION_CENTER_REFRESHED"
+              next_expected="COMPLETE"
+            fi
+
+            SOURCE_RUN_ID="$SOURCE_RUN_ID" DEEP_RUN_ID="$DEEP_RUN_ID" STAGE="$stage" NEXT_EXPECTED="$next_expected" python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          path=Path("data/jev_shadow/orchestration/latest.json")
+          payload=json.loads(path.read_text(encoding="utf-8"))
+          assert str(payload.get("source_workflow_run_id") or "") == os.environ["SOURCE_RUN_ID"]
+          assert str(payload.get("deep_run_id") or "") == os.environ["DEEP_RUN_ID"]
+          payload["lifecycle_state"]=os.environ["STAGE"]
+          payload["next_expected_stage"]=os.environ["NEXT_EXPECTED"]
+          payload["deep_execution_status"]="SUCCESS"
+          payload["production_verification_complete"]=os.environ["STAGE"] == "DECISION_CENTER_REFRESHED"
+          payload["pending_operation"]=None
+          payload["updated_at"]=datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+          path.write_text(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+          PY
+
+            git add -f \
+              data/deep_calculation/latest_status.json \
+              data/deep_calculation/latest_profiles.json \
+              data/deep_calculation/latest.md \
+              data/deep_calculation/latest_evidence.json \
+              data/jev_shadow/orchestration/latest.json
+
+            if git diff --cached --quiet; then
+              echo "owns_latest=true" >> "$GITHUB_OUTPUT"
+              echo "stage=$stage" >> "$GITHUB_OUTPUT"
+              if [ "$RECOVER" = "true" ] && [ "$stage" = "DEEP_COMPLETE" ]; then
+                echo "recovery_dispatch=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "recovery_dispatch=false" >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+
+            git commit -m "Reconcile Jev Deep lineage $DEEP_RUN_ID [skip ci]"
+            if git push origin HEAD:main; then
+              echo "owns_latest=true" >> "$GITHUB_OUTPUT"
+              echo "stage=$stage" >> "$GITHUB_OUTPUT"
+              if [ "$RECOVER" = "true" ] && [ "$stage" = "DEEP_COMPLETE" ]; then
+                echo "recovery_dispatch=true" >> "$GITHUB_OUTPUT"
+              else
+                echo "recovery_dispatch=false" >> "$GITHUB_OUTPUT"
+              fi
+              exit 0
+            fi
+          done
+
+          echo "Jev lineage persistence failed after optimistic replay." >&2
+          exit 1
+
+      - name: Recover exact downstream convergence without rerunning Deep
+        if: steps.persist.outputs.owns_latest == 'true' && steps.persist.outputs.recovery_dispatch == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-v31-deep-provenance-audit.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run genge-v31-terminal-research-decision.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+      - name: Publish reconciliation summary
+        if: always()
+        run: |
+          echo "# GenGe Jev Orchestration Reconciler" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact Jev source: ${{ steps.inspect.outputs.source_run_id || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- exact Deep run: ${{ steps.inspect.outputs.deep_run_id || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- artifact recovery used: ${{ steps.inspect.outputs.recover || 'false' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- cursor stage: ${{ steps.persist.outputs.stage || 'unchanged' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Jev direct dispatch=false; Formal trading authority=false; UNKNOWN != PASS; no_auto_trade=true" >> "$GITHUB_STEP_SUMMARY"
