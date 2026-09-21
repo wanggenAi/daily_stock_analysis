@@ -396,6 +396,42 @@ def test_newest_complete_risk_ledger_blocks_resurrection_from_older_runs(tmp_pat
     assert rows == []
 
 
+def test_missing_newest_risk_ledger_evidence_falls_back_to_prior_verified_history(tmp_path):
+    history = tmp_path / "history"
+    history.mkdir()
+    old = _material_event("DEBT_DEFAULT")
+    (history / "100.json").write_text(
+        json.dumps({"material_event_failed_gate_count": 2}),
+        encoding="utf-8",
+    )
+    (history / "100.evidence.json").write_text(
+        json.dumps({
+            "formal_trading_authority": False,
+            "automatic_formal_buy_allowed": False,
+            "unknown_is_pass": False,
+            "no_auto_trade": True,
+            "company_evidence": [old],
+        }, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    (history / "200.json").write_text(
+        json.dumps({
+            "material_event_risk_ledger_complete": True,
+            "material_event_risk_ledger_count": 0,
+        }),
+        encoding="utf-8",
+    )
+
+    rows = _load_historical_verified_material_events(
+        history,
+        ["001316"],
+        as_of=date(2026, 9, 21),
+    )
+
+    assert len(rows) == 1
+    assert rows[0]["event_type"] == "DEBT_DEFAULT"
+
+
 def test_all_resolved_profiles_finish_complete():
     payload = _profiles()
     gates = payload["profiles"]["001316"]["gates"]
