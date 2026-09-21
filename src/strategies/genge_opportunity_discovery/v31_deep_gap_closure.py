@@ -597,6 +597,7 @@ def close_profiles(
         "research_outcome": terminal_state,
         "generated_at": now,
         "requested_count": len(requested),
+        "requested_codes": list(requested),
         "profile_count": len(profiles),
         "requested_profile_count": requested_profile_count,
         "processed_requested_count": requested_profile_count,
