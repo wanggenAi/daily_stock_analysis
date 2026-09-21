@@ -4,14 +4,14 @@
 
 ## 1. 我的持仓：深算后到底怎么办
 
-- 持仓：**4**；已有显式深算：**0**；深算完整：**0**；仍有 gap：**4**。
+- 持仓：**4**；已有显式深算：**4**；深算完整：**0**；仍有 gap：**4**。
 
 | 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |
 |---|---:|---:|---:|---|---|---|---|---|
-| 国电南瑞 600406 | 22.05 | 17.46 | -4.65 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=177 | STALE_PROFILE_LAST_TERMINAL |
-| 润贝航科 001316 | 28.11 | 49.37 | 9.19 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=179 | STALE_PROFILE_LAST_TERMINAL |
-| 中国平安 601318 | 53.37 | 83.07 | -4.64 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=104 | STALE_PROFILE_LAST_TERMINAL |
-| 洛阳钼业 603993 | 17.51 | 28.13 | -5.98 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=146 | STALE_PROFILE_LAST_TERMINAL |
+| 国电南瑞 600406 | 22.05 | 17.46 | -4.65 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=177 | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 28.11 | 49.37 | 9.19 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=179 | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | 53.37 | 83.07 | -4.64 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=104 | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | 17.51 | 28.13 | -5.98 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=146 | DEEP_REVIEW_PARTIAL |
 
 ### 每只持仓的决策链
 
@@ -95,7 +95,7 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=118 / events=7749 / focus=4 |
-| Deep 五类硬门槛 + 官方证据 | **PARTIAL** | requested=852 / verified-pass=0 / unresolved=0 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=16 / verified-pass=0 / unresolved=69 |
 | Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
@@ -113,28 +113,28 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 
 ## 自动深算运行状态
 
-- 当前运行状态来源：**PARTIAL_CHECKPOINT**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35609598979`；与当前运行一致：**False**
-- ⚠️ 最新自动 profiles 属于上一轮 Deep runtime；顶部持仓/机会的深算完整度已按当前 runtime 视为未完成，旧 profile 状态仅保留为 last_profile_status 供审计。
-- Lambda run：`35602894521`
-- 触发来源：`Era Capital Trend Radar Live`
-- 计算执行：**PARTIAL**
-- 运行状态：**PARTIAL_CHECKPOINT**
-- 研究过程终态：**NOT_COMPLETED**
-- 请求深算：**852**；已处理：**852**；完整：**未携带**；证据穷尽：**未携带**。
-- Workset profile：总数 **853**；请求代码已落 profile **852**；handoff 未完成 **未携带**；覆盖可审计：**True**；完整覆盖：**True**。
-- 同轮补证据尝试：**0**；取得证据：**0**；推进硬门槛：**0**。
-- 尚未解决硬门槛：**未携带**。
-- 未决原因摘要：当前 checkpoint 未携带逐股未决明细
+- 当前运行状态来源：**TERMINAL_STATUS**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35616396593`；与当前运行一致：**True**
+- 深算 profile lineage 与当前 runtime 一致。
+- Lambda run：`35616396593`
+- 触发来源：`EVIDENCE_LAYER_CHANGE`
+- 计算执行：**SUCCESS**
+- 运行状态：**COMPLETED**
+- 研究过程终态：**EVIDENCE_EXHAUSTED**
+- 请求深算：**16**；已处理：**16**；完整：**0**；证据穷尽：**16**。
+- Workset profile：总数 **853**；请求代码已落 profile **16**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
+- 同轮补证据尝试：**2**；取得证据：**38**；推进硬门槛：**1**。
+- 尚未解决硬门槛：**69**。
+- 未决原因摘要：涉及 16 只；门槛分布：long_term_demand×15、moat×15、predictability×15、earnings_authenticity×12、financial_safety×12；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×15、NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE×15、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×13、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×12、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×12；样例：000576[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；001316[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]；002375[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；002537[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；003039[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`35609598979`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
-- 是否需要你手工开启下一轮：**True**。
+- 上一次完整终态 run：`35616396593`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`35609598979`；当前 Lambda：`35602894521`。
+- 终态来源 Lambda：`35609598979`；当前 Lambda：`35616396593`。
 - 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
