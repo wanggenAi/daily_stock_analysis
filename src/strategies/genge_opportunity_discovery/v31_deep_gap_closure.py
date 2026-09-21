@@ -133,7 +133,7 @@ def _material_event_evidence(row: Mapping[str, Any]) -> dict[str, Any]:
 def infer_material_event_gate_failures(
     code: str, company_evidence: Iterable[Mapping[str, Any]]
 ) -> dict[str, tuple[str, list[dict[str, Any]]]]:
-    """Return strict FAIL decisions created by current verified material risks."""
+    """Return strict FAIL decisions created by verified material risks."""
     grouped: dict[str, list[dict[str, Any]]] = {}
     event_types: dict[str, set[str]] = {}
     for raw in company_evidence:
@@ -303,6 +303,43 @@ def _dedupe(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def _load_historical_verified_material_events(
+    history_root: Path,
+    requested_codes: Iterable[str],
+) -> list[dict[str, Any]]:
+    """Recover only previously VERIFIED/ACTIVE/HIGH official material risks.
+
+    Deep evidence history is immutable repository state. A transient source
+    failure in a later run must not erase an already verified negative gate.
+    Historical PASS evidence, ordinary evidence and non-active material events
+    are deliberately excluded.
+    """
+    requested = set(_requested_codes(requested_codes))
+    if not requested or not history_root.is_dir():
+        return []
+
+    recovered: list[dict[str, Any]] = []
+    for path in sorted(history_root.glob("*.evidence.json")):
+        payload = _read_json(path)
+        if (
+            payload.get("formal_trading_authority") is not False
+            or payload.get("automatic_formal_buy_allowed") is not False
+            or payload.get("unknown_is_pass") is not False
+            or payload.get("no_auto_trade") is not True
+        ):
+            continue
+        rows = payload.get("company_evidence")
+        if not isinstance(rows, list):
+            continue
+        for raw in rows:
+            if not isinstance(raw, Mapping):
+                continue
+            code = _code(raw.get("code"))
+            if code in requested and _verified_active_high_material_event(raw, code):
+                recovered.append(dict(raw))
+    return _dedupe(recovered)
+
+
 def close_profiles(
     profiles_payload: Mapping[str, Any],
     candidate_rows: list[Mapping[str, Any]],
@@ -312,6 +349,7 @@ def close_profiles(
     company_evidence: list[Mapping[str, Any]],
     evidence_audit: list[Mapping[str, Any]],
     evidence_summary: Mapping[str, Any],
+    historical_material_event_evidence: list[Mapping[str, Any]] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     out = json.loads(json.dumps(profiles_payload, ensure_ascii=False))
     profiles = out.get("profiles") if isinstance(out.get("profiles"), dict) else {}
@@ -319,12 +357,15 @@ def close_profiles(
     requested = _requested_codes(requested_codes)
     progressed = 0
     material_event_failed_gates = 0
+    historical_material_event_failed_gates = 0
     material_event_pass_overrides = 0
     predictability_resolved_gates = 0
     unresolved: dict[str, dict[str, str]] = {}
     complete_codes: list[str] = []
     exhausted_codes: list[str] = []
     missing_profile_codes: list[str] = []
+    historical_material_events = list(historical_material_event_evidence or [])
+    material_event_evidence = _dedupe([*historical_material_events, *company_evidence])
 
     for code in requested:
         profile = profiles.get(code)
@@ -336,7 +377,9 @@ def close_profiles(
         row = rows_by_code.get(code, {})
         industry = str(profile.get("industry") or row.get("normalized_industry") or row.get("industry") or "")
 
-        risk_failures = infer_material_event_gate_failures(code, company_evidence)
+        current_risk_failures = infer_material_event_gate_failures(code, company_evidence)
+        historical_risk_failures = infer_material_event_gate_failures(code, historical_material_events)
+        risk_failures = infer_material_event_gate_failures(code, material_event_evidence)
         for gate, (rationale, evidence) in risk_failures.items():
             raw = gates.get(gate) if isinstance(gates.get(gate), dict) else None
             if raw is None or _status(raw) == "FAIL":
@@ -352,6 +395,11 @@ def close_profiles(
                 }
             )
             raw.pop("terminal_unresolved_reason", None)
+            if gate in historical_risk_failures and gate not in current_risk_failures:
+                raw["evidence_persistence"] = "HISTORICAL_VERIFIED_ACTIVE_HIGH"
+                historical_material_event_failed_gates += 1
+            else:
+                raw.pop("evidence_persistence", None)
             progressed += 1
             material_event_failed_gates += 1
             if previous == "PASS":
@@ -450,6 +498,8 @@ def close_profiles(
         "progressed_gate_count": progressed,
         "predictability_resolved_gate_count": predictability_resolved_gates,
         "material_event_failed_gate_count": material_event_failed_gates,
+        "historical_material_event_evidence_count": len(historical_material_events),
+        "historical_material_event_failed_gate_count": historical_material_event_failed_gates,
         "material_event_pass_override_count": material_event_pass_overrides,
         "unresolved_requested_gate_count": sum(
             1
@@ -484,6 +534,8 @@ def close_profiles(
             "progressed_gate_count": progressed,
             "predictability_resolved_gate_count": predictability_resolved_gates,
             "material_event_failed_gate_count": material_event_failed_gates,
+            "historical_material_event_evidence_count": len(historical_material_events),
+            "historical_material_event_failed_gate_count": historical_material_event_failed_gates,
             "material_event_pass_override_count": material_event_pass_overrides,
             "immediate_retry_required": False,
             "formal_trading_authority": False,
@@ -567,6 +619,10 @@ def run(
     profiles = _read_json(profiles_json)
     rows = _read_csv(candidate_csv)
     requested = _requested_codes(requested_codes)
+    historical_material_event_evidence = _load_historical_verified_material_events(
+        Path("data/deep_calculation/history"),
+        requested,
+    )
     selected: list[dict[str, Any]] = []
     for row in rows:
         code = _code(row.get("code"))
@@ -601,6 +657,9 @@ def run(
     )
     evidence_summary["unique_company_evidence_count"] = len(company_evidence)
     evidence_summary["unique_evidence_count"] = len(industry_evidence) + len(company_evidence)
+    evidence_summary["historical_verified_material_event_count"] = len(
+        historical_material_event_evidence
+    )
 
     closed_profiles, status = close_profiles(
         profiles,
@@ -610,6 +669,7 @@ def run(
         company_evidence=company_evidence,
         evidence_audit=audit_rows,
         evidence_summary=evidence_summary,
+        historical_material_event_evidence=historical_material_event_evidence,
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "deep_review_profiles.json").write_text(
@@ -644,6 +704,8 @@ def run(
         f"- progressed gates: **{status['progressed_gate_count']}**\n"
         f"- predictability resolved gates: **{status['predictability_resolved_gate_count']}**\n"
         f"- material-event failed gates: **{status['material_event_failed_gate_count']}**\n"
+        f"- historical material-event evidence rows: **{status['historical_material_event_evidence_count']}**\n"
+        f"- historical material-event failed gates: **{status['historical_material_event_failed_gate_count']}**\n"
         f"- material-event PASS overrides: **{status['material_event_pass_override_count']}**\n"
         f"- unresolved gates: **{status['unresolved_requested_gate_count']}**\n"
         "- immediate retry required: **False**\n- UNKNOWN != PASS; no automatic Formal BUY; no auto trade.\n",
