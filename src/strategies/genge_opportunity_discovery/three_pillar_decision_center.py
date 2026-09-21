@@ -434,13 +434,21 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
         "",
         f"- 持仓：**{h['holding_count']}**；已有显式深算：**{h['explicit_deep_review_count']}**；深算完整：**{h['complete_deep_review_count']}**；仍有 gap：**{h['deep_review_gap_count']}**。",
         "",
-        "| 股票 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 深算状态 |",
-        "|---|---:|---|---|---|---|",
+        "| 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |",
+        "|---|---:|---:|---:|---|---|---|---|---|",
     ]
     for x in h["rows"]:
+        lifecycle = x.get("candidate_lifecycle") if isinstance(x.get("candidate_lifecycle"), Mapping) else {}
+        lifecycle_text = (
+            f"{lifecycle.get('lifecycle_state','—')}/seen={lifecycle.get('seen_count',0)}"
+            if lifecycle
+            else "—"
+        )
         lines.append(
-            f"| {x['name']} {x['code']} | {_fmt(x.get('pnl_pct'))} | {x.get('formal_action') or '—'} | "
-            f"**{x.get('investor_action') or '—'}** | {x.get('valuation_confidence') or '—'} | {x['deep_review']['status']} |"
+            f"| {x['name']} {x['code']} | {_fmt(x.get('current_price'))} | {_fmt(x.get('neutral_value'))} | "
+            f"{_fmt(x.get('pnl_pct'))} | {x.get('formal_action') or '—'} | "
+            f"**{x.get('investor_action') or '—'}** | {x.get('valuation_confidence') or '—'} | "
+            f"{lifecycle_text} | {x['deep_review']['status']} |"
         )
     lines += ["", "## 2. 世界/社会/市场：钱可能在哪里", ""]
     market = m.get("a_share_market_snapshot") or {}
@@ -494,7 +502,7 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
     if o["buy_now"]:
         lines.append("### BUY NOW")
         for x in o["buy_now"]:
-            lines.append(f"- **{x['name']} {x['code']}**：现价 {_fmt(x.get('current_price'))}；估值信心 {x.get('valuation_confidence') or '—'}；深算 {x['deep_review']['status']}。")
+            lines.append(f"- **{x['name']} {x['code']}**：现价 {_fmt(x.get('current_price'))}；价值中枢 {_fmt(x.get('neutral_value'))}；估值信心 {x.get('valuation_confidence') or '—'}；深算 {x['deep_review']['status']}。")
     else:
         lines.append("- **本轮没有已授权新股 BUY。**")
     if o["wait_price"]:
