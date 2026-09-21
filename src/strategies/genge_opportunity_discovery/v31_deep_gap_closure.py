@@ -577,16 +577,21 @@ def run(
         copy["stock_name"] = copy.get("stock_name") or copy.get("name") or ""
         selected.append(copy)
 
-    industry_evidence, company_evidence, audit_rows, evidence_summary = _collect_with_bounded_retry(
-        selected=selected,
-        as_of=as_of,
-        cache_dir=cache_dir,
-    )
-
+    # Production evidence shows the long automatic company/event collection can
+    # consume the healthiest official-source network window before strict
+    # multi-year annual-report retrieval begins. Front-load predictability while
+    # preserving the exact collector, evidence gates, retry rules and authority.
+    # Transport success still cannot create PASS without verified report bodies.
     predictability_selected = _predictability_unknown_rows(profiles, selected)
     predictability_evidence = collect_multi_year_predictability_evidence(
         priority_rows=predictability_selected,
         as_of=as_of,
+    )
+
+    industry_evidence, company_evidence, audit_rows, evidence_summary = _collect_with_bounded_retry(
+        selected=selected,
+        as_of=as_of,
+        cache_dir=cache_dir,
     )
     company_evidence = _dedupe([*company_evidence, *predictability_evidence])
     evidence_summary["multi_year_predictability_requested_count"] = len(predictability_selected)
