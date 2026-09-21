@@ -1,35 +1,39 @@
 {
   "schema_version": 2,
-  "generation": 18,
+  "generation": 19,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
+  "status": "WAITING_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR224_CI_POST223_END_TO_END_VERIFIED",
-  "last_observed_main_sha": "1470ab2b4401c84d402fdee515252fb22a14dc8e",
-  "work_branch": "fix/deep-default-workset-coalescing-20260920",
-  "work_head_sha": "cd6b70914cffbd88f518f8f2b139e73ee4fba334",
-  "active_pr": 224,
+  "stage": "POST229_MERGED_PRODUCTION_VALIDATION",
+  "last_observed_main_sha": "7744b46b8e8b188f3bc209bad6a9efe6bf59440f",
+  "work_branch": "fix/frontload-predictability-20260921",
+  "work_head_sha": "3493029639c2ec64a20eca4231c574d222ce18c4",
+  "active_pr": 229,
   "ci": {
-    "run_id": 35511472781,
-    "head_sha": "cd6b70914cffbd88f518f8f2b139e73ee4fba334",
-    "status": "RUNNING",
-    "conclusion": null,
-    "note": "PR #224 ai-governance/change detection/docker green; backend-gate full offline suite still running; web-gate skipped."
+    "status": "SUCCESS",
+    "conclusion": "success",
+    "head_sha": "3493029639c2ec64a20eca4231c574d222ce18c4",
+    "note": "PR #229 merged only after required CI/review checks were green."
   },
   "production_or_artifact": {
-    "status": "POST223_END_TO_END_VERIFIED_PR224_DUPLICATE_COALESCING_PENDING",
-    "evidence": [
-      "Authoritative Deep 35509192911 completed SUCCESS at 12:49:22Z; all closure/persistence/dispatch steps succeeded.",
-      "latest_status and history/35509192911.json both point to lambda 35509192911, source Every-Industry 35443656183, code epoch d06b040a6373054aa50b5ccda835a1a354f113a5, requested/processed=852, profiles=853, unresolved=4021.",
-      "Deep safety remained intact: verified_pass_gate_count=215, unverified_pass_gate_count=0, unknown_is_pass=false, automatic_formal_buy_allowed=false, formal_trading_authority=false, no_auto_trade=true.",
-      "Provenance audit for 35509192911 succeeded; all_pass_gates_have_verified_evidence=true and unknown_gate_count=4021.",
-      "Terminal Research converged exactly from source_deep_lambda_run_id=35509192911: BUY=0, WAIT_PRICE=0, RESEARCH_GAP=833, REJECT=19, requested=852, all_requested_terminal=true, research-only authority.",
-      "Investor terminal_research_snapshot now points to 35509192911 with 833/19 counts. Formal terminal remains unavailable by design; terminal_research_available=true and terminal_research_formal_mutation_allowed=false.",
-      "Run 35508293335 measured transient query fix: ANNUAL_REPORT_QUERY_FAILED unresolved count 377->0 without any predictability PASS; 845 still insufficient complete fiscal years.",
-      "Evidence for predictability is mostly acquisition/extraction constrained: 470 SSE rows had no report URLs with primary insufficient + CNINFO 403; among SZSE rows only 24/382 had successfully retained source URLs and most complete-year coverage remained zero.",
-      "Current duplicate periodic Deep 35510170838 uses the exact same Every-Industry source 35443656183 and same 852/852 workset as 35509192911, proving it is duplicate work rather than fresher research input.",
-      "PR #224 removes runtime SHA from default Deep concurrency grouping while retaining explicit research_run_id/requested_codes isolation and #223 non-preemption semantics."
-    ]
+    "status": "RUNNING",
+    "run_id": 35551673513,
+    "code_baseline_sha": "c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9",
+    "current_step": "Close unresolved gates with optimized quality-preserving official evidence",
+    "completed_through_step": 12,
+    "initial_artifact": "genge-v31-deep-initial-35551673513",
+    "terminal_artifact_available": false,
+    "locked_baseline": {
+      "prior_run_id": 35549602593,
+      "exact_query_failure_count": 377,
+      "exact_query_failure_prefix_0": 269,
+      "exact_query_failure_prefix_3": 108,
+      "insufficient_consecutive_complete_fiscal_years": 470,
+      "predictability_verified_count": 0,
+      "predictability_resolved_gate_count": 0,
+      "pre_225_query_failure_baseline": 375
+    },
+    "note": "Current main latest_status.json is still from an older terminal run and must not be attributed to 35551673513 until lineage updates."
   },
   "pending_operation": null,
   "health": {
@@ -37,20 +41,21 @@
     "last_error": null
   },
   "completed": [
-    "Merged #222; bounded transient metadata retry eliminated transport-query unresolved reasons without weakening gates.",
-    "Merged #223; production-proved successful periodic workflow_run cannot cancel active official-evidence closure.",
-    "Production-proved stale code epochs preserve immutable history without overwriting latest pointers.",
-    "Completed and end-to-end verified authoritative Deep 35509192911 through Provenance, Terminal Research and Investor research overlay.",
-    "Created PR #224 to coalesce logically identical default-workset Deep runs across runtime/persisted-data SHAs.",
-    "Quantified next predictability bottleneck as report acquisition/body extraction observability rather than threshold strictness."
+    "PR #225 was production-tested and its intended CNINFO header-only recovery was disproved.",
+    "Root-cause evidence narrowed to late-stage official-source transport degradation during long Deep runs.",
+    "PR #229 front-loads unchanged strict multi-year predictability collection before high-volume general evidence collection.",
+    "PR #229 passed required CI/review and merged as c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9.",
+    "Main optimized runtime path was re-read after merge and confirmed not to bypass predictability-first ordering.",
+    "Fresh Deep 35551673513 started from the merge baseline; contracts and steps 1-12 succeeded and the initial artifact was uploaded."
   ],
-  "next_action": "Consume PR #224 backend-gate. Merge #224 only when all blocking checks are green, preferably while duplicate Deep 35510170838 is still running so the workflow-file epoch fence prevents it from overwriting latest. Then production-verify default-workset periodic triggers queue/coalesce instead of running a second closure. After that, fix predictability acquisition observability/source coverage before changing any gate logic.",
+  "next_action": "Resume from live Deep run 35551673513. When terminal, inspect the fresh artifact/persisted lineage, recount predictability reasons versus 377/375 baselines, verify any resolved gates have official source URLs and metrics_by_year, then verify Deep -> Provenance -> Terminal -> Investor convergence. If step 13 fails or Shenzhen/ChiNext failures remain systemic, repair only the demonstrated transport/session/pacing/runner-network cause without weakening evidence gates.",
   "do_not_repeat": [
-    "Do not reopen solved Candidate Lifecycle continuity defects.",
-    "Do not treat history-only stale epochs as latest.",
-    "Do not claim predictability passed: verified_count remains 0.",
-    "Do not conflate formal Terminal availability with terminal research snapshot availability.",
-    "Do not modify PR #224 head unless CI reveals a real defect.",
-    "Do not loosen hard gates, valuation formulas, BUY/WAIT_PRICE/REJECT thresholds, Formal authority, UNKNOWN != PASS, or no_auto_trade."
+    "Do not reopen Candidate Lifecycle continuity.",
+    "Do not treat #225 as a successful transport fix.",
+    "Do not recreate or reopen #229; it is merged.",
+    "Do not use stale latest_status.json as the result of Deep 35551673513.",
+    "Do not change multiple transport variables while the #229 production experiment is still running.",
+    "Do not convert transport/query success, 403, or ConnectionError into evidence PASS.",
+    "Do not loosen predictability, valuation, BUY/WAIT_PRICE/REJECT, Formal authority, UNKNOWN != PASS, or no_auto_trade."
   ]
 }
