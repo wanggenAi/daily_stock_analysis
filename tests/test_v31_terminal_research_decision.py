@@ -28,6 +28,10 @@ def _valuation(pe="8", median="12", quality="90", confidence="HIGH", status="OK"
         "earnings_quality_score": quality,
         "earnings_quality_confidence": confidence,
         "financial_review_status": status,
+        "cash_conversion_ratio": "0.90",
+        "normalized_core_operating_profit": "100",
+        "operating_cash_flow": "90",
+        "financial_disclosure_date": "2026-08-30",
         "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
     }]
 
@@ -90,6 +94,47 @@ def test_evidence_blocked_but_attractive_screen_is_prioritized_without_buying():
     assert "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED" in row["urgent_research_reasons"]
     assert out["urgent_research_queue"][0]["code"] == "000001"
 
+
+
+def test_terminal_snapshot_explains_exact_machine_financial_blocker_without_changing_gate():
+    gates = _all("PASS")
+    gates["financial_safety"] = "UNKNOWN"
+    valuation = _valuation(quality="69")
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=valuation,
+    )
+    row = out["terminal_rows"][0]
+    diagnostics = row["valuation"]["financial_gate_diagnostics"]
+
+    assert row["research_decision"] == "RESEARCH_GAP"
+    assert diagnostics["earnings_quality_score"] == 69.0
+    assert diagnostics["earnings_quality_pass_threshold"] == 70.0
+    assert diagnostics["cash_conversion_ratio"] == 0.90
+    assert diagnostics["cash_conversion_pass_threshold"] == 0.80
+    assert diagnostics["blockers"] == [
+        "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD"
+    ]
+    assert diagnostics["machine_financial_pass_ready"] is False
+
+
+def test_terminal_snapshot_reports_missing_financial_inputs_fail_closed():
+    gates = _all("PASS")
+    gates["earnings_authenticity"] = "UNKNOWN"
+    valuation = _valuation()
+    valuation[0].pop("cash_conversion_ratio")
+    valuation[0].pop("operating_cash_flow")
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=valuation,
+    )
+    diagnostics = out["terminal_rows"][0]["valuation"]["financial_gate_diagnostics"]
+
+    assert "CASH_CONVERSION_RATIO_MISSING" in diagnostics["blockers"]
+    assert "OPERATING_CASH_FLOW_MISSING" in diagnostics["blockers"]
+    assert diagnostics["machine_financial_pass_ready"] is False
 
 def test_specialized_industry_never_uses_generic_pe_to_create_buy():
     valuation = _valuation(pe="5", median="10")
