@@ -108,7 +108,10 @@ jobs:
           assert 'today_account_plan' in p
           assert 'deep_calculation_runtime' in p
           assert 'candidate_lifecycle' in p
+          assert 'holding_valuation_continuity' in p
           assert 'system_capability_visibility' in p
+          assert p['holding_valuation_continuity']['formal_action_recomputed'] is False
+          assert p['holding_valuation_continuity']['no_auto_trade'] is True
           lifecycle=p['candidate_lifecycle']
           assert lifecycle['formal_authority_granted'] is False
           assert lifecycle['no_auto_trade'] is True
