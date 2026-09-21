@@ -611,12 +611,14 @@ def _query_sse_announcements(
     max_pages: int = 1,
     page_size: int = MATERIAL_EVENT_PAGE_SIZE,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    """Query the current first-party SSE bulletin endpoint and filter dates locally.
+    """Query the current first-party SSE bulletin endpoint.
 
     The current SSE bulletin endpoint requires the exact disclosure-page Referer.
-    Its server-side date parameters are intentionally not used: pagination walks
-    newest-to-oldest rows and this adapter applies the requested date interval to
-    SSEDATE locally.
+    Typed periodic-report queries also carry explicit beginDate/endDate bounds;
+    production showed YEARLY/DQBG can return an empty result set when those
+    server-side bounds are omitted. Untyped material-event scans keep their
+    newest-to-oldest pagination and still apply the requested date interval
+    locally.
     """
     result: list[dict[str, Any]] = []
     pages_fetched = 0
@@ -643,6 +645,9 @@ def _query_sse_announcements(
             params["reportType"] = report_type
         if report_type2:
             params["reportType2"] = report_type2
+        if report_type or report_type2:
+            params["beginDate"] = start.isoformat()
+            params["endDate"] = as_of.isoformat()
 
         try:
             response = session.get(
