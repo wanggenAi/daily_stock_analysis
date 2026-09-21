@@ -105,14 +105,11 @@ _DANGLING_GROUP_RE = re.compile(
 _SECTION_HEADING_RE = re.compile(
     r"(?:^|\n)\s*(?:第[一二三四五六七八九十百]+[章节]|[一二三四五六七八九十]+、)"
 )
-_QUARTERLY_SECTION_TOKENS = (
-    "分季度主要财务数据",
-    "季度主要财务数据",
-    "季度数据",
-    "第一季度",
-    "第二季度",
-    "第三季度",
-    "第四季度",
+_QUARTER_SECTION_RE = re.compile(r"(?:季度数据|分季度)")
+_QUARTER_COLUMN_RE = re.compile(
+    r"(?:第一季度|第二季度|第三季度|第四季度|"
+    r"一季度|二季度|三季度|四季度|Q[1-4])",
+    flags=re.IGNORECASE,
 )
 
 
@@ -407,10 +404,16 @@ def _current_section_prefix(
 
 
 def _metric_context_is_quarterly(text: str, label_start: int) -> bool:
-    """Reject quarterly rows as evidence for an annual fiscal-year metric."""
+    """Reject quarterly tables without treating one narrative quarter mention as a table."""
     section = _current_section_prefix(text, label_start)
-    tail = section[-900:]
-    return any(token in tail for token in _QUARTERLY_SECTION_TOKENS)
+    local = section[-900:]
+    if _QUARTER_SECTION_RE.search(local):
+        return True
+    quarter_labels = {
+        match.group(0).upper()
+        for match in _QUARTER_COLUMN_RE.finditer(local)
+    }
+    return len(quarter_labels) >= 2
 
 
 def _nearby_header_unit(text: str, label_start: int) -> tuple[str | None, str]:
