@@ -15,6 +15,10 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from .public_material_gate_recovery import merge_recovered_gates
+from .v31_automatic_deep_calculation import (
+    MACHINE_PASS_CASH_CONVERSION,
+    MACHINE_PASS_EARNINGS_QUALITY,
+)
 
 CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 DECISIONS = {"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"}
@@ -82,6 +86,51 @@ def _priority_meta(priority: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     return out
 
 
+def _financial_gate_diagnostics(row: Mapping[str, Any]) -> dict[str, Any]:
+    financial_status = str(row.get("financial_review_status") or "").upper()
+    quality_conf = str(row.get("earnings_quality_confidence") or "").upper()
+    cash_conversion = _num(row.get("cash_conversion_ratio"))
+    quality_score = _num(row.get("earnings_quality_score"))
+    normalized_profit = _num(row.get("normalized_core_operating_profit"))
+    operating_cash = _num(row.get("operating_cash_flow"))
+    blockers: list[str] = []
+
+    if financial_status != "OK":
+        blockers.append("FINANCIAL_REVIEW_STATUS_NOT_OK")
+    if quality_conf != "HIGH":
+        blockers.append("EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH")
+    if cash_conversion is None:
+        blockers.append("CASH_CONVERSION_RATIO_MISSING")
+    elif cash_conversion < MACHINE_PASS_CASH_CONVERSION:
+        blockers.append("CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD")
+    if quality_score is None:
+        blockers.append("EARNINGS_QUALITY_SCORE_MISSING")
+    elif quality_score < MACHINE_PASS_EARNINGS_QUALITY:
+        blockers.append("EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD")
+    if normalized_profit is None:
+        blockers.append("NORMALIZED_CORE_OPERATING_PROFIT_MISSING")
+    elif normalized_profit <= 0:
+        blockers.append("NORMALIZED_CORE_OPERATING_PROFIT_NON_POSITIVE")
+    if operating_cash is None:
+        blockers.append("OPERATING_CASH_FLOW_MISSING")
+    elif operating_cash <= 0:
+        blockers.append("OPERATING_CASH_FLOW_NON_POSITIVE")
+
+    return {
+        "financial_review_status": financial_status,
+        "earnings_quality_confidence": quality_conf,
+        "cash_conversion_ratio": cash_conversion,
+        "cash_conversion_pass_threshold": MACHINE_PASS_CASH_CONVERSION,
+        "earnings_quality_score": quality_score,
+        "earnings_quality_pass_threshold": MACHINE_PASS_EARNINGS_QUALITY,
+        "normalized_core_operating_profit": normalized_profit,
+        "operating_cash_flow": operating_cash,
+        "financial_disclosure_date": str(row.get("financial_disclosure_date") or ""),
+        "blockers": blockers,
+        "machine_financial_pass_ready": not blockers,
+    }
+
+
 def _valuation_decision(row: Mapping[str, Any]) -> tuple[str, str, dict[str, Any]]:
     industry = str(row.get("industry") or "").strip().upper()
     current_pe = _num(row.get("current_pe"))
@@ -90,6 +139,7 @@ def _valuation_decision(row: Mapping[str, Any]) -> tuple[str, str, dict[str, Any
     quality_conf = str(row.get("earnings_quality_confidence") or "").upper()
     quality_score = _num(row.get("earnings_quality_score"))
     expectation = str(row.get("expectation_state") or "").upper()
+    financial_gate = _financial_gate_diagnostics(row)
     snapshot = {
         "current_pe": current_pe,
         "historical_median_pe_reference": median_pe,
@@ -99,6 +149,7 @@ def _valuation_decision(row: Mapping[str, Any]) -> tuple[str, str, dict[str, Any
         "earnings_quality_score": quality_score,
         "expectation_state": expectation,
         "required_profit_growth_pct": _num(row.get("required_profit_growth_pct")),
+        "financial_gate_diagnostics": financial_gate,
     }
     if industry.startswith(SPECIALIZED_INDUSTRY_PREFIXES):
         return "RESEARCH_GAP", "SPECIALIZED_VALUATION_REQUIRED", snapshot
@@ -246,8 +297,9 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
     for row in urgent:
         ratio = (row.get("valuation") or {}).get("pe_to_history_ratio")
         reasons = ",".join(row.get("urgent_research_reasons") or [])
+        blockers = ((row.get("valuation") or {}).get("financial_gate_diagnostics") or {}).get("blockers") or []
         lines.append(
-            f"- {row.get('code')} {row.get('name')}: quant={row.get('quant_score')}, PE/history={ratio}, unknown={','.join(row.get('hard_gate_unknowns') or [])}, urgent={reasons}"
+            f"- {row.get('code')} {row.get('name')}: quant={row.get('quant_score')}, PE/history={ratio}, unknown={','.join(row.get('hard_gate_unknowns') or [])}, financial_blockers={','.join(blockers) or 'NONE'}, urgent={reasons}"
         )
     lines += ["", "## Terminal rows", ""]
     for row in payload.get("terminal_rows") or []:
