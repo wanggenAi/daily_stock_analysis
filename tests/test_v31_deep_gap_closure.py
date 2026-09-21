@@ -94,6 +94,19 @@ def test_long_term_demand_requires_two_independent_official_domains():
     assert len(evidence) == 2
 
 
+def test_same_official_authority_subdomains_do_not_count_as_independent_sources():
+    status, rationale, evidence = infer_long_term_demand(
+        "航空装备",
+        [
+            _official("www.miit.gov.cn", "POSITIVE"),
+            _official("wap.miit.gov.cn", "POSITIVE"),
+        ],
+    )
+    assert status == "UNKNOWN"
+    assert "Fewer than two independent" in rationale
+    assert {row["source_family"] for row in evidence} == {"miit.gov.cn"}
+
+
 def test_conflicting_official_evidence_stays_unknown():
     status, rationale, _ = infer_long_term_demand(
         "航空装备",
