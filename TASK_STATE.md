@@ -1,81 +1,74 @@
 # Current Mission
 
 ## Goal
-Converge the existing stock system into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
+Converge the stock system into a trustworthy daily decision surface while actively closing verified evidence gaps. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
 
 ## Current Phase
-Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-year predictability. Do not weaken evidence semantics.
+Run the post-#229 predictability transport experiment while preparing two independent evidence-coverage repairs: #230 for SSE annual-report discovery and this branch for MIIT nested industry evidence discovery.
 
 ## Last Verified Main
-- PR #229 merged into main as `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
-- Latest observed main at checkpoint: `7744b46b8e8b188f3bc209bad6a9efe6bf59440f`; later `[skip ci]` investor persistence commits do not modify Deep calculation code.
-- Live GitHub refs / PRs / Actions / artifacts / persisted data always override this checkpoint.
+- PR #229 merged as `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
+- Fresh post-#229 Deep run `35551673513` remains the authoritative transport experiment until its terminal artifact is inspected.
+- Live GitHub refs / PRs / Actions / artifacts / persisted data override this checkpoint.
 
-## PR / CI State
-- #229 — `fix: front-load strict predictability evidence collection` — is merged.
-- Final PR head: `3493029639c2ec64a20eca4231c574d222ce18c4`.
-- Required CI/review checks were green before merge.
-- Scope remained scheduling-only; no evidence gate, provider authority, MIN_COMPLETE_YEARS, valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade semantics changed.
+## Active Branch
+`fix/miit-industry-evidence-depth-20260921`
+
+## Active PR
+- This branch is the next evidence-coverage PR; live GitHub is authoritative once the PR is opened.
+- Scope: industry evidence discovery only. Follow first-party MIIT category pages to dated operating-statistics releases and expand search aliases. No hard-gate threshold change.
+
+## CI
+- Not yet authoritative for this branch at this checkpoint; open PR and run all blocking checks.
+- #230 SSE annual-report repair is a separate PR/branch and must retain its own green merge gate.
+- Never weaken tests, evidence provenance, source-family independence, or UNKNOWN != PASS to obtain green CI.
 
 ## Production / Artifact
-- Fresh post-merge Deep run: `35551673513`.
-- Run code baseline: `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
-- Contracts job succeeded.
-- Deep steps 1-12 succeeded, including exact input/workset resolution, initial calculation, checkpoint, and initial artifact upload.
-- Current step at checkpoint: step 13 `Close unresolved gates with optimized quality-preserving official evidence` = IN_PROGRESS.
-- Initial artifact exists: `genge-v31-deep-initial-35551673513`.
-- No terminal Deep artifact exists yet at this checkpoint.
-- Do not attribute current `data/deep_calculation/latest_status.json` to run `35551673513` until its lineage/run_id updates.
-
-## Locked Comparison Baseline
-- Prior terminal run: `35549602593`.
-- requested=852; processed=852.
-- predictability verified=0; predictability_resolved_gate_count=0.
-- Terminal predictability unresolved:
-  - 377 = `ANNUAL_REPORT_QUERY_FAILED:PRIMARY:ConnectionError,CNINFO:HTTPError:403`
-    - 269 codes with 0-prefix
-    - 108 codes with 3-prefix
-  - 470 = `INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS`
-- Earlier pre-#225 exact query-failure baseline: 375.
-- #225 therefore did not improve the production transport bucket.
-
-## Current Findings
-- #225 browser-form CNINFO headers alone were insufficient in production.
-- Previous production showed first-party SZSE transport degrading later in long Deep runs, followed by CNINFO 403 fallback.
-- #229 tests the scheduling/transport-liveness hypothesis by running the unchanged strict predictability collector before high-volume general evidence collection.
-- The optimized runtime patch was re-read after merge and confirmed not to bypass this order.
-- Transport/query recovery is never evidence PASS; verified annual-report bodies and complete strict metrics remain mandatory.
-- Shanghai strict incomplete-consecutive-year cases stay UNKNOWN unless verified official evidence resolves them.
+- Locked pre-#229 Deep baseline: `35541596198` / terminal lineage `35549602593`.
+- Predictability baseline: 377 exact Shenzhen/ChiNext query failures plus 470 Shanghai zero-report cases.
+- Shanghai artifact inspection proved all 470 had empty metrics/source URLs and `PRIMARY_INSUFFICIENT_REPORTS:0,CNINFO:HTTPError:403`.
+- Previous industry evidence artifact contains 51 verified industry rows total.
+- Urgent-26 analysis: most long-term-demand UNKNOWNs have only one verified official source family; several have zero.
+- Audit evidence shows MIIT often fetched an industry category page as if it were the final article, producing `article_publish_date_missing` for software, internet, textiles, auto, aviation and raw-material sectors.
+- Urgent-26 financial review correction: all 26 had `financial_review_status=OK`; 10 already PASS financial_safety/earnings_authenticity and 16 remain UNKNOWN due strict quality thresholds, not missing review budget.
 
 ## Completed
-- #223 Deep liveness fix remains production-proven.
-- #225 was merged, production-tested, and correctly classified as unsuccessful for its intended transport recovery.
-- #229 passed required CI/review and merged.
-- Main production code path was verified after merge.
-- Volatile web-session checkpoint is stored on `state/chatgpt-recovery` at `recovery/tasks/stock-system-convergence.json`; live GitHub remains authoritative.
+- #223 liveness fix remains production-proven.
+- #225 was correctly classified as unsuccessful for its intended transport recovery.
+- #229 merged with scheduling-only predictability front-loading.
+- #230 was created to restore typed SSE date bounds and shard the six-year annual-report query horizon.
+- This branch adds specialized MIIT category routes, dated operational-article discovery, and search aliases without changing demand-gate semantics.
 
-## Blocker
-Fresh terminal production evidence from Deep run `35551673513` is still required before #229 can be classified as production-proven.
+## Current Findings
+- Long-term-demand PASS requires at least two independent verified official source families with the same direction.
+- The prior collector often produced only NBS evidence because generic MIIT discovery stopped on an undated category/navigation page.
+- The correct MIIT path is top-level/category discovery -> dated operating-statistics article -> publication date + numeric context.
+- Evidence-source coverage should be repaired before considering any relaxation of the two-source corroboration rule.
+- Transport/query success alone never creates PASS.
+
+## Blockers
+- Post-#229 Deep run `35551673513` must finish before #229 can be classified as production-proven.
+- This branch requires blocking CI/review plus a post-merge production artifact before its evidence effect is accepted.
+- #230 must not be merged merely because transport code looks plausible; green CI and clean experiment lineage remain mandatory.
 
 ## Next Action
-1. Resume from live Deep run `35551673513`.
-2. If step 13 fails, inspect the exact failure and repair only the demonstrated cause.
-3. If it succeeds, inspect the fresh terminal artifact and persisted lineage.
-4. Recount exact predictability failures against post-#225 baseline=377 and pre-#225 baseline=375, split by 0/3/6 prefix.
-5. Check predictability verified/resolved counts, source URLs, and `metrics_by_year` for every newly resolved gate.
-6. Verify Deep -> Provenance -> Terminal -> Investor lineage convergence.
-7. Re-verify all PASS evidence provenance and the safety invariants.
-8. If Shenzhen/ChiNext failures remain systemic, continue at provider/session/pacing/runner-network transport level without weakening gates.
+1. Open the MIIT evidence-depth PR and run all blocking checks.
+2. Fix only demonstrated CI/review failures.
+3. Continue observing Deep `35551673513`; when terminal, inspect artifact immediately.
+4. Recount exact 0/3-prefix query failures against baseline 377 and validate any new predictability source URLs/metrics.
+5. Once the #229 experiment is captured, merge #230 only if green and production-test the Shanghai zero-report bucket against 470.
+6. Keep this MIIT repair independent; after merge, verify whether additional official source families actually appear for affected industries.
+7. Do not treat a second source as corroboration unless it is independently verified, fresh, numeric, and same-direction.
+8. After transport/source coverage is proven, design separate strict closure for remaining moat and financial/earnings UNKNOWNs rather than lowering gates.
 
 ## Do Not Repeat
-- Do not reopen solved Candidate Lifecycle continuity work.
+- Do not redo solved Candidate Lifecycle continuity.
 - Do not treat #225 as a successful transport fix.
-- Do not recreate or reopen #229; it is merged.
-- Do not restart from generic CNINFO-header speculation.
-- Do not use stale `latest_status.json` as the result of run `35551673513`.
-- Do not change multiple transport variables while the #229 production experiment is still running.
-- Do not promote metadata/query success itself to evidence PASS.
-- Do not loosen predictability, valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.
+- Do not reopen generic CNINFO-header speculation.
+- Do not confuse an MIIT category page with a dated evidence article.
+- Do not convert NEUTRAL evidence into POSITIVE merely to satisfy two-source corroboration.
+- Do not lower MIN_COMPLETE_YEARS or any BUY/WAIT_PRICE/REJECT threshold.
+- Do not promote metadata/query success into evidence PASS.
 
 ## Guardrails
 - GitHub live state is the source of truth.
