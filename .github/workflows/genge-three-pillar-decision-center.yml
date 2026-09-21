@@ -107,6 +107,14 @@ jobs:
           assert 'pillar_3_deep_opportunities' in p
           assert 'today_account_plan' in p
           assert 'deep_calculation_runtime' in p
+          assert 'candidate_lifecycle' in p
+          assert 'system_capability_visibility' in p
+          lifecycle=p['candidate_lifecycle']
+          assert lifecycle['formal_authority_granted'] is False
+          assert lifecycle['no_auto_trade'] is True
+          capabilities=p['system_capability_visibility']['capabilities']
+          assert any(row['capability'] == 'Candidate Lifecycle 持续研究记忆' for row in capabilities)
+          assert any(row['capability'] == 'Deep Provenance 证据审计' for row in capabilities)
           account=p['today_account_plan']
           assert account['no_auto_trade'] is True
           assert account['planned_immediate_cash_cny'] <= account['available_cash_cny']
@@ -172,4 +180,5 @@ jobs:
           echo '- Pillar 3: Canonical Formal actions and terminal research-only BUY / WAIT_PRICE / REJECT are separate' >> "$GITHUB_STEP_SUMMARY"
           echo '- Terminal research is exposed only when its Deep Lambda lineage matches the current runtime; stale research is fail-closed' >> "$GITHUB_STEP_SUMMARY"
           echo '- Deep Calculation Lambda status is visible separately from research completeness' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Candidate Lifecycle continuity and production-wired capability visibility are first-class report contracts' >> "$GITHUB_STEP_SUMMARY"
           echo '- Authority: Canonical Formal actions only; research authority cannot escalate; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
