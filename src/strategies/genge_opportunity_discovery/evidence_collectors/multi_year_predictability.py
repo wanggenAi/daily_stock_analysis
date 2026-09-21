@@ -37,6 +37,10 @@ MAX_REPORTS = 5
 MIN_COMPLETE_YEARS = 3
 TRANSIENT_QUERY_ATTEMPTS = 2
 TRANSIENT_QUERY_BACKOFF_SECONDS = 0.25
+# SSE typed periodic-report queries are date-bounded. Keep each server-side
+# window below three calendar years so the six-year predictability horizon does
+# not depend on one oversized YEARLY/DQBG request.
+SSE_MAX_QUERY_SPAN_DAYS = 1094
 _RETRYABLE_HTTP_STATUS = {429, 500, 502, 503, 504}
 _METRIC_WINDOW = 1400
 _HEADER_WINDOW = 1600
@@ -278,6 +282,17 @@ def _query_cninfo_history(
     return [by_year[year] for year in sorted(by_year, reverse=True)[:MAX_REPORTS]]
 
 
+def _sse_history_windows(start: date, end: date) -> list[tuple[date, date]]:
+    """Split the long research horizon into SSE-safe typed-query windows."""
+    windows: list[tuple[date, date]] = []
+    cursor = start
+    while cursor <= end:
+        window_end = min(end, cursor + timedelta(days=SSE_MAX_QUERY_SPAN_DAYS))
+        windows.append((cursor, window_end))
+        cursor = window_end + timedelta(days=1)
+    return windows
+
+
 def _query_sse_history(
     code: str,
     as_of: date,
@@ -285,17 +300,22 @@ def _query_sse_history(
     timeout: int,
 ) -> list[dict[str, Any]]:
     """Return strict annual-report bodies from the issuer's primary SSE source."""
-    rows, _ = _query_sse_announcements(
-        code,
-        start=as_of - timedelta(days=HISTORY_DAYS),
-        as_of=as_of,
-        session=session,
-        timeout=timeout,
-        report_type="YEARLY",
-        report_type2="DQBG",
-        max_pages=5,
-        page_size=30,
-    )
+    history_start = as_of - timedelta(days=HISTORY_DAYS)
+    rows: list[dict[str, Any]] = []
+    for window_start, window_end in _sse_history_windows(history_start, as_of):
+        window_rows, _ = _query_sse_announcements(
+            code,
+            start=window_start,
+            as_of=window_end,
+            session=session,
+            timeout=timeout,
+            report_type="YEARLY",
+            report_type2="DQBG",
+            max_pages=5,
+            page_size=30,
+        )
+        rows.extend(window_rows)
+
     by_year: dict[int, dict[str, Any]] = {}
     for item in rows:
         title = _clean_title(item.get("title"))
