@@ -1,6 +1,6 @@
 # 投资决策驾驶舱
 
-> 市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=4/4
+> 市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
 
 ## 1. 最新市场结构（日线）
 
@@ -13,10 +13,10 @@
 - 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。
 | 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作/权限 | 动作状态 | 现在怎么办 |
 |---|---:|---:|---:|---:|---|---|---|
-| 国电南瑞 600406 | 200 | 23.13 | 22.10 | -4.43 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
-| 润贝航科 001316 | 200 | 25.75 | 29.62 | 15.05 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
-| 中国平安 601318 | 400 | 55.97 | 53.98 | -3.55 | HOLD | **UNCHANGED** | **继续持有** |
-| 洛阳钼业 603993 | 1100 | 18.62 | 17.59 | -5.55 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
+| 国电南瑞 600406 | 200 | 23.13 | 22.05 | -4.65 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
+| 润贝航科 001316 | 200 | 25.75 | 28.11 | 9.19 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
+| 中国平安 601318 | 400 | 55.97 | 53.37 | -4.64 | HOLD | **UNCHANGED** | **继续持有** |
+| 洛阳钼业 603993 | 1100 | 18.62 | 17.51 | -5.98 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
 
 ## 3. 今天能直接买什么
 
@@ -42,7 +42,7 @@
 
 | 股票 | 动作 | 股数 | 第一档最高价 | 第二档最高价 | 预计/预留金额 | 执行状态 |
 |---|---|---:|---:|---:|---:|---|
-| 洛阳钼业 603993 | **ADD_LIMIT** | 100 | 17.51 | — | 1751.00 | 暂不可立即执行：现价高于授权上限 |
+| — | — | 0 | — | — | 0 | — |
 
 ## 7. 当前强势方向（辅助，不代替BUY权限）
 
@@ -60,47 +60,3 @@ O81机动车、电子产品和日用产品修理业(STRONG)、E49建筑安装业
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**852** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **837** / REJECT **15**。
-- urgent research：**26** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
-| 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
-
-### Urgent evidence queue
-
-- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
-- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
-- 国联股份 603613: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 台华新材 603055: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 金杯汽车 600609: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 大参林 603233: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 甘化科工 000576: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 华阳集团 002906: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 新强联 300850: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 深信服 300454: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 恒誉科技 688309: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 移远通信 603236: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 松发股份 603268: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 奥浦迈 688293: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- XD睿创微 688002: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 皖仪科技 688600: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 广大特材 688186: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 吉华集团 603980: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 方正科技 600601: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 兴通股份 603209: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 科锐国际 300662: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 朗姿股份 002612: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 汇顶科技 603160: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 巨一科技 688162: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
