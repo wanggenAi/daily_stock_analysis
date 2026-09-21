@@ -19,7 +19,7 @@ from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Mapping
 
-from .evidence_collectors import collect_auto_evidence
+from .evidence_collectors import classify_material_event_title, collect_auto_evidence
 from .evidence_collectors.multi_year_predictability import (
     collect_multi_year_predictability_evidence,
 )
@@ -303,30 +303,113 @@ def _dedupe(rows: Iterable[Mapping[str, Any]]) -> list[dict[str, Any]]:
     return result
 
 
+def _historical_material_event_semantically_active(
+    row: Mapping[str, Any], code: str, *, as_of: date
+) -> bool:
+    """Revalidate persisted event labels with the current semantic classifier."""
+    if not _verified_active_high_material_event(row, code):
+        return False
+    title = str(row.get("title") or "").strip()
+    raw_date = str(row.get("publish_date") or row.get("date") or "").strip()
+    if not title or not raw_date:
+        return False
+    try:
+        publish_date = date.fromisoformat(raw_date[:10])
+    except ValueError:
+        return False
+    event_type = str(row.get("event_type") or "").upper()
+    return any(
+        str(event.get("event_type") or "").upper() == event_type
+        and str(event.get("event_status") or "").upper() == "ACTIVE"
+        and str(event.get("event_severity") or "").upper() == "HIGH"
+        for event in classify_material_event_title(
+            title,
+            publish_date=publish_date,
+            as_of=as_of,
+        )
+    )
+
+
+def _safe_historical_evidence_payload(payload: Mapping[str, Any]) -> bool:
+    return bool(
+        payload.get("formal_trading_authority") is False
+        and payload.get("automatic_formal_buy_allowed") is False
+        and payload.get("unknown_is_pass") is False
+        and payload.get("no_auto_trade") is True
+    )
+
+
 def _load_historical_verified_material_events(
     history_root: Path,
     requested_codes: Iterable[str],
+    *,
+    as_of: date,
 ) -> list[dict[str, Any]]:
-    """Recover only previously VERIFIED/ACTIVE/HIGH official material risks.
+    """Recover only still-valid strict negative evidence from durable Deep history.
 
-    Deep evidence history is immutable repository state. A transient source
-    failure in a later run must not erase an already verified negative gate.
-    Historical PASS evidence, ordinary evidence and non-active material events
-    are deliberately excluded.
+    The newest post-fix cumulative risk ledger is authoritative when present.
+    Before such a ledger exists, compact Deep status files are used as an index
+    so only runs that actually produced material-event FAILs require loading
+    their much larger evidence payloads.
     """
     requested = set(_requested_codes(requested_codes))
     if not requested or not history_root.is_dir():
         return []
 
+    status_paths = sorted(
+        (path for path in history_root.glob("[0-9]*.json") if path.stem.isdigit()),
+        key=lambda path: int(path.stem),
+        reverse=True,
+    )
+
+    # Once a cumulative ledger exists, never resurrect older risks behind it.
+    for status_path in status_paths:
+        try:
+            status_payload = _read_json(status_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if status_payload.get("material_event_risk_ledger_complete") is not True:
+            continue
+        evidence_path = history_root / f"{status_path.stem}.evidence.json"
+        if not evidence_path.is_file():
+            return []
+        try:
+            payload = _read_json(evidence_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            return []
+        if not _safe_historical_evidence_payload(payload):
+            return []
+        rows = payload.get("material_event_risk_ledger")
+        if not isinstance(rows, list):
+            return []
+        return _dedupe(
+            dict(raw)
+            for raw in rows
+            if isinstance(raw, Mapping)
+            and _code(raw.get("code")) in requested
+            and _historical_material_event_semantically_active(
+                raw,
+                _code(raw.get("code")),
+                as_of=as_of,
+            )
+        )
+
     recovered: list[dict[str, Any]] = []
-    for path in sorted(history_root.glob("*.evidence.json")):
-        payload = _read_json(path)
-        if (
-            payload.get("formal_trading_authority") is not False
-            or payload.get("automatic_formal_buy_allowed") is not False
-            or payload.get("unknown_is_pass") is not False
-            or payload.get("no_auto_trade") is not True
-        ):
+    for status_path in reversed(status_paths):
+        try:
+            status_payload = _read_json(status_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if int(status_payload.get("material_event_failed_gate_count") or 0) <= 0:
+            continue
+        evidence_path = history_root / f"{status_path.stem}.evidence.json"
+        if not evidence_path.is_file():
+            continue
+        try:
+            payload = _read_json(evidence_path)
+        except (OSError, ValueError, json.JSONDecodeError):
+            continue
+        if not _safe_historical_evidence_payload(payload):
             continue
         rows = payload.get("company_evidence")
         if not isinstance(rows, list):
@@ -335,9 +418,38 @@ def _load_historical_verified_material_events(
             if not isinstance(raw, Mapping):
                 continue
             code = _code(raw.get("code"))
-            if code in requested and _verified_active_high_material_event(raw, code):
+            if (
+                code in requested
+                and _historical_material_event_semantically_active(
+                    raw,
+                    code,
+                    as_of=as_of,
+                )
+            ):
                 recovered.append(dict(raw))
     return _dedupe(recovered)
+
+
+def _material_event_risk_ledger(
+    *,
+    current_company_evidence: Iterable[Mapping[str, Any]],
+    historical_material_event_evidence: Iterable[Mapping[str, Any]],
+    requested_codes: Iterable[str],
+    as_of: date,
+) -> list[dict[str, Any]]:
+    requested = set(_requested_codes(requested_codes))
+    rows = [*historical_material_event_evidence, *current_company_evidence]
+    return _dedupe(
+        dict(raw)
+        for raw in rows
+        if isinstance(raw, Mapping)
+        and _code(raw.get("code")) in requested
+        and _historical_material_event_semantically_active(
+            raw,
+            _code(raw.get("code")),
+            as_of=as_of,
+        )
+    )
 
 
 def close_profiles(
@@ -622,6 +734,7 @@ def run(
     historical_material_event_evidence = _load_historical_verified_material_events(
         Path("data/deep_calculation/history"),
         requested,
+        as_of=as_of,
     )
     selected: list[dict[str, Any]] = []
     for row in rows:
@@ -671,6 +784,18 @@ def run(
         evidence_summary=evidence_summary,
         historical_material_event_evidence=historical_material_event_evidence,
     )
+    material_event_risk_ledger = _material_event_risk_ledger(
+        current_company_evidence=company_evidence,
+        historical_material_event_evidence=historical_material_event_evidence,
+        requested_codes=requested,
+        as_of=as_of,
+    )
+    for payload in (closed_profiles, status):
+        payload["material_event_risk_ledger_complete"] = True
+        payload["material_event_risk_ledger_count"] = len(material_event_risk_ledger)
+    evidence_summary["material_event_risk_ledger_complete"] = True
+    evidence_summary["material_event_risk_ledger_count"] = len(material_event_risk_ledger)
+
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "deep_review_profiles.json").write_text(
         json.dumps(closed_profiles, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8"
@@ -684,6 +809,8 @@ def run(
         "requested_codes": requested,
         "industry_evidence": industry_evidence,
         "company_evidence": company_evidence,
+        "material_event_risk_ledger": material_event_risk_ledger,
+        "material_event_risk_ledger_complete": True,
         "audit": audit_rows,
         "summary": evidence_summary,
         "formal_trading_authority": False,
@@ -706,6 +833,7 @@ def run(
         f"- material-event failed gates: **{status['material_event_failed_gate_count']}**\n"
         f"- historical material-event evidence rows: **{status['historical_material_event_evidence_count']}**\n"
         f"- historical material-event failed gates: **{status['historical_material_event_failed_gate_count']}**\n"
+        f"- cumulative material-event risk ledger rows: **{status['material_event_risk_ledger_count']}**\n"
         f"- material-event PASS overrides: **{status['material_event_pass_override_count']}**\n"
         f"- unresolved gates: **{status['unresolved_requested_gate_count']}**\n"
         "- immediate retry required: **False**\n- UNKNOWN != PASS; no automatic Formal BUY; no auto trade.\n",
