@@ -26,6 +26,58 @@ RUNTIME_CONTRACT = "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2"
 TERMINAL_RESEARCH_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
 
+ERA_EVIDENCE_FAMILIES = (
+    "POLICY_CAPITAL",
+    "INDUSTRIAL_CAPITAL",
+    "FINANCIAL_CAPITAL",
+    "REAL_DEMAND",
+    "TECHNOLOGY",
+    "GLOBAL_STRUCTURE",
+)
+CAPITAL_FLOW_FAMILIES = (
+    "POLICY_CAPITAL",
+    "INDUSTRIAL_CAPITAL",
+    "FINANCIAL_CAPITAL",
+    "REAL_DEMAND",
+)
+
+
+def summarize_era_evidence(evidence_bundle: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Expose actual evidence coverage instead of implying fund-flow knowledge."""
+    raw = dict(evidence_bundle or {})
+    rows = [row for row in (raw.get("records") or []) if isinstance(row, Mapping)]
+    counts = {family: 0 for family in ERA_EVIDENCE_FAMILIES}
+    for row in rows:
+        family = str(row.get("family") or "").upper()
+        if family in counts:
+            counts[family] += 1
+
+    covered = [family for family in CAPITAL_FLOW_FAMILIES if counts[family] > 0]
+    missing = [family for family in CAPITAL_FLOW_FAMILIES if counts[family] == 0]
+    status = (
+        "MULTI_LAYER_COVERED"
+        if not missing
+        else "PARTIAL"
+        if covered
+        else "UNAVAILABLE"
+    )
+    return {
+        "status": status,
+        "evidence_count": len(rows),
+        "family_counts": counts,
+        "covered_capital_layers": covered,
+        "missing_capital_layers": missing,
+        "policy_capital_evidence_available": counts["POLICY_CAPITAL"] > 0,
+        "industrial_capital_evidence_available": counts["INDUSTRIAL_CAPITAL"] > 0,
+        "financial_capital_evidence_available": counts["FINANCIAL_CAPITAL"] > 0,
+        "real_demand_evidence_available": counts["REAL_DEMAND"] > 0,
+        "direct_stock_fund_flow_claimed": False,
+        "interpretation": (
+            "Policy/industrial/financial capital and real-demand evidence are separate layers. "
+            "Missing FINANCIAL_CAPITAL must remain explicit; market-strength proxies never become direct fund-flow evidence."
+        ),
+    }
+
 
 def _json(path: Path | None) -> dict[str, Any]:
     if path is None or not path.is_file():
@@ -314,6 +366,26 @@ def normalize_terminal_research(
     }
 
 
+def _research_investor_view(row: Mapping[str, Any]) -> dict[str, Any]:
+    item = dict(row)
+    decision = str(item.get("research_decision") or "").upper()
+    unknowns = [str(x) for x in (item.get("hard_gate_unknowns") or []) if str(x)]
+    if decision == "RESEARCH_GAP":
+        waiting = "、".join(unknowns) or "缺失证据"
+        item["investor_action"] = f"暂不买；等待补齐：{waiting}"
+        item["account_action"] = "DO_NOT_BUY_YET"
+    elif decision == "BUY":
+        item["investor_action"] = "研究层达到BUY条件，但未获得Formal BUY授权；不得直接下单"
+        item["account_action"] = "RESEARCH_BUY_NOT_FORMAL"
+    elif decision == "WAIT_PRICE":
+        item["investor_action"] = "研究层等待价格；未获得Formal BUY授权，达到价格也需重新核验正式权限"
+        item["account_action"] = "WAIT_PRICE_RESEARCH_ONLY"
+    else:
+        item["investor_action"] = "不买；研究层已淘汰"
+        item["account_action"] = "DO_NOT_BUY"
+    return item
+
+
 def _attach_terminal_research(
     payload: dict[str, Any],
     terminal: dict[str, Any],
@@ -332,12 +404,20 @@ def _attach_terminal_research(
     opportunities["canonical_formal_buy_now"] = list(opportunities.get("buy_now") or [])
     opportunities["canonical_formal_wait_price"] = list(opportunities.get("wait_price") or [])
     opportunities["terminal_research_snapshot"] = terminal
-    opportunities["research_buy"] = list(terminal.get("research_buy") or []) if current else []
-    opportunities["research_wait_price"] = list(terminal.get("research_wait_price") or []) if current else []
-    opportunities["research_gap"] = list(terminal.get("research_gap") or []) if current else []
+    opportunities["research_buy"] = [
+        _research_investor_view(row) for row in (terminal.get("research_buy") or [])
+    ] if current else []
+    opportunities["research_wait_price"] = [
+        _research_investor_view(row) for row in (terminal.get("research_wait_price") or [])
+    ] if current else []
+    opportunities["research_gap"] = [
+        _research_investor_view(row) for row in (terminal.get("research_gap") or [])
+    ] if current else []
     opportunities["research_gap_count"] = _int(terminal.get("research_gap_count")) if current else 0
     opportunities["research_reject_count"] = _int(terminal.get("research_reject_count")) if current else 0
-    opportunities["urgent_evidence_queue"] = list(terminal.get("urgent_research_queue") or []) if current else []
+    opportunities["urgent_evidence_queue"] = [
+        _research_investor_view(row) for row in (terminal.get("urgent_research_queue") or [])
+    ] if current else []
     opportunities["research_actionable_count"] = (
         len(opportunities["research_buy"]) + len(opportunities["research_wait_price"])
     )
@@ -371,6 +451,56 @@ def _attach_terminal_research(
             ),
         }
     )
+
+
+def _finalize_investor_report_readiness(payload: dict[str, Any]) -> None:
+    holdings = payload.get("pillar_1_holdings_deep_analysis") or {}
+    holding_rows = [row for row in (holdings.get("rows") or []) if isinstance(row, Mapping)]
+    opportunities = payload.get("pillar_3_deep_opportunities") or {}
+    account = payload.get("today_account_plan") or {}
+    capital = payload.get("pillar_2_world_social_market_capital_map") or {}
+    coverage = capital.get("capital_evidence_coverage") or {}
+    runtime = payload.get("deep_calculation_runtime") or {}
+
+    holding_actions_complete = all(
+        bool(str(row.get("investor_action") or "").strip()) for row in holding_rows
+    )
+    terminal_current = opportunities.get("research_terminal_current") is True
+    terminal_available = (opportunities.get("terminal_research_snapshot") or {}).get("available") is True
+    account_action_complete = bool(str(account.get("plain_language") or "").strip())
+
+    # A report can remain action-complete while a newer research generation is
+    # still running: stale research is not promoted, and the safe candidate
+    # action becomes "do not add new exposure yet". Evidence freshness remains
+    # a separate limitation below.
+    action_complete = bool(holding_actions_complete and account_action_complete)
+
+    limitations: list[str] = []
+    if runtime.get("research_complete") is not True:
+        limitations.append("DEEP_RESEARCH_EVIDENCE_PARTIAL")
+    if terminal_available and not terminal_current:
+        limitations.append("TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP")
+    if coverage.get("financial_capital_evidence_available") is not True:
+        limitations.append("FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING")
+    if payload.get("decision_readiness", {}).get("validated_macro_to_a_share_handoff_available") is not True:
+        limitations.append("ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED")
+    if payload.get("decision_readiness", {}).get("live_execution_quote_coverage_complete") is not True:
+        limitations.append("LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION")
+
+    evidence_complete = not limitations
+    payload["investor_report_readiness"] = {
+        "status": "ACTION_COMPLETE" if action_complete else "ACTION_INCOMPLETE",
+        "action_complete": action_complete,
+        "evidence_complete": evidence_complete,
+        "limitations": limitations,
+        "interpretation": (
+            "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action "
+            "without promoting missing evidence. EVIDENCE completeness is tracked separately."
+        ),
+        "no_auto_trade": True,
+    }
+    payload["executive_summary"]["investor_action_report_complete"] = action_complete
+    payload["executive_summary"]["investor_evidence_complete"] = evidence_complete
 
 
 def _mark_stale_profile_lineage(payload: dict[str, Any]) -> None:
@@ -430,6 +560,7 @@ def build_runtime_decision_center(
     deep_calculation_status: Mapping[str, Any] | None = None,
     partial_deep_calculation_status: Mapping[str, Any] | None = None,
     terminal_research_decisions: Mapping[str, Any] | None = None,
+    era_evidence_bundle: Mapping[str, Any] | None = None,
     industry_links: Mapping[str, Any] | None = None,
     era_handoff: Mapping[str, Any] | None = None,
     generated_at: str | None = None,
@@ -442,6 +573,19 @@ def build_runtime_decision_center(
         industry_links=industry_links,
         era_handoff=era_handoff,
         generated_at=generated_at,
+    )
+    capital_coverage = summarize_era_evidence(era_evidence_bundle)
+    capital_map = payload["pillar_2_world_social_market_capital_map"]
+    capital_map["capital_evidence_coverage"] = capital_coverage
+    capital_map["direct_financial_capital_evidence_available"] = capital_coverage[
+        "financial_capital_evidence_available"
+    ]
+    payload["executive_summary"]["capital_flow_evidence_status"] = capital_coverage["status"]
+    payload["decision_readiness"]["financial_capital_evidence_available"] = capital_coverage[
+        "financial_capital_evidence_available"
+    ]
+    payload["decision_readiness"]["capital_flow_multi_layer_covered"] = (
+        capital_coverage["status"] == "MULTI_LAYER_COVERED"
     )
     selected_status, status_source = select_latest_deep_calculation_status(
         deep_calculation_status,
@@ -501,6 +645,7 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
+    _finalize_investor_report_readiness(payload)
     return payload
 
 
@@ -554,7 +699,8 @@ def _urgent_text(rows: list[Mapping[str, Any]]) -> str:
         code = str(row.get("code") or "")
         name = str(row.get("name") or "")
         score = row.get("quant_score")
-        parts.append(f"{code} {name}(quant={score})".strip())
+        action = str(row.get("investor_action") or "暂不买")
+        parts.append(f"{code} {name}(quant={score}；{action})".strip())
     return "；".join(parts)
 
 
@@ -567,7 +713,14 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
     missing = runtime.get("missing_requested_codes") or []
     opportunities = payload.get("pillar_3_deep_opportunities") or {}
     terminal = opportunities.get("terminal_research_snapshot") or {}
+    report_ready = payload.get("investor_report_readiness") or {}
     lines = [
+        "",
+        "## 今日汇报可执行性",
+        "",
+        f"- 行动结论完整：**{report_ready.get('action_complete') is True}**；证据完整：**{report_ready.get('evidence_complete') is True}**。",
+        f"- 当前限制：{_code_list_text(report_ready.get('limitations') or [], limit=10)}。",
+        "- 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。",
         "",
         "## 自动深算运行状态",
         "",
@@ -618,6 +771,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dashboard", type=Path, default=Path("data/investor_decision_dashboard/latest.json"))
     parser.add_argument("--era-radar", type=Path, default=Path("data/era_radar/latest.json"))
+    parser.add_argument("--era-evidence", type=Path, default=None)
     parser.add_argument("--era-handoff", type=Path, default=Path("data/era_radar/research_handoff/latest.json"))
     parser.add_argument("--automatic-deep-reviews", type=Path, default=Path("data/deep_calculation/latest_profiles.json"))
     parser.add_argument("--static-deep-reviews", type=Path, default=Path("config/v31_explicit_deep_reviews.json"))
@@ -629,14 +783,25 @@ def main() -> int:
     parser.add_argument("--output-md", type=Path, default=Path("LATEST_DECISION_CENTER.md"))
     args = parser.parse_args()
 
+    era_radar = _json(args.era_radar)
+    era_evidence_path = args.era_evidence
+    if era_evidence_path is None:
+        snapshot_id = str(era_radar.get("snapshot_id") or "").strip()
+        era_evidence_path = (
+            args.era_radar.parent / "evidence" / f"{snapshot_id}.json"
+            if snapshot_id
+            else None
+        )
+
     payload = build_runtime_decision_center(
         dashboard=_json(args.dashboard),
-        era_radar=_json(args.era_radar),
+        era_radar=era_radar,
         automatic_profiles=_json(args.automatic_deep_reviews),
         static_profiles=_json(args.static_deep_reviews),
         deep_calculation_status=_json(args.deep_calculation_status),
         partial_deep_calculation_status=_json(args.deep_calculation_partial_status),
         terminal_research_decisions=_json(args.terminal_research_decisions),
+        era_evidence_bundle=_json(era_evidence_path),
         industry_links=_json(args.industry_links),
         era_handoff=_json(args.era_handoff),
     )
