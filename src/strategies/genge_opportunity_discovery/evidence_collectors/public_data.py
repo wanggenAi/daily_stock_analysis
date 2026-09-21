@@ -43,6 +43,13 @@ SPECIALIZED_PUBLIC_SOURCES = {
             "工业和信息化部软件业运行数据",
         )
     ],
+    "电子信息制造业": [
+        (
+            "miit_electronic_information_public_data",
+            "https://www.miit.gov.cn/jgsj/yxj/index.html",
+            "工业和信息化部电子信息制造业运行数据",
+        )
+    ],
     "互联网": [
         (
             "miit_internet_public_data",
@@ -92,6 +99,7 @@ NBS_REPORT_TITLE_TOKENS = (
     "规模以上工业企业利润",
     "社会消费品零售总额",
     "工业生产者出厂价格",
+    "全国固定资产投资",
 )
 MOT_REPORT_TITLE_TOKENS = (
     "交通运输经济运行情况",
@@ -348,7 +356,7 @@ def collect_public_industry_data(
                 "industry": industry,
                 "search_terms": search_terms,
                 "source": url,
-                "version": 4,
+                "version": 5,
             })
             cached = cache.get(key)
             if cached is not None:
