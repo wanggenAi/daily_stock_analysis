@@ -15,8 +15,8 @@ from datetime import datetime, timezone
 from typing import Any, Mapping, Protocol
 
 CONTRACT = "GEN_GE_JEV_SHADOW_DECISION_V1"
-STATE_SCHEMA_VERSION = "GEN_GE_JEV_STOCK_STATE_V1"
-QUESTION_SET_VERSION = "GEN_GE_JEV_RESEARCH_ROUTING_V1"
+STATE_SCHEMA_VERSION = "GEN_GE_JEV_STOCK_STATE_V2"
+QUESTION_SET_VERSION = "GEN_GE_JEV_RESEARCH_ROUTING_V2"
 
 QUESTION_SPECS: dict[str, dict[str, Any]] = {
     "needs_more_evidence": {
@@ -31,15 +31,23 @@ QUESTION_SPECS: dict[str, dict[str, Any]] = {
         "type": "noul",
         "instructions": (
             "Would this entity benefit from expensive deep research now, rather than only routine "
-            "refresh, to resolve material research uncertainty? Judge research routing only. "
-            "Do not make or imply a trading recommendation."
+            "source refresh, to resolve material research uncertainty? Use supplied deterministic "
+            "triage signals such as urgent_research, research_priority, current-holding status, "
+            "resolved/unknown hard gates, and valuation research context only to decide research "
+            "effort. Deep research is for synthesis, conflict, or material unresolved reasoning; "
+            "do not choose it merely because evidence is missing. Do not make or imply a trading "
+            "recommendation."
         ),
     },
     "research_route": {
         "type": "choice",
         "instructions": (
             "Which research route best fits the supplied state right now? Choose exactly one route. "
-            "Do not make or imply a trading recommendation."
+            "Differentiate concrete missing/stale source evidence (EVIDENCE_REFRESH) from cases that "
+            "already have enough evidence to require synthesis or conflict resolution (DEEP_RESEARCH), "
+            "and from materially ambiguous/high-stakes cases needing HUMAN_REVIEW. Do not choose "
+            "EVIDENCE_REFRESH solely because some hard gates are UNKNOWN; use the supplied triage and "
+            "gate context. Do not make or imply a trading recommendation."
         ),
         "criteria": {
             "NO_ESCALATION": "No urgent extra research is indicated; normal lifecycle refresh is sufficient.",
@@ -61,7 +69,11 @@ QUESTION_SPECS: dict[str, dict[str, Any]] = {
         "type": "choice",
         "instructions": (
             "How much research attention should this entity receive relative to ordinary candidates? "
-            "Judge research priority only, not investment attractiveness."
+            "Use supplied deterministic triage signals such as current-holding status, urgent_research, "
+            "research_priority, screening_attractiveness, quant context, and unresolved hard gates. "
+            "Reserve HIGH for materially urgent or decision-relevant research; do not label an entity "
+            "HIGH merely because evidence is insufficient. Judge research priority only, not investment "
+            "attractiveness."
         ),
         "criteria": {
             "LOW": "Routine monitoring is sufficient; no material research urgency is visible.",
@@ -195,6 +207,48 @@ def _profile_gate_summary(profile: Mapping[str, Any] | None) -> dict[str, dict[s
     return result
 
 
+def _triage_sort_key(code: str, research_map: Mapping[str, Mapping[str, Any]]) -> tuple[Any, ...]:
+    row = research_map.get(code) if isinstance(research_map, Mapping) else None
+    research = row if isinstance(row, Mapping) else {}
+    urgent_rank = 0 if research.get("urgent_research") is True else 1
+    priority = str(research.get("research_priority") or "").strip().upper()
+    priority_rank = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}.get(priority, 9)
+    attractiveness = str(research.get("screening_attractiveness") or "").strip().upper()
+    attractiveness_rank = {"HIGH": 0, "NORMAL": 1, "LOW": 2}.get(attractiveness, 9)
+    quant_status = str(research.get("quant_status") or "").strip().upper()
+    quant_status_rank = {
+        "PRIORITY_RESEARCH": 0,
+        "NORMAL": 1,
+        "HARD_REJECT": 2,
+    }.get(quant_status, 3)
+    raw_score = research.get("quant_score")
+    quant_score = float(raw_score) if isinstance(raw_score, (int, float)) else float("-inf")
+    return (
+        urgent_rank,
+        priority_rank,
+        attractiveness_rank,
+        quant_status_rank,
+        -quant_score,
+        code,
+    )
+
+
+def _valuation_research_context(research: Mapping[str, Any]) -> dict[str, Any]:
+    raw = research.get("valuation") if isinstance(research, Mapping) else None
+    valuation = raw if isinstance(raw, Mapping) else {}
+    keys = (
+        "current_pe",
+        "historical_median_pe_reference",
+        "pe_to_history_ratio",
+        "required_profit_growth_pct",
+        "expectation_state",
+        "financial_review_status",
+        "earnings_quality_confidence",
+        "earnings_quality_score",
+    )
+    return {key: valuation.get(key) for key in keys if key in valuation}
+
+
 def build_stock_shadow_states(
     *,
     dashboard: Mapping[str, Any] | None,
@@ -231,7 +285,10 @@ def build_stock_shadow_states(
 
     unresolved_raw = status_obj.get("unresolved_reasons")
     unresolved = unresolved_raw if isinstance(unresolved_raw, Mapping) else {}
-    unresolved_codes = sorted(_code(code) for code in unresolved if _code(code))
+    unresolved_codes = sorted(
+        (_code(code) for code in unresolved if _code(code)),
+        key=lambda code: _triage_sort_key(code, research_map),
+    )
 
     selected: list[str] = []
     if scope in {"holdings", "combined"}:
@@ -294,6 +351,16 @@ def build_stock_shadow_states(
                     "deep_execution_status": str(status_obj.get("execution_status") or ""),
                     "deep_terminal_state": str(status_obj.get("research_terminal_state") or ""),
                     "deep_lambda_run_id": str(status_obj.get("lambda_run_id") or ""),
+                },
+                "triage_context": {
+                    "research_priority": str(research.get("research_priority") or ""),
+                    "urgent_research": research.get("urgent_research") is True,
+                    "urgent_research_reasons": list(research.get("urgent_research_reasons") or [])[:8],
+                    "quant_status": str(research.get("quant_status") or ""),
+                    "quant_score": research.get("quant_score"),
+                    "screening_attractiveness": str(research.get("screening_attractiveness") or ""),
+                    "industry": str(research.get("industry") or ""),
+                    "valuation": _valuation_research_context(research),
                 },
                 "source_lineage": {
                     "dashboard_snapshot_id": str(dashboard_obj.get("canonical_snapshot_id") or ""),
@@ -537,6 +604,9 @@ def evaluate_stock_shadow(
             "question_set_version": QUESTION_SET_VERSION,
             "existing_engine_action": str(state.get("existing_engine_action") or ""),
             "existing_needs_more_evidence": state.get("existing_needs_more_evidence") is True,
+            "triage_context": dict(state.get("triage_context") or {})
+            if isinstance(state.get("triage_context"), Mapping)
+            else {},
             "requested_model": config.model,
             "attempt_count": attempts,
             "latency_ms": latency_ms,
