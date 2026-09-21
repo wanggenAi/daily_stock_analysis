@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] 增加工信部行业分类页到带日期运行数据文章的发现链，并补充软件、互联网、纺织等行业路由。
 - [新功能] Jev 第二阶段新增只读研究路由桥接层：将 typed shadow 判断整理为补证据/深算/人工复核/无升级的持久化 advisory queue；仅手动 workflow_dispatch 成功后写回最新结果，自动 dispatch=false，不得压制确定性研究任务，不改变 Formal 决策、UNKNOWN 语义或 no-auto-trade。
 - [新功能] 增加 Jev Shadow Decision Layer 与 GitHub Actions 手动评估工作流；仅用于研究路由校准，不改变 Formal 决策、硬门槛、Candidate Lifecycle 或交易权限。
 - [修复] Deep Calculation 将仍满足当前语义校验的 VERIFIED/ACTIVE/HIGH 官方重大风险持久化为累计风险 ledger；后续官方附件瞬时 403/抓取失败不再抹掉已验证硬门槛 FAIL，同时损坏或缺失的新 ledger 会安全回退到上一份可信历史，UNKNOWN、Formal Authority 与 no-auto-trade 规则不变。
