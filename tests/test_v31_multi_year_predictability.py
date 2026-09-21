@@ -198,6 +198,46 @@ def test_generic_segment_region_and_post_label_product_scope_are_rejected():
         assert metrics["metric_provenance"]["revenue"]["reason"] == "SCOPED_SUBTOTAL_NOT_COMPANY_METRIC"
 
 
+def test_quarterly_table_rows_cannot_stand_in_for_annual_totals():
+    text = """
+    九、季度数据
+    单位：元
+    第一季度 第二季度 第三季度 第四季度
+    营业收入 1,064,399,637.59 1,186,976,201.68 1,269,449,861.67 1,214,795,357.49
+    归属于上市公司股东的净利润 195,348,364.84 235,263,440.00 245,999,461.86 160,487,991.55
+    经营活动产生的现金流量净额 183,465,857.89 253,650,903.56 290,494,735.15 360,126,402.66
+    """
+    metrics = extract_report_metrics(text, 2025)
+    for metric in ("revenue", "net_profit", "operating_cash_flow"):
+        assert metrics[metric] is None
+        provenance = metrics["metric_provenance"][metric]
+        assert provenance["verified"] is False
+        assert provenance["reason"] == "NON_ANNUAL_PERIOD_NOT_FISCAL_YEAR_METRIC"
+
+
+def test_annual_summary_wins_when_report_also_contains_quarterly_table():
+    text = """
+    二、主要会计数据和财务指标
+    单位：元
+    营业收入 4,735,621,902.73
+    归属于上市公司股东的净利润 836,099,254.25
+    经营活动产生的现金流量净额 1,087,737,899.28
+
+    九、分季度主要财务数据
+    单位：元
+    第一季度 第二季度 第三季度 第四季度
+    营业收入 1,064,399,637.59 1,186,976,201.68 1,269,449,861.67 1,214,795,357.49
+    归属于上市公司股东的净利润 195,348,364.84 235,263,440.00 245,999,461.86 160,487,991.55
+    经营活动产生的现金流量净额 183,465,857.89 253,650,903.56 290,494,735.15 360,126,402.66
+    """
+    metrics = extract_report_metrics(text, 2025)
+    assert metrics["revenue"] == 4_735_621_902.73
+    assert metrics["net_profit"] == 836_099_254.25
+    assert metrics["operating_cash_flow"] == 1_087_737_899.28
+    for metric in ("revenue", "net_profit", "operating_cash_flow"):
+        assert metrics["metric_provenance"][metric]["verified"] is True
+
+
 def test_wrapped_labels_units_and_values_are_layout_equivalent():
     compact = """
     单位：万元
