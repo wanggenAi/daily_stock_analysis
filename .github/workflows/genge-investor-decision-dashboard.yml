@@ -48,7 +48,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: genge-investor-decision-dashboard
+  group: genge-investor-decision-dashboard-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
   cancel-in-progress: false
 
 env:
