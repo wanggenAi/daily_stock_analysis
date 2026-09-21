@@ -42,8 +42,6 @@ on:
       - "tests/test_v31_multi_year_predictability.py"
       - "tests/test_v31_deep_provenance_audit.py"
       - "tests/test_runbei_archetype_deep_handoff.py"
-      - "tests/test_genge_v31_deep_calculation_workflow_contract.py"
-      - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
       - ".github/workflows/genge-v31-deep-provenance-audit.yml"
   workflow_run:
     workflows:
@@ -387,6 +385,7 @@ jobs:
           PY
 
       - name: Persist terminal deep-calculation state with optimistic replay
+        id: persist
         if: steps.closure.outcome == 'success'
         shell: bash
         run: |
@@ -417,18 +416,41 @@ jobs:
               echo "Deep code epoch ${DEEP_CODE_EPOCH_SHA} is superseded by newer Deep/evidence code on origin/main; preserving history only."
             fi
 
+            # GitHub run ids are assigned when runs are created and are monotonic.
+            # A slower, older run must never roll shared latest_* pointers backward
+            # after a newer run has already persisted successfully.
+            latest_run_id="0"
+            if [ -s data/deep_calculation/latest_status.json ]; then
+              candidate="$(jq -r '.lambda_run_id // "0"' data/deep_calculation/latest_status.json 2>/dev/null || echo "0")"
+              if [[ "$candidate" =~ ^[0-9]+$ ]]; then
+                latest_run_id="$candidate"
+              fi
+            fi
+            if [ "$latest_run_id" -gt "$GITHUB_RUN_ID" ]; then
+              superseded=true
+              echo "Deep run ${GITHUB_RUN_ID} is older than persisted latest Lambda ${latest_run_id}; preserving history only."
+            fi
+
             cp /tmp/genge-deep-calc/latest_status.json "data/deep_calculation/history/${GITHUB_RUN_ID}.json"
             cp /tmp/genge-deep-calc/latest_evidence.json "data/deep_calculation/history/${GITHUB_RUN_ID}.evidence.json"
+            owns_latest=false
             if [ "$superseded" = false ]; then
               cp /tmp/genge-deep-calc/latest_status.json data/deep_calculation/latest_status.json
               cp /tmp/genge-deep-calc/latest_profiles.json data/deep_calculation/latest_profiles.json
               cp /tmp/genge-deep-calc/latest.md data/deep_calculation/latest.md
               cp /tmp/genge-deep-calc/latest_evidence.json data/deep_calculation/latest_evidence.json
+              owns_latest=true
             fi
             git add -f data/deep_calculation
-            git diff --cached --quiet && exit 0
+            if git diff --cached --quiet; then
+              echo "owns_latest=$owns_latest" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
             git commit -m "Persist terminal deep calculation ${GITHUB_RUN_ID} [skip ci]"
-            git push origin HEAD:main && exit 0
+            if git push origin HEAD:main; then
+              echo "owns_latest=$owns_latest" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
           done
           exit 1
 
@@ -511,7 +533,7 @@ jobs:
           retention-days: 30
 
       - name: Dispatch provenance and terminal convergence immediately
-        if: steps.closure.outcome == 'success'
+        if: steps.closure.outcome == 'success' && steps.persist.outputs.owns_latest == 'true'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
