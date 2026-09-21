@@ -450,6 +450,25 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
             f"**{x.get('investor_action') or '—'}** | {x.get('valuation_confidence') or '—'} | "
             f"{lifecycle_text} | {x['deep_review']['status']} |"
         )
+    lines += ["", "### 每只持仓的决策链", ""]
+    for x in h["rows"]:
+        deep = x.get("deep_review") or {}
+        lifecycle = x.get("candidate_lifecycle") if isinstance(x.get("candidate_lifecycle"), Mapping) else {}
+        price = _num(x.get("current_price"))
+        neutral = _num(x.get("neutral_value"))
+        price_to_value = (price / neutral) if price is not None and neutral not in (None, 0) else None
+        lifecycle_text = (
+            f"{lifecycle.get('lifecycle_state','—')} / seen={lifecycle.get('seen_count',0)}"
+            if lifecycle
+            else "未接入当前生命周期快照"
+        )
+        reason = str(x.get("reason_codes") or "无显式原因码")
+        lines.append(
+            f"- **{x.get('name','')} {x.get('code','')}**：现价 {_fmt(price)} / 价值中枢 {_fmt(neutral)}"
+            f"（价/值 {_fmt(price_to_value)}）；估值信心 **{x.get('valuation_confidence') or '—'}**；"
+            f"Formal **{x.get('formal_action') or '—'}**；Deep **PASS {deep.get('pass_count',0)} / FAIL {deep.get('fail_count',0)} / UNKNOWN {deep.get('unknown_count',0)}**；"
+            f"Lifecycle **{lifecycle_text}**；原因码：`{reason}`。"
+        )
     lines += ["", "## 2. 世界/社会/市场：钱可能在哪里", ""]
     market = m.get("a_share_market_snapshot") or {}
     lines += ["### 今日A股大盘脉搏", ""]
