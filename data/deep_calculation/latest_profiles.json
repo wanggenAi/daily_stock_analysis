@@ -2,17 +2,21 @@
   "authority": "RESEARCH_ONLY",
   "automatic_formal_buy_allowed": false,
   "contract": "GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1",
-  "deep_code_epoch_sha": "c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9",
+  "deep_code_epoch_sha": "a89e69c66ba769ed17f68a121700d3a1f9c4b275",
   "execution_status": "SUCCESS",
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-21T02:08:20+00:00",
-  "generated_at": "2026-09-21T01:43:01+00:00",
+  "gap_closure_generated_at": "2026-09-21T03:32:52+00:00",
+  "generated_at": "2026-09-21T03:08:41+00:00",
+  "historical_material_event_evidence_count": 13,
+  "historical_material_event_failed_gate_count": 19,
   "immediate_retry_required": false,
-  "lambda_run_id": "35551673513",
-  "material_event_failed_gate_count": 0,
-  "material_event_pass_override_count": 0,
+  "lambda_run_id": "35556365712",
+  "material_event_failed_gate_count": 19,
+  "material_event_pass_override_count": 1,
+  "material_event_risk_ledger_complete": true,
+  "material_event_risk_ledger_count": 13,
   "new_evidence_count": 903,
   "no_auto_trade": true,
   "predictability_resolved_gate_count": 0,
@@ -1184,17 +1188,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "ILLEGAL_GUARANTEE",
+              "publish_date": "2026-04-29",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "吉林化纤：关联方非经营性资金占用及清偿情况和违规担保及解除情况的专项报告：和违规担保及解除情况的专项报告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/aaca5ea3-52f1-4120-8866-3adcc0ccbaaa.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: ILLEGAL_GUARANTEE.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -2504,16 +2514,23 @@
           "status": "PASS"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2026-08-12",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "西部创业：关于子公司破产清算进展情况的公告：关于子公司破产清算进展情况的公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-12/dad8699c-0b2c-4e17-b7df-9e8c293b20b7.PDF"
             }
           ],
-          "rationale": "Same-run PIT financial review is OK with HIGH earnings-quality confidence, positive normalized operating profit and operating cash flow, cash conversion >= 0.80, and earnings-quality score >= 70.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "PASS"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -2534,239 +2551,23 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "classification": "UNKNOWN",
-              "coverage_years": [
-                2023,
-                2024
-              ],
-              "cyclical_or_resource": true,
-              "metrics_by_year": [
-                {
-                  "fiscal_year": 2025,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "归属于上市\n公司股东的\n净利润(元) \n292,557,430.47 263,007,747.05 11.24% 242,400,833.26 \n归属于上市\n公司股东的\n扣除非经常\n性损益的净\n利润(元) \n149,558,825.70 276,503,411.58 -45.91% 250,870,293.32 \n经营活动产\n生的现金流\n量净额(",
-                      "extraction_mode": "ANNUAL_REPORT_CURRENT_ROW",
-                      "raw_value": 292557430.47,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "METRIC_LABEL",
-                      "value_yuan": 292557430.47,
-                      "verified": true
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "经营活动产\n生的现金流\n量净额 \n106,053,689.55 100,646,797.12 116,435,735.77 60,170,442.97 \n上述财务指标或其加总数是否与公司已披露季度报告、半\n年度报告相关财务指标存在重大差异 \n□是 否 \n九、非经常性损益项目及金额 \n适用 □不适用 \n单位:元 \n项 目 2025 年金额",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 106053689.55,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 106053689.55,
-                      "verified": true
-                    },
-                    "revenue": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NO_TRUSTED_UNIT_HEADER",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    }
-                  },
-                  "net_profit": 292557430.47,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": 106053689.55,
-                  "revenue": null,
-                  "unit_provenance_required": true
-                },
-                {
-                  "fiscal_year": 2024,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "归属于上市\n公司股东的\n净利润 \n84,313,918.08 71,775,071.99 68,055,057.97 38,863,699.01 \n 2024 年年度报告全文 \n \n- 10 - \n归属于上市\n公司股东的\n扣除非经常\n性损益的净\n利润 \n86,933,782.40 75,214,834.19 57,645,770.92 5",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 84313918.08,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 84313918.08,
-                      "verified": true
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "经营活动产\n生的现金流\n量净额 \n198,749,824.52 124,101,127.92 196,980,773.69 52,905,341.57 \n上述财务指标或其加总数是否与公司已披露季度报告、半\n年度报告相关财务指标存在重大差异 \n□是 否 \n九、非经常性损益项目及金额 \n适用 □不适用 \n单位:元 \n项 目 2024 年金额",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 198749824.52,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 198749824.52,
-                      "verified": true
-                    },
-                    "revenue": {
-                      "excerpt": "营业收入 328,131,551.61 320,652,531.41 345,892,019.95 350,646,591.52 \n归属于上市\n公司股东的\n净利润 \n84,313,918.08 71,775,071.99 68,055,057.97 38,863,699.01 \n 2024 年年度报告全文 \n \n-",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 328131551.61,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 328131551.61,
-                      "verified": true
-                    }
-                  },
-                  "net_profit": 84313918.08,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": 198749824.52,
-                  "revenue": 328131551.61,
-                  "unit_provenance_required": true
-                },
-                {
-                  "fiscal_year": 2023,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "归属于上市公司\n股东的净利润 79,342,022.17 47,454,097.70 69,995,216.13 45,609,497.26 \n归属于上市公司\n股东的扣除非经\n常性损益的净利\n润 \n81,996,709.98 48,693,001.19 72,701,863.49 47,478,718.66 \n经营活动产生的\n现金流量",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 79342022.17,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 79342022.17,
-                      "verified": true
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "经营活动产生的\n现金流量净额 320,419,497.08 233,827,753.01 18,730,091.54 89,533,856.75 \n \n 2023 年年度报告全文 \n \n- 10 - \n上述财务指标或其加总数是否与公司已披露季度报告 、半\n年度报告相关财务指标存在重大差异 \n□是 否 \n九、非经常性损益项目及金额 \n",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 320419497.08,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 320419497.08,
-                      "verified": true
-                    },
-                    "revenue": {
-                      "excerpt": "营业收入 377,687,367.46 327,220,406.37 494,045,958.60 466,321,740.93 \n归属于上市公司\n股东的净利润 79,342,022.17 47,454,097.70 69,995,216.13 45,609,497.26 \n归属于上市公司\n股东的扣除非经\n常性损益的",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 377687367.46,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 377687367.46,
-                      "verified": true
-                    }
-                  },
-                  "net_profit": 79342022.17,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": 320419497.08,
-                  "revenue": 377687367.46,
-                  "unit_provenance_required": true
-                },
-                {
-                  "fiscal_year": 2022,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "经营活动产生的 \n现金流量净额 \n30,738,092.89 185,851,585.49 100,459,099.07 231,793,889.89 \n上述财务指标或其加总数是否与公司已披露季度报告、半\n年度报告相关财务指标存在重大差异 \n□是 否 \n说明: \n(一)经 2023 年 4 月 3 日召开的第十届董事会第二次会议\n(临时",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 30738092.89,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 30738092.89,
-                      "verified": true
-                    },
-                    "revenue": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NO_TRUSTED_UNIT_HEADER",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    }
-                  },
-                  "net_profit": null,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": 30738092.89,
-                  "revenue": null,
-                  "unit_provenance_required": true
-                },
-                {
-                  "fiscal_year": 2021,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NO_TRUSTED_UNIT_HEADER",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "经营活动产生的\n现金流量净额 80,836,649.87 112,590,804.81 45,119,504.23 -15,206,722.01 \n上述财务指标或其加总数是否与公司已披露季度报告、 半年度报\n告相关财务指标存在重大差异 □ 是 √ 否 \n九、非经常性损益项目及金额 √ 适用 □ 不适用 \n单位:元 \n项目 2021 年",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 80836649.87,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "TABLE_HEADER",
-                      "value_yuan": 80836649.87,
-                      "verified": true
-                    },
-                    "revenue": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NO_TRUSTED_UNIT_HEADER",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    }
-                  },
-                  "net_profit": null,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": 80836649.87,
-                  "revenue": null,
-                  "unit_provenance_required": true
-                }
-              ],
-              "publish_date": "2026-04-29",
-              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2026-08-12",
               "source_domain": "disc.static.szse.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "source_urls": [
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/76c15deb-305b-4a43-adb7-e65f03f0f215.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-25/e9d6e971-e150-4485-afb1-328c5f51adf1.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2024-04-25/78704561-c343-4f9f-b2b9-ad6f83ea1958.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2023-04-24/1288c7a0-ad97-4e4b-963b-875227725990.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2022-04-28/18f664a0-b1dd-4f00-b11f-de48658ce05b.PDF"
-              ],
-              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2023, 2024]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/76c15deb-305b-4a43-adb7-e65f03f0f215.PDF"
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "西部创业：关于子公司破产清算进展情况的公告：关于子公司破产清算进展情况的公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-12/dad8699c-0b2c-4e17-b7df-9e8c293b20b7.PDF"
             }
           ],
-          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         }
       },
       "industry": "G53铁路运输业",
@@ -5062,17 +4863,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "DEBT_DEFAULT",
+              "publish_date": "2025-12-06",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "锦龙股份：关于部分债务到期未能清偿的进展公告：关于部分债务到期未能清偿的进展公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-12-06/a6d63fff-a979-4045-9684-6bae96516e6b.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: DEBT_DEFAULT.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -5093,29 +4900,23 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "classification": "UNKNOWN",
-              "coverage_years": [],
-              "cyclical_or_resource": false,
-              "metrics_by_year": [],
-              "publish_date": null,
-              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "szse.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "source_urls": [],
-              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": null
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "DEBT_DEFAULT",
+              "publish_date": "2025-12-06",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "锦龙股份：关于部分债务到期未能清偿的进展公告：关于部分债务到期未能清偿的进展公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-12-06/a6d63fff-a979-4045-9684-6bae96516e6b.PDF"
             }
           ],
-          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: DEBT_DEFAULT.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         }
       },
       "industry": "J67资本市场服务",
@@ -5216,17 +5017,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "FUNDS_OCCUPATION",
+              "publish_date": "2025-08-26",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "湖南发展：董事会关于拟购买资产资金占用问题的说明：关于拟购买资产资金占用问题的说明",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-08-26/22580421-1ab4-4469-8710-7b6bcd287919.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -6640,46 +6447,6 @@
                   "operating_cash_flow": null,
                   "revenue": null,
                   "unit_provenance_required": true
-                },
-                {
-                  "fiscal_year": 2021,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    },
-                    "revenue": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "METRIC_VALUE_NOT_FOUND",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    }
-                  },
-                  "net_profit": null,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": null,
-                  "revenue": null,
-                  "unit_provenance_required": true
                 }
               ],
               "publish_date": "2026-04-28",
@@ -6691,8 +6458,7 @@
                 "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-28/3a5b77b1-aa33-4f2f-bfec-fed79e67fc25.PDF",
                 "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-29/be27dc0b-3d45-4718-9b7b-d8c0968d1df7.PDF",
                 "https://disc.static.szse.cn/download/disc/disk03/finalpage/2024-04-27/83b094ea-e043-430b-b4ef-66a18120bb28.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2023-04-28/6a9fb43e-6fde-4f60-90a9-c93b1994fcd4.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2022-04-30/f797c51a-526d-4297-92cb-1e359317cc20.PDF"
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2023-04-28/6a9fb43e-6fde-4f60-90a9-c93b1994fcd4.PDF"
               ],
               "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
               "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-28/3a5b77b1-aa33-4f2f-bfec-fed79e67fc25.PDF"
@@ -9568,6 +9334,86 @@
                   "operating_cash_flow": null,
                   "revenue": null,
                   "unit_provenance_required": true
+                },
+                {
+                  "fiscal_year": 2024,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "revenue": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "NO_TRUSTED_UNIT_HEADER",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    }
+                  },
+                  "net_profit": null,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": null,
+                  "revenue": null,
+                  "unit_provenance_required": true
+                },
+                {
+                  "fiscal_year": 2023,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "revenue": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "NO_NEARBY_UNIT_HEADER",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    }
+                  },
+                  "net_profit": null,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": null,
+                  "revenue": null,
+                  "unit_provenance_required": true
                 }
               ],
               "publish_date": "2026-04-17",
@@ -9576,7 +9422,9 @@
               "source_domain": "disc.static.szse.cn",
               "source_type": "OFFICIAL_REPORT",
               "source_urls": [
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-17/d7c94f41-f08a-4379-988e-a93dc221e87c.PDF"
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-17/d7c94f41-f08a-4379-988e-a93dc221e87c.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-25/6e53248e-5def-4557-af98-99c77021fa41.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2024-04-25/4e637e00-89ee-482d-9076-140d9cd4251a.PDF"
               ],
               "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
               "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-17/d7c94f41-f08a-4379-988e-a93dc221e87c.PDF"
@@ -12335,17 +12183,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2025-11-14",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "旺能环境：关于法院裁定受理子公司预重整并指定预重整管理人的公告：关于法院裁定受理子公司预重整并指定预重整管理人的公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-11-14/8d500a5d-cd6b-4a88-895f-377d8ee634f4.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -12376,29 +12230,23 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "classification": "UNKNOWN",
-              "coverage_years": [],
-              "cyclical_or_resource": false,
-              "metrics_by_year": [],
-              "publish_date": null,
-              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "szse.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "source_urls": [],
-              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": null
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2025-11-14",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "旺能环境：关于法院裁定受理子公司预重整并指定预重整管理人的公告：关于法院裁定受理子公司预重整并指定预重整管理人的公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-11-14/8d500a5d-cd6b-4a88-895f-377d8ee634f4.PDF"
             }
           ],
-          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         }
       },
       "industry": "D44电力、热力生产和供应业",
@@ -12586,17 +12434,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "DEBT_DEFAULT",
+              "publish_date": "2026-07-30",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "云南能投：云南能源投资股份有限公司关于向参股公司所提供的委托贷款逾期的进展公告：关于向参股公司所提供的委托贷款逾期的进展公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-30/71531203-5d79-4809-b651-018f08f245be.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: DEBT_DEFAULT.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -12627,29 +12481,23 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "classification": "UNKNOWN",
-              "coverage_years": [],
-              "cyclical_or_resource": false,
-              "metrics_by_year": [],
-              "publish_date": null,
-              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "szse.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "source_urls": [],
-              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": null
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "DEBT_DEFAULT",
+              "publish_date": "2026-07-30",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "云南能投：云南能源投资股份有限公司关于向参股公司所提供的委托贷款逾期的进展公告：关于向参股公司所提供的委托贷款逾期的进展公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-30/71531203-5d79-4809-b651-018f08f245be.PDF"
             }
           ],
-          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: DEBT_DEFAULT.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         }
       },
       "industry": "D44电力、热力生产和供应业",
@@ -13597,17 +13445,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "FUNDS_OCCUPATION",
+              "publish_date": "2025-08-27",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "东港股份：防止大股东及关联方占用资金制度（2025.8）：防止大股东及关联方占用资金制度",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-08-27/4542d5e0-7cd3-4965-bd2b-ae7e33598b96.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -13810,6 +13664,46 @@
                   "operating_cash_flow": null,
                   "revenue": null,
                   "unit_provenance_required": true
+                },
+                {
+                  "fiscal_year": 2023,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "revenue": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    }
+                  },
+                  "net_profit": null,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": null,
+                  "revenue": null,
+                  "unit_provenance_required": true
                 }
               ],
               "publish_date": "2026-04-25",
@@ -13819,7 +13713,8 @@
               "source_type": "OFFICIAL_REPORT",
               "source_urls": [
                 "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-25/8e5bfa5e-f1e8-4107-bdd7-590cc48e0f9e.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-25/09e83402-c61f-46c5-b336-b4c97683a11d.PDF"
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-25/09e83402-c61f-46c5-b336-b4c97683a11d.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2024-04-30/ee5d4d56-0994-484d-92d6-16f17b382853.PDF"
               ],
               "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
               "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-25/8e5bfa5e-f1e8-4107-bdd7-590cc48e0f9e.PDF"
@@ -15934,17 +15829,23 @@
     "002268": {
       "gates": {
         "earnings_authenticity": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "NON_STANDARD_AUDIT",
+              "publish_date": "2025-04-29",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "电科网安：会计师事务所对非标意见涉及事项专项说明：《深圳证券交易所股票上市规则（2024 年修订）》等规定，现对导致非标意见的事项予以说明。",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-29/22c103d4-fac2-4e98-a60b-57316007aa6c.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with earnings_authenticity: NON_STANDARD_AUDIT.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -18320,17 +18221,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "FUNDS_OCCUPATION",
+              "publish_date": "2026-04-29",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "康盛股份：控股股东及其他关联方占用资金情况的专项审计说明：控股股东及其他关联方占用资金情况的",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/915b0157-f2bc-403c-a3ab-fbca58cf6e79.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -18788,17 +18695,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "FUNDS_OCCUPATION",
+              "publish_date": "2026-04-29",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "尤夫股份：防止大股东及关联方占用资金制度：防止大股东及关联方占用资金制度",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/4473ff75-c3d2-4bcb-b3a7-ec50cee8dfec.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: FUNDS_OCCUPATION.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -18971,17 +18884,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2026-07-14",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "杭氧股份：关于公司全资子公司拟申请破产清算的公告：关于公司全资子公司拟申请破产清算的公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-14/fdcb3ec2-42d0-47fd-9412-29978fee391d.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -19012,29 +18931,23 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "classification": "UNKNOWN",
-              "coverage_years": [],
-              "cyclical_or_resource": false,
-              "metrics_by_year": [],
-              "publish_date": null,
-              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "szse.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "source_urls": [],
-              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": null
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2026-07-14",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "杭氧股份：关于公司全资子公司拟申请破产清算的公告：关于公司全资子公司拟申请破产清算的公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-07-14/fdcb3ec2-42d0-47fd-9412-29978fee391d.PDF"
             }
           ],
-          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         }
       },
       "industry": "C35专用设备制造业",
@@ -20501,15 +20414,58 @@
               "classification": "UNKNOWN",
               "coverage_years": [],
               "cyclical_or_resource": true,
-              "metrics_by_year": [],
-              "publish_date": null,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "AMBIGUOUS_METRIC_VALUES_FOR_FISCAL_YEAR",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "revenue": {
+                      "excerpt": "营业收入 205,626,134.31 261,960,014.25 282,432,032.38 295,781,788.12\n归属于上市公司股东的净利润 13,647,287.37 19,160,477.96 24,714,549.30 7,334,495.05\n归属于上市公司股东的扣除非经\n常性损益的净利润 1",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": 205626134.31,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "TABLE_HEADER",
+                      "value_yuan": 205626134.31,
+                      "verified": true
+                    }
+                  },
+                  "net_profit": null,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": null,
+                  "revenue": 205626134.31,
+                  "unit_provenance_required": true
+                }
+              ],
+              "publish_date": "2026-08-25",
               "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
               "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "szse.cn",
+              "source_domain": "disc.static.szse.cn",
               "source_type": "OFFICIAL_REPORT",
-              "source_urls": [],
+              "source_urls": [
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/9dd97f30-5d55-4da8-a94e-04e107d46862.PDF"
+              ],
               "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": null
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/9dd97f30-5d55-4da8-a94e-04e107d46862.PDF"
             }
           ],
           "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
@@ -26776,99 +26732,15 @@
               "classification": "UNKNOWN",
               "coverage_years": [],
               "cyclical_or_resource": false,
-              "metrics_by_year": [
-                {
-                  "fiscal_year": 2025,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "归属于上市公\n司股东的净利\n润(元)\n221,644,035.57\n65,024,468.5\n2\n55,774,960.7\n8 297.39% 124,949,766.71\n124,949,766.71\n归属于上市公\n司股东的扣除\n非经常性损益\n的净利润\n(元)\n137,019,696.57\n94,600,675.0\n7\n85,351,167.3\n3 60.54% 93",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 65024468.5,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "METRIC_LABEL",
-                      "value_yuan": 65024468.5,
-                      "verified": true
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NARRATIVE_OR_SECTION_BOUNDARY_BEFORE_VALUE",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    },
-                    "revenue": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NO_TRUSTED_UNIT_HEADER",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    }
-                  },
-                  "net_profit": 65024468.5,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": null,
-                  "revenue": null,
-                  "unit_provenance_required": true
-                },
-                {
-                  "fiscal_year": 2024,
-                  "metric_provenance": {
-                    "net_profit": {
-                      "excerpt": "归属于上市公\n司股东的净利\n润(元) \n65,024,468.5\n2 \n124,949,766.71 \n124,949,766.71 -47.96% 199,758,682.65 \n199,758,682.65 \n归属于上市公\n司股东的扣除\n非经常性损益\n的净利润\n(元) \n94,600,675.0\n7 \n93,865,307.4\n3 \n93",
-                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
-                      "raw_value": 65024468.5,
-                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
-                      "unit": "元",
-                      "unit_source": "METRIC_LABEL",
-                      "value_yuan": 65024468.5,
-                      "verified": true
-                    },
-                    "operating_cash_flow": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NARRATIVE_OR_SECTION_BOUNDARY_BEFORE_VALUE",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    },
-                    "revenue": {
-                      "excerpt": "",
-                      "extraction_mode": null,
-                      "raw_value": null,
-                      "reason": "NO_TRUSTED_UNIT_HEADER",
-                      "unit": null,
-                      "unit_source": null,
-                      "value_yuan": null,
-                      "verified": false
-                    }
-                  },
-                  "net_profit": 65024468.5,
-                  "normalization_unit": "CNY_YUAN",
-                  "operating_cash_flow": null,
-                  "revenue": null,
-                  "unit_provenance_required": true
-                }
-              ],
-              "publish_date": "2026-04-27",
+              "metrics_by_year": [],
+              "publish_date": null,
               "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
               "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "disc.static.szse.cn",
+              "source_domain": "szse.cn",
               "source_type": "OFFICIAL_REPORT",
-              "source_urls": [
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-27/5b81ba73-2949-4cbb-8b4d-e118b27426cd.PDF",
-                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-24/fea3d7c9-d6c6-4fad-8db8-2887f07f7128.PDF"
-              ],
+              "source_urls": [],
               "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-27/5b81ba73-2949-4cbb-8b4d-e118b27426cd.PDF"
+              "url": null
             }
           ],
           "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
@@ -27237,17 +27109,23 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2026-09-04",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "南网能源：关于孙公司破产重整事项的进展公告：关于孙公司破产重整事项的进展公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-09-04/467408a4-a68c-4641-a99f-5c26bf6b0600.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with financial_safety: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "long_term_demand": {
           "confidence": "",
@@ -27268,29 +27146,23 @@
           "terminal_unresolved_reason": "NO_STRICT_MACHINE_RULE_PROVES_DURABLE_COMPETITIVE_ADVANTAGE"
         },
         "predictability": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
-              "classification": "UNKNOWN",
-              "coverage_years": [],
-              "cyclical_or_resource": false,
-              "metrics_by_year": [],
-              "publish_date": null,
-              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
-              "source_domain": "szse.cn",
-              "source_type": "OFFICIAL_REPORT",
-              "source_urls": [],
-              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[]; unit_provenance=required; normalization=CNY_YUAN",
-              "url": null
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "BANKRUPTCY_RESTRUCTURING",
+              "publish_date": "2026-09-04",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "南网能源：关于孙公司破产重整事项的进展公告：关于孙公司破产重整事项的进展公告",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-09-04/467408a4-a68c-4641-a99f-5c26bf6b0600.PDF"
             }
           ],
-          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with predictability: BANKRUPTCY_RESTRUCTURING.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         }
       },
       "industry": "M75科技推广和应用服务业",
@@ -28679,17 +28551,23 @@
     "300163": {
       "gates": {
         "earnings_authenticity": {
-          "confidence": "MACHINE",
+          "confidence": "HIGH",
           "evidence": [
             {
-              "reference": "valuation_research_queue.csv",
-              "source_type": "SAME_RUN_PIT_MACHINE"
+              "event_severity": "HIGH",
+              "event_status": "ACTIVE",
+              "event_type": "NON_STANDARD_AUDIT",
+              "publish_date": "2026-04-28",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "EXCHANGE_DISCLOSURE",
+              "summary": "先锋新材：董事会关于2025年度审计报告中非标准审计意见涉及事项的专项说明：关于2025年度审计报告中非标准审计意见涉及事项的专项说明",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-28/9c279be9-b395-4a2c-af4a-5e75c38f25c2.PDF"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
-          "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
+          "evidence_persistence": "HISTORICAL_VERIFIED_ACTIVE_HIGH",
+          "rationale": "Verified ACTIVE/HIGH exchange disclosure establishes a material risk incompatible with earnings_authenticity: NON_STANDARD_AUDIT.",
+          "source": "AUTOMATIC_VERIFIED_MATERIAL_EVENT_CLOSURE",
+          "status": "FAIL"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -76712,14 +76590,14 @@
       "research_terminal_state": "EVIDENCE_EXHAUSTED"
     }
   },
-  "progressed_gate_count": 0,
+  "progressed_gate_count": 19,
   "research_outcome": "EVIDENCE_EXHAUSTED",
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
   "reverified_upstream_pass_count": 7,
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
   "source_run_id": "35513006839",
-  "trigger_source": "PUSH_CHANGE",
+  "trigger_source": "EVIDENCE_LAYER_CHANGE",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
