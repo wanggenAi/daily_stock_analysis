@@ -21,11 +21,7 @@ PUBLIC_SOURCES = [
 ]
 SPECIALIZED_PUBLIC_SOURCES = {
     "航运": [
-        (
-            "mot_public_data",
-            "https://www.mot.gov.cn/shuju/",
-            "交通运输部行业运行数据",
-        )
+        ("mot_public_data", "https://www.mot.gov.cn/shuju/", "交通运输部行业运行数据"),
     ],
     "物流": [
         (
@@ -35,6 +31,27 @@ SPECIALIZED_PUBLIC_SOURCES = {
             "&_rangeTimeGte=&_channelName=&page=1",
             "国家邮政局行业要闻",
         )
+    ],
+    "软件和信息技术服务业": [
+        ("miit_software_public_data", "https://www.miit.gov.cn/gxsj/tjfx/rjy/index.html", "工业和信息化部软件业运行数据"),
+    ],
+    "互联网和相关服务": [
+        ("miit_internet_public_data", "https://www.miit.gov.cn/gxsj/tjfx/hlw/index.html", "工业和信息化部互联网行业运行数据"),
+    ],
+    "纺织": [
+        ("miit_textile_public_data", "https://www.miit.gov.cn/gxsj/tjfx/xfpgy/fz/index.html", "工业和信息化部纺织行业运行数据"),
+    ],
+    "汽车": [
+        ("miit_auto_public_data", "https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/index.html", "工业和信息化部汽车行业运行数据"),
+    ],
+    "航空": [
+        ("miit_aviation_public_data", "https://www.miit.gov.cn/gxsj/tjfx/zbgy/myhkgy/index.html", "工业和信息化部民用航空工业运行数据"),
+    ],
+    "有色": [
+        ("miit_raw_material_public_data", "https://www.miit.gov.cn/gxsj/tjfx/yclgy/index.html", "工业和信息化部原材料工业运行数据"),
+    ],
+    "化工": [
+        ("miit_raw_material_public_data", "https://www.miit.gov.cn/gxsj/tjfx/yclgy/index.html", "工业和信息化部原材料工业运行数据"),
     ],
 }
 SPB_OPERATIONAL_TITLE_TOKENS = ("行业运行情况", "行业发展情况", "业务量")
@@ -48,6 +65,8 @@ MOT_REPORT_TITLE_TOKENS = (
     "交通运输经济运行情况",
     "水运经济运行",
 )
+MIIT_OPERATIONAL_TITLE_TOKENS = ("运行情况", "运行分析", "经济运行", "主要指标")
+_MIIT_DATED_TITLE_RE = re.compile(r"20\d{2}年")
 OFFICIAL_DOMAIN_FAMILIES = ("mot.gov.cn",)
 
 
@@ -159,6 +178,23 @@ def _report_article_candidates(
             break
     return candidates
 
+
+def _miit_operational_article_candidates(
+    html: str, *, base_url: str, limit: int = 20,
+) -> list[tuple[str, str, str]]:
+    """Find dated MIIT operating-statistics releases inside a category page.
+
+    Category/navigation links can contain words such as 运行分析 but have no
+    publication date. Requiring an explicit year in the link title prevents
+    a category page from being mistaken for the evidence article.
+    """
+    rows = _report_article_candidates(
+        html,
+        base_url=base_url,
+        title_tokens=MIIT_OPERATIONAL_TITLE_TOKENS,
+        limit=limit * 2,
+    )
+    return [row for row in rows if _MIIT_DATED_TITLE_RE.search(row[0])][:limit]
 
 def _extract_report_numeric_context(text: str, keywords: list[str]) -> dict[str, str]:
     """Extract table values even when HTML cells became separate text lines."""
@@ -324,6 +360,10 @@ def collect_public_industry_data(
                 elif collector == "mot_public_data":
                     article_attempts = _report_article_candidates(
                         listing_html, base_url=url, title_tokens=MOT_REPORT_TITLE_TOKENS,
+                    )
+                elif collector.startswith("miit_") and collector != "miit_public_data":
+                    article_attempts = _miit_operational_article_candidates(
+                        listing_html, base_url=url,
                     )
                 else:
                     article_attempts = _article_candidates(
