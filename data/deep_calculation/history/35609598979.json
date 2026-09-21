@@ -1,4 +1,5 @@
 {
+  "all_pass_gates_have_verified_evidence": true,
   "automatic_formal_buy_allowed": false,
   "complete_requested_count": 0,
   "contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
@@ -120,13 +121,24 @@
   },
   "evidence_exhausted_requested_count": 16,
   "execution_status": "SUCCESS",
+  "fail_gate_count": 4,
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
+  "gate_source_counts": {
+    "AUTOMATIC_ATTEMPT": 2553,
+    "AUTOMATIC_MACHINE": 1706,
+    "EXPLICIT_VERIFIED": 6
+  },
   "generated_at": "2026-09-21T14:09:23+00:00",
   "handoff_incomplete_requested_count": 0,
+  "hard_gate_count": 4265,
   "historical_material_event_evidence_count": 0,
   "historical_material_event_failed_gate_count": 0,
   "immediate_retry_required": false,
+  "initial_reverified_upstream_pass_count": 7,
+  "initial_unverified_pass_downgraded_count": 0,
+  "initial_unverified_pass_gate_count": 0,
+  "initial_verified_pass_gate_count": 217,
   "lambda_run_attempt": "1",
   "lambda_run_id": "35609598979",
   "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
@@ -138,10 +150,18 @@
   "new_evidence_count": 38,
   "no_auto_trade": true,
   "partial_requested_count": 16,
+  "pass_gate_count": 217,
   "predictability_resolved_gate_count": 0,
   "processed_requested_count": 16,
   "profile_count": 853,
   "progressed_gate_count": 0,
+  "provenance_audit_complete": true,
+  "provenance_audit_contract": "GEN_GE_V31_DEEP_PROVENANCE_AUDIT_V1",
+  "provenance_audit_event": "workflow_dispatch",
+  "provenance_audit_generated_at": "2026-09-21T14:10:34+00:00",
+  "provenance_audit_run_attempt": "1",
+  "provenance_audit_run_id": "35610254055",
+  "provenance_audit_workflow": "GenGe V3.1 Deep Provenance Audit",
   "requested_codes": [
     "000576",
     "001316",
@@ -169,6 +189,7 @@
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
   "source_run_id": "35570184481",
   "trigger_source": "SLOW_LANE_TERMINAL_URGENT_REOPEN",
+  "unknown_gate_count": 4044,
   "unknown_is_pass": false,
   "unresolved_reasons": {
     "000576": {
@@ -275,6 +296,8 @@
     }
   },
   "unresolved_requested_gate_count": 70,
+  "unverified_pass_gate_count": 0,
+  "verified_pass_gate_count": 217,
   "workset_coverage_complete": true,
   "workset_coverage_known": true
 }
