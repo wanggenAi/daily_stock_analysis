@@ -103,3 +103,23 @@ def test_deep_epoch_fence_uses_actual_checked_out_code_sha() -> None:
     assert 'DEEP_CODE_EPOCH_SHA=$(git rev-parse HEAD)' in checkout
     assert 'git diff --quiet "${DEEP_CODE_EPOCH_SHA}"..origin/main --' in workflow
     assert "'deep_code_epoch_sha':os.environ.get('DEEP_CODE_EPOCH_SHA','')" in workflow
+
+
+def test_older_completed_deep_cannot_replace_newer_latest_or_dispatch_downstream() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    block = workflow.split("- name: Persist terminal deep-calculation state with optimistic replay", 1)[1].split(
+        "- name: Persist partial checkpoint when closure is incomplete", 1
+    )[0]
+    dispatch = workflow.split("- name: Dispatch provenance and terminal convergence immediately", 1)[1].split(
+        "- name: Publish Lambda status", 1
+    )[0]
+
+    assert "id: persist" in workflow
+    assert 'latest_run_id="0"' in block
+    assert "'.lambda_run_id // \"0\"'" in block
+    assert '[ "$latest_run_id" -gt "$GITHUB_RUN_ID" ]' in block
+    assert "older than persisted latest Lambda" in block
+    assert 'owns_latest=false' in block
+    assert 'owns_latest=true' in block
+    assert 'echo "owns_latest=$owns_latest" >> "$GITHUB_OUTPUT"' in block
+    assert "steps.persist.outputs.owns_latest == 'true'" in dispatch
