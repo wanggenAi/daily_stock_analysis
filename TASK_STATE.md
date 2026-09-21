@@ -11,12 +11,12 @@ Repair the production fail-closed regression discovered while verifying #229: a 
 
 ## Active PR
 - #232 — `fix: preserve verified material-event failures across deep runs`.
-- Safety scope only: reuse immutable historical evidence only when it independently satisfies the existing VERIFIED + ACTIVE + HIGH + official-exchange material-event FAIL rule.
+- Safety scope only: persisted negative evidence is revalidated through the current title semantics + VERIFIED + ACTIVE + HIGH + official-exchange hard-FAIL rule before reuse; historical PASS is never reused.
 - #230 (SSE annual-report discovery) and #231 (MIIT industry evidence depth) remain separate and must not be merged ahead of this fail-closed repair.
 
 ## CI
-- #232 initial CI run `35554179025` failed only in `ai-governance` because this checkpoint lacked required headings; backend/web/docker jobs were skipped before code tests.
-- Required checkpoint headings are now restored; the next #232 head must run the actual blocking code/test gates.
+- #232 initial CI run `35554179025` failed only in `ai-governance` because this checkpoint lacked required headings; fixed.
+- Current #232 head `6fa80dea086700b22900bc1eea50bc0592c97732`: CI run `35554594958` is running; ai-governance is green and backend/docker gates have started.
 
 ## Last Verified Main
 - PR #229 merged into main as `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
@@ -39,8 +39,10 @@ Repair the production fail-closed regression discovered while verifying #229: a 
 - predictability verified=0; predictability_resolved_gate_count=0.
 - All 852 predictability rows ended `INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS`: 273 0-prefix, 109 3-prefix, 470 6-prefix.
 - #229 materially changed Shenzhen/ChiNext transport behavior: the old 0/3-prefix query-failure shape disappeared and 23 0-prefix rows obtained report metrics/source URLs, but none reached the strict multi-year resolution threshold.
-- Exact same-workset comparison to terminal run `35549602593` exposed a separate safety regression: 18 previously verified material-event FAIL gates disappeared; 16 became UNKNOWN and 2 became PASS.
-- The two unsafe FAIL -> PASS regressions are `000557 financial_safety` and `000603 financial_safety`.
+- Raw same-workset comparison to terminal run `35549602593` exposed 18 disappeared historical material-event FAIL gates: 16 became UNKNOWN and 2 became PASS.
+- Revalidating the 13 underlying historical rows with corrected current title semantics removes 5 stale/non-assertive rows: 3 explicit resolution rows and 2 "是否存在..." due-diligence classifications.
+- The strict carry-forward set is therefore 8 still-active official rows mapping to 12 hard-gate FAILs.
+- After semantic correction, the demonstrated true FAIL -> PASS regression is `000557 financial_safety`; `000603` must not be restored because its disclosure says the funds occupation was already resolved.
 
 ## Locked Comparison Baseline
 - Prior terminal run: `35549602593`.
@@ -61,10 +63,13 @@ Repair the production fail-closed regression discovered while verifying #229: a 
 - The optimized runtime patch was re-read after merge and confirmed not to bypass this order.
 - Transport/query recovery is never evidence PASS; verified annual-report bodies and complete strict metrics remain mandatory.
 - Shanghai strict incomplete-consecutive-year cases stay UNKNOWN unless verified official evidence resolves them.
-- The prior terminal artifact contains 13 VERIFIED/ACTIVE/HIGH official exchange material-event disclosures across 12 companies that generated 18 hard-gate FAILs.
+- The prior terminal artifact stored 13 rows as VERIFIED/ACTIVE/HIGH and generated 18 hard-gate FAILs; artifact review showed 5 of those labels were semantically stale/non-assertive under the corrected rules.
 - In `35551673513`, SZSE announcement metadata still surfaced those risks, but `disc.static.szse.cn` PDF downloads returned HTTP 403 and later retries sometimes hit SZSE transport failure; the fresh run therefore failed to recreate the verified rows.
 - Current closure logic uses only same-run material-event evidence, so transient refetch failure can erase an earlier verified negative gate. This is the demonstrated root cause addressed by #232.
-- Immutable `data/deep_calculation/history/*.evidence.json` already persists prior evidence packets; #232 reuses only rows that pass the existing strict negative-event validator and never reuses historical PASS evidence.
+- #232 revalidates persisted rows with the current material-event title classifier before reuse, including expiry at the run as-of date.
+- #232 fixes title semantics for explicit "已解决/影响已消除" resolutions and "是否存在..." due-diligence questions so keyword presence alone cannot create a hard FAIL.
+- #232 uses compact status files as the bootstrap index instead of scanning every multi-megabyte evidence payload, then writes a cumulative complete risk ledger for future runs.
+- Historical PASS evidence, ordinary evidence, resolved/expired events, non-assertive titles, unofficial domains, and lower-severity events are never reused.
 
 ## Completed
 - #223 Deep liveness fix remains production-proven.
@@ -80,9 +85,9 @@ Repair the production fail-closed regression discovered while verifying #229: a 
 1. Let #232 blocking CI/review complete; fix only demonstrated failures.
 2. Merge #232 when green.
 3. Run a fresh production Deep on main.
-4. Verify the known 18 historical material-event FAIL gates remain FAIL unless stricter fresh verified evidence applies.
-5. Specifically verify `000557 financial_safety` and `000603 financial_safety` cannot remain PASS while their prior VERIFIED/ACTIVE/HIGH risks remain in immutable history.
-6. Verify historical evidence counters, Deep -> Provenance -> Terminal -> Investor convergence, UNKNOWN != PASS, and no_auto_trade=true.
+4. Verify the revalidated 8-row / 12-gate historical risk set remains fail-closed when current refetch fails.
+5. Specifically verify `000557 financial_safety` returns to FAIL, while resolved/non-assertive historical rows such as `000603` and `301251` are not resurrected.
+6. Verify cumulative risk-ledger counters, Deep -> Provenance -> Terminal -> Investor convergence, UNKNOWN != PASS, and no_auto_trade=true.
 7. Only after #232 is production-proven, resume #230 Shanghai SSE annual-report discovery verification and then #231 long-term-demand evidence depth.
 
 ## Do Not Repeat
