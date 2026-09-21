@@ -4,7 +4,7 @@
 
 # 投资决策驾驶舱
 
-> 数据代际=STALE_UPSTREAM；禁止新增仓位；市场=GREEN；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0
+> 数据代际=STALE_UPSTREAM；禁止新增仓位；市场=GREEN；盘中价仅用于展示/审计；计划立即投入≈¥0
 
 ## 1. 最新市场结构（日线）
 
@@ -17,10 +17,10 @@
 - 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。
 | 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作/权限 | 动作状态 | 现在怎么办 |
 |---|---:|---:|---:|---:|---|---|---|
-| 国电南瑞 600406 | 200 | 23.13 | 22.02 | -4.78 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
-| 润贝航科 001316 | 200 | 25.75 | 28.19 | 9.50 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
-| 中国平安 601318 | 400 | 55.97 | 53.51 | -4.39 | HOLD | **UNCHANGED** | **继续持有** |
-| 洛阳钼业 603993 | 1100 | 18.62 | 17.84 | -4.21 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
+| 国电南瑞 600406 | 200 | 23.13 | 22.05 | -4.65 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
+| 润贝航科 001316 | 200 | 25.75 | 28.11 | 9.19 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
+| 中国平安 601318 | 400 | 55.97 | 53.37 | -4.64 | HOLD | **UNCHANGED** | **继续持有** |
+| 洛阳钼业 603993 | 1100 | 18.62 | 17.51 | -5.98 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
 
 ## 3. 今天能直接买什么
 
@@ -64,25 +64,3 @@ O81机动车、电子产品和日用产品修理业(STRONG)、E49建筑安装业
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**4** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **4** / REJECT **0**。
-- urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 600406 | — | 本轮 workset 未包含 | — | — |
-| 001316 | — | 本轮 workset 未包含 | — | — |
-| 601318 | — | 本轮 workset 未包含 | — | — |
-| 603993 | — | 本轮 workset 未包含 | — | — |
-
-### Urgent evidence queue
-
-- 甘化科工 000576: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 兴通股份 603209: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 汇顶科技 603160: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
-- 巨一科技 688162: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
