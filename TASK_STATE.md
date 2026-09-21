@@ -14,6 +14,10 @@ Repair the production fail-closed regression discovered while verifying #229: a 
 - Safety scope only: reuse immutable historical evidence only when it independently satisfies the existing VERIFIED + ACTIVE + HIGH + official-exchange material-event FAIL rule.
 - #230 (SSE annual-report discovery) and #231 (MIIT industry evidence depth) remain separate and must not be merged ahead of this fail-closed repair.
 
+## CI
+- #232 initial CI run `35554179025` failed only in `ai-governance` because this checkpoint lacked required headings; backend/web/docker jobs were skipped before code tests.
+- Required checkpoint headings are now restored; the next #232 head must run the actual blocking code/test gates.
+
 ## Last Verified Main
 - PR #229 merged into main as `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
 - Latest observed main at checkpoint: `7744b46b8e8b188f3bc209bad6a9efe6bf59440f`; later `[skip ci]` investor persistence commits do not modify Deep calculation code.
@@ -69,7 +73,7 @@ Repair the production fail-closed regression discovered while verifying #229: a 
 - Main production code path was verified after merge.
 - Volatile web-session checkpoint is stored on `state/chatgpt-recovery` at `recovery/tasks/stock-system-convergence.json`; live GitHub remains authoritative.
 
-## Blocker
+## Blockers
 #232 must pass blocking CI/review, merge, and receive fresh production Deep verification before #230/#231 transport/evidence expansion is allowed to merge.
 
 ## Next Action
