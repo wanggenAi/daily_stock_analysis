@@ -63,7 +63,7 @@ M73研究和试验发展(STRONG)、O81机动车、电子产品和日用产品修
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**16** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **16** / REJECT **0**。
+- 本轮深算：**22** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **22** / REJECT **0**。
 - urgent research：**8** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
 
