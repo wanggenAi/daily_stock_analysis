@@ -84,7 +84,9 @@ jobs:
         run: python -m pytest -q tests/test_jev_shadow.py
 
   live-shadow:
-    if: github.event_name == 'workflow_dispatch'
+    # Same-repository PRs get a bounded live smoke when the secret is available.
+    # Fork PRs receive no repository secret and the runner safely reports SKIPPED_NO_SECRET.
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request'
     needs: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -99,8 +101,6 @@ jobs:
       TYPESAFE_API_KEY: ${{ secrets.TYPESAFE_API_KEY }}
     steps:
       - uses: actions/checkout@v5
-        with:
-          ref: main
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
@@ -111,8 +111,8 @@ jobs:
       - name: Run Jev shadow evaluation
         run: |
           python tools/run_jev_shadow.py \
-            --scope '${{ inputs.scope }}' \
-            --max-entities '${{ inputs.max_entities }}' \
+            --scope '${{ github.event_name == 'workflow_dispatch' && inputs.scope || 'combined' }}' \
+            --max-entities '${{ github.event_name == 'workflow_dispatch' && inputs.max_entities || '4' }}' \
             --output-dir .artifacts/jev-shadow
       - name: Publish Jev shadow summary
         if: always()
