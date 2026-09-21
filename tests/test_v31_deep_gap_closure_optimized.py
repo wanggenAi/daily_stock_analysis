@@ -117,3 +117,56 @@ def test_install_runtime_optimizations_changes_scheduling_not_contract(monkeypat
     finally:
         monkeypatch.setattr(opt.core, "_collect_with_bounded_retry", original_retry)
         monkeypatch.setattr(opt.core, "collect_multi_year_predictability_evidence", original_predictability)
+
+def test_gap_closure_frontloads_predictability_before_general_evidence(monkeypatch, tmp_path):
+    order = []
+
+    profiles_payload = {
+        "profiles": {
+            "000001": {
+                "industry": "I1",
+                "gates": {"predictability": {"status": "UNKNOWN"}},
+            }
+        }
+    }
+    candidate_rows = [_row("000001")]
+    monkeypatch.setattr(opt.core, "_read_json", lambda path: profiles_payload)
+    monkeypatch.setattr(opt.core, "_read_csv", lambda path: candidate_rows)
+
+    def fake_predictability(*, priority_rows, as_of, timeout=20):
+        order.append("predictability")
+        assert [row["code"] for row in priority_rows] == ["000001"]
+        return []
+
+    def fake_general(*, selected, as_of, cache_dir):
+        order.append("general")
+        return (
+            [],
+            [],
+            [],
+            {
+                "collection_attempt_count": 1,
+                "unique_evidence_count": 0,
+                "final_failed_count": 0,
+                "final_missing_count": 0,
+            },
+        )
+
+    monkeypatch.setattr(
+        opt.core,
+        "collect_multi_year_predictability_evidence",
+        fake_predictability,
+    )
+    monkeypatch.setattr(opt.core, "_collect_with_bounded_retry", fake_general)
+
+    opt.core.run(
+        profiles_json=tmp_path / "profiles.json",
+        candidate_csv=tmp_path / "candidates.csv",
+        output_dir=tmp_path / "out",
+        cache_dir=tmp_path / "cache",
+        requested_codes=["000001"],
+        as_of=date(2026, 9, 20),
+    )
+
+    assert order == ["predictability", "general"]
+
