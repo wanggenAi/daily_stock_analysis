@@ -62,9 +62,9 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 
 ## 4. 今日账户资金怎么处理
 
-- 可用现金：**¥57000.00**；可部署预算：**¥0.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥57000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
-- **本轮没有已授权的新资金投入，约¥57000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
+- 可用现金：**¥50000.00**；可部署预算：**¥0.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
+- 盘中价覆盖：**0/4**；交易时段：**CLOSED**；行情状态：**OFF_SESSION**。
+- **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
 
@@ -99,7 +99,7 @@ O81机动车、电子产品和日用产品修理业(99.35)、E49建筑安装业(
 | Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
-| 资金计划 + 执行价覆盖 | **ACTIVE** | cash=57000.0 / immediate=0.0 / quotes=0/4 |
+| 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **118**；累计生命周期事件 **7749**。这意味着历史候选会持续研究，而不是第二天扫描不到就消失。
 - 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。
