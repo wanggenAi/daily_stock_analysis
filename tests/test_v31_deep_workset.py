@@ -66,3 +66,58 @@ def test_pass_only_profile_is_not_retained_by_continuity_rule():
         {"unresolved_reasons": {}},
         {"profiles": {"600000": {"gates": {"predictability": {"status": "PASS"}}}}},
     ) == []
+
+
+def test_exact_requested_scope_blocks_full_profile_universe_expansion():
+    status = {
+        "requested_codes": ["000576", "603209"],
+        "requested_count": 2,
+        "profile_count": 853,
+        "unresolved_reasons": {"000576": {"moat": "UNKNOWN"}},
+    }
+    profiles = {
+        "profiles": {
+            "000576": {"gates": {"moat": {"status": "UNKNOWN"}}},
+            "603209": {"gates": {"financial_safety": {"status": "FAIL"}}},
+            "688162": {"gates": {"moat": {"status": "UNKNOWN"}}},
+            "600000": {"gates": {"predictability": {"status": "UNKNOWN"}}},
+        }
+    }
+    assert retained_deep_codes(status, profiles) == ["000576", "603209"]
+
+
+def test_legacy_bounded_state_uses_named_unresolved_scope_not_all_profiles():
+    status = {
+        "requested_count": 4,
+        "profile_count": 853,
+        "unresolved_reasons": {
+            "000576": {"moat": "UNKNOWN"},
+            "603209": {"predictability": "UNKNOWN"},
+            "688162": {"long_term_demand": "UNKNOWN"},
+            "603160": {"financial_safety": "UNKNOWN"},
+        },
+    }
+    profiles = {
+        "profiles": {
+            "000576": {"gates": {"moat": {"status": "UNKNOWN"}}},
+            "603209": {"gates": {"predictability": {"status": "UNKNOWN"}}},
+            "688162": {"gates": {"long_term_demand": {"status": "UNKNOWN"}}},
+            "603160": {"gates": {"financial_safety": {"status": "UNKNOWN"}}},
+            "600000": {"gates": {"predictability": {"status": "UNKNOWN"}}},
+            "601899": {"gates": {"earnings_authenticity": {"status": "FAIL"}}},
+        }
+    }
+    assert retained_deep_codes(status, profiles) == [
+        "000576", "603209", "688162", "603160"
+    ]
+
+
+def test_unscoped_legacy_state_keeps_historical_profile_continuity():
+    status = {"unresolved_reasons": {"001316": {"moat": "UNKNOWN"}}}
+    profiles = {
+        "profiles": {
+            "603233": {"gates": {"financial_safety": {"status": "FAIL"}}},
+            "601899": {"gates": {"moat": {"status": "UNKNOWN"}}},
+        }
+    }
+    assert retained_deep_codes(status, profiles) == ["001316", "603233", "601899"]
