@@ -27,17 +27,29 @@ _ORIGINAL_LOAD_CNINFO_ORG_IDS = _company_announcements._load_cninfo_org_ids
 _ORIGINAL_CLASSIFY_MATERIAL_EVENTS = _company_announcements._classify_material_events
 
 _FUNDS_OCCUPATION_PREVENTIVE_POLICY_RE = re.compile(
-    r"(?:防范|预防|防止|规范).{0,48}(?:非经营性)?资金占用.{0,24}"
+    r"(?:防范|预防|防止|规范).{0,48}"
+    r"(?:(?:非经营性)?资金占用|占用(?:上市)?公司资金|占用资金).{0,24}"
     r"(?:管理办法|管理制度|内部控制制度|制度|规定)"
-    r"|(?:非经营性)?资金占用.{0,24}(?:管理办法|管理制度|内部控制制度)"
+    r"|(?:(?:非经营性)?资金占用|占用(?:上市)?公司资金|占用资金).{0,24}"
+    r"(?:管理办法|管理制度|内部控制制度)"
 )
 _FUNDS_OCCUPATION_TRUE_INCIDENT_RE = re.compile(
-    r"(?:存在|发生|形成|新增|发现|涉及|违规).{0,18}(?:非经营性)?资金占用"
-    r"|(?:非经营性)?资金占用(?:事项|问题|行为).{0,18}(?:整改|进展|归还|清偿|解决)"
+    r"(?:存在|发生|形成|新增|发现|涉及|违规).{0,18}"
+    r"(?:(?:非经营性)?资金占用|占用(?:上市)?公司资金|占用资金)"
+    r"|(?:(?:非经营性)?资金占用|占用资金)(?:事项|问题|行为).{0,18}"
+    r"(?:整改|进展|归还|清偿|解决)"
     r"|占用(?:上市)?公司资金"
 )
 _MATERIAL_EVENT_NON_ASSERTION_RE = re.compile(
-    r"是否存在.{0,48}(?:财务造假|虚假记载|欺诈发行|虚假陈述|(?:非经营性)?资金占用)"
+    r"是否存在.{0,48}(?:财务造假|虚假记载|欺诈发行|虚假陈述|(?:非经营性)?资金占用|占用资金)"
+)
+_MATERIAL_EVENT_ROUTINE_ASSURANCE_RE = re.compile(
+    r"拟购买资产.{0,24}(?:资金占用|占用资金)(?:问题)?.{0,12}(?:说明|核查)"
+    r"|(?:控股股东及其他关联方|控股股东及关联方|关联方)?.{0,18}"
+    r"(?:资金占用|占用资金).{0,24}(?:情况|清偿情况).{0,32}"
+    r"(?:专项审计说明|专项说明|专项报告|情况表|专项公告)"
+    r"|(?:非经营性)?资金占用及清偿情况.{0,48}(?:专项报告|专项说明|情况表)"
+    r"|违规担保及解除情况.{0,32}(?:专项报告|专项说明|情况表)"
 )
 _FUNDS_OCCUPATION_FULL_RESOLUTION_RE = re.compile(
     r"(?:非经营性)?资金占用.{0,20}(?:已解决|已全部解决|已全部归还|已全部清偿)"
@@ -115,8 +127,11 @@ def _classify_material_events_with_policy_guard(
     """Apply semantic guards after the base keyword classifier.
 
     Hard FAIL evidence must represent an asserted, still-active event. Titles
-    that explicitly ask whether a risk exists are not assertions, while titles
-    that explicitly say the issue was solved/eliminated are resolution evidence.
+    that explicitly ask whether a risk exists are not assertions. Preventive
+    governance rules, acquisition due-diligence explanations and routine
+    occupation/clearance assurance reports also do not establish a live event.
+    Titles that explicitly say the issue was solved/eliminated are resolution
+    evidence.
     """
     text = _company_announcements._clean_title(title)
     events = _ORIGINAL_CLASSIFY_MATERIAL_EVENTS(
@@ -130,11 +145,19 @@ def _classify_material_events_with_policy_guard(
         ]
 
     non_assertive = bool(_MATERIAL_EVENT_NON_ASSERTION_RE.search(text))
+    routine_assurance = bool(_MATERIAL_EVENT_ROUTINE_ASSURANCE_RE.search(text))
+    asserted_funds_occupation = bool(_FUNDS_OCCUPATION_TRUE_INCIDENT_RE.search(text))
     result: list[dict[str, Any]] = []
     for raw in events:
         event = dict(raw)
         event_type = str(event.get("event_type") or "")
         if non_assertive and event_type in {"ACCOUNTING_FRAUD", "FUNDS_OCCUPATION"}:
+            continue
+        if (
+            routine_assurance
+            and not asserted_funds_occupation
+            and event_type in {"FUNDS_OCCUPATION", "ILLEGAL_GUARANTEE"}
+        ):
             continue
         fully_resolved = (
             event_type == "FUNDS_OCCUPATION"
