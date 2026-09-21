@@ -17,7 +17,7 @@
 
 - **国电南瑞 600406**：现价 22.05 / 价值中枢 17.46（价/值 1.26；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=178**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
 - **润贝航科 001316**：现价 28.11 / 价值中枢 49.37（价/值 0.57；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=180**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
-- **中国平安 601318**：现价 53.37 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=105**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00`。
+- **中国平安 601318**：现价 53.37 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=105**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.650<1.00`。
 - **洛阳钼业 603993**：现价 17.51 / 价值中枢 28.13（价/值 0.62；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=147**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
 
 ## 2. 世界/社会/市场：钱可能在哪里
@@ -84,7 +84,7 @@ M73研究和试验发展(100.00)、O81机动车、电子产品和日用产品修
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -94,11 +94,11 @@ M73研究和试验发展(100.00)、O81机动车、电子产品和日用产品修
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | GREEN / score=72.27 / 2026-09-21 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=125 / events=7782 / focus=4 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=16 / verified-pass=0 / unresolved=69 |
-| Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=125 / events=7782 / focus=10 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=16 / verified-pass=218 / unresolved=69 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35620157914 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
+| Deep Research Terminal | **ACTIVE** | BUY=0 / WAIT=0 / GAP=16 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **125**；累计生命周期事件 **7782**。这意味着历史候选会持续研究，而不是第二天扫描不到就消失。
@@ -133,10 +133,10 @@ M73研究和试验发展(100.00)、O81机动车、电子产品和日用产品修
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`35616396593`；当前 Lambda：`35618926319`。
-- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：无
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
+- 终态来源 Lambda：`35618926319`；当前 Lambda：`35618926319`。
+- 请求：**16**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**16**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=37.7717；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=35.5701；暂不买；等待补齐：predictability、long_term_demand、moat)；601318 中国平安(quant=33.0392；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603993 洛阳钼业(quant=31.0177；暂不买；等待补齐：predictability)；000576 甘化科工(quant=75.2261；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603209 兴通股份(quant=68.2587；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603160 汇顶科技(quant=65.9223；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；688162 巨一科技(quant=65.7322；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
