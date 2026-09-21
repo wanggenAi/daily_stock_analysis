@@ -121,16 +121,17 @@ def test_install_runtime_optimizations_changes_scheduling_not_contract(monkeypat
 def test_gap_closure_frontloads_predictability_before_general_evidence(monkeypatch, tmp_path):
     order = []
 
-    profiles_path = tmp_path / "profiles.json"
-    profiles_path.write_text(
-        '{"profiles":{"000001":{"industry":"I1","gates":{"predictability":{"status":"UNKNOWN"}}}}}',
-        encoding="utf-8",
-    )
-    candidate_path = tmp_path / "candidates.csv"
-    candidate_path.write_text(
-        "code,industry,normalized_industry\\n000001,I1,I1\\n",
-        encoding="utf-8",
-    )
+    profiles_payload = {
+        "profiles": {
+            "000001": {
+                "industry": "I1",
+                "gates": {"predictability": {"status": "UNKNOWN"}},
+            }
+        }
+    }
+    candidate_rows = [_row("000001")]
+    monkeypatch.setattr(opt.core, "_read_json", lambda path: profiles_payload)
+    monkeypatch.setattr(opt.core, "_read_csv", lambda path: candidate_rows)
 
     def fake_predictability(*, priority_rows, as_of, timeout=20):
         order.append("predictability")
@@ -159,8 +160,8 @@ def test_gap_closure_frontloads_predictability_before_general_evidence(monkeypat
     monkeypatch.setattr(opt.core, "_collect_with_bounded_retry", fake_general)
 
     opt.core.run(
-        profiles_json=profiles_path,
-        candidate_csv=candidate_path,
+        profiles_json=tmp_path / "profiles.json",
+        candidate_csv=tmp_path / "candidates.csv",
         output_dir=tmp_path / "out",
         cache_dir=tmp_path / "cache",
         requested_codes=["000001"],
