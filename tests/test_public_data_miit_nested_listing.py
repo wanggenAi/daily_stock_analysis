@@ -2,8 +2,10 @@ from src.strategies.genge_opportunity_discovery.evidence_collectors import (
     prepare_industry_alias_map,
 )
 from src.strategies.genge_opportunity_discovery.evidence_collectors.public_data import (
+    NBS_REPORT_TITLE_TOKENS,
     _industry_search_terms,
     _miit_operational_article_candidates,
+    _report_article_candidates,
     _specialized_source_specs,
 )
 
@@ -43,3 +45,41 @@ def test_miit_category_page_yields_dated_operational_article_not_navigation():
         "https://www.miit.gov.cn/gxsj/tjfx/rjy/art/2026/art_latest.html"
     )
     assert all("统计数据和运行分析" != row[0] for row in rows)
+
+
+def test_electronic_information_industry_routes_to_miit_operating_monitoring():
+    industry = "C39计算机、通信和其他电子设备制造业"
+    alias_map = prepare_industry_alias_map([industry])
+    terms = _industry_search_terms(industry, alias_map)
+    specs = _specialized_source_specs(terms)
+
+    assert "电子信息制造业" in terms
+    assert "计算机、通信和其他电子设备制造业" in terms
+    assert any(
+        collector == "miit_electronic_information_public_data"
+        and url.endswith("/jgsj/yxj/index.html")
+        for collector, url, _title in specs
+    )
+
+
+def test_nbs_fixed_asset_release_is_a_cross_industry_candidate():
+    html = """
+    <html><body>
+      <a href="/sj/zxfb/202609/t20260915_1965309.html">
+        2026年1—8月份全国固定资产投资基本情况
+      </a>
+      <a href="/sj/zxfb/202609/unrelated.html">居民消费价格</a>
+    </body></html>
+    """
+    rows = _report_article_candidates(
+        html,
+        base_url="https://www.stats.gov.cn/sj/zxfb/",
+        title_tokens=NBS_REPORT_TITLE_TOKENS,
+    )
+
+    assert [row[0] for row in rows] == [
+        "2026年1—8月份全国固定资产投资基本情况"
+    ]
+    assert rows[0][1] == (
+        "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965309.html"
+    )

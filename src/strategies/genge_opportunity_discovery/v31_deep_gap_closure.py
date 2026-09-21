@@ -74,10 +74,22 @@ def _status(gate: Mapping[str, Any] | None) -> str:
     return value if value in {"PASS", "FAIL"} else "UNKNOWN"
 
 
+_OFFICIAL_AUTHORITY_DOMAIN_FAMILIES = (
+    "miit.gov.cn",
+    "stats.gov.cn",
+    "mot.gov.cn",
+    "ndrc.gov.cn",
+    "spb.gov.cn",
+)
+
+
 def _source_family(value: Any) -> str:
     domain = str(value or "").strip().lower().rstrip(".")
     while domain.startswith("www."):
         domain = domain[4:]
+    for family in _OFFICIAL_AUTHORITY_DOMAIN_FAMILIES:
+        if domain == family or domain.endswith(f".{family}"):
+            return family
     return domain
 
 
