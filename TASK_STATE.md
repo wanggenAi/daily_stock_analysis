@@ -1,88 +1,79 @@
 # Current Mission
 
 ## Goal
-Make the stock system operate as one durable closed research loop. Jev should automatically route bounded research into the existing Deep -> Terminal -> Investor -> Three-Pillar chain without changing Formal trading authority.
+Operate the stock system as one durable closed research loop. Jev may accelerate bounded research through the existing Deep -> Terminal -> Investor -> Three-Pillar chain, but it must not change Formal trading authority.
 
 ## Current Phase
-JEV_AUTO_ORCHESTRATION_PR_242
+POST_MERGE_JEV_AUTO_ORCHESTRATION_PRODUCTION_VERIFICATION
 
 ## Last Verified Main
-- Live main when this checkpoint was written: `380a57063cf89b4a78ba8afd749b844753c5fb02`.
-- Live GitHub refs / PRs / Actions / artifacts / persisted data always override this checkpoint.
+- #242 merged to `main` as `10e095d613162f9b65217207f806fffe019eaae1`.
+- Live GitHub refs / Actions / persisted data always override this checkpoint.
 
 ## Active Branch
-`feat/jev-auto-orchestrator-20260921`
+None for the merged Jev auto-orchestration work.
 
 ## Active PR
-- #242 — `feat: auto-chain Jev into bounded research execution`
-- #241 is closed and superseded by #242.
+- #242 — `feat: auto-chain Jev into bounded research execution` — merged.
+- #241 remains superseded/closed and must not be revived.
 
 ## CI
-- PR #242 must pass:
-  - repository `CI`
-  - `ai-governance`
-  - backend gate
-  - Docker gate
-  - `GenGe Jev Shadow Evaluation` contracts + live PR smoke
-  - `GenGe Jev Research Orchestrator` contracts
-- Current known governance requirement: this file must remain <=120 lines and preserve every required heading.
+- #242 PR validation passed before merge.
+- Merge-triggered Jev production evaluation and deterministic orchestrator both progressed successfully to Deep dispatch.
+- Exact live Actions state must be re-read before any retry or repair.
 
 ## Production / Artifact
-- Jev Phase 1 merged in #237.
-- Jev Phase 2 merged in #240 as `a14b3b0c4b7efcdfd0e85d2b7e402105327d3cb3`.
-- First production Jev run `35569181282` succeeded 25/25 on `jev-1.13.0`.
-- Persisted advisory files:
-  - `data/jev_shadow/latest.json`
-  - `data/jev_shadow/latest_routing.json`
-  - `JEV_RESEARCH_ROUTING.md`
-- Automatic-loop cursor after #242 merges:
-  - `data/jev_shadow/orchestration/latest.json`
+- Merge-triggered Jev source run: `35573887821`.
+- Persisted Jev routing source_workflow_run_id: `35573887821`.
+- Routing result: 25 entities; 23 EVIDENCE_REFRESH; 2 HUMAN_REVIEW.
+- Jev orchestrator run: `35574096933`.
+- Orchestration cursor: `DEEP_DISPATCH_ACCEPTED`.
+- Exact Deep run: `35574223501`.
+- Deep requested workset: `000576,603209,688162,603160`.
+- Latest observed Deep state: contracts passed; `deep-calculate` was in progress.
+- Cursor file: `data/jev_shadow/orchestration/latest.json`.
 
 ## Completed
-- First live Jev production integration is proven.
-- First persisted 25-entity Jev advisory is proven.
-- Phase 3 triage concept is proven by live PR smoke.
-- #241 was closed to avoid parallel stale implementation.
-- #242 now combines Phase 3 + exact Jev run lineage + bounded deterministic research orchestration + durable resume rules.
+- Jev Phase 1 live API/shadow integration is production-proven.
+- Jev Phase 2 persistent advisory routing is production-proven.
+- Phase 3 priority triage is merged through #242.
+- #242 merged the bounded deterministic research orchestrator.
+- Main production run proved Jev can trigger the orchestrator without a user saying “继续”.
+- Orchestrator proved idempotent exact lineage and automatically dispatched one bounded Deep workset.
+- Fail-closed routing worked: uncertain/low-confidence rows were held for HUMAN_REVIEW instead of auto-dispatch.
 
 ## Current Findings
-- First production sample returned 25/25 `EVIDENCE_REFRESH`; candidate selection was too homogeneous.
-- Phase 3 changes selection to holdings first, then urgent / P0-P2 / strong deterministic research candidates.
-- Jev remains advisory-only.
-- The deterministic orchestrator may auto-dispatch research only when Jev route and existing deterministic triage agree.
-- Target chain:
-  `Jev Shadow Evaluation -> Jev Research Orchestrator -> V3.1 Deep Calculation Lambda -> V3.1 Terminal Research Decision -> Investor Terminal Research Overlay -> Three-Pillar Decision Center`
-- Default maximum dispatch is 12 codes per Jev cycle.
-- Human-review routes are never auto-dispatched.
+- The automatic chain is real, not only architectural: Jev -> Orchestrator -> Deep has executed on main.
+- Auto-dispatch required Jev route + route confidence >= 0.50 + deterministic triage agreement.
+- 4 rows met the bounded dispatch contract.
+- 21 rows were not auto-dispatched; HUMAN_REVIEW/fail-closed handling remained active.
+- Jev direct dispatch=false.
+- Formal trading authority=false.
+- Automatic Formal BUY=false.
+- UNKNOWN != PASS.
+- no_auto_trade=true.
 
 ## Blockers
-- PR #242 is not mergeable until all required CI passes.
-- After merge, production proof is still required for the full automatic chain.
-- Separate stock-system PRs remain open and are not part of this Jev scope:
-  - #238 material-event semantics
-  - #235 SSE annual-report discovery
-  - #236 MIIT evidence-depth repair
-  - #234 recovered historical candidate continuity
-  - #233 investor-report readiness
+- Full production proof is not complete until Deep `35574223501` reaches terminal completion and the downstream automatic chain is verified.
+- Do not dispatch another Deep run for Jev source `35573887821`.
 
 ## Next Action
-1. Fix PR #242 CI until green.
-2. Merge #242 only after required checks succeed.
-3. Verify merge-triggered main Jev run evaluates 25 prioritized entities and persists exact `source_workflow_run_id`.
-4. Verify Jev Research Orchestrator consumes only that exact run.
-5. Verify at most one bounded Deep dispatch is created and cursor becomes `DEEP_DISPATCH_ACCEPTED`.
-6. Follow exact Deep run to success.
-7. Verify automatic Terminal Research Decision.
-8. Verify Investor Terminal Overlay.
-9. Verify Three-Pillar refresh.
-10. Inspect newest persisted terminal/investor result and record exact run ids/results.
+1. Re-read Deep run `35574223501` jobs and artifacts.
+2. If Deep fails, inspect the exact failed job/step and repair only the demonstrated cause.
+3. If Deep succeeds, verify its persisted status/artifact and exact requested four-code workset.
+4. Verify automatic Terminal Research Decision starts/completes.
+5. Verify Investor Terminal Overlay refreshes.
+6. Verify Three-Pillar Decision Center refreshes.
+7. Confirm persisted lineage reaches the newest terminal/investor outputs without duplicate dispatch.
+8. Update this checkpoint with final production run ids and result.
 
 ## Do Not Repeat
-- Do not reopen or merge #241.
-- Do not dispatch a second Deep run for the same Jev `source_workflow_run_id`.
-- Do not let Jev mutate Formal BUY / WAIT_PRICE / REJECT.
+- Do not redo Phase 3.
+- Do not reopen #241.
+- Do not recreate or remerge #242.
+- Do not manually dispatch a second Deep run for source `35573887821`.
 - Do not loosen evidence gates, valuation thresholds, Candidate Lifecycle, UNKNOWN != PASS, or no_auto_trade.
-- Do not trust stale chat state over live GitHub.
+- Do not infer completion from chat; use live GitHub.
 
 ## Guardrails
 - GitHub live state is the source of truth.
@@ -96,4 +87,4 @@ JEV_AUTO_ORCHESTRATION_PR_242
 - Deep idempotency key: `JEV_ORCHESTRATOR_<source_workflow_run_id>`.
 - Orchestration cursor lifecycle:
   `JEV_READY -> ORCHESTRATION_PENDING -> DEEP_DISPATCH_ACCEPTED -> DEEP_COMPLETE -> TERMINAL_COMPLETE -> INVESTOR_OVERLAY_COMPLETE -> DECISION_CENTER_REFRESHED`.
-- On future user message "继续": read live main / PRs / Actions, this file, Jev routing, and orchestration cursor; resume from the first unfinished stage without asking for background.
+- On future user message “继续”, resume from the first unfinished live GitHub stage without asking for background.
