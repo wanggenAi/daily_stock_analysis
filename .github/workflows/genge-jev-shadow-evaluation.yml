@@ -26,18 +26,26 @@ on:
   pull_request:
     paths:
       - 'src/strategies/genge_opportunity_discovery/jev_shadow.py'
+      - 'src/strategies/genge_opportunity_discovery/jev_routing_bridge.py'
       - 'tools/run_jev_shadow.py'
+      - 'tools/build_jev_routing_bridge.py'
       - 'tests/test_jev_shadow.py'
+      - 'tests/test_jev_routing_bridge.py'
       - '.github/workflows/genge-jev-shadow-evaluation.yml'
       - 'docs/JEV_SHADOW_DECISION_LAYER.md'
+      - 'docs/JEV_ROUTING_BRIDGE.md'
   push:
     branches: [main]
     paths:
       - 'src/strategies/genge_opportunity_discovery/jev_shadow.py'
+      - 'src/strategies/genge_opportunity_discovery/jev_routing_bridge.py'
       - 'tools/run_jev_shadow.py'
+      - 'tools/build_jev_routing_bridge.py'
       - 'tests/test_jev_shadow.py'
+      - 'tests/test_jev_routing_bridge.py'
       - '.github/workflows/genge-jev-shadow-evaluation.yml'
       - 'docs/JEV_SHADOW_DECISION_LAYER.md'
+      - 'docs/JEV_ROUTING_BRIDGE.md'
 
 concurrency:
   group: genge-jev-shadow-${{ github.event.pull_request.number || github.ref }}
@@ -80,10 +88,11 @@ jobs:
           )
           client.close()
           PY
-      - name: Validate Jev runner entrypoint and shadow guardrails without network
+      - name: Validate Jev runner entrypoints and advisory guardrails without network
         run: |
           python tools/run_jev_shadow.py --help > /dev/null
-          python -m pytest -q tests/test_jev_shadow.py
+          python tools/build_jev_routing_bridge.py --help > /dev/null
+          python -m pytest -q tests/test_jev_shadow.py tests/test_jev_routing_bridge.py
 
   live-shadow:
     # Same-repository PRs get a bounded live smoke. Fork PRs never receive the secret
@@ -117,6 +126,13 @@ jobs:
             --max-entities '${{ github.event_name == 'workflow_dispatch' && inputs.max_entities || '4' }}' \
             --output-dir .artifacts/jev-shadow \
             --require-success
+      - name: Build Jev advisory routing bridge
+        run: |
+          python tools/build_jev_routing_bridge.py \
+            --shadow-json .artifacts/jev-shadow/jev_shadow.json \
+            --output-json .artifacts/jev-shadow/jev_routing.json \
+            --output-md .artifacts/jev-shadow/jev_routing.md \
+            --require-success
       - name: Publish Jev shadow summary
         if: always()
         shell: bash
@@ -135,3 +151,94 @@ jobs:
           path: .artifacts/jev-shadow/
           if-no-files-found: warn
           retention-days: 30
+
+  persist-routing-advisory:
+    if: github.event_name == 'workflow_dispatch'
+    needs: live-shadow
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download this run's Jev artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-jev-shadow-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/jev-shadow
+
+      - name: Validate persisted advisory contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s /tmp/jev-shadow/jev_shadow.json
+          test -s /tmp/jev-shadow/jev_routing.json
+          test -s /tmp/jev-shadow/jev_routing.md
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          shadow=json.loads(Path('/tmp/jev-shadow/jev_shadow.json').read_text(encoding='utf-8'))
+          routing=json.loads(Path('/tmp/jev-shadow/jev_routing.json').read_text(encoding='utf-8'))
+
+          assert shadow['execution_status'] == 'SUCCESS'
+          assert shadow['authority'] == 'SHADOW_ONLY'
+          assert shadow['formal_trading_authority'] is False
+          assert shadow['mutates_authoritative_decision'] is False
+          assert shadow['unknown_is_pass'] is False
+          assert shadow['no_auto_trade'] is True
+
+          assert routing['contract'] == 'GEN_GE_JEV_ROUTING_BRIDGE_V1'
+          assert routing['execution_status'] == 'SUCCESS'
+          assert routing['authority'] == 'ADVISORY_RESEARCH_ROUTING_ONLY'
+          assert routing['automatic_dispatch_allowed'] is False
+          assert routing['automatic_formal_buy_allowed'] is False
+          assert routing['formal_trading_authority'] is False
+          assert routing['mutates_authoritative_decision'] is False
+          assert routing['may_suppress_existing_research'] is False
+          assert routing['may_create_or_mutate_formal_action'] is False
+          assert routing['unknown_is_pass'] is False
+          assert routing['no_auto_trade'] is True
+          PY
+
+      - name: Persist latest Jev advisory with optimistic replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'genge-jev-routing-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/jev_shadow
+            cp /tmp/jev-shadow/jev_shadow.json data/jev_shadow/latest.json
+            cp /tmp/jev-shadow/jev_routing.json data/jev_shadow/latest_routing.json
+            cp /tmp/jev-shadow/jev_routing.md JEV_RESEARCH_ROUTING.md
+            git add -f data/jev_shadow/latest.json data/jev_shadow/latest_routing.json
+            git add JEV_RESEARCH_ROUTING.md
+            if git diff --cached --quiet; then
+              echo 'Latest Jev advisory is already persisted.'
+              exit 0
+            fi
+            git commit -m 'Persist Jev research routing advisory [skip ci]'
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo 'main moved while persisting Jev advisory; replaying.' >&2
+          done
+          echo 'Jev advisory persistence failed after 4 optimistic replay attempts.' >&2
+          exit 1
+
+      - name: Publish persistence summary
+        if: always()
+        run: |
+          echo '# Jev Research Routing Persistence' >> "$GITHUB_STEP_SUMMARY"
+          echo '- source run: `${{ github.run_id }}`' >> "$GITHUB_STEP_SUMMARY"
+          echo '- persisted: `data/jev_shadow/latest.json`, `data/jev_shadow/latest_routing.json`, `JEV_RESEARCH_ROUTING.md`' >> "$GITHUB_STEP_SUMMARY"
+          echo '- authority: advisory research routing only; automatic dispatch=false; Formal authority unchanged; UNKNOWN != PASS; no_auto_trade=true' >> "$GITHUB_STEP_SUMMARY"
