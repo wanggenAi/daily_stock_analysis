@@ -4,7 +4,14 @@
 Converge the existing stock system into one trustworthy daily decision surface before adding new models. Preserve Candidate Lifecycle, valuation/decision thresholds, Formal authority separation, UNKNOWN != PASS, and no_auto_trade=true.
 
 ## Current Phase
-Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-year predictability. Do not weaken evidence semantics.
+Production-verify the merged #229 scheduling fix for Shenzhen/ChiNext while repairing the separately proven Shanghai SSE annual-report discovery failure. Do not weaken evidence semantics.
+
+## Active Branch
+`fix/sse-annual-report-date-window-20260921`
+
+## Active PR
+- #230 — `fix: restore SSE multi-year annual-report discovery`.
+- Scope: transport/discovery only — restore typed SSE server date bounds and shard the six-year predictability horizon into SSE-safe windows.
 
 ## Last Verified Main
 - PR #229 merged into main as `c8693a1d89794fb351bde5cf563f5cf2ef9c4cc9`.
@@ -45,7 +52,10 @@ Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-ye
 - #229 tests the scheduling/transport-liveness hypothesis by running the unchanged strict predictability collector before high-volume general evidence collection.
 - The optimized runtime patch was re-read after merge and confirmed not to bypass this order.
 - Transport/query recovery is never evidence PASS; verified annual-report bodies and complete strict metrics remain mandatory.
-- Shanghai strict incomplete-consecutive-year cases stay UNKNOWN unless verified official evidence resolves them.
+- Post-#225 artifact inspection proved the 470 Shanghai `INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS` rows are not parser failures: all 470 have empty `metrics_by_year`, empty coverage/source URLs, and `PRIMARY_INSUFFICIENT_REPORTS:0,CNINFO:HTTPError:403`.
+- Therefore Shanghai's dominant blocker is first-party SSE annual-report discovery: the typed YEARLY/DQBG query returned zero candidates before CNINFO fallback failed.
+- #230 restores explicit `beginDate/endDate` for typed SSE report queries and splits the six-year research horizon into contiguous <=1094-day windows; untyped material-event collection is unchanged.
+- Shanghai cases stay UNKNOWN unless verified official report bodies and complete trusted metrics actually resolve them.
 
 ## Completed
 - #223 Deep liveness fix remains production-proven.
@@ -55,7 +65,8 @@ Production-verify the merged scheduling fix for Shenzhen/ChiNext strict multi-ye
 - Volatile web-session checkpoint is stored on `state/chatgpt-recovery` at `recovery/tasks/stock-system-convergence.json`; live GitHub remains authoritative.
 
 ## Blocker
-Fresh terminal production evidence from Deep run `35551673513` is still required before #229 can be classified as production-proven.
+- Fresh terminal production evidence from Deep run `35551673513` is still required before #229 can be classified as production-proven.
+- #230 requires green blocking CI/review before merge; first CI attempt failed only because this checkpoint lacked the repository-required `## Active Branch` heading, now corrected.
 
 ## Next Action
 1. Resume from live Deep run `35551673513`.
@@ -65,7 +76,9 @@ Fresh terminal production evidence from Deep run `35551673513` is still required
 5. Check predictability verified/resolved counts, source URLs, and `metrics_by_year` for every newly resolved gate.
 6. Verify Deep -> Provenance -> Terminal -> Investor lineage convergence.
 7. Re-verify all PASS evidence provenance and the safety invariants.
-8. If Shenzhen/ChiNext failures remain systemic, continue at provider/session/pacing/runner-network transport level without weakening gates.
+8. Let #230 blocking CI/review complete; fix only demonstrated failures.
+9. After #229 production evidence is captured, merge #230 only when green, then run a fresh Deep and compare the Shanghai zero-report bucket against 470.
+10. If Shenzhen/ChiNext failures remain systemic, continue at provider/session/pacing/runner-network transport level without weakening gates.
 
 ## Do Not Repeat
 - Do not reopen solved Candidate Lifecycle continuity work.
