@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-21T03:28:12+00:00",
+  "generated_at": "2026-09-21T03:31:04+00:00",
   "canonical_snapshot_id": "e181bb43ef065623842a",
   "canonical_source_run_id": "35513006839",
   "latest_trade_date": "2026-09-18",
@@ -329,7 +329,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-21T03:28:12+00:00",
+    "evaluated_at": "2026-09-21T03:31:04+00:00",
     "canonical_generated_at": "2026-09-20T13:30:04+00:00",
     "canonical_latest_trade_date": "2026-09-18",
     "canonical_source_run_id": "35513006839",
@@ -379,8 +379,15 @@
     "carried_forward_consumption_count": 1,
     "explicit_rearm_skipped_count": 0,
     "explicit_rearm_skipped_codes": [],
-    "applied_consumption_count": 0,
-    "applied": [],
+    "applied_consumption_count": 1,
+    "applied": [
+      {
+        "code": "603993",
+        "consumed_shares": 100,
+        "allowance_shares": 100,
+        "lineage_match": "CARRIED_FORWARD"
+      }
+    ],
     "routine_canonical_refresh_rearms_consumed_add": false,
     "explicit_rearm_required": true,
     "formal_action_mutation_allowed": false,
