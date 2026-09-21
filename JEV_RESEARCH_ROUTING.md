@@ -12,34 +12,34 @@
 
 ## Route counts
 
-- {"EVIDENCE_REFRESH": 25}
+- {"EVIDENCE_REFRESH": 23, "HUMAN_REVIEW": 2}
 
 ## Advisory queue
 
-- 000001 平安银行 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000019 深粮控股 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000035 中国天楹 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000088 盐 田 港 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000089 深圳机场 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000096 广聚能源 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000156 华数传媒 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000159 国际实业 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000333 美的集团 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000400 许继电气 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000415 渤海租赁 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000426 兴业银锡 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000498 山东路桥 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000501 武商集团 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000504 南华生物 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000506 招金黄金 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000507 珠海港 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000528 柳    工 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 000532 华金资本 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 600406 国电南瑞 | priority=HIGH | route=HUMAN_REVIEW | evidence=INSUFFICIENT | engine=FORMAL:REDUCE_25
+- 601318 中国平安 | priority=HIGH | route=HUMAN_REVIEW | evidence=INSUFFICIENT | engine=FORMAL:HOLD
 - 001316 润贝航科 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=FORMAL:HOLD_REVIEW
-- 600406 国电南瑞 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=FORMAL:REDUCE_25
-- 601318 中国平安 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=FORMAL:HOLD
-- 000526 学大教育 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
-- 603993 洛阳钼业 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=FORMAL:HOLD
-- 000420 吉林化纤 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:REJECT
+- 603993 洛阳钼业 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=FORMAL:HOLD
+- 000576 甘化科工 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 002612 朗姿股份 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 002906 华阳集团 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 300454 深信服 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 300662 科锐国际 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 300850 新强联 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 600609 金杯汽车 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603055 台华新材 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603160 汇顶科技 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603209 兴通股份 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603233 大参林 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603236 移远通信 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603268 松发股份 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603613 国联股份 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603980 吉华集团 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 688002 XD睿创微 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 688162 巨一科技 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 688186 广大特材 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 688293 奥浦迈 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 688309 恒誉科技 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 688600 皖仪科技 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
