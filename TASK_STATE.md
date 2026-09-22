@@ -4,7 +4,7 @@
 Eliminate the production false-positive path where generic management-system certifications can satisfy the strict multi-year moat entry-barrier rule, then re-verify the exact Deep -> Provenance -> Terminal -> Investor -> Three-Pillar chain without weakening any authority guardrail.
 
 ## Current Phase
-GENERIC_CERTIFICATION_MOAT_FALSE_POSITIVE_FIX_READY_FOR_PR
+GENERIC_CERTIFICATION_MOAT_FALSE_POSITIVE_PR_OPEN_AWAITING_CI
 
 ## Last Verified Main
 - PR #268 merged as `bc927ef143b9eff9f2cf4e58708f0707e2bd5f76`.
@@ -16,10 +16,10 @@ GENERIC_CERTIFICATION_MOAT_FALSE_POSITIVE_FIX_READY_FOR_PR
 - `fix/moat-generic-certification-false-positive-20260922`.
 
 ## Active PR
-- Not opened yet. Open a PR only after branch-level self-review confirms the minimal rule/test/docs diff.
+- #269 `fix: reject generic certifications as moat barriers`: open against `main`.
 
 ## CI
-- No PR CI yet for this fix branch.
+- PR #269 opened; live checks on the latest PR head must pass before merge.
 - PR #268 final head had passed its blocking CI before merge.
 - Post-merge CI for `bc927ef...` was still running when production Deep verification began; re-read live CI before final delivery.
 
@@ -60,12 +60,11 @@ GENERIC_CERTIFICATION_MOAT_FALSE_POSITIVE_FIX_READY_FOR_PR
 - None currently. The next blocker, if any, must come from PR CI/review or post-merge production evidence.
 
 ## Next Action
-1. Self-review the branch diff against current main.
-2. Open the fix PR and run blocking CI plus focused moat tests.
-3. Merge only when blocking checks are green.
-4. Verify live main and trigger/observe the resulting evidence-layer Deep.
-5. Audit the new production moat PASS set; `603396` must no longer PASS from generic ISO certification evidence.
-6. Verify exact Deep -> Provenance -> Terminal -> Investor -> Three-Pillar lineage and update this checkpoint to completion.
+1. Read PR #269 blocking CI/review on the latest head; fix any failures without broadening the moat rule.
+2. Merge only when blocking checks are green and the PR is safely current/mergeable against live main.
+3. Verify live main and trigger/observe the resulting evidence-layer Deep.
+4. Audit the new production moat PASS set; `603396` must no longer PASS from generic ISO certification evidence.
+5. Verify exact Deep -> Provenance -> Terminal -> Investor -> Three-Pillar lineage and update this checkpoint to completion.
 
 ## Do Not Repeat
 - Do not redo PR #268.
