@@ -13,7 +13,7 @@ STRICT_MULTI_YEAR_MOAT_PR_OPEN_AWAITING_CI
 
 ## Active Branch
 - `feat/strict-multiyear-moat-evidence-20260922`.
-- Last code/docs commit before this checkpoint: `6313b521eab244e6a1e0e05497fcc3c9d2c266fe`.
+- Latest code/docs commit before this checkpoint: `ff345901097b8a95ac8f6bff1714caf6ce07d2b1`.
 
 ## Active PR
 - #268 `feat: close moat gaps with strict multi-year official evidence`: open against `main`.
@@ -21,7 +21,8 @@ STRICT_MULTI_YEAR_MOAT_PR_OPEN_AWAITING_CI
 ## CI
 - PR #268 opened.
 - CI `35681726992` failed only in `ai-governance`: `TASK_STATE.md` used `## Production / Artifact Baseline` instead of the required exact heading `## Production / Artifact`; fixed on this branch.
-- Required before merge: rerun blocking CI plus deep-calculation contract tests.
+- On the repaired head, Legacy Risk-Capped Research `35681783545` passed; subsequent issuer-bound false-positive hardening superseded that head, so latest-head checks must pass before merge.
+- Required before merge: blocking CI plus deep-calculation contract tests on the final head.
 - No production claim is allowed until post-merge Deep artifacts verify the new rule on live official reports.
 
 ## Production / Artifact
@@ -43,6 +44,7 @@ STRICT_MULTI_YEAR_MOAT_PR_OPEN_AWAITING_CI
 - The new rule is PASS-only and fail-closed: absence/ambiguity remains UNKNOWN; it does not manufacture moat FAIL.
 - PASS requires the same strong moat category in two consecutive fiscal-year official reports plus at least one second corroborating category across the pair.
 - Generic phrases such as “加大研发投入 / 保持行业领先 / 积极拓展客户”, one-year evidence, and patent-count-only evidence remain UNKNOWN.
+- Final self-review tightened extraction so moat signals must be issuer-bound (`公司`/`本公司`); competitor/industry-peer leadership, certification or patent claims cannot satisfy the rule.
 - The rule reuses annual-report bodies already fetched for strict predictability, so it does not add another provider fanout.
 - Jev/TypeSafe has not been invoked in this mission yet. All work so far is deterministic repository inspection and code/test construction. Historical Jev -> Orchestrator continuation remains separately production-proven.
 
