@@ -87,6 +87,21 @@ def test_consumed_staged_add_is_not_planned_twice_and_formal_hold_is_unchanged()
     assert reconciliation["routine_canonical_refresh_rearms_consumed_add"] is False
 
 
+def test_consumed_staged_add_limit_variant_is_removed_after_live_quote_overlay():
+    dashboard = _dashboard()
+    dashboard["capital_deployment"]["operations"][0]["action"] = "ADD_LIMIT"
+    dashboard["final_operation_table"][0]["action"] = "ADD_LIMIT"
+    dashboard["capital_deployment"]["operations"][0]["immediate_execution_eligible"] = False
+    dashboard["final_operation_table"][0]["immediate_execution_eligible"] = False
+
+    out = apply_execution_consumption(dashboard, _state(snapshot="old-snap", source="old-run"))
+
+    assert out["stock_portfolio"]["rows"][0]["holding_add_authorized"] is False
+    assert out["capital_deployment"]["operations"] == []
+    assert out["final_operation_table"] == []
+    assert out["execution_consumption_reconciliation"]["applied_consumption_count"] == 1
+
+
 def test_consumption_carries_across_routine_canonical_refresh_and_blocks_repeat_add():
     out = apply_execution_consumption(_dashboard(), _state(snapshot="old-snap", source="old-run"))
     row = out["stock_portfolio"]["rows"][0]
