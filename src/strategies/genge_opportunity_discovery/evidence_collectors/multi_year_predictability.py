@@ -32,6 +32,7 @@ from .company_announcements import (
 from .validators import content_hash, extract_text_from_response, source_domain, utc_now
 
 RULE_VERSION = "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2"
+MOAT_RULE_VERSION = "DURABLE_MOAT_MULTI_YEAR_OFFICIAL_V1"
 HISTORY_DAYS = 2200
 MAX_REPORTS = 5
 MIN_COMPLETE_YEARS = 3
@@ -84,6 +85,89 @@ _SCOPED_METRIC_TOKENS = (
     "产品", "板块", "分部", "地区", "区域", "分行业", "按行业", "按产品",
     "按地区", "按区域", "矿山端", "贸易端", "冶炼端", "单项业务", "单一业务",
 )
+
+
+# Moat evidence must describe a durable replication barrier, not generic
+# management language. A PASS requires the same strong signal category to be
+# present in two consecutive official annual reports, plus at least one second
+# corroborating category across that pair. Supporting patent-count evidence can
+# corroborate a strong signal but cannot prove a moat on its own.
+_MOAT_SUBJECT = r"(?:本公司|(?<![\u4e00-\u9fff])公司(?:产品|核心产品|主要产品)?)"
+_MOAT_STRONG_SIGNAL_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
+    "market_leadership": (
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:全球|世界|国内|中国|行业).{0,24}"
+            r"(?:市场占有率|市场份额|排名|产量|销量).{0,14}"
+            r"(?:第一|第1|前三|前3|前五|前5)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:市场占有率|市场份额).{0,14}(?:第一|第1|领先)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:全球|世界|国内|中国|行业).{0,18}"
+            r"(?:最大|第一大|领先).{0,20}"
+            r"(?:生产商|供应商|制造商|企业|厂商|矿山|产能|产量)"
+        ),
+    ),
+    "entry_barrier": (
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:通过|取得|获得|达到|满足).{0,20}ASIL[- ]?D"
+            r"(?:.{0,16}(?:认证|资质|标准|要求))?",
+            flags=re.IGNORECASE,
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:独家|唯一).{0,24}(?:供应|许可|资质|技术|产品|平台)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:通过|取得|获得|保持).{0,18}"
+            r"(?:国家级|国际).{0,14}(?:认证|资质)"
+        ),
+    ),
+    "customer_embedding": (
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:获得|取得|新增|累计).{0,20}\d{1,4}(?:个|项).{0,14}"
+            r"(?:定点|量产项目|客户项目)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:定点|量产项目).{0,20}\d{1,4}(?:个|项)"
+        ),
+    ),
+    "resource_asset": (
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:拥有|持有|运营|控制).{0,20}"
+            r"(?:世界级|全球.{0,8}(?:最大|领先)|大型).{0,20}"
+            r"(?:矿山|矿床|资源基地)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:拥有|持有|控制).{0,20}"
+            r"(?:铜|钴|锂|镍|钼|金).{0,8}(?:资源量|储量).{0,20}"
+            r"\d+(?:\.\d+)?(?:万吨|亿吨|吨)"
+        ),
+    ),
+}
+_MOAT_SUPPORTING_SIGNAL_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
+    "ip_scale": (
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:拥有|累计|授权|申请).{0,18}\d{2,6}(?:项|件)?(?:有效)?专利"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}专利.{0,18}\d{2,6}(?:项|件)"
+        ),
+    ),
+}
+_MOAT_STRONG_CATEGORIES = frozenset(_MOAT_STRONG_SIGNAL_PATTERNS)
 
 _FULLWIDTH_TRANSLATION = str.maketrans(
     {
@@ -166,6 +250,80 @@ def _normalize_pdf_text(value: Any) -> str:
     text = re.sub(r"(?<=\d)\s*,\s*(?=\d)", ",", text)
     text = re.sub(r"(?<=\d)\s*\.\s*(?=\d)", ".", text)
     return text
+
+
+def extract_report_moat_signals(text: str, fiscal_year: int) -> dict[str, Any]:
+    """Extract conservative durable-advantage signals from one official report.
+
+    The extractor intentionally ignores generic words such as “领先”“研发投入”
+    unless they satisfy a narrow, auditable pattern. It returns at most one
+    excerpt per category per fiscal year so repeated prose inside one report
+    cannot manufacture durability.
+    """
+    compact = re.sub(r"\s+", "", _normalize_pdf_text(text))
+    signals: list[dict[str, Any]] = []
+    patterns: dict[str, tuple[re.Pattern[str], ...]] = {
+        **_MOAT_STRONG_SIGNAL_PATTERNS,
+        **_MOAT_SUPPORTING_SIGNAL_PATTERNS,
+    }
+    for category, category_patterns in patterns.items():
+        selected: re.Match[str] | None = None
+        for pattern in category_patterns:
+            selected = pattern.search(compact)
+            if selected:
+                break
+        if selected is None:
+            continue
+        start = max(0, selected.start() - 90)
+        end = min(len(compact), selected.end() + 140)
+        signals.append(
+            {
+                "category": category,
+                "strength": "STRONG" if category in _MOAT_STRONG_CATEGORIES else "SUPPORTING",
+                "fiscal_year": int(fiscal_year),
+                "excerpt": compact[start:end],
+            }
+        )
+    return {"fiscal_year": int(fiscal_year), "signals": signals}
+
+
+def classify_multi_year_moat(
+    signals_by_year: Iterable[Mapping[str, Any]],
+) -> tuple[str, str]:
+    """Resolve moat only from repeated strong evidence in consecutive reports."""
+    by_year: dict[int, set[str]] = {}
+    for raw in signals_by_year:
+        try:
+            year = int(raw.get("fiscal_year"))
+        except (TypeError, ValueError):
+            continue
+        categories = {
+            str(signal.get("category") or "")
+            for signal in (raw.get("signals") or [])
+            if isinstance(signal, Mapping) and str(signal.get("category") or "")
+        }
+        if categories:
+            by_year[year] = categories
+
+    years = sorted(by_year)
+    if len(years) < 2:
+        return "UNKNOWN", "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE"
+
+    for previous, current in zip(years, years[1:]):
+        if current - previous != 1:
+            continue
+        previous_categories = by_year[previous]
+        current_categories = by_year[current]
+        repeated_strong = (
+            previous_categories
+            & current_categories
+            & _MOAT_STRONG_CATEGORIES
+        )
+        corroborating_categories = previous_categories | current_categories
+        if repeated_strong and len(corroborating_categories) >= 2:
+            return "PASS", "STRICT_MULTI_YEAR_OFFICIAL_MOAT_EVIDENCE_PROVEN"
+
+    return "UNKNOWN", "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET"
 
 
 def _label_pattern(label: str) -> re.Pattern[str]:
@@ -886,6 +1044,12 @@ def _unknown_row(code: str, industry: str, reason: str) -> dict[str, Any]:
         "predictability_classification": "UNKNOWN",
         "reason_code": reason,
         "rule_version": RULE_VERSION,
+        "moat_classification": "UNKNOWN",
+        "moat_reason_code": "OFFICIAL_REPORT_EVIDENCE_UNAVAILABLE",
+        "moat_rule_version": MOAT_RULE_VERSION,
+        "moat_signals_by_year": [],
+        "moat_evidence_status": "OBSERVED_CONTEXT",
+        "moat_adopted_for_gate": False,
         "coverage_years": [],
         "metrics_by_year": [],
         "evidence_status": "OBSERVED_CONTEXT",
@@ -1035,6 +1199,7 @@ def collect_multi_year_predictability_evidence(
                 continue
 
         metrics: list[dict[str, Any]] = []
+        moat_signals_by_year: list[dict[str, Any]] = []
         source_rows: list[dict[str, Any]] = []
         report_texts: list[str] = []
         for candidate in candidates:
@@ -1052,12 +1217,18 @@ def collect_multi_year_predictability_evidence(
                 continue
             parsed = extract_report_metrics(text, int(candidate["fiscal_year"]))
             metrics.append(parsed)
+            moat_signals_by_year.append(
+                extract_report_moat_signals(text, int(candidate["fiscal_year"]))
+            )
             report_texts.append(text)
             source_rows.append({**candidate, "extraction_method": extraction_method})
 
         cyclical = _is_cyclical_or_resource(industry, report_texts)
         classification, reason = classify_multi_year_metrics(
             metrics, cyclical_or_resource=cyclical
+        )
+        moat_classification, moat_reason = classify_multi_year_moat(
+            moat_signals_by_year
         )
         coverage_years = sorted(
             int(item["fiscal_year"]) for item in metrics if _complete_record(item)
@@ -1069,6 +1240,9 @@ def collect_multi_year_predictability_evidence(
             "classification": classification,
             "reason": reason,
             "metrics": metrics,
+            "moat_classification": moat_classification,
+            "moat_reason": moat_reason,
+            "moat_signals_by_year": moat_signals_by_year,
             "sources": [item.get("url") for item in source_rows],
         }
         results.append({
@@ -1079,6 +1253,14 @@ def collect_multi_year_predictability_evidence(
             "predictability_classification": classification,
             "reason_code": reason,
             "rule_version": RULE_VERSION,
+            "moat_classification": moat_classification,
+            "moat_reason_code": moat_reason,
+            "moat_rule_version": MOAT_RULE_VERSION,
+            "moat_signals_by_year": moat_signals_by_year,
+            "moat_evidence_status": (
+                "VERIFIED" if moat_classification == "PASS" else "OBSERVED_CONTEXT"
+            ),
+            "moat_adopted_for_gate": moat_classification == "PASS",
             "coverage_years": coverage_years,
             "coverage_count": len(coverage_years),
             "metrics_by_year": metrics,

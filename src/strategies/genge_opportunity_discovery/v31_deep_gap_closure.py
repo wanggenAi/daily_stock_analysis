@@ -21,6 +21,7 @@ from typing import Any, Iterable, Mapping
 
 from .evidence_collectors import classify_material_event_title, collect_auto_evidence
 from .evidence_collectors.multi_year_predictability import (
+    MOAT_RULE_VERSION,
     collect_multi_year_predictability_evidence,
 )
 
@@ -274,6 +275,60 @@ def infer_predictability(
     return "UNKNOWN", reason, evidence
 
 
+def infer_moat(
+    code: str, company_evidence: Iterable[Mapping[str, Any]]
+) -> tuple[str, str, list[dict[str, Any]]]:
+    """Consume only strict cross-year moat evidence from official annual reports."""
+    rows = [
+        dict(row)
+        for row in company_evidence
+        if _code(row.get("code")) == code
+        and str(row.get("evidence_kind") or "").lower() == "multi_year_predictability"
+        and _official_exchange_domain(row.get("source_domain"))
+    ]
+    evidence = [
+        {
+            "source_type": row.get("source_type"),
+            "source_domain": row.get("source_domain"),
+            "url": row.get("original_url") or row.get("source"),
+            "source_urls": row.get("source_urls") or [],
+            "publish_date": row.get("publish_date") or row.get("date"),
+            "rule_version": row.get("moat_rule_version"),
+            "signals_by_year": row.get("moat_signals_by_year") or [],
+            "classification": row.get("moat_classification"),
+            "reason_code": row.get("moat_reason_code"),
+        }
+        for row in rows
+    ]
+    verified = [
+        row
+        for row in rows
+        if str(row.get("moat_evidence_status") or "").upper() == "VERIFIED"
+        and bool(row.get("moat_adopted_for_gate"))
+        and str(row.get("moat_classification") or "").upper() == "PASS"
+        and str(row.get("moat_rule_version") or "") == MOAT_RULE_VERSION
+        and str(row.get("moat_reason_code") or "")
+        == "STRICT_MULTI_YEAR_OFFICIAL_MOAT_EVIDENCE_PROVEN"
+        and bool(str(row.get("publish_date") or "").strip())
+    ]
+    if verified:
+        return (
+            "PASS",
+            "Strict repeated multi-year official-report moat rule resolved the gate: "
+            + ",".join(sorted({str(row.get("moat_reason_code") or "") for row in verified})),
+            evidence,
+        )
+    reason_codes = sorted(
+        {str(row.get("moat_reason_code") or "") for row in rows if row.get("moat_reason_code")}
+    )
+    reason = (
+        reason_codes[0]
+        if len(reason_codes) == 1
+        else "STRICT_MULTI_YEAR_DURABLE_MOAT_THRESHOLD_NOT_MET"
+    )
+    return "UNKNOWN", reason, evidence
+
+
 def _unresolved_reason(gate: str, evidence_summary: Mapping[str, Any]) -> str:
     fetch_failures = int(evidence_summary.get("final_failed_count") or evidence_summary.get("failed_count") or 0)
     if gate == "long_term_demand":
@@ -484,6 +539,7 @@ def close_profiles(
     historical_material_event_failed_gates = 0
     material_event_pass_overrides = 0
     predictability_resolved_gates = 0
+    moat_resolved_gates = 0
     unresolved: dict[str, dict[str, str]] = {}
     complete_codes: list[str] = []
     exhausted_codes: list[str] = []
@@ -568,12 +624,34 @@ def close_profiles(
                 predictability["gap_closure_evidence"] = evidence
                 predictability["gap_closure_rationale"] = rationale
 
+        moat = gates.get("moat") if isinstance(gates.get("moat"), dict) else None
+        if moat is not None and _status(moat) == "UNKNOWN":
+            decision, rationale, evidence = infer_moat(code, company_evidence)
+            if decision == "PASS":
+                moat.update(
+                    {
+                        "status": "PASS",
+                        "confidence": "HIGH",
+                        "rationale": rationale,
+                        "evidence": evidence,
+                        "source": "AUTOMATIC_STRICT_MULTI_YEAR_OFFICIAL_MOAT_CLOSURE",
+                    }
+                )
+                moat.pop("terminal_unresolved_reason", None)
+                progressed += 1
+                moat_resolved_gates += 1
+            else:
+                moat["gap_closure_evidence"] = evidence
+                moat["gap_closure_rationale"] = rationale
+
         code_unresolved: dict[str, str] = {}
         for gate in GATES:
             raw = gates.get(gate) if isinstance(gates.get(gate), dict) else None
             if raw is None or _status(raw) == "UNKNOWN":
                 reason = _unresolved_reason(gate, evidence_summary)
                 if gate == "predictability" and raw is not None:
+                    reason = str(raw.get("gap_closure_rationale") or reason)
+                if gate == "moat" and raw is not None:
                     reason = str(raw.get("gap_closure_rationale") or reason)
                 code_unresolved[gate] = reason
                 if raw is not None:
@@ -622,6 +700,7 @@ def close_profiles(
         "workset_coverage_complete": not missing_profile_codes,
         "progressed_gate_count": progressed,
         "predictability_resolved_gate_count": predictability_resolved_gates,
+        "moat_resolved_gate_count": moat_resolved_gates,
         "material_event_failed_gate_count": material_event_failed_gates,
         "historical_material_event_evidence_count": len(historical_material_events),
         "historical_material_event_failed_gate_count": historical_material_event_failed_gates,
@@ -658,6 +737,7 @@ def close_profiles(
             "new_evidence_count": new_evidence_count,
             "progressed_gate_count": progressed,
             "predictability_resolved_gate_count": predictability_resolved_gates,
+            "moat_resolved_gate_count": moat_resolved_gates,
             "material_event_failed_gate_count": material_event_failed_gates,
             "historical_material_event_evidence_count": len(historical_material_events),
             "historical_material_event_failed_gate_count": historical_material_event_failed_gates,
@@ -843,6 +923,7 @@ def run(
         f"- new evidence rows: **{status['new_evidence_count']}**\n"
         f"- progressed gates: **{status['progressed_gate_count']}**\n"
         f"- predictability resolved gates: **{status['predictability_resolved_gate_count']}**\n"
+        f"- moat resolved gates: **{status['moat_resolved_gate_count']}**\n"
         f"- material-event failed gates: **{status['material_event_failed_gate_count']}**\n"
         f"- historical material-event evidence rows: **{status['historical_material_event_evidence_count']}**\n"
         f"- historical material-event failed gates: **{status['historical_material_event_failed_gate_count']}**\n"
