@@ -92,7 +92,7 @@ _SCOPED_METRIC_TOKENS = (
 # present in two consecutive official annual reports, plus at least one second
 # corroborating category across that pair. Supporting patent-count evidence can
 # corroborate a strong signal but cannot prove a moat on its own.
-_MOAT_SUBJECT = r"(?:本公司|(?<![\\u4e00-\\u9fff])公司(?:产品|核心产品|主要产品)?)"
+_MOAT_SUBJECT = r"(?:本公司|(?<![\u4e00-\u9fff])公司(?:产品|核心产品|主要产品)?)"
 _MOAT_STRONG_SIGNAL_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
     "market_leadership": (
         re.compile(
