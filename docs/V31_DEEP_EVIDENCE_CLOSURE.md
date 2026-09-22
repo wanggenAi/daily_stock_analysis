@@ -20,8 +20,9 @@ research-process terminal state, not an investment approval.
 ## Strict multi-year moat rule
 
 The moat rule reuses annual-report bodies already fetched by the predictability
-collector; it does not add a second report-download fanout. The extractor accepts
-only narrow, auditable signal categories:
+collector; it does not add a second report-download fanout. The extractor accepts only issuer-bound claims (the report text must attribute the
+signal to `公司`/`本公司`, not a competitor or industry peer) and only narrow,
+auditable signal categories:
 
 - market leadership supported by explicit market-share/ranking/scale language;
 - entry barriers such as exclusive/unique rights or high-specificity
