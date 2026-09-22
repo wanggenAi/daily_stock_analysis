@@ -173,6 +173,10 @@ def test_infer_moat_requires_moat_specific_verified_adoption():
     row["moat_adopted_for_gate"] = False
     assert infer_moat("000001", [row])[0] == "UNKNOWN"
 
+    row["moat_adopted_for_gate"] = True
+    row["moat_rule_version"] = "STALE_OR_UNKNOWN_MOAT_RULE"
+    assert infer_moat("000001", [row])[0] == "UNKNOWN"
+
 
 def test_header_unit_is_normalized_to_yuan_with_provenance():
     text = """
