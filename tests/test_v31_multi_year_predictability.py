@@ -87,6 +87,18 @@ def test_moat_signal_extraction_rejects_generic_promotional_language():
     assert row["signals"] == []
 
 
+def test_moat_signal_extraction_requires_issuer_bound_claims():
+    row = extract_report_moat_signals(
+        (
+            "竞争对手市场份额全球第一，并已通过ASIL-D认证。"
+            "行业头部企业累计拥有300项专利。"
+            "本公司持续加大研发投入，保持行业领先地位。"
+        ),
+        2025,
+    )
+    assert row["signals"] == []
+
+
 def test_moat_requires_repeated_strong_signal_across_consecutive_years():
     rows = [
         {
