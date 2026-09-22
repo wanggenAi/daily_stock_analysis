@@ -8,10 +8,13 @@ from src.strategies.genge_opportunity_discovery.evidence_collectors import (
 from src.strategies.genge_opportunity_discovery.evidence_collectors.multi_year_predictability import (
     collect_multi_year_predictability_evidence,
     classify_multi_year_metrics,
+    classify_multi_year_moat,
     extract_report_metrics,
+    extract_report_moat_signals,
 )
 from src.strategies.genge_opportunity_discovery.v31_deep_gap_closure import (
     close_profiles,
+    infer_moat,
     infer_predictability,
 )
 
@@ -73,6 +76,89 @@ def _strict_row(code="000001", decision="PASS"):
         "authority_crossed": False,
         "formal_decision": False,
     }
+
+
+def test_moat_signal_extraction_rejects_generic_promotional_language():
+    row = extract_report_moat_signals(
+        "公司持续加大研发投入，保持行业领先地位，积极拓展客户。",
+        2025,
+    )
+    assert row["fiscal_year"] == 2025
+    assert row["signals"] == []
+
+
+def test_moat_requires_repeated_strong_signal_across_consecutive_years():
+    rows = [
+        {
+            "fiscal_year": 2024,
+            "signals": [
+                {"category": "market_leadership", "strength": "STRONG"},
+                {"category": "ip_scale", "strength": "SUPPORTING"},
+            ],
+        },
+        {
+            "fiscal_year": 2025,
+            "signals": [
+                {"category": "market_leadership", "strength": "STRONG"},
+            ],
+        },
+    ]
+    decision, reason = classify_multi_year_moat(rows)
+    assert decision == "PASS"
+    assert reason == "STRICT_MULTI_YEAR_OFFICIAL_MOAT_EVIDENCE_PROVEN"
+
+
+def test_moat_does_not_pass_from_one_year_or_patents_alone():
+    one_year = [
+        {
+            "fiscal_year": 2025,
+            "signals": [
+                {"category": "market_leadership", "strength": "STRONG"},
+                {"category": "ip_scale", "strength": "SUPPORTING"},
+            ],
+        }
+    ]
+    patents_only = [
+        {"fiscal_year": 2024, "signals": [{"category": "ip_scale", "strength": "SUPPORTING"}]},
+        {"fiscal_year": 2025, "signals": [{"category": "ip_scale", "strength": "SUPPORTING"}]},
+    ]
+    assert classify_multi_year_moat(one_year)[0] == "UNKNOWN"
+    assert classify_multi_year_moat(patents_only)[0] == "UNKNOWN"
+
+
+def test_infer_moat_requires_moat_specific_verified_adoption():
+    row = _strict_row()
+    row.update(
+        {
+            "moat_classification": "PASS",
+            "moat_reason_code": "STRICT_MULTI_YEAR_OFFICIAL_MOAT_EVIDENCE_PROVEN",
+            "moat_rule_version": "DURABLE_MOAT_MULTI_YEAR_OFFICIAL_V1",
+            "moat_signals_by_year": [
+                {
+                    "fiscal_year": 2024,
+                    "signals": [
+                        {"category": "market_leadership", "strength": "STRONG"},
+                        {"category": "ip_scale", "strength": "SUPPORTING"},
+                    ],
+                },
+                {
+                    "fiscal_year": 2025,
+                    "signals": [
+                        {"category": "market_leadership", "strength": "STRONG"}
+                    ],
+                },
+            ],
+            "moat_evidence_status": "VERIFIED",
+            "moat_adopted_for_gate": True,
+        }
+    )
+    decision, rationale, evidence = infer_moat("000001", [row])
+    assert decision == "PASS"
+    assert "Strict repeated multi-year" in rationale
+    assert evidence[0]["rule_version"] == "DURABLE_MOAT_MULTI_YEAR_OFFICIAL_V1"
+
+    row["moat_adopted_for_gate"] = False
+    assert infer_moat("000001", [row])[0] == "UNKNOWN"
 
 
 def test_header_unit_is_normalized_to_yuan_with_provenance():
