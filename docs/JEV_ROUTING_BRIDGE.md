@@ -46,15 +46,14 @@ The secret-bearing live PR job remains contents:read.
 
 PR smoke runs still upload artifacts but never persist them to main.
 
-## Why automatic dispatch is still off
+## Automatic research dispatch boundary
 
-This phase makes Jev operationally visible and durable, but it intentionally does not
-launch Deep or Evidence workflows yet. We first need repeated live calibration showing
-that route selection is stable and useful. Deterministic research obligations always
-remain in force and Jev can never suppress them.
-
-A later promotion may allow Jev to accelerate already-eligible research work, but only
-after calibration and with deterministic override/fail-closed semantics.
+The routing bridge itself remains advisory: `automatic_dispatch_allowed=false`.
+A separate deterministic research orchestrator may consume the persisted advisory
+queue and dispatch the existing bounded Deep research workflow only when deterministic
+eligibility and fail-closed guardrails also permit it. Jev never dispatches work
+directly, never suppresses deterministic research obligations, and never grants Formal
+trading authority.
 
 ## Low-confidence deterministic fallback
 
@@ -64,9 +63,9 @@ A Jev `HUMAN_REVIEW` route is also downgraded to the same read-only evidence ref
 
 ## Research strategy ledger
 
-The orchestrator persists a fail-closed research strategy ledger at `data/jev_shadow/research_strategy_ledger.json`. Each attempt is keyed semantically by stock code, unresolved hard gate, strategy family, and a stable evidence fingerprint. Runtime-only lineage such as a Jev or Deep workflow id is excluded from the evidence fingerprint.
+The orchestrator persists a fail-closed research strategy ledger at `data/jev_shadow/research_strategy_ledger.json`. Each attempt is keyed semantically by stock code, unresolved hard gate, strategy family, and a **hard-gate-local evidence epoch**. Runtime-only lineage such as a Jev or Deep workflow id is excluded. The broader stock-level research fingerprint is retained only as trace metadata and does not decide whether an individual gate strategy may reopen.
 
-The ledger records the unresolved reason, strategy/source/query family, evidence epoch, dispatch status, accepted Deep run id, whether new evidence appeared, whether the gate changed, and whether that strategy is exhausted. A strategy is not judged until the exact accepted Deep run is visible in a later Jev research state. If that later state has the same evidence fingerprint and the same gate remains unresolved, the strategy becomes `EXHAUSTED_NO_PROGRESS` and is not scheduled again in that evidence epoch. A changed evidence fingerprint reopens the supported strategy.
+The ledger records the unresolved reason, strategy/source/query family, gate-local evidence epoch, dispatch status, accepted Deep run id, whether new evidence appeared, whether the gate changed, and whether that strategy is exhausted. A strategy is not judged until the exact accepted Deep run is visible in a later Jev research state. If that gate's local evidence epoch is unchanged and the gate remains unresolved, the strategy becomes `EXHAUSTED_NO_PROGRESS` and is not scheduled again in that epoch. Only a change in that same gate's evidence state reopens its supported strategy; progress in an unrelated gate does not reopen an already exhausted path.
 
 This is research-control state only. It cannot authorize a trade, weaken a hard gate, or convert UNKNOWN to PASS. New source/query families can be added later without changing the ledger contract.
 
