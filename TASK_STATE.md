@@ -4,10 +4,10 @@
 Operate the stock system as one durable closed research loop. Jev may accelerate bounded research through the existing Deep -> Terminal -> Investor -> Three-Pillar chain, but it must not change Formal trading authority.
 
 ## Current Phase
-OFFICIAL_EVIDENCE_LOCAL_CONTEXT_PRODUCTION_VERIFIED_POST_MERGE_CI_OBSERVATION
+OFFICIAL_EVIDENCE_LOCAL_CONTEXT_PRODUCTION_VERIFIED_COMPLETE
 
 ## Last Verified Main
-- Live main before this checkpoint: `7d799f069976b09003bd9d165b8b3a892ae59510`.
+- Live main before this final checkpoint: `117485e05c9345fdbbe7de30f0c1af1deefc2836`.
 - Final production code epoch for this verification: `0156e68bb73121adbfdd29a011cc9f49352c3eba` (#267 merge).
 - #266 and #267 are merged; stale #265 is closed without merge.
 - Live GitHub refs / Actions / persisted data always override this checkpoint.
@@ -23,9 +23,9 @@ OFFICIAL_EVIDENCE_LOCAL_CONTEXT_PRODUCTION_VERIFIED_POST_MERGE_CI_OBSERVATION
 
 ## CI
 - #266 PR head checks passed: CI `35675319708`, Opportunity Discovery `35675319725`, Legacy Risk-Capped Research `35675319698`.
-- #267 was merged after its production-shaped split-layout regression and became main code epoch `0156e68...`.
-- Post-merge push CI `35679077724`: ai-governance=success, docker-build=success, web-gate=skipped; backend-gate was still running the offline test suite at the last observation.
-- Production verification below is already completed successfully and is independent of that still-running post-merge observation.
+- #267 merged as main code epoch `0156e68...` after its production-shaped split-layout regression.
+- Post-merge push CI `35679077724`: completed success. ai-governance, backend-gate and docker-build passed; web-gate was correctly skipped for this backend-only change.
+- No CI blocker remains.
 
 ## Production / Artifact
 - Baseline Deep: `35618926319` (success), requested=16, unresolved_requested_gate_count=69, unique_industry_evidence_count=20.
@@ -45,6 +45,7 @@ OFFICIAL_EVIDENCE_LOCAL_CONTEXT_PRODUCTION_VERIFIED_POST_MERGE_CI_OBSERVATION
 - #267 fixed the remaining NBS split-layout clause-boundary contamination.
 - Fresh production Deep -> Provenance -> Terminal -> Investor -> Three-Pillar chain completed successfully.
 - The target extraction defects are production-proven fixed without relaxing evidence thresholds.
+- Post-merge repository CI completed successfully.
 - Formal/Production authority remains unchanged; no automatic trading authority was introduced.
 
 ## Current Findings
@@ -56,14 +57,12 @@ OFFICIAL_EVIDENCE_LOCAL_CONTEXT_PRODUCTION_VERIFIED_POST_MERGE_CI_OBSERVATION
 - Earlier Jev -> Orchestrator automatic continuation remains production-proven from prior completed work; do not conflate that historical proof with an actual Jev call in this replay.
 
 ## Blockers
-- No production-logic blocker remains for the official-evidence local-context fix.
-- Observation only: post-merge push CI `35679077724` backend-gate was still running the offline suite at the last check. If it later fails, inspect that failure before declaring repository-wide CI fully green.
+- None for this mission.
 
 ## Next Action
-1. Re-read live main and CI `35679077724`.
-2. If backend-gate succeeds, mark this mission fully complete with no further production rerun.
-3. If backend-gate fails, inspect only the failing test/job and repair if it is causally related; do not repeat the already-successful production Deep chain unless evidence code changes again.
-4. Continue future stock research from the persisted 22-name Terminal/Three-Pillar state, not from the old 16-name baseline.
+- This mission is complete.
+- On the next stock-project request, continue from the persisted 22-name Terminal/Three-Pillar state and the live repository state.
+- Only rerun this production evidence closure if evidence-layer code or relevant upstream evidence changes.
 
 ## Do Not Repeat
 - Do not redo Jev Phase 1/2/3 or recreate #242.
