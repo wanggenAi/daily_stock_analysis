@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generation": 28,
+  "generation": 29,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "STRICT_MULTI_YEAR_MOAT_AUTHORITATIVE_DEEP_RUNNING",
-  "last_observed_main_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76",
+  "stage": "STRICT_MULTI_YEAR_MOAT_PRODUCTION_FALSE_POSITIVE_HARDENING",
+  "last_observed_main_sha": "5b5424fca37d702f811ba47c81720a637789ec36",
   "work_branch": null,
   "work_head_sha": null,
   "active_pr": null,
@@ -16,16 +16,32 @@
     "merge_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76"
   },
   "production_or_artifact": {
-    "status": "RUNNING",
-    "superseded_push_deep_run_id": 35683870241,
-    "evidence_change_trigger_run_id": 35683870157,
+    "status": "SEMANTIC_REVIEW_FAILED_NEEDS_HARDENING",
     "authoritative_deep_run_id": 35683878901,
-    "trigger_source": "EVIDENCE_LAYER_CHANGE",
-    "code_baseline_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76",
+    "deep_status": "SUCCESS",
+    "research_terminal_state": "EVIDENCE_EXHAUSTED",
     "baseline_unresolved_requested_gate_count": 93,
-    "baseline_unresolved_moat_count": 21
+    "current_unresolved_requested_gate_count": 89,
+    "baseline_unresolved_moat_count": 21,
+    "moat_resolved_gate_count": 4,
+    "provisional_automatic_moat_pass_codes": [
+      "603396",
+      "002375",
+      "000576",
+      "603160"
+    ],
+    "false_positive_findings": [
+      "603396: generic ISO management-system certifications were treated as durable entry barriers",
+      "002375: issuer subject bridged into investee/controlled-company leadership wording",
+      "000576: issuer subject can bridge into subsidiary leadership wording; fail closed until explicitly modeled"
+    ]
   },
-  "pending_operation": null,
+  "pending_operation": {
+    "type": "CREATE_BRANCH",
+    "branch": "fix/strict-moat-subject-scope-20260922",
+    "base_sha": "5b5424fca37d702f811ba47c81720a637789ec36",
+    "purpose": "Remove generic certification moat signals and prevent issuer subject from bridging into third-party/subsidiary leadership claims."
+  },
   "completed": [
     "Recovered live repository state and identified PR #268 as the first unfinished mission.",
     "Confirmed main drift since PR base is runtime JSON only.",
@@ -35,7 +51,7 @@
     "Corrected the Unicode CJK negative-lookbehind escaping; issuer-bound regex now actually rejects Chinese-prefix peer/company phrases.",
     "PR #268 final head passed all checks and squash-merged as bc927ef143b9eff9f2cf4e58708f0707e2bd5f76."
   ],
-  "next_action": "Follow authoritative Deep 35683878901. After success inspect persisted/artifact moat results and every automatic moat PASS excerpt, then verify Provenance -> Terminal -> Investor -> Three-Pillar. Do not treat cancelled push Deep 35683870241 as failure.",
+  "next_action": "Create fix/strict-moat-subject-scope-20260922 from live main, harden patterns and regressions, run PR CI, merge, then rerun production Deep and require semantic audit of every automatic moat PASS.",
   "do_not_repeat": [
     "Do not rerun completed #266/#267 evidence mission.",
     "Do not use Jev as hard-gate authority.",
