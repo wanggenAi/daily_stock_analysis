@@ -214,3 +214,99 @@ def test_conflicted_human_review_route_remains_human_review():
     assert reviews["601318"]["evidence_state"] == "CONFLICTED"
     assert reviews["601318"]["review_reason"] == "JEV_ROUTE_HUMAN_REVIEW"
     assert "601318" not in plan["requested_codes"]
+
+def _scoped_routing(*, fingerprint="fp-1", source_run="200", deep_run=""):
+    payload = _routing()
+    payload["source_workflow_run_id"] = source_run
+    row = payload["routing_queue"][1]
+    row["research_evidence_fingerprint"] = fingerprint
+    row["research_context"] = {
+        "deep_lambda_run_id": deep_run,
+        "unresolved_gates": [
+            {
+                "gate": "predictability",
+                "reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+            }
+        ],
+    }
+    return payload
+
+
+def test_strategy_ledger_suppresses_same_strategy_in_same_evidence_epoch():
+    first = build_orchestration_plan(_scoped_routing(), max_dispatch=12)
+    assert "000576" in first["requested_codes"]
+    assert first["summary"]["strategy_attempt_count"] == 1
+
+    ledger = first["strategy_ledger"]
+    for entry in ledger["entries"]:
+        if entry["code"] == "000576":
+            entry["attempt_status"] = "DISPATCH_ACCEPTED"
+            entry["deep_run_id"] = "900"
+
+    later_payload = _scoped_routing(source_run="201", deep_run="900")
+    later = build_orchestration_plan(
+        later_payload,
+        max_dispatch=12,
+        strategy_ledger=ledger,
+    )
+
+    assert "000576" not in later["requested_codes"]
+    assert any(
+        row.get("entity_id") == "000576"
+        and row.get("reason") == "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH"
+        for row in later["skipped"]
+    )
+    exhausted = [
+        entry
+        for entry in later["strategy_ledger"]["entries"]
+        if entry["code"] == "000576"
+    ]
+    assert exhausted
+    assert all(entry["attempt_status"] == "EXHAUSTED_NO_PROGRESS" for entry in exhausted)
+
+
+def test_new_evidence_epoch_reopens_same_supported_strategy():
+    first = build_orchestration_plan(_scoped_routing(), max_dispatch=12)
+    ledger = first["strategy_ledger"]
+    for entry in ledger["entries"]:
+        if entry["code"] == "000576":
+            entry["attempt_status"] = "DISPATCH_ACCEPTED"
+            entry["deep_run_id"] = "900"
+
+    changed_payload = _scoped_routing(
+        fingerprint="fp-2",
+        source_run="202",
+        deep_run="900",
+    )
+    changed_payload["routing_queue"][1]["research_context"]["unresolved_gates"][0][
+        "reason"
+    ] = "MULTI_YEAR_POSITIVITY_NOT_PROVEN"
+    changed = build_orchestration_plan(
+        changed_payload,
+        max_dispatch=12,
+        strategy_ledger=ledger,
+    )
+
+    assert "000576" in changed["requested_codes"]
+    attempts = [
+        attempt
+        for row in changed["selected"]
+        if row["entity_id"] == "000576"
+        for attempt in row.get("strategy_attempts") or []
+    ]
+    assert len(attempts) == 1
+    assert attempts[0]["evidence_fingerprint"] == "fp-2"
+    assert attempts[0]["hard_gate"] == "predictability"
+
+
+def test_workflow_persists_strategy_ledger_only_after_deep_acceptance():
+    from pathlib import Path
+
+    workflow = Path(".github/workflows/genge-jev-research-orchestrator.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "--strategy-ledger-json data/jev_shadow/research_strategy_ledger.json" in workflow
+    assert 'plan.pop("strategy_ledger", None)' in workflow
+    assert 'entry["attempt_status"] = "DISPATCH_ACCEPTED"' in workflow
+    assert "data/jev_shadow/research_strategy_ledger.json" in workflow
+
