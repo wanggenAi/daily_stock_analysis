@@ -154,7 +154,38 @@ def build_queue(
     hourly_rows = {str(r.get("code") or "").zfill(6): r for r in (hourly.get("rows") or []) if isinstance(r, Mapping)}
     recovery_rows = _recovery_map(near_buy_recovery)
     archetype_rows = _archetype_map(success_archetype_recall)
-    codes = sorted(set(life) | set(coverage_rows) | set(hourly_rows) | set(recovery_rows) | set(archetype_rows))
+
+    # Lifecycle memory may retain ARCHIVED/INVALIDATED identities for audit, but
+    # those rows must not seed ordinary research by themselves. Coverage is
+    # likewise derived from lifecycle memory, so only explicit HOLDING coverage
+    # may independently keep an inactive code visible for risk monitoring.
+    active_lifecycle_codes = {
+        str(code).zfill(6)
+        for code, candidate in life.items()
+        if not isinstance(candidate, Mapping)
+        or str(candidate.get("lifecycle_state") or "ACTIVE").upper() == "ACTIVE"
+    }
+    holding_coverage_codes = {
+        code
+        for code, row in coverage_rows.items()
+        if "HOLDING" in {
+            str(scope).upper() for scope in (row.get("scopes") or [])
+        }
+    }
+    inactive_lifecycle_codes = {
+        str(code).zfill(6)
+        for code, candidate in life.items()
+        if isinstance(candidate, Mapping)
+        and str(candidate.get("lifecycle_state") or "ACTIVE").upper()
+        in {"ARCHIVED", "INVALIDATED"}
+    }
+    codes = sorted(
+        active_lifecycle_codes
+        | holding_coverage_codes
+        | set(hourly_rows)
+        | set(recovery_rows)
+        | set(archetype_rows)
+    )
     queue: list[dict[str, Any]] = []
     for code in codes:
         l = life.get(code) or {}
@@ -222,10 +253,17 @@ def build_queue(
             priority = "P2"
         else:
             priority = "P3"
+        lifecycle_state = str(l.get("lifecycle_state") or "ACTIVE").upper() if l else ""
         queue.append({
             "code": code,
             "name": c.get("name") or l.get("stock_name") or h.get("name") or recovery.get("name") or archetype.get("name") or "",
             "priority": priority,
+            "candidate_lifecycle_state": lifecycle_state,
+            "candidate_archive_reason_class": str(l.get("archive_reason_class") or ""),
+            "candidate_archive_evidence_fingerprint": str(
+                l.get("archive_evidence_fingerprint") or ""
+            ),
+            "candidate_archive_evidence_id": str(l.get("archive_evidence_id") or ""),
             "priority_score": score,
             "research_tier": tier,
             "thesis_status": thesis or None,
@@ -264,6 +302,9 @@ def build_queue(
         "success_archetype_recall_changes_thresholds": False,
         "research_overlay_boost_combination": "MAX_NOT_SUM",
         "queue_count": len(queue),
+        "inactive_lifecycle_seed_suppressed_count": len(
+            inactive_lifecycle_codes - holding_coverage_codes
+        ),
         "p0_count": sum(r["priority"] == "P0" for r in queue),
         "p1_count": sum(r["priority"] == "P1" for r in queue),
         "mapping_gap_count": sum(bool(r["mapping_gaps"]) for r in queue),
