@@ -1,5 +1,6 @@
 from src.strategies.genge_opportunity_discovery.research_strategy_ledger import (
     append_attempts,
+    gate_evidence_fingerprint,
     has_strategy_scope,
     plan_strategy_attempts,
     reconcile_ledger,
@@ -10,24 +11,36 @@ def _row(
     *,
     code="000576",
     fingerprint="fp-1",
-    reason="INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+    predictability_reason="INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+    financial_reason="SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+    predictability_source="annual-report",
+    financial_source="financial-report",
 ):
     return {
         "entity_id": code,
         "research_evidence_fingerprint": fingerprint,
         "research_context": {
             "unresolved_gates": [
-                {"gate": "predictability", "reason": reason},
-                {
-                    "gate": "financial_safety",
-                    "reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+                {"gate": "predictability", "reason": predictability_reason},
+                {"gate": "financial_safety", "reason": financial_reason},
+            ],
+            "profile_gate_statuses": {
+                "predictability": {
+                    "status": "UNKNOWN",
+                    "confidence": "LOW",
+                    "source": predictability_source,
                 },
-            ]
+                "financial_safety": {
+                    "status": "UNKNOWN",
+                    "confidence": "LOW",
+                    "source": financial_source,
+                },
+            },
         },
     }
 
 
-def test_plans_one_attempt_per_supported_gate_for_new_evidence_epoch():
+def test_plans_one_attempt_per_supported_gate_for_new_gate_epoch():
     row = _row()
 
     attempts = plan_strategy_attempts(
@@ -41,13 +54,32 @@ def test_plans_one_attempt_per_supported_gate_for_new_evidence_epoch():
         "predictability",
         "financial_safety",
     }
-    assert {item["evidence_epoch"] for item in attempts} == {"fp-1"}
+    assert len({item["evidence_epoch"] for item in attempts}) == 2
+    assert {item["stock_evidence_fingerprint"] for item in attempts} == {"fp-1"}
     assert all(item["attempt_status"] == "DISPATCH_PLANNED" for item in attempts)
     assert all(item["formal_trading_authority"] is False for item in attempts)
     assert all(item["no_auto_trade"] is True for item in attempts)
 
 
-def test_same_strategy_and_fingerprint_is_not_planned_twice():
+def test_gate_fingerprint_ignores_unrelated_stock_level_epoch_change():
+    first = _row(fingerprint="fp-1")
+    later = _row(fingerprint="fp-2")
+
+    first_fp = gate_evidence_fingerprint(
+        first,
+        gate="predictability",
+        unresolved_reason="INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+    )
+    later_fp = gate_evidence_fingerprint(
+        later,
+        gate="predictability",
+        unresolved_reason="INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+    )
+
+    assert first_fp == later_fp
+
+
+def test_same_strategy_and_gate_epoch_is_not_planned_twice():
     row = _row()
     attempts = plan_strategy_attempts(
         row,
@@ -65,7 +97,7 @@ def test_same_strategy_and_fingerprint_is_not_planned_twice():
     assert repeated == []
 
 
-def test_new_evidence_fingerprint_reactivates_strategy():
+def test_stock_epoch_change_alone_does_not_reactivate_exhausted_gate_strategy():
     first = _row(fingerprint="fp-1")
     ledger = append_attempts(
         {},
@@ -79,14 +111,31 @@ def test_new_evidence_fingerprint_reactivates_strategy():
         source_workflow_run_id="101",
     )
 
-    assert {item["hard_gate"] for item in attempts} == {
-        "predictability",
-        "financial_safety",
-    }
-    assert {item["evidence_fingerprint"] for item in attempts} == {"fp-2"}
+    assert attempts == []
 
 
-def test_later_same_fingerprint_marks_accepted_attempt_as_no_progress_exhausted():
+def test_gate_local_change_reactivates_only_that_gate_strategy():
+    first = _row()
+    ledger = append_attempts(
+        {},
+        plan_strategy_attempts(first, {}, source_workflow_run_id="100"),
+    )
+    later = _row(
+        fingerprint="fp-2",
+        predictability_reason="MULTI_YEAR_POSITIVITY_NOT_PROVEN",
+    )
+
+    attempts = plan_strategy_attempts(
+        later,
+        ledger,
+        source_workflow_run_id="101",
+    )
+
+    assert [item["hard_gate"] for item in attempts] == ["predictability"]
+    assert attempts[0]["stock_evidence_fingerprint"] == "fp-2"
+
+
+def test_later_same_gate_epoch_marks_accepted_attempt_as_no_progress_exhausted():
     row = _row()
     attempts = plan_strategy_attempts(
         row,
@@ -112,7 +161,7 @@ def test_later_same_fingerprint_marks_accepted_attempt_as_no_progress_exhausted(
     assert all(item["strategy_exhausted"] is True for item in reconciled["entries"])
 
 
-def test_changed_fingerprint_records_evidence_progress_without_inventing_gate_pass():
+def test_gate_local_progress_does_not_reopen_or_mark_other_gate_progressed():
     first = _row(fingerprint="fp-1")
     attempts = plan_strategy_attempts(
         first,
@@ -125,7 +174,7 @@ def test_changed_fingerprint_records_evidence_progress_without_inventing_gate_pa
 
     later = _row(
         fingerprint="fp-2",
-        reason="MULTI_YEAR_POSITIVITY_NOT_PROVEN",
+        predictability_reason="MULTI_YEAR_POSITIVITY_NOT_PROVEN",
     )
     reconciled = reconcile_ledger(
         ledger,
@@ -137,8 +186,9 @@ def test_changed_fingerprint_records_evidence_progress_without_inventing_gate_pa
     assert by_gate["predictability"]["attempt_status"] == "COMPLETED_EVIDENCE_CHANGED"
     assert by_gate["predictability"]["new_evidence_acquired"] is True
     assert by_gate["predictability"]["gate_changed"] is True
-    assert by_gate["financial_safety"]["attempt_status"] == "COMPLETED_EVIDENCE_CHANGED"
-    assert by_gate["financial_safety"]["new_evidence_acquired"] is True
+    assert by_gate["financial_safety"]["attempt_status"] == "EXHAUSTED_NO_PROGRESS"
+    assert by_gate["financial_safety"]["new_evidence_acquired"] is False
+    assert by_gate["financial_safety"]["gate_changed"] is False
 
 
 def test_same_source_run_does_not_close_write_ahead_attempt():
@@ -162,13 +212,14 @@ def test_same_source_run_does_not_close_write_ahead_attempt():
     )
 
 
-def test_missing_fingerprint_or_gate_state_is_not_falsely_governed():
+def test_missing_gate_state_is_not_falsely_governed():
     assert has_strategy_scope({"entity_id": "000001"}) is False
     assert plan_strategy_attempts(
-        {"entity_id": "000001"},
+        {"entity_id": "000001", "research_evidence_fingerprint": "fp"},
         {},
         source_workflow_run_id="100",
     ) == []
+
 
 def test_accepted_attempt_waits_until_exact_deep_result_is_visible():
     row = _row()
@@ -205,4 +256,3 @@ def test_accepted_attempt_waits_until_exact_deep_result_is_visible():
         item["attempt_status"] == "EXHAUSTED_NO_PROGRESS"
         for item in reconciled["entries"]
     )
-
