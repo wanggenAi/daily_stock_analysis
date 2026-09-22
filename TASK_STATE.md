@@ -4,7 +4,7 @@
 Close the dominant V3.1 moat evidence gap with a strict, auditable multi-year official-report rule while preserving the existing Deep -> Terminal -> Investor -> Three-Pillar authority boundaries.
 
 ## Current Phase
-STRICT_MULTI_YEAR_MOAT_CODE_WRITTEN_AWAITING_PR_CI
+STRICT_MULTI_YEAR_MOAT_PR_OPEN_AWAITING_CI
 
 ## Last Verified Main
 - Live main at mission start: `25468263d23ed5aa40a1d830c67e8b5d9ebd8c62`.
@@ -16,11 +16,11 @@ STRICT_MULTI_YEAR_MOAT_CODE_WRITTEN_AWAITING_PR_CI
 - Last code/docs commit before this checkpoint: `6313b521eab244e6a1e0e05497fcc3c9d2c266fe`.
 
 ## Active PR
-- None yet. Next stage is PR creation from the active branch to `main`.
+- #268 `feat: close moat gaps with strict multi-year official evidence`: open against `main`.
 
 ## CI
-- Not started for this branch yet.
-- Required after PR creation: blocking CI plus deep-calculation contract tests.
+- PR #268 opened; CI/checks are now expected on the latest branch head.
+- Required before merge: blocking CI plus deep-calculation contract tests.
 - No production claim is allowed until post-merge Deep artifacts verify the new rule on live official reports.
 
 ## Production / Artifact Baseline
@@ -49,12 +49,11 @@ STRICT_MULTI_YEAR_MOAT_CODE_WRITTEN_AWAITING_PR_CI
 - None currently. CI has not run yet.
 
 ## Next Action
-1. Open PR from the active branch.
-2. Read blocking CI/review; fix any failures on the same branch.
-3. Merge only when blocking checks are green and head is current.
-4. Verify live main.
-5. Verify a fresh production Deep -> Provenance -> Terminal -> Investor -> Three-Pillar chain and measure `moat_resolved_gate_count` plus unresolved moat count.
-6. Record whether Jev actually ran; do not report Jev usage unless a TypeSafe/Jev workflow log proves it.
+1. Read PR #268 blocking CI/review; fix any failures on the same branch.
+2. Merge only when blocking checks are green and head is current.
+3. Verify live main.
+4. Verify a fresh production Deep -> Provenance -> Terminal -> Investor -> Three-Pillar chain and measure `moat_resolved_gate_count` plus unresolved moat count.
+5. Record whether Jev actually ran; do not report Jev usage unless a TypeSafe/Jev workflow log proves it.
 
 ## Do Not Repeat
 - Do not redo Jev Phase 1/2/3 or recreate #242.
