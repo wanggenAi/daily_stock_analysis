@@ -194,25 +194,45 @@ def _rows_by_code(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]
 def _stable_gate_evidence_fingerprint(raw: Mapping[str, Any]) -> str:
     """Hash semantic gate evidence while excluding runtime-only lineage."""
 
-    def stable_items(value: Any) -> list[Any]:
-        if not isinstance(value, list):
-            return []
-        canonical: list[tuple[str, Any]] = []
-        for item in value:
-            if isinstance(item, Mapping):
-                normalized = dict(item)
-            else:
-                normalized = item
-            encoded = json.dumps(
+    runtime_keys = {
+        "retrieved_at",
+        "fetched_at",
+        "collected_at",
+        "observed_at",
+        "generated_at",
+        "updated_at",
+        "workflow_run_id",
+        "run_id",
+        "lambda_run_id",
+        "deep_lambda_run_id",
+        "deep_code_epoch_sha",
+        "head_sha",
+    }
+
+    def stable_value(value: Any) -> Any:
+        if isinstance(value, Mapping):
+            return {
+                str(key): stable_value(item)
+                for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+                if str(key) not in runtime_keys
+            }
+        if isinstance(value, list):
+            normalized = [stable_value(item) for item in value]
+            return sorted(
                 normalized,
-                ensure_ascii=False,
-                sort_keys=True,
-                separators=(",", ":"),
-                default=str,
+                key=lambda item: json.dumps(
+                    item,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                ),
             )
-            canonical.append((encoded, normalized))
-        canonical.sort(key=lambda item: item[0])
-        return [item[1] for item in canonical]
+        return value
+
+    def stable_items(value: Any) -> list[Any]:
+        normalized = stable_value(value)
+        return normalized if isinstance(normalized, list) else []
 
     payload = {
         "status": str(raw.get("status") or "UNKNOWN"),
