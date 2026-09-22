@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [新功能] Jev 编排在同一 Deep lineage 完成 Terminal、Investor Overlay 与 Three-Pillar 收敛后，按 Deep run id 去重自动发起一次新的 Jev Shadow 复评；复评只负责 typed 分类/路由与策略账本结算，只有新的 gate-local evidence epoch/研究策略仍满足确定性资格时才进入下一轮 bounded Deep，同一 lineage 的重复 Reconciler 唤醒不会重复调度，Formal Authority、UNKNOWN 与 no-auto-trade 语义不变。
 - [新功能] 新增 Jev/Deep 持久化研究策略账本：按 `code × hard_gate × strategy_family × hard-gate-local evidence epoch` 记录官方补证策略，只有已接受 Deep 结果真实回流后才判断进展；同一门槛证据 epoch 的同一路径不再重复调度；epoch 纳入该门槛 Deep 补证语义及财务门槛 PIT 诊断并排除抓取时间/运行 lineage，只有该门槛自身证据变化才可重新激活，其他门槛进展不会误重开，UNKNOWN、Formal Authority 与 no-auto-trade 语义不变。
 - [修复] Jev research orchestrator 不再把 `INSUFFICIENT` 且已由确定性 P0/P1/P2/urgent/holding 研究规则覆盖的对象仅因 Jev route confidence < 0.50 停在人工队列；此类对象降级为 bounded `DETERMINISTIC_SAFE_FALLBACK` 只读补证据，`CONFLICTED` 等不可规则化状态仍保留人工复核，Formal Authority 与 no-auto-trade 不变。
 - [修复] Jev shadow 输入改为持仓优先后直接消费 `data/research_priority/latest.json` 的实时排序队列，再补充未覆盖的 Deep unresolved continuity；P0/P1 与 Near-BUY 缺证候选不再因只读取上一轮 Deep GAP 而被 157→24 的旧工作集反复饿死，Formal Authority、UNKNOWN 与 no-auto-trade 规则不变。
