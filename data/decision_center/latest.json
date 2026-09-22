@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-22T12:16:02+00:00",
+  "generated_at": "2026-09-22T13:30:46+00:00",
   "latest_trade_date": "2026-09-21",
   "canonical_snapshot_id": "5ac20f6d54739d44e849",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -385,18 +385,18 @@
     "direct_fund_flow_claimed": false,
     "a_share_market_snapshot": {
       "as_of_date": "2026-09-21",
-      "status": "UNAVAILABLE",
-      "data_quality": "UNAVAILABLE",
+      "status": "GREEN",
+      "data_quality": "OK",
       "allow_new_buy": false,
-      "score": null,
-      "position_multiplier": null,
-      "advance_ratio": null,
-      "median_return_1d_pct": null,
-      "above_ma20_ratio": null,
-      "above_ma60_ratio": null,
-      "distribution_ratio": null,
-      "limit_up_count": 0,
-      "limit_down_count": 0,
+      "score": 72.27,
+      "position_multiplier": 1.0,
+      "advance_ratio": 0.8114,
+      "median_return_1d_pct": 1.5152,
+      "above_ma20_ratio": 0.5613,
+      "above_ma60_ratio": 0.6178,
+      "distribution_ratio": 0.0224,
+      "limit_up_count": 98,
+      "limit_down_count": 2,
       "risk_reasons": []
     },
     "structural_world_social_trends": [
@@ -595,7 +595,48 @@
         }
       }
     ],
-    "tactical_market_behavior_proxy": [],
+    "tactical_market_behavior_proxy": [
+      {
+        "industry": "M73研究和试验发展",
+        "status": "STRONG",
+        "score": 100.0
+      },
+      {
+        "industry": "O81机动车、电子产品和日用产品修理业",
+        "status": "STRONG",
+        "score": 100.0
+      },
+      {
+        "industry": "A02林业",
+        "status": "STRONG",
+        "score": 92.84
+      },
+      {
+        "industry": "K70房地产业",
+        "status": "STRONG",
+        "score": 92.82
+      },
+      {
+        "industry": "C27医药制造业",
+        "status": "STRONG",
+        "score": 90.06
+      },
+      {
+        "industry": "A04渔业",
+        "status": "STRONG",
+        "score": 89.76
+      },
+      {
+        "industry": "C41其他制造业",
+        "status": "STRONG",
+        "score": 89.72
+      },
+      {
+        "industry": "C19皮革、毛皮、羽毛及其制品和制鞋业",
+        "status": "STRONG",
+        "score": 89.5
+      }
+    ],
     "validated_a_share_research_handoffs": [],
     "validated_handoff_count": 0,
     "intersection_status": "NO_VALIDATED_A_SHARE_HANDOFF",
@@ -2949,8 +2990,8 @@
     "capabilities": [
       {
         "capability": "市场大趋势 / 全A脉搏",
-        "status": "MISSING",
-        "result": "UNAVAILABLE / score=— / 2026-09-21"
+        "status": "ACTIVE",
+        "result": "GREEN / score=72.27 / 2026-09-21"
       },
       {
         "capability": "持仓 + 估值 + Formal Action",
