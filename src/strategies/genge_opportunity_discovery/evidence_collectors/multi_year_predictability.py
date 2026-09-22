@@ -92,43 +92,79 @@ _SCOPED_METRIC_TOKENS = (
 # present in two consecutive official annual reports, plus at least one second
 # corroborating category across that pair. Supporting patent-count evidence can
 # corroborate a strong signal but cannot prove a moat on its own.
+_MOAT_SUBJECT = r"(?:本公司|公司(?:产品|核心产品|主要产品)?)"
 _MOAT_STRONG_SIGNAL_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
     "market_leadership": (
         re.compile(
-            r"(?:全球|世界|国内|中国|行业).{0,28}"
-            r"(?:市场占有率|市场份额|排名|产量|销量).{0,16}"
+            _MOAT_SUBJECT
+            + r".{0,36}(?:全球|世界|国内|中国|行业).{0,24}"
+            r"(?:市场占有率|市场份额|排名|产量|销量).{0,14}"
             r"(?:第一|第1|前三|前3|前五|前5)"
         ),
-        re.compile(r"(?:市场占有率|市场份额).{0,16}(?:第一|第1|领先)"),
         re.compile(
-            r"(?:全球|世界|国内|中国|行业).{0,20}(?:最大|第一大|领先).{0,24}"
+            _MOAT_SUBJECT
+            + r".{0,36}(?:市场占有率|市场份额).{0,14}(?:第一|第1|领先)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:全球|世界|国内|中国|行业).{0,18}"
+            r"(?:最大|第一大|领先).{0,20}"
             r"(?:生产商|供应商|制造商|企业|厂商|矿山|产能|产量)"
         ),
     ),
     "entry_barrier": (
-        re.compile(r"ASIL[- ]?D", flags=re.IGNORECASE),
-        re.compile(r"(?:独家|唯一).{0,28}(?:供应|许可|资质|技术|产品|平台)"),
-        re.compile(r"(?:国家级|国际).{0,16}(?:认证|资质).{0,24}(?:通过|取得|获得|保持)"),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:通过|取得|获得|达到|满足).{0,20}ASIL[- ]?D"
+            r"(?:.{0,16}(?:认证|资质|标准|要求))?",
+            flags=re.IGNORECASE,
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:独家|唯一).{0,24}(?:供应|许可|资质|技术|产品|平台)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:通过|取得|获得|保持).{0,18}"
+            r"(?:国家级|国际).{0,14}(?:认证|资质)"
+        ),
     ),
     "customer_embedding": (
         re.compile(
-            r"(?:获得|取得|新增|累计).{0,24}\d{1,4}(?:个|项).{0,16}"
+            _MOAT_SUBJECT
+            + r".{0,36}(?:获得|取得|新增|累计).{0,20}\d{1,4}(?:个|项).{0,14}"
             r"(?:定点|量产项目|客户项目)"
         ),
-        re.compile(r"(?:定点|量产项目).{0,24}\d{1,4}(?:个|项)"),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:定点|量产项目).{0,20}\d{1,4}(?:个|项)"
+        ),
     ),
     "resource_asset": (
-        re.compile(r"(?:世界级|全球.{0,10}(?:最大|领先)|大型).{0,24}(?:矿山|矿床|资源基地)"),
         re.compile(
-            r"(?:铜|钴|锂|镍|钼|金).{0,10}(?:资源量|储量).{0,24}"
+            _MOAT_SUBJECT
+            + r".{0,36}(?:拥有|持有|运营|控制).{0,20}"
+            r"(?:世界级|全球.{0,8}(?:最大|领先)|大型).{0,20}"
+            r"(?:矿山|矿床|资源基地)"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:拥有|持有|控制).{0,20}"
+            r"(?:铜|钴|锂|镍|钼|金).{0,8}(?:资源量|储量).{0,20}"
             r"\d+(?:\.\d+)?(?:万吨|亿吨|吨)"
         ),
     ),
 }
 _MOAT_SUPPORTING_SIGNAL_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
     "ip_scale": (
-        re.compile(r"(?:拥有|累计|授权|申请).{0,20}\d{2,6}(?:项|件)?(?:有效)?专利"),
-        re.compile(r"专利.{0,20}\d{2,6}(?:项|件)"),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}(?:拥有|累计|授权|申请).{0,18}\d{2,6}(?:项|件)?(?:有效)?专利"
+        ),
+        re.compile(
+            _MOAT_SUBJECT
+            + r".{0,36}专利.{0,18}\d{2,6}(?:项|件)"
+        ),
     ),
 }
 _MOAT_STRONG_CATEGORIES = frozenset(_MOAT_STRONG_SIGNAL_PATTERNS)
