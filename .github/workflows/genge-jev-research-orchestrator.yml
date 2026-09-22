@@ -134,7 +134,11 @@ jobs:
           MAX_DISPATCH: ${{ github.event_name == 'workflow_dispatch' && inputs.max_dispatch || '12' }}
         run: |
           set -euo pipefail
-          python -m src.strategies.genge_opportunity_discovery.jev_research_orchestrator             --routing-json data/jev_shadow/latest_routing.json             --output-json "$RUNNER_TEMP/jev-orchestration-plan.json"             --max-dispatch "$MAX_DISPATCH"             --require-ready
+          ledger_args=()
+          if [ -s data/jev_shadow/research_strategy_ledger.json ]; then
+            ledger_args=(--strategy-ledger-json data/jev_shadow/research_strategy_ledger.json)
+          fi
+          python -m src.strategies.genge_opportunity_discovery.jev_research_orchestrator             --routing-json data/jev_shadow/latest_routing.json             --output-json "$RUNNER_TEMP/jev-orchestration-plan.json"             --max-dispatch "$MAX_DISPATCH"             "${ledger_args[@]}"             --require-ready
           test "$(jq -r '.authority' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "DETERMINISTIC_RESEARCH_ORCHESTRATOR"
           test "$(jq -r '.jev_direct_dispatch_allowed' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "false"
           test "$(jq -r '.automatic_research_dispatch_allowed' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "true"
@@ -195,6 +199,9 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
           plan = json.loads(Path(os.environ["PLAN"]).read_text(encoding="utf-8"))
+          # The durable strategy ledger is committed only after Deep dispatch is
+          # accepted; keep the write-ahead orchestration marker compact.
+          plan.pop("strategy_ledger", None)
           plan["lifecycle_state"] = "ORCHESTRATION_PENDING"
           plan["trigger_source"] = os.environ["TRIGGER_SOURCE"]
           plan["orchestrator_run_id"] = os.environ.get("GITHUB_RUN_ID", "")
@@ -276,6 +283,7 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
           plan = json.loads(Path(os.environ["PLAN"]).read_text(encoding="utf-8"))
+          ledger = plan.pop("strategy_ledger", {})
           dispatched = os.environ.get("SHOULD_DISPATCH") == "true"
           deep_run_id = os.environ.get("DEEP_RUN_ID", "")
           if dispatched:
@@ -292,6 +300,23 @@ jobs:
           plan["orchestrator_run_id"] = os.environ.get("GITHUB_RUN_ID", "")
           plan["pending_operation"] = None
           plan["updated_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+          if isinstance(ledger, dict):
+              entries = ledger.get("entries")
+              if isinstance(entries, list) and dispatched and deep_run_id:
+                  for entry in entries:
+                      if not isinstance(entry, dict):
+                          continue
+                      if (
+                          entry.get("attempt_status") == "DISPATCH_PLANNED"
+                          and str(entry.get("source_workflow_run_id") or "")
+                          == os.environ["SOURCE_RUN_ID"]
+                      ):
+                          entry["attempt_status"] = "DISPATCH_ACCEPTED"
+                          entry["deep_run_id"] = deep_run_id
+              Path("/tmp/jev-research-strategy-ledger.json").write_text(
+                  json.dumps(ledger, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+                  encoding="utf-8",
+              )
           Path("/tmp/jev-orchestration-final.json").write_text(
               json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
               encoding="utf-8",
@@ -304,7 +329,10 @@ jobs:
             git reset --hard origin/main
             mkdir -p data/jev_shadow/orchestration
             cp /tmp/jev-orchestration-final.json data/jev_shadow/orchestration/latest.json
-            git add -f data/jev_shadow/orchestration/latest.json
+            if [ -s /tmp/jev-research-strategy-ledger.json ]; then
+              cp /tmp/jev-research-strategy-ledger.json data/jev_shadow/research_strategy_ledger.json
+            fi
+            git add -f data/jev_shadow/orchestration/latest.json data/jev_shadow/research_strategy_ledger.json
             if git diff --cached --quiet; then break; fi
             git commit -m "Persist Jev orchestration state [skip ci]"
             if git push origin HEAD:main; then break; fi
@@ -320,5 +348,6 @@ jobs:
           echo "- human-review queue: ${{ steps.plan.outputs.human_review_count || '0' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- requested codes: ${{ steps.plan.outputs.requested_codes || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Deep run: ${{ steps.deep.outputs.deep_run_id || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- strategy attempts planned: $(jq -r '.summary.strategy_attempt_count // 0' "$RUNNER_TEMP/jev-orchestration-plan.json" 2>/dev/null || echo 0)" >> "$GITHUB_STEP_SUMMARY"
           echo "- chain: Jev -> deterministic research orchestrator -> Deep Calculation -> Terminal Research Decision -> Investor Terminal Overlay -> Three-Pillar Decision Center" >> "$GITHUB_STEP_SUMMARY"
           echo "- Jev direct dispatch=false; Formal trading authority=false; UNKNOWN != PASS; no_auto_trade=true" >> "$GITHUB_STEP_SUMMARY"
