@@ -11,6 +11,7 @@ from src.strategies.genge_opportunity_discovery.v31_deep_gap_closure import (
     close_profiles,
     infer_long_term_demand,
     infer_material_event_gate_failures,
+    infer_moat,
 )
 
 
@@ -193,6 +194,58 @@ def test_verified_corroboration_progresses_gate_but_does_not_invent_buy_authorit
     assert status["unresolved_requested_gate_count"] == 2
     assert status["automatic_formal_buy_allowed"] is False
     assert status["formal_trading_authority"] is False
+    assert status["no_auto_trade"] is True
+
+
+def test_verified_multiyear_moat_evidence_closes_only_moat_gate():
+    moat_evidence = {
+        "code": "001316",
+        "evidence_kind": "multi_year_predictability",
+        "source_type": "OFFICIAL_REPORT",
+        "source_domain": "static.cninfo.com.cn",
+        "publish_date": "2026-03-31",
+        "original_url": "https://static.cninfo.com.cn/example.pdf",
+        "moat_classification": "PASS",
+        "moat_reason_code": "STRICT_MULTI_YEAR_OFFICIAL_MOAT_EVIDENCE_PROVEN",
+        "moat_rule_version": "DURABLE_MOAT_MULTI_YEAR_OFFICIAL_V1",
+        "moat_signals_by_year": [
+            {
+                "fiscal_year": 2024,
+                "signals": [
+                    {"category": "customer_embedding", "strength": "STRONG"},
+                    {"category": "ip_scale", "strength": "SUPPORTING"},
+                ],
+            },
+            {
+                "fiscal_year": 2025,
+                "signals": [
+                    {"category": "customer_embedding", "strength": "STRONG"}
+                ],
+            },
+        ],
+        "moat_evidence_status": "VERIFIED",
+        "moat_adopted_for_gate": True,
+    }
+    assert infer_moat("001316", [moat_evidence])[0] == "PASS"
+
+    out, status = close_profiles(
+        _profiles(),
+        [{"code": "001316", "industry": "航空装备", "stock_name": "润贝航科"}],
+        requested_codes=["001316"],
+        industry_evidence=[],
+        company_evidence=[moat_evidence],
+        evidence_audit=[],
+        evidence_summary={"verified_count": 1},
+    )
+    gate = out["profiles"]["001316"]["gates"]["moat"]
+    assert gate["status"] == "PASS"
+    assert gate["source"] == "AUTOMATIC_STRICT_MULTI_YEAR_OFFICIAL_MOAT_CLOSURE"
+    assert status["moat_resolved_gate_count"] == 1
+    assert status["progressed_gate_count"] == 1
+    assert status["unresolved_requested_gate_count"] == 2
+    assert status["automatic_formal_buy_allowed"] is False
+    assert status["formal_trading_authority"] is False
+    assert status["unknown_is_pass"] is False
     assert status["no_auto_trade"] is True
 
 
