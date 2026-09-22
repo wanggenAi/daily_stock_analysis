@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 23,
+  "generation": 24,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "STRICT_MULTI_YEAR_MOAT_FINAL_HEAD_CI",
+  "stage": "STRICT_MULTI_YEAR_MOAT_REGEX_ESCAPE_FIX_PENDING",
   "last_observed_main_sha": "38d19e38fc7311cd15876ccbc27f919dc248643d",
   "work_branch": "feat/strict-multiyear-moat-evidence-20260922",
   "work_head_sha": "53199759e8194c29e4ef93b2a848b97e263d70f1",
@@ -12,8 +12,14 @@
   "ci": {
     "run_id": 35682757333,
     "status": "IN_PROGRESS",
-    "passed": ["ai-governance"],
-    "running": ["backend-gate", "docker-build", "opportunity-fixture-smoke"]
+    "passed": [
+      "ai-governance"
+    ],
+    "running": [
+      "backend-gate",
+      "docker-build",
+      "opportunity-fixture-smoke"
+    ]
   },
   "production_or_artifact": {
     "baseline_deep_run_id": 35679085547,
@@ -21,7 +27,11 @@
     "unresolved_moat_count": 21,
     "status": "NOT_YET_VERIFIED_FOR_PR268"
   },
-  "pending_operation": null,
+  "pending_operation": {
+    "type": "BRANCH_EDIT",
+    "purpose": "Fix accidental double escaping in Unicode CJK negative-lookbehind for issuer-bound moat subject matching.",
+    "expected_branch_head": "53199759e8194c29e4ef93b2a848b97e263d70f1"
+  },
   "completed": [
     "Recovered live repository state and identified PR #268 as the first unfinished mission.",
     "Confirmed main drift since PR base is runtime JSON only.",
