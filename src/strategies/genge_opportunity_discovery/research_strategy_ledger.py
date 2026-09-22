@@ -105,6 +105,21 @@ def gate_evidence_fingerprint(
     context = _mapping(row.get("research_context"))
     statuses = _mapping(context.get("profile_gate_statuses"))
     status = _mapping(statuses.get(gate))
+    triage = _mapping(row.get("triage_context"))
+    valuation = _mapping(triage.get("valuation"))
+    financial_context: Mapping[str, Any] = {}
+    if gate in {"financial_safety", "earnings_authenticity"}:
+        financial_context = _mapping(valuation.get("financial_gate_diagnostics"))
+        if not financial_context:
+            financial_context = {
+                key: valuation.get(key)
+                for key in (
+                    "financial_review_status",
+                    "earnings_quality_confidence",
+                    "earnings_quality_score",
+                )
+                if key in valuation
+            }
     payload = {
         "gate": str(gate or ""),
         "unresolved_reason": str(unresolved_reason or ""),
@@ -112,7 +127,9 @@ def gate_evidence_fingerprint(
             "status": str(status.get("status") or ""),
             "confidence": str(status.get("confidence") or ""),
             "source": str(status.get("source") or ""),
+            "evidence_fingerprint": str(status.get("evidence_fingerprint") or ""),
         },
+        "financial_evidence_context": dict(financial_context),
     }
     encoded = json.dumps(
         payload,
