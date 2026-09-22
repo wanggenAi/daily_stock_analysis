@@ -1,89 +1,41 @@
 {
   "schema_version": 2,
-  "generation": 21,
+  "generation": 22,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "ACTIVE_MULTI_TRACK_CONVERGENCE",
+  "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "POST232_PRODUCTION_PLUS_REPORT_AND_LIFECYCLE_FIXES",
-  "last_observed_main_sha": "a89e69c66ba769ed17f68a121700d3a1f9c4b275",
-  "business_code_baseline_sha": "07dd4ca72e94c7576e3f2672a5df38266c1deddb",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "stage": "STRICT_MULTI_YEAR_MOAT_FALSE_POSITIVE_HARDENING",
+  "last_observed_main_sha": "38d19e38fc7311cd15876ccbc27f919dc248643d",
+  "work_branch": "feat/strict-multiyear-moat-evidence-20260922",
+  "work_head_sha": "06d4b7398c751600dc5979e7f58645900c9f0d00",
+  "active_pr": 268,
   "ci": {
-    "status": "SUCCESS",
-    "conclusion": "success",
-    "head_sha": "dabfb27a1e74b3ce21641d1bf54993505e4e266f",
-    "note": "PR #232 completed CI successfully and was squash-merged as 07dd4ca72e94c7576e3f2672a5df38266c1deddb."
+    "run_id": 35681956624,
+    "status": "IN_PROGRESS",
+    "passed": ["ai-governance", "docker-build", "deterministic-checks"],
+    "pending": ["offline-pytest"]
   },
   "production_or_artifact": {
-    "status": "RUNNING",
-    "run_id": 35556365712,
-    "trigger_run_id": 35556361159,
-    "code_baseline_sha": "07dd4ca72e94c7576e3f2672a5df38266c1deddb",
-    "current_step": "Install runtime dependencies",
-    "completed_through_step": 5,
-    "contracts": "SUCCESS",
-    "terminal_artifact_available": false,
-    "verification_targets": {
-      "historical_strict_rows": 8,
-      "historical_expected_fail_gates": 12,
-      "must_fail": [
-        "000557 financial_safety"
-      ],
-      "must_not_resurrect": [
-        "000603",
-        "301251"
-      ]
-    },
-    "note": "A later [skip ci] TASK_STATE-only checkpoint advanced main to a89e69c; business/runtime code remains equivalent to the #232 merge baseline. Trust the run's captured code epoch when published."
+    "baseline_deep_run_id": 35679085547,
+    "unresolved_requested_gate_count": 93,
+    "unresolved_moat_count": 21,
+    "status": "NOT_YET_VERIFIED_FOR_PR268"
   },
-  "pending_operation": null,
-  "health": {
-    "recovery": "HEALTHY",
-    "last_error": null
+  "pending_operation": {
+    "type": "BRANCH_EDIT",
+    "purpose": "Harden issuer-bound moat extraction against competitor/company substring false positives before final PR CI.",
+    "expected_branch_head": "06d4b7398c751600dc5979e7f58645900c9f0d00"
   },
   "completed": [
-    "PR #229 production run 35551673513 completed and exposed a material-event persistence regression.",
-    "Historical material-event evidence was revalidated: 8 still-active VERIFIED/HIGH official rows map to 12 hard-gate FAILs; 5 stale/non-assertive rows were excluded.",
-    "PR #232 implemented current-semantic revalidation plus a cumulative negative-risk ledger without historical PASS propagation.",
-    "PR #232 passed CI and merged as 07dd4ca72e94c7576e3f2672a5df38266c1deddb.",
-    "Evidence Change Trigger run 35556361159 succeeded and launched Deep production run 35556365712.",
-    "TASK_STATE.md was checkpointed on main via [skip ci] commit a89e69c66ba769ed17f68a121700d3a1f9c4b275."
+    "Recovered live AGENTS.md, TASK_STATE.md, open PRs, CI and persisted Jev orchestration state.",
+    "Confirmed PR #268 is the active unfinished mission.",
+    "Confirmed main churn since PR base is runtime JSON only, not business code.",
+    "Found issuer-substring false-positive risk during semantic self-review."
   ],
-  "next_action": "Continue all three tracks from live GitHub. Do not merge #230/#231 evidence expansion before #232 production verification. Prepare fresh current-main replacements for stale #230/#231, run CI, then merge/production-verify sequentially after #232 passes. Continue end-to-end report capability inventory; only production-wired capabilities may be labeled ACTIVE.",
+  "next_action": "Patch moat subject boundary plus regression, run final-head CI, then merge and production-verify Deep -> Provenance -> Terminal -> Investor -> Three-Pillar.",
   "do_not_repeat": [
-    "Do not reopen or recreate merged #229/#232.",
-    "Do not merge stale #227/#228/#230/#231 directly; use current-main replacements.",
-    "Do not merge #230/#231 replacements before #232 production verification.",
-    "Do not count design docs or isolated modules as active report capabilities.",
-    "Do not propagate historical PASS evidence or promote UNKNOWN to PASS.",
-    "Do not change valuation or BUY/WAIT_PRICE/REJECT thresholds while fixing evidence/report wiring.",
-    "Do not expand Formal authority; no_auto_trade=true remains mandatory."
-  ],
-  "active_tracks": [
-    {
-      "track": "evidence-safety",
-      "production_run_id": 35556365712,
-      "state": "RUNNING_STEP_13",
-      "merge_sha": "07dd4ca72e94c7576e3f2672a5df38266c1deddb",
-      "next": "Verify 8-row/12-gate carry-forward, 000557 FAIL, 000603/301251 excluded, risk ledger and downstream convergence."
-    },
-    {
-      "track": "report-readiness",
-      "pr": 233,
-      "branch": "fix/report-readiness-convergence-20260921",
-      "head": "45fbe0e89e436a97000d7c47589933969f26159d",
-      "state": "CI_RUNNING_MOST_CHECKS_GREEN",
-      "next": "Finish CI, merge when green, production-verify 50k cash/NBS-PBC/lifecycle/capability visibility."
-    },
-    {
-      "track": "candidate-continuity",
-      "pr": 234,
-      "branch": "fix/recovered-historical-continuity-current-20260921",
-      "head": "f44c7f8bee238ca77c3f2f78d7ee9de65464cc4c",
-      "state": "CI_PENDING",
-      "next": "Finish CI and merge independently if green; then close stale #228 as superseded."
-    }
+    "Do not rerun completed #266/#267 evidence mission.",
+    "Do not use Jev as hard-gate authority.",
+    "Do not relax UNKNOWN != PASS, Formal authority, valuation thresholds or no_auto_trade."
   ]
 }
