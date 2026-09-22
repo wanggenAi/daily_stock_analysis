@@ -256,3 +256,66 @@ def test_accepted_attempt_waits_until_exact_deep_result_is_visible():
         item["attempt_status"] == "EXHAUSTED_NO_PROGRESS"
         for item in reconciled["entries"]
     )
+
+def test_semantic_evidence_change_reactivates_only_affected_gate():
+    first = _row(fingerprint="fp-stable")
+    first["research_context"]["profile_gate_statuses"]["predictability"][
+        "evidence_fingerprint"
+    ] = "predictability-evidence-a"
+    first["research_context"]["profile_gate_statuses"]["financial_safety"][
+        "evidence_fingerprint"
+    ] = "financial-evidence-a"
+    ledger = append_attempts(
+        {},
+        plan_strategy_attempts(first, {}, source_workflow_run_id="100"),
+    )
+
+    later = _row(fingerprint="fp-stable")
+    later["research_context"]["profile_gate_statuses"]["predictability"][
+        "evidence_fingerprint"
+    ] = "predictability-evidence-b"
+    later["research_context"]["profile_gate_statuses"]["financial_safety"][
+        "evidence_fingerprint"
+    ] = "financial-evidence-a"
+
+    attempts = plan_strategy_attempts(
+        later,
+        ledger,
+        source_workflow_run_id="101",
+    )
+
+    assert [item["hard_gate"] for item in attempts] == ["predictability"]
+
+
+def test_financial_diagnostic_change_reactivates_financial_gate_strategy():
+    first = _row(fingerprint="fp-stable")
+    first["triage_context"] = {
+        "valuation": {
+            "financial_gate_diagnostics": {
+                "cash_conversion_ratio": 0.70,
+                "operating_cash_flow": 100.0,
+            }
+        }
+    }
+    ledger = append_attempts(
+        {},
+        plan_strategy_attempts(first, {}, source_workflow_run_id="100"),
+    )
+
+    later = _row(fingerprint="fp-stable")
+    later["triage_context"] = {
+        "valuation": {
+            "financial_gate_diagnostics": {
+                "cash_conversion_ratio": 0.78,
+                "operating_cash_flow": 120.0,
+            }
+        }
+    }
+    attempts = plan_strategy_attempts(
+        later,
+        ledger,
+        source_workflow_run_id="101",
+    )
+
+    assert [item["hard_gate"] for item in attempts] == ["financial_safety"]
+
