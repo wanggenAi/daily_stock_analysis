@@ -62,3 +62,11 @@ Jev route confidence is advisory and is not a safety authority. When the persist
 
 A Jev `HUMAN_REVIEW` route is also downgraded to the same read-only evidence refresh only when the state is ruleable `INSUFFICIENT`. `CONFLICTED` and other genuinely non-ruleable cases remain in human review. This fallback never grants Formal trading authority and cannot convert UNKNOWN to PASS.
 
+## Research strategy ledger
+
+The orchestrator persists a fail-closed research strategy ledger at `data/jev_shadow/research_strategy_ledger.json`. Each attempt is keyed semantically by stock code, unresolved hard gate, strategy family, and a stable evidence fingerprint. Runtime-only lineage such as a Jev or Deep workflow id is excluded from the evidence fingerprint.
+
+The ledger records the unresolved reason, strategy/source/query family, evidence epoch, dispatch status, accepted Deep run id, whether new evidence appeared, whether the gate changed, and whether that strategy is exhausted. A strategy is not judged until the exact accepted Deep run is visible in a later Jev research state. If that later state has the same evidence fingerprint and the same gate remains unresolved, the strategy becomes `EXHAUSTED_NO_PROGRESS` and is not scheduled again in that evidence epoch. A changed evidence fingerprint reopens the supported strategy.
+
+This is research-control state only. It cannot authorize a trade, weaken a hard gate, or convert UNKNOWN to PASS. New source/query families can be added later without changing the ledger contract.
+
