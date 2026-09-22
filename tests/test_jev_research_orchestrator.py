@@ -168,17 +168,49 @@ def test_workflow_auto_chains_research_without_trading_authority():
     assert "no_auto_trade=true" in workflow
 
 
-def test_low_or_missing_route_confidence_never_auto_dispatches():
+def test_low_or_missing_route_confidence_falls_back_for_ruleable_evidence_refresh():
     payload = _routing()
     payload["routing_queue"][0]["route_confidence"] = 0.49
     payload["routing_queue"][1].pop("route_confidence", None)
 
     plan = build_orchestration_plan(payload, max_dispatch=12)
 
-    assert plan["requested_codes"] == []
+    assert plan["requested_codes"] == ["600406", "000576"]
+    selected = {row["entity_id"]: row for row in plan["selected"]}
+    assert selected["600406"]["dispatch_mode"] == "DETERMINISTIC_SAFE_FALLBACK"
+    assert selected["600406"]["fallback_reason"] == "LOW_OR_MISSING_JEV_ROUTE_CONFIDENCE"
+    assert selected["000576"]["dispatch_mode"] == "DETERMINISTIC_SAFE_FALLBACK"
+    assert plan["summary"]["deterministic_fallback_count"] == 2
     reviews = {row["entity_id"]: row for row in plan["human_review"]}
-    assert reviews["600406"]["review_reason"] == "LOW_OR_MISSING_ROUTE_CONFIDENCE"
-    assert reviews["000576"]["review_reason"] == "LOW_OR_MISSING_ROUTE_CONFIDENCE"
     assert reviews["601318"]["review_reason"] == "JEV_ROUTE_HUMAN_REVIEW"
     assert plan["formal_trading_authority"] is False
     assert plan["no_auto_trade"] is True
+
+
+def test_ruleable_insufficient_human_review_route_uses_safe_deterministic_fallback():
+    payload = _routing()
+    review = payload["routing_queue"][3]
+    review["evidence_state"] = "INSUFFICIENT"
+    review["needs_more_evidence"] = True
+
+    plan = build_orchestration_plan(payload, max_dispatch=12)
+
+    selected = {row["entity_id"]: row for row in plan["selected"]}
+    row = selected["601318"]
+    assert row["jev_route"] == "HUMAN_REVIEW"
+    assert row["route"] == "EVIDENCE_REFRESH"
+    assert row["dispatch_mode"] == "DETERMINISTIC_SAFE_FALLBACK"
+    assert (
+        row["fallback_reason"]
+        == "RULEABLE_INSUFFICIENT_EVIDENCE_DOES_NOT_REQUIRE_HUMAN_STOP"
+    )
+    assert "601318" not in {row["entity_id"] for row in plan["human_review"]}
+
+
+def test_conflicted_human_review_route_remains_human_review():
+    plan = build_orchestration_plan(_routing(), max_dispatch=12)
+
+    reviews = {row["entity_id"]: row for row in plan["human_review"]}
+    assert reviews["601318"]["evidence_state"] == "CONFLICTED"
+    assert reviews["601318"]["review_reason"] == "JEV_ROUTE_HUMAN_REVIEW"
+    assert "601318" not in plan["requested_codes"]
