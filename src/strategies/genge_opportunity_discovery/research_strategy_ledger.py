@@ -8,6 +8,8 @@ later Jev evaluation closes the prior attempt as no-progress.
 from __future__ import annotations
 
 from copy import deepcopy
+import hashlib
+import json
 from typing import Any, Mapping
 
 CONTRACT = "GEN_GE_RESEARCH_STRATEGY_LEDGER_V1"
@@ -92,6 +94,35 @@ def evidence_fingerprint(row: Mapping[str, Any]) -> str:
     return str(row.get("research_evidence_fingerprint") or "").strip()
 
 
+def gate_evidence_fingerprint(
+    row: Mapping[str, Any],
+    *,
+    gate: str,
+    unresolved_reason: str,
+) -> str:
+    """Return a gate-local epoch so unrelated gate progress cannot reopen work."""
+
+    context = _mapping(row.get("research_context"))
+    statuses = _mapping(context.get("profile_gate_statuses"))
+    status = _mapping(statuses.get(gate))
+    payload = {
+        "gate": str(gate or ""),
+        "unresolved_reason": str(unresolved_reason or ""),
+        "profile_gate_status": {
+            "status": str(status.get("status") or ""),
+            "confidence": str(status.get("confidence") or ""),
+            "source": str(status.get("source") or ""),
+        },
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:20]
+
+
 def _same_attempt(
     entry: Mapping[str, Any],
     *,
@@ -143,34 +174,34 @@ def reconcile_ledger(
         if accepted_deep_run_id and observed_deep_run_id != accepted_deep_run_id:
             continue
 
-        current_fp = evidence_fingerprint(row)
-        if not current_fp:
-            continue
         gates = unresolved_gates(row)
         gate = str(entry.get("hard_gate") or "")
         previous_reason = str(entry.get("unresolved_reason") or "")
         current_reason = gates.get(gate)
-        if current_fp == str(entry.get("evidence_fingerprint") or ""):
-            if current_reason is not None:
-                entry["attempt_status"] = "EXHAUSTED_NO_PROGRESS"
-                entry["new_evidence_acquired"] = False
-                entry["gate_changed"] = False
-                entry["strategy_exhausted"] = True
-            else:
-                entry["attempt_status"] = "COMPLETED_GATE_RESOLVED"
-                entry["new_evidence_acquired"] = None
-                entry["gate_changed"] = True
-                entry["strategy_exhausted"] = False
+        if current_reason is None:
+            entry["attempt_status"] = "COMPLETED_GATE_RESOLVED"
+            entry["new_evidence_acquired"] = None
+            entry["gate_changed"] = True
+            entry["strategy_exhausted"] = False
             continue
+
+        current_fp = gate_evidence_fingerprint(
+            row,
+            gate=gate,
+            unresolved_reason=current_reason,
+        )
+        if current_fp == str(entry.get("evidence_fingerprint") or ""):
+            entry["attempt_status"] = "EXHAUSTED_NO_PROGRESS"
+            entry["new_evidence_acquired"] = False
+            entry["gate_changed"] = False
+            entry["strategy_exhausted"] = True
+            continue
+
         entry["new_evidence_acquired"] = True
         entry["gate_changed"] = current_reason != previous_reason
         entry["strategy_exhausted"] = False
         entry["result_evidence_fingerprint"] = current_fp
-        entry["attempt_status"] = (
-            "COMPLETED_GATE_RESOLVED"
-            if current_reason is None
-            else "COMPLETED_EVIDENCE_CHANGED"
-        )
+        entry["attempt_status"] = "COMPLETED_EVIDENCE_CHANGED"
     return ledger
 
 
@@ -184,9 +215,9 @@ def plan_strategy_attempts(
     """Plan only never-before-used strategies for the current evidence epoch."""
 
     code = _code(row.get("entity_id"))
-    fingerprint = evidence_fingerprint(row)
+    stock_fingerprint = evidence_fingerprint(row)
     gates = unresolved_gates(row)
-    if not code or not fingerprint or not gates:
+    if not code or not gates:
         return []
 
     normalized = normalize_ledger(ledger)
@@ -195,6 +226,11 @@ def plan_strategy_attempts(
         spec = _GATE_STRATEGY.get(gate)
         if spec is None:
             continue
+        fingerprint = gate_evidence_fingerprint(
+            row,
+            gate=gate,
+            unresolved_reason=reason,
+        )
         already_attempted = any(
             _same_attempt(
                 entry,
@@ -215,6 +251,7 @@ def plan_strategy_attempts(
                 **spec,
                 "evidence_fingerprint": fingerprint,
                 "evidence_epoch": fingerprint,
+                "stock_evidence_fingerprint": stock_fingerprint,
                 "attempt_status": "DISPATCH_PLANNED",
                 "attempted_at": str(attempted_at or ""),
                 "source_workflow_run_id": str(source_workflow_run_id or ""),
@@ -264,4 +301,4 @@ def append_attempts(
 def has_strategy_scope(row: Mapping[str, Any]) -> bool:
     """Whether this row has gate-level state that the ledger can govern."""
 
-    return bool(evidence_fingerprint(row) and unresolved_gates(row))
+    return bool(unresolved_gates(row))
