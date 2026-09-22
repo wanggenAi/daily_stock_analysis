@@ -238,6 +238,11 @@ def test_strategy_ledger_suppresses_same_strategy_in_same_evidence_epoch():
     assert first["summary"]["strategy_attempt_count"] == 1
 
     ledger = first["strategy_ledger"]
+    prior_predictability_epoch = next(
+        entry["evidence_fingerprint"]
+        for entry in ledger["entries"]
+        if entry["code"] == "000576" and entry["hard_gate"] == "predictability"
+    )
     for entry in ledger["entries"]:
         if entry["code"] == "000576":
             entry["attempt_status"] = "DISPATCH_ACCEPTED"
@@ -295,7 +300,8 @@ def test_new_evidence_epoch_reopens_same_supported_strategy():
         for attempt in row.get("strategy_attempts") or []
     ]
     assert len(attempts) == 1
-    assert attempts[0]["evidence_fingerprint"] == "fp-2"
+    assert attempts[0]["evidence_fingerprint"] != prior_predictability_epoch
+    assert attempts[0]["stock_evidence_fingerprint"] == "fp-2"
     assert attempts[0]["hard_gate"] == "predictability"
 
 
