@@ -3,15 +3,13 @@
   "automatic_formal_buy_allowed": false,
   "automatic_research_dispatch_allowed": true,
   "contract": "GEN_GE_JEV_RESEARCH_ORCHESTRATION_V1",
-  "deep_execution_status": "SUCCESS",
-  "deep_run_id": "35574223501",
   "dispatch_is_research_only": true,
   "dispatch_target": "genge-v31-deep-calculation-lambda.yml",
   "execution_status": "READY",
   "formal_trading_authority": false,
   "human_review": [
     {
-      "attention_confidence": 0.93,
+      "attention_confidence": 0.88,
       "attention_priority": "HIGH",
       "entity_id": "603993",
       "entity_name": "洛阳钼业",
@@ -25,12 +23,16 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
       "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.39,
+      "route_confidence": 0.41,
       "triage_context": {
         "industry": "B09有色金属矿采选业",
-        "quant_score": 31.0177,
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": null,
+        "near_buy_missing_evidence_items": [],
+        "quant_score": 30.3106,
         "quant_status": "HARD_REJECT",
         "research_priority": "P0",
+        "research_priority_score": 105,
         "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
@@ -49,7 +51,7 @@
       }
     },
     {
-      "attention_confidence": 0.99,
+      "attention_confidence": 0.98,
       "attention_priority": "HIGH",
       "entity_id": "001316",
       "entity_name": "润贝航科",
@@ -63,12 +65,18 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
       "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.23,
+      "route_confidence": 0.34,
       "triage_context": {
         "industry": "F51批发业",
-        "quant_score": 35.5701,
+        "mapping_gaps": [
+          "PEER"
+        ],
+        "near_buy_evidence_recovery_tier": null,
+        "near_buy_missing_evidence_items": [],
+        "quant_score": 36.6131,
         "quant_status": "HARD_REJECT",
         "research_priority": "P0",
+        "research_priority_score": 110,
         "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
@@ -87,7 +95,7 @@
       }
     },
     {
-      "attention_confidence": 0.96,
+      "attention_confidence": 0.97,
       "attention_priority": "HIGH",
       "entity_id": "601318",
       "entity_name": "中国平安",
@@ -99,14 +107,18 @@
       "needs_more_evidence": true,
       "no_auto_trade": true,
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "JEV_ROUTE_HUMAN_REVIEW",
-      "route": "HUMAN_REVIEW",
-      "route_confidence": 0.33,
+      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.34,
       "triage_context": {
         "industry": "J68保险业",
-        "quant_score": 33.0392,
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": null,
+        "near_buy_missing_evidence_items": [],
+        "quant_score": 32.4859,
         "quant_status": "HARD_REJECT",
         "research_priority": "P0",
+        "research_priority_score": 105,
         "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
@@ -139,12 +151,16 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "review_reason": "JEV_ROUTE_HUMAN_REVIEW",
       "route": "HUMAN_REVIEW",
-      "route_confidence": 0.27,
+      "route_confidence": 0.32,
       "triage_context": {
         "industry": "I65软件和信息技术服务业",
-        "quant_score": 37.7717,
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": null,
+        "near_buy_missing_evidence_items": [],
+        "quant_score": 37.3127,
         "quant_status": "LOW_PRIORITY",
         "research_priority": "P0",
+        "research_priority_score": 70,
         "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
@@ -163,10 +179,10 @@
       }
     },
     {
-      "attention_confidence": 0.95,
+      "attention_confidence": 0.88,
       "attention_priority": "HIGH",
-      "entity_id": "603055",
-      "entity_name": "台华新材",
+      "entity_id": "601236",
+      "entity_name": "红塔证券",
       "evidence_state": "INSUFFICIENT",
       "existing_engine_action": "RESEARCH:RESEARCH_GAP",
       "formal_trading_authority": false,
@@ -177,661 +193,140 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
       "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.34,
+      "route_confidence": 0.37,
       "triage_context": {
-        "industry": "C17纺织业",
-        "quant_score": 80.3262,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "P2",
-        "screening_attractiveness": "HIGH",
+        "industry": "J67资本市场服务",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": 49.4944,
+        "quant_status": "SECONDARY_RESEARCH",
+        "research_priority": "P1",
+        "research_priority_score": 50,
+        "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          "HOURLY_PRIORITY_RAISE",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
         ],
         "valuation": {
-          "current_pe": 16.01,
+          "current_pe": 31.69,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 90.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
           "financial_review_status": "OK",
-          "historical_median_pe_reference": 20.060000000000002,
-          "pe_to_history_ratio": 0.7981056829511466,
-          "required_profit_growth_pct": -20.18943170488534
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.93,
-      "attention_priority": "HIGH",
-      "entity_id": "002612",
-      "entity_name": "朗姿股份",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.33,
-      "triage_context": {
-        "industry": "C18纺织服装、服饰业",
-        "quant_score": 65.9913,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "P2",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 7.39,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 40.015,
-          "pe_to_history_ratio": 0.1846807447207297,
-          "required_profit_growth_pct": -81.53192552792703
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.93,
-      "attention_priority": "HIGH",
-      "entity_id": "603233",
-      "entity_name": "大参林",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.33,
-      "triage_context": {
-        "industry": "F52零售业",
-        "quant_score": 75.6873,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "P2",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 15.46,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 21.99,
-          "pe_to_history_ratio": 0.7030468394724876,
-          "required_profit_growth_pct": -29.69531605275124
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.65,
-      "attention_priority": "HIGH",
-      "entity_id": "603268",
-      "entity_name": "松发股份",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": false,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.27,
-      "triage_context": {
-        "industry": "C37铁路、船舶、航空航天和其他运输设备制造业",
-        "quant_score": 70.25,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "P3",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 34.68,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 52.254999999999995,
-          "pe_to_history_ratio": 0.6636685484642618,
-          "required_profit_growth_pct": -33.63314515357382
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.94,
-      "attention_priority": "HIGH",
-      "entity_id": "300662",
-      "entity_name": "科锐国际",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.49,
-      "triage_context": {
-        "industry": "L72商务服务业",
-        "quant_score": 66.515,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 11.93,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 34.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 24.92,
-          "pe_to_history_ratio": 0.47873194221508825,
-          "required_profit_growth_pct": -52.12680577849118
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.94,
-      "attention_priority": "HIGH",
-      "entity_id": "688186",
-      "entity_name": "广大特材",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.48,
-      "triage_context": {
-        "industry": "C34通用设备制造业",
-        "quant_score": 69.8641,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 29.73,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 0.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 39.2,
-          "pe_to_history_ratio": 0.7584183673469387,
-          "required_profit_growth_pct": -24.158163265306133
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.93,
-      "attention_priority": "HIGH",
-      "entity_id": "603613",
-      "entity_name": "国联股份",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.45,
-      "triage_context": {
-        "industry": "I64互联网和相关服务",
-        "quant_score": 81.0239,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 10.86,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 34.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 14.66,
-          "pe_to_history_ratio": 0.7407912687585265,
-          "required_profit_growth_pct": -25.92087312414735
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.9,
-      "attention_priority": "HIGH",
-      "entity_id": "603980",
-      "entity_name": "吉华集团",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": false,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.44,
-      "triage_context": {
-        "industry": "C26化学原料和化学制品制造业",
-        "quant_score": 69.5501,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 46.97,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 25.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 59.655,
-          "pe_to_history_ratio": 0.7873606571117258,
-          "required_profit_growth_pct": -21.263934288827425
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.94,
-      "attention_priority": "HIGH",
-      "entity_id": "600609",
-      "entity_name": "金杯汽车",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.43,
-      "triage_context": {
-        "industry": "C36汽车制造业",
-        "quant_score": 76.2566,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 19.54,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 2.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 31.8,
-          "pe_to_history_ratio": 0.6144654088050314,
-          "required_profit_growth_pct": -38.55345911949686
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.9,
-      "attention_priority": "HIGH",
-      "entity_id": "603236",
-      "entity_name": "移远通信",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.39,
-      "triage_context": {
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "quant_score": 70.25,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 26.2,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 55.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 41.54,
-          "pe_to_history_ratio": 0.6307173808377468,
-          "required_profit_growth_pct": -36.928261916225324
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.92,
-      "attention_priority": "HIGH",
-      "entity_id": "688309",
-      "entity_name": "恒誉科技",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.36,
-      "triage_context": {
-        "industry": "C35专用设备制造业",
-        "quant_score": 70.25,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 54.25,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 67.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 87.89,
-          "pe_to_history_ratio": 0.6172488337694846,
-          "required_profit_growth_pct": -38.275116623051545
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.89,
-      "attention_priority": "HIGH",
-      "entity_id": "688600",
-      "entity_name": "皖仪科技",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": false,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.34,
-      "triage_context": {
-        "industry": "C40仪器仪表制造业",
-        "quant_score": 70.25,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 43.1,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 0.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 55.47,
-          "pe_to_history_ratio": 0.7769965747250767,
-          "required_profit_growth_pct": -22.300342527492333
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.94,
-      "attention_priority": "HIGH",
-      "entity_id": "300850",
-      "entity_name": "新强联",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.31,
-      "triage_context": {
-        "industry": "C34通用设备制造业",
-        "quant_score": 73.3718,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 14.51,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 77.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 39.2,
-          "pe_to_history_ratio": 0.37015306122448977,
-          "required_profit_growth_pct": -62.984693877551024
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.93,
-      "attention_priority": "HIGH",
-      "entity_id": "688293",
-      "entity_name": "奥浦迈",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": false,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.3,
-      "triage_context": {
-        "industry": "M73研究和试验发展",
-        "quant_score": 70.25,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 72.22,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 25.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 101.09,
-          "pe_to_history_ratio": 0.7144128993965773,
-          "required_profit_growth_pct": -28.558710060342275
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.96,
-      "attention_priority": "HIGH",
-      "entity_id": "002906",
-      "entity_name": "华阳集团",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": true,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.29,
-      "triage_context": {
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "quant_score": 74.3695,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 17.89,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 77.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 31.77,
-          "pe_to_history_ratio": 0.5631098520616934,
-          "required_profit_growth_pct": -43.68901479383066
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.91,
-      "attention_priority": "HIGH",
-      "entity_id": "300454",
-      "entity_name": "深信服",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": false,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.29,
-      "triage_context": {
-        "industry": "I65软件和信息技术服务业",
-        "quant_score": 70.25,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 63.28,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 34.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 111.42,
-          "pe_to_history_ratio": 0.5679411236761802,
-          "required_profit_growth_pct": -43.20588763238198
-        }
-      }
-    },
-    {
-      "attention_confidence": 0.91,
-      "attention_priority": "HIGH",
-      "entity_id": "688002",
-      "entity_name": "XD睿创微",
-      "evidence_state": "INSUFFICIENT",
-      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": false,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.21,
-      "triage_context": {
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "quant_score": 70.25,
-        "quant_status": "HARD_REJECT",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 36.24,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 47.6,
-          "pe_to_history_ratio": 0.7613445378151261,
-          "required_profit_growth_pct": -23.86554621848739
+          "historical_median_pe_reference": 45.87,
+          "pe_to_history_ratio": 0.6908654894266406,
+          "required_profit_growth_pct": -30.91345105733594
         }
       }
     }
   ],
   "jev_direct_dispatch_allowed": false,
-  "lifecycle_state": "DECISION_CENTER_REFRESHED",
+  "lifecycle_state": "ORCHESTRATION_PENDING",
   "max_dispatch": 12,
   "min_auto_route_confidence": 0.5,
   "mutates_authoritative_decision": false,
-  "next_expected_stage": "COMPLETE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "35574096933",
-  "pending_operation": null,
-  "production_verification_complete": true,
+  "orchestrator_run_id": "35698009347",
+  "pending_operation": {
+    "operation": "DISPATCH_DEEP_CALCULATION",
+    "requested_codes": [
+      "600916",
+      "603369",
+      "002042",
+      "600309",
+      "600640",
+      "603883",
+      "600610",
+      "000096",
+      "603739",
+      "002282",
+      "603617",
+      "600283"
+    ],
+    "source_workflow_run_id": "35697815789",
+    "target_workflow": "genge-v31-deep-calculation-lambda.yml"
+  },
   "requested_codes": [
-    "000576",
-    "603209",
-    "688162",
-    "603160"
+    "600916",
+    "603369",
+    "002042",
+    "600309",
+    "600640",
+    "603883",
+    "600610",
+    "000096",
+    "603739",
+    "002282",
+    "603617",
+    "600283"
   ],
-  "requested_codes_csv": "000576,603209,688162,603160",
+  "requested_codes_csv": "600916,603369,002042,600309,600640,603883,600610,000096,603739,002282,603617,600283",
   "selected": [
     {
-      "attention_confidence": 0.98,
+      "attention_confidence": 0.93,
       "attention_priority": "HIGH",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
+      "entity_id": "600916",
+      "entity_name": "中国黄金",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P1",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": true,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.65,
+      "triage_context": {
+        "industry": "F52零售业",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "A",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P1",
+        "research_priority_score": 50,
+        "screening_attractiveness": "",
+        "urgent_research": true,
+        "urgent_research_reasons": [
+          "NEAR_BUY_EVIDENCE_RECOVERY_A"
+        ],
+        "valuation": {}
+      }
+    },
+    {
+      "attention_confidence": 0.94,
+      "attention_priority": "HIGH",
+      "entity_id": "603369",
+      "entity_name": "今世缘",
       "evidence_state": "INSUFFICIENT",
       "existing_engine_action": "RESEARCH:RESEARCH_GAP",
       "formal_trading_authority": false,
@@ -841,34 +336,51 @@
       "no_auto_trade": true,
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.56,
+      "route_confidence": 0.59,
       "triage_context": {
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "quant_score": 75.2261,
-        "quant_status": "PRIORITY_RESEARCH",
+        "industry": "C15酒、饮料和精制茶制造业",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "A",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": 56.4948,
+        "quant_status": "SECONDARY_RESEARCH",
         "research_priority": "P1",
-        "screening_attractiveness": "HIGH",
+        "research_priority_score": 50,
+        "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          "NEAR_BUY_EVIDENCE_RECOVERY_A"
         ],
         "valuation": {
-          "current_pe": 45.91,
+          "current_pe": 15.76,
           "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 34.0,
+          "earnings_quality_score": 82.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
           "financial_review_status": "OK",
-          "historical_median_pe_reference": 60.81,
-          "pe_to_history_ratio": 0.7549745107712547,
-          "required_profit_growth_pct": -24.502548922874535
+          "historical_median_pe_reference": 21.1,
+          "pe_to_history_ratio": 0.7469194312796208,
+          "required_profit_growth_pct": -25.30805687203792
         }
       }
     },
     {
       "attention_confidence": 0.93,
       "attention_priority": "HIGH",
-      "entity_id": "603209",
-      "entity_name": "兴通股份",
+      "entity_id": "002042",
+      "entity_name": "华孚时尚",
       "evidence_state": "INSUFFICIENT",
       "existing_engine_action": "RESEARCH:RESEARCH_GAP",
       "formal_trading_authority": false,
@@ -878,34 +390,101 @@
       "no_auto_trade": true,
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "route": "EVIDENCE_REFRESH",
-      "route_confidence": 0.56,
+      "route_confidence": 0.58,
       "triage_context": {
-        "industry": "G55水上运输业",
-        "quant_score": 68.2587,
+        "industry": "C17纺织业",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": 59.0886,
         "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "P2",
-        "screening_attractiveness": "HIGH",
+        "research_priority": "P1",
+        "research_priority_score": 50,
+        "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          "HOURLY_PRIORITY_RAISE",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
         ],
         "valuation": {
-          "current_pe": 14.37,
+          "current_pe": 32.03,
           "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 69.0,
+          "earnings_quality_score": 25.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
           "financial_review_status": "OK",
-          "historical_median_pe_reference": 18.5,
-          "pe_to_history_ratio": 0.7767567567567567,
-          "required_profit_growth_pct": -22.32432432432433
+          "historical_median_pe_reference": 34.94,
+          "pe_to_history_ratio": 0.9167143674871209,
+          "required_profit_growth_pct": -8.328563251287912
         }
       }
     },
     {
-      "attention_confidence": 0.94,
+      "attention_confidence": 0.85,
       "attention_priority": "HIGH",
-      "entity_id": "688162",
-      "entity_name": "巨一科技",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P1",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": true,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.57,
+      "triage_context": {
+        "industry": "C26化学原料和化学制品制造业",
+        "mapping_gaps": [
+          "COMMODITY",
+          "PEER"
+        ],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P1",
+        "research_priority_score": 45,
+        "screening_attractiveness": "",
+        "urgent_research": true,
+        "urgent_research_reasons": [
+          "MAPPING_GAP",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
+        ],
+        "valuation": {}
+      }
+    },
+    {
+      "attention_confidence": 0.91,
+      "attention_priority": "HIGH",
+      "entity_id": "600640",
+      "entity_name": "国脉文化",
       "evidence_state": "INSUFFICIENT",
       "existing_engine_action": "RESEARCH:RESEARCH_GAP",
       "formal_trading_authority": false,
@@ -917,32 +496,95 @@
       "route": "EVIDENCE_REFRESH",
       "route_confidence": 0.57,
       "triage_context": {
-        "industry": "C35专用设备制造业",
-        "quant_score": 65.7322,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
+        "industry": "I64互联网和相关服务",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": 51.4063,
+        "quant_status": "SECONDARY_RESEARCH",
+        "research_priority": "P1",
+        "research_priority_score": 50,
+        "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          "HOURLY_PRIORITY_RAISE",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
         ],
         "valuation": {
-          "current_pe": 39.25,
+          "current_pe": 380.66,
           "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 69.0,
+          "earnings_quality_score": 25.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
           "financial_review_status": "OK",
-          "historical_median_pe_reference": 56.21,
-          "pe_to_history_ratio": 0.6982743284113146,
-          "required_profit_growth_pct": -30.172567158868535
+          "historical_median_pe_reference": 504.72,
+          "pe_to_history_ratio": 0.7542003487081946,
+          "required_profit_growth_pct": -24.579965129180536
         }
       }
     },
     {
-      "attention_confidence": 0.94,
+      "attention_confidence": 0.88,
       "attention_priority": "HIGH",
-      "entity_id": "603160",
-      "entity_name": "汇顶科技",
+      "entity_id": "603883",
+      "entity_name": "老百姓",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P1",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": true,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.56,
+      "triage_context": {
+        "industry": "F52零售业",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "A",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P1",
+        "research_priority_score": 50,
+        "screening_attractiveness": "",
+        "urgent_research": true,
+        "urgent_research_reasons": [
+          "NEAR_BUY_EVIDENCE_RECOVERY_A"
+        ],
+        "valuation": {}
+      }
+    },
+    {
+      "attention_confidence": 0.92,
+      "attention_priority": "HIGH",
+      "entity_id": "600610",
+      "entity_name": "中毅达",
       "evidence_state": "INSUFFICIENT",
       "existing_engine_action": "RESEARCH:RESEARCH_GAP",
       "formal_trading_authority": false,
@@ -954,44 +596,356 @@
       "route": "EVIDENCE_REFRESH",
       "route_confidence": 0.52,
       "triage_context": {
-        "industry": "C39计算机、通信和其他电子设备制造业",
-        "quant_score": 65.9223,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "",
-        "screening_attractiveness": "HIGH",
+        "industry": "C26化学原料和化学制品制造业",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": 53.0938,
+        "quant_status": "SECONDARY_RESEARCH",
+        "research_priority": "P1",
+        "research_priority_score": 50,
+        "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
-          "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          "HOURLY_PRIORITY_RAISE",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
         ],
         "valuation": {
-          "current_pe": 38.03,
+          "current_pe": 203.97,
           "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 54.0,
+          "earnings_quality_score": 67.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
           "financial_review_status": "OK",
-          "historical_median_pe_reference": 48.8,
-          "pe_to_history_ratio": 0.7793032786885247,
-          "required_profit_growth_pct": -22.069672131147534
+          "historical_median_pe_reference": 289.27,
+          "pe_to_history_ratio": 0.7051197842845784,
+          "required_profit_growth_pct": -29.488021571542156
         }
+      }
+    },
+    {
+      "attention_confidence": 0.92,
+      "attention_priority": "MEDIUM",
+      "entity_id": "000096",
+      "entity_name": "广聚能源",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P2",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": false,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.84,
+      "triage_context": {
+        "industry": "F51批发业",
+        "mapping_gaps": [],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P2",
+        "research_priority_score": 35,
+        "screening_attractiveness": "",
+        "urgent_research": false,
+        "urgent_research_reasons": [
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
+        ],
+        "valuation": {}
+      }
+    },
+    {
+      "attention_confidence": 0.89,
+      "attention_priority": "MEDIUM",
+      "entity_id": "603739",
+      "entity_name": "蔚蓝生物",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P2",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": false,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.83,
+      "triage_context": {
+        "industry": "",
+        "mapping_gaps": [
+          "INDUSTRY"
+        ],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P2",
+        "research_priority_score": 40,
+        "screening_attractiveness": "",
+        "urgent_research": false,
+        "urgent_research_reasons": [
+          "MAPPING_GAP",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
+        ],
+        "valuation": {}
+      }
+    },
+    {
+      "attention_confidence": 0.92,
+      "attention_priority": "MEDIUM",
+      "entity_id": "002282",
+      "entity_name": "博深股份",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P2",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": false,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.82,
+      "triage_context": {
+        "industry": "",
+        "mapping_gaps": [
+          "INDUSTRY"
+        ],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P2",
+        "research_priority_score": 40,
+        "screening_attractiveness": "",
+        "urgent_research": false,
+        "urgent_research_reasons": [
+          "MAPPING_GAP",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
+        ],
+        "valuation": {}
+      }
+    },
+    {
+      "attention_confidence": 0.92,
+      "attention_priority": "MEDIUM",
+      "entity_id": "603617",
+      "entity_name": "君禾股份",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P2",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": false,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.82,
+      "triage_context": {
+        "industry": "",
+        "mapping_gaps": [
+          "INDUSTRY"
+        ],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P2",
+        "research_priority_score": 40,
+        "screening_attractiveness": "",
+        "urgent_research": false,
+        "urgent_research_reasons": [
+          "MAPPING_GAP",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
+        ],
+        "valuation": {}
+      }
+    },
+    {
+      "attention_confidence": 0.92,
+      "attention_priority": "MEDIUM",
+      "entity_id": "600283",
+      "entity_name": "钱江水利",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH_PRIORITY:P2",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": false,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.81,
+      "triage_context": {
+        "industry": "",
+        "mapping_gaps": [
+          "INDUSTRY"
+        ],
+        "near_buy_evidence_recovery_tier": "B",
+        "near_buy_missing_evidence_items": [
+          "hard_gate:predictability",
+          "hard_gate:long_term_demand",
+          "hard_gate:moat",
+          "hard_gate:financial_safety",
+          "hard_gate:earnings_authenticity",
+          "score_complete",
+          "scenario_valuation",
+          "implied_expectation",
+          "expectation_gap",
+          "risk_adjusted_cagr",
+          "downside",
+          "falsification"
+        ],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P2",
+        "research_priority_score": 40,
+        "screening_attractiveness": "",
+        "urgent_research": false,
+        "urgent_research_reasons": [
+          "MAPPING_GAP",
+          "NEAR_BUY_EVIDENCE_RECOVERY_B"
+        ],
+        "valuation": {}
       }
     }
   ],
   "should_dispatch": true,
-  "skipped": [],
+  "skipped": [
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "603566",
+      "entity_name": "普莱柯",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "601968",
+      "entity_name": "宝钢包装",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "603237",
+      "entity_name": "五芳斋",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "001323",
+      "entity_name": "慕思股份",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600765",
+      "entity_name": "中航重机",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600486",
+      "entity_name": "扬农化工",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000633",
+      "entity_name": "合金投资",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000526",
+      "entity_name": "学大教育",
+      "reason": "MAX_DISPATCH_BOUND",
+      "route": "EVIDENCE_REFRESH"
+    }
+  ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-21T07:40:19+00:00",
-  "source_workflow_head_sha": "10e095d613162f9b65217207f806fffe019eaae1",
+  "source_generated_at": "2026-09-22T07:06:36+00:00",
+  "source_workflow_head_sha": "24ec9d66f9a8141c5c9f2925b5a49706a9a335b9",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "35573887821",
+  "source_workflow_run_id": "35697815789",
   "summary": {
     "deep_research_count": 0,
-    "evidence_refresh_count": 4,
+    "evidence_refresh_count": 12,
     "holding_selected_count": 0,
-    "human_review_count": 21,
-    "selected_count": 4,
-    "skipped_count": 0
+    "human_review_count": 5,
+    "selected_count": 12,
+    "skipped_count": 8
   },
-  "trigger_source": "JEV_ORCHESTRATOR_35573887821",
+  "trigger_source": "JEV_ORCHESTRATOR_35697815789",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-21T13:21:11+00:00"
+  "updated_at": "2026-09-22T07:08:33+00:00"
 }
