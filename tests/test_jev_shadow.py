@@ -456,3 +456,35 @@ def test_priority_queue_does_not_drop_deep_unresolved_continuity_when_capacity_a
 
     assert [row["entity"]["code"] for row in states] == ["000002", "000001"]
 
+def test_research_evidence_fingerprint_is_stable_across_runtime_lineage_changes():
+    first_status = _status()
+    second_status = deepcopy(first_status)
+    second_status["lambda_run_id"] = "999"
+    second_status["deep_code_epoch_sha"] = "different-runtime-lineage"
+
+    first = evaluate_stock_shadow(
+        states=build_stock_shadow_states(
+            dashboard=_dashboard(),
+            deep_status=first_status,
+            profiles=_profiles(),
+            max_entities=1,
+        ),
+        config=JevShadowConfig(enabled=True, shadow_mode=True),
+        provider=FakeProvider(),
+    )["rows"][0]
+    second = evaluate_stock_shadow(
+        states=build_stock_shadow_states(
+            dashboard=_dashboard(),
+            deep_status=second_status,
+            profiles=_profiles(),
+            max_entities=1,
+        ),
+        config=JevShadowConfig(enabled=True, shadow_mode=True),
+        provider=FakeProvider(),
+    )["rows"][0]
+
+    assert first["state_fingerprint"] != second["state_fingerprint"]
+    assert first["research_evidence_fingerprint"] == second["research_evidence_fingerprint"]
+    assert first["research_context"]["deep_lambda_run_id"] == "123"
+    assert second["research_context"]["deep_lambda_run_id"] == "999"
+
