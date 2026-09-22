@@ -19,11 +19,12 @@ STRICT_MULTI_YEAR_MOAT_PR_OPEN_AWAITING_CI
 - #268 `feat: close moat gaps with strict multi-year official evidence`: open against `main`.
 
 ## CI
-- PR #268 opened; CI/checks are now expected on the latest branch head.
-- Required before merge: blocking CI plus deep-calculation contract tests.
+- PR #268 opened.
+- CI `35681726992` failed only in `ai-governance`: `TASK_STATE.md` used `## Production / Artifact Baseline` instead of the required exact heading `## Production / Artifact`; fixed on this branch.
+- Required before merge: rerun blocking CI plus deep-calculation contract tests.
 - No production claim is allowed until post-merge Deep artifacts verify the new rule on live official reports.
 
-## Production / Artifact Baseline
+## Production / Artifact
 - Deep `35679085547`: requested=22, unresolved_requested_gate_count=93, progressed_gate_count=3, predictability_resolved_gate_count=1.
 - Terminal `35679520250`: requested=22, RESEARCH_GAP=22, BUY=0, WAIT_PRICE=0, REJECT=0.
 - Dominant unresolved distribution: moat=21, predictability=21, long_term_demand=19, earnings_authenticity=16, financial_safety=16.
@@ -46,7 +47,7 @@ STRICT_MULTI_YEAR_MOAT_PR_OPEN_AWAITING_CI
 - Jev/TypeSafe has not been invoked in this mission yet. All work so far is deterministic repository inspection and code/test construction. Historical Jev -> Orchestrator continuation remains separately production-proven.
 
 ## Blockers
-- None currently. CI has not run yet.
+- None currently. The first CI failure was a TASK_STATE heading-contract issue and is fixed; latest-head CI must confirm.
 
 ## Next Action
 1. Read PR #268 blocking CI/review; fix any failures on the same branch.
