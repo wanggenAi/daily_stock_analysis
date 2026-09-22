@@ -1,86 +1,189 @@
 # Current Mission
 
 ## Goal
-Eliminate the production false-positive path where generic management-system certifications can satisfy the strict multi-year moat entry-barrier rule, then re-verify the exact Deep -> Provenance -> Terminal -> Investor -> Three-Pillar chain without weakening any authority guardrail.
+
+Turn the current research system into a convergent autonomous opportunity engine that can actually surface **reference-worthy stock codes** without fabricating certainty or forcing a BUY.
+
+Two linked problems must be solved together:
+
+1. **Autonomous research closure:** for every active non-holding candidate that remains `RESEARCH_GAP`, Jev + the deterministic research stack must keep selecting genuinely new evidence/research paths until either:
+   - the hard gates are sufficiently proven and the candidate can progress to the existing valuation / BUY / WAIT_PRICE authority path;
+   - a hard gate is disproven and the candidate becomes REJECT; or
+   - all supported, credible, non-duplicate research strategies are exhausted. In that case the non-holding candidate loses active-candidate eligibility and moves to a dormant/excluded evidence-exhausted pool, to be reactivated only by a genuinely new evidence epoch/material event.
+
+2. **Candidate-funnel health / Runbei-like opportunity recovery:** diagnose why a market-wide system scanning thousands of A shares is currently producing no research BUY/WAIT_PRICE despite a large research queue. Do **not** assume the answer is to weaken thresholds. Identify whether useful candidates are being lost or stalled in recall, mapping, valuation coverage, Deep workset construction, evidence acquisition, hard-gate semantics, Jev routing, lifecycle persistence, or Terminal promotion.
+
+The product goal is not “always output at least one BUY.” The goal is that the system must make a serious, auditable attempt to find strong opportunities across the broad market and return useful candidate codes when evidence supports them; a zero-result terminal is acceptable only after funnel coverage and research closure are proven healthy.
 
 ## Current Phase
-GENERIC_CERTIFICATION_MOAT_FIX_PRODUCTION_VERIFIED_COMPLETE
 
-## Last Verified Main
-- Production-chain verification completed on main through `be53d6928b3e802e4860a36139563cb2d6ce3573` (`Persist runtime-aware three-pillar investor decision center [skip ci]`).
-- This checkpoint commit may move main again; live GitHub refs / Actions / persisted data always override the recorded SHA.
-- PR #269 merged the fix as `8ddc6efb46526d44d2313dd20cd1fa764d13461a`.
-- PR #269 final blocking CI `35684679501`: ai-governance=success, docker-build=success, backend-gate=success, web-gate=skipped.
+AUTONOMOUS_RESEARCH_CLOSURE_AND_CANDIDATE_FUNNEL_AUDIT
 
-## Active Branch
-- None required for the completed mission.
+## Live Source Of Truth
 
-## Active PR
-- None for the current mission. #269 is merged.
+Always re-read live GitHub state before continuing. The values below are a handoff checkpoint only and may advance.
 
-## CI
-- PR #269 blocking CI passed before merge.
-- Post-merge checkpoint push CI `35685830962` on `d9cb0169d56824c97e6f5e69a10b200582f2a2c9` was still in progress at this checkpoint: ai-governance=success, docker-build=success, backend-gate=in_progress, web-gate=skipped.
-- `8ddc6efb... -> d9cb0169...` is exactly one commit ahead and the only changed file is `TASK_STATE.md`; no production business code changed between the merged fix and the Deep code epoch.
-- The mission's production proof is therefore based on the already-passed PR CI plus the successful post-fix Deep / Provenance / Terminal / Investor / Three-Pillar chain. Do not retroactively claim CI `35685830962` passed unless live Actions proves it.
+- Main at checkpoint: `ca3390991034f3fffea2ee800b43b742aa8d53ad` — `Persist terminal deep calculation 35689369644 [skip ci]`.
+- Latest persisted Deep at checkpoint: run `35689369644`, trigger `EVERY_INDUSTRY_READY`, execution `SUCCESS`.
+- Deep requested **24**, processed **24**, workset coverage complete=true, complete=**0**, evidence-exhausted=**24**.
+- Deep gap closure used **2** attempts, acquired **58** new evidence rows, progressed **6** gates, but still has **98** unresolved requested hard gates.
+- Latest persisted Terminal observed at checkpoint still points to Deep `35688190313`: **BUY=0 / WAIT_PRICE=0 / RESEARCH_GAP=24 / REJECT=0**. This is older than latest Deep `35689369644`; verify downstream convergence before treating Terminal as current.
+- Research Priority queue at checkpoint: **157** candidates; **P0=4**, **P1=8**, **near-buy recovery=110**, **success-archetype recall=0**, mapping gaps=**39** (+1 partial).
+- Current P0s are the four holdings; current P1 examples include 华孚时尚 002042、中毅达 600610、国脉文化 600640、中国黄金 600916、红塔证券 601236、今世缘 603369、老百姓 603883、万华化学 600309.
+- The system therefore has a large upstream candidate/recovery population but currently converges to no research BUY/WAIT. This is the funnel discrepancy to explain with data rather than intuition.
 
-## Production / Artifact
-- Post-fix Deep `35685721820`: SUCCESS, requested=22, processed=22, missing=0, workset_coverage_complete=true, research_terminal_state=EVIDENCE_EXHAUSTED.
-- Persisted Deep code epoch: `d9cb0169d56824c97e6f5e69a10b200582f2a2c9`, proven descendant of fix `8ddc6efb...` with only `TASK_STATE.md` changed.
-- Post-fix Deep: moat_resolved_gate_count=3, predictability_resolved_gate_count=1, progressed_gate_count=6, unresolved_requested_gate_count=90.
-- Required invariant is satisfied: `603396` moat is UNKNOWN/unresolved with reason `DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET`; generic ISO9001/ISO14001/ISO45001 evidence no longer creates an automatic moat PASS.
-- Provenance audit `35686204130`: SUCCESS; hard gates=2505, PASS=227, verified PASS=227, unverified PASS=0, provenance_audit_complete=true.
-- Terminal `35686206157`: SUCCESS; persisted as `9de7da9f3ebfa23297b1d92b1cb77f6fc1ca2852`; source_deep_lambda_run_id=`35685721820`; 22/22 requested codes terminal, BUY=0, WAIT_PRICE=0, RESEARCH_GAP=22, REJECT=0.
-- Investor Terminal Overlay `35686310906`: SUCCESS; persisted as `f24e52cfc097c9bc80bb1fc0448888733624d8e0`; terminal snapshot source_deep_lambda_run_id=`35685721820`, requested=22, RESEARCH_GAP=22, research-only, no Formal mutation.
-- Three-Pillar Decision Center `35686413089`: SUCCESS from head `f24e52c...`; persisted as `be53d6928b3e802e4860a36139563cb2d6ce3573`.
-- Final decision center: deep runtime `35685721820` CURRENT, Provenance ACTIVE (`35686204130`, unverified-pass=0), Terminal ACTIVE (BUY=0 / WAIT=0 / GAP=22 / REJECT=0), no_auto_trade=true.
-- Remaining evidence limitations are explicit rather than promoted: DEEP_RESEARCH_EVIDENCE_PARTIAL, FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING, ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED, LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION.
+## Required Workstream A — Autonomous Jev Research Closure
 
-## Completed
-- Recovered from live GitHub rather than chat state and did not repeat #268 or #269.
-- Audited the strict-moat production pass set and fixed the `603396` generic-certification false positive.
-- Removed only the generic `国家级|国际 ... 认证|资质` strong-barrier pattern.
-- Preserved high-specificity ASIL-D, exclusive/unique rights, market leadership, customer embedding and resource barriers.
-- Added regressions proving generic ISO certifications remain insufficient while ASIL-D remains recognized.
-- PR #269 passed blocking CI and was squash-merged.
-- Verified the post-fix production Deep actually executed code containing #269.
-- Verified `603396` remains unresolved for moat rather than receiving an automatic PASS.
-- Verified exact Deep -> Provenance -> Terminal -> Investor -> Three-Pillar production convergence.
-- Verified all persisted PASS gates are provenance-backed; no unverified PASS remains.
+Implement a durable per-`code × hard_gate` research strategy ledger.
 
-## Current Findings
-- The fix remains PASS-only and fail-closed. It reduced the automatic moat PASS count from 4 to 3 for the audited requested set; it did not manufacture FAIL or Formal action.
-- `000576`, `002375`, and `603160` remain the post-fix automatically resolved moat cases; `603396` no longer qualifies through generic certification evidence.
-- Terminal research remains research-only: all 22 requested codes are `RESEARCH_GAP`; none is a research BUY/WAIT_PRICE/REJECT in this run.
-- No BUY/WAIT_PRICE/REJECT threshold, valuation rule, Candidate Lifecycle rule, Formal authority rule, or automatic order permission was loosened.
+The ledger must record at minimum:
+- unresolved gate and exact reason;
+- research strategy family;
+- source family / query family;
+- evidence fingerprint / epoch;
+- attempt status and timestamps;
+- whether new evidence was acquired;
+- whether the gate changed;
+- whether the strategy is exhausted;
+- what untried strategy families remain.
 
-## TypeSafe / Jev
-- No new Jev call was required or used for this moat-fix acceptance mission. The moat decision and lineage checks are deterministic official-evidence / provenance validation and must not be delegated to probabilistic routing.
-- Latest proven live Jev run remains `35573887821` (2026-09-21): `GenGe Jev Shadow Evaluation` SUCCESS.
-- Actual live Jev steps proven by Actions: install pinned `typesafe-sdk==0.7.0` -> run `tools/run_jev_shadow.py` with `JEV_ENABLED=true`, `JEV_SHADOW_MODE=true`, `JEV_MODEL=jev-latest`, secret `TYPESAFE_API_KEY` -> build typed advisory bridge with `tools/build_jev_routing_bridge.py` -> validate advisory guardrails -> persist `data/jev_shadow/latest.json`, `data/jev_shadow/latest_routing.json`, and `JEV_RESEARCH_ROUTING.md`.
-- Persisted live rows record requested_model=`jev-latest` and served_model=`jev-1.13.0`.
-- Current orchestration remains: Jev typed routing -> deterministic research orchestrator -> bounded eligible-code dispatch -> Deep.
-- `jev_direct_dispatch_allowed=false`; Jev cannot create Formal BUY, suppress deterministic obligations, or mutate trading authority.
+Add a Jev research-strategy planning stage after Deep/Terminal GAP evaluation:
+- Jev may propose/route the next research strategy, but remains advisory.
+- A deterministic guard must validate source/strategy allowlists, novelty, budget and authority.
+- Jev must never directly create Formal BUY/SELL/HOLD, mutate hard-gate truth, or turn UNKNOWN into PASS.
+- Low Jev route confidence must not automatically end research for safe read-only evidence collection. It should fall back to the safest deterministic/lowest-cost valid research path when one exists.
+- HUMAN_REVIEW should be reserved for genuinely non-ruleable ambiguity, unsupported source classes, material accounting interpretation conflicts, or other explicitly defined cases.
 
-## Blockers
-- None for the generic-certification moat-fix mission.
-- Auxiliary post-merge checkpoint CI `35685830962` was still running at the time of this checkpoint; it is not a business-code blocker because the only delta from the already-verified fix commit to its head is `TASK_STATE.md`.
+Add an autonomous loop controller:
+`GAP -> plan next novel strategy -> collect -> provenance/audit -> Deep -> compare gate/evidence fingerprints -> repeat if novel path remains -> terminal when resolved or policy-exhausted`.
 
-## Next Action
-- This mission is complete. Start future work from live main and current persisted artifacts; do not reopen the generic-certification fix unless new production evidence violates the invariant.
-- If reviewing historical CI later, read live Actions before asserting the final conclusion of `35685830962`.
+Loop controls are mandatory:
+- identical evidence must never create an infinite retry;
+- repeated strategy/source/query fingerprints are suppressed;
+- per-code and per-run budgets are bounded;
+- source failures get bounded retry;
+- no progress with no novel path terminates cleanly;
+- a new evidence epoch/material event can reactivate a dormant candidate.
 
-## Do Not Repeat
-- Do not redo #268 or #269.
-- Do not rerun old Deep `35679085547`, pre-fix Deep `35683878901`, or verified post-fix Deep `35685721820` merely to recreate already-persisted proof.
-- Do not broaden moat rules to recover pass count.
-- Do not loosen long_term_demand, predictability, financial-safety, earnings-authenticity, valuation, BUY/WAIT_PRICE/REJECT, Candidate Lifecycle, or Formal authority rules.
+Define explicit research terminal reasons, e.g.:
+- `HARD_GATE_FAILED`
+- `POLICY_EXHAUSTED`
+- `SOURCE_EXHAUSTED`
+- `DATA_NOT_YET_EXISTS`
+- `EVIDENCE_CONFLICTED`
+- `BUDGET_EXHAUSTED_RETRYABLE`
+
+## Required Workstream B — Candidate Death / Dormancy Semantics
+
+For **non-holding candidates**:
+- If supported credible research paths are exhausted and key evidence still cannot be proven, remove the code from the active candidate/research queue.
+- Do not label it as business-quality FAIL unless the evidence actually disproves a hard gate.
+- Persist it in a dormant/excluded research pool with the exact exhaustion reason and reactivation conditions.
+- Dormant candidates must not consume routine Jev/Deep capacity.
+- New annual reports, material company events, new official industry evidence or a changed evidence fingerprint may reactivate them.
+
+For **current holdings**:
+- Never “delete” the code merely because evidence is exhausted.
+- Evidence exhaustion may block new exposure and raise review/risk status, but SELL/REDUCE still requires the existing Formal authority/rules.
+- Preserve `UNKNOWN != PASS` and `no_auto_trade=true`.
+
+## Required Workstream C — Diagnose Why No New Runbei-Like Candidates Emerge
+
+Treat the current zero BUY/WAIT result as a **funnel-health investigation**, not proof that no opportunity exists and not proof that thresholds must be relaxed.
+
+Audit stage-by-stage counts and attrition across:
+`All-A universe -> quant screen -> wide recall -> industry-protected recall -> valuation coverage -> research priority -> Deep workset -> hard gates -> Terminal`.
+
+At each stage produce:
+- input/output counts;
+- codes dropped and exact reasons;
+- sector/industry coverage;
+- valuation-anchor availability;
+- mapping gaps;
+- hard-gate UNKNOWN/FAIL distribution;
+- evidence-source coverage;
+- candidate age/staleness;
+- whether durable lifecycle is causing stale GAP accumulation;
+- whether newer high-scoring candidates are displaced by old unresolved continuity anchors.
+
+Specifically investigate:
+- why `success_archetype_recall_count=0` despite the existing Runbei archetype;
+- whether Runbei-like recall is too narrow, stale, disconnected from current All-A output, or blocked downstream;
+- why **110 near-buy recovery** candidates do not produce any Terminal WAIT/BUY;
+- whether current Deep workset size/continuity (24) is starving the broader 157-candidate queue;
+- whether 39 mapping gaps are materially preventing valuation/deep promotion;
+- whether hard-gate requirements are valid but evidence collectors are underpowered;
+- whether all candidates are being treated with a one-size-fits-all evidence template where industry-specific research is required;
+- whether Terminal semantics are over-conservative relative to the intended contract, without changing thresholds merely to create output.
+
+The audit must identify concrete example codes at each major bottleneck and follow several candidates end-to-end.
+
+## Success Criteria
+
+This mission is complete only when all of the following are true:
+
+1. A GAP candidate can autonomously continue through multiple **novel** research strategies without the user saying “继续”.
+2. The system can prove when a candidate is genuinely policy/source exhausted rather than merely “not yet searched enough”.
+3. Non-holding exhausted candidates leave the active queue and enter durable dormant state with deterministic reactivation rules.
+4. Holdings remain managed safely and are never silently dropped.
+5. The full-market opportunity funnel has an auditable attrition report explaining where thousands of stocks become the final research set.
+6. Runbei-like/success-archetype recall is verified as live and effective, or its failure mode is explicitly fixed.
+7. The system produces a useful ranked **research shortlist of stock codes** when evidence supports it, even if no Formal BUY exists yet. The shortlist must distinguish:
+   - evidence-complete / valuation-ready;
+   - promising but still actively researching;
+   - WAIT_PRICE;
+   - excluded/dormant.
+8. No thresholds, hard gates or authority rules are weakened solely to guarantee non-zero output.
+9. Production chain remains fail-closed: `UNKNOWN != PASS`, Formal authority remains Canonical-only, automatic Formal BUY=false, `no_auto_trade=true`.
+
+## Separate Active Work — PR #270
+
+PR #270 remains a separate execution/display consistency fix:
+`fix: keep first-use execution report internally consistent`.
+
+At checkpoint:
+- PR #270 is open, not merged.
+- Head was `6afea42756b866d62dfa93a16f52d2569e07b22d`.
+- It fixes consumed staged-add `ADD_LIMIT` resurrection and preservation of fresh broker/direct execution quotes during off-session display while immediate execution remains blocked.
+
+Future sessions must inspect its live CI/mergeability and finish or reconcile it, but **do not conflate PR #270 with the autonomous research/funnel mission**.
+
+## Previously Completed Mission
+
+The generic-certification moat false-positive fix (#269) is complete and production-verified. Do not reopen or weaken it merely to improve candidate counts. Generic ISO9001/ISO14001/ISO45001-style certifications remain insufficient as standalone durable-moat evidence.
+
+## Immediate Next Actions
+
+1. Re-read latest main, Deep, Terminal, research priority, open PRs and CI because bot persistence may have advanced state.
+2. Ensure PR #270 is safely completed/reconciled when CI permits.
+3. Build a stage-by-stage funnel attrition snapshot from the latest broad-market artifacts and identify the largest real bottleneck.
+4. Trace at least several current near-buy/P1 candidates end-to-end and compare with the historical Runbei archetype path.
+5. Design/implement the research-strategy ledger + novelty-aware autonomous loop in small guarded PRs.
+6. Add dormant/excluded candidate semantics after policy exhaustion.
+7. Update the Investor/Three-Pillar display so it shows:
+   - what was researched;
+   - which strategies were tried;
+   - what evidence was gained;
+   - why a candidate progressed, was excluded, or remains active;
+   - the actual current research shortlist codes.
+
+## Do Not Do
+
+- Do not force at least one BUY/WAIT by lowering thresholds.
+- Do not treat “no evidence found” as proof the business is bad.
+- Do not keep exhausted non-holding candidates permanently ACTIVE.
+- Do not delete or ignore current holdings because evidence is exhausted.
+- Do not repeatedly fetch identical evidence.
+- Do not let Jev directly mutate Formal/Canonical trading authority.
+- Do not repeat already-completed #268/#269 work.
+- Do not use chat memory as the source of truth when live GitHub disagrees.
 
 ## Guardrails
-- GitHub live state is the source of truth.
-- Jev direct dispatch=false.
-- Deterministic bounded research dispatch is research-only.
-- Formal trading authority=false.
+
+- GitHub live state is authoritative.
+- Jev direct trading dispatch=false.
+- Jev may guide research strategy only behind deterministic guardrails.
+- Formal trading authority=false outside existing Canonical path.
 - Automatic Formal BUY=false.
 - UNKNOWN != PASS.
 - no_auto_trade=true.
