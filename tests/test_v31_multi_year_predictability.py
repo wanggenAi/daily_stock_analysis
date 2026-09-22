@@ -90,8 +90,9 @@ def test_moat_signal_extraction_rejects_generic_promotional_language():
 def test_moat_signal_extraction_requires_issuer_bound_claims():
     row = extract_report_moat_signals(
         (
-            "竞争对手市场份额全球第一，并已通过ASIL-D认证。"
-            "行业头部企业累计拥有300项专利。"
+            "竞争对手公司市场份额全球第一，并已通过ASIL-D认证。"
+            "可比公司累计拥有300项专利。"
+            "同行业公司拥有大型铜矿资源基地。"
             "本公司持续加大研发投入，保持行业领先地位。"
         ),
         2025,
