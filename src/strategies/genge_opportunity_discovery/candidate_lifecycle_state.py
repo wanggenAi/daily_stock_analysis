@@ -458,6 +458,8 @@ def apply_explicit_transition(
     evidence_id = str(transition.get("evidence_id") or "").strip()
     observed_at = str(transition.get("evidence_observed_at") or "").strip()
     reason = str(transition.get("reason") or "").strip()
+    reason_class = str(transition.get("reason_class") or "").strip().upper()
+    evidence_fingerprint = str(transition.get("evidence_fingerprint") or "").strip()
     target_tier = str(transition.get("target_tier") or "").strip()
     snapshot_id = str(transition.get("snapshot_id") or next_state.get("latest_applied_snapshot_id") or "")
 
@@ -494,9 +496,30 @@ def apply_explicit_transition(
     }:
         new_state = prior_state
 
+    prior_archive_reason_class = str(candidate.get("archive_reason_class") or "")
+    prior_archive_evidence_fingerprint = str(
+        candidate.get("archive_evidence_fingerprint") or ""
+    )
+
     candidate["lifecycle_state"] = new_state
     if target_tier:
         candidate["research_tier"] = target_tier
+    if event_name == EXPLICIT_ARCHIVED:
+        candidate["archive_reason_class"] = reason_class
+        candidate["archive_evidence_fingerprint"] = evidence_fingerprint
+        candidate["archive_evidence_id"] = evidence_id
+        candidate["archive_observed_at"] = observed_at
+    elif event_name == EXPLICIT_REACTIVATED:
+        candidate["last_archive_reason_class"] = prior_archive_reason_class
+        candidate["last_archive_evidence_fingerprint"] = prior_archive_evidence_fingerprint
+        candidate["last_reactivation_evidence_fingerprint"] = evidence_fingerprint
+        for field in (
+            "archive_reason_class",
+            "archive_evidence_fingerprint",
+            "archive_evidence_id",
+            "archive_observed_at",
+        ):
+            candidate.pop(field, None)
     evidence_ids.append(evidence_id)
     candidate["applied_evidence_ids"] = evidence_ids[-200:]
 
@@ -508,6 +531,10 @@ def apply_explicit_transition(
         "observed_at": observed_at,
         "evidence_id": evidence_id,
         "reason": reason,
+        "reason_class": reason_class,
+        "evidence_fingerprint": evidence_fingerprint,
+        "prior_archive_reason_class": prior_archive_reason_class,
+        "prior_archive_evidence_fingerprint": prior_archive_evidence_fingerprint,
         "prior_lifecycle_state": prior_state,
         "lifecycle_state_after": new_state,
         "target_tier": target_tier,
