@@ -1,25 +1,22 @@
 {
   "schema_version": 2,
-  "generation": 30,
+  "generation": 31,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "FIRST_LIVE_REPORT_EXECUTION_DISPLAY_CONSISTENCY_PR_CI",
-  "last_observed_main_sha": "2a178a7581214ed0eab90ab9f665f733ed422b24",
+  "stage": "FIRST_LIVE_REPORT_EXECUTION_DISPLAY_CONSISTENCY_PR_CI_V2",
+  "last_observed_main_sha": "26ed8a21b9d2518ea0439c7ef8bd02fb0f88662a",
   "work_branch": "fix/consumed-staged-add-limit-overlay-20260922",
-  "work_head_sha": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967",
+  "work_head_sha": "161d7527992a8152607f9088aae3d7f01246ad4c",
   "active_pr": 270,
   "ci": {
-    "status": "IN_PROGRESS",
-    "pr_head": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967",
-    "pr_ci_run_id": 35687159675,
-    "ai_governance": "SUCCESS",
-    "backend_gate": "IN_PROGRESS",
-    "docker_build": "IN_PROGRESS",
-    "web_gate": "SKIPPED"
+    "status": "QUEUED",
+    "pr_head": "161d7527992a8152607f9088aae3d7f01246ad4c",
+    "pr_ci_run_id": 35687671486,
+    "live_execution_contract_run_id": 35687671617
   },
   "production_or_artifact": {
-    "status": "FIRST_LIVE_REPORT_DEFECTS_FIXED_AWAITING_PR_CI",
+    "status": "WORKFLOW_CONTRACT_DRIFT_FIXED_AWAITING_LATEST_HEAD_CI",
     "observed_defects": [
       "Consumed staged-add source could reappear as ADD_LIMIT after quote overlay.",
       "Fresh user-confirmed broker quote overlay could be reset to frozen Canonical prices during lunch-break refresh."
@@ -31,19 +28,21 @@
     ]
   },
   "pending_operation": {
-    "type": "MERGE_PR_AFTER_BLOCKING_CI",
+    "type": "MERGE_PR_AFTER_LATEST_HEAD_BLOCKING_CI",
     "pr": 270,
-    "head_sha": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967",
-    "require": "blocking CI green and mergeable"
+    "head_sha": "161d7527992a8152607f9088aae3d7f01246ad4c",
+    "require": "latest-head blocking CI green and mergeable"
   },
   "completed": [
     "Recovered live repository state and did not reopen completed #269.",
     "Identified PR #270 as the first unfinished current mission.",
     "Verified consumed staged-add suppression is keyed by authoritative staged-add source rather than ADD display variant.",
     "Verified off-session preservation keeps a fresh existing broker overlay display-only while forcing immediate deployment to zero.",
-    "Verified current PR head includes freshness-contract follow-up and regression coverage."
+    "Verified current PR head includes freshness-contract follow-up and regression coverage.",
+    "Detected stale production workflow assertion that rejected preserved user-confirmed broker quote source off session.",
+    "Aligned production live-execution workflow validation with preserved off-session quote semantics and documented the behavior in CHANGELOG and V31 execution contract."
   ],
-  "next_action": "Re-read PR #270 head and blocking CI; if green and mergeable, merge, then verify live main and the post-merge execution-report workflow/artifact before closing the mission.",
+  "next_action": "Verify latest head 161d752 CI and live-execution contract; if green and mergeable, squash-merge PR #270, then verify main production quote refresh removes consumed 603993 operation while preserving fresh 12:17 broker quotes off session.",
   "do_not_repeat": [
     "Do not redo #268 or #269.",
     "Do not rerun completed moat Deep proof.",
