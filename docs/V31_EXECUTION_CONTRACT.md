@@ -103,6 +103,12 @@ A new session or implementation must reject all of the following as standalone S
 
 The correct sequence is always: refresh fundamentals -> refresh normalized earnings -> refresh scenario valuation -> reverse-solve market expectations -> compare price with refreshed value -> decide `HOLD / REDUCE / CORE_ONLY / EXIT`.
 
+## Execution/display overlay continuity
+
+Execution-price overlays are display/execution-reference state only. A consumed staged holding add stays consumed regardless of whether a live-price renderer labels the plan `ADD` or `ADD_LIMIT`; the authoritative staged-add source may not re-enter the operation table until an explicit rearm authority exists.
+
+During lunch breaks or other non-continuous sessions, a fresh existing execution overlay may be preserved for display under its own recorded freshness contract. The preserved source may be either a direct public intraday quote or a user-confirmed broker intraday quote bound to the current Canonical snapshot. Preservation never recomputes Formal actions, never grants BUY authority, and forces all immediate execution eligibility and planned immediate cash to zero while the market is off session.
+
 ## Human execution only
 
 V3.1 is a research and decision-support contract. It does not connect to a broker and does not automatically place orders. `BUY`, `REDUCE` and `EXIT` outputs remain subject to human confirmation and current-data review.
