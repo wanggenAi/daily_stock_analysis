@@ -389,6 +389,18 @@ def build_stock_shadow_states(
                         research.get("research_priority") or priority_label
                     ),
                     "research_priority_score": priority.get("priority_score"),
+                    "candidate_lifecycle_state": str(
+                        priority.get("candidate_lifecycle_state") or ""
+                    ),
+                    "candidate_archive_reason_class": str(
+                        priority.get("candidate_archive_reason_class") or ""
+                    ),
+                    "candidate_archive_evidence_fingerprint": str(
+                        priority.get("candidate_archive_evidence_fingerprint") or ""
+                    ),
+                    "candidate_archive_evidence_id": str(
+                        priority.get("candidate_archive_evidence_id") or ""
+                    ),
                     "urgent_research": (
                         research.get("urgent_research") is True
                         or priority_label in {"P0", "P1"}
