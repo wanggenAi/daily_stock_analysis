@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 - [新功能] Deep Calculation 复用既有多年官方年报新增严格 moat 证据闭环：仅当连续两个财年重复出现同一强壁垒信号且存在第二类佐证时自动 PASS；泛化宣传语、单年证据和仅专利数量继续保持 UNKNOWN，并新增 moat_resolved_gate_count 审计字段。
+- [修复] 收紧 strict multi-year moat 的 entry-barrier 证据：ISO9001/ISO14001/ISO45001 等通用管理体系认证不再被视为耐久进入壁垒，保留 ASIL-D、独家/唯一权利等高特异性规则，避免官方年报中的常规认证造成自动 moat PASS 假阳性。
 - [修复] 恢复上交所定期报告查询的服务端日期边界，并分片多年年报检索以补强严格可预测性证据发现。
 - [新功能] Jev 第二阶段新增只读研究路由桥接层：将 typed shadow 判断整理为补证据/深算/人工复核/无升级的持久化 advisory queue；仅手动 workflow_dispatch 成功后写回最新结果，自动 dispatch=false，不得压制确定性研究任务，不改变 Formal 决策、UNKNOWN 语义或 no-auto-trade。
 - [新功能] 增加 Jev Shadow Decision Layer 与 GitHub Actions 手动评估工作流；仅用于研究路由校准，不改变 Formal 决策、硬门槛、Candidate Lifecycle 或交易权限。
