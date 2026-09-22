@@ -21,6 +21,7 @@ from typing import Any, Iterable, Mapping
 
 from .evidence_collectors import classify_material_event_title, collect_auto_evidence
 from .evidence_collectors.multi_year_predictability import (
+    MOAT_RULE_VERSION,
     collect_multi_year_predictability_evidence,
 )
 
@@ -305,6 +306,9 @@ def infer_moat(
         if str(row.get("moat_evidence_status") or "").upper() == "VERIFIED"
         and bool(row.get("moat_adopted_for_gate"))
         and str(row.get("moat_classification") or "").upper() == "PASS"
+        and str(row.get("moat_rule_version") or "") == MOAT_RULE_VERSION
+        and str(row.get("moat_reason_code") or "")
+        == "STRICT_MULTI_YEAR_OFFICIAL_MOAT_EVIDENCE_PROVEN"
         and bool(str(row.get("publish_date") or "").strip())
     ]
     if verified:
