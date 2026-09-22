@@ -43,7 +43,7 @@ _GATE_STRATEGY = {
     },
 }
 
-_ACTIVE_ATTEMPT_STATUSES = {"DISPATCH_PLANNED", "DISPATCH_ACCEPTED"}
+_ACTIVE_ATTEMPT_STATUSES = {"DISPATCH_ACCEPTED"}
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
@@ -132,6 +132,17 @@ def reconcile_ledger(
         row = by_code.get(code)
         if row is None:
             continue
+
+        # Do not judge an accepted attempt until the exact accepted Deep run is
+        # visible in the later Jev state. A newer Jev workflow can start while
+        # Deep is still running; treating that as "no progress" would exhaust a
+        # strategy before its result exists.
+        accepted_deep_run_id = str(entry.get("deep_run_id") or "")
+        research_context = _mapping(row.get("research_context"))
+        observed_deep_run_id = str(research_context.get("deep_lambda_run_id") or "")
+        if accepted_deep_run_id and observed_deep_run_id != accepted_deep_run_id:
+            continue
+
         current_fp = evidence_fingerprint(row)
         if not current_fp:
             continue
