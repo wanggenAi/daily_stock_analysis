@@ -128,6 +128,28 @@ def test_nbs_direction_is_local_to_target_industry_not_later_region_decline():
     ) == "POSITIVE"
 
 
+def test_nbs_split_layout_direction_stops_before_later_region_decline():
+    text = """
+    2026年1—8月份全国固定资产投资基本情况
+    水上运输业投资增长
+    14.7%
+    。
+    分地区看，东部地区投资同比下降9.4%，中部地区投资下降8.7%。
+    """
+    extracted = _extract_report_numeric_context(text, ["水上运输业"])
+
+    assert extracted["value"] == "14.7"
+    assert extracted["unit"] == "%"
+    assert "水上运输业投资增长 14.7%" in extracted["excerpt"]
+    assert "东部地区" not in extracted["excerpt"]
+    assert _report_direction(
+        extracted["excerpt"],
+        extracted["value"],
+        collector="nbs_public_data",
+        article_title="2026年1—8月份全国固定资产投资基本情况",
+    ) == "POSITIVE"
+
+
 def test_nbs_table_negative_value_keeps_negative_direction_without_words():
     text = """
     分行业
