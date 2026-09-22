@@ -111,7 +111,23 @@ jobs:
           assert p.get('formal_action_source') == 'FINALIZED_CANONICAL_ONLY'
           assert p.get('formal_action_recomputed') is False
           assert p.get('no_auto_trade') is True
-          assert o.get('source') == 'DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE'
+          source = str(o.get('source') or '')
+          preserved_off_session = o.get('preserved_fresh_overlay_off_session') is True
+          if preserved_off_session:
+              assert o.get('market_session_active') is False
+              assert o.get('market_data_status') == 'OFF_SESSION'
+              assert o.get('canonical_snapshot_match') is not False
+              assert source in {
+                  'DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE',
+                  'USER_CONFIRMED_BROKER_INTRADAY_QUOTE',
+              }
+              assert (p.get('capital_deployment') or {}).get('planned_immediate_cash_cny') == 0
+              assert all(
+                  op.get('immediate_execution_eligible') is False
+                  for op in (p.get('capital_deployment') or {}).get('operations') or []
+              )
+          else:
+              assert source == 'DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE'
           assert o.get('formal_action_recomputed') is False
           assert o.get('formal_action_mutation_allowed') is False
           assert o.get('missing_quote_blocks_immediate_execution') is True
