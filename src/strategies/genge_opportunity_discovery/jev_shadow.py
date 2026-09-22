@@ -191,6 +191,54 @@ def _rows_by_code(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]
     return result
 
 
+def _stable_gate_evidence_fingerprint(raw: Mapping[str, Any]) -> str:
+    """Hash semantic gate evidence while excluding runtime-only lineage."""
+
+    def stable_items(value: Any) -> list[Any]:
+        if not isinstance(value, list):
+            return []
+        canonical: list[tuple[str, Any]] = []
+        for item in value:
+            if isinstance(item, Mapping):
+                normalized = dict(item)
+            else:
+                normalized = item
+            encoded = json.dumps(
+                normalized,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+                default=str,
+            )
+            canonical.append((encoded, normalized))
+        canonical.sort(key=lambda item: item[0])
+        return [item[1] for item in canonical]
+
+    payload = {
+        "status": str(raw.get("status") or "UNKNOWN"),
+        "confidence": str(raw.get("confidence") or ""),
+        "source": str(raw.get("source") or ""),
+        "rationale": _compact_text(
+            raw.get("gap_closure_rationale") or raw.get("rationale"),
+            limit=1000,
+        ),
+        "terminal_unresolved_reason": _compact_text(
+            raw.get("terminal_unresolved_reason"),
+            limit=1000,
+        ),
+        "evidence": stable_items(raw.get("evidence")),
+        "gap_closure_evidence": stable_items(raw.get("gap_closure_evidence")),
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:20]
+
+
 def _profile_gate_summary(profile: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
     gates = profile.get("gates") if isinstance(profile, Mapping) else None
     if not isinstance(gates, Mapping):
@@ -203,6 +251,7 @@ def _profile_gate_summary(profile: Mapping[str, Any] | None) -> dict[str, dict[s
             "status": str(raw.get("status") or "UNKNOWN"),
             "confidence": str(raw.get("confidence") or ""),
             "source": str(raw.get("source") or ""),
+            "evidence_fingerprint": _stable_gate_evidence_fingerprint(raw),
         }
     return result
 
@@ -245,6 +294,7 @@ def _valuation_research_context(research: Mapping[str, Any]) -> dict[str, Any]:
         "financial_review_status",
         "earnings_quality_confidence",
         "earnings_quality_score",
+        "financial_gate_diagnostics",
     )
     return {key: valuation.get(key) for key in keys if key in valuation}
 
