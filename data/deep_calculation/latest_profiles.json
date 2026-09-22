@@ -2,17 +2,17 @@
   "authority": "RESEARCH_ONLY",
   "automatic_formal_buy_allowed": false,
   "contract": "GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1",
-  "deep_code_epoch_sha": "ea95c71947e167c53e99a4d26b6f41893998f898",
+  "deep_code_epoch_sha": "7f12d4d06b1d9456d4537f60c72fcaa0612f8eb6",
   "execution_status": "SUCCESS",
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-21T23:22:27+00:00",
-  "generated_at": "2026-09-21T23:17:22+00:00",
+  "gap_closure_generated_at": "2026-09-22T01:44:11+00:00",
+  "generated_at": "2026-09-22T01:39:48+00:00",
   "historical_material_event_evidence_count": 0,
   "historical_material_event_failed_gate_count": 0,
   "immediate_retry_required": false,
-  "lambda_run_id": "35666669781",
+  "lambda_run_id": "35676441478",
   "material_event_failed_gate_count": 0,
   "material_event_pass_override_count": 0,
   "material_event_risk_ledger_complete": true,
@@ -764,9 +764,8 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
               "direction": "POSITIVE",
               "publish_date": "2026-09-15",
@@ -777,29 +776,27 @@
               "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
             },
             {
-              "direction": "NEUTRAL",
+              "direction": "POSITIVE",
               "publish_date": "2026-06-30",
               "source_domain": "www.miit.gov.cn",
               "source_family": "miit.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年1—5月电子信息制造业运行情况（匹配词：电子信息）：2026年1—5月电子信息制造业运行情况",
+              "summary": "2026年1—5月电子信息制造业运行情况（匹配词：电子信息）：电子信息制造业增加值同比增长14.6%，",
               "url": "https://www.miit.gov.cn/gxsj/tjfx/dzxx/art/2026/art_a05e859e858449928b5b13e5d6e1e9aa.html"
             },
             {
-              "direction": "NEUTRAL",
+              "direction": "POSITIVE",
               "publish_date": "2026-08-31",
               "source_domain": "www.miit.gov.cn",
               "source_family": "miit.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年1—7月电子信息制造业运行情况（匹配词：运行情况）：2026年1—7月电子信息制造业运行情况",
+              "summary": "2026年1—7月电子信息制造业运行情况（匹配词：运行情况）：电子信息制造业增加值同比增长15.4%，",
               "url": "https://www.miit.gov.cn/jgsj/yxj/xxfb/art/2026/art_c1fadec4526040f881b364001d3b24e1.html"
             }
           ],
-          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
+          "rationale": "At least two independent verified official source families support long-term demand: ['miit.gov.cn', 'stats.gov.cn']",
+          "source": "AUTOMATIC_OFFICIAL_EVIDENCE_CLOSURE",
+          "status": "PASS"
         },
         "moat": {
           "confidence": "",
@@ -6556,7 +6553,7 @@
               "source_domain": "www.miit.gov.cn",
               "source_family": "miit.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年8月汽车工业经济运行情况（匹配词：汽车）：2026年8月汽车工业经济运行情况",
+              "summary": "2026年8月汽车工业经济运行情况（匹配词：汽车）：汽车产销分别完成268.4万辆和271.2万辆，",
               "url": "https://www.miit.gov.cn/gxsj/tjfx/zbgy/qc/art/2026/art_8661141ddd554777be9acff6aa8f3309.html"
             }
           ],
@@ -15643,7 +15640,7 @@
               "source_domain": "www.miit.gov.cn",
               "source_family": "miit.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年1—7月份软件业运行情况（匹配词：软件）：2026年1—7月份软件业运行情况",
+              "summary": "2026年1—7月份软件业运行情况（匹配词：软件）：软件业务收入89785亿元，",
               "url": "https://www.miit.gov.cn/gxsj/tjfx/rjy/art/2026/art_3588c41c7dd34514868a93b3cb2c020c.html"
             }
           ],
@@ -16919,7 +16916,7 @@
               "source_domain": "www.miit.gov.cn",
               "source_family": "miit.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年上半年互联网和相关服务业运行情况（匹配词：互联网和相关服务）：2026年上半年互联网和相关服务业运行情况",
+              "summary": "2026年上半年互联网和相关服务业运行情况（匹配词：互联网和相关服务）：互联网和相关服务企业（以下简称互联网企业）完成互联网业务收入10675亿元，",
               "url": "https://www.miit.gov.cn/gxsj/tjfx/hlw/art/2026/art_5090e5989b4543feb009119826e0755d.html"
             }
           ],
@@ -21410,12 +21407,12 @@
           "evidence": [],
           "gap_closure_evidence": [
             {
-              "direction": "POSITIVE",
+              "direction": "NEGATIVE",
               "publish_date": "2026-08-27",
               "source_domain": "www.stats.gov.cn",
               "source_family": "stats.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年1—7月份全国规模以上工业企业利润增长17.6%（匹配词：规模以上工业企业利润）：开采专业及辅助性活动 1137.6 -10.3 1052.1 -10.5 4",
+              "summary": "2026年1—7月份全国规模以上工业企业利润增长17.6%（匹配词：规模以上工业企业利润）：开采专业及辅助性活动 1137.6 -10.3 1052.1 -10.5 44.4 11",
               "url": "https://www.stats.gov.cn/sj/zxfb/202608/t20260827_1965126.html"
             }
           ],
@@ -23383,9 +23380,8 @@
           "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
-          "confidence": "",
-          "evidence": [],
-          "gap_closure_evidence": [
+          "confidence": "HIGH",
+          "evidence": [
             {
               "direction": "POSITIVE",
               "publish_date": "2026-09-15",
@@ -23396,29 +23392,27 @@
               "url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965308.html"
             },
             {
-              "direction": "NEUTRAL",
+              "direction": "POSITIVE",
               "publish_date": "2026-06-30",
               "source_domain": "www.miit.gov.cn",
               "source_family": "miit.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年1—5月电子信息制造业运行情况（匹配词：电子信息）：2026年1—5月电子信息制造业运行情况",
+              "summary": "2026年1—5月电子信息制造业运行情况（匹配词：电子信息）：电子信息制造业增加值同比增长14.6%，",
               "url": "https://www.miit.gov.cn/gxsj/tjfx/dzxx/art/2026/art_a05e859e858449928b5b13e5d6e1e9aa.html"
             },
             {
-              "direction": "NEUTRAL",
+              "direction": "POSITIVE",
               "publish_date": "2026-08-31",
               "source_domain": "www.miit.gov.cn",
               "source_family": "miit.gov.cn",
               "source_type": "OFFICIAL_REPORT",
-              "summary": "2026年1—7月电子信息制造业运行情况（匹配词：运行情况）：2026年1—7月电子信息制造业运行情况",
+              "summary": "2026年1—7月电子信息制造业运行情况（匹配词：运行情况）：电子信息制造业增加值同比增长15.4%，",
               "url": "https://www.miit.gov.cn/jgsj/yxj/xxfb/art/2026/art_c1fadec4526040f881b364001d3b24e1.html"
             }
           ],
-          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
-          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
-          "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN",
-          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
+          "rationale": "At least two independent verified official source families support long-term demand: ['miit.gov.cn', 'stats.gov.cn']",
+          "source": "AUTOMATIC_OFFICIAL_EVIDENCE_CLOSURE",
+          "status": "PASS"
         },
         "moat": {
           "confidence": "",
@@ -30931,14 +30925,14 @@
       "name": "华纳药厂"
     }
   },
-  "progressed_gate_count": 1,
+  "progressed_gate_count": 3,
   "research_outcome": "EVIDENCE_EXHAUSTED",
   "research_terminal_state": "EVIDENCE_EXHAUSTED",
   "reverified_upstream_pass_count": 7,
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
   "source_run_id": "35628515407",
-  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
+  "trigger_source": "EVIDENCE_LAYER_CHANGE",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
