@@ -1,8 +1,15 @@
 name: GenGe Jev Shadow Evaluation
 
+run-name: >-
+  GenGe Jev Shadow Evaluation / ${{ inputs.continuation_deep_run_id || github.run_id }}
+
 on:
   workflow_dispatch:
     inputs:
+      continuation_deep_run_id:
+        description: 'Optional exact Deep run id when this evaluation continues an autonomous research cycle'
+        required: false
+        type: string
       scope:
         description: 'Which persisted stock states should Jev inspect?'
         required: true
@@ -179,6 +186,7 @@ jobs:
           SOURCE_RUN_ATTEMPT: ${{ github.run_attempt }}
           SOURCE_HEAD_SHA: ${{ github.sha }}
           SOURCE_EVENT: ${{ github.event_name }}
+          CONTINUATION_DEEP_RUN_ID: ${{ inputs.continuation_deep_run_id }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -192,6 +200,9 @@ jobs:
               payload['source_workflow_run_attempt'] = str(os.environ['SOURCE_RUN_ATTEMPT'])
               payload['source_workflow_head_sha'] = str(os.environ['SOURCE_HEAD_SHA'])
               payload['source_workflow_event'] = str(os.environ['SOURCE_EVENT'])
+              continuation_deep_run_id = str(os.environ.get('CONTINUATION_DEEP_RUN_ID') or '').strip()
+              if continuation_deep_run_id.isdigit():
+                  payload['continuation_from_deep_run_id'] = continuation_deep_run_id
               path.write_text(
                   json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + '\n',
                   encoding='utf-8',
