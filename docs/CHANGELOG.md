@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [新功能] 新增 Jev/Deep 持久化研究策略账本：按 `code × hard_gate × strategy_family × evidence_fingerprint` 记录官方补证策略，只有已接受 Deep 结果真实回流后才判断进展；同一证据 epoch 的同一路径不再重复调度，证据指纹变化可重新激活，UNKNOWN、Formal Authority 与 no-auto-trade 语义不变。
 - [修复] Jev research orchestrator 不再把 `INSUFFICIENT` 且已由确定性 P0/P1/P2/urgent/holding 研究规则覆盖的对象仅因 Jev route confidence < 0.50 停在人工队列；此类对象降级为 bounded `DETERMINISTIC_SAFE_FALLBACK` 只读补证据，`CONFLICTED` 等不可规则化状态仍保留人工复核，Formal Authority 与 no-auto-trade 不变。
 - [修复] Jev shadow 输入改为持仓优先后直接消费 `data/research_priority/latest.json` 的实时排序队列，再补充未覆盖的 Deep unresolved continuity；P0/P1 与 Near-BUY 缺证候选不再因只读取上一轮 Deep GAP 而被 157→24 的旧工作集反复饿死，Formal Authority、UNKNOWN 与 no-auto-trade 规则不变。
 - [修复] 投资执行报价刷新在午休/非连续交易时段保留仍处于自身 freshness 合约内的券商/直连报价，仅用于显示与执行参考；已消费的持仓分批加仓不再因 `ADD_LIMIT` 展示变体回到操作表，且非连续时段计划立即投入继续强制为 0。
