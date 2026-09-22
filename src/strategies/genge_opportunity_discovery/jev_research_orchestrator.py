@@ -11,6 +11,13 @@ import json
 from pathlib import Path
 from typing import Any, Mapping
 
+from src.strategies.genge_opportunity_discovery.research_strategy_ledger import (
+    append_attempts,
+    has_strategy_scope,
+    plan_strategy_attempts,
+    reconcile_ledger,
+)
+
 CONTRACT = "GEN_GE_JEV_RESEARCH_ORCHESTRATION_V1"
 ROUTING_CONTRACT = "GEN_GE_JEV_ROUTING_BRIDGE_V1"
 AUTO_RESEARCH_ROUTES = {"EVIDENCE_REFRESH", "DEEP_RESEARCH"}
@@ -80,6 +87,7 @@ def build_orchestration_plan(
     routing_payload: Mapping[str, Any],
     *,
     max_dispatch: int = 12,
+    strategy_ledger: Mapping[str, Any] | None = None,
 ) -> dict[str, Any]:
     """Build a bounded research-only dispatch plan from persisted Jev routing."""
 
@@ -119,6 +127,22 @@ def build_orchestration_plan(
         base["requested_codes_csv"] = ""
         return base
 
+    source_workflow_run_id = str(routing_payload.get("source_workflow_run_id") or "")
+    reconciled_ledger = reconcile_ledger(
+        strategy_ledger,
+        [
+            row
+            for row in (routing_payload.get("routing_queue") or [])
+            if isinstance(row, Mapping)
+        ],
+        current_source_workflow_run_id=source_workflow_run_id,
+    )
+    attempted_at = str(
+        routing_payload.get("generated_at")
+        or routing_payload.get("source_generated_at")
+        or ""
+    )
+
     candidates: list[dict[str, Any]] = []
     seen_codes: set[str] = set()
 
@@ -146,12 +170,25 @@ def build_orchestration_plan(
             "needs_more_evidence": raw.get("needs_more_evidence"),
             "needs_deep_research": raw.get("needs_deep_research"),
             "triage_context": triage,
+            "research_context": dict(_mapping(raw.get("research_context"))),
+            "research_evidence_fingerprint": str(
+                raw.get("research_evidence_fingerprint") or ""
+            ),
             "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
             "formal_trading_authority": False,
             "no_auto_trade": True,
         }
 
         deterministic_eligible = _eligible_by_deterministic_triage(raw)
+        strategy_attempts = plan_strategy_attempts(
+            row,
+            reconciled_ledger,
+            source_workflow_run_id=source_workflow_run_id,
+            attempted_at=attempted_at,
+        )
+        row["strategy_attempts"] = strategy_attempts
+        strategy_scope = has_strategy_scope(row)
+
         ruleable_insufficient_evidence = (
             str(raw.get("evidence_state") or "").strip().upper() == "INSUFFICIENT"
             and deterministic_eligible
@@ -160,6 +197,17 @@ def build_orchestration_plan(
 
         if route == "HUMAN_REVIEW":
             if ruleable_insufficient_evidence:
+                if strategy_scope and not strategy_attempts:
+                    base["skipped"].append(
+                        {
+                            "entity_id": code,
+                            "entity_name": row["entity_name"],
+                            "route": route,
+                            "attention_priority": attention,
+                            "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+                        }
+                    )
+                    continue
                 row["jev_route"] = "HUMAN_REVIEW"
                 row["route"] = "EVIDENCE_REFRESH"
                 row["dispatch_mode"] = "DETERMINISTIC_SAFE_FALLBACK"
@@ -182,6 +230,17 @@ def build_orchestration_plan(
             and attention in {"HIGH", "MEDIUM"}
             and deterministic_eligible
         ):
+            if strategy_scope and not strategy_attempts:
+                base["skipped"].append(
+                    {
+                        "entity_id": code,
+                        "entity_name": row["entity_name"],
+                        "route": route,
+                        "attention_priority": attention,
+                        "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+                    }
+                )
+                continue
             if not route_confidence_ok:
                 if ruleable_insufficient_evidence:
                     row["dispatch_mode"] = "DETERMINISTIC_SAFE_FALLBACK"
@@ -226,6 +285,16 @@ def build_orchestration_plan(
 
     base["selected"] = selected
     base["human_review"].sort(key=_sort_key)
+    planned_strategy_attempts = [
+        attempt
+        for row in selected
+        for attempt in (row.get("strategy_attempts") or [])
+        if isinstance(attempt, Mapping)
+    ]
+    base["strategy_ledger"] = append_attempts(
+        reconciled_ledger,
+        planned_strategy_attempts,
+    )
     requested_codes = [str(row["entity_id"]) for row in selected]
     base["requested_codes"] = requested_codes
     base["requested_codes_csv"] = ",".join(requested_codes)
@@ -249,6 +318,10 @@ def build_orchestration_plan(
             for row in selected
             if row.get("dispatch_mode") == "DETERMINISTIC_SAFE_FALLBACK"
         ),
+        "strategy_attempt_count": len(planned_strategy_attempts),
+        "strategy_ledger_entry_count": len(
+            base["strategy_ledger"].get("entries") or []
+        ),
     }
     return base
 
@@ -258,13 +331,24 @@ def main() -> int:
     parser.add_argument("--routing-json", type=Path, required=True)
     parser.add_argument("--output-json", type=Path, required=True)
     parser.add_argument("--max-dispatch", type=int, default=12)
+    parser.add_argument("--strategy-ledger-json", type=Path)
     parser.add_argument("--require-ready", action="store_true")
     args = parser.parse_args()
 
     payload = json.loads(args.routing_json.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError("routing payload must be a JSON object")
-    plan = build_orchestration_plan(payload, max_dispatch=args.max_dispatch)
+    ledger_payload: dict[str, Any] = {}
+    if args.strategy_ledger_json and args.strategy_ledger_json.is_file():
+        raw_ledger = json.loads(args.strategy_ledger_json.read_text(encoding="utf-8"))
+        if not isinstance(raw_ledger, dict):
+            raise ValueError("strategy ledger must be a JSON object")
+        ledger_payload = raw_ledger
+    plan = build_orchestration_plan(
+        payload,
+        max_dispatch=args.max_dispatch,
+        strategy_ledger=ledger_payload,
+    )
     args.output_json.parent.mkdir(parents=True, exist_ok=True)
     args.output_json.write_text(
         json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True) + "\n",

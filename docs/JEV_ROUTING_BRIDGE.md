@@ -35,30 +35,36 @@ produces a refused bridge instead of a usable routing queue.
 
 ## Persistence
 
-A successful manual **GenGe Jev Shadow Evaluation** run persists:
+A successful **GenGe Jev Shadow Evaluation** run from `workflow_dispatch` or a
+qualifying `main` push persists:
 
 - data/jev_shadow/latest.json
 - data/jev_shadow/latest_routing.json
 - JEV_RESEARCH_ROUTING.md
 
-The persistence job exists only for workflow_dispatch and owns the write permission.
-The secret-bearing live PR job remains contents:read.
+The persistence job owns the write permission. The secret-bearing live PR job remains
+`contents: read`; PR smoke runs upload artifacts but never persist them to `main`.
 
-PR smoke runs still upload artifacts but never persist them to main.
+## Automatic research dispatch boundary
 
-## Why automatic dispatch is still off
-
-This phase makes Jev operationally visible and durable, but it intentionally does not
-launch Deep or Evidence workflows yet. We first need repeated live calibration showing
-that route selection is stable and useful. Deterministic research obligations always
-remain in force and Jev can never suppress them.
-
-A later promotion may allow Jev to accelerate already-eligible research work, but only
-after calibration and with deterministic override/fail-closed semantics.
+The routing bridge itself remains advisory: `automatic_dispatch_allowed=false`.
+A separate deterministic research orchestrator may consume the persisted advisory
+queue and dispatch the existing bounded Deep research workflow only when deterministic
+eligibility and fail-closed guardrails also permit it. Jev never dispatches work
+directly, never suppresses deterministic research obligations, and never grants Formal
+trading authority.
 
 ## Low-confidence deterministic fallback
 
 Jev route confidence is advisory and is not a safety authority. When the persisted evidence state is `INSUFFICIENT` and deterministic triage already marks the entity as a holding, urgent research, or P0/P1/P2, the research orchestrator may still dispatch the existing bounded Deep evidence refresh even when Jev route confidence is below 0.50. The plan records `dispatch_mode=DETERMINISTIC_SAFE_FALLBACK`.
 
 A Jev `HUMAN_REVIEW` route is also downgraded to the same read-only evidence refresh only when the state is ruleable `INSUFFICIENT`. `CONFLICTED` and other genuinely non-ruleable cases remain in human review. This fallback never grants Formal trading authority and cannot convert UNKNOWN to PASS.
+
+## Research strategy ledger
+
+The orchestrator persists a fail-closed research strategy ledger at `data/jev_shadow/research_strategy_ledger.json`. Each attempt is keyed semantically by stock code, unresolved hard gate, strategy family, and a **hard-gate-local evidence epoch**. Runtime-only lineage such as a Jev or Deep workflow id is excluded. The broader stock-level research fingerprint is retained only as trace metadata and does not decide whether an individual gate strategy may reopen.
+
+The gate-local epoch includes the gate's semantic evidence summary (including Deep gap-closure evidence) and, for financial gates, the same-run PIT financial diagnostics. Retrieval timestamps and workflow lineage are excluded so a re-fetch of identical evidence does not create a false new epoch. The ledger records the unresolved reason, strategy/source/query family, gate-local evidence epoch, dispatch status, accepted Deep run id, whether new evidence appeared, whether the gate changed, and whether that strategy is exhausted. A strategy is not judged until the exact accepted Deep run is visible in a later Jev research state. If that gate's local evidence epoch is unchanged and the gate remains unresolved, the strategy becomes `EXHAUSTED_NO_PROGRESS` and is not scheduled again in that epoch. Only a change in that same gate's evidence state reopens its supported strategy; progress in an unrelated gate does not reopen an already exhausted path.
+
+This is research-control state only. It cannot authorize a trade, weaken a hard gate, or convert UNKNOWN to PASS. New source/query families can be added later without changing the ledger contract.
 

@@ -456,3 +456,114 @@ def test_priority_queue_does_not_drop_deep_unresolved_continuity_when_capacity_a
 
     assert [row["entity"]["code"] for row in states] == ["000002", "000001"]
 
+def test_research_evidence_fingerprint_is_stable_across_runtime_lineage_changes():
+    first_status = _status()
+    second_status = deepcopy(first_status)
+    second_status["lambda_run_id"] = "999"
+    second_status["deep_code_epoch_sha"] = "different-runtime-lineage"
+
+    first = evaluate_stock_shadow(
+        states=build_stock_shadow_states(
+            dashboard=_dashboard(),
+            deep_status=first_status,
+            profiles=_profiles(),
+            max_entities=1,
+        ),
+        config=JevShadowConfig(enabled=True, shadow_mode=True),
+        provider=FakeProvider(),
+    )["rows"][0]
+    second = evaluate_stock_shadow(
+        states=build_stock_shadow_states(
+            dashboard=_dashboard(),
+            deep_status=second_status,
+            profiles=_profiles(),
+            max_entities=1,
+        ),
+        config=JevShadowConfig(enabled=True, shadow_mode=True),
+        provider=FakeProvider(),
+    )["rows"][0]
+
+    assert first["state_fingerprint"] != second["state_fingerprint"]
+    assert first["research_evidence_fingerprint"] == second["research_evidence_fingerprint"]
+    assert first["research_context"]["deep_lambda_run_id"] == "123"
+    assert second["research_context"]["deep_lambda_run_id"] == "999"
+
+def test_gate_evidence_fingerprint_tracks_semantic_evidence_not_runtime_metadata():
+    first_profiles = _profiles()
+    first_profiles["profiles"]["600406"]["gates"]["predictability"] = {
+        "status": "UNKNOWN",
+        "confidence": "LOW",
+        "source": "UNRESOLVED",
+        "gap_closure_rationale": "STRICT_THRESHOLD_NOT_MET",
+        "gap_closure_evidence": [
+            {
+                "url": "https://example.test/report-a",
+                "publish_date": "2025-04-01",
+                "summary": "first verified annual-report row",
+                "retrieved_at": "2026-09-22T01:00:00+00:00",
+            }
+        ],
+    }
+    runtime_only_change = deepcopy(first_profiles)
+    runtime_only_change["profiles"]["600406"]["gates"]["predictability"][
+        "gap_closure_evidence"
+    ][0]["retrieved_at"] = "2026-09-22T02:00:00+00:00"
+    semantic_change = deepcopy(runtime_only_change)
+    semantic_change["profiles"]["600406"]["gates"]["predictability"][
+        "gap_closure_evidence"
+    ].append(
+        {
+            "url": "https://example.test/report-b",
+            "publish_date": "2024-04-01",
+            "summary": "second verified annual-report row",
+        }
+    )
+
+    def fingerprint(profiles):
+        state = build_stock_shadow_states(
+            dashboard=_dashboard(),
+            deep_status=_status(),
+            profiles=profiles,
+            max_entities=1,
+        )[0]
+        return state["research_context"]["profile_gate_statuses"]["predictability"][
+            "evidence_fingerprint"
+        ]
+
+    first = fingerprint(first_profiles)
+    runtime_only = fingerprint(runtime_only_change)
+    changed = fingerprint(semantic_change)
+
+    assert first == runtime_only
+    assert changed != first
+
+
+def test_financial_gate_diagnostics_are_carried_into_research_context():
+    states = build_stock_shadow_states(
+        dashboard=_dashboard(),
+        deep_status=_status(),
+        profiles=_profiles(),
+        research_decisions={
+            "terminal_rows": [
+                {
+                    "code": "600406",
+                    "research_decision": "RESEARCH_GAP",
+                    "valuation": {
+                        "financial_gate_diagnostics": {
+                            "cash_conversion_ratio": 0.75,
+                            "operating_cash_flow": 100.0,
+                            "normalized_core_operating_profit": 120.0,
+                        }
+                    },
+                }
+            ]
+        },
+        max_entities=1,
+    )
+
+    diagnostics = states[0]["triage_context"]["valuation"][
+        "financial_gate_diagnostics"
+    ]
+    assert diagnostics["cash_conversion_ratio"] == 0.75
+    assert diagnostics["operating_cash_flow"] == 100.0
+

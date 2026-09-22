@@ -190,3 +190,22 @@ def test_workflow_keeps_write_permission_out_of_live_pr_job():
     assert "contents: write" not in live
     assert "if: github.event_name == 'workflow_dispatch'" in persist
     assert "contents: write" in persist
+
+def test_bridge_carries_research_evidence_epoch_without_authority_change():
+    shadow = _shadow()
+    shadow["rows"][0]["research_evidence_fingerprint"] = "evidence-fp-1"
+    shadow["rows"][0]["research_context"] = {
+        "deep_lambda_run_id": "900",
+        "unresolved_gates": [
+            {"gate": "predictability", "reason": "INSUFFICIENT_HISTORY"}
+        ],
+    }
+
+    payload = build_routing_bridge(shadow)
+    row = payload["routing_queue"][0]
+
+    assert row["research_evidence_fingerprint"] == "evidence-fp-1"
+    assert row["research_context"]["deep_lambda_run_id"] == "900"
+    assert row["formal_trading_authority"] is False
+    assert row["no_auto_trade"] is True
+

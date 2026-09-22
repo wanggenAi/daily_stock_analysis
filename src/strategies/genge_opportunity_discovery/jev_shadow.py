@@ -191,6 +191,74 @@ def _rows_by_code(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]
     return result
 
 
+def _stable_gate_evidence_fingerprint(raw: Mapping[str, Any]) -> str:
+    """Hash semantic gate evidence while excluding runtime-only lineage."""
+
+    runtime_keys = {
+        "retrieved_at",
+        "fetched_at",
+        "collected_at",
+        "observed_at",
+        "generated_at",
+        "updated_at",
+        "workflow_run_id",
+        "run_id",
+        "lambda_run_id",
+        "deep_lambda_run_id",
+        "deep_code_epoch_sha",
+        "head_sha",
+    }
+
+    def stable_value(value: Any) -> Any:
+        if isinstance(value, Mapping):
+            return {
+                str(key): stable_value(item)
+                for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))
+                if str(key) not in runtime_keys
+            }
+        if isinstance(value, list):
+            normalized = [stable_value(item) for item in value]
+            return sorted(
+                normalized,
+                key=lambda item: json.dumps(
+                    item,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    default=str,
+                ),
+            )
+        return value
+
+    def stable_items(value: Any) -> list[Any]:
+        normalized = stable_value(value)
+        return normalized if isinstance(normalized, list) else []
+
+    payload = {
+        "status": str(raw.get("status") or "UNKNOWN"),
+        "confidence": str(raw.get("confidence") or ""),
+        "source": str(raw.get("source") or ""),
+        "rationale": _compact_text(
+            raw.get("gap_closure_rationale") or raw.get("rationale"),
+            limit=1000,
+        ),
+        "terminal_unresolved_reason": _compact_text(
+            raw.get("terminal_unresolved_reason"),
+            limit=1000,
+        ),
+        "evidence": stable_items(raw.get("evidence")),
+        "gap_closure_evidence": stable_items(raw.get("gap_closure_evidence")),
+    }
+    encoded = json.dumps(
+        payload,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()[:20]
+
+
 def _profile_gate_summary(profile: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
     gates = profile.get("gates") if isinstance(profile, Mapping) else None
     if not isinstance(gates, Mapping):
@@ -203,6 +271,7 @@ def _profile_gate_summary(profile: Mapping[str, Any] | None) -> dict[str, dict[s
             "status": str(raw.get("status") or "UNKNOWN"),
             "confidence": str(raw.get("confidence") or ""),
             "source": str(raw.get("source") or ""),
+            "evidence_fingerprint": _stable_gate_evidence_fingerprint(raw),
         }
     return result
 
@@ -245,6 +314,7 @@ def _valuation_research_context(research: Mapping[str, Any]) -> dict[str, Any]:
         "financial_review_status",
         "earnings_quality_confidence",
         "earnings_quality_score",
+        "financial_gate_diagnostics",
     )
     return {key: valuation.get(key) for key in keys if key in valuation}
 
@@ -563,6 +633,45 @@ def _fingerprint(state: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()[:20]
 
 
+def _research_evidence_fingerprint(state: Mapping[str, Any]) -> str:
+    """Fingerprint evidence-dependent research state while ignoring runtime lineage."""
+
+    research_raw = state.get("research_context")
+    research = research_raw if isinstance(research_raw, Mapping) else {}
+    triage_raw = state.get("triage_context")
+    triage = triage_raw if isinstance(triage_raw, Mapping) else {}
+    payload = {
+        "research_decision": str(research.get("research_decision") or ""),
+        "research_reason": _compact_text(research.get("research_reason"), limit=500),
+        "hard_gate_pass_count": research.get("hard_gate_pass_count"),
+        "hard_gate_failures": sorted(
+            str(value) for value in (research.get("hard_gate_failures") or [])
+        ),
+        "hard_gate_unknowns": sorted(
+            str(value) for value in (research.get("hard_gate_unknowns") or [])
+        ),
+        "unresolved_gates": sorted(
+            [
+                {
+                    "gate": str(item.get("gate") or ""),
+                    "reason": _compact_text(item.get("reason"), limit=500),
+                }
+                for item in (research.get("unresolved_gates") or [])
+                if isinstance(item, Mapping)
+            ],
+            key=lambda item: (item["gate"], item["reason"]),
+        ),
+        "profile_gate_statuses": research.get("profile_gate_statuses")
+        if isinstance(research.get("profile_gate_statuses"), Mapping)
+        else {},
+        "near_buy_missing_evidence_items": sorted(
+            str(value)
+            for value in (triage.get("near_buy_missing_evidence_items") or [])
+        ),
+    }
+    return _fingerprint(payload)
+
+
 def _error_kind(exc: Exception) -> str:
     text = f"{type(exc).__name__} {exc}".lower()
     return "TIMEOUT" if "timeout" in text else "ERROR"
@@ -654,12 +763,16 @@ def evaluate_stock_shadow(
             "entity_name": str(entity.get("name") or ""),
             "is_current_holding": entity.get("is_current_holding") is True,
             "state_fingerprint": _fingerprint(state),
+            "research_evidence_fingerprint": _research_evidence_fingerprint(state),
             "state_schema_version": STATE_SCHEMA_VERSION,
             "question_set_version": QUESTION_SET_VERSION,
             "existing_engine_action": str(state.get("existing_engine_action") or ""),
             "existing_needs_more_evidence": state.get("existing_needs_more_evidence") is True,
             "triage_context": dict(state.get("triage_context") or {})
             if isinstance(state.get("triage_context"), Mapping)
+            else {},
+            "research_context": dict(state.get("research_context") or {})
+            if isinstance(state.get("research_context"), Mapping)
             else {},
             "requested_model": config.model,
             "attempt_count": attempts,
