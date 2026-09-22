@@ -1,53 +1,58 @@
 {
   "schema_version": 2,
-  "generation": 31,
+  "generation": 32,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "FIRST_LIVE_REPORT_EXECUTION_DISPLAY_CONSISTENCY_PR_CI_V2",
-  "last_observed_main_sha": "26ed8a21b9d2518ea0439c7ef8bd02fb0f88662a",
-  "work_branch": "fix/consumed-staged-add-limit-overlay-20260922",
-  "work_head_sha": "161d7527992a8152607f9088aae3d7f01246ad4c",
-  "active_pr": 270,
+  "stage": "RESEARCH_STRATEGY_LEDGER_PR_CI",
+  "last_observed_main_sha": "30c539fef0c0c6abb2f48c208dad115a6f685a77",
+  "work_branch": "feat/research-strategy-ledger-replay-20260922",
+  "work_head_sha": "dc33fd1ec9f8ce9b164cb6ac22476b6c6600fe2b",
+  "active_pr": 275,
   "ci": {
-    "status": "QUEUED",
-    "pr_head": "161d7527992a8152607f9088aae3d7f01246ad4c",
-    "pr_ci_run_id": 35687671486,
-    "live_execution_contract_run_id": 35687671617
+    "status": "IN_PROGRESS",
+    "pr_head": "dc33fd1ec9f8ce9b164cb6ac22476b6c6600fe2b",
+    "pr_ci_run_id": 35703785758,
+    "jev_shadow_run_id": 35703785800,
+    "jev_orchestrator_run_id": 35703785850,
+    "opportunity_discovery_run_id": 35703786261
   },
   "production_or_artifact": {
-    "status": "WORKFLOW_CONTRACT_DRIFT_FIXED_AWAITING_LATEST_HEAD_CI",
-    "observed_defects": [
-      "Consumed staged-add source could reappear as ADD_LIMIT after quote overlay.",
-      "Fresh user-confirmed broker quote overlay could be reset to frozen Canonical prices during lunch-break refresh."
+    "status": "LEDGER_NOT_MERGED_AWAITING_BLOCKING_CI",
+    "verified": [
+      "PR Jev Shadow Evaluation succeeded on latest head.",
+      "PR Jev Research Orchestrator succeeded on latest head.",
+      "PR Opportunity Discovery succeeded on latest head.",
+      "Prior backend failure was a test-scope NameError only; fixed in dc33fd1."
     ],
     "safety": [
-      "Formal actions remain immutable.",
-      "Off-session immediate deployment is forced to zero.",
+      "No hard-gate or valuation threshold changes.",
+      "Formal trading authority remains false.",
+      "UNKNOWN != PASS.",
       "no_auto_trade remains true."
     ]
   },
   "pending_operation": {
     "type": "MERGE_PR_AFTER_LATEST_HEAD_BLOCKING_CI",
-    "pr": 270,
-    "head_sha": "161d7527992a8152607f9088aae3d7f01246ad4c",
+    "pr": 275,
+    "head_sha": "dc33fd1ec9f8ce9b164cb6ac22476b6c6600fe2b",
     "require": "latest-head blocking CI green and mergeable"
   },
   "completed": [
-    "Recovered live repository state and did not reopen completed #269.",
-    "Identified PR #270 as the first unfinished current mission.",
-    "Verified consumed staged-add suppression is keyed by authoritative staged-add source rather than ADD display variant.",
-    "Verified off-session preservation keeps a fresh existing broker overlay display-only while forcing immediate deployment to zero.",
-    "Verified current PR head includes freshness-contract follow-up and regression coverage.",
-    "Detected stale production workflow assertion that rejected preserved user-confirmed broker quote source off session.",
-    "Aligned production live-execution workflow validation with preserved off-session quote semantics and documented the behavior in CHANGELOG and V31 execution contract."
+    "Reconciled stale recovery cursor from completed PR #270 to live PR #275.",
+    "Read live AGENTS.md, TASK_STATE.md, Jev routing/orchestration state, open PRs and current Actions.",
+    "Identified latest-head CI blocker as NameError caused by test-local evidence epoch variable scope.",
+    "Moved prior_predictability_epoch into test_new_evidence_epoch_reopens_same_supported_strategy.",
+    "Confirmed latest-head Jev Shadow Evaluation, Jev Research Orchestrator and Opportunity Discovery workflows succeed."
   ],
-  "next_action": "Verify latest head 161d752 CI and live-execution contract; if green and mergeable, squash-merge PR #270, then verify main production quote refresh removes consumed 603993 operation while preserving fresh 12:17 broker quotes off session.",
+  "next_action": "Wait only for latest-head blocking CI backend-gate/docker-build; if green and PR is mergeable, merge PR #275, then verify live main and post-merge research/orchestration state. Do not redispatch duplicate Jev/Deep work.",
   "do_not_repeat": [
-    "Do not redo #268 or #269.",
-    "Do not rerun completed moat Deep proof.",
-    "Do not invoke Jev for deterministic execution-display consistency checks.",
-    "Do not relax UNKNOWN != PASS, Formal authority, valuation thresholds or no_auto_trade."
+    "Do not redo #268, #269, #270, #271 or #273.",
+    "Do not reopen superseded #274 unless live GitHub proves a regression.",
+    "Do not rerun completed moat proof.",
+    "Do not dispatch duplicate Deep/Jev work when persisted lineage already proves completion.",
+    "Do not lower thresholds to force BUY/WAIT_PRICE.",
+    "Do not relax UNKNOWN != PASS, Formal authority or no_auto_trade."
   ],
-  "business_code_baseline_sha": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967"
+  "business_code_baseline_sha": "4d834ed073ac92428a9a598d76a3e1d50635b0df"
 }
