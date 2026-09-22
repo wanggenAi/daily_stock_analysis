@@ -53,6 +53,11 @@ def main() -> int:
         default=Path("data/deep_calculation/latest_research_decisions.json"),
     )
     parser.add_argument(
+        "--research-priority",
+        type=Path,
+        default=Path("data/research_priority/latest.json"),
+    )
+    parser.add_argument(
         "--scope",
         choices=("holdings", "unresolved", "combined"),
         default="combined",
@@ -75,6 +80,7 @@ def main() -> int:
         deep_status=_read_json(args.deep_status),
         profiles=_read_json(args.profiles),
         research_decisions=_read_json(args.research_decisions),
+        research_priority=_read_json(args.research_priority),
         scope=args.scope,
         max_entities=args.max_entities,
     )

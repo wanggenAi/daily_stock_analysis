@@ -98,3 +98,13 @@ The shadow output can now be transformed by `tools/build_jev_routing_bridge.py` 
 
 This does not promote Jev to an authoritative decision engine: automatic dispatch remains disabled, deterministic research obligations cannot be suppressed, Formal actions are unchanged, UNKNOWN is not PASS, and no_auto_trade remains true.
 
+## Live research-priority queue
+
+For `combined` and `unresolved` scopes, the shadow input order is now:
+
+1. confirmed current holdings;
+2. the persisted live research-priority queue (`data/research_priority/latest.json`) in its existing ranked order;
+3. any Deep unresolved continuity codes not already represented.
+
+Near-BUY hard-gate missing items from the priority router are carried into the non-authoritative research context as explicit unresolved research needs. This changes only which bounded research states Jev is allowed to inspect; it does not weaken hard gates, create Formal authority, or turn UNKNOWN into PASS.
+

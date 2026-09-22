@@ -176,7 +176,7 @@ def _compact_text(value: Any, limit: int = 500) -> str:
 def _rows_by_code(payload: Mapping[str, Any] | None) -> dict[str, dict[str, Any]]:
     raw = dict(payload or {})
     candidates: list[Any] = []
-    for key in ("terminal_rows", "rows", "research_rows"):
+    for key in ("terminal_rows", "rows", "research_rows", "queue"):
         value = raw.get(key)
         if isinstance(value, list):
             candidates = value
@@ -255,6 +255,7 @@ def build_stock_shadow_states(
     deep_status: Mapping[str, Any] | None,
     profiles: Mapping[str, Any] | None = None,
     research_decisions: Mapping[str, Any] | None = None,
+    research_priority: Mapping[str, Any] | None = None,
     scope: str = "combined",
     max_entities: int = 25,
 ) -> list[dict[str, Any]]:
@@ -269,6 +270,16 @@ def build_stock_shadow_states(
     profiles_obj = dict(profiles or {})
     profile_map = profiles_obj.get("profiles") if isinstance(profiles_obj.get("profiles"), Mapping) else {}
     research_map = _rows_by_code(research_decisions)
+    priority_obj = dict(research_priority or {})
+    priority_map = _rows_by_code(priority_obj)
+    priority_rows = priority_obj.get("queue") if isinstance(priority_obj.get("queue"), list) else []
+    priority_order = [
+        code
+        for raw in priority_rows
+        if isinstance(raw, Mapping)
+        for code in [_code(raw.get("code"))]
+        if code
+    ]
 
     portfolio = dashboard_obj.get("stock_portfolio")
     holding_rows = portfolio.get("rows") if isinstance(portfolio, Mapping) else []
@@ -294,6 +305,10 @@ def build_stock_shadow_states(
     if scope in {"holdings", "combined"}:
         selected.extend(holding_order)
     if scope in {"unresolved", "combined"}:
+        # The live priority router is the broad candidate source of truth. Keep
+        # holdings first, then consume its ranked queue, then append any Deep
+        # unresolved continuity codes that are not already represented.
+        selected.extend(code for code in priority_order if code not in selected)
         selected.extend(code for code in unresolved_codes if code not in selected)
     selected = selected[:max_entities]
 
@@ -301,10 +316,20 @@ def build_stock_shadow_states(
     for code in selected:
         holding = holdings.get(code, {})
         research = research_map.get(code, {})
+        priority = priority_map.get(code, {})
         reasons_raw = unresolved.get(code, {})
         reasons = dict(reasons_raw) if isinstance(reasons_raw, Mapping) else {}
         profile = profile_map.get(code) if isinstance(profile_map, Mapping) else None
         gate_summary = _profile_gate_summary(profile if isinstance(profile, Mapping) else None)
+
+        priority_missing = list(priority.get("near_buy_missing_evidence_items") or [])
+        for item in priority_missing:
+            text = str(item or "")
+            if not text.startswith("hard_gate:"):
+                continue
+            gate = text.split(":", 1)[1].strip()
+            if gate and gate not in reasons:
+                reasons[gate] = "RESEARCH_PRIORITY_MISSING_EVIDENCE"
 
         unresolved_gates = [
             {"gate": str(gate), "reason": _compact_text(reason)}
@@ -313,11 +338,14 @@ def build_stock_shadow_states(
 
         formal_action = str(holding.get("canonical_formal_action") or holding.get("formal_action") or "")
         research_decision = str(research.get("research_decision") or research.get("terminal_decision") or "")
+        priority_label = str(priority.get("priority") or "").strip().upper()
         existing_action = (
             f"FORMAL:{formal_action}"
             if formal_action
             else f"RESEARCH:{research_decision}"
             if research_decision
+            else f"RESEARCH_PRIORITY:{priority_label}"
+            if priority_label
             else f"DEEP:{status_obj.get('research_terminal_state') or 'UNKNOWN'}"
         )
 
@@ -327,7 +355,11 @@ def build_stock_shadow_states(
                 "entity": {
                     "code": code,
                     "name": str(
-                        holding.get("name") or research.get("name") or research.get("stock_name") or ""
+                        holding.get("name")
+                        or research.get("name")
+                        or research.get("stock_name")
+                        or priority.get("name")
+                        or ""
                     ),
                     "is_current_holding": code in holdings,
                 },
@@ -353,13 +385,32 @@ def build_stock_shadow_states(
                     "deep_lambda_run_id": str(status_obj.get("lambda_run_id") or ""),
                 },
                 "triage_context": {
-                    "research_priority": str(research.get("research_priority") or ""),
-                    "urgent_research": research.get("urgent_research") is True,
-                    "urgent_research_reasons": list(research.get("urgent_research_reasons") or [])[:8],
+                    "research_priority": str(
+                        research.get("research_priority") or priority_label
+                    ),
+                    "research_priority_score": priority.get("priority_score"),
+                    "urgent_research": (
+                        research.get("urgent_research") is True
+                        or priority_label in {"P0", "P1"}
+                    ),
+                    "urgent_research_reasons": list(
+                        research.get("urgent_research_reasons")
+                        or priority.get("reason_codes")
+                        or []
+                    )[:8],
                     "quant_status": str(research.get("quant_status") or ""),
                     "quant_score": research.get("quant_score"),
                     "screening_attractiveness": str(research.get("screening_attractiveness") or ""),
-                    "industry": str(research.get("industry") or ""),
+                    "industry": str(
+                        research.get("industry")
+                        or (profile.get("industry") if isinstance(profile, Mapping) else "")
+                        or ""
+                    ),
+                    "near_buy_evidence_recovery_tier": priority.get(
+                        "near_buy_evidence_recovery_tier"
+                    ),
+                    "near_buy_missing_evidence_items": priority_missing[:16],
+                    "mapping_gaps": list(priority.get("mapping_gaps") or [])[:8],
                     "valuation": _valuation_research_context(research),
                 },
                 "source_lineage": {
@@ -377,7 +428,10 @@ def build_stock_shadow_states(
                 },
                 "existing_engine_action": existing_action,
                 "existing_needs_more_evidence": bool(
-                    unresolved_gates or research_decision.upper() == "RESEARCH_GAP"
+                    unresolved_gates
+                    or research_decision.upper() == "RESEARCH_GAP"
+                    or priority_label in {"P0", "P1"}
+                    or priority_missing
                 ),
             }
         )

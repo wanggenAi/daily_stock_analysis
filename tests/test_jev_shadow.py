@@ -370,3 +370,89 @@ def test_live_row_carries_non_authoritative_triage_context():
     assert row["triage_context"]["urgent_research"] is True
     assert row["triage_context"]["quant_score"] == 88.0
     assert row["mutates_authoritative_decision"] is False
+
+def test_live_priority_queue_precedes_old_deep_unresolved_backlog():
+    status = {
+        "execution_status": "SUCCESS",
+        "research_terminal_state": "EVIDENCE_EXHAUSTED",
+        "unresolved_reasons": {
+            "000099": {"moat": "OLD_DEEP_GAP"},
+        },
+    }
+    priority = {
+        "queue": [
+            {
+                "code": "600406",
+                "name": "国电南瑞",
+                "priority": "P0",
+                "priority_score": 110,
+            },
+            {
+                "code": "002042",
+                "name": "华孚时尚",
+                "priority": "P1",
+                "priority_score": 50,
+                "near_buy_evidence_recovery_tier": "B",
+                "near_buy_missing_evidence_items": [
+                    "hard_gate:predictability",
+                    "hard_gate:moat",
+                ],
+                "reason_codes": ["NEAR_BUY_EVIDENCE_RECOVERY_B"],
+            },
+            {
+                "code": "600916",
+                "name": "中国黄金",
+                "priority": "P1",
+                "priority_score": 50,
+                "near_buy_evidence_recovery_tier": "A",
+                "near_buy_missing_evidence_items": ["hard_gate:long_term_demand"],
+            },
+        ]
+    }
+
+    states = build_stock_shadow_states(
+        dashboard=_dashboard(),
+        deep_status=status,
+        research_priority=priority,
+        scope="combined",
+        max_entities=4,
+    )
+
+    assert [row["entity"]["code"] for row in states] == [
+        "600406",
+        "002042",
+        "600916",
+        "000099",
+    ]
+    huafu = states[1]
+    assert huafu["existing_engine_action"] == "RESEARCH_PRIORITY:P1"
+    assert huafu["existing_needs_more_evidence"] is True
+    assert huafu["triage_context"]["research_priority"] == "P1"
+    assert huafu["triage_context"]["research_priority_score"] == 50
+    assert huafu["triage_context"]["near_buy_evidence_recovery_tier"] == "B"
+    assert huafu["research_context"]["unresolved_gates"] == [
+        {"gate": "moat", "reason": "RESEARCH_PRIORITY_MISSING_EVIDENCE"},
+        {"gate": "predictability", "reason": "RESEARCH_PRIORITY_MISSING_EVIDENCE"},
+    ]
+
+
+def test_priority_queue_does_not_drop_deep_unresolved_continuity_when_capacity_allows():
+    states = build_stock_shadow_states(
+        dashboard={},
+        deep_status={
+            "unresolved_reasons": {
+                "000001": {"moat": "UNKNOWN"},
+                "000002": {"predictability": "UNKNOWN"},
+            }
+        },
+        research_priority={
+            "queue": [
+                {"code": "000002", "name": "优先候选", "priority": "P1"},
+            ]
+        },
+        scope="unresolved",
+        max_entities=5,
+    )
+
+    assert [row["entity"]["code"] for row in states] == ["000002", "000001"]
+
