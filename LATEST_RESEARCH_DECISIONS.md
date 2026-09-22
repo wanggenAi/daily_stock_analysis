@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **12**
-- BUY: **0** / WAIT_PRICE: **0** / RESEARCH_GAP: **12** / REJECT: **0**
+- requested: **13**
+- BUY: **0** / WAIT_PRICE: **0** / RESEARCH_GAP: **13** / REJECT: **0**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -14,6 +14,7 @@
 
 ## Terminal rows
 
+- 603105 芯能科技: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 002042 华孚时尚: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 603369 今世缘: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600916 中国黄金: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
