@@ -1,49 +1,43 @@
 {
   "schema_version": 2,
-  "generation": 26,
+  "generation": 27,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "STRICT_MULTI_YEAR_MOAT_MERGE_PENDING",
-  "last_observed_main_sha": "34c20cfa481d96a70d682fc0b475741f95861b5a",
-  "work_branch": "feat/strict-multiyear-moat-evidence-20260922",
-  "work_head_sha": "dd91c3eb6c26a13188a081b31084c90987366ee5",
-  "active_pr": 268,
+  "stage": "STRICT_MULTI_YEAR_MOAT_POST_MERGE_PRODUCTION_VERIFY",
+  "last_observed_main_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
-    "run_id": 35682895014,
     "status": "SUCCESS",
-    "conclusion": "success",
-    "related_runs": {
-      "opportunity": 35682895065,
-      "legacy": 35682895083,
-      "pr_review": 35682892905
-    }
+    "pr_head": "dd91c3eb6c26a13188a081b31084c90987366ee5",
+    "pr_ci_run_id": 35682895014,
+    "merge_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76"
   },
   "production_or_artifact": {
-    "baseline_deep_run_id": 35679085547,
-    "unresolved_requested_gate_count": 93,
-    "unresolved_moat_count": 21,
-    "status": "NOT_YET_VERIFIED_FOR_PR268"
+    "status": "RUNNING",
+    "deep_run_id": 35683870241,
+    "evidence_change_trigger_run_id": 35683870157,
+    "code_baseline_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76",
+    "baseline_unresolved_requested_gate_count": 93,
+    "baseline_unresolved_moat_count": 21
   },
-  "pending_operation": {
-    "type": "MERGE_PR",
-    "pr_number": 268,
-    "merge_method": "squash",
-    "expected_head_sha": "dd91c3eb6c26a13188a081b31084c90987366ee5",
-    "observed_main_sha": "34c20cfa481d96a70d682fc0b475741f95861b5a"
-  },
+  "pending_operation": null,
   "completed": [
     "Recovered live repository state and identified PR #268 as the first unfinished mission.",
     "Confirmed main drift since PR base is runtime JSON only.",
     "Hardened issuer-bound moat extraction against competitor/company substring false positives.",
     "Required exact current moat rule version and proven reason code before Deep may consume VERIFIED moat PASS evidence.",
     "Added regressions for peer-company claims and stale moat evidence contracts.",
-    "Corrected the Unicode CJK negative-lookbehind escaping; issuer-bound regex now actually rejects Chinese-prefix peer/company phrases."
+    "Corrected the Unicode CJK negative-lookbehind escaping; issuer-bound regex now actually rejects Chinese-prefix peer/company phrases.",
+    "PR #268 final head passed all checks and squash-merged as bc927ef143b9eff9f2cf4e58708f0707e2bd5f76."
   ],
-  "next_action": "Reconcile PR #268 provider state, then squash-merge exactly head dd91c3eb if not already merged; after merge verify live main and production chain.",
+  "next_action": "Follow Deep 35683870241 on merge code epoch; after success verify moat_resolved_gate_count and inspect all automatic moat PASS evidence, then Provenance -> Terminal -> Investor -> Three-Pillar convergence. Record actual Jev usage from workflow evidence only.",
   "do_not_repeat": [
     "Do not rerun completed #266/#267 evidence mission.",
     "Do not use Jev as hard-gate authority.",
     "Do not relax UNKNOWN != PASS, Formal authority, valuation thresholds or no_auto_trade."
-  ]
+  ],
+  "business_code_baseline_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76"
 }
