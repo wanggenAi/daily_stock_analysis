@@ -178,6 +178,12 @@ def build_routing_bridge(shadow_payload: Mapping[str, Any]) -> dict[str, Any]:
                 "triage_context": dict(raw_row.get("triage_context") or {})
                 if isinstance(raw_row.get("triage_context"), Mapping)
                 else {},
+                "research_context": dict(raw_row.get("research_context") or {})
+                if isinstance(raw_row.get("research_context"), Mapping)
+                else {},
+                "research_evidence_fingerprint": str(
+                    raw_row.get("research_evidence_fingerprint") or ""
+                ),
                 "route": route,
                 "route_confidence": route_confidence,
                 "route_probabilities": route_probabilities,
