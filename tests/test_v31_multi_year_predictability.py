@@ -87,6 +87,37 @@ def test_moat_signal_extraction_rejects_generic_promotional_language():
     assert row["signals"] == []
 
 
+def test_moat_signal_extraction_rejects_generic_management_certifications():
+    rows = [
+        extract_report_moat_signals(
+            (
+                "本公司通过ISO9001国际质量管理体系认证、ISO14001环境管理体系认证"
+                "和ISO45001职业健康安全管理体系认证。"
+                "本公司累计拥有120项专利。"
+            ),
+            year,
+        )
+        for year in (2024, 2025)
+    ]
+
+    for row in rows:
+        categories = {signal["category"] for signal in row["signals"]}
+        assert "entry_barrier" not in categories
+        assert "ip_scale" in categories
+
+    assert classify_multi_year_moat(rows)[0] == "UNKNOWN"
+
+
+def test_moat_signal_extraction_keeps_high_specificity_asil_d_barrier():
+    row = extract_report_moat_signals(
+        "本公司通过ASIL-D认证。本公司累计拥有120项专利。",
+        2025,
+    )
+    categories = {signal["category"] for signal in row["signals"]}
+    assert "entry_barrier" in categories
+    assert "ip_scale" in categories
+
+
 def test_moat_signal_extraction_requires_issuer_bound_claims():
     row = extract_report_moat_signals(
         (

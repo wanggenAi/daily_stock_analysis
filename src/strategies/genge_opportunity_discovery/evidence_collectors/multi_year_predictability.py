@@ -123,11 +123,6 @@ _MOAT_STRONG_SIGNAL_PATTERNS: Mapping[str, tuple[re.Pattern[str], ...]] = {
             _MOAT_SUBJECT
             + r".{0,36}(?:独家|唯一).{0,24}(?:供应|许可|资质|技术|产品|平台)"
         ),
-        re.compile(
-            _MOAT_SUBJECT
-            + r".{0,36}(?:通过|取得|获得|保持).{0,18}"
-            r"(?:国家级|国际).{0,14}(?:认证|资质)"
-        ),
     ),
     "customer_embedding": (
         re.compile(

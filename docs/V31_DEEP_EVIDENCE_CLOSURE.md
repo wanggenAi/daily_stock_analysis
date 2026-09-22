@@ -25,8 +25,10 @@ signal to `公司`/`本公司`, not a competitor or industry peer) and only narr
 auditable signal categories:
 
 - market leadership supported by explicit market-share/ranking/scale language;
-- entry barriers such as exclusive/unique rights or high-specificity
-  certification language;
+- entry barriers such as exclusive/unique rights or narrowly specified
+  safety/market-access qualifications such as ASIL-D; generic ISO quality,
+  environmental, or occupational-health management-system certifications are
+  explicitly insufficient;
 - customer embedding supported by quantified designation or mass-production
   programs;
 - resource-asset barriers supported by world-class/large-resource language or
@@ -44,8 +46,9 @@ A moat PASS requires all of the following:
    `moat_adopted_for_gate=true`.
 
 Generic claims such as “加大研发投入”“保持行业领先”“积极拓展客户” do not satisfy
-the rule. Patent counts alone do not satisfy the rule. Any ambiguity remains
-`UNKNOWN`.
+the rule. Generic management-system certifications such as ISO9001/ISO14001/
+ISO45001 do not constitute an entry barrier. Patent counts alone do not satisfy
+the rule. Any ambiguity remains `UNKNOWN`.
 
 The rule is research-only. It does not change valuation formulas,
 BUY/WAIT_PRICE/REJECT thresholds, Candidate Lifecycle, Formal trading authority,
