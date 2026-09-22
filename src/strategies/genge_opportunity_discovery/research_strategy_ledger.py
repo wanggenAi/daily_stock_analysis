@@ -265,3 +265,74 @@ def has_strategy_scope(row: Mapping[str, Any]) -> bool:
     """Whether this row has gate-level state that the ledger can govern."""
 
     return bool(evidence_fingerprint(row) and unresolved_gates(row))
+
+
+def strategy_exhaustion_summary(
+    row: Mapping[str, Any],
+    ledger: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Describe whether every supported strategy is exhausted in this evidence epoch.
+
+    Exhaustion is research-control state only.  It is never a hard-gate FAIL and
+    never grants or suppresses Formal trading authority.  A changed evidence
+    fingerprint automatically starts a fresh research epoch.
+    """
+
+    code = _code(row.get("entity_id"))
+    fingerprint = evidence_fingerprint(row)
+    gates = unresolved_gates(row)
+    normalized = normalize_ledger(ledger)
+    unsupported_gates = sorted(gate for gate in gates if gate not in _GATE_STRATEGY)
+    strategy_states: list[dict[str, Any]] = []
+
+    if code and fingerprint:
+        for gate, reason in sorted(gates.items()):
+            spec = _GATE_STRATEGY.get(gate)
+            if spec is None:
+                continue
+            matches = [
+                entry
+                for entry in normalized["entries"]
+                if _same_attempt(
+                    entry,
+                    code=code,
+                    gate=gate,
+                    strategy_family=spec["strategy_family"],
+                    fingerprint=fingerprint,
+                )
+            ]
+            status = (
+                str(matches[-1].get("attempt_status") or "")
+                if matches
+                else "NOT_ATTEMPTED"
+            )
+            strategy_states.append(
+                {
+                    "hard_gate": gate,
+                    "unresolved_reason": reason,
+                    "strategy_family": spec["strategy_family"],
+                    "attempt_status": status,
+                    "strategy_exhausted": status == "EXHAUSTED_NO_PROGRESS",
+                }
+            )
+
+    all_supported_exhausted = bool(strategy_states) and not unsupported_gates and all(
+        item["strategy_exhausted"] for item in strategy_states
+    )
+    return {
+        "code": code,
+        "evidence_fingerprint": fingerprint,
+        "evidence_epoch": fingerprint,
+        "unresolved_gate_count": len(gates),
+        "supported_gate_count": len(strategy_states),
+        "unsupported_gates": unsupported_gates,
+        "strategy_states": strategy_states,
+        "all_supported_strategies_exhausted": all_supported_exhausted,
+        "research_state": (
+            "DORMANT_EXHAUSTED" if all_supported_exhausted else "ACTIVE_RESEARCH"
+        ),
+        "formal_trading_authority": False,
+        "automatic_formal_buy_allowed": False,
+        "unknown_is_pass": False,
+        "no_auto_trade": True,
+    }
