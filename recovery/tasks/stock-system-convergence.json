@@ -1,61 +1,54 @@
 {
   "schema_version": 2,
-  "generation": 29,
+  "generation": 30,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "STRICT_MULTI_YEAR_MOAT_PRODUCTION_FALSE_POSITIVE_HARDENING",
-  "last_observed_main_sha": "5b5424fca37d702f811ba47c81720a637789ec36",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "stage": "FIRST_LIVE_REPORT_EXECUTION_DISPLAY_CONSISTENCY_PR_CI",
+  "last_observed_main_sha": "2a178a7581214ed0eab90ab9f665f733ed422b24",
+  "work_branch": "fix/consumed-staged-add-limit-overlay-20260922",
+  "work_head_sha": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967",
+  "active_pr": 270,
   "ci": {
-    "status": "SUCCESS",
-    "pr_head": "dd91c3eb6c26a13188a081b31084c90987366ee5",
-    "pr_ci_run_id": 35682895014,
-    "merge_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76"
+    "status": "IN_PROGRESS",
+    "pr_head": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967",
+    "pr_ci_run_id": 35687159675,
+    "ai_governance": "SUCCESS",
+    "backend_gate": "IN_PROGRESS",
+    "docker_build": "IN_PROGRESS",
+    "web_gate": "SKIPPED"
   },
   "production_or_artifact": {
-    "status": "SEMANTIC_REVIEW_FAILED_NEEDS_HARDENING",
-    "authoritative_deep_run_id": 35683878901,
-    "deep_status": "SUCCESS",
-    "research_terminal_state": "EVIDENCE_EXHAUSTED",
-    "baseline_unresolved_requested_gate_count": 93,
-    "current_unresolved_requested_gate_count": 89,
-    "baseline_unresolved_moat_count": 21,
-    "moat_resolved_gate_count": 4,
-    "provisional_automatic_moat_pass_codes": [
-      "603396",
-      "002375",
-      "000576",
-      "603160"
+    "status": "FIRST_LIVE_REPORT_DEFECTS_FIXED_AWAITING_PR_CI",
+    "observed_defects": [
+      "Consumed staged-add source could reappear as ADD_LIMIT after quote overlay.",
+      "Fresh user-confirmed broker quote overlay could be reset to frozen Canonical prices during lunch-break refresh."
     ],
-    "false_positive_findings": [
-      "603396: generic ISO management-system certifications were treated as durable entry barriers",
-      "002375: issuer subject bridged into investee/controlled-company leadership wording",
-      "000576: issuer subject can bridge into subsidiary leadership wording; fail closed until explicitly modeled"
+    "safety": [
+      "Formal actions remain immutable.",
+      "Off-session immediate deployment is forced to zero.",
+      "no_auto_trade remains true."
     ]
   },
   "pending_operation": {
-    "type": "CREATE_BRANCH",
-    "branch": "fix/strict-moat-subject-scope-20260922",
-    "base_sha": "5b5424fca37d702f811ba47c81720a637789ec36",
-    "purpose": "Remove generic certification moat signals and prevent issuer subject from bridging into third-party/subsidiary leadership claims."
+    "type": "MERGE_PR_AFTER_BLOCKING_CI",
+    "pr": 270,
+    "head_sha": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967",
+    "require": "blocking CI green and mergeable"
   },
   "completed": [
-    "Recovered live repository state and identified PR #268 as the first unfinished mission.",
-    "Confirmed main drift since PR base is runtime JSON only.",
-    "Hardened issuer-bound moat extraction against competitor/company substring false positives.",
-    "Required exact current moat rule version and proven reason code before Deep may consume VERIFIED moat PASS evidence.",
-    "Added regressions for peer-company claims and stale moat evidence contracts.",
-    "Corrected the Unicode CJK negative-lookbehind escaping; issuer-bound regex now actually rejects Chinese-prefix peer/company phrases.",
-    "PR #268 final head passed all checks and squash-merged as bc927ef143b9eff9f2cf4e58708f0707e2bd5f76."
+    "Recovered live repository state and did not reopen completed #269.",
+    "Identified PR #270 as the first unfinished current mission.",
+    "Verified consumed staged-add suppression is keyed by authoritative staged-add source rather than ADD display variant.",
+    "Verified off-session preservation keeps a fresh existing broker overlay display-only while forcing immediate deployment to zero.",
+    "Verified current PR head includes freshness-contract follow-up and regression coverage."
   ],
-  "next_action": "Create fix/strict-moat-subject-scope-20260922 from live main, harden patterns and regressions, run PR CI, merge, then rerun production Deep and require semantic audit of every automatic moat PASS.",
+  "next_action": "Re-read PR #270 head and blocking CI; if green and mergeable, merge, then verify live main and the post-merge execution-report workflow/artifact before closing the mission.",
   "do_not_repeat": [
-    "Do not rerun completed #266/#267 evidence mission.",
-    "Do not use Jev as hard-gate authority.",
+    "Do not redo #268 or #269.",
+    "Do not rerun completed moat Deep proof.",
+    "Do not invoke Jev for deterministic execution-display consistency checks.",
     "Do not relax UNKNOWN != PASS, Formal authority, valuation thresholds or no_auto_trade."
   ],
-  "business_code_baseline_sha": "bc927ef143b9eff9f2cf4e58708f0707e2bd5f76"
+  "business_code_baseline_sha": "40429db3de1dfc3e2d8a74b1dcc2e8187a24b967"
 }
