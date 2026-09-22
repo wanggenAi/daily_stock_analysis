@@ -563,6 +563,45 @@ def _fingerprint(state: Mapping[str, Any]) -> str:
     return hashlib.sha256(encoded).hexdigest()[:20]
 
 
+def _research_evidence_fingerprint(state: Mapping[str, Any]) -> str:
+    """Fingerprint evidence-dependent research state while ignoring runtime lineage."""
+
+    research_raw = state.get("research_context")
+    research = research_raw if isinstance(research_raw, Mapping) else {}
+    triage_raw = state.get("triage_context")
+    triage = triage_raw if isinstance(triage_raw, Mapping) else {}
+    payload = {
+        "research_decision": str(research.get("research_decision") or ""),
+        "research_reason": _compact_text(research.get("research_reason"), limit=500),
+        "hard_gate_pass_count": research.get("hard_gate_pass_count"),
+        "hard_gate_failures": sorted(
+            str(value) for value in (research.get("hard_gate_failures") or [])
+        ),
+        "hard_gate_unknowns": sorted(
+            str(value) for value in (research.get("hard_gate_unknowns") or [])
+        ),
+        "unresolved_gates": sorted(
+            [
+                {
+                    "gate": str(item.get("gate") or ""),
+                    "reason": _compact_text(item.get("reason"), limit=500),
+                }
+                for item in (research.get("unresolved_gates") or [])
+                if isinstance(item, Mapping)
+            ],
+            key=lambda item: (item["gate"], item["reason"]),
+        ),
+        "profile_gate_statuses": research.get("profile_gate_statuses")
+        if isinstance(research.get("profile_gate_statuses"), Mapping)
+        else {},
+        "near_buy_missing_evidence_items": sorted(
+            str(value)
+            for value in (triage.get("near_buy_missing_evidence_items") or [])
+        ),
+    }
+    return _fingerprint(payload)
+
+
 def _error_kind(exc: Exception) -> str:
     text = f"{type(exc).__name__} {exc}".lower()
     return "TIMEOUT" if "timeout" in text else "ERROR"
@@ -654,12 +693,16 @@ def evaluate_stock_shadow(
             "entity_name": str(entity.get("name") or ""),
             "is_current_holding": entity.get("is_current_holding") is True,
             "state_fingerprint": _fingerprint(state),
+            "research_evidence_fingerprint": _research_evidence_fingerprint(state),
             "state_schema_version": STATE_SCHEMA_VERSION,
             "question_set_version": QUESTION_SET_VERSION,
             "existing_engine_action": str(state.get("existing_engine_action") or ""),
             "existing_needs_more_evidence": state.get("existing_needs_more_evidence") is True,
             "triage_context": dict(state.get("triage_context") or {})
             if isinstance(state.get("triage_context"), Mapping)
+            else {},
+            "research_context": dict(state.get("research_context") or {})
+            if isinstance(state.get("research_context"), Mapping)
             else {},
             "requested_model": config.model,
             "attempt_count": attempts,
