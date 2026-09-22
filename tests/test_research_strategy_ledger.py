@@ -169,3 +169,40 @@ def test_missing_fingerprint_or_gate_state_is_not_falsely_governed():
         {},
         source_workflow_run_id="100",
     ) == []
+
+def test_accepted_attempt_waits_until_exact_deep_result_is_visible():
+    row = _row()
+    attempts = plan_strategy_attempts(
+        row,
+        {},
+        source_workflow_run_id="100",
+    )
+    for item in attempts:
+        item["attempt_status"] = "DISPATCH_ACCEPTED"
+        item["deep_run_id"] = "900"
+    ledger = append_attempts({}, attempts)
+
+    before_result = _row()
+    before_result["research_context"]["deep_lambda_run_id"] = "899"
+    unreconciled = reconcile_ledger(
+        ledger,
+        [before_result],
+        current_source_workflow_run_id="101",
+    )
+    assert all(
+        item["attempt_status"] == "DISPATCH_ACCEPTED"
+        for item in unreconciled["entries"]
+    )
+
+    after_result = _row()
+    after_result["research_context"]["deep_lambda_run_id"] = "900"
+    reconciled = reconcile_ledger(
+        unreconciled,
+        [after_result],
+        current_source_workflow_run_id="102",
+    )
+    assert all(
+        item["attempt_status"] == "EXHAUSTED_NO_PROGRESS"
+        for item in reconciled["entries"]
+    )
+
