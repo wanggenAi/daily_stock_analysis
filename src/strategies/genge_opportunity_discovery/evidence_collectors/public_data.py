@@ -312,10 +312,16 @@ def _extract_report_numeric_context(text: str, keywords: list[str]) -> dict[str,
                     break
                 if _calendar_noise_match(local, match):
                     continue
+                metric_end = match.end()
+                excerpt_end = min(len(local), metric_end + 20)
+                for delimiter in ("，", "；", "。", ";"):
+                    position = local.find(delimiter, metric_end)
+                    if position >= 0:
+                        excerpt_end = min(excerpt_end, position + 1)
                 return {
                     "value": match.group("value").replace(",", ""),
                     "unit": match.group("unit") or "",
-                    "excerpt": local[: min(len(local), match.end() + 20)],
+                    "excerpt": local[:excerpt_end],
                 }
             start = text.find(keyword, start + len(keyword))
     return extract_numeric_context(text, keywords=keywords)
