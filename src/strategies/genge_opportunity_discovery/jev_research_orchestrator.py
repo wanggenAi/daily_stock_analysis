@@ -151,12 +151,27 @@ def build_orchestration_plan(
             "no_auto_trade": True,
         }
 
+        deterministic_eligible = _eligible_by_deterministic_triage(raw)
+        ruleable_insufficient_evidence = (
+            str(raw.get("evidence_state") or "").strip().upper() == "INSUFFICIENT"
+            and deterministic_eligible
+            and attention in {"HIGH", "MEDIUM"}
+        )
+
         if route == "HUMAN_REVIEW":
+            if ruleable_insufficient_evidence:
+                row["jev_route"] = "HUMAN_REVIEW"
+                row["route"] = "EVIDENCE_REFRESH"
+                row["dispatch_mode"] = "DETERMINISTIC_SAFE_FALLBACK"
+                row["fallback_reason"] = (
+                    "RULEABLE_INSUFFICIENT_EVIDENCE_DOES_NOT_REQUIRE_HUMAN_STOP"
+                )
+                candidates.append(row)
+                continue
             row["review_reason"] = "JEV_ROUTE_HUMAN_REVIEW"
             base["human_review"].append(row)
             continue
 
-        deterministic_eligible = _eligible_by_deterministic_triage(raw)
         route_confidence = raw.get("route_confidence")
         route_confidence_ok = (
             isinstance(route_confidence, (int, float))
@@ -168,9 +183,15 @@ def build_orchestration_plan(
             and deterministic_eligible
         ):
             if not route_confidence_ok:
+                if ruleable_insufficient_evidence:
+                    row["dispatch_mode"] = "DETERMINISTIC_SAFE_FALLBACK"
+                    row["fallback_reason"] = "LOW_OR_MISSING_JEV_ROUTE_CONFIDENCE"
+                    candidates.append(row)
+                    continue
                 row["review_reason"] = "LOW_OR_MISSING_ROUTE_CONFIDENCE"
                 base["human_review"].append(row)
                 continue
+            row["dispatch_mode"] = "JEV_AND_DETERMINISTIC_AGREEMENT"
             candidates.append(row)
             continue
 
@@ -222,6 +243,11 @@ def build_orchestration_plan(
         ),
         "deep_research_count": sum(
             1 for row in selected if row.get("route") == "DEEP_RESEARCH"
+        ),
+        "deterministic_fallback_count": sum(
+            1
+            for row in selected
+            if row.get("dispatch_mode") == "DETERMINISTIC_SAFE_FALLBACK"
         ),
     }
     return base
