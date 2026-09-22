@@ -157,6 +157,49 @@ def _zero_immediate_deployment(payload: dict[str, Any], note: str) -> None:
         payload["decision_summary"]["planned_immediate_cash_cny"] = 0.0
 
 
+def _existing_execution_overlay_is_fresh(
+    dashboard: Mapping[str, Any], *, now: datetime, max_age_minutes: int
+) -> bool:
+    overlay = dashboard.get("live_execution_overlay") or {}
+    if int(overlay.get("applied_code_count") or 0) <= 0:
+        return False
+    if overlay.get("canonical_snapshot_match") is False:
+        return False
+    observed_raw = str(overlay.get("latest_quote_observed_at") or "").strip()
+    if not observed_raw:
+        return False
+    try:
+        observed = datetime.fromisoformat(observed_raw.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    if observed.tzinfo is None:
+        return False
+    age_seconds = (
+        now.astimezone(timezone.utc) - observed.astimezone(timezone.utc)
+    ).total_seconds()
+    try:
+        existing_max_age = int(overlay.get("max_quote_age_minutes") or 0)
+    except (TypeError, ValueError):
+        existing_max_age = 0
+    effective_max_age = max(0, int(max_age_minutes), existing_max_age)
+    return 0 <= age_seconds <= effective_max_age * 60
+
+
+def _headline(payload: Mapping[str, Any]) -> str:
+    market = payload.get("market") or {}
+    terminal = payload.get("terminal_opportunities") or {}
+    plan = payload.get("capital_deployment") or {}
+    holding_rows = payload.get("stock_portfolio", {}).get("rows") or []
+    overlay = payload.get("live_execution_overlay") or {}
+    return (
+        f"市场={market.get('status','UNKNOWN')}；持仓减仓/退出="
+        f"{sum(str(x.get('formal_action') or '').upper() in {'EXIT','SELL','REDUCE','REDUCE_25','REDUCE_50'} for x in holding_rows)}；"
+        f"新股正式BUY={len(terminal.get('buy_now') or [])}；等价格={len(terminal.get('wait_price') or [])}；"
+        f"计划立即投入≈¥{(_num(plan.get('planned_immediate_cash_cny')) or 0):.0f}；"
+        f"盘中价覆盖={overlay.get('applied_code_count',0)}/{overlay.get('expected_code_count',0)}"
+    )
+
+
 def apply_direct_execution_quote_overlay(
     dashboard: Mapping[str, Any],
     *,
@@ -166,6 +209,43 @@ def apply_direct_execution_quote_overlay(
     retry_attempts: int = 3,
 ) -> dict[str, Any]:
     now = now or datetime.now(timezone.utc)
+    session = market_session_state(now)
+    active = session.startswith("ACTIVE_")
+    if not active and _existing_execution_overlay_is_fresh(
+        dashboard, now=now, max_age_minutes=max_age_minutes
+    ):
+        payload = copy.deepcopy(dict(dashboard))
+        before_actions = {
+            _code(row.get("code")): row.get("formal_action")
+            for row in payload.get("stock_portfolio", {}).get("rows") or []
+        }
+        _zero_immediate_deployment(payload, "MARKET_NOT_IN_CONTINUOUS_SESSION")
+        after_actions = {
+            _code(row.get("code")): row.get("formal_action")
+            for row in payload.get("stock_portfolio", {}).get("rows") or []
+        }
+        if before_actions != after_actions:
+            raise ValueError("off-session quote preservation mutated Formal Actions")
+        overlay = payload.setdefault("live_execution_overlay", {})
+        overlay.update(
+            {
+                "market_session_state": session,
+                "market_session_active": False,
+                "market_data_status": "OFF_SESSION",
+                "quote_refresh_mode": "PRESERVE_FRESH_EXISTING_OFF_SESSION",
+                "formal_action_recomputed": False,
+                "formal_action_mutation_allowed": False,
+                "quote_may_only_change_display_and_execution_reference": True,
+                "missing_quote_blocks_immediate_execution": True,
+                "preserved_fresh_overlay_off_session": True,
+                "no_auto_trade": True,
+                "refreshed_at": now.astimezone(timezone.utc).isoformat(),
+                "refreshed_at_beijing": now.astimezone(BEIJING).isoformat(),
+            }
+        )
+        payload["headline"] = _headline(payload)
+        return payload
+
     baseline = _reset_to_frozen_prices(dashboard)
     before_actions = {
         _code(row.get("code")): row.get("formal_action")
@@ -200,8 +280,6 @@ def apply_direct_execution_quote_overlay(
             if _code(row.get("code")) in applied_codes:
                 row["price_source"] = DIRECT_PRICE_SOURCE
 
-    session = market_session_state(now)
-    active = session.startswith("ACTIVE_")
     if not active:
         _zero_immediate_deployment(payload, "MARKET_NOT_IN_CONTINUOUS_SESSION")
 
@@ -227,16 +305,7 @@ def apply_direct_execution_quote_overlay(
     )
     payload["live_execution_overlay"] = overlay
 
-    market = payload.get("market") or {}
-    plan = payload.get("capital_deployment") or {}
-    holding_rows = payload.get("stock_portfolio", {}).get("rows") or []
-    payload["headline"] = (
-        f"市场={market.get('status','UNKNOWN')}；持仓减仓/退出="
-        f"{sum(str(x.get('formal_action') or '').upper() in {'EXIT','SELL','REDUCE','REDUCE_25','REDUCE_50'} for x in holding_rows)}；"
-        f"新股正式BUY={len(terminal.get('buy_now') or [])}；等价格={len(terminal.get('wait_price') or [])}；"
-        f"计划立即投入≈¥{(_num(plan.get('planned_immediate_cash_cny')) or 0):.0f}；"
-        f"盘中价覆盖={overlay.get('applied_code_count',0)}/{overlay.get('expected_code_count',0)}"
-    )
+    payload["headline"] = _headline(payload)
     return payload
 
 

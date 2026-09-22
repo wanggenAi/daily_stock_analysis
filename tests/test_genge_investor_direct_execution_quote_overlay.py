@@ -128,3 +128,50 @@ def test_lunch_break_never_reports_immediate_execution_even_with_fresh_snapshot(
         and op["execution_note"] == "MARKET_NOT_IN_CONTINUOUS_SESSION"
         for op in payload["capital_deployment"]["operations"]
     )
+
+
+def test_lunch_break_preserves_fresh_existing_manual_overlay_for_display_only():
+    lunch = datetime(2026, 9, 15, 4, 30, tzinfo=timezone.utc)  # 12:30 Beijing
+    dashboard = _dashboard()
+    dashboard["stock_portfolio"]["rows"][0]["canonical_price"] = 56.0
+    dashboard["stock_portfolio"]["rows"][0]["current_price"] = 55.4
+    dashboard["stock_portfolio"]["rows"][0]["price_source"] = "USER_CONFIRMED_BROKER_INTRADAY_QUOTE"
+    dashboard["stock_portfolio"]["rows"][1]["canonical_price"] = 22.5
+    dashboard["stock_portfolio"]["rows"][1]["current_price"] = 22.28
+    dashboard["stock_portfolio"]["rows"][1]["price_source"] = "USER_CONFIRMED_BROKER_INTRADAY_QUOTE"
+    dashboard["live_execution_overlay"] = {
+        "available": True,
+        "source": "USER_CONFIRMED_BROKER_INTRADAY_QUOTE",
+        "canonical_snapshot_match": True,
+        "expected_code_count": 2,
+        "applied_code_count": 2,
+        "applied_codes": ["600406", "601318"],
+        "missing_codes": [],
+        "coverage_ratio": 1.0,
+        "latest_quote_observed_at": "2026-09-15T11:55:00+08:00",
+        "max_quote_age_minutes": 120,
+        "no_auto_trade": True,
+    }
+
+    def should_not_fetch(_codes):
+        raise AssertionError("fresh existing broker overlay should be preserved during lunch break")
+
+    payload = apply_direct_execution_quote_overlay(
+        dashboard,
+        quote_provider=should_not_fetch,
+        now=lunch,
+        max_age_minutes=15,
+        retry_attempts=1,
+    )
+
+    rows = {row["code"]: row for row in payload["stock_portfolio"]["rows"]}
+    overlay = payload["live_execution_overlay"]
+    assert rows["601318"]["current_price"] == 55.4
+    assert rows["601318"]["price_source"] == "USER_CONFIRMED_BROKER_INTRADAY_QUOTE"
+    assert rows["600406"]["current_price"] == 22.28
+    assert overlay["source"] == "USER_CONFIRMED_BROKER_INTRADAY_QUOTE"
+    assert overlay["applied_code_count"] == 2
+    assert overlay["market_session_state"] == "LUNCH_BREAK"
+    assert overlay["market_data_status"] == "OFF_SESSION"
+    assert overlay["preserved_fresh_overlay_off_session"] is True
+    assert payload["capital_deployment"]["planned_immediate_cash_cny"] == 0

@@ -191,7 +191,6 @@ def apply_execution_consumption(
         if not (
             _code((op or {}).get("code")) in applied_codes
             and str((op or {}).get("source") or "") == STAGED_ADD_SOURCE
-            and str((op or {}).get("action") or "").upper() == "ADD"
         )
     ]
     if len(filtered) != len(operations):
@@ -205,7 +204,6 @@ def apply_execution_consumption(
             if not (
                 _code((op or {}).get("code")) in applied_codes
                 and str((op or {}).get("source") or "") == STAGED_ADD_SOURCE
-                and str((op or {}).get("action") or "").upper() == "ADD"
             )
         ]
         if isinstance(payload.get("decision_summary"), dict):

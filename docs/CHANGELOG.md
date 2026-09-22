@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] 投资执行报价刷新在午休/非连续交易时段保留仍处于自身 freshness 合约内的券商/直连报价，仅用于显示与执行参考；已消费的持仓分批加仓不再因 `ADD_LIMIT` 展示变体回到操作表，且非连续时段计划立即投入继续强制为 0。
 - [新功能] Deep Calculation 复用既有多年官方年报新增严格 moat 证据闭环：仅当连续两个财年重复出现同一强壁垒信号且存在第二类佐证时自动 PASS；泛化宣传语、单年证据和仅专利数量继续保持 UNKNOWN，并新增 moat_resolved_gate_count 审计字段。
 - [修复] 收紧 strict multi-year moat 的 entry-barrier 证据：ISO9001/ISO14001/ISO45001 等通用管理体系认证不再被视为耐久进入壁垒，保留 ASIL-D、独家/唯一权利等高特异性规则，避免官方年报中的常规认证造成自动 moat PASS 假阳性。
 - [修复] 恢复上交所定期报告查询的服务端日期边界，并分片多年年报检索以补强严格可预测性证据发现。
