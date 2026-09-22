@@ -3,6 +3,7 @@
   "automatic_formal_buy_allowed": false,
   "automatic_research_dispatch_allowed": true,
   "contract": "GEN_GE_JEV_RESEARCH_ORCHESTRATION_V1",
+  "deep_run_id": "35698134033",
   "dispatch_is_research_only": true,
   "dispatch_target": "genge-v31-deep-calculation-lambda.yml",
   "execution_status": "READY",
@@ -236,31 +237,14 @@
     }
   ],
   "jev_direct_dispatch_allowed": false,
-  "lifecycle_state": "ORCHESTRATION_PENDING",
+  "lifecycle_state": "DEEP_DISPATCH_ACCEPTED",
   "max_dispatch": 12,
   "min_auto_route_confidence": 0.5,
   "mutates_authoritative_decision": false,
+  "next_expected_stage": "DEEP_COMPLETE_THEN_TERMINAL_AUTO_CHAIN",
   "no_auto_trade": true,
   "orchestrator_run_id": "35698009347",
-  "pending_operation": {
-    "operation": "DISPATCH_DEEP_CALCULATION",
-    "requested_codes": [
-      "600916",
-      "603369",
-      "002042",
-      "600309",
-      "600640",
-      "603883",
-      "600610",
-      "000096",
-      "603739",
-      "002282",
-      "603617",
-      "600283"
-    ],
-    "source_workflow_run_id": "35697815789",
-    "target_workflow": "genge-v31-deep-calculation-lambda.yml"
-  },
+  "pending_operation": null,
   "requested_codes": [
     "600916",
     "603369",
@@ -947,5 +931,5 @@
   },
   "trigger_source": "JEV_ORCHESTRATOR_35697815789",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-22T07:08:33+00:00"
+  "updated_at": "2026-09-22T07:08:46+00:00"
 }
