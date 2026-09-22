@@ -82,7 +82,7 @@
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -92,11 +92,11 @@
 | 市场大趋势 / 全A脉搏 | **MISSING** | UNAVAILABLE / score=— / 2026-09-21 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=125 / events=7914 / focus=4 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=125 / events=7914 / focus=8 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=13 / verified-pass=224 / unresolved=48 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35713502529 / unverified-pass=0 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35713512097 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
+| Deep Research Terminal | **ACTIVE** | BUY=0 / WAIT=0 / GAP=13 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **125**；累计生命周期事件 **7914**。这意味着历史候选会持续研究，而不是第二天扫描不到就消失。
@@ -131,10 +131,10 @@
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`35706039574`；当前 Lambda：`35712985177`。
-- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：无
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
+- 终态来源 Lambda：`35712985177`；当前 Lambda：`35712985177`。
+- 请求：**13**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**13**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=37.3127；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=36.6131；暂不买；等待补齐：predictability、long_term_demand、moat)；601318 中国平安(quant=32.4859；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603993 洛阳钼业(quant=30.3106；暂不买；等待补齐：predictability)
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
