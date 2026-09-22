@@ -174,8 +174,15 @@ def _existing_execution_overlay_is_fresh(
         return False
     if observed.tzinfo is None:
         return False
-    age_seconds = (now.astimezone(timezone.utc) - observed.astimezone(timezone.utc)).total_seconds()
-    return 0 <= age_seconds <= max(0, int(max_age_minutes)) * 60
+    age_seconds = (
+        now.astimezone(timezone.utc) - observed.astimezone(timezone.utc)
+    ).total_seconds()
+    try:
+        existing_max_age = int(overlay.get("max_quote_age_minutes") or 0)
+    except (TypeError, ValueError):
+        existing_max_age = 0
+    effective_max_age = max(0, int(max_age_minutes), existing_max_age)
+    return 0 <= age_seconds <= effective_max_age * 60
 
 
 def _headline(payload: Mapping[str, Any]) -> str:
