@@ -4,92 +4,66 @@
 Operate the stock system as one durable closed research loop. Jev may accelerate bounded research through the existing Deep -> Terminal -> Investor -> Three-Pillar chain, but it must not change Formal trading authority.
 
 ## Current Phase
-POST_JEV_PRODUCTION_COMPLETE_EVIDENCE_CLOSURE
+OFFICIAL_EVIDENCE_LOCAL_CONTEXT_REPLAY_CI
 
 ## Last Verified Main
-- Live main HEAD observed at `16b0b617cd10fd0b0730d7a40b54f053ee72cb31`.
-- #242 merged earlier as `10e095d613162f9b65217207f806fffe019eaae1`.
+- Latest main observed before this replay: `20ee5f5b2b107be083f2a3b7cfbba511a6e36614`.
+- #242 auto-chain is already merged and production-proven.
+- #259, #260, #262 and #264 are merged on the evidence/reporting line.
 - Live GitHub refs / Actions / persisted data always override this checkpoint.
 
 ## Active Branch
-- `chore/checkpoint-jev-production-complete-20260921` for this checkpoint only.
+- `fix/official-metric-local-context-main2-20260922`
 
 ## Active PR
-- Checkpoint PR to be created from the branch above.
-- #242 is merged and complete.
-- #241 remains superseded/closed and must not be revived.
+- #266 `fix: replay official metric local-context extraction on latest main`
+- Supersedes stale #265 after fresh CI and merge.
 
 ## CI
-- #242 PR validation passed before merge.
-- Merge-triggered Jev production evaluation succeeded.
-- Deterministic Jev orchestrator succeeded.
-- Deep run `35574223501` completed successfully.
-- Deep contracts and `deep-calculate` both concluded `success`.
-- Deep artifact `genge-v31-deep-calculation-35574223501` exists and is unexpired.
-- Exact live Actions state must still be re-read before retry or repair.
+- Original #265 head `9b7dd2191d6b8a7dda53d92fbd58f80879e9309b` passed CI, Opportunity Discovery, and Legacy Risk-Capped Research.
+- #266 was replayed because #265 became stale/non-mergeable after production/state commits advanced main.
+- Fresh #266 checks must be read from live GitHub before merge.
 
 ## Production / Artifact
-- Jev source run: `35573887821`.
-- Jev orchestrator run: `35574096933`.
-- Deep run: `35574223501`.
-- Exact requested Deep workset: `000576,603209,688162,603160`.
-- Deep artifact digest: `sha256:953505a69b237de289b2c705f7be622028486e71b9966e7c4b177dd8733a8438`.
-- Terminal / Investor / Three-Pillar downstream state persisted successfully on main.
-- Investor overlay persisted with `source_deep_lambda_run_id=35574223501`.
-- Three-Pillar Decision Center refreshed after the Deep lineage.
-- Jev orchestration cursor: `DECISION_CENTER_REFRESHED`.
-- `next_expected_stage=COMPLETE`.
-- `production_verification_complete=true`.
-- Cursor file: `data/jev_shadow/orchestration/latest.json`.
+- Baseline production Deep run for this fix: `35618926319`.
+- Baseline: `unresolved_requested_gate_count=69`.
+- Baseline: `unique_industry_evidence_count=20`.
+- The verified production defect is evidence extraction quality, not Jev continuation.
 
 ## Completed
-- Jev Phase 1 live API/shadow integration is production-proven.
-- Jev Phase 2 persistent advisory routing is production-proven.
-- Jev Phase 3 priority triage is production-proven.
-- #242 merged the bounded deterministic research orchestrator.
-- Jev -> Orchestrator -> Deep executed automatically on main without a user saying “继续”.
-- Deep completed successfully for the exact bounded four-code workset.
-- Deep dispatched provenance / terminal convergence successfully.
-- Terminal research output propagated into Investor Terminal Overlay.
-- Three-Pillar Decision Center refreshed from the same Deep lineage.
-- Orchestration state reconciled to `DECISION_CENTER_REFRESHED` and marked production complete.
-- Fail-closed routing remained active throughout.
-- No duplicate Deep dispatch was required.
+- Jev -> Orchestrator -> Deep -> Terminal -> Investor -> Three-Pillar automatic research chain is production-proven.
+- #264 expanded official industry-demand routing and official source-family normalization.
+- Post-#264 production showed the new routes reached intended official releases.
+- Root causes were isolated in #265:
+  - MIIT title/year values could be mistaken for the operating metric.
+  - NBS excerpts could include later unrelated decline wording and contaminate direction.
+- Before replay, both #265 target files on current main were verified byte-identical to #265's original base.
+- #266 replayed the reviewed two-file implementation onto latest main without overwriting production-state commits.
 
 ## Current Findings
-- The automatic chain is real and production-verified end to end: Jev -> Orchestrator -> Deep -> Terminal -> Investor -> Three-Pillar.
-- Auto-dispatch required Jev route + route confidence >= 0.50 + deterministic triage agreement.
-- The bounded workset contained 4 rows: 甘化科工 000576, 兴通股份 603209, 巨一科技 688162, 汇顶科技 603160.
-- All 4 finished as `RESEARCH_GAP`, not Formal BUY / WAIT_PRICE / REJECT.
-- The common unresolved hard-gate evidence set is: `predictability`, `long_term_demand`, `moat`, `financial_safety`, `earnings_authenticity`.
-- Jev direct dispatch=false.
-- Formal trading authority=false.
-- Automatic Formal BUY=false.
-- UNKNOWN != PASS.
-- no_auto_trade=true.
+- The active blocker is local metric extraction from official industry reports.
+- The replay binds numeric extraction to the same local industry metric context, rejects calendar/date/month-range numbers, bounds excerpts to the target metric clause, and uses the report extractor for MIIT and NBS.
+- Evidence cache contract is bumped from v5 to v6.
+- Regressions cover MIIT 15.4% growth, NBS water-transport 14.7% growth without later-region contamination, and negative NBS table values.
 
 ## Blockers
-- Jev automatic continuation itself is no longer the blocker.
-- The active blocker is official-evidence closure quality for the four research-gap names.
-- Existing evidence-discovery PRs must be reconciled against current main before reuse; stale branches must not be merged blindly.
+- Fresh #266 CI/checks are the current gate.
+- After merge, a fresh production Deep run is required to compare against run `35618926319`.
 
 ## Next Action
-1. Re-read current open evidence-related PRs and current main before changing evidence collection.
-2. Reconcile #230 (SSE multi-year annual-report discovery) and #231 (MIIT industry evidence discovery) against current main.
-3. Preserve only still-valid fixes; replay onto current main if the old branches are stale/non-mergeable.
-4. Prioritize closure of the five hard-gate evidence families for the four Jev-selected names.
-5. Run CI, merge only verified changes, then trigger fresh production Deep evidence closure.
-6. Verify whether the four names remain RESEARCH_GAP or advance based on actual official evidence.
-7. Do not alter valuation formulas, BUY / WAIT_PRICE / REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.
+1. Read fresh #266 CI/checks.
+2. If blocking checks pass, merge #266.
+3. Close/supersede #265.
+4. Trigger or follow the normal fresh production Deep evidence-closure chain on merged main.
+5. Compare `unresolved_requested_gate_count`, `unique_industry_evidence_count`, and per-code hard-gate outcomes against Deep `35618926319`.
+6. Verify whether any names legitimately advance from RESEARCH_GAP based on real official evidence.
+7. Persist the new production lineage and final state.
 
 ## Do Not Repeat
-- Do not redo Jev Phase 1/2/3.
-- Do not reopen #241.
-- Do not recreate or remerge #242.
-- Do not manually dispatch another Deep run for Jev source `35573887821`.
-- Do not treat current RESEARCH_GAP rows as Formal BUY.
-- Do not merge stale evidence branches without replaying/revalidating against current main.
-- Do not loosen evidence gates, valuation thresholds, Candidate Lifecycle, UNKNOWN != PASS, or no_auto_trade.
+- Do not redo Jev Phase 1/2/3 or recreate #242.
+- Do not merge stale #265 directly.
+- Do not loosen long_term_demand's two-independent-official-source rule.
+- Do not alter valuation formulas, BUY / WAIT_PRICE / REJECT thresholds, Candidate Lifecycle, Formal authority, UNKNOWN != PASS, or no_auto_trade.
 - Do not infer completion from chat; use live GitHub.
 
 ## Guardrails
@@ -100,8 +74,4 @@ POST_JEV_PRODUCTION_COMPLETE_EVIDENCE_CLOSURE
 - Automatic Formal BUY=false.
 - UNKNOWN != PASS.
 - no_auto_trade=true.
-- Exact Jev lineage key: `source_workflow_run_id`.
-- Deep idempotency key: `JEV_ORCHESTRATOR_<source_workflow_run_id>`.
-- Orchestration cursor lifecycle:
-  `JEV_READY -> ORCHESTRATION_PENDING -> DEEP_DISPATCH_ACCEPTED -> DEEP_COMPLETE -> TERMINAL_COMPLETE -> INVESTOR_OVERLAY_COMPLETE -> DECISION_CENTER_REFRESHED`.
 - On future user message “继续”, resume from the first unfinished live GitHub stage without asking for background.

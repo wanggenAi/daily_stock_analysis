@@ -243,14 +243,75 @@ def _miit_operational_article_candidates(
     return [row for row in rows if _MIIT_DATED_TITLE_RE.search(row[0])][:limit]
 
 
+def _calendar_noise_match(text: str, match: re.Match[str]) -> bool:
+    """Reject publication dates / month ranges before they become evidence values."""
+    if match.group("unit"):
+        return False
+    fragment = text[match.start() : match.start() + 20]
+    following = text[match.end() : match.end() + 8]
+    try:
+        number = float(match.group("value").replace(",", ""))
+    except ValueError:
+        number = 0.0
+    if 1900 <= number <= 2100 and re.match(r"\s*年", following):
+        return True
+    if re.match(r"\d{1,4}\s*[-—－/]\s*\d{1,2}(?:\s*[-—－/]\s*\d{1,2})?", fragment):
+        return True
+    if re.match(r"\d{4}\s*\.\s*\d{1,2}(?:\s*\.\s*\d{1,2})?", fragment):
+        return True
+    if re.match(r"\d{1,2}\s*[-—－]\s*\d{1,2}\s*月", fragment):
+        return True
+    if re.match(r"\d{1,2}\s*:\s*\d{2}", fragment):
+        return True
+    return False
+
+
+def _line_bound_numeric_context(text: str, keywords: list[str]) -> dict[str, str]:
+    """Bind a metric to the same line and to numbers after its industry label.
+
+    This prevents an article title year from becoming the metric and prevents
+    a later unrelated negative clause from contaminating an earlier industry value.
+    """
+    lines = [re.sub(r"\s+", " ", line).strip() for line in text.splitlines() if line.strip()]
+    for keyword in keywords:
+        for line in lines:
+            start = line.find(keyword)
+            while start >= 0:
+                suffix = line[start + len(keyword) :]
+                for match in NUMBER_WITH_UNIT_RE.finditer(suffix):
+                    if match.start() > 80:
+                        break
+                    if _calendar_noise_match(suffix, match):
+                        continue
+                    metric_end = start + len(keyword) + match.end()
+                    excerpt_end = min(len(line), metric_end + 36)
+                    for delimiter in ("，", "；", "。", ";"):
+                        position = line.find(delimiter, metric_end)
+                        if position >= 0:
+                            excerpt_end = min(excerpt_end, position + 1)
+                    return {
+                        "value": match.group("value").replace(",", ""),
+                        "unit": match.group("unit") or "",
+                        "excerpt": line[start:excerpt_end],
+                    }
+                start = line.find(keyword, start + len(keyword))
+    return {}
+
+
 def _extract_report_numeric_context(text: str, keywords: list[str]) -> dict[str, str]:
-    """Extract table values even when HTML cells became separate text lines."""
+    """Extract an industry-bound value, with a split-layout fallback."""
+    line_bound = _line_bound_numeric_context(text, keywords)
+    if line_bound:
+        return line_bound
     for keyword in keywords:
         start = text.find(keyword)
         while start >= 0:
             local = re.sub(r"\s+", " ", text[start : start + 180]).strip()
-            match = NUMBER_WITH_UNIT_RE.search(local, pos=len(keyword))
-            if match and match.start() - len(keyword) <= 80:
+            for match in NUMBER_WITH_UNIT_RE.finditer(local, pos=len(keyword)):
+                if match.start() - len(keyword) > 80:
+                    break
+                if _calendar_noise_match(local, match):
+                    continue
                 return {
                     "value": match.group("value").replace(",", ""),
                     "unit": match.group("unit") or "",
@@ -258,8 +319,6 @@ def _extract_report_numeric_context(text: str, keywords: list[str]) -> dict[str,
                 }
             start = text.find(keyword, start + len(keyword))
     return extract_numeric_context(text, keywords=keywords)
-
-
 def _report_direction(excerpt: str, value: str, *, collector: str, article_title: str) -> str:
     direction = direction_from_excerpt(excerpt)
     if direction != "NEUTRAL" or collector != "nbs_public_data":
@@ -362,7 +421,7 @@ def collect_public_industry_data(
                 "industry": industry,
                 "search_terms": search_terms,
                 "source": url,
-                "version": 5,
+                "version": 6,
             })
             cached = cache.get(key)
             if cached is not None:
@@ -516,7 +575,7 @@ def collect_public_industry_data(
                     continue
                 extracted = (
                     _extract_report_numeric_context(article_text, search_terms)
-                    if collector == "nbs_public_data"
+                    if collector == "nbs_public_data" or collector.startswith("miit_")
                     else extract_numeric_context(article_text, keywords=search_terms)
                 )
                 if not extracted:
