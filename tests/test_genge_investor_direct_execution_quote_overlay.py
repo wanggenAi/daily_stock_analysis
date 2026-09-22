@@ -131,7 +131,7 @@ def test_lunch_break_never_reports_immediate_execution_even_with_fresh_snapshot(
 
 
 def test_lunch_break_preserves_fresh_existing_manual_overlay_for_display_only():
-    lunch = datetime(2026, 9, 15, 4, 0, tzinfo=timezone.utc)  # 12:00 Beijing
+    lunch = datetime(2026, 9, 15, 4, 30, tzinfo=timezone.utc)  # 12:30 Beijing
     dashboard = _dashboard()
     dashboard["stock_portfolio"]["rows"][0]["canonical_price"] = 56.0
     dashboard["stock_portfolio"]["rows"][0]["current_price"] = 55.4
@@ -149,6 +149,7 @@ def test_lunch_break_preserves_fresh_existing_manual_overlay_for_display_only():
         "missing_codes": [],
         "coverage_ratio": 1.0,
         "latest_quote_observed_at": "2026-09-15T11:55:00+08:00",
+        "max_quote_age_minutes": 120,
         "no_auto_trade": True,
     }
 
