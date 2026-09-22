@@ -6,6 +6,7 @@ DEEP = Path(".github/workflows/genge-v31-deep-calculation-lambda.yml")
 TERMINAL = Path(".github/workflows/genge-v31-terminal-research-decision.yml")
 INVESTOR = Path(".github/workflows/genge-investor-terminal-research-overlay.yml")
 DECISION_CENTER = Path(".github/workflows/genge-three-pillar-decision-center.yml")
+JEV_SHADOW = Path(".github/workflows/genge-jev-shadow-evaluation.yml")
 
 
 def test_reconciler_tracks_the_exact_jev_deep_lineage() -> None:
@@ -91,3 +92,31 @@ def test_downstream_convergence_explicitly_wakes_jev_reconciler() -> None:
 
     production = center.split("  production:", 1)[1]
     assert "actions: write" in production.split("    steps:", 1)[0]
+
+
+def test_full_downstream_convergence_schedules_one_lineage_keyed_jev_reevaluation() -> None:
+    workflow = RECONCILER.read_text(encoding="utf-8")
+    shadow = JEV_SHADOW.read_text(encoding="utf-8")
+
+    assert 'next_expected="JEV_REEVALUATION"' in workflow
+    assert 'payload["continuation_jev_state"] = "PENDING"' in workflow
+    assert "Dispatch lineage-keyed Jev reevaluation after full downstream convergence" in workflow
+    assert "genge-jev-shadow-evaluation.yml/runs?branch=main&event=workflow_dispatch" in workflow
+    assert "display_title" in workflow
+    assert '-f continuation_deep_run_id="$DEEP_RUN_ID"' in workflow
+    assert "-f scope=combined" in workflow
+    assert "-f max_entities=25" in workflow
+
+    assert "continuation_deep_run_id:" in shadow
+    assert "GenGe Jev Shadow Evaluation / ${{ inputs.continuation_deep_run_id || github.run_id }}" in shadow
+    assert "continuation_from_deep_run_id" in shadow
+
+
+def test_jev_continuation_does_not_directly_relaunch_deep() -> None:
+    workflow = RECONCILER.read_text(encoding="utf-8")
+    continuation = workflow.split(
+        "Dispatch lineage-keyed Jev reevaluation after full downstream convergence", 1
+    )[1].split("Publish reconciliation summary", 1)[0]
+
+    assert "gh workflow run genge-jev-shadow-evaluation.yml" in continuation
+    assert "gh workflow run genge-v31-deep-calculation-lambda.yml" not in continuation
