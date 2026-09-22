@@ -35,16 +35,15 @@ produces a refused bridge instead of a usable routing queue.
 
 ## Persistence
 
-A successful manual **GenGe Jev Shadow Evaluation** run persists:
+A successful **GenGe Jev Shadow Evaluation** run from `workflow_dispatch` or a
+qualifying `main` push persists:
 
 - data/jev_shadow/latest.json
 - data/jev_shadow/latest_routing.json
 - JEV_RESEARCH_ROUTING.md
 
-The persistence job exists only for workflow_dispatch and owns the write permission.
-The secret-bearing live PR job remains contents:read.
-
-PR smoke runs still upload artifacts but never persist them to main.
+The persistence job owns the write permission. The secret-bearing live PR job remains
+`contents: read`; PR smoke runs upload artifacts but never persist them to `main`.
 
 ## Automatic research dispatch boundary
 
