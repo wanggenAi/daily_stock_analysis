@@ -120,3 +120,96 @@ def test_adapter_has_no_candidate_or_historical_run_hardcode() -> None:
         assert "603055" not in text
         assert "34565436187" not in text
         assert "34586652294" not in text
+
+
+def test_company_collector_retries_negative_cached_observations(monkeypatch, tmp_path: Path) -> None:
+    calls: list[str] = []
+
+    def no_annual_report(code, *_args, **_kwargs):
+        calls.append(code)
+        return []
+
+    monkeypatch.setattr(company_announcements, "_announcement_candidates", no_annual_report)
+    cache = EvidenceCache(tmp_path)
+    kwargs = {
+        "rows": [
+            {
+                "code": "600048",
+                "stock_name": "保利发展",
+                "normalized_industry": "房地产业",
+            }
+        ],
+        "as_of": date(2026, 9, 22),
+        "cache": cache,
+        "limit": 1,
+        "timeout": 1,
+    }
+
+    first_evidence, first_audit, first_summary = (
+        evidence_collectors.collect_company_announcements(**kwargs)
+    )
+    second_evidence, second_audit, second_summary = (
+        evidence_collectors.collect_company_announcements(**kwargs)
+    )
+
+    assert first_evidence == second_evidence == []
+    assert [row["issue"] for row in first_audit] == ["announcement_not_found"]
+    assert [row["issue"] for row in second_audit] == ["announcement_not_found"]
+    assert calls == ["600048", "600048"]
+    assert first_summary["company_actual_fetch_count"] == 1
+    assert second_summary["company_actual_fetch_count"] == 1
+    assert cache.cache_hits == 0
+    assert cache.cache_misses == 2
+
+
+def test_company_collector_reuses_positive_cached_evidence(monkeypatch, tmp_path: Path) -> None:
+    cache = EvidenceCache(tmp_path)
+    typed_cache = company_extraction_status._TypedEvidenceCacheProxy(cache)
+    key = typed_cache.key_for(
+        {
+            "collector": "sse_company_announcement",
+            "code": "600048",
+            "announcement_type": "annual_report",
+            "report_period": "2025",
+            "version": 4,
+        }
+    )
+    cached_evidence = [
+        {
+            "scope": "company",
+            "code": "600048",
+            "stock_name": "保利发展",
+            "industry": "房地产业",
+            "evidence_name": "fixture_verified_company_evidence",
+            "evidence_status": "VERIFIED",
+        }
+    ]
+    cache.set(key, {"evidence_rows": cached_evidence, "audit_rows": []})
+
+    monkeypatch.setattr(
+        company_announcements,
+        "_announcement_candidates",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(
+            AssertionError("positive cache should suppress provider query")
+        ),
+    )
+
+    evidence, audit, summary = evidence_collectors.collect_company_announcements(
+        rows=[
+            {
+                "code": "600048",
+                "stock_name": "保利发展",
+                "normalized_industry": "房地产业",
+            }
+        ],
+        as_of=date(2026, 9, 22),
+        cache=cache,
+        limit=1,
+        timeout=1,
+    )
+
+    assert evidence == cached_evidence
+    assert audit == []
+    assert summary["company_actual_fetch_count"] == 0
+    assert cache.cache_hits == 1
+    assert cache.cache_misses == 0
