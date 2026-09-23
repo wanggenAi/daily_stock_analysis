@@ -22,8 +22,8 @@ VALUATION_PRICE_CLOSURE_PREREQUISITE_REPLAY
 - Original #294 branch `fix/valuation-price-closure-20260923` is superseded because it diverged from live main and carried an older TASK_STATE; do not merge it directly.
 
 ## Active PR
-- Clean replay PR pending creation from `fix/valuation-price-closure-replay-20260923`.
-- #294 contains the original implementation/validation evidence but is superseded by the clean replay once the replacement PR is opened.
+- #295 `fix: replay valuation and price closure on current main` is open from `fix/valuation-price-closure-replay-20260923`.
+- #294 is closed/superseded; retain it only as original implementation/validation evidence.
 - #293 remains closed/merged.
 
 ## CI
