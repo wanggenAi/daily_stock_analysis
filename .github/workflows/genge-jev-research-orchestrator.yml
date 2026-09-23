@@ -343,6 +343,80 @@ jobs:
             [ "$attempt" -lt 4 ] || exit 1
           done
 
+      - name: Persist research lifecycle convergence
+        if: always() && steps.plan.outcome == 'success' && steps.deep.outcome == 'success'
+        shell: bash
+        run: |
+          set -euo pipefail
+          plan="$RUNNER_TEMP/jev-orchestration-plan.json"
+          transitions="$(jq -r '.summary.lifecycle_transition_count // 0' "$plan")"
+          if [ "$transitions" = "0" ]; then
+            echo "No candidate lifecycle convergence to persist."
+            exit 0
+          fi
+          cp "$plan" /tmp/jev-lifecycle-plan.json
+          observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          git config user.name "genge-jev-orchestrator-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          for attempt in 1 2 3 4; do
+            echo "research-lifecycle persistence replay ${attempt}/4"
+            git fetch origin main
+            git reset --hard origin/main
+            PLAN=/tmp/jev-lifecycle-plan.json OBSERVED_AT="$observed_at" python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_persistence import (
+              render_ledger_projection,
+          )
+          from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
+              apply_explicit_transition,
+              load_state,
+              write_state,
+          )
+
+          state_path = Path("data/opportunity_snapshots/candidate_lifecycle_state.json")
+          projection_path = Path("V31_CANDIDATE_LEDGER.md")
+          plan = json.loads(Path(os.environ["PLAN"]).read_text(encoding="utf-8"))
+          state = load_state(state_path)
+          events = []
+          for raw in plan.get("lifecycle_transitions") or []:
+              if not isinstance(raw, dict):
+                  continue
+              transition = dict(raw)
+              transition["evidence_observed_at"] = os.environ["OBSERVED_AT"]
+              state, event = apply_explicit_transition(state, transition)
+              if event is not None:
+                  events.append(event)
+          write_state(state_path, state)
+          projection_path.write_text(render_ledger_projection(state), encoding="utf-8")
+          print(json.dumps({
+              "planned_transition_count": len(plan.get("lifecycle_transitions") or []),
+              "applied_transition_count": len(events),
+              "research_exhausted_count": sum(
+                  1 for event in events if event.get("event") == "RESEARCH_EXHAUSTED"
+              ),
+              "research_reactivated_count": sum(
+                  1 for event in events if event.get("event") == "RESEARCH_REACTIVATED"
+              ),
+              "no_auto_trade": state.get("no_auto_trade"),
+          }, ensure_ascii=False, indent=2))
+          PY
+            git add data/opportunity_snapshots/candidate_lifecycle_state.json V31_CANDIDATE_LEDGER.md
+            if git diff --cached --quiet; then
+              echo "Research lifecycle already converged."
+              exit 0
+            fi
+            git commit -m "Persist research lifecycle convergence [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo "main moved; replaying lifecycle convergence on latest durable state." >&2
+          done
+          echo "research lifecycle persistence failed after 4 replays" >&2
+          exit 1
+
       - name: Publish orchestration summary
         if: always()
         run: |
