@@ -158,7 +158,8 @@ def test_workflow_auto_chains_research_without_trading_authority():
     workflow = Path(".github/workflows/genge-jev-research-orchestrator.yml").read_text(
         encoding="utf-8"
     )
-    assert '"GenGe Jev Shadow Evaluation"' in workflow
+    assert "workflow_run:" not in workflow
+    assert "if: github.event_name == 'workflow_dispatch'" in workflow
     assert "actions: write" in workflow
     assert "gh workflow run genge-v31-deep-calculation-lambda.yml" in workflow
     assert "JEV_ORCHESTRATOR_" in workflow
