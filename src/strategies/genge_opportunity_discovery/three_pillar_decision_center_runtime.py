@@ -969,6 +969,17 @@ def _attach_jev_entry_judgments(
     rows: list[dict[str, Any]] = []
     stale_count = 0
     invalid_count = 0
+    terminal_bucket_by_code: dict[str, str] = {}
+    for bucket, values in (
+        ("BUY", opportunities.get("research_buy") or []),
+        ("WAIT_PRICE", opportunities.get("research_wait_price") or []),
+        ("RESEARCH_GAP", opportunities.get("research_gap") or []),
+    ):
+        for item in values:
+            if isinstance(item, Mapping):
+                code = _stock_code(item.get("code"))
+                if code:
+                    terminal_bucket_by_code[code] = bucket
 
     if (
         routing.get("contract") != "GEN_GE_JEV_ROUTING_BRIDGE_V1"
@@ -1007,10 +1018,26 @@ def _attach_jev_entry_judgments(
         if not runtime_run_id or source_deep != runtime_run_id:
             stale_count += 1
             continue
+        code = _stock_code(raw.get("entity_id"))
+        judgment = str(entry.get("validated_judgment") or "")
+        terminal_bucket = terminal_bucket_by_code.get(code, "")
+        expected_bucket = (
+            "BUY"
+            if judgment == "ENTRY_NOW"
+            else "WAIT_PRICE"
+            if judgment in {"WAIT_PRICE", "DO_NOT_CHASE"}
+            else "RESEARCH_GAP"
+            if judgment == "WAIT_EVIDENCE"
+            else ""
+        )
+        if expected_bucket and terminal_bucket != expected_bucket:
+            invalid_count += 1
+            continue
         item = {
-            "code": _stock_code(raw.get("entity_id")),
+            "code": code,
             "name": str(raw.get("entity_name") or ""),
             **dict(entry),
+            "terminal_research_bucket": terminal_bucket,
             "jev_route": str(raw.get("route") or ""),
             "jev_route_confidence": raw.get("route_confidence"),
             "source_jev_run_id": str(routing.get("source_workflow_run_id") or ""),
