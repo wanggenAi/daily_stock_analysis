@@ -22,7 +22,13 @@ RESEARCH_EXHAUSTION_DORMANCY_IMPLEMENTATION
 - Scope: durable research-exhaustion DORMANT state plus deterministic evidence-epoch reactivation; no threshold or Formal strategy change.
 
 ## Active PR
-- Not opened yet at this checkpoint.
+- #289 `feat: converge exhausted research candidates into dormancy`.
+- Head before this checkpoint: `adfce73e2fe0a80f6256bb2c5b40a589ae6aa565`.
+
+## CI
+- Initial #289 CI `35828339588` failed only in `ai-governance` because this checkpoint omitted the required `## CI` heading; backend/docker were skipped downstream of governance.
+- Fix in progress: restore the required heading without changing implementation semantics.
+- Jev/Opportunity/legacy research PR workflows were still running at the last observation.
 
 ## Production / Artifact
 - Fresh Jev `35826965359`: 603105 exact Deep profile PASS on earnings_authenticity / financial_safety / predictability; only long_term_demand / moat remain UNKNOWN.
