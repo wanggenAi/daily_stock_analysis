@@ -28,15 +28,20 @@ from .candidate_lifecycle_persistence import (
 )
 from .candidate_lifecycle_state import (
     ACTIVE,
+    DORMANT,
     ARCHIVED,
     INVALIDATED,
     LIFECYCLE_CONTRACT_VERSION,
+    apply_research_exhaustion_lifecycle,
     load_state,
+    write_state,
 )
 
 STATE_RELATIVE_PATH = Path("data/opportunity_snapshots/candidate_lifecycle_state.json")
 LEDGER_RELATIVE_PATH = Path("V31_CANDIDATE_LEDGER.md")
 LEGACY_NOTES_RELATIVE_PATH = Path("V31_CANDIDATE_RESEARCH_NOTES_LEGACY.md")
+JEV_ROUTING_RELATIVE_PATH = Path("data/jev_shadow/latest_routing.json")
+STRATEGY_LEDGER_RELATIVE_PATH = Path("data/jev_shadow/research_strategy_ledger.json")
 MEANINGFUL_FORMAL_ACTIONS = {"BUY", "ADD", "REDUCE", "EXIT"}
 DEFAULT_MAX_ATTEMPTS = 4
 
@@ -108,6 +113,7 @@ def _write_duplicate_outputs(
         "snapshot_event_count": 0,
         "candidate_count": len(candidates),
         "active_count": sum(1 for row in rows if row.get("lifecycle_state") == ACTIVE),
+        "dormant_count": sum(1 for row in rows if row.get("lifecycle_state") == DORMANT),
         "inactive_count": sum(
             1 for row in rows if row.get("lifecycle_state") in {ARCHIVED, INVALIDATED}
         ),
@@ -336,24 +342,166 @@ def publish_candidate_lifecycle_with_replay(
         shutil.rmtree(temp_root, ignore_errors=True)
 
 
+def publish_research_lifecycle_with_replay(
+    *,
+    expected_jev_run_id: str,
+    repo_root: Path = Path("."),
+    remote: str = "origin",
+    branch: str = "main",
+    max_attempts: int = DEFAULT_MAX_ATTEMPTS,
+) -> dict[str, Any]:
+    """Persist DORMANT/reactivation transitions against latest main with replay."""
+
+    expected_jev_run_id = str(expected_jev_run_id or "").strip()
+    if not expected_jev_run_id.isdigit():
+        raise ValueError("expected_jev_run_id must be a numeric GitHub Actions run id")
+    if max_attempts < 1:
+        raise ValueError("max_attempts must be >= 1")
+
+    repo_root = repo_root.resolve()
+    _git(repo_root, "config", "user.name", "genge-research-lifecycle-bot")
+    _git(
+        repo_root,
+        "config",
+        "user.email",
+        "31836791+wanggenAi@users.noreply.github.com",
+    )
+
+    temp_root = Path(tempfile.mkdtemp(prefix="genge-research-lifecycle-replay-"))
+    last_push_error = ""
+    try:
+        for attempt in range(1, max_attempts + 1):
+            _git(repo_root, "fetch", remote, branch)
+            remote_ref = f"{remote}/{branch}"
+            base_sha = _git_text(repo_root, "rev-parse", remote_ref)
+            worktree = temp_root / f"research-worktree-{attempt}"
+            _git(repo_root, "worktree", "add", "--detach", str(worktree), base_sha)
+            try:
+                state_path = worktree / STATE_RELATIVE_PATH
+                projection_path = worktree / LEDGER_RELATIVE_PATH
+                routing_path = worktree / JEV_ROUTING_RELATIVE_PATH
+                strategy_path = worktree / STRATEGY_LEDGER_RELATIVE_PATH
+                if not state_path.is_file():
+                    raise ValueError("candidate lifecycle state is unavailable")
+                if not routing_path.is_file() or not strategy_path.is_file():
+                    raise ValueError("persisted Jev routing/strategy ledger is unavailable")
+
+                routing = json.loads(routing_path.read_text(encoding="utf-8"))
+                strategy = json.loads(strategy_path.read_text(encoding="utf-8"))
+                source_run_id = str(routing.get("source_workflow_run_id") or "")
+                if source_run_id != expected_jev_run_id:
+                    raise ValueError(
+                        "persisted Jev lineage mismatch: "
+                        f"expected={expected_jev_run_id} persisted={source_run_id}"
+                    )
+
+                state = load_state(state_path)
+                next_state, events = apply_research_exhaustion_lifecycle(
+                    state,
+                    routing,
+                    strategy,
+                )
+                if events:
+                    write_state(state_path, next_state)
+                    projection_path.write_text(
+                        render_ledger_projection(next_state),
+                        encoding="utf-8",
+                    )
+                    _git(
+                        worktree,
+                        "add",
+                        str(STATE_RELATIVE_PATH),
+                        str(LEDGER_RELATIVE_PATH),
+                    )
+
+                diff = _git(worktree, "diff", "--cached", "--quiet", check=False)
+                if diff.returncode not in {0, 1}:
+                    raise RuntimeError(
+                        f"git diff --cached --quiet failed: {diff.returncode}"
+                    )
+                dormant_count = sum(
+                    1
+                    for row in (next_state.get("candidates") or {}).values()
+                    if isinstance(row, Mapping) and row.get("lifecycle_state") == DORMANT
+                )
+                if diff.returncode == 0:
+                    return {
+                        "status": "NO_CHANGE",
+                        "source_jev_run_id": source_run_id,
+                        "event_count": 0,
+                        "dormant_count": dormant_count,
+                        "attempt": attempt,
+                        "base_sha": base_sha,
+                        "persisted_commit_sha": base_sha,
+                        "replay_on_conflict": True,
+                        "no_auto_trade": True,
+                    }
+
+                _git(
+                    worktree,
+                    "commit",
+                    "-m",
+                    f"Reconcile candidate research dormancy {source_run_id} [skip ci]",
+                )
+                commit_sha = _git_text(worktree, "rev-parse", "HEAD")
+                if _push_worktree(worktree, remote, branch):
+                    return {
+                        "status": "PERSISTED",
+                        "source_jev_run_id": source_run_id,
+                        "event_count": len(events),
+                        "dormant_count": dormant_count,
+                        "attempt": attempt,
+                        "base_sha": base_sha,
+                        "persisted_commit_sha": commit_sha,
+                        "replay_on_conflict": True,
+                        "no_auto_trade": True,
+                    }
+                last_push_error = (
+                    f"push rejected on attempt {attempt}; remote {remote}/{branch} moved "
+                    "or push failed"
+                )
+            finally:
+                _git(repo_root, "worktree", "remove", "--force", str(worktree), check=False)
+
+        raise RuntimeError(
+            f"research lifecycle persistence failed after {max_attempts} attempts: "
+            f"{last_push_error or 'no successful push'}"
+        )
+    finally:
+        shutil.rmtree(temp_root, ignore_errors=True)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--snapshot", type=Path, required=True)
-    parser.add_argument("--authoritative-dir", type=Path, required=True)
+    parser.add_argument("--snapshot", type=Path)
+    parser.add_argument("--authoritative-dir", type=Path)
+    parser.add_argument("--research-reconcile", action="store_true")
+    parser.add_argument("--expected-jev-run-id", default="")
     parser.add_argument("--repo-root", type=Path, default=Path("."))
     parser.add_argument("--remote", default="origin")
     parser.add_argument("--branch", default="main")
     parser.add_argument("--max-attempts", type=int, default=DEFAULT_MAX_ATTEMPTS)
     args = parser.parse_args(argv)
 
-    result = publish_candidate_lifecycle_with_replay(
-        snapshot_path=args.snapshot,
-        authoritative_dir=args.authoritative_dir,
-        repo_root=args.repo_root,
-        remote=args.remote,
-        branch=args.branch,
-        max_attempts=args.max_attempts,
-    )
+    if args.research_reconcile:
+        result = publish_research_lifecycle_with_replay(
+            expected_jev_run_id=args.expected_jev_run_id,
+            repo_root=args.repo_root,
+            remote=args.remote,
+            branch=args.branch,
+            max_attempts=args.max_attempts,
+        )
+    else:
+        if args.snapshot is None or args.authoritative_dir is None:
+            parser.error("--snapshot and --authoritative-dir are required outside --research-reconcile")
+        result = publish_candidate_lifecycle_with_replay(
+            snapshot_path=args.snapshot,
+            authoritative_dir=args.authoritative_dir,
+            repo_root=args.repo_root,
+            remote=args.remote,
+            branch=args.branch,
+            max_attempts=args.max_attempts,
+        )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
 

@@ -22,6 +22,7 @@ from typing import Any, Mapping
 
 from .candidate_lifecycle_state import (
     ACTIVE,
+    DORMANT,
     ARCHIVED,
     INVALIDATED,
     LIFECYCLE_CONTRACT_VERSION,
@@ -176,7 +177,7 @@ def bootstrap_state_from_legacy_ledger(path: Path) -> dict[str, Any]:
 
 def _candidate_sort_key(candidate: Mapping[str, Any]) -> tuple[int, int, str]:
     lifecycle = str(candidate.get("lifecycle_state") or "")
-    state_rank = {ACTIVE: 0, ARCHIVED: 1, INVALIDATED: 2}.get(lifecycle, 9)
+    state_rank = {ACTIVE: 0, DORMANT: 1, ARCHIVED: 2, INVALIDATED: 3}.get(lifecycle, 9)
     tier = str(candidate.get("research_tier") or "").upper()
     if tier.startswith("A1"):
         tier_rank = 0
@@ -199,6 +200,7 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
     candidates.sort(key=_candidate_sort_key)
 
     active = [row for row in candidates if row.get("lifecycle_state") == ACTIVE]
+    dormant = [row for row in candidates if row.get("lifecycle_state") == DORMANT]
     inactive = [row for row in candidates if row.get("lifecycle_state") in {ARCHIVED, INVALIDATED}]
 
     lines = [
@@ -215,6 +217,7 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
         f"- latest_applied_snapshot_id: `{state.get('latest_applied_snapshot_id') or ''}`",
         f"- latest_research_as_of: `{state.get('latest_research_as_of') or ''}`",
         f"- active_candidates: {len(active)}",
+        f"- dormant_research_candidates: {len(dormant)}",
         f"- archived_or_invalidated_candidates: {len(inactive)}",
         f"- lifecycle_event_count: {int(state.get('event_count') or 0)}",
         "- seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration",
@@ -249,6 +252,30 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
 
     lines.extend([
         "",
+        "## DORMANT research candidate ledger",
+        "",
+        "| Code | Name | Tier | Seen | Research Epoch | Last Snapshot | Last Event |",
+        "| --- | --- | --- | ---: | --- | --- | --- |",
+    ])
+    for row in dormant:
+        lines.append(
+            "| {code} | {name} | {tier} | {seen} | {epoch} | {snapshot} | {event} |".format(
+                code=row.get("code") or "",
+                name=row.get("stock_name") or "",
+                tier=row.get("research_tier") or "",
+                seen=int(row.get("seen_count") or 0),
+                epoch=row.get("research_dormant_epoch") or "",
+                snapshot=row.get("last_seen_snapshot_id") or "LEGACY_IMPORT",
+                event=row.get("last_event") or "",
+            )
+        )
+    if not dormant:
+        lines.append("| - | - | - | 0 | - | - | - |")
+    for row in dormant:
+        lines.extend(_render_candidate_detail(row))
+
+    lines.extend([
+        "",
         "## Archived / INVALIDATED candidate ledger",
         "",
         "| Code | Name | Lifecycle State | Tier | Seen | Last Snapshot | Last Event |",
@@ -278,6 +305,8 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
         "- `seen_count` counts distinct canonical observations since machine lifecycle migration; legacy counts are audit-only metadata.",
         "- Re-reading the same canonical snapshot is idempotent and must not increment `seen_count`.",
         "- Absence from a snapshot does not automatically archive or invalidate a candidate.",
+        "- DORMANT means supported research strategies were deterministically exhausted for the current evidence epoch; it is not a REJECT/FAIL.",
+        "- DORMANT may reactivate automatically only when a new schedulable research epoch or terminal research progress is proven; current holdings are protected from dormancy.",
         "- Archived/INVALIDATED rediscovery requires explicit evidence-backed reactivation.",
         "- Explicit upgrade/downgrade/archive/invalidate/reactivate events require unique evidence IDs.",
         "- The lifecycle state is downstream memory only; it must never filter broad Discovery.",
@@ -366,6 +395,10 @@ def persist_finalized_snapshot(
             "active_count": sum(
                 1 for row in (state.get("candidates") or {}).values()
                 if isinstance(row, Mapping) and row.get("lifecycle_state") == ACTIVE
+            ),
+            "dormant_count": sum(
+                1 for row in (state.get("candidates") or {}).values()
+                if isinstance(row, Mapping) and row.get("lifecycle_state") == DORMANT
             ),
             "inactive_count": sum(
                 1 for row in (state.get("candidates") or {}).values()

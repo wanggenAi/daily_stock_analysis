@@ -367,3 +367,102 @@ def has_strategy_scope(row: Mapping[str, Any]) -> bool:
     """Whether this row has gate-level state that the ledger can govern."""
 
     return bool(unresolved_gates(row))
+
+
+def research_exhaustion_state(
+    row: Mapping[str, Any],
+    ledger: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Prove whether every supported unresolved gate is exhausted in this epoch.
+
+    Exhaustion is research-control state only. It requires an exact
+    code/gate/strategy/evidence-epoch match already closed as
+    EXHAUSTED_NO_PROGRESS. Missing profiles, accepted work, changed evidence,
+    unsupported gates, or a never-attempted current epoch are not exhaustion.
+    """
+
+    code = _code(row.get("entity_id"))
+    gates = unresolved_gates(row)
+    blocker = _profile_workset_blocker(row)
+    normalized = normalize_ledger(ledger)
+    gate_states: list[dict[str, Any]] = []
+    if not code or not gates or blocker:
+        return {
+            "exhausted": False,
+            "code": code,
+            "supported_gate_count": 0,
+            "gate_states": gate_states,
+            "blocker": blocker or ("NO_SUPPORTED_UNRESOLVED_SCOPE" if not gates else ""),
+            "evidence_epoch_fingerprint": "",
+        }
+
+    for gate, reason in sorted(gates.items()):
+        spec = _GATE_STRATEGY.get(gate)
+        if spec is None:
+            continue
+        fingerprint = gate_evidence_fingerprint(
+            row,
+            gate=gate,
+            unresolved_reason=reason,
+        )
+        matching = [
+            entry
+            for entry in normalized["entries"]
+            if _same_attempt(
+                entry,
+                code=code,
+                gate=gate,
+                strategy_family=spec["strategy_family"],
+                fingerprint=fingerprint,
+            )
+        ]
+        exhausted = any(
+            str(entry.get("attempt_status") or "") == "EXHAUSTED_NO_PROGRESS"
+            and entry.get("strategy_exhausted") is True
+            for entry in matching
+        )
+        gate_states.append(
+            {
+                "hard_gate": gate,
+                "strategy_family": spec["strategy_family"],
+                "evidence_fingerprint": fingerprint,
+                "exhausted": exhausted,
+                "attempt_statuses": sorted(
+                    {
+                        str(entry.get("attempt_status") or "")
+                        for entry in matching
+                        if str(entry.get("attempt_status") or "")
+                    }
+                ),
+            }
+        )
+
+    exhausted = bool(gate_states) and all(item["exhausted"] for item in gate_states)
+    epoch_payload = [
+        {
+            "hard_gate": item["hard_gate"],
+            "strategy_family": item["strategy_family"],
+            "evidence_fingerprint": item["evidence_fingerprint"],
+        }
+        for item in gate_states
+    ]
+    epoch = (
+        hashlib.sha256(
+            json.dumps(
+                epoch_payload,
+                ensure_ascii=False,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode("utf-8")
+        ).hexdigest()[:20]
+        if epoch_payload
+        else ""
+    )
+    return {
+        "exhausted": exhausted,
+        "code": code,
+        "supported_gate_count": len(gate_states),
+        "gate_states": gate_states,
+        "blocker": "",
+        "evidence_epoch_fingerprint": epoch,
+    }
