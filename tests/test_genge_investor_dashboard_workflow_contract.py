@@ -147,3 +147,13 @@ def test_investor_brief_reapplies_execution_consumption_before_persistence() -> 
     assert "routine_canonical_refresh_rearms_consumed_add" in block
     assert "explicit_rearm_required" in block
     assert build_at < consumption_at < validation_at < commit_at
+
+
+def test_investor_brief_validation_accepts_terminal_research_section_in_presentation_order() -> None:
+    workflow = _workflow()
+    expected = (
+        "assert p['presentation_contract']['section_order'][:7] == "
+        "['market','stock_portfolio','terminal_research','terminal_buy_now',"
+        "'terminal_wait_price','capital_deployment','final_operation_table']"
+    )
+    assert expected in workflow
