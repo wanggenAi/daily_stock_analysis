@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-23T14:04:10+00:00",
+  "mode": "EVENT",
+  "generated_at": "2026-09-23T14:16:59+00:00",
   "canonical_snapshot_id": "538269c3908f97c328d1",
   "canonical_source_run_id": "35829289957",
   "latest_trade_date": "2026-09-22",
@@ -360,8 +360,14 @@
     "rows": []
   },
   "event_review": {
-    "triggered": false,
-    "trigger_codes": []
+    "triggered": true,
+    "trigger_codes": [
+      "001316",
+      "601318",
+      "603993",
+      "000504",
+      "600816"
+    ]
   },
   "hourly_context": {
     "available": true,
@@ -414,7 +420,7 @@
       "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
       "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
     ],
-    "evaluated_at": "2026-09-23T14:04:10+00:00",
+    "evaluated_at": "2026-09-23T14:16:59+00:00",
     "canonical_generated_at": "2026-09-23T07:12:20+00:00",
     "canonical_latest_trade_date": "2026-09-22",
     "canonical_source_run_id": "35829289957",
@@ -483,14 +489,14 @@
   "terminal_research_snapshot": {
     "available": true,
     "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-    "source_deep_lambda_run_id": "35869903181",
-    "source_every_industry_run_id": "35829289957",
+    "source_deep_lambda_run_id": "35872063645",
+    "source_every_industry_run_id": "35870152528",
     "requested_count": 15,
     "decision_counts": {
       "RESEARCH_GAP": 15,
-      "WAIT_PRICE": 0,
+      "REJECT": 0,
       "BUY": 0,
-      "REJECT": 0
+      "WAIT_PRICE": 0
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
