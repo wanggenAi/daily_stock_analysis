@@ -729,7 +729,7 @@ def test_candidate_lifecycle_and_system_capabilities_are_visible_in_final_report
     md = render_runtime_markdown(out)
     assert "## 本次汇报真正用了哪些系统能力" in md
     assert "Candidate Lifecycle 持续研究记忆" in md
-    assert "当前 ACTIVE **2**；累计生命周期事件 **3**" in md
+    assert "当前 ACTIVE **2**；DORMANT **0**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **3**" in md
     assert "国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 176 次" in md
     assert "价值区间 12.83–26.09" in md
     assert "区位 **UPPER_VALUE**" in md
