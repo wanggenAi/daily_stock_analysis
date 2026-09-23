@@ -1,72 +1,64 @@
 {
   "schema_version": 2,
-  "generation": 39,
+  "generation": 40,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "PR292_DECISION_CENTER_CURRENT_CONTINUATION_JEV_RUNNING",
-  "last_observed_main_sha": "771aba2cc47ebd89c1ede5e9d7a385b86852c2a4",
+  "stage": "PRODUCTION_LINEAGE_CONVERGED_DISPLAY_FIX_PENDING",
+  "last_observed_main_sha": "da1b8212b209ff17b823721b4a93dd12eee98f64",
   "work_branch": null,
   "work_head_sha": null,
   "active_pr": null,
   "ci": {
-    "merge_sha": "27e857007884c560db539581cb599a500389aaa3",
-    "production_jev_run_id": 35848751814,
-    "production_jev_status": "SUCCESS",
-    "orchestrator_run_id": 35848953724,
-    "orchestrator_status": "SUCCESS",
+    "pr_292_merge_sha": "27e857007884c560db539581cb599a500389aaa3",
+    "initial_jev_run_id": 35848751814,
+    "initial_orchestrator_run_id": 35848953724,
     "deep_run_id": 35849124866,
-    "deep_status": "SUCCESS",
     "provenance_run_id": 35849381115,
-    "provenance_status": "SUCCESS",
     "terminal_run_id": 35849383598,
-    "terminal_status": "SUCCESS",
     "overlay_run_id": 35849559567,
-    "overlay_status": "SUCCESS",
     "three_pillar_run_id": 35849728138,
-    "three_pillar_status": "SUCCESS",
     "continuation_jev_run_id": 35849969346,
-    "continuation_jev_status": "IN_PROGRESS"
+    "continuation_orchestrator_run_id": 35850186518,
+    "continuation_orchestrator_status": "SUCCESS_NOOP"
   },
   "production_or_artifact": {
-    "status": "RESEARCH_BUY_VISIBLE_FORMAL_AUTHORITY_UNCHANGED_CONTINUATION_CHECK_RUNNING",
+    "status": "RESEARCH_BUY_CONVERGED_NO_DUPLICATE_DEEP",
     "verified": [
-      "Fresh initial Jev run 35848751814 used TypeSafe/Jev successfully and exact deterministic Orchestrator run 35848953724 selected only 603596.",
-      "Exact Deep run 35849124866 completed SUCCESS/COMPLETE and provenance audit 35849381115 verified all PASS gates have evidence.",
-      "Terminal Research Decision run 35849383598 converged 603596 to research_decision=BUY with five hard gates PASS.",
-      "603596 research valuation is current_pe=17.95, historical_median_pe_reference=33.65, pe_to_history_ratio=0.5334323922734027, reference_price=29.15 on 2026-09-22.",
-      "Research capital advisory is BUILD with conviction=0.945 and suggested_max_portfolio_pct=3, but authority=ADVISORY_ONLY, automatic_execution_allowed=false and formal_buy_authorized=false.",
-      "Investor Overlay run 35849559567 and Three-Pillar run 35849728138 succeeded; decision center source Deep is exactly 35849124866 and terminal snapshot current_for_deep_runtime=true.",
-      "Decision center retains formal_action_source=FINALIZED_CANONICAL_ONLY, formal_action_recomputed=false and no_auto_trade=true.",
-      "Reconciler dispatched exactly one lineage-keyed continuation Jev run 35849969346 from Deep 35849124866."
+      "Initial main-push TypeSafe/Jev run 35848751814 completed 25/25 and deterministic Orchestrator run 35848953724 selected only 603596.",
+      "Exact Deep run 35849124866 completed SUCCESS/COMPLETE; provenance audit 35849381115 verified PASS evidence lineage.",
+      "Terminal run 35849383598 converged 603596 to RESEARCH_ONLY BUY with five hard gates PASS and advisory BUILD up to 3%, while formal_buy_authorized=false and no_auto_trade=true.",
+      "Investor Overlay 35849559567 and Three-Pillar 35849728138 consumed exact Deep 35849124866; decision center is current_for_deep_runtime=true and Formal action source remains FINALIZED_CANONICAL_ONLY.",
+      "Continuation TypeSafe/Jev run 35849969346 completed 25/25 using jev-1.13.0. For 603596 it now sees existing_engine_action=RESEARCH:BUY and evidence_state=ADEQUATE_FOR_CURRENT_RESEARCH_STATE.",
+      "Continuation deterministic Orchestrator run 35850186518 completed NOOP: should_dispatch=false, requested_codes=[], deep_run_id='', and both write-ahead/Deep-dispatch steps were skipped.",
+      "603596 is human-review only in the continuation because route=DEEP_RESEARCH confidence=0.46 is below min_auto_route_confidence=0.5; no duplicate Deep was created."
+    ],
+    "display_gap": [
+      "LATEST_DECISION_CENTER.md still shows 603596 in the pre-terminal five-gate lead section with stale text 'continue valuation / do not buy yet' even though the exact current terminal section correctly exposes RESEARCH BUY / BUILD.",
+      "Root cause is _attach_deep_qualified_research_leads: it excludes holdings and Canonical BUY/WAIT_PRICE codes but does not exclude codes already resolved by a current terminal research decision."
     ],
     "safety": [
-      "Research BUY is not Canonical Formal BUY and is not executable authorization.",
-      "No auto trade; automatic formal BUY remains false.",
-      "Do not rerun Jev 35848751814, Orchestrator 35848953724 or Deep 35849124866.",
-      "Continuation must prove convergence without duplicate Deep unless a genuinely novel deterministic research strategy exists."
+      "Research BUY/BUILD is advisory/research-only and does not create Canonical Formal BUY or automatic execution.",
+      "UNKNOWN != PASS and no_auto_trade=true.",
+      "Do not rerun the consumed Jev/Deep lineage."
     ]
   },
   "pending_operation": {
-    "type": "VERIFY_CONTINUATION_JEV_CONVERGES_WITHOUT_DUPLICATE_DEEP",
-    "continuation_from_deep_run_id": 35849124866,
-    "continuation_jev_run_id": 35849969346,
-    "require": "track continuation Jev 35849969346 to success, inspect its persisted exact routing and deterministic Orchestrator result, verify no duplicate Deep for 603596 in the same evidence epoch, then reconcile any remaining user-facing stale wording and persist final TASK_STATE checkpoint"
+    "type": "CREATE_FRESH_DISPLAY_CONSISTENCY_FIX_AND_FINAL_TASK_STATE_PR",
+    "require": "create a fresh branch from current main; make deep-qualified pre-terminal leads exclude codes already covered by the exact current terminal research snapshot; add regression coverage proving a current terminal BUY does not also render stale DO_NOT_BUY_YET lead text; update TASK_STATE with the completed #292 production lineage; run PR CI; merge after green; verify post-merge Three-Pillar output and final authority separation"
   },
   "completed": [
-    "Merged #292 after green PR CI.",
-    "Verified fresh production TypeSafe/Jev -> deterministic Orchestrator -> one-code Deep chain.",
-    "Verified Deep SUCCESS/COMPLETE and provenance proof.",
-    "Verified Terminal research BUY and advisory BUILD for 603596.",
-    "Verified Investor Overlay and Three-Pillar consume exact Deep 35849124866 while preserving Canonical-only Formal authority.",
-    "Verified continuation Jev dispatch is keyed to exact Deep lineage."
+    "Merged #292 and verified its production wake behavior.",
+    "Completed real TypeSafe/Jev -> deterministic Orchestrator -> bounded Deep -> Provenance -> Terminal -> Investor Overlay -> Three-Pillar lineage.",
+    "Obtained one truthful research BUY/BUILD candidate: 603596 伯特利.",
+    "Completed lineage-keyed continuation Jev and proved deterministic NOOP/no duplicate Deep."
   ],
-  "next_action": "Track continuation Jev 35849969346, then its exact deterministic Orchestrator outcome. If no duplicate Deep occurs, fix any stale conflicting decision-center prose if still present, commit the final TASK_STATE production checkpoint through a fresh branch/PR, verify CI, merge, and mark this recovery task COMPLETE.",
+  "next_action": "Create a new display-consistency branch from live main, patch three_pillar_decision_center_runtime.py and its tests, update TASK_STATE.md with terminal production facts, open PR, run CI, merge if green, then verify regenerated decision center no longer contains the stale pre-terminal wording for 603596 and mark recovery COMPLETE.",
   "do_not_repeat": [
-    "Do not reopen consumed old PRs or branches.",
-    "Do not dispatch another Deep for 603596 from the same evidence epoch unless deterministic novelty rules explicitly permit it.",
-    "Do not represent research BUY/BUILD as Formal BUY or automatic execution.",
-    "Do not lower thresholds or relax UNKNOWN != PASS, Canonical authority or no_auto_trade."
+    "Do not reopen #292 branch or any consumed lineage.",
+    "Do not rerun Deep 35849124866.",
+    "Do not turn research BUY/BUILD into Formal BUY.",
+    "Do not lower thresholds or relax UNKNOWN != PASS / no_auto_trade."
   ],
-  "business_code_baseline_sha": "771aba2cc47ebd89c1ede5e9d7a385b86852c2a4"
+  "business_code_baseline_sha": "da1b8212b209ff17b823721b4a93dd12eee98f64"
 }
