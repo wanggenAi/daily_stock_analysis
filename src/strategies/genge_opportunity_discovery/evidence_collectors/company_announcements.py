@@ -1107,7 +1107,15 @@ def collect_company_announcements(
                 "version": 4,
             }
         )
-        cached = cache.get(key)
+        # Only verified positive annual-report evidence may suppress a fresh
+        # provider request.  Transport failures, parser failures and apparent
+        # source absence are negative observations, not durable evidence; a
+        # restored 14-day cache must not turn a transient exchange outage into
+        # a two-week research blind spot.
+        cached = cache.get(
+            key,
+            accept=lambda payload: bool(payload.get("evidence_rows")),
+        )
         if cached is not None:
             evidence_rows.extend(cached.get("evidence_rows") or [])
             for audit in cached.get("audit_rows") or []:
