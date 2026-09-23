@@ -24,7 +24,7 @@
 
 ### 今日A股大盘脉搏
 
-- 2026-09-22：市场 **YELLOW**；数据质量 **OK**；市场分数 **57.74**；仓位倍率 **0.50**。
+- 2026-09-22：市场 **YELLOW**；数据质量 **OK**；市场分数 **54.74**；仓位倍率 **0.50**。
 - 上涨家数占比 **43.13%**；中位涨跌 **-0.20%**；MA20 上方 **55.54%**；MA60 上方 **62.47%**；涨停/跌停 **63/4**。
 - 市场读法：**当日涨跌广度中性；短中期趋势仍有分化；极端分化/派发代理暂不高**。这只是市场环境解释，不自行创造个股 BUY 权限。
 
@@ -91,7 +91,7 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 
 | 能力 | 状态 | 当前真正产出的结果 |
 |---|---|---|
-| 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=57.74 / 2026-09-22 |
+| 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=54.74 / 2026-09-22 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=123 / dormant=3 / archived-invalidated=0 / events=9953 / focus=4 |
