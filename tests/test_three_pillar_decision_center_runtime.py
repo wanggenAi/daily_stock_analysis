@@ -938,6 +938,39 @@ def test_stale_or_unknown_profile_cannot_surface_as_deep_qualified_lead():
     assert stale["pillar_3_deep_opportunities"]["deep_qualified_research_lead_count"] == 0
 
 
+def _terminal_buy_603596(lambda_run_id="987654"):
+    terminal = _terminal_research(lambda_run_id)
+    row = terminal["terminal_rows"][0]
+    row.update(
+        {
+            "code": "603596",
+            "name": "伯特利",
+            "industry": "C36汽车制造业",
+            "research_decision": "BUY",
+            "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
+            "hard_gate_pass_count": 5,
+            "hard_gate_unknowns": [],
+            "capital_allocation": {
+                "action": "BUILD",
+                "authority": "ADVISORY_ONLY",
+                "automatic_execution_allowed": False,
+                "formal_buy_authorized": False,
+                "no_auto_trade": True,
+                "capital_conviction_score": 0.945,
+                "suggested_max_portfolio_pct": 3.0,
+            },
+        }
+    )
+    terminal["decision_counts"] = {
+        "BUY": 1,
+        "WAIT_PRICE": 0,
+        "RESEARCH_GAP": 0,
+        "REJECT": 0,
+    }
+    terminal["urgent_research_queue"] = []
+    return terminal
+
+
 def _jev_entry_routing(deep_run_id="987654", judgment="ENTRY_NOW"):
     return {
         "contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
@@ -988,7 +1021,7 @@ def test_current_jev_entry_judgment_is_exposed_without_formal_authority():
         automatic_profiles=_automatic_profiles(),
         static_profiles={},
         deep_calculation_status=_status(),
-        terminal_research_decisions=_terminal_research("987654"),
+        terminal_research_decisions=_terminal_buy_603596("987654"),
         jev_routing=_jev_entry_routing(),
         industry_links={},
         era_handoff={},
