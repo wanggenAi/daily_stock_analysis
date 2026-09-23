@@ -109,6 +109,44 @@ def _priority_meta(priority: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
     return out
 
 
+def _valuation_closure_carry_forward_codes(
+    priority: Mapping[str, Any],
+    profiles: Mapping[str, Any],
+) -> list[str]:
+    """Keep exact 5/5-PASS priority follow-ups in Terminal valuation closure.
+
+    Deep worksets are bounded and may omit a previously qualified candidate in a
+    later unrelated runtime. That omission must not erase a valuation-closed
+    research BUY/WAIT_PRICE state. Current profile gates remain authoritative.
+    """
+
+    result: list[str] = []
+    for raw in priority.get("queue") or []:
+        if not isinstance(raw, Mapping):
+            continue
+        code = _code(raw.get("code"))
+        if not code or code in result:
+            continue
+        reason_codes = {
+            str(item or "").strip().upper()
+            for item in (raw.get("reason_codes") or [])
+            if str(item or "").strip()
+        }
+        marked_complete = (
+            raw.get("deep_hard_gate_complete") is True
+            or "DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP" in reason_codes
+        )
+        if not marked_complete:
+            continue
+        profile = profiles.get(code) if isinstance(profiles.get(code), Mapping) else {}
+        if not profile:
+            continue
+        failed, unknown, passed = _gate_state(profile)
+        if not failed and not unknown and passed == len(GATES):
+            result.append(code)
+    return result
+
+
 def _financial_gate_diagnostics(row: Mapping[str, Any]) -> dict[str, Any]:
     financial_status = str(row.get("financial_review_status") or "").upper()
     quality_conf = str(row.get("earnings_quality_confidence") or "").upper()
@@ -163,16 +201,30 @@ def _valuation_decision(row: Mapping[str, Any]) -> tuple[str, str, dict[str, Any
     quality_score = _num(row.get("earnings_quality_score"))
     expectation = str(row.get("expectation_state") or "").upper()
     financial_gate = _financial_gate_diagnostics(row)
+    pe_ratio = (current_pe / median_pe) if current_pe and median_pe and median_pe > 0 else None
+    reference_price = _num(row.get("reference_price"))
+    research_buy_price_ceiling = (
+        reference_price * (PE_BUY_RATIO / pe_ratio)
+        if reference_price is not None and reference_price > 0 and pe_ratio is not None and pe_ratio > 0
+        else None
+    )
     snapshot = {
         "current_pe": current_pe,
         "historical_median_pe_reference": median_pe,
-        "pe_to_history_ratio": (current_pe / median_pe) if current_pe and median_pe and median_pe > 0 else None,
+        "pe_to_history_ratio": pe_ratio,
+        "research_buy_pe_ratio_threshold": PE_BUY_RATIO,
+        "research_buy_price_ceiling": research_buy_price_ceiling,
+        "distance_to_research_buy_ceiling_pct": (
+            (research_buy_price_ceiling / reference_price - 1.0) * 100.0
+            if research_buy_price_ceiling is not None and reference_price is not None and reference_price > 0
+            else None
+        ),
         "financial_review_status": financial_status,
         "earnings_quality_confidence": quality_conf,
         "earnings_quality_score": quality_score,
         "expectation_state": expectation,
         "required_profit_growth_pct": _num(row.get("required_profit_growth_pct")),
-        "reference_price": _num(row.get("reference_price")),
+        "reference_price": reference_price,
         "reference_trade_date": str(row.get("reference_trade_date") or ""),
         "reference_price_basis": str(row.get("reference_price_basis") or ""),
         "price_mapping_status": str(row.get("price_mapping_status") or ""),
@@ -324,9 +376,18 @@ def build_terminal_decisions(
 
     profiles = profiles_payload.get("profiles") if isinstance(profiles_payload.get("profiles"), Mapping) else {}
     valuation_by_code = {_code(row.get("code")): dict(row) for row in valuation_rows if _code(row.get("code"))}
-    priority_by_code = _priority_meta(priority_payload or {})
-    requested = [_code(x) for x in (evidence_payload.get("requested_codes") or []) if _code(x)]
-    requested = list(dict.fromkeys(requested))
+    priority_obj = dict(priority_payload or {})
+    priority_by_code = _priority_meta(priority_obj)
+    deep_requested = [_code(x) for x in (evidence_payload.get("requested_codes") or []) if _code(x)]
+    deep_requested = list(dict.fromkeys(deep_requested))
+    valuation_closure_carry_forward_codes = _valuation_closure_carry_forward_codes(
+        priority_obj,
+        profiles,
+    )
+    requested = list(deep_requested)
+    requested.extend(
+        code for code in valuation_closure_carry_forward_codes if code not in requested
+    )
     rows: list[dict[str, Any]] = []
 
     for code in requested:
@@ -442,6 +503,9 @@ def build_terminal_decisions(
         "source_deep_lambda_run_id": str(status.get("lambda_run_id") or profiles_payload.get("lambda_run_id") or ""),
         "source_every_industry_run_id": str(status.get("source_run_id") or ""),
         "requested_count": len(requested),
+        "deep_requested_count": len(deep_requested),
+        "valuation_closure_carry_forward_count": len(valuation_closure_carry_forward_codes),
+        "valuation_closure_carry_forward_codes": valuation_closure_carry_forward_codes,
         "decision_counts": counts,
         "all_requested_terminal": len(rows) == len(requested) and all(r["research_decision"] in DECISIONS for r in rows),
         "research_authority": "RESEARCH_ONLY",
