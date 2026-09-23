@@ -4,7 +4,7 @@
 Build a convergent autonomous stock opportunity engine that returns actionable research entry judgments without fabricating certainty or granting Jev/Formal/automatic trading authority.
 
 ## Current Phase
-VALUATION_PRICE_CLOSURE_PREREQUISITE_REPLAY
+JEV_ENTRY_JUDGMENT_IMPLEMENTATION
 
 ## Source of Truth
 - Live GitHub main/PR/Actions/artifacts override this checkpoint.
@@ -16,13 +16,12 @@ VALUATION_PRICE_CLOSURE_PREREQUISITE_REPLAY
 - #293 display-precedence mission is complete.
 
 ## Active Branch
-- `fix/valuation-price-closure-replay-20260923`
-- Clean replay of #294 net code/docs/tests onto current-main lineage.
-- Original `fix/valuation-price-closure-20260923` is superseded; do not merge it.
+- `feat/jev-entry-judgment-20260923`, stacked on the current #295 head while prerequisite CI/merge completes.
+- #295 branch is the valuation/price-closure prerequisite; #294 remains superseded.
 
 ## Active PR
-- #295 `fix: replay valuation and price closure on current main`.
-- #294 is closed/superseded and retained only as prior implementation/validation evidence.
+- #295 `fix: replay valuation and price closure on current main` is the prerequisite PR.
+- Entry-judgment PR is pending creation from `feat/jev-entry-judgment-20260923`; initially base it on #295 to isolate the feature diff, then retarget to main after #295 merges.
 
 ## CI
 - #295 first CI `35873089047` failed only ai-governance because TASK_STATE exceeded the 120-line limit.
@@ -46,6 +45,7 @@ VALUATION_PRICE_CLOSURE_PREREQUISITE_REPLAY
 - #294 root cause isolated: post-Deep 5/5-PASS candidates could stall because Jev lacked valuation closure and later Deep worksets could erase terminal visibility.
 - #294 net implementation replayed onto current-main branch without stale production data or stale TASK_STATE.
 - Replay includes Jev VALUATION_CLOSURE, price-reference context, deterministic closure handoff, Terminal carry-forward, research buy-price ceiling, and 603596 regressions.
+- Entry implementation in progress: Jev V4 typed `entry_judgment`, valuation/risk-budget/source-lineage context, deterministic validator, persisted routing fields, Three-Pillar current-lineage display, workflow guard assertions, regression tests, docs and changelog are on the feature branch.
 
 ## Current Findings
 - Valuation/price closure is a prerequisite for the larger Jev Entry Judgment mission, not the endpoint.
@@ -53,15 +53,15 @@ VALUATION_PRICE_CLOSURE_PREREQUISITE_REPLAY
 
 ## Blockers
 - No user/login/approval blocker.
-- Current blocker: fresh #295 CI after TASK_STATE compaction.
+- #295 must merge before the entry-judgment PR can become a clean main-targeting PR.
 
 ## Next Action
-1. Require newest-head #295 CI green; fix any real failure.
-2. Merge #295 and verify live main.
-3. Run/observe fresh Jev -> deterministic Orchestrator -> Terminal -> Three-Pillar.
-4. Verify 603596 gets durable valuation closure and explicit `research_buy_price_ceiling`.
-5. Continue Jev Structured Entry Judgment implementation below.
-6. Finish schema -> context -> deterministic validation -> persistence -> report -> tests -> CI -> fresh production Jev -> 603596 acceptance.
+1. Require newest-head #295 CI green, merge it, and production-verify valuation closure.
+2. Run stacked entry-judgment PR CI and fix all failures.
+3. Retarget/replay entry PR onto live main after #295 merge.
+4. Merge only with green blocking CI.
+5. Verify fresh production Jev V4 -> persisted routing -> deterministic entry validation -> Three-Pillar.
+6. Verify 603596 end-to-end actionable result and authority guards.
 7. Persist final checkpoint.
 
 ## Do Not Repeat
