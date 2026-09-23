@@ -20,7 +20,13 @@ JEV_POST_TERMINAL_LINEAGE_REFRESH
 - Scope: wake one lineage-keyed Jev V4 evaluation after each successfully persisted Terminal Research Decision, deduped by exact Deep run id.
 
 ## Active PR
-- Not opened yet at this checkpoint.
+- #298 `fix: refresh Jev after terminal lineage advances`.
+- Initial head `05bf7b5660e85df98d3dcdf03d6a779ad5c4bace`; this checkpoint repair advances the head.
+
+## CI
+- Initial PR CI run `35891272509` failed only in AI governance because this checkpoint omitted required headings.
+- Code/workflow failure has not been observed at this checkpoint.
+- Re-run newest-head CI after restoring the required TASK_STATE contract headings.
 
 ## Production / Artifact
 - Fresh post-#297 Jev V4 source `35880305447` succeeded and persisted 25 routing rows.
@@ -34,6 +40,18 @@ JEV_POST_TERMINAL_LINEAGE_REFRESH
 ## Actual TypeSafe/Jev Use
 - Production uses pinned TypeSafe SDK and requested model `jev-latest`; post-#297 run served `jev-1.13.0`.
 - Jev remains ADVISORY_ONLY. Deterministic code owns lineage, price thresholds, sizing validation, dispatch, and authority boundaries.
+
+## Completed
+- #297 merged and production V4 proved the structured entry-judgment path works.
+- Current stale-lineage behavior was verified: 25 old Jev rows are excluded rather than promoted.
+- Root cause was isolated to post-Terminal wake wiring, not thresholds, selection order, Jev question semantics, or Formal authority.
+- Minimal lineage-keyed wake implementation and regression test are committed on the active branch.
+
+## Current Findings
+- Current production Deep/Terminal lineage is `35887467588`.
+- 603596 remains research BUY with 5/5 hard gates PASS in that current Terminal.
+- Latest persisted Jev routing is older (`35880305447` over Deep `35872063645`), so current Jev entry count is correctly zero.
+- A post-Terminal wake keyed by exact Deep run id closes this gap without weakening stale-lineage validation.
 
 ## Root Cause
 - The entry-judgment implementation and stale-lineage hiding are working.
