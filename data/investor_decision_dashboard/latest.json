@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-23T07:19:32+00:00",
+  "generated_at": "2026-09-23T08:10:59+00:00",
   "canonical_snapshot_id": "538269c3908f97c328d1",
   "canonical_source_run_id": "35829289957",
   "latest_trade_date": "2026-09-22",
@@ -20,11 +20,11 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=4/4",
+  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
   "market": {
     "as_of_date": "2026-09-22",
     "status": "YELLOW",
-    "allow_new_buy": true,
+    "allow_new_buy": false,
     "external_risk_level": "LOW",
     "data_quality": "OK",
     "limit_up_count": 63,
@@ -37,7 +37,8 @@
     "above_ma60_ratio": 0.6247,
     "distribution_ratio": 0.0434,
     "risk_reasons": [],
-    "context_scope": "EOD_DAILY_STRUCTURE"
+    "context_scope": "EOD_DAILY_STRUCTURE",
+    "freshness_override": "STALE_UPSTREAM_FAIL_CLOSED"
   },
   "stock_portfolio": {
     "status": "CONFIRMED",
@@ -47,8 +48,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.38,
-        "pnl_pct": -3.22,
+        "current_price": 22.23,
+        "pnl_pct": -3.87,
         "formal_action": "REDUCE_25",
         "canonical_formal_action": "REDUCE_25",
         "formal_action_currently_usable": true,
@@ -95,19 +96,15 @@
           "no_auto_trade": true
         },
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 22.23,
-        "price_observed_at": "2026-09-23T15:20:03+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 8
+        "new_exposure_currently_usable": false
       },
       {
         "code": "001316",
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 28.44,
-        "pnl_pct": 10.47,
+        "current_price": 28.9,
+        "pnl_pct": 12.25,
         "formal_action": "HOLD_REVIEW",
         "canonical_formal_action": "HOLD_REVIEW",
         "formal_action_currently_usable": true,
@@ -140,19 +137,15 @@
           "no_auto_trade": true
         },
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 28.9,
-        "price_observed_at": "2026-09-23T15:19:30+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 41
+        "new_exposure_currently_usable": false
       },
       {
         "code": "601318",
         "name": "中国平安",
         "quantity": 400,
         "average_cost": 55.9658,
-        "current_price": 53.87,
-        "pnl_pct": -3.74,
+        "current_price": 54.46,
+        "pnl_pct": -2.69,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -185,19 +178,15 @@
           "no_auto_trade": true
         },
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.656<1.00",
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 54.46,
-        "price_observed_at": "2026-09-23T15:19:57+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 14
+        "new_exposure_currently_usable": false
       },
       {
         "code": "603993",
         "name": "洛阳钼业",
         "quantity": 1100,
         "average_cost": 18.6244,
-        "current_price": 17.66,
-        "pnl_pct": -5.18,
+        "current_price": 17.81,
+        "pnl_pct": -4.37,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -230,6 +219,7 @@
           "no_auto_trade": true
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "new_exposure_currently_usable": false,
         "holding_add_consumption": {
           "status": "CONSUMED",
           "source_canonical_snapshot_id": "4e025e2112441ae19e05",
@@ -245,12 +235,7 @@
           "rearm_requires_explicit_authority": true,
           "formal_action_mutation_allowed": false,
           "no_auto_trade": true
-        },
-        "price_source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-        "canonical_price": 17.81,
-        "price_observed_at": "2026-09-23T15:20:10+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 1
+        }
       }
     ]
   },
@@ -264,11 +249,11 @@
     "formal_buy_is_mirror_only": true
   },
   "capital_deployment": {
-    "status": "READY",
+    "status": "STALE_UPSTREAM_BLOCK_NEW_EXPOSURE",
     "available_cash_cny": 50000.0,
     "capital_as_of": "2026-09-20",
-    "deployment_budget_cny": 25000.0,
-    "effective_max_deployment_ratio": 0.5,
+    "deployment_budget_cny": 0.0,
+    "effective_max_deployment_ratio": 0.0,
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
@@ -384,9 +369,12 @@
     "terminal_unauthorized_buy_suppressed": 0,
     "capital_source_status": "USER_CONFIRMED_FLOOR",
     "engineering_details_are_secondary": true,
-    "freshness_status": "OK",
-    "freshness_reasons": [],
-    "formal_new_exposure_allowed": true,
+    "freshness_status": "STALE_UPSTREAM",
+    "freshness_reasons": [
+      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
+      "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
+    ],
+    "formal_new_exposure_allowed": false,
     "terminal_research_available": true,
     "terminal_research_authority": "RESEARCH_ONLY",
     "terminal_research_formal_mutation_allowed": false,
@@ -412,20 +400,23 @@
   },
   "freshness_contract": {
     "contract_version": "GEN_GE_GENERATION_FRESHNESS_V1",
-    "status": "OK",
-    "fresh": true,
-    "formal_new_exposure_allowed": true,
-    "fail_closed_applied": false,
-    "reasons": [],
-    "evaluated_at": "2026-09-23T07:19:32+00:00",
+    "status": "STALE_UPSTREAM",
+    "fresh": false,
+    "formal_new_exposure_allowed": false,
+    "fail_closed_applied": true,
+    "reasons": [
+      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
+      "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
+    ],
+    "evaluated_at": "2026-09-23T08:10:59+00:00",
     "canonical_generated_at": "2026-09-23T07:12:20+00:00",
     "canonical_latest_trade_date": "2026-09-22",
     "canonical_source_run_id": "35829289957",
-    "expected_min_trade_date": "2026-09-22",
+    "expected_min_trade_date": "2026-09-23",
     "market_as_of": "2026-09-22",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
-  "formal_new_exposure_allowed": true,
+  "formal_new_exposure_allowed": false,
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
     "canonical_snapshot_id": "538269c3908f97c328d1",
@@ -458,8 +449,8 @@
     "requested_count": 3,
     "decision_counts": {
       "BUY": 0,
-      "REJECT": 0,
       "WAIT_PRICE": 0,
+      "REJECT": 0,
       "RESEARCH_GAP": 3
     },
     "research_authority": "RESEARCH_ONLY",
@@ -760,45 +751,5 @@
     "capital_probe_count": 0,
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
-    "available": true,
-    "market_data_status": "OFF_SESSION",
-    "eligible_quote_count": 4,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 4,
-    "applied_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "missing_codes": [],
-    "coverage_ratio": 1.0,
-    "latest_quote_observed_at": "2026-09-23T15:20:10+08:00",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true,
-    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-    "quote_refresh_mode": "PRESERVE_FRESH_EXISTING_OFF_SESSION",
-    "market_session_state": "CLOSED",
-    "market_session_active": false,
-    "retry_attempts": 3,
-    "refreshed_at": "2026-09-23T07:33:34.884457+00:00",
-    "refreshed_at_beijing": "2026-09-23T15:33:34.884457+08:00",
-    "preserved_fresh_overlay_off_session": true
   }
 }
