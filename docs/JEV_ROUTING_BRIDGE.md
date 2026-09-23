@@ -68,3 +68,9 @@ The gate-local epoch includes the gate's semantic evidence summary (including De
 
 This is research-control state only. It cannot authorize a trade, weaken a hard gate, or convert UNKNOWN to PASS. New source/query families can be added later without changing the ledger contract.
 
+## Autonomous continuation after downstream convergence
+
+When an exact Jev-triggered Deep run has fully converged through Terminal Research Decision, Investor Terminal Research Overlay, and the Three-Pillar Decision Center, the reconciler schedules one lineage-keyed **Jev Shadow Evaluation** for that exact Deep run. The continuation run carries `continuation_from_deep_run_id`, and the reconciler de-duplicates it by the run display title before dispatch. This closes the research loop without allowing Jev to call Deep directly.
+
+The new Jev result still passes through the deterministic Jev Research Orchestrator. Only that orchestrator may decide whether another bounded Deep research dispatch is warranted. If no eligible work remains, the cycle terminates as a no-op. Formal trading authority remains false, UNKNOWN remains distinct from PASS, and no-auto-trade remains true.
+
