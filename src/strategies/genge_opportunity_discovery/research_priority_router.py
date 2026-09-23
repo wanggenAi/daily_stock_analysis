@@ -168,11 +168,16 @@ def build_queue(
         if is_current_holding:
             score += 50
             reasons.append("CURRENT_HOLDING")
+        lifecycle_state = str(l.get("lifecycle_state") or "ACTIVE").strip().upper()
         tier = str(l.get("research_tier") or "")
-        ts = _tier_score(tier)
-        score += ts
-        if ts >= 15:
-            reasons.append("HIGH_RESEARCH_TIER")
+        if lifecycle_state == "DORMANT":
+            ts = 0
+            reasons.append("RESEARCH_DORMANT_WAIT_NEW_EVIDENCE")
+        else:
+            ts = _tier_score(tier)
+            score += ts
+            if ts >= 15:
+                reasons.append("HIGH_RESEARCH_TIER")
         conclusion = str(h.get("hourly_research_conclusion") or "")
         thesis = str(h.get("thesis_status") or "")
         structural_reunderwrite = _requires_structural_reunderwrite(is_current_holding=is_current_holding, hourly_row=h)
@@ -228,6 +233,7 @@ def build_queue(
             "priority": priority,
             "priority_score": score,
             "research_tier": tier,
+            "lifecycle_state": lifecycle_state,
             "thesis_status": thesis or None,
             "hourly_research_conclusion": conclusion or None,
             "mapping_gaps": mapping_gaps,

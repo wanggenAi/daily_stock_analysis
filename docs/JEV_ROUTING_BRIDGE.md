@@ -76,3 +76,20 @@ When an exact Jev-triggered Deep run has fully converged through Terminal Resear
 
 The new Jev result still passes through the deterministic Jev Research Orchestrator. After the Jev persistence job has committed the exact routing lineage to main, it explicitly dispatches the orchestrator with that Jev run id and de-duplicates by the lineage-keyed orchestrator run title. This avoids leaving a persisted continuation routing unconsumed when a secondary workflow-completion trigger is not created, while keeping Jev itself advisory: only the deterministic orchestrator may decide whether another bounded Deep research dispatch is warranted. If no eligible work remains, the cycle terminates as a no-op. Formal trading authority remains false, UNKNOWN remains distinct from PASS, and no-auto-trade remains true.
 
+
+
+## Research-exhaustion lifecycle convergence
+
+The deterministic strategy ledger can feed candidate lifecycle dormancy after
+the exact Jev routing lineage is reconciled. A non-holding candidate can enter
+`DORMANT` only when every supported unresolved hard gate has an exact
+code/gate/strategy/evidence-epoch ledger entry closed as
+`EXHAUSTED_NO_PROGRESS`. Workset gaps, accepted work, changed evidence, and
+never-attempted current epochs cannot produce dormancy.
+
+`DORMANT` is research-control state, not `REJECT` or `FAIL`. It removes
+stale lifecycle-tier priority boost while Broad Discovery remains independent.
+A new schedulable evidence epoch, terminal research progress, or current-holding
+protection deterministically reactivates the candidate. Jev remains advisory;
+Formal actions remain Canonical-only, UNKNOWN is never promoted to PASS, and
+automatic trading remains disabled.
