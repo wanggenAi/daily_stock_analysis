@@ -214,6 +214,7 @@ def build_orchestration_plan(
                 "research_evidence_changed": True,
                 "research_evidence_epoch": "|".join(reactivation_epochs),
                 "source_run_id": source_workflow_run_id,
+                "expected_prior_lifecycle_state": "DORMANT",
             }
         if (
             lifecycle_state == "ACTIVE"
@@ -233,6 +234,7 @@ def build_orchestration_plan(
                     "research_evidence_changed": False,
                     "research_evidence_epoch": str(exhaustion.get("closure_epoch") or ""),
                     "source_run_id": source_workflow_run_id,
+                    "expected_prior_lifecycle_state": "ACTIVE",
                 }
             )
 
