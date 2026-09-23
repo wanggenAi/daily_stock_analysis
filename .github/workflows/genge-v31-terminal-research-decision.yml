@@ -118,9 +118,18 @@ jobs:
           assert p['automatic_formal_buy_allowed'] is False
           assert p['unknown_is_pass'] is False
           assert p['no_auto_trade'] is True
+          assert p['capital_advisory_authority'] == 'ADVISORY_ONLY'
+          assert p['capital_advisory_automatic_execution_allowed'] is False
+          assert sum(p['capital_action_counts'].values()) == p['requested_count']
           for row in p['terminal_rows']:
               assert row['research_decision'] in {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}
               assert row['formal_buy_authorized'] is False
+              cap=row['capital_allocation']
+              assert cap['action'] in {'BUILD','PROBE','WATCH','BLOCK'}
+              assert cap['authority'] == 'ADVISORY_ONLY'
+              assert cap['automatic_execution_allowed'] is False
+              assert cap['formal_buy_authorized'] is False
+              assert cap['no_auto_trade'] is True
           PY
 
       - name: Persist terminal research decisions with optimistic replay
