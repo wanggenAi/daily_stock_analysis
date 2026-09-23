@@ -386,13 +386,17 @@ def research_exhaustion_state(
     blocker = _profile_workset_blocker(row)
     normalized = normalize_ledger(ledger)
     gate_states: list[dict[str, Any]] = []
-    if not code or not gates or blocker:
+    unsupported_gates = sorted(gate for gate in gates if gate not in _GATE_STRATEGY)
+    if not code or not gates or blocker or unsupported_gates:
+        reason = blocker or ("NO_SUPPORTED_UNRESOLVED_SCOPE" if not gates else "")
+        if unsupported_gates:
+            reason = "UNSUPPORTED_UNRESOLVED_GATES:" + ",".join(unsupported_gates)
         return {
             "exhausted": False,
             "code": code,
             "supported_gate_count": 0,
             "gate_states": gate_states,
-            "blocker": blocker or ("NO_SUPPORTED_UNRESOLVED_SCOPE" if not gates else ""),
+            "blocker": reason,
             "evidence_epoch_fingerprint": "",
         }
 
