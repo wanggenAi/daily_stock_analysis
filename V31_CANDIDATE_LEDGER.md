@@ -11,6 +11,7 @@
 - latest_applied_snapshot_id: `538269c3908f97c328d1`
 - latest_research_as_of: `2026-09-23T07:12:19Z`
 - active_candidates: 126
+- dormant_research_candidates: 0
 - archived_or_invalidated_candidates: 0
 - lifecycle_event_count: 9950
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
@@ -2921,6 +2922,12 @@
 - 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
 - 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 
+## DORMANT research candidate ledger
+
+| Code | Name | Tier | Seen | Research Epoch | Last Snapshot | Last Event |
+| --- | --- | --- | ---: | --- | --- | --- |
+| - | - | - | 0 | - | - | - |
+
 ## Archived / INVALIDATED candidate ledger
 
 | Code | Name | Lifecycle State | Tier | Seen | Last Snapshot | Last Event |
@@ -2932,6 +2939,8 @@
 - `seen_count` counts distinct canonical observations since machine lifecycle migration; legacy counts are audit-only metadata.
 - Re-reading the same canonical snapshot is idempotent and must not increment `seen_count`.
 - Absence from a snapshot does not automatically archive or invalidate a candidate.
+- DORMANT means supported research strategies were deterministically exhausted for the current evidence epoch; it is not a REJECT/FAIL.
+- DORMANT may reactivate automatically only when a new schedulable research epoch or terminal research progress is proven; current holdings are protected from dormancy.
 - Archived/INVALIDATED rediscovery requires explicit evidence-backed reactivation.
 - Explicit upgrade/downgrade/archive/invalidate/reactivate events require unique evidence IDs.
 - The lifecycle state is downstream memory only; it must never filter broad Discovery.
