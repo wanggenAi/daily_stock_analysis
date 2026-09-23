@@ -80,7 +80,7 @@ jobs:
       - name: Install evidence recovery dependencies
         run: |
           python -m pip install --disable-pip-version-check -q \
-            pandas requests beautifulsoup4 pypdf
+            pandas PyYAML requests beautifulsoup4 pypdf
 
       - name: Resolve exact Near-BUY source artifact
         shell: bash

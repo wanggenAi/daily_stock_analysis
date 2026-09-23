@@ -209,3 +209,16 @@ def test_router_ignores_untrusted_priority_boost_and_rejects_authority():
         assert False, "recovery artifact cannot claim Formal authority"
     except AssertionError:
         pass
+
+
+def test_production_recovery_job_installs_yaml_runtime_dependency():
+    from pathlib import Path
+
+    workflow = Path(".github/workflows/genge-near-buy-evidence-recovery.yml").read_text(
+        encoding="utf-8"
+    )
+    production = workflow.split("  build-recovery:", 1)[1]
+    install = production.split("- name: Install evidence recovery dependencies", 1)[1].split(
+        "- name: Resolve exact Near-BUY source artifact", 1
+    )[0]
+    assert "PyYAML" in install
