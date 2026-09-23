@@ -258,6 +258,8 @@ def _capital_allocation_advisory(
         action, reason = "WATCH", "SPECIALIZED_VALUATION_REQUIRED"
     elif pe_ratio is None:
         action, reason = "WATCH", "VALUATION_REFERENCE_INCOMPLETE"
+    elif str(valuation_snapshot.get("expectation_state") or "") != "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE":
+        action, reason = "WATCH", "EXPECTATION_REQUIRES_GROWTH"
     elif research_decision == "BUY":
         action, reason = "BUILD", "ALL_GATES_PASS_AND_RESEARCH_BUY"
         max_portfolio_pct = min(3.0, max(1.0, 3.5 * conviction))
