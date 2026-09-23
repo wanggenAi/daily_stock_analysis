@@ -315,6 +315,56 @@ def append_attempts(
     return normalized
 
 
+def current_strategy_exhaustion(
+    row: Mapping[str, Any],
+    ledger: Mapping[str, Any] | None,
+) -> dict[str, Any]:
+    """Describe whether every current supported hard-gate strategy is exhausted.
+
+    Exhaustion is scoped to the current gate-local evidence epoch. An accepted
+    attempt is not exhaustion: the exact Deep result must first reconcile to
+    EXHAUSTED_NO_PROGRESS. Unsupported gates fail closed and keep the candidate
+    research-active rather than manufacturing a terminal state.
+    """
+
+    code = _code(row.get("entity_id"))
+    gates = unresolved_gates(row)
+    normalized = normalize_ledger(ledger)
+    details: list[dict[str, Any]] = []
+    all_exhausted = bool(code and gates)
+
+    for gate, reason in sorted(gates.items()):
+        spec = _GATE_STRATEGY.get(gate)
+        if spec is None:
+            details.append({"hard_gate": gate, "supported": False, "evidence_epoch": "", "strategy_family": "", "exhausted": False})
+            all_exhausted = False
+            continue
+        fingerprint = gate_evidence_fingerprint(row, gate=gate, unresolved_reason=reason)
+        matches = [
+            entry for entry in normalized["entries"]
+            if _same_attempt(entry, code=code, gate=gate, strategy_family=spec["strategy_family"], fingerprint=fingerprint)
+        ]
+        exhausted = any(
+            str(entry.get("attempt_status") or "") == "EXHAUSTED_NO_PROGRESS"
+            and entry.get("strategy_exhausted") is True
+            for entry in matches
+        )
+        details.append({"hard_gate": gate, "supported": True, "evidence_epoch": fingerprint, "strategy_family": spec["strategy_family"], "exhausted": exhausted})
+        if not exhausted:
+            all_exhausted = False
+
+    closure_payload = [
+        {"hard_gate": item["hard_gate"], "evidence_epoch": item["evidence_epoch"], "strategy_family": item["strategy_family"]}
+        for item in details
+    ]
+    closure_epoch = ""
+    if closure_payload:
+        closure_epoch = hashlib.sha256(
+            json.dumps(closure_payload, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()[:20]
+    return {"code": code, "exhausted": all_exhausted, "closure_epoch": closure_epoch, "gate_count": len(details), "gates": details}
+
+
 def has_strategy_scope(row: Mapping[str, Any]) -> bool:
     """Whether this row has gate-level state that the ledger can govern."""
 
