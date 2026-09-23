@@ -11,7 +11,7 @@ JEV_POST_TERMINAL_LINEAGE_REFRESH_MAIN_REPLAY
 - Production persistence may advance main at any time; re-read live main before merge and production acceptance.
 
 ## Last Verified Main
-- Latest-main replay base: `b9795670bb9b6a76326c3cd94b0435cb330fea98`.
+- Latest-main replay branch was cut from `b9795670bb9b6a76326c3cd94b0435cb330fea98`; PR #299 opened against live main `79f99cea5c0fbbf83f2e2c655c7a5cbbb41dc163`.
 - #297 is merged as `ce4cbbca4ca3afc1390d654da48246832660d1fa`.
 - #298 passed all newest-head CI on `31d576a45b8d84d0cb29d650ecb94e5b7eaf9d05`, but production persistence advanced main by 23 commits during the long offline suite, so #298 is superseded for merge purposes.
 
@@ -21,8 +21,8 @@ JEV_POST_TERMINAL_LINEAGE_REFRESH_MAIN_REPLAY
 - No stale production runtime data is copied.
 
 ## Active PR
-- Latest-main replay PR not yet opened at this checkpoint.
-- #298 is CI evidence only after main advanced; do not merge it directly.
+- #299 `fix: replay post-terminal Jev refresh on current main`.
+- #298 is superseded CI evidence only; do not merge it directly.
 
 ## CI
 - #298 initial governance failure was TASK_STATE-only and was repaired.
@@ -63,14 +63,13 @@ JEV_POST_TERMINAL_LINEAGE_REFRESH_MAIN_REPLAY
 - Fresh replay PR + newest-head CI + merge + production acceptance are pending.
 
 ## Next Action
-1. Open the latest-main replay PR.
-2. Require fresh newest-head blocking CI and workflow-contract tests.
-3. Re-read live main immediately before merge; replay again only if production persistence creates another real latest-main divergence.
-4. Merge only when green.
-5. Observe merge-triggered Terminal -> lineage-keyed Jev V4 -> persisted routing -> Three-Pillar chain.
-6. Verify 603596 against the then-current successful Deep/Terminal lineage, never an old price snapshot.
-7. Record exact Jev run/artifact, validated judgment, verified price ceiling, initial/max research size, add/do-not-chase/invalidation conditions, and authority flags.
-8. Persist final TASK_STATE with live main SHA and the next unfinished stage.
+1. Require #299 fresh newest-head blocking CI and workflow-contract tests.
+2. Re-read live main immediately before merge; production-only data drift may be merged through the PR merge ref if workflow/test paths are unchanged.
+3. Merge only when green.
+4. Observe merge-triggered Terminal -> lineage-keyed Jev V4 -> persisted routing -> Three-Pillar chain.
+5. Verify 603596 against the then-current successful Deep/Terminal lineage, never an old price snapshot.
+6. Record exact Jev run/artifact, validated judgment, verified price ceiling, initial/max research size, add/do-not-chase/invalidation conditions, and authority flags.
+7. Persist final TASK_STATE with live main SHA and the next unfinished stage.
 
 ## Do Not Repeat
 - Do not reopen #292/#293/#294 or merge stale #296.
