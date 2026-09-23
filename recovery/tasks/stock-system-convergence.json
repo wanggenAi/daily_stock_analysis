@@ -1,57 +1,61 @@
 {
   "schema_version": 2,
-  "generation": 36,
+  "generation": 37,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "PR292_MERGED_PRODUCTION_JEV_RUNNING",
-  "last_observed_main_sha": "27e857007884c560db539581cb599a500389aaa3",
+  "stage": "PR292_PRODUCTION_DEEP_ACCEPTED",
+  "last_observed_main_sha": "5f9e2f46712bb7188361370801a04876242b316a",
   "work_branch": null,
   "work_head_sha": null,
   "active_pr": null,
   "ci": {
-    "pr_292_head": "88d76605d2517e0af389b7f9967d33e3a7d8d68c",
     "pr_292_blocking_ci_run_id": 35846422908,
     "pr_292_blocking_ci_status": "SUCCESS",
-    "pr_292_jev_smoke_run_id": 35846422916,
-    "pr_292_jev_smoke_status": "SUCCESS",
     "merge_sha": "27e857007884c560db539581cb599a500389aaa3",
     "production_jev_run_id": 35848751814,
-    "production_jev_status": "IN_PROGRESS"
+    "production_jev_status": "SUCCESS",
+    "orchestrator_run_id": 35848953724,
+    "orchestrator_state": "DEEP_DISPATCH_ACCEPTED",
+    "deep_run_id": 35849124866,
+    "deep_status": "IN_PROGRESS"
   },
   "production_or_artifact": {
-    "status": "FRESH_MERGE_TRIGGERED_JEV_RUNNING",
+    "status": "EXACT_JEV_LINEAGE_CONSUMED_ONE_CODE_DEEP_ACCEPTED",
     "verified": [
-      "PR #292 merged successfully as 27e857007884c560db539581cb599a500389aaa3 after all blocking PR checks passed.",
-      "The merge push triggered fresh GenGe Jev Shadow Evaluation run 35848751814 on main.",
-      "Research priority latest.json still records 603596 伯特利 as P1, exact-current Deep 5/5 PASS from lineage 35831920970, with no Formal action eligibility.",
-      "Pre-merge persisted Jev routing source 35832551432 and orchestrator source 35832551432 are stale relative to the new priority state and must not be reused as production verification."
+      "Fresh main-push TypeSafe/Jev run 35848751814 completed successfully with 25/25 successful calls using requested jev-latest and served jev-1.13.0.",
+      "Persisted latest_routing.source_workflow_run_id is exactly 35848751814.",
+      "603596 伯特利 is in the fresh 25-entity routing window: HIGH attention, route=DEEP_RESEARCH confidence=0.60, evidence_state=INSUFFICIENT, five exact Deep profile gates remain PASS, Formal authority=false and no_auto_trade=true.",
+      "Deterministic Orchestrator run 35848953724 consumed exact source 35848751814 and selected only 603596.",
+      "Orchestration state is DEEP_DISPATCH_ACCEPTED with exact deep_run_id=35849124866, requested_codes=[603596], pending_operation=null.",
+      "Current decision center keeps 603596 RESEARCH_ONLY / DO_NOT_BUY_YET and outside Canonical BUY/WAIT_PRICE."
     ],
     "safety": [
-      "Jev remains advisory research routing only.",
-      "Formal trading authority remains Canonical-only and automatic Formal BUY=false.",
+      "Jev route did not itself authorize the Deep dispatch; deterministic orchestrator owns the accepted dispatch.",
+      "Formal trading authority remains false for research layers.",
       "UNKNOWN != PASS and no_auto_trade=true.",
-      "Fresh production verification must follow source Jev run 35848751814 exactly."
+      "Do not duplicate Deep run 35849124866."
     ]
   },
   "pending_operation": {
-    "type": "VERIFY_FRESH_PRODUCTION_JEV_AND_EXACT_ORCHESTRATOR_LINEAGE",
+    "type": "FOLLOW_ACCEPTED_DEEP_TO_TERMINAL_CHAIN",
     "source_jev_run_id": 35848751814,
-    "require": "after Jev success, verify persisted latest_routing.source_workflow_run_id=35848751814, inspect 603596 typed route/evidence/attention/served model, then follow exact deterministic Orchestrator source lineage to terminal state and any resulting bounded Deep/downstream chain without duplicate dispatch"
+    "orchestrator_run_id": 35848953724,
+    "deep_run_id": 35849124866,
+    "require": "follow exact Deep run 35849124866 to completion and then verify its automatic Terminal Research Decision, Investor Terminal Overlay and Three-Pillar lineage; do not redispatch the same Jev source or code"
   },
   "completed": [
-    "Reconciled and advanced stale recovery checkpoint to current live state.",
-    "Verified #292 PR-head TypeSafe/Jev smoke and deterministic Orchestrator smoke.",
-    "Verified #292 blocking CI green.",
-    "Merged #292 with exact expected head SHA.",
-    "Confirmed fresh main-push Jev production run 35848751814 exists."
+    "Merged #292 after green PR CI.",
+    "Verified fresh production TypeSafe/Jev routing and exact persisted lineage.",
+    "Verified exact deterministic Orchestrator consumption.",
+    "Verified one bounded research-only Deep dispatch was accepted for 603596 and persisted."
   ],
-  "next_action": "Track Jev run 35848751814 to completion, inspect its exact persisted routing and 603596 row, then verify the deterministic Orchestrator consumes source_workflow_run_id 35848751814 and continue any accepted Deep/downstream lineage to a terminal state before final checkpoint.",
+  "next_action": "Track Deep run 35849124866 to completion, identify exact downstream Terminal/Overlay/Three-Pillar runs and persisted artifacts, then assess whether the research state reached a truthful terminal condition or exposes another supported closure gap.",
   "do_not_repeat": [
     "Do not reopen consumed old PRs or branches.",
-    "Do not reuse pre-merge Jev run 35832551432 as fresh production verification.",
-    "Do not duplicate any exact lineage dispatch already accepted by GitHub.",
+    "Do not rerun Jev 35848751814 or Deep 35849124866.",
+    "Do not treat Jev DEEP_RESEARCH as Formal authority.",
     "Do not lower thresholds or relax UNKNOWN != PASS, Formal authority or no_auto_trade."
   ],
-  "business_code_baseline_sha": "27e857007884c560db539581cb599a500389aaa3"
+  "business_code_baseline_sha": "5f9e2f46712bb7188361370801a04876242b316a"
 }
