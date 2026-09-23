@@ -956,6 +956,129 @@ def _mark_stale_profile_lineage(payload: dict[str, Any]) -> None:
                 deep["current_for_runtime"] = False
 
 
+def _attach_jev_entry_judgments(
+    payload: dict[str, Any],
+    jev_routing: Mapping[str, Any] | None,
+    runtime: Mapping[str, Any],
+) -> None:
+    """Expose only current, deterministically validated Jev entry judgments."""
+
+    opportunities = payload["pillar_3_deep_opportunities"]
+    routing = dict(jev_routing or {})
+    runtime_run_id = str(runtime.get("lambda_run_id") or "")
+    rows: list[dict[str, Any]] = []
+    stale_count = 0
+    invalid_count = 0
+    terminal_bucket_by_code: dict[str, str] = {}
+    for bucket, values in (
+        ("BUY", opportunities.get("research_buy") or []),
+        ("WAIT_PRICE", opportunities.get("research_wait_price") or []),
+        ("RESEARCH_GAP", opportunities.get("research_gap") or []),
+    ):
+        for item in values:
+            if isinstance(item, Mapping):
+                code = _stock_code(item.get("code"))
+                if code:
+                    terminal_bucket_by_code[code] = bucket
+
+    if (
+        routing.get("contract") != "GEN_GE_JEV_ROUTING_BRIDGE_V1"
+        or routing.get("execution_status") != "SUCCESS"
+        or routing.get("formal_trading_authority") is not False
+        or routing.get("automatic_formal_buy_allowed") is not False
+        or routing.get("unknown_is_pass") is not False
+        or routing.get("no_auto_trade") is not True
+    ):
+        opportunities["jev_entry_judgments"] = []
+        opportunities["jev_entry_judgment_count"] = 0
+        opportunities["jev_entry_now_count"] = 0
+        opportunities["jev_entry_judgment_source_run_id"] = str(
+            routing.get("source_workflow_run_id") or ""
+        )
+        opportunities["jev_entry_judgment_status"] = "NOT_AVAILABLE_OR_GUARDRAIL_REJECTED"
+        return
+
+    for raw in routing.get("routing_queue") or []:
+        if not isinstance(raw, Mapping):
+            continue
+        entry = raw.get("entry_judgment")
+        if not isinstance(entry, Mapping):
+            continue
+        if (
+            entry.get("authority") != "ADVISORY_ONLY"
+            or entry.get("formal_buy_authorized") is not False
+            or entry.get("automatic_execution_allowed") is not False
+            or entry.get("no_auto_trade") is not True
+        ):
+            invalid_count += 1
+            continue
+        lineage = entry.get("source_lineage")
+        lineage = lineage if isinstance(lineage, Mapping) else {}
+        source_deep = str(lineage.get("deep_lambda_run_id") or "")
+        if not runtime_run_id or source_deep != runtime_run_id:
+            stale_count += 1
+            continue
+        code = _stock_code(raw.get("entity_id"))
+        judgment = str(entry.get("validated_judgment") or "")
+        terminal_bucket = terminal_bucket_by_code.get(code, "")
+        expected_bucket = (
+            "BUY"
+            if judgment == "ENTRY_NOW"
+            else "WAIT_PRICE"
+            if judgment in {"WAIT_PRICE", "DO_NOT_CHASE"}
+            else "RESEARCH_GAP"
+            if judgment == "WAIT_EVIDENCE"
+            else ""
+        )
+        if expected_bucket and terminal_bucket != expected_bucket:
+            invalid_count += 1
+            continue
+        item = {
+            "code": code,
+            "name": str(raw.get("entity_name") or ""),
+            **dict(entry),
+            "terminal_research_bucket": terminal_bucket,
+            "jev_route": str(raw.get("route") or ""),
+            "jev_route_confidence": raw.get("route_confidence"),
+            "source_jev_run_id": str(routing.get("source_workflow_run_id") or ""),
+        }
+        if item["code"]:
+            rows.append(item)
+
+    order = {
+        "ENTRY_NOW": 0,
+        "WAIT_PRICE": 1,
+        "WAIT_EVIDENCE": 2,
+        "DO_NOT_CHASE": 3,
+        "INVALIDATED": 4,
+        "NO_JUDGMENT": 5,
+    }
+    rows.sort(
+        key=lambda row: (
+            order.get(str(row.get("validated_judgment") or ""), 99),
+            -float(row.get("judgment_confidence") or 0.0),
+            str(row.get("code") or ""),
+        )
+    )
+    opportunities["jev_entry_judgments"] = rows
+    opportunities["jev_entry_judgment_count"] = len(rows)
+    opportunities["jev_entry_now_count"] = sum(
+        1 for row in rows if row.get("validated_judgment") == "ENTRY_NOW"
+    )
+    opportunities["jev_entry_judgment_source_run_id"] = str(
+        routing.get("source_workflow_run_id") or ""
+    )
+    opportunities["jev_entry_judgment_stale_row_count"] = stale_count
+    opportunities["jev_entry_judgment_invalid_row_count"] = invalid_count
+    opportunities["jev_entry_judgment_status"] = "CURRENT" if rows else "EMPTY_CURRENT"
+    opportunities["jev_entry_authority_rule"] = (
+        "Jev entry judgments are ADVISORY_ONLY. Numeric price/sizing fields are "
+        "deterministically validated; they never create Canonical Formal BUY or orders."
+    )
+    payload["executive_summary"]["jev_entry_judgment_count"] = len(rows)
+    payload["executive_summary"]["jev_entry_now_count"] = opportunities["jev_entry_now_count"]
+
+
 def build_runtime_decision_center(
     *,
     dashboard: Mapping[str, Any],
@@ -965,6 +1088,7 @@ def build_runtime_decision_center(
     deep_calculation_status: Mapping[str, Any] | None = None,
     partial_deep_calculation_status: Mapping[str, Any] | None = None,
     terminal_research_decisions: Mapping[str, Any] | None = None,
+    jev_routing: Mapping[str, Any] | None = None,
     era_evidence_bundle: Mapping[str, Any] | None = None,
     candidate_lifecycle_state: Mapping[str, Any] | None = None,
     holding_valuation_continuity_state: Mapping[str, Any] | None = None,
@@ -1052,6 +1176,7 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
+    _attach_jev_entry_judgments(payload, jev_routing, runtime)
     terminal_research_codes: set[str] = set()
     if (
         terminal.get("available") is True
@@ -1224,6 +1349,24 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         ],
         "- **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。",
         "",
+        "## Jev 买入判断（研究建议，不是 Formal BUY）",
+        "",
+        f"- 当前可用判断：**{opportunities.get('jev_entry_judgment_count', 0)}**；其中 ENTRY_NOW **{opportunities.get('jev_entry_now_count', 0)}**；Jev run：`{opportunities.get('jev_entry_judgment_source_run_id') or '—'}`。",
+        *[
+            (
+                f"- **{row.get('code')} {row.get('name')}**：**{row.get('validated_judgment')}**；"
+                f"触发={row.get('entry_trigger') or '—'}；"
+                f"买入价上限={row.get('entry_price_zone_high') if row.get('entry_price_zone_high') is not None else '—'}；"
+                f"首仓={row.get('initial_manual_position_pct', 0)}%；"
+                f"最大研究仓位={row.get('max_manual_position_pct', 0)}%；"
+                f"加仓条件={row.get('add_condition') or '—'}；"
+                f"不追条件={row.get('do_not_chase_condition') or '—'}；"
+                f"失效条件={row.get('invalidation_condition') or '—'}。"
+            )
+            for row in (opportunities.get("jev_entry_judgments") or [])
+        ],
+        "- Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。",
+        "",
         "> 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。",
         "",
     ]
@@ -1243,6 +1386,7 @@ def main() -> int:
     parser.add_argument("--deep-calculation-status", type=Path, default=Path("data/deep_calculation/latest_status.json"))
     parser.add_argument("--deep-calculation-partial-status", type=Path, default=Path("data/deep_calculation/latest_partial_status.json"))
     parser.add_argument("--terminal-research-decisions", type=Path, default=Path("data/deep_calculation/latest_research_decisions.json"))
+    parser.add_argument("--jev-routing", type=Path, default=Path("data/jev_shadow/latest_routing.json"))
     parser.add_argument("--industry-links", type=Path, default=Path("config/era_radar_industry_links.json"))
     parser.add_argument("--output-json", type=Path, default=Path("data/decision_center/latest.json"))
     parser.add_argument("--output-md", type=Path, default=Path("LATEST_DECISION_CENTER.md"))
@@ -1266,6 +1410,7 @@ def main() -> int:
         deep_calculation_status=_json(args.deep_calculation_status),
         partial_deep_calculation_status=_json(args.deep_calculation_partial_status),
         terminal_research_decisions=_json(args.terminal_research_decisions),
+        jev_routing=_json(args.jev_routing),
         era_evidence_bundle=_json(era_evidence_path),
         candidate_lifecycle_state=_json(args.candidate_lifecycle),
         holding_valuation_continuity_state=_json(args.holding_valuation_continuity),
