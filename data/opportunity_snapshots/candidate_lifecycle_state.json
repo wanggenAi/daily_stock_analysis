@@ -10339,7 +10339,7 @@
     "000504": {
       "code": "000504",
       "stock_name": "南华生物",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -10348,22 +10348,10 @@
       "seen_count": 118,
       "last_formal_action": "",
       "last_valuation_confidence": "",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-09-23T07:12:19Z",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-09-23T07:37:25+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "000504",
-          "snapshot_id": "6cf7afa5cd3ad505b817",
-          "source_run_id": "33209199110",
-          "observed_at": "2026-08-28T20:44:04Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "000504",
@@ -11551,6 +11539,22 @@
           "valuation_confidence": "",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "000504",
+          "snapshot_id": "538269c3908f97c328d1",
+          "source_run_id": "35832551432",
+          "observed_at": "2026-09-23T07:37:25+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "2a42d1ca9498724fedcc",
+          "research_epoch": "600b8e4427b66d8bf266",
+          "supported_gate_count": 5,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-09-23T07:16:29Z",
@@ -11562,7 +11566,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-09-23T07:16:29Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -11894,7 +11898,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "35832551432",
+      "last_research_lifecycle_observed_at": "2026-09-23T07:37:25+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "600b8e4427b66d8bf266"
     },
     "000557": {
       "code": "000557",
@@ -46857,7 +46865,7 @@
     "600816": {
       "code": "600816",
       "stock_name": "建元信托",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -46866,22 +46874,10 @@
       "seen_count": 127,
       "last_formal_action": "",
       "last_valuation_confidence": "",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-09-23T07:12:19Z",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-09-23T07:37:25+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "600816",
-          "snapshot_id": "2c763f58a2dcf400f7c2",
-          "source_run_id": "33241724270",
-          "observed_at": "2026-08-29T07:54:15Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "600816",
@@ -48069,6 +48065,22 @@
           "valuation_confidence": "",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "600816",
+          "snapshot_id": "538269c3908f97c328d1",
+          "source_run_id": "35832551432",
+          "observed_at": "2026-09-23T07:37:25+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "f6cab49b2ee82c22a56f",
+          "research_epoch": "a8ae13563da5bf6420ca",
+          "supported_gate_count": 5,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-09-23T07:16:29Z",
@@ -48080,7 +48092,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-09-23T07:16:29Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -48412,7 +48424,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "35832551432",
+      "last_research_lifecycle_observed_at": "2026-09-23T07:37:25+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "a8ae13563da5bf6420ca"
     },
     "600958": {
       "code": "600958",
@@ -52893,7 +52909,7 @@
     "601020": {
       "code": "601020",
       "stock_name": "华钰矿业",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -52902,22 +52918,10 @@
       "seen_count": 118,
       "last_formal_action": "",
       "last_valuation_confidence": "",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-09-23T07:12:19Z",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-09-23T07:37:25+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "601020",
-          "snapshot_id": "6cf7afa5cd3ad505b817",
-          "source_run_id": "33209199110",
-          "observed_at": "2026-08-28T20:44:04Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "601020",
@@ -54105,6 +54109,22 @@
           "valuation_confidence": "",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "601020",
+          "snapshot_id": "538269c3908f97c328d1",
+          "source_run_id": "35832551432",
+          "observed_at": "2026-09-23T07:37:25+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "dec047a2215e24db3707",
+          "research_epoch": "bf4973ba54c1969c5d20",
+          "supported_gate_count": 5,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-09-23T07:16:29Z",
@@ -54116,7 +54136,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-09-23T07:16:29Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -54448,7 +54468,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "35832551432",
+      "last_research_lifecycle_observed_at": "2026-09-23T07:37:25+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "bf4973ba54c1969c5d20"
     },
     "601069": {
       "code": "601069",
@@ -140370,7 +140394,7 @@
       ]
     }
   },
-  "event_count": 9950,
+  "event_count": 9953,
   "no_auto_trade": true,
   "discovery_is_filtered_by_lifecycle": false,
   "bootstrap_source": "LEGACY_MARKDOWN",
@@ -140407,5 +140431,8 @@
   ],
   "latest_terminal_memory_id": "terminal:35830663138:1",
   "latest_terminal_memory_observed_at": "2026-09-23T07:16:29Z",
-  "terminal_memory_event_count": 2655
+  "terminal_memory_event_count": 2655,
+  "latest_research_lifecycle_source_run_id": "35832551432",
+  "latest_research_lifecycle_observed_at": "2026-09-23T07:37:25+00:00",
+  "research_lifecycle_event_count": 3
 }

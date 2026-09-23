@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `538269c3908f97c328d1`
 - latest_research_as_of: `2026-09-23T07:12:19Z`
-- active_candidates: 126
-- dormant_research_candidates: 0
+- active_candidates: 123
+- dormant_research_candidates: 3
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 9950
+- lifecycle_event_count: 9953
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -25,7 +25,6 @@
 | 000096 | 广聚能源 | PENDING | 183 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 000415 | 渤海租赁 | PENDING | 118 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 000426 | 兴业银锡 | PENDING | 118 |  |  | 538269c3908f97c328d1 | RESEEN |
-| 000504 | 南华生物 | PENDING | 118 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 000526 | 学大教育 | PENDING | 197 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 000557 | 西部创业 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
 | 000567 | 海德股份 | PENDING | 78 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
@@ -93,7 +92,6 @@
 | 600739 | 辽宁成大 | PENDING | 8 |  |  | dbe2947123155cda76e7 | RESEEN |
 | 600754 | 锦江酒店 | PENDING | 197 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
 | 600812 | 华北制药 | PENDING | 118 |  |  | 538269c3908f97c328d1 | RESEEN |
-| 600816 | 建元信托 | PENDING | 127 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 600827 | 百联股份 | PENDING | 74 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 600834 | 申通地铁 | PENDING | 1 |  |  | 292c453ed9def63dc763 | NEW |
 | 600916 | 中国黄金 | PENDING | 73 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
@@ -101,7 +99,6 @@
 | 600958 | 东方证券 | PENDING | 199 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 600961 | 株冶集团 | PENDING | 116 |  |  | 610e09cb57bb91c49bf2 | RESEEN |
 | 601007 | 金陵饭店 | PENDING | 83 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
-| 601020 | 华钰矿业 | PENDING | 118 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 601022 | 宁波远洋 | PENDING | 45 |  |  | dbe2947123155cda76e7 | RESEEN |
 | 601069 | 西部黄金 | PENDING | 118 |  |  | 538269c3908f97c328d1 | RESEEN |
 | 601111 | 中国国航 | PENDING | 99 |  |  | ee53846288f5dc5bf814 | RESEEN |
@@ -196,29 +193,6 @@
 - 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 
 ### 000426 兴业银锡
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 118
-- **last_seen_snapshot_id:** 538269c3908f97c328d1
-- **last_seen_source_run_id:** 35829289957
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-04T11:28:06Z — **RESEEN**; snapshot `d100e40b6dcf5187290f`
-- 2026-09-04T13:11:19Z — **RESEEN**; snapshot `abde31b77594d24d064b`
-- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
-- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
-- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
-- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
-- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
-- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
-- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
-- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
-
-### 000504 南华生物
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
@@ -1725,29 +1699,6 @@
 - 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
 - 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 
-### 600816 建元信托
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 127
-- **last_seen_snapshot_id:** 538269c3908f97c328d1
-- **last_seen_source_run_id:** 35829289957
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-07T05:25:13Z — **RESEEN**; snapshot `3d58064c5203b791eb8f`
-- 2026-09-07T06:21:34Z — **RESEEN**; snapshot `0883d2ba81c77e996018`
-- 2026-09-07T08:19:35Z — **RESEEN**; snapshot `a25f97bb0fee9ab3d56b`
-- 2026-09-07T09:08:50Z — **RESEEN**; snapshot `02e611993c5786217567`
-- 2026-09-07T10:31:28Z — **RESEEN**; snapshot `77325f47fbf65647e777`
-- 2026-09-07T12:41:42Z — **RESEEN**; snapshot `6706d4163a93951ec6bf`
-- 2026-09-07T14:12:11Z — **RESEEN**; snapshot `a308c746899cc7c88e90`
-- 2026-09-07T14:35:18Z — **RESEEN**; snapshot `d177ad83826140cfe194`
-- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
-- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
-
 ### 600827 百联股份
 
 - **lifecycle_state:** ACTIVE
@@ -1890,29 +1841,6 @@
 - 2026-09-22T16:27:42Z — **RESEEN**; snapshot `530df3c8e1faddfa2ea9`
 - 2026-09-22T19:04:53Z — **RESEEN**; snapshot `451aae130d6597f1d225`
 - 2026-09-22T20:04:52Z — **RESEEN**; snapshot `ea3c4b0384d9f6efec18`
-
-### 601020 华钰矿业
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 118
-- **last_seen_snapshot_id:** 538269c3908f97c328d1
-- **last_seen_source_run_id:** 35829289957
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-04T11:28:06Z — **RESEEN**; snapshot `d100e40b6dcf5187290f`
-- 2026-09-04T13:11:19Z — **RESEEN**; snapshot `abde31b77594d24d064b`
-- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
-- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
-- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
-- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
-- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
-- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
-- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
-- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 
 ### 601022 宁波远洋
 
@@ -2926,7 +2854,78 @@
 
 | Code | Name | Tier | Seen | Research Epoch | Last Snapshot | Last Event |
 | --- | --- | --- | ---: | --- | --- | --- |
-| - | - | - | 0 | - | - | - |
+| 000504 | 南华生物 | PENDING | 118 | 600b8e4427b66d8bf266 | 538269c3908f97c328d1 | RESEARCH_EXHAUSTED_DORMANT |
+| 600816 | 建元信托 | PENDING | 127 | a8ae13563da5bf6420ca | 538269c3908f97c328d1 | RESEARCH_EXHAUSTED_DORMANT |
+| 601020 | 华钰矿业 | PENDING | 118 | bf4973ba54c1969c5d20 | 538269c3908f97c328d1 | RESEARCH_EXHAUSTED_DORMANT |
+
+### 000504 南华生物
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 118
+- **last_seen_snapshot_id:** 538269c3908f97c328d1
+- **last_seen_source_run_id:** 35829289957
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-04T13:11:19Z — **RESEEN**; snapshot `abde31b77594d24d064b`
+- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
+- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
+- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
+- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
+- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
+- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
+- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
+- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
+- 2026-09-23T07:37:25+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `538269c3908f97c328d1`
+
+### 600816 建元信托
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 127
+- **last_seen_snapshot_id:** 538269c3908f97c328d1
+- **last_seen_source_run_id:** 35829289957
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-07T06:21:34Z — **RESEEN**; snapshot `0883d2ba81c77e996018`
+- 2026-09-07T08:19:35Z — **RESEEN**; snapshot `a25f97bb0fee9ab3d56b`
+- 2026-09-07T09:08:50Z — **RESEEN**; snapshot `02e611993c5786217567`
+- 2026-09-07T10:31:28Z — **RESEEN**; snapshot `77325f47fbf65647e777`
+- 2026-09-07T12:41:42Z — **RESEEN**; snapshot `6706d4163a93951ec6bf`
+- 2026-09-07T14:12:11Z — **RESEEN**; snapshot `a308c746899cc7c88e90`
+- 2026-09-07T14:35:18Z — **RESEEN**; snapshot `d177ad83826140cfe194`
+- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
+- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
+- 2026-09-23T07:37:25+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `538269c3908f97c328d1`
+
+### 601020 华钰矿业
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 118
+- **last_seen_snapshot_id:** 538269c3908f97c328d1
+- **last_seen_source_run_id:** 35829289957
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-04T13:11:19Z — **RESEEN**; snapshot `abde31b77594d24d064b`
+- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
+- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
+- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
+- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
+- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
+- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
+- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
+- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
+- 2026-09-23T07:37:25+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `538269c3908f97c328d1`
 
 ## Archived / INVALIDATED candidate ledger
 
