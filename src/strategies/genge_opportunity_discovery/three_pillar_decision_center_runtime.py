@@ -25,6 +25,13 @@ from .three_pillar_decision_center import build_decision_center, render_markdown
 RUNTIME_CONTRACT = "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2"
 TERMINAL_RESEARCH_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 TERMINAL_DECISIONS = frozenset({"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"})
+REQUIRED_DEEP_HARD_GATES = (
+    "earnings_authenticity",
+    "financial_safety",
+    "long_term_demand",
+    "moat",
+    "predictability",
+)
 
 ERA_EVIDENCE_FAMILIES = (
     "POLICY_CAPITAL",
@@ -160,6 +167,84 @@ def choose_deep_review_config(
             raise ValueError("automatic deep profiles must preserve no-auto-trade")
         return automatic, "AUTOMATIC_DEEP_CALCULATION"
     return dict(static_profiles or {}), "STATIC_BOOTSTRAP_FALLBACK"
+
+
+def _attach_deep_qualified_research_leads(
+    payload: dict[str, Any],
+    automatic_profiles: Mapping[str, Any] | None,
+    *,
+    profile_current_for_runtime: bool,
+) -> None:
+    """Expose fully resolved hard-gate research leads without inventing BUY authority."""
+
+    opportunities = payload.get("pillar_3_deep_opportunities")
+    if not isinstance(opportunities, dict):
+        return
+
+    opportunities["deep_qualified_research_leads"] = []
+    opportunities["deep_qualified_research_lead_count"] = 0
+    opportunities["deep_qualified_research_authority"] = "RESEARCH_ONLY"
+    opportunities["deep_qualified_research_formal_buy_authorized"] = False
+
+    if not profile_current_for_runtime:
+        return
+
+    raw_profiles = (automatic_profiles or {}).get("profiles")
+    if not isinstance(raw_profiles, Mapping):
+        return
+
+    holding_codes = {
+        str(row.get("code") or "").strip().zfill(6)
+        for row in ((payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or [])
+        if isinstance(row, Mapping) and str(row.get("code") or "").strip()
+    }
+    formal_codes = {
+        str(row.get("code") or "").strip().zfill(6)
+        for key in ("buy_now", "wait_price")
+        for row in (opportunities.get(key) or [])
+        if isinstance(row, Mapping) and str(row.get("code") or "").strip()
+    }
+
+    leads: list[dict[str, Any]] = []
+    for raw_code, profile in raw_profiles.items():
+        if not isinstance(profile, Mapping):
+            continue
+        code = str(raw_code or "").strip().zfill(6)
+        if not code or code in holding_codes or code in formal_codes:
+            continue
+        gates = profile.get("gates")
+        if not isinstance(gates, Mapping):
+            continue
+        statuses = {
+            gate: str((gates.get(gate) or {}).get("status") or "UNKNOWN").strip().upper()
+            if isinstance(gates.get(gate), Mapping)
+            else "UNKNOWN"
+            for gate in REQUIRED_DEEP_HARD_GATES
+        }
+        if not all(statuses[gate] == "PASS" for gate in REQUIRED_DEEP_HARD_GATES):
+            continue
+        leads.append(
+            {
+                "code": code,
+                "name": str(profile.get("name") or ""),
+                "industry": str(profile.get("industry") or ""),
+                "hard_gate_pass_count": len(REQUIRED_DEEP_HARD_GATES),
+                "hard_gate_total_count": len(REQUIRED_DEEP_HARD_GATES),
+                "hard_gate_statuses": statuses,
+                "research_authority": "RESEARCH_ONLY",
+                "formal_buy_authorized": False,
+                "automatic_execution_allowed": False,
+                "account_action": "DO_NOT_BUY_YET",
+                "research_action": "CONTINUE_VALUATION_PRICE_AND_AUTHORITY_CLOSURE",
+                "no_auto_trade": True,
+            }
+        )
+
+    leads.sort(key=lambda row: (row["code"], row["name"]))
+    opportunities["deep_qualified_research_leads"] = leads[:20]
+    opportunities["deep_qualified_research_lead_count"] = len(leads)
+    payload["executive_summary"]["deep_qualified_research_lead_count"] = len(leads)
+    payload["decision_readiness"]["deep_qualified_research_leads_current"] = bool(leads)
 
 
 def normalize_runtime(status: Mapping[str, Any] | None) -> dict[str, Any]:
@@ -960,6 +1045,11 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
+    _attach_deep_qualified_research_leads(
+        payload,
+        automatic_profiles,
+        profile_current_for_runtime=profile_current_for_runtime,
+    )
     valuation_continuity = _attach_holding_valuation_continuity(
         payload, holding_valuation_continuity_state
     )
@@ -1092,6 +1182,15 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         f"- 上一次完整终态 run：`{runtime.get('last_terminal_run_id') or '—'}`；执行 **{runtime.get('last_terminal_execution_status') or 'NOT_AVAILABLE'}**；研究终态 **{runtime.get('last_terminal_research_terminal_state') or 'NOT_AVAILABLE'}**。",
         f"- 是否需要你手工开启下一轮：**{runtime.get('manual_next_round_required', True)}**。",
         "- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。",
+        "",
+        "## 五类硬门槛已通过的研究线索",
+        "",
+        f"- 当前 runtime 中非持仓、非 Formal BUY/WAIT_PRICE、五类硬门槛全部明确 PASS：**{opportunities.get('deep_qualified_research_lead_count', 0)}**。",
+        *[
+            f"- **{row.get('code')} {row.get('name')}**（{row.get('industry') or '行业未标注'}）：硬门槛 **{row.get('hard_gate_pass_count', 0)}/{row.get('hard_gate_total_count', 5)} PASS**；下一步 **继续估值、价格与 Formal authority 闭环**；当前账户动作 **暂不买**。"
+            for row in (opportunities.get("deep_qualified_research_leads") or [])
+        ],
+        "- 这是一层研究资格可见性，不是 BUY/WAIT_PRICE；不会改变阈值、不会把 UNKNOWN 当 PASS，也不会创建 Formal 交易权限。",
         "",
         "## 深算终态研究决策",
         "",

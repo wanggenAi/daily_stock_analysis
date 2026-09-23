@@ -142,3 +142,114 @@ def test_partial_mapping_remains_visible_without_losing_connected_status():
     assert set(row["mapping_gaps"]) == {"COMMODITY_PARTIAL", "PEER"}
     assert payload["partial_mapping_gap_count"] == 1
     assert row["formal_action_eligible"] is False
+
+
+def test_current_deep_all_pass_candidate_is_promoted_for_research_order_only():
+    hourly = {"rows": []}
+    lifecycle = {"candidates": {"603596": {"stock_name": "伯特利", "research_tier": "PENDING"}}}
+    coverage = {"securities": [{
+        "code": "603596",
+        "name": "伯特利",
+        "industry_mapped": True,
+        "commodity_monitoring_state": "NOT_APPLICABLE",
+        "peer_monitoring_state": "MAPPED",
+    }]}
+    deep_profiles = {
+        "lambda_run_id": "deep-1",
+        "formal_trading_authority": False,
+        "automatic_formal_buy_allowed": False,
+        "unknown_is_pass": False,
+        "no_auto_trade": True,
+        "profiles": {
+            "603596": {
+                "name": "伯特利",
+                "industry": "C36汽车制造业",
+                "gates": {
+                    "earnings_authenticity": {"status": "PASS"},
+                    "financial_safety": {"status": "PASS"},
+                    "long_term_demand": {"status": "PASS"},
+                    "moat": {"status": "PASS"},
+                    "predictability": {"status": "PASS"},
+                },
+            }
+        },
+    }
+    deep_status = {"lambda_run_id": "deep-1", "execution_status": "SUCCESS"}
+
+    payload = build_queue(
+        hourly,
+        lifecycle,
+        coverage,
+        deep_profiles=deep_profiles,
+        deep_status=deep_status,
+    )
+    row = payload["queue"][0]
+
+    assert row["code"] == "603596"
+    assert row["priority"] == "P1"
+    assert row["deep_hard_gate_complete"] is True
+    assert row["deep_hard_gate_pass_count"] == 5
+    assert "DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP" in row["reason_codes"]
+    assert row["formal_action_eligible"] is False
+    assert row["formal_action_recomputed"] is False
+    assert payload["deep_qualified_profile_count"] == 1
+    assert payload["deep_qualified_profile_changes_order_only"] is True
+    assert payload["deep_qualified_profile_changes_thresholds"] is False
+    assert payload["no_auto_trade"] is True
+
+
+def test_deep_profile_unknown_or_stale_lineage_cannot_receive_qualification_boost():
+    lifecycle = {
+        "candidates": {
+            "603596": {"stock_name": "伯特利", "research_tier": "PENDING"},
+            "600000": {"stock_name": "未知样例", "research_tier": "PENDING"},
+        }
+    }
+    coverage = {"securities": []}
+    profiles = {
+        "lambda_run_id": "old-run",
+        "unknown_is_pass": False,
+        "no_auto_trade": True,
+        "profiles": {
+            "603596": {
+                "gates": {
+                    "earnings_authenticity": {"status": "PASS"},
+                    "financial_safety": {"status": "PASS"},
+                    "long_term_demand": {"status": "PASS"},
+                    "moat": {"status": "PASS"},
+                    "predictability": {"status": "PASS"},
+                }
+            },
+            "600000": {
+                "gates": {
+                    "earnings_authenticity": {"status": "PASS"},
+                    "financial_safety": {"status": "PASS"},
+                    "long_term_demand": {"status": "PASS"},
+                    "moat": {"status": "PASS"},
+                    "predictability": {"status": "UNKNOWN"},
+                }
+            },
+        },
+    }
+
+    stale = build_queue(
+        {"rows": []},
+        lifecycle,
+        coverage,
+        deep_profiles=profiles,
+        deep_status={"lambda_run_id": "new-run", "execution_status": "SUCCESS"},
+    )
+    assert stale["deep_qualified_profile_count"] == 0
+    assert all(row["deep_hard_gate_complete"] is False for row in stale["queue"])
+
+    current = build_queue(
+        {"rows": []},
+        lifecycle,
+        coverage,
+        deep_profiles=profiles,
+        deep_status={"lambda_run_id": "old-run", "execution_status": "SUCCESS"},
+    )
+    by_code = {row["code"]: row for row in current["queue"]}
+    assert by_code["603596"]["deep_hard_gate_complete"] is True
+    assert by_code["600000"]["deep_hard_gate_complete"] is False
+    assert "DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP" not in by_code["600000"]["reason_codes"]

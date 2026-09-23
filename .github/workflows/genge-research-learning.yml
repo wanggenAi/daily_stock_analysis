@@ -265,12 +265,20 @@ jobs:
             if [ -n "${NEAR_BUY_RECOVERY_FILE:-}" ] && [ -f "$NEAR_BUY_RECOVERY_FILE" ]; then recovery_args=(--near-buy-recovery "$NEAR_BUY_RECOVERY_FILE"); fi
             archetype_args=()
             if [ -n "${SUCCESS_ARCHETYPE_FILE:-}" ] && [ -f "$SUCCESS_ARCHETYPE_FILE" ]; then archetype_args=(--success-archetype-recall "$SUCCESS_ARCHETYPE_FILE"); fi
+            deep_args=()
+            if [ -s data/deep_calculation/latest_profiles.json ] && [ -s data/deep_calculation/latest_status.json ]; then
+              deep_args=(
+                --deep-profiles data/deep_calculation/latest_profiles.json
+                --deep-status data/deep_calculation/latest_status.json
+              )
+            fi
             python -m src.strategies.genge_opportunity_discovery.research_priority_router \
               --hourly data/hourly_research_state/latest.json \
               --lifecycle data/opportunity_snapshots/candidate_lifecycle_state.json \
               --coverage data/research_mapping/coverage.json \
               "${recovery_args[@]}" \
               "${archetype_args[@]}" \
+              "${deep_args[@]}" \
               --output data/research_priority/latest.json
 
             python - <<'PY'
@@ -320,6 +328,8 @@ jobs:
           assert q['near_buy_recovery_changes_thresholds'] is False
           assert q['success_archetype_recall_changes_order_only'] is True
           assert q['success_archetype_recall_changes_thresholds'] is False
+          assert q['deep_qualified_profile_changes_order_only'] is True
+          assert q['deep_qualified_profile_changes_thresholds'] is False
           assert q['research_overlay_boost_combination'] == 'MAX_NOT_SUM'
           if os.environ.get('SUCCESS_ARCHETYPE_FILE'):
               assert q['success_archetype_recall_count'] >= 0
