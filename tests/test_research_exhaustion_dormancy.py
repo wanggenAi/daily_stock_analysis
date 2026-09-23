@@ -48,6 +48,7 @@ def _routing(row: dict, run_id: str = "900") -> dict:
         "automatic_formal_buy_allowed": False,
         "formal_trading_authority": False,
         "mutates_authoritative_decision": False,
+        "may_suppress_existing_research": False,
         "may_create_or_mutate_formal_action": False,
         "unknown_is_pass": False,
         "no_auto_trade": True,
