@@ -336,6 +336,14 @@ jobs:
             --branch main \
             --max-attempts 4
 
+      - name: Refresh three-pillar decision center after lifecycle convergence
+        if: success() && steps.plan.outcome == 'success' && steps.deep.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-three-pillar-decision-center.yml --repo "$GITHUB_REPOSITORY" --ref main
+
       - name: Publish orchestration summary
         if: always()
         run: |
