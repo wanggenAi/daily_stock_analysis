@@ -474,3 +474,57 @@ def test_profile_workset_recovery_reopens_same_gate_epoch_after_blocked_dispatch
         item["attempt_status"] == "DISPATCH_PLANNED"
         for item in updated["entries"]
     ) == 2
+
+
+def test_exact_deep_pass_and_fail_override_stale_explicit_unresolved_scope():
+    row = _row()
+    row["research_context"]["profile_gate_statuses"]["predictability"]["status"] = "PASS"
+    row["research_context"]["profile_gate_statuses"]["financial_safety"]["status"] = "FAIL"
+
+    assert has_strategy_scope(row) is False
+    assert plan_strategy_attempts(
+        row,
+        {},
+        source_workflow_run_id="300",
+    ) == []
+
+
+def test_exact_deep_pass_removes_only_resolved_gates_from_live_like_scope():
+    row = {
+        "entity_id": "603105",
+        "research_evidence_fingerprint": "fp-live-603105",
+        "research_context": {
+            "unresolved_gates": [
+                {"gate": "earnings_authenticity", "reason": "RESEARCH_PRIORITY_MISSING_EVIDENCE"},
+                {"gate": "financial_safety", "reason": "RESEARCH_PRIORITY_MISSING_EVIDENCE"},
+                {
+                    "gate": "long_term_demand",
+                    "reason": "OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET",
+                },
+                {"gate": "moat", "reason": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET"},
+                {"gate": "predictability", "reason": "RESEARCH_PRIORITY_MISSING_EVIDENCE"},
+            ],
+            "profile_gate_statuses": {
+                "earnings_authenticity": {"status": "PASS", "source": "AUTOMATIC_MACHINE"},
+                "financial_safety": {"status": "PASS", "source": "AUTOMATIC_MACHINE"},
+                "long_term_demand": {"status": "UNKNOWN", "source": "AUTOMATIC_ATTEMPT"},
+                "moat": {"status": "UNKNOWN", "source": "AUTOMATIC_ATTEMPT"},
+                "predictability": {
+                    "status": "PASS",
+                    "source": "AUTOMATIC_STRICT_MULTI_YEAR_OFFICIAL_EVIDENCE_CLOSURE",
+                },
+            },
+        },
+    }
+
+    attempts = plan_strategy_attempts(row, {}, source_workflow_run_id="301")
+
+    assert {item["hard_gate"] for item in attempts} == {"long_term_demand", "moat"}
+    assert all(
+        item["unresolved_reason"]
+        in {
+            "OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET",
+            "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
+        }
+        for item in attempts
+    )
