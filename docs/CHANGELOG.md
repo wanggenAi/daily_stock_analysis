@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] Jev routing 成功持久化后显式、按 source run 去重地 dispatch deterministic Research Orchestrator，不再依赖二级 workflow completion 事件来消费 continuation routing；Jev 仍为 advisory-only，UNKNOWN != PASS，Formal Authority 与 no-auto-trade 不变。
 - [改进] 估值研究队列与 Terminal research valuation snapshot 透传同一量化快照的 raw 收盘参考价、交易日与价格映射状态，为后续研究型风险预算手数可执行性提供同代 PIT 价格输入；不引入实时行情、Formal BUY 或自动交易权限。
 - [新功能] Jev/Deep 自治研究闭环在精确 Deep lineage 完成 Terminal、Investor Overlay 与 Three-Pillar 收敛后，自动触发一次去重的 lineage-keyed Jev 重新评估；Jev 仍只提供 advisory routing，后续 Deep 是否再次执行由确定性 orchestrator 决定，Formal Authority、UNKNOWN != PASS 与 no-auto-trade 不变。
 - [新功能] 新增 Jev/Deep 持久化研究策略账本：按 `code × hard_gate × strategy_family × hard-gate-local evidence epoch` 记录官方补证策略，只有已接受 Deep 结果真实回流后才判断进展；同一门槛证据 epoch 的同一路径不再重复调度；epoch 纳入该门槛 Deep 补证语义及财务门槛 PIT 诊断并排除抓取时间/运行 lineage，只有该门槛自身证据变化才可重新激活，其他门槛进展不会误重开，UNKNOWN、Formal Authority 与 no-auto-trade 语义不变。

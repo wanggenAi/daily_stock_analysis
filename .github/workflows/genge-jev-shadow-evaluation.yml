@@ -166,6 +166,7 @@ jobs:
     timeout-minutes: 10
     permissions:
       contents: write
+      actions: write
     steps:
       - name: Checkout current main
         uses: actions/checkout@v5
@@ -276,6 +277,28 @@ jobs:
           done
           echo 'Jev advisory persistence failed after 4 optimistic replay attempts.' >&2
           exit 1
+
+      - name: Dispatch deterministic research orchestrator for persisted Jev lineage
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SOURCE_RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          existing="$(
+            gh api "repos/$GITHUB_REPOSITORY/actions/workflows/genge-jev-research-orchestrator.yml/runs?event=workflow_dispatch&per_page=100" \
+              --jq ".workflow_runs[] | select(.display_title == \"GenGe Jev Research Orchestrator / $SOURCE_RUN_ID\") | .id" \
+              | head -1
+          )"
+          if [ -n "$existing" ]; then
+            echo "Deterministic orchestrator already exists for Jev source $SOURCE_RUN_ID: $existing"
+            exit 0
+          fi
+          gh workflow run genge-jev-research-orchestrator.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f source_run_id="$SOURCE_RUN_ID" \
+            -f max_dispatch=12
 
       - name: Publish persistence summary
         if: always()

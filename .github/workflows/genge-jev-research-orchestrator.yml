@@ -1,12 +1,8 @@
 name: GenGe Jev Research Orchestrator
 
-run-name: GenGe Jev Research Orchestrator / ${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }}
+run-name: GenGe Jev Research Orchestrator / ${{ inputs.source_run_id || github.run_id }}
 
 on:
-  workflow_run:
-    workflows:
-      - "GenGe Jev Shadow Evaluation"
-    types: [completed]
   workflow_dispatch:
     inputs:
       source_run_id:
@@ -41,7 +37,7 @@ permissions:
   actions: write
 
 concurrency:
-  group: genge-jev-research-orchestrator-${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }}
+  group: genge-jev-research-orchestrator-${{ inputs.source_run_id || github.run_id }}
   cancel-in-progress: false
 
 env:
@@ -53,16 +49,7 @@ jobs:
     if: >-
       github.event_name == 'pull_request' ||
       github.event_name == 'push' ||
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main' &&
-        (
-          github.event.workflow_run.event == 'workflow_dispatch' ||
-          github.event.workflow_run.event == 'push'
-        )
-      )
+      github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     permissions:
@@ -81,17 +68,7 @@ jobs:
 
   plan-and-dispatch:
     needs: contracts
-    if: >-
-      github.event_name == 'workflow_dispatch' ||
-      (
-        github.event_name == 'workflow_run' &&
-        github.event.workflow_run.conclusion == 'success' &&
-        github.event.workflow_run.head_branch == 'main' &&
-        (
-          github.event.workflow_run.event == 'workflow_dispatch' ||
-          github.event.workflow_run.event == 'push'
-        )
-      )
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -109,16 +86,13 @@ jobs:
         id: source
         shell: bash
         env:
-          EVENT_SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
           MANUAL_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
         run: |
           set -euo pipefail
           test -s data/jev_shadow/latest_routing.json
           persisted="$(jq -r '.source_workflow_run_id // ""' data/jev_shadow/latest_routing.json)"
           expected=""
-          if [ "$GITHUB_EVENT_NAME" = "workflow_run" ]; then
-            expected="$EVENT_SOURCE_RUN_ID"
-          elif [[ "$MANUAL_SOURCE_RUN_ID" =~ ^[0-9]+$ ]]; then
+          if [[ "$MANUAL_SOURCE_RUN_ID" =~ ^[0-9]+$ ]]; then
             expected="$MANUAL_SOURCE_RUN_ID"
           else
             expected="$persisted"
