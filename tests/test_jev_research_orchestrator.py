@@ -253,7 +253,7 @@ def test_strategy_ledger_suppresses_same_strategy_in_same_evidence_epoch():
     assert "000576" not in later["requested_codes"]
     assert any(
         row.get("entity_id") == "000576"
-        and row.get("reason") == "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH"
+        and row.get("reason") == "RESEARCH_STRATEGIES_EXHAUSTED_DORMANT"
         for row in later["skipped"]
     )
     exhausted = [
@@ -263,6 +263,11 @@ def test_strategy_ledger_suppresses_same_strategy_in_same_evidence_epoch():
     ]
     assert exhausted
     assert all(entry["attempt_status"] == "EXHAUSTED_NO_PROGRESS" for entry in exhausted)
+    transitions = [item for item in later["lifecycle_transitions"] if item["code"] == "000576"]
+    assert len(transitions) == 1
+    assert transitions[0]["event"] == "RESEARCH_EXHAUSTED"
+    assert transitions[0]["is_current_holding"] is False
+    assert later["summary"]["research_exhausted_dormant_count"] == 1
 
 
 def test_new_evidence_epoch_reopens_same_supported_strategy():
@@ -316,3 +321,76 @@ def test_workflow_persists_strategy_ledger_only_after_deep_acceptance():
     assert 'entry["attempt_status"] = "DISPATCH_ACCEPTED"' in workflow
     assert "data/jev_shadow/research_strategy_ledger.json" in workflow
 
+
+
+def test_dormant_candidate_reactivates_only_when_new_gate_epoch_is_dispatchable():
+    first = build_orchestration_plan(_scoped_routing(), max_dispatch=12)
+    ledger = first["strategy_ledger"]
+    for entry in ledger["entries"]:
+        if entry["code"] == "000576":
+            entry["attempt_status"] = "DISPATCH_ACCEPTED"
+            entry["deep_run_id"] = "900"
+
+    exhausted_payload = _scoped_routing(source_run="201", deep_run="900")
+    exhausted = build_orchestration_plan(
+        exhausted_payload,
+        max_dispatch=12,
+        strategy_ledger=ledger,
+    )
+    exhausted_ledger = exhausted["strategy_ledger"]
+    assert exhausted["summary"]["research_exhausted_dormant_count"] == 1
+
+    unchanged = _scoped_routing(source_run="202", deep_run="900")
+    unchanged["routing_queue"][1]["triage_context"]["candidate_lifecycle_state"] = "DORMANT"
+    unchanged_plan = build_orchestration_plan(
+        unchanged,
+        max_dispatch=12,
+        strategy_ledger=exhausted_ledger,
+    )
+    assert "000576" not in unchanged_plan["requested_codes"]
+    assert not [
+        item
+        for item in unchanged_plan["lifecycle_transitions"]
+        if item["event"] == "RESEARCH_REACTIVATED"
+    ]
+
+    changed = _scoped_routing(source_run="203", deep_run="900")
+    changed["routing_queue"][1]["triage_context"]["candidate_lifecycle_state"] = "DORMANT"
+    changed["routing_queue"][1]["research_context"]["unresolved_gates"][0][
+        "reason"
+    ] = "MULTI_YEAR_POSITIVITY_NOT_PROVEN"
+    changed_plan = build_orchestration_plan(
+        changed,
+        max_dispatch=12,
+        strategy_ledger=exhausted_ledger,
+    )
+
+    assert "000576" in changed_plan["requested_codes"]
+    transitions = [
+        item
+        for item in changed_plan["lifecycle_transitions"]
+        if item["code"] == "000576"
+    ]
+    assert len(transitions) == 1
+    assert transitions[0]["event"] == "RESEARCH_REACTIVATED"
+    assert transitions[0]["research_evidence_changed"] is True
+    assert changed_plan["summary"]["research_reactivated_count"] == 1
+
+
+def test_exhausted_current_holding_is_never_moved_to_dormant():
+    payload = _scoped_routing()
+    row = payload["routing_queue"][1]
+    row["is_current_holding"] = True
+    first = build_orchestration_plan(payload, max_dispatch=12)
+    ledger = first["strategy_ledger"]
+    for entry in ledger["entries"]:
+        if entry["code"] == "000576":
+            entry["attempt_status"] = "DISPATCH_ACCEPTED"
+            entry["deep_run_id"] = "900"
+
+    later = _scoped_routing(source_run="201", deep_run="900")
+    later["routing_queue"][1]["is_current_holding"] = True
+    plan = build_orchestration_plan(later, max_dispatch=12, strategy_ledger=ledger)
+
+    assert "000576" not in plan["requested_codes"]
+    assert not [item for item in plan["lifecycle_transitions"] if item["code"] == "000576"]
