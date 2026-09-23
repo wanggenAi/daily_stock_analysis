@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **3**
-- BUY: **0** / WAIT_PRICE: **0** / RESEARCH_GAP: **3** / REJECT: **0**
+- requested: **1**
+- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **0** / REJECT: **0**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -11,11 +11,10 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **0** / PROBE: **0** / WATCH: **0** / BLOCK: **3**
+- BUILD: **1** / PROBE: **0** / WATCH: **0** / BLOCK: **0**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
+- 603596 伯特利: **BUILD** / conviction=0.945 / max_portfolio=3.0%
 
 ## Terminal rows
 
-- 600816 建元信托: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
-- 000504 南华生物: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
-- 601020 华钰矿业: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 603596 伯特利: **BUY** / ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT
