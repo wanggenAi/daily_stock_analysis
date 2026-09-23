@@ -201,6 +201,48 @@ class ValuationResearchReportTest(unittest.TestCase):
         self.assertFalse(by_code["002120"]["automatic_promotion_allowed"])
         self.assertTrue(by_code["002120"]["no_auto_trade"])
 
+    def test_queue_preserves_same_snapshot_raw_execution_reference_price(self):
+        source_rows = [
+            {
+                "code": "603105",
+                "stock_name": "芯能科技",
+                "industry": "电力",
+                "quant_status": "PRIORITY_RESEARCH",
+                "quant_score": 76.1,
+                "raw_latest_close": "8.53",
+                "raw_latest_trade_date": "2026-09-22",
+                "latest_trade_date": "2026-09-22",
+                "adjusted_latest_close": "8.53",
+                "price_mapping_status": "OK",
+            }
+        ]
+        loader = _FakeLoader(
+            {
+                "603105": FundamentalFetchResult(
+                    valuation_df=pd.DataFrame(
+                        {
+                            "date": ["2026-09-19", "2026-09-21", "2026-09-22"],
+                            "pe": [27.0, 27.2, 22.06],
+                        }
+                    )
+                )
+            }
+        )
+
+        rows = build_valuation_research_rows(
+            source_rows,
+            as_of=date(2026, 9, 22),
+            loader=loader,
+            minimum_pe_samples=1,
+        )
+
+        self.assertEqual(rows[0]["reference_price"], 8.53)
+        self.assertEqual(rows[0]["reference_trade_date"], "2026-09-22")
+        self.assertEqual(rows[0]["reference_price_basis"], "RAW_LATEST_CLOSE")
+        self.assertEqual(rows[0]["price_mapping_status"], "OK")
+        self.assertFalse(rows[0]["formal_signal_eligible"])
+        self.assertTrue(rows[0]["no_auto_trade"])
+
     def test_queue_ranks_low_implied_expectation_before_high_expectation(self):
         source_rows = [
             {

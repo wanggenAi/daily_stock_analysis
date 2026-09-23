@@ -92,6 +92,8 @@ python3 -m src.strategies.genge_opportunity_discovery.all_a_full_scan \
 
 统一入口从上交所、深交所公开清单的证券类型和板块元数据构建股票池，不按代码前缀猜板块。长期指标和支撑、阻力、ATR、突破位等计划几何只使用截至 `as_of_date` 的前复权日线，避免把除权前高价误当成当前真实阻力；最终价位再按计划起始日的精确 raw/qfq 因子映射为未复权价格，并只在 raw 口径按 A 股 0.01 元最小价位取整。`price_mapping_audit.csv` 记录两套价格、映射比例、除权事件判断、数据源和日期，不允许用未复权历史静默替代复权指标。
 
+估值研究侧车 `valuation_research_queue.csv` 还会透传同一量化快照里的 `raw_latest_close` 为 `reference_price`，并同时保存 `reference_trade_date`、`reference_price_basis=RAW_LATEST_CLOSE` 和 `price_mapping_status`。这些字段只用于后续研究型风险预算的手数/金额可执行性计算，必须和该轮量化/估值 lineage 同代；它们不是实时行情，也不会新增 Formal BUY 或自动下单权限。Terminal research 会把这组字段原样带入 valuation snapshot，供投资者研究层继续做 fail-closed 执行约束。
+
 输出位于 `reports/all_a_full_scan/<下一交易日 YYYYMMDD>/`。用户层级只有 `STRICT_REVIEW_READY`、`CONDITION_WATCH`、`RESEARCH_WATCH` 和 `NOT_QUALIFIED`；后三者风险预算仓位固定为 0。严格候选仍只是公开数据下的人工复核对象，不是交易指令。
 
 全 A 入口还会计算一层可审计的现实风险信号：沪深主要指数、全市场涨跌宽度与涨跌停失衡用于判断大盘状态；行业上涨参与度、中位涨跌、均线位置与放量下跌比例用于判断行业状态；个股涨跌、跳空、成交量/成交额相对 20 日水平、收盘位置和均线位置用于判断量价状态；巨潮和上交所近 730 日官方公告用于识别处罚、立案、退市、违约、冻结、事故、停产、预亏、大额减持等重大事件。事件公告可从同一标题识别多个事件类型，并区分 `ACTIVE`、`RESOLVED`、`EXPIRED` 及全部/部分解除；只有仍在有效期内且原文核验成功的活动风险进入负面门槛。标题必须表达事件实际发生或处理进展，年度例行的资金占用专项说明、专项审计或核查意见不会仅凭关键词被误判为高风险。公告接口响应缺字段、计数矛盾、查询截断或原文核验不完整时按 `PARTIAL/FAILED` 失败关闭，不能误当成没有风险。成交量本身不能区分所谓“买入量”和“卖出量”，第三方标注的“主力净流入”不作为事实或独立买入依据。

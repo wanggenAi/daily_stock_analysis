@@ -33,11 +33,28 @@ def _valuation(pe="8", median="12", quality="90", confidence="HIGH", status="OK"
         "operating_cash_flow": "90",
         "financial_disclosure_date": "2026-08-30",
         "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        "reference_price": "8.53",
+        "reference_trade_date": "2026-09-22",
+        "reference_price_basis": "RAW_LATEST_CLOSE",
+        "price_mapping_status": "OK",
     }]
 
 
 def _all(status):
     return {k: status for k in ("predictability", "long_term_demand", "moat", "financial_safety", "earnings_authenticity")}
+
+
+def test_terminal_snapshot_preserves_execution_reference_price_lineage():
+    out = build_terminal_decisions(
+        profiles_payload=_profile(_all("PASS")),
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(),
+    )
+    valuation = out["terminal_rows"][0]["valuation"]
+    assert valuation["reference_price"] == 8.53
+    assert valuation["reference_trade_date"] == "2026-09-22"
+    assert valuation["reference_price_basis"] == "RAW_LATEST_CLOSE"
+    assert valuation["price_mapping_status"] == "OK"
 
 
 def test_unknown_after_bounded_recovery_converges_to_research_gap_not_fake_pass():
