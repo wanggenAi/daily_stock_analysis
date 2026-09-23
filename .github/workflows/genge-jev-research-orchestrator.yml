@@ -385,6 +385,18 @@ jobs:
               if not isinstance(raw, dict):
                   continue
               transition = dict(raw)
+              code = str(transition.get("code") or "").zfill(6)
+              expected = str(transition.get("expected_prior_lifecycle_state") or "")
+              candidate = (state.get("candidates") or {}).get(code) or {}
+              if expected and str(candidate.get("lifecycle_state") or "") != expected:
+                  print(json.dumps({
+                      "stale_transition_skipped": True,
+                      "code": code,
+                      "event": transition.get("event"),
+                      "expected_prior_lifecycle_state": expected,
+                      "actual_lifecycle_state": candidate.get("lifecycle_state"),
+                  }, ensure_ascii=False))
+                  continue
               transition["evidence_observed_at"] = os.environ["OBSERVED_AT"]
               state, event = apply_explicit_transition(state, transition)
               if event is not None:
