@@ -26,6 +26,7 @@
 - 600640 国脉文化 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
 - 600916 中国黄金 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
 - 601236 红塔证券 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
+- 603105 芯能科技 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
 - 603369 今世缘 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
 - 603883 老百姓 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH:RESEARCH_GAP
 - 000096 广聚能源 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P2
@@ -40,6 +41,5 @@
 - 603237 五芳斋 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P2
 - 603566 普莱柯 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P2
 - 603617 君禾股份 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P2
-- 603739 蔚蓝生物 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P2
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
