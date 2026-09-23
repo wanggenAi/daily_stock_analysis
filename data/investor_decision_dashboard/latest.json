@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-23T09:15:01+00:00",
+  "mode": "EVENT",
+  "generated_at": "2026-09-23T09:30:45+00:00",
   "canonical_snapshot_id": "538269c3908f97c328d1",
   "canonical_source_run_id": "35829289957",
   "latest_trade_date": "2026-09-22",
@@ -25,18 +25,20 @@
     "as_of_date": "2026-09-22",
     "status": "YELLOW",
     "allow_new_buy": false,
-    "external_risk_level": "LOW",
+    "external_risk_level": "MEDIUM",
     "data_quality": "OK",
     "limit_up_count": 63,
     "limit_down_count": 4,
-    "score": 57.74,
+    "score": 54.74,
     "position_multiplier": 0.5,
     "advance_ratio": 0.4313,
     "median_return_1d_pct": -0.2005,
     "above_ma20_ratio": 0.5554,
     "above_ma60_ratio": 0.6247,
     "distribution_ratio": 0.0434,
-    "risk_reasons": [],
+    "risk_reasons": [
+      "external_market_risk_medium"
+    ],
     "context_scope": "EOD_DAILY_STRUCTURE",
     "freshness_override": "STALE_UPSTREAM_FAIL_CLOSED"
   },
@@ -354,8 +356,14 @@
     "rows": []
   },
   "event_review": {
-    "triggered": false,
-    "trigger_codes": []
+    "triggered": true,
+    "trigger_codes": [
+      "001316",
+      "601318",
+      "603993",
+      "000504",
+      "600816"
+    ]
   },
   "hourly_context": {
     "available": false,
@@ -408,7 +416,7 @@
       "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
       "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
     ],
-    "evaluated_at": "2026-09-23T09:15:01+00:00",
+    "evaluated_at": "2026-09-23T09:30:45+00:00",
     "canonical_generated_at": "2026-09-23T07:12:20+00:00",
     "canonical_latest_trade_date": "2026-09-22",
     "canonical_source_run_id": "35829289957",
@@ -448,9 +456,9 @@
     "source_every_industry_run_id": "35829289957",
     "requested_count": 3,
     "decision_counts": {
-      "BUY": 0,
       "WAIT_PRICE": 0,
       "REJECT": 0,
+      "BUY": 0,
       "RESEARCH_GAP": 3
     },
     "research_authority": "RESEARCH_ONLY",
