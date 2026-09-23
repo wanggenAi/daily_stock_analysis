@@ -87,6 +87,20 @@ def unresolved_gates(row: Mapping[str, Any]) -> dict[str, str]:
         gate = str(item.get("gate") or "").strip()
         if gate:
             result[gate] = str(item.get("reason") or "").strip()
+
+    # Some live priority/holding rows can carry a fully populated Deep
+    # profile_gate_statuses map while the routing-level unresolved_gates list
+    # is empty.  Treat explicit UNKNOWN gate state as unresolved research
+    # scope so the durable strategy ledger still governs retries.  Never infer
+    # FAIL as researchable and never downgrade PASS.
+    statuses = _mapping(context.get("profile_gate_statuses"))
+    for gate, raw_status in statuses.items():
+        gate_name = str(gate or "").strip()
+        if not gate_name or gate_name in result or gate_name not in _GATE_STRATEGY:
+            continue
+        status = str(_mapping(raw_status).get("status") or "").strip().upper()
+        if status == "UNKNOWN":
+            result[gate_name] = "PROFILE_GATE_STATUS_UNKNOWN"
     return result
 
 
