@@ -172,6 +172,10 @@ def _valuation_decision(row: Mapping[str, Any]) -> tuple[str, str, dict[str, Any
         "earnings_quality_score": quality_score,
         "expectation_state": expectation,
         "required_profit_growth_pct": _num(row.get("required_profit_growth_pct")),
+        "reference_price": _num(row.get("reference_price")),
+        "reference_trade_date": str(row.get("reference_trade_date") or ""),
+        "reference_price_basis": str(row.get("reference_price_basis") or ""),
+        "price_mapping_status": str(row.get("price_mapping_status") or ""),
         "financial_gate_diagnostics": financial_gate,
     }
     if industry.startswith(SPECIALIZED_INDUSTRY_PREFIXES):
