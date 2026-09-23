@@ -84,7 +84,7 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -98,7 +98,7 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=3 / verified-pass=207 / unresolved=15 |
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35831231832 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
+| Deep Research Terminal | **ACTIVE** | BUY=0 / WAIT=0 / GAP=3 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **126**；累计生命周期事件 **8043**。这意味着历史候选会持续研究，而不是第二天扫描不到就消失。
@@ -133,9 +133,9 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`35830505984`；当前 Lambda：`35830941131`。
-- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
+- 终态来源 Lambda：`35830941131`；当前 Lambda：`35830941131`。
+- 请求：**3**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**3**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - 风险预算层 BUILD/PROBE 候选：**0**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
