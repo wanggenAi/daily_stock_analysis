@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-23T09:33:52+00:00",
+  "generated_at": "2026-09-23T09:35:29+00:00",
   "latest_trade_date": "2026-09-22",
   "canonical_snapshot_id": "538269c3908f97c328d1",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -1339,11 +1339,11 @@
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
-    "market_session_state": "UNKNOWN",
-    "market_data_status": "UNAVAILABLE",
+    "market_session_state": "CLOSED",
+    "market_data_status": "OFF_SESSION",
     "live_quote_applied_count": 0,
-    "live_quote_expected_count": 0,
-    "live_quote_coverage_complete": true,
+    "live_quote_expected_count": 4,
+    "live_quote_coverage_complete": false,
     "immediate_execution_ready": false,
     "cash_action": "KEEP_CASH",
     "plain_language": "本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。",
@@ -1355,7 +1355,7 @@
     "structural_trend_evidence_available": true,
     "validated_macro_to_a_share_handoff_available": false,
     "terminal_opportunity_result_available": true,
-    "live_execution_quote_coverage_complete": true,
+    "live_execution_quote_coverage_complete": false,
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
     "financial_capital_evidence_available": false,
     "capital_flow_multi_layer_covered": false,
@@ -1740,7 +1740,7 @@
       {
         "capability": "资金计划 + 执行价覆盖",
         "status": "ACTIVE",
-        "result": "cash=50000.0 / immediate=0.0 / quotes=0/0"
+        "result": "cash=50000.0 / immediate=0.0 / quotes=0/4"
       }
     ],
     "interpretation": "Only production-wired capabilities are shown here. A design doc or isolated module does not count as active.",
@@ -1753,7 +1753,8 @@
     "limitations": [
       "DEEP_RESEARCH_EVIDENCE_PARTIAL",
       "FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING",
-      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED"
+      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED",
+      "LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION"
     ],
     "interpretation": "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action without promoting missing evidence. EVIDENCE completeness is tracked separately.",
     "no_auto_trade": true
