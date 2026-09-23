@@ -1,6 +1,6 @@
 # 投资决策驾驶舱
 
-> 市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=4/4
+> 市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
 
 ## 1. 最新市场结构（日线）
 
@@ -8,17 +8,15 @@
 - 市场状态：**YELLOW**；是否允许新买：**True**；仓位倍率：**0.50**
 - 上涨家数比例：**43.13%**；数据质量：**OK**
 
-- 盘中执行价覆盖：**4/4只**；行情状态：**OK**；最新行情时间：**2026-09-23T11:13:51+08:00**；正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。
-
 ## 2. 我的持仓怎么办
 
 - 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。
 | 股票 | 持仓 | 成本 | 参考价 | 盈亏% | 正式动作/权限 | 动作状态 | 现在怎么办 |
 |---|---:|---:|---:|---:|---|---|---|
-| 国电南瑞 600406 | 200 | 23.13 | 22.31 | -3.53 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
-| 润贝航科 001316 | 200 | 25.75 | 28.32 | 10.00 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
-| 中国平安 601318 | 400 | 55.97 | 54.19 | -3.17 | HOLD | **UNCHANGED** | **继续持有** |
-| 洛阳钼业 603993 | 1100 | 18.62 | 17.62 | -5.39 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
+| 国电南瑞 600406 | 200 | 23.13 | 22.23 | -3.87 | REDUCE_25 | **UNCHANGED** | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** |
+| 润贝航科 001316 | 200 | 25.75 | 28.90 | 12.25 | HOLD_REVIEW | **UNCHANGED** | **持有观察** |
+| 中国平安 601318 | 400 | 55.97 | 54.46 | -2.69 | HOLD | **UNCHANGED** | **继续持有** |
+| 洛阳钼业 603993 | 1100 | 18.62 | 17.81 | -4.37 | HOLD | **UNCHANGED** | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** |
 
 ## 3. 今天能直接买什么
 
@@ -62,25 +60,3 @@ R86新闻和出版业(STRONG)、P83教育(STRONG)、I64互联网和相关服务(
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**13** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **13** / REJECT **0**。
-- urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
-| 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
-
-### Urgent evidence queue
-
-- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
-- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
