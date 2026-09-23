@@ -179,3 +179,13 @@ def test_dormant_candidate_loses_stale_tier_boost_but_new_signal_can_reenter():
     assert reopened["priority_score"] >= 45
     assert reopened["priority"] in {"P0", "P1"}
     assert "REUNDERWRITE_REQUIRED" in reopened["reason_codes"]
+
+
+def test_unsupported_unresolved_gate_blocks_dormancy_fail_closed():
+    row = _row()
+    row["research_context"]["unresolved_gates"].append(
+        {"gate": "future_unmapped_gate", "reason": "NO_STRATEGY_DEFINED"}
+    )
+    state = research_exhaustion_state(row, _exhausted_ledger(_row()))
+    assert state["exhausted"] is False
+    assert state["blocker"].startswith("UNSUPPORTED_UNRESOLVED_GATES:")
