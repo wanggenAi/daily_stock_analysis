@@ -8,6 +8,7 @@ from typing import Any, Mapping
 
 TERMINAL_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
 TERMINAL_DECISIONS = {"BUY", "WAIT_PRICE", "RESEARCH_GAP", "REJECT"}
+CAPITAL_ACTIONS = ("BUILD", "PROBE", "WATCH", "BLOCK")
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -54,6 +55,61 @@ def normalize_terminal_research(payload: Mapping[str, Any]) -> dict[str, Any]:
     if any(int(source_counts.get(d) or 0) != counts[d] for d in TERMINAL_DECISIONS):
         raise ValueError("terminal research decision_counts mismatch")
 
+    capital_model_version = str(payload.get("capital_model_version") or "")
+    capital_action_counts = {action: 0 for action in CAPITAL_ACTIONS}
+    capital_probe_rows: list[dict[str, Any]] = []
+    for row in normalized_rows:
+        capital = row.get("capital_allocation")
+        if not isinstance(capital, Mapping):
+            if capital_model_version:
+                raise ValueError("capital model row missing capital_allocation")
+            continue
+        action = str(capital.get("action") or "").upper()
+        if action not in capital_action_counts:
+            raise ValueError(f"invalid capital advisory action: {action or 'EMPTY'}")
+        if capital.get("authority") != "ADVISORY_ONLY":
+            raise ValueError("capital advisory gained forbidden authority")
+        if capital.get("automatic_execution_allowed") is not False:
+            raise ValueError("capital advisory cannot enable automatic execution")
+        if capital.get("formal_buy_authorized") is not False:
+            raise ValueError("capital advisory cannot grant Formal BUY")
+        if capital.get("no_auto_trade") is not True:
+            raise ValueError("capital advisory lost no-auto-trade")
+        capital_action_counts[action] += 1
+        if action in {"BUILD", "PROBE"}:
+            capital_probe_rows.append(row)
+
+    if capital_model_version:
+        if payload.get("capital_advisory_authority") != "ADVISORY_ONLY":
+            raise ValueError("terminal capital advisory authority mismatch")
+        if payload.get("capital_advisory_automatic_execution_allowed") is not False:
+            raise ValueError("terminal capital advisory cannot auto-execute")
+        source_capital_counts = payload.get("capital_action_counts")
+        if not isinstance(source_capital_counts, Mapping):
+            raise ValueError("capital_action_counts missing for capital model")
+        expected_capital_counts = {
+            action: int(source_capital_counts.get(action) or 0)
+            for action in CAPITAL_ACTIONS
+        }
+        if expected_capital_counts != capital_action_counts:
+            raise ValueError("terminal capital_action_counts mismatch")
+        if sum(capital_action_counts.values()) != requested_count:
+            raise ValueError("capital advisory rows do not cover terminal workset")
+        source_probe = payload.get("capital_probe_queue")
+        if not isinstance(source_probe, list):
+            raise ValueError("capital_probe_queue missing for capital model")
+        source_probe_keys = sorted(
+            (str(row.get("code") or ""), str((row.get("capital_allocation") or {}).get("action") or ""))
+            for row in source_probe
+            if isinstance(row, Mapping)
+        )
+        actual_probe_keys = sorted(
+            (str(row.get("code") or ""), str((row.get("capital_allocation") or {}).get("action") or ""))
+            for row in capital_probe_rows
+        )
+        if source_probe_keys != actual_probe_keys:
+            raise ValueError("capital_probe_queue mismatch")
+
     urgent = payload.get("urgent_research_queue") or []
     if not isinstance(urgent, list):
         raise ValueError("urgent_research_queue must be a list")
@@ -81,6 +137,12 @@ def normalize_terminal_research(payload: Mapping[str, Any]) -> dict[str, Any]:
         "terminal_rows": normalized_rows,
         "urgent_research_queue": urgent_rows,
         "urgent_research_count": len(urgent_rows),
+        "capital_model_version": capital_model_version,
+        "capital_action_counts": capital_action_counts,
+        "capital_probe_queue": capital_probe_rows,
+        "capital_probe_count": len(capital_probe_rows),
+        "capital_advisory_authority": "ADVISORY_ONLY",
+        "capital_advisory_automatic_execution_allowed": False,
     }
 
 
@@ -100,10 +162,19 @@ def apply_overlay(dashboard: Mapping[str, Any], terminal_payload: Mapping[str, A
         "research_gap_count": research["decision_counts"]["RESEARCH_GAP"],
         "research_reject_count": research["decision_counts"]["REJECT"],
         "urgent_research_count": research["urgent_research_count"],
+        "research_capital_probe_count": research["capital_probe_count"],
+        "research_capital_action_counts": dict(research["capital_action_counts"]),
     })
     out["decision_summary"] = summary
     health = dict(out.get("data_health") or {})
-    health.update({"terminal_research_available": True, "terminal_research_authority": "RESEARCH_ONLY", "terminal_research_formal_mutation_allowed": False})
+    health.update({
+        "terminal_research_available": True,
+        "terminal_research_authority": "RESEARCH_ONLY",
+        "terminal_research_formal_mutation_allowed": False,
+        "terminal_capital_advisory_available": bool(research["capital_model_version"]),
+        "terminal_capital_advisory_authority": "ADVISORY_ONLY",
+        "terminal_capital_advisory_automatic_execution_allowed": False,
+    })
     out["data_health"] = health
     presentation = dict(out.get("presentation_contract") or {})
     sections = list(presentation.get("section_order") or [])
@@ -141,7 +212,27 @@ def append_markdown(markdown: str, dashboard: Mapping[str, Any]) -> str:
     lines = [markdown, "", "## 深算研究终态（Research-only，不等于正式交易授权）", "",
              f"- 本轮深算：**{research.get('requested_count', 0)}** 只；研究 BUY **{counts.get('BUY', 0)}** / WAIT_PRICE **{counts.get('WAIT_PRICE', 0)}** / RESEARCH_GAP **{counts.get('RESEARCH_GAP', 0)}** / REJECT **{counts.get('REJECT', 0)}**。",
              f"- urgent research：**{research.get('urgent_research_count', 0)}** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。",
-             "- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。", "", "### 我的持仓深算", "",
+             "- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。"]
+    if research.get("capital_model_version"):
+        capital_counts = research.get("capital_action_counts") or {}
+        lines += [
+            f"- 风险预算：BUILD **{capital_counts.get('BUILD', 0)}** / PROBE **{capital_counts.get('PROBE', 0)}** / WATCH **{capital_counts.get('WATCH', 0)}** / BLOCK **{capital_counts.get('BLOCK', 0)}**；仅人工建议，不自动执行。",
+            "",
+            "### 风险预算 BUILD / PROBE",
+            "",
+        ]
+        probes = research.get("capital_probe_queue") or []
+        if not probes:
+            lines.append("- 暂无。")
+        for row in probes:
+            capital = row.get("capital_allocation") or {}
+            lines.append(
+                f"- {row.get('name') or ''} {row.get('code')}: **{capital.get('action') or '—'}**；"
+                f"conviction={capital.get('capital_conviction_score', '—')}；"
+                f"建议账户仓位上限={capital.get('suggested_max_portfolio_pct', 0)}%；"
+                f"研究结论仍为 {row.get('research_decision') or '—'}。"
+            )
+    lines += ["", "### 我的持仓深算", "",
              "| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |", "|---|---|---|---|---|"]
     by_code = {str(row.get("code") or ""): row for row in research.get("terminal_rows") or []}
     urgent_codes = {str(row.get("code") or "") for row in research.get("urgent_research_queue") or []}
