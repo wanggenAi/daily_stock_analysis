@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-23T16:22:20+00:00",
+  "generated_at": "2026-09-23T16:52:55+00:00",
   "canonical_snapshot_id": "966b9961b76c7cdfc464",
   "canonical_source_run_id": "35886039426",
   "latest_trade_date": "2026-09-23",
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场日线=YELLOW（2026-09-23）；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
+  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
   "market": {
     "as_of_date": "2026-09-23",
     "status": "YELLOW",
@@ -96,7 +96,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION"
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "001316",
@@ -136,7 +137,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE"
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "601318",
@@ -176,7 +178,8 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.648<1.00"
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.648<1.00",
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "603993",
@@ -217,6 +220,7 @@
           "no_auto_trade": true
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "price_source": "CANONICAL_FROZEN_PRICE",
         "holding_add_consumption": {
           "status": "CONSUMED",
           "source_canonical_snapshot_id": "4e025e2112441ae19e05",
@@ -355,8 +359,8 @@
     "trigger_codes": []
   },
   "hourly_context": {
-    "available": false,
-    "research_as_of": ""
+    "available": true,
+    "research_as_of": "2026-09-23T16:15:09Z"
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -399,7 +403,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-23T16:22:20+00:00",
+    "evaluated_at": "2026-09-23T16:52:55+00:00",
     "canonical_generated_at": "2026-09-23T16:15:09+00:00",
     "canonical_latest_trade_date": "2026-09-23",
     "canonical_source_run_id": "35886039426",
@@ -408,6 +412,38 @@
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
   "formal_new_exposure_allowed": true,
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "available": false,
+    "market_data_status": "DEGRADED",
+    "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": false,
+    "formal_new_exposure_allowed": true
+  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
     "canonical_snapshot_id": "966b9961b76c7cdfc464",
@@ -439,10 +475,10 @@
     "source_every_industry_run_id": "35886039426",
     "requested_count": 16,
     "decision_counts": {
-      "RESEARCH_GAP": 15,
+      "REJECT": 0,
       "WAIT_PRICE": 0,
       "BUY": 1,
-      "REJECT": 0
+      "RESEARCH_GAP": 15
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
