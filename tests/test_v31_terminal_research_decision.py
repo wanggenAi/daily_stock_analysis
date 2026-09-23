@@ -346,3 +346,75 @@ def test_terminal_production_has_actions_write_for_explicit_dispatch() -> None:
     workflow = Path(".github/workflows/genge-v31-terminal-research-decision.yml").read_text(encoding="utf-8")
     production = workflow.split("  production:", 1)[1]
     assert "permissions:\n      actions: write\n      contents: write" in production
+
+def test_existing_pe_buy_rule_is_reverse_solved_into_explicit_price_ceiling():
+    out = build_terminal_decisions(
+        profiles_payload=_profile(_all("PASS")),
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(pe="8", median="12"),
+    )
+    valuation = out["terminal_rows"][0]["valuation"]
+
+    assert valuation["research_buy_pe_ratio_threshold"] == 0.80
+    assert round(valuation["research_buy_price_ceiling"], 4) == 10.236
+    assert round(valuation["distance_to_research_buy_ceiling_pct"], 2) == 20.0
+
+
+def test_five_of_five_priority_followup_survives_later_deep_workset_omission():
+    gates = _all("PASS")
+    profiles = {
+        "unknown_is_pass": False,
+        "automatic_formal_buy_allowed": False,
+        "no_auto_trade": True,
+        "profiles": {
+            "603596": {
+                "name": "伯特利",
+                "industry": "C36汽车制造业",
+                "gates": {gate: {"status": status} for gate, status in gates.items()},
+            }
+        },
+    }
+    valuation = _valuation(pe="17.95", median="33.65")
+    valuation[0].update(
+        {
+            "code": "603596",
+            "stock_name": "伯特利",
+            "industry": "C36汽车制造业",
+            "quant_score": "80.0059",
+            "reference_price": "28.72",
+        }
+    )
+    priority = {
+        "queue": [
+            {
+                "code": "603596",
+                "name": "伯特利",
+                "priority": "P1",
+                "priority_score": 50,
+                "deep_hard_gate_complete": True,
+                "deep_hard_gate_pass_count": 5,
+                "deep_hard_gate_total_count": 5,
+                "reason_codes": ["DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP"],
+            }
+        ]
+    }
+
+    out = build_terminal_decisions(
+        profiles_payload=profiles,
+        evidence_payload={"requested_codes": []},
+        valuation_rows=valuation,
+        priority_payload=priority,
+    )
+
+    assert out["deep_requested_count"] == 0
+    assert out["valuation_closure_carry_forward_count"] == 1
+    assert out["valuation_closure_carry_forward_codes"] == ["603596"]
+    assert out["requested_count"] == 1
+    assert out["all_requested_terminal"] is True
+    row = out["terminal_rows"][0]
+    assert row["code"] == "603596"
+    assert row["research_decision"] == "BUY"
+    assert row["capital_allocation"]["action"] == "BUILD"
+    assert row["formal_buy_authorized"] is False
+    assert row["no_auto_trade"] is True
+    assert row["valuation"]["research_buy_price_ceiling"] > 28.72
