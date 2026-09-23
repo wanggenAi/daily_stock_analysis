@@ -34,6 +34,11 @@ VALUATION_PRICE_CLOSURE_IMPLEMENTATION
 - This checkpoint restores the required heading; re-read the next newest-head run before merge.
 - No business/test failure has been observed yet.
 
+## Production / Artifact
+- Regression lineage: Jev `35849969346` -> Orchestrator `35850186518`; 603596 was 5/5 PASS + `RESEARCH:BUY` but stopped at NOOP.
+- Historical 603596 Terminal result: research BUY + BUILD, conviction 0.945, advisory max 3%; Formal BUY=false.
+- #294 production verification is pending merge and must prove durable closure plus `research_buy_price_ceiling`.
+
 ## Proven Production Defect
 - `603596 伯特利` is the concrete regression case.
 - Jev run `35849969346` saw it as HIGH attention, evidence `ADEQUATE_FOR_CURRENT_RESEARCH_STATE`, exact Deep 5/5 PASS, existing engine action `RESEARCH:BUY`, quant score 80.0059, PE 17.95 vs historical median reference 33.65.
@@ -80,6 +85,10 @@ A later Deep workset that excludes 603596 must not erase its valuation-closed re
 - Added explicit research buy-price ceiling derived from the existing `PE_BUY_RATIO=0.80` policy.
 - Added 603596-shaped regression coverage across Jev schema, routing, orchestrator, workflow handoff, and Terminal persistence.
 - Opened PR #294; CI/merge/production verification remain pending.
+
+## Current Findings
+- This is a post-Deep routing/persistence defect, not a hard-gate evidence deficiency.
+- The fix preserves thresholds and reuses existing Terminal valuation rather than creating parallel authority.
 
 ## Blockers
 - None requiring user action.
