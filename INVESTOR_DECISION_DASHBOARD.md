@@ -61,34 +61,12 @@ R86新闻和出版业(STRONG)、P83教育(STRONG)、I64互联网和相关服务(
 
 - **no-auto-trade：true；所有订单必须人工确认。**
 
-## 7. 事件深算闭环：到底算完没有
-
-- 总状态：**EVENT_TRIGGER_FAILED**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
-
-| 股票 | 闭环状态 | 正式结果 | 为什么没有BUY/ADD / 结果解释 |
-|---|---|---|---|
-| 南华生物 000504 | **EVENT_TRIGGER_FAILED** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 润贝航科 001316 | **EVENT_TRIGGER_FAILED** | **HOLD_REVIEW** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 建元信托 600816 | **EVENT_TRIGGER_FAILED** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 中国平安 601318 | **EVENT_TRIGGER_FAILED** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 洛阳钼业 603993 | **EVENT_TRIGGER_FAILED** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 000703 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 002042 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 002375 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 002537 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 国电南瑞 600406 | **RAISE_ONLY** | **REDUCE_25** | 当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。 |
-| 600610 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 600640 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601020 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 603105 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 603369 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**12** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **12** / REJECT **0**。
+- 本轮深算：**16** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **16** / REJECT **0**。
 - urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **0** / PROBE **1** / WATCH **2** / BLOCK **9**；仅人工建议，不自动执行。
+- 风险预算：BUILD **0** / PROBE **1** / WATCH **2** / BLOCK **13**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
