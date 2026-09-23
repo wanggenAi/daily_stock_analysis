@@ -465,6 +465,7 @@ def apply_research_exhaustion_lifecycle(
         and routing_payload.get("automatic_formal_buy_allowed") is False
         and routing_payload.get("formal_trading_authority") is False
         and routing_payload.get("mutates_authoritative_decision") is False
+        and routing_payload.get("may_suppress_existing_research") is False
         and routing_payload.get("may_create_or_mutate_formal_action") is False
         and routing_payload.get("unknown_is_pass") is False
         and routing_payload.get("no_auto_trade") is True
