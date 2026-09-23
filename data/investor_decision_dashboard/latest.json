@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-23T09:32:35+00:00",
+  "generated_at": "2026-09-23T09:51:32+00:00",
   "canonical_snapshot_id": "538269c3908f97c328d1",
   "canonical_source_run_id": "35829289957",
   "latest_trade_date": "2026-09-22",
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
+  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
   "market": {
     "as_of_date": "2026-09-22",
     "status": "YELLOW",
@@ -98,8 +98,7 @@
           "no_auto_trade": true
         },
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "new_exposure_currently_usable": false,
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "new_exposure_currently_usable": false
       },
       {
         "code": "001316",
@@ -140,8 +139,7 @@
           "no_auto_trade": true
         },
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "new_exposure_currently_usable": false,
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "new_exposure_currently_usable": false
       },
       {
         "code": "601318",
@@ -182,8 +180,7 @@
           "no_auto_trade": true
         },
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.656<1.00",
-        "new_exposure_currently_usable": false,
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "new_exposure_currently_usable": false
       },
       {
         "code": "603993",
@@ -240,8 +237,7 @@
           "rearm_requires_explicit_authority": true,
           "formal_action_mutation_allowed": false,
           "no_auto_trade": true
-        },
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        }
       }
     ]
   },
@@ -414,7 +410,7 @@
       "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
       "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
     ],
-    "evaluated_at": "2026-09-23T09:32:35+00:00",
+    "evaluated_at": "2026-09-23T09:51:32+00:00",
     "canonical_generated_at": "2026-09-23T07:12:20+00:00",
     "canonical_latest_trade_date": "2026-09-22",
     "canonical_source_run_id": "35829289957",
@@ -454,10 +450,10 @@
     "source_every_industry_run_id": "35829289957",
     "requested_count": 3,
     "decision_counts": {
-      "REJECT": 0,
-      "RESEARCH_GAP": 3,
       "WAIT_PRICE": 0,
-      "BUY": 0
+      "BUY": 0,
+      "REJECT": 0,
+      "RESEARCH_GAP": 3
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
@@ -757,45 +753,5 @@
     "capital_probe_count": 0,
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
-    "available": false,
-    "market_data_status": "OFF_SESSION",
-    "eligible_quote_count": 0,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "missing_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "coverage_ratio": 0.0,
-    "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": true,
-    "formal_new_exposure_allowed": false,
-    "freshness_fail_closed_reasserted": true,
-    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
-    "market_session_state": "CLOSED",
-    "market_session_active": false,
-    "retry_attempts": 3,
-    "refreshed_at": "2026-09-23T09:39:42.969012+00:00",
-    "refreshed_at_beijing": "2026-09-23T17:39:42.969012+08:00"
   }
 }
