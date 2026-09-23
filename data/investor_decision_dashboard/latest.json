@@ -1,9 +1,9 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-23T06:37:23+00:00",
-  "canonical_snapshot_id": "ea3c4b0384d9f6efec18",
-  "canonical_source_run_id": "35776816635",
+  "mode": "EVENT",
+  "generated_at": "2026-09-23T06:51:36+00:00",
+  "canonical_snapshot_id": "ede2069c9e422134ded6",
+  "canonical_source_run_id": "35827260708",
   "latest_trade_date": "2026-09-22",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
+  "headline": "市场日线=YELLOW（2026-09-22）；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
   "market": {
     "as_of_date": "2026-09-22",
     "status": "YELLOW",
@@ -94,8 +94,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION"
       },
       {
         "code": "001316",
@@ -135,8 +134,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE"
       },
       {
         "code": "601318",
@@ -176,8 +174,7 @@
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.656<1.00",
-        "price_source": "CANONICAL_FROZEN_PRICE"
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.656<1.00"
       },
       {
         "code": "603993",
@@ -218,13 +215,12 @@
           "no_auto_trade": true
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
-        "price_source": "CANONICAL_FROZEN_PRICE",
         "holding_add_consumption": {
           "status": "CONSUMED",
           "source_canonical_snapshot_id": "4e025e2112441ae19e05",
           "source_canonical_source_run_id": "34879450038",
-          "applied_to_canonical_snapshot_id": "ea3c4b0384d9f6efec18",
-          "applied_to_canonical_source_run_id": "35776816635",
+          "applied_to_canonical_snapshot_id": "ede2069c9e422134ded6",
+          "applied_to_canonical_source_run_id": "35827260708",
           "lineage_match": "CARRIED_FORWARD",
           "consumed_shares": 100,
           "allowance_shares": 100,
@@ -242,7 +238,7 @@
     "available": true,
     "buy_now": [],
     "wait_price": [],
-    "reject_count": 94,
+    "reject_count": 118,
     "invalid_unauthorized_buy_count": 0,
     "decision_authority": "RESEARCH_TERMINAL_VIEW",
     "formal_buy_is_mirror_only": true
@@ -286,7 +282,7 @@
     "new_risk_reduction_action_count": 0,
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
-    "terminal_reject_count": 94,
+    "terminal_reject_count": 118,
     "planned_immediate_cash_cny": 0,
     "research_terminal_requested_count": 12,
     "research_buy_count": 0,
@@ -353,12 +349,16 @@
     "rows": []
   },
   "event_review": {
-    "triggered": false,
-    "trigger_codes": []
+    "triggered": true,
+    "trigger_codes": [
+      "001316",
+      "601318",
+      "603993"
+    ]
   },
   "hourly_context": {
-    "available": true,
-    "research_as_of": "2026-09-22T20:04:52Z"
+    "available": false,
+    "research_as_of": ""
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -401,51 +401,19 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-23T06:37:23+00:00",
-    "canonical_generated_at": "2026-09-22T20:04:52+00:00",
+    "evaluated_at": "2026-09-23T06:51:36+00:00",
+    "canonical_generated_at": "2026-09-23T06:45:13+00:00",
     "canonical_latest_trade_date": "2026-09-22",
-    "canonical_source_run_id": "35776816635",
+    "canonical_source_run_id": "35827260708",
     "expected_min_trade_date": "2026-09-22",
     "market_as_of": "2026-09-22",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
   "formal_new_exposure_allowed": true,
-  "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
-    "available": false,
-    "market_data_status": "DEGRADED",
-    "eligible_quote_count": 0,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "missing_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "coverage_ratio": 0.0,
-    "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true
-  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "ea3c4b0384d9f6efec18",
-    "canonical_source_run_id": "35776816635",
+    "canonical_snapshot_id": "ede2069c9e422134ded6",
+    "canonical_source_run_id": "35827260708",
     "matching_consumption_count": 1,
     "exact_lineage_consumption_count": 0,
     "carried_forward_consumption_count": 1,
@@ -473,10 +441,10 @@
     "source_every_industry_run_id": "35776816635",
     "requested_count": 12,
     "decision_counts": {
-      "REJECT": 0,
-      "RESEARCH_GAP": 12,
       "BUY": 0,
-      "WAIT_PRICE": 0
+      "REJECT": 0,
+      "WAIT_PRICE": 0,
+      "RESEARCH_GAP": 12
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
