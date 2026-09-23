@@ -4,6 +4,7 @@ import pytest
 
 from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
     ACTIVE,
+    DORMANT,
     INVALIDATED,
     apply_explicit_transition,
     apply_snapshot,
@@ -351,3 +352,79 @@ def test_terminal_memory_rejects_unauthorized_buy_and_cannot_admit_new_candidate
     assert events == []
     assert "000589" not in state["candidates"]
 
+
+
+def test_research_exhaustion_moves_only_nonholding_active_candidate_to_dormant() -> None:
+    state = _active_terminal_candidate()
+    transition = {
+        "code": "002120",
+        "event": "RESEARCH_EXHAUSTED",
+        "evidence_id": "jev-exhaustion:run-1:002120:epoch-a",
+        "evidence_observed_at": "2026-09-23T04:00:00+00:00",
+        "reason": "all supported hard-gate strategies exhausted for the current evidence epoch",
+        "is_current_holding": False,
+        "research_evidence_epoch": "epoch-a",
+    }
+    state, event = apply_explicit_transition(state, transition)
+
+    assert event is not None
+    assert state["candidates"]["002120"]["lifecycle_state"] == DORMANT
+    assert event["research_evidence_epoch"] == "epoch-a"
+    assert event["automatic_reactivation"] is False
+
+    holding_state = _active_terminal_candidate()
+    with pytest.raises(ValueError, match="forbidden for current holdings"):
+        apply_explicit_transition(
+            holding_state,
+            {
+                **transition,
+                "evidence_id": "jev-exhaustion:holding",
+                "is_current_holding": True,
+            },
+        )
+
+
+def test_dormant_candidate_reactivates_only_on_changed_research_evidence() -> None:
+    state = _active_terminal_candidate()
+    state, _ = apply_explicit_transition(
+        state,
+        {
+            "code": "002120",
+            "event": "RESEARCH_EXHAUSTED",
+            "evidence_id": "jev-exhaustion:run-1:002120:epoch-a",
+            "evidence_observed_at": "2026-09-23T04:00:00+00:00",
+            "reason": "current evidence epoch exhausted",
+            "is_current_holding": False,
+            "research_evidence_epoch": "epoch-a",
+        },
+    )
+
+    with pytest.raises(ValueError, match="requires changed research evidence"):
+        apply_explicit_transition(
+            state,
+            {
+                "code": "002120",
+                "event": "RESEARCH_REACTIVATED",
+                "evidence_id": "jev-reactivation:run-2:002120:epoch-b",
+                "evidence_observed_at": "2026-09-23T05:00:00+00:00",
+                "reason": "candidate re-entered research routing",
+                "research_evidence_changed": False,
+                "research_evidence_epoch": "epoch-b",
+            },
+        )
+
+    state, event = apply_explicit_transition(
+        state,
+        {
+            "code": "002120",
+            "event": "RESEARCH_REACTIVATED",
+            "evidence_id": "jev-reactivation:run-2:002120:epoch-b",
+            "evidence_observed_at": "2026-09-23T05:00:00+00:00",
+            "reason": "new hard-gate evidence epoch reopened a bounded research strategy",
+            "research_evidence_changed": True,
+            "research_evidence_epoch": "epoch-b",
+        },
+    )
+    assert event is not None
+    assert event["automatic_reactivation"] is True
+    assert state["candidates"]["002120"]["lifecycle_state"] == ACTIVE
