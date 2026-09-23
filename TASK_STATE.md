@@ -1,82 +1,88 @@
 # Current Mission
 
 ## Goal
-Complete the Jev Structured Entry Judgment loop on current production main, then verify a fresh TypeSafe/Jev production run and 603596 end to end without granting Formal or automatic trading authority.
+Keep Jev Structured Entry Judgment current with the latest successful Deep/Terminal lineage, then verify 603596 end to end without granting Formal or automatic trading authority.
 
 ## Current Phase
-JEV_ENTRY_JUDGMENT_MAIN_REPLAY
+JEV_POST_TERMINAL_LINEAGE_REFRESH_MAIN_REPLAY
 
 ## Source of Truth
-- Live GitHub main/PR/Actions/artifacts override this checkpoint.
-- Production persistence may advance main at any time; re-read live refs before merge and production verification.
+- Live GitHub main/PR/Actions/artifacts and persisted production data override this checkpoint.
+- Production persistence may advance main at any time; re-read live main before merge and production acceptance.
 
 ## Last Verified Main
-- Replay base: `cb29b5fa93cf939d6e0b00122b29e68ca64af37d`.
-- #295 is merged; #294 is superseded/closed.
-- #295 production closure is already visible on main.
+- Latest-main replay branch was cut from `b9795670bb9b6a76326c3cd94b0435cb330fea98`; PR #299 opened against live main `79f99cea5c0fbbf83f2e2c655c7a5cbbb41dc163`.
+- #297 is merged as `ce4cbbca4ca3afc1390d654da48246832660d1fa`.
+- #298 passed all newest-head CI on `31d576a45b8d84d0cb29d650ecb94e5b7eaf9d05`, but production persistence advanced main by 23 commits during the long offline suite, so #298 is superseded for merge purposes.
 
 ## Active Branch
-- `feat/jev-entry-judgment-main-replay-20260923`
-- Replay commit before this checkpoint: `34fdac5b5e13f514ec8fc6b72d5a4b744f165862`.
-- Replays only #296 net business/test/docs changes onto live main.
+- `fix/jev-refresh-after-terminal-main-replay-20260924`.
+- Replays only the already-green #298 workflow/test fix onto current live main, plus this checkpoint update.
+- No stale production runtime data is copied.
 
 ## Active PR
-- New latest-main replay PR not yet opened at this checkpoint.
-- #296 `feat: add validated Jev entry judgments` is implementation/CI evidence only; its branch is stale/diverged and must not be merged.
+- #299 `fix: replay post-terminal Jev refresh on current main`.
+- #298 is superseded CI evidence only; do not merge it directly.
 
 ## CI
-- Original #296 head `766d5a1d` passed Jev Shadow `35875174705`, Jev Orchestrator `35875174599`, and Three-Pillar `35875174632`.
-- Fresh CI is still required on the latest-main replay head.
+- #298 initial governance failure was TASK_STATE-only and was repaired.
+- #298 newest-head CI run `35891380780`: SUCCESS.
+- #298 Opportunity Discovery `35891380730`: SUCCESS.
+- #298 Legacy Risk-Capped Research `35891380650`: SUCCESS.
+- #298 PR Review `35891377502`: SUCCESS.
+- Fresh newest-head CI is still required on this latest-main replay branch.
 
 ## Production / Artifact
-- #295 valuation/price closure is production-visible.
-- Current Jev routing includes exactly one `VALUATION_CLOSURE`: 603596 伯特利.
-- Current Terminal source: `35872063645`; requested=16, research BUY=1, WAIT_PRICE=0, RESEARCH_GAP=15.
-- 603596 is current research BUY and risk-budget BUILD, conviction=0.945, advisory max=3.0%.
-- Current Decision Center reports the Terminal snapshot as current for runtime.
-- Formal BUY remains false; no_auto_trade=true.
+- Post-#297 Jev V4 source `35880305447` succeeded and persisted 25 routing rows: 24 WAIT_EVIDENCE, 1 ENTRY_NOW.
+- 603596 伯特利 was ENTRY_NOW on Deep `35872063645`, using 2026-09-22 reference price 29.15 and research buy ceiling 43.7169.
+- That row is now correctly stale because current Deep/Terminal advanced to `35887467588`.
+- Current Terminal `35887467588` still reports 603596 research BUY, 5/5 hard gates PASS, 2026-09-23 reference price 28.72, research buy ceiling 43.072, BUILD, max advisory research size 3%.
+- Current Decision Center reports Jev EMPTY_CURRENT because all 25 persisted Jev rows have stale Deep lineage.
+- Formal BUY remains false; automatic execution remains false; no_auto_trade=true.
 
 ## Actual TypeSafe/Jev Use
-- Current persisted Jev routing completed SUCCESS for 25 entities and routed 603596 to VALUATION_CLOSURE.
-- Existing production TypeSafe/Jev path remains advisory only.
-- Fresh post-merge V4 TypeSafe/Jev run is required before final acceptance.
+- Production uses pinned TypeSafe SDK and requested model `jev-latest`; post-#297 run served `jev-1.13.0`.
+- Jev remains ADVISORY_ONLY. Deterministic code owns lineage, verified price thresholds, sizing validation, dispatch, and authority boundaries.
 
 ## Completed
-- #295 valuation closure merged.
-- Durable 603596 research BUY/BUILD closure is production-visible.
-- #296 typed entry-judgment implementation was completed and workflow-validated on its original head.
-- Verified all #296 changed static files on live main still matched #296 base blobs before replay.
-- Replayed schema/context/deterministic validator/persistence/report/tests/workflow changes onto current production main without copying stale runtime data.
+- #297 structured entry judgment merged and production V4 proved the judgment/validation/persistence path works.
+- Current stale-lineage hiding was verified: stale Jev rows are excluded rather than promoted.
+- Root cause was isolated to missing post-Terminal wake wiring for independently newer Deep lineage.
+- #298 implemented the minimal lineage-keyed wake and passed all CI, but was not merged because main advanced during CI.
+- The same workflow/test diff has now been replayed onto live main `b9795670`.
 
 ## Current Findings
-- The prerequisite valuation/price closure is no longer the blocker.
-- Remaining work is latest-main CI/merge plus fresh production V4 Jev and 603596 entry-jJudgment acceptance.
-- Jev categorical judgment may only be downgraded by deterministic guards; deterministic verified price/risk-budget data owns numeric entry thresholds and sizing.
+- The entry-judgment implementation itself is not the blocker.
+- Existing Jev Orchestration Reconciler only continues exact Deep work Jev itself dispatched; it cannot claim an independently newer Deep lineage when its marker has no accepted Jev Deep run.
+- Research-priority wake already exists and is consumed by main; it solves a different trigger source.
+- Correct durable fix: after Terminal persists, wake exactly one Jev V4 run keyed by that exact Deep lambda run id and deduplicate repeated Terminal convergence.
+- Existing Jev routing persistence already triggers Three-Pillar refresh.
 
 ## Blockers
 - No user/login/approval blocker.
-- Fresh replay PR + CI + merge + production V4 execution still pending.
+- Fresh replay PR + newest-head CI + merge + production acceptance are pending.
 
 ## Next Action
-1. Open replay PR against current main.
-2. Require fresh newest-head blocking CI; fix any real failure.
-3. Merge replay PR after re-reading live main and resolving any production-only divergence safely.
-4. Trigger/observe fresh TypeSafe/Jev V4 production evaluation.
-5. Verify deterministic routing persistence and current-lineage Three-Pillar rendering.
-6. Verify 603596 answers buy-now-or-not, verified threshold, initial/max manual research size, do-not-chase, and invalidation.
-7. Persist final TASK_STATE with live main SHA, Jev run IDs/artifacts, 603596 result, and remaining next action.
+1. Require #299 fresh newest-head blocking CI and workflow-contract tests.
+2. Re-read live main immediately before merge; production-only data drift may be merged through the PR merge ref if workflow/test paths are unchanged.
+3. Merge only when green.
+4. Observe merge-triggered Terminal -> lineage-keyed Jev V4 -> persisted routing -> Three-Pillar chain.
+5. Verify 603596 against the then-current successful Deep/Terminal lineage, never an old price snapshot.
+6. Record exact Jev run/artifact, validated judgment, verified price ceiling, initial/max research size, add/do-not-chase/invalidation conditions, and authority flags.
+7. Persist final TASK_STATE with live main SHA and the next unfinished stage.
 
 ## Do Not Repeat
-- Do not reopen #292/#293/#294.
-- Do not merge stale #296 directly.
-- Do not lower Jev 0.50 or hard-gate/selection thresholds to force a result.
-- Do not rerun already-PASS hard gates only to manufacture newer lineage.
-- Do not copy historical 603596 price/valuation into production as current truth.
+- Do not reopen #292/#293/#294 or merge stale #296.
+- Do not merge superseded #298 after latest-main replay exists.
+- Do not reuse the consumed `fix/jev-wake-on-research-priority-20260923` branch.
+- Do not lower Jev 0.50, hard gates, research selection thresholds, or valuation thresholds to force a result.
+- Do not rerun passed hard gates only to manufacture a newer lineage.
+- Do not copy the 2026-09-22 29.15 price into current production truth.
 - Do not promote Research BUY/BUILD/Jev entry judgment into Canonical Formal BUY.
 
 ## Guardrails
 - Jev authority: ADVISORY_ONLY research routing + structured entry judgment.
-- Deterministic code owns eligibility, lineage, price/sizing validation, dispatch, and authority boundaries.
+- Deterministic code owns eligibility, lineage, verified price/sizing, dispatch, and authority boundaries.
 - Formal actions remain Canonical-only; formal_buy_authorized=false.
 - automatic_execution_allowed=false; no_auto_trade=true.
 - UNKNOWN != PASS.
@@ -86,19 +92,8 @@ JEV_ENTRY_JUDGMENT_MAIN_REPLAY
 - For each leading candidate answer: buy now or not; exact verified price/evidence trigger; initial size; add condition; max size; do-not-chase; invalidation.
 - If verified inputs cannot support a defensible trigger, report the missing evidence/unlock condition instead of inventing a number.
 
-## Jev Structured Entry Judgment
-- Typed judgment: `ENTRY_NOW | WAIT_PRICE | WAIT_EVIDENCE | DO_NOT_CHASE | INVALIDATED | NO_JUDGMENT`.
-- Jev judges categorical attractiveness/state only.
-- Deterministic code supplies/validates price zones and manual research sizing from current verified valuation/risk-budget inputs.
-- Persist exact Jev/Deep/Terminal/valuation lineage and authority flags.
-
-## 603596 Acceptance Case
-- Fresh V4 Jev must evaluate current 603596 state.
-- Prior BUY/BUILD and old 29.15 reference are regression evidence, not permission to fabricate current price truth.
-- Completion requires current lineage, deterministic validation, persisted entry advisory, and actionable Three-Pillar output while Formal BUY remains false.
-
 ## Completion Criteria
-- Latest-main replay merged with green CI.
-- Fresh production TypeSafe/Jev V4 run exercises the new schema.
-- 603596 end-to-end output is current, deterministic, persisted, and user-facing actionable.
-- Final checkpoint records live main SHA, run IDs, artifact result, and next unfinished stage.
+- Latest-main wake fix merged with green CI.
+- A fresh production TypeSafe/Jev V4 run is keyed to the current successful Deep/Terminal lineage.
+- 603596 end-to-end output is current, deterministic, persisted, and visible in Three-Pillar when lineage matches.
+- Formal BUY remains false and automatic execution remains disabled.
