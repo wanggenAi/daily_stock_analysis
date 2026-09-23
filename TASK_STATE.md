@@ -20,12 +20,15 @@ DEEP_QUALIFIED_RESEARCH_VISIBILITY_AND_ROUTING
 - Scope: route current-runtime five-hard-gate PASS research leads into priority ordering and expose them in the final decision center without creating BUY/WAIT_PRICE authority.
 
 ## Active PR
-- Not opened yet at this checkpoint; open after branch tests/contracts are committed.
+- #291 `fix: surface deep-qualified research leads`.
+- Initial head `5f083545d0e55d1d0cc76ae82b697b16b24dd559`; this checkpoint update advances the head, so use the live PR head for merge verification.
 
 ## CI
-- Previous main CI run `35837313841` was still in progress when this branch started; governance and Docker were green, backend-gate was still running.
-- Branch CI has not yet run. Required focused suites: research-priority routing and three-pillar runtime, then repository blocking CI.
-- Governance heading is intentionally present in this checkpoint.
+- PR #291 Three-Pillar contracts run `35839507326`: 27/27 focused tests passed.
+- PR #291 Jev Orchestrator contracts run `35839507307`: 35/35 focused tests passed.
+- Opportunity fixture, Near-BUY recovery, Success Archetype, Legacy Research, PR Review, governance and Docker checks passed on the initial PR head.
+- Blocking CI `35839507337`: syntax, flake8-critical and deterministic checks passed; offline suite was still running at this checkpoint.
+- This checkpoint commit intentionally retriggers PR checks; merge only after the newest head is green.
 
 ## Production / Artifact
 - Candidate lifecycle is converged: ACTIVE=123, DORMANT=3, ARCHIVED/INVALIDATED=0.
@@ -62,13 +65,12 @@ DEEP_QUALIFIED_RESEARCH_VISIBILITY_AND_ROUTING
 - Merge remains blocked until PR CI is green.
 
 ## Next Action
-1. Open PR and run focused/blocking CI.
-2. Fix any regression without weakening authority or evidence rules.
-3. Merge only after blocking CI is green.
-4. Dispatch/rebuild Research Learning on production main and verify 603596 enters the research-priority/Jev candidate window.
-5. Verify a fresh TypeSafe/Jev -> deterministic Orchestrator cycle and record whether 603596 receives a useful route or truthful NOOP.
-6. Rebuild/verify Three-Pillar Decision Center and confirm 603596 is visible only as a research-qualified lead, never as Formal BUY/WAIT_PRICE.
-7. Persist the final production checkpoint and continue valuation-closure work only if a supported evidence/model path exists.
+1. Finish PR #291 newest-head blocking CI and fix any regression without weakening authority or evidence rules.
+2. Merge only after blocking CI is green.
+3. Dispatch/rebuild Research Learning on production main and verify 603596 enters the research-priority/Jev candidate window.
+4. Verify a fresh TypeSafe/Jev -> deterministic Orchestrator cycle and record whether 603596 receives a useful route or truthful NOOP.
+5. Rebuild/verify Three-Pillar Decision Center and confirm 603596 is visible only as a research-qualified lead, never as Formal BUY/WAIT_PRICE.
+6. Persist the final production checkpoint and continue valuation-closure work only if a supported evidence/model path exists.
 
 ## Do Not Repeat
 - Do not reopen consumed old branches or PRs without a newly proven regression.
