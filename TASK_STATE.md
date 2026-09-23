@@ -11,30 +11,34 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_PR
 - Production bot persistence may advance main after any recorded SHA.
 
 ## Last Verified Main
-- Live main checkpoint before this fix: `da1b8212b209ff17b823721b4a93dd12eee98f64`.
+- Live main re-read at `81b3b6674ae9cca9017d56017d99ae8ca503fd8b` after the 19:00 production persistence cycle.
+- Main advances since this PR's merge base are runtime/report/evidence persistence only; they do not touch the #293 implementation, regression test, or documentation files.
 - PR #292 is merged; its research-priority wake handoff is production-verified.
 - Fresh TypeSafe/Jev production run: `35849969346`.
 - Exact deterministic Orchestrator run: `35850186518`.
 
 ## Active Branch
 - `fix/terminal-research-supersedes-qualified-20260923`
-- Base: `da1b8212b209ff17b823721b4a93dd12eee98f64`.
+- Merge base: `da1b8212b209ff17b823721b4a93dd12eee98f64`.
 - Scope: prevent a current terminal research decision from being duplicated by the preliminary Deep-qualified `DO_NOT_BUY_YET` display layer.
 
 ## Active PR
 - #293 `fix: converge terminal research display precedence` is open from the active branch.
 
 ## CI
-- Regression added for the exact overlap case: current 5/5 Deep-qualified 603596 plus current terminal `RESEARCH:BUY` / risk-budget `BUILD`.
-- #293 newest-head blocking CI is required before merge; earlier-head results do not authorize merge.
+- Regression covers the exact overlap case: current 5/5 Deep-qualified 603596 plus current terminal `RESEARCH:BUY` / risk-budget `BUILD`.
+- PR-head Three-Pillar, Opportunity Discovery, and Legacy Risk-Capped workflows succeeded.
+- CI run `35851756202` on head `94bc1377568c204ae54a8cb0d4f0d227442d5cac`: change detection, AI governance, Docker and deterministic checks passed; Web correctly skipped.
+- Its offline pytest step remained `in_progress` for more than 39 minutes, materially beyond the last five successful PR baselines (~9-21.5 minutes), with no failure conclusion and no downloadable job log. Treat that run as an abnormal stalled validation, not as a pass or a test failure.
+- This checkpoint intentionally advances the PR head so the PR concurrency contract can replace the stalled run with a clean newest-head CI. Merge still requires that fresh blocking CI to pass.
 - No threshold, Jev confidence gate, Formal authority, or capital model change.
 
 ## Production / Artifact
 - Jev run `35849969346`: SUCCESS, 25 entities, requested model `jev-latest`, served model `jev-1.13.0`.
 - 603596 伯特利: HIGH attention, evidence `ADEQUATE_FOR_CURRENT_RESEARCH_STATE`, route `DEEP_RESEARCH`, route confidence `0.46`, Deep lineage `35849124866`, 5/5 hard gates PASS, research decision `BUY`.
 - Orchestrator `35850186518` consumed exact Jev lineage `35849969346` and converged to `HUMAN_REVIEW / NOOP` because route confidence `0.46 < 0.50`; no new Deep dispatch occurred.
-- Latest Three-Pillar state preserves `formal_action_source=FINALIZED_CANONICAL_ONLY` and `no_auto_trade=true`.
-- Production display conflict found: 603596 simultaneously appears as terminal `MANUAL_BUILD_ADVISORY` and preliminary `DO_NOT_BUY_YET`, while both correctly retain `formal_buy_authorized=false`.
+- Latest verified pre-fix Three-Pillar state preserves `formal_action_source=FINALIZED_CANONICAL_ONLY` and `no_auto_trade=true`.
+- Production display conflict is proven: 603596 simultaneously appears as terminal `MANUAL_BUILD_ADVISORY` and preliminary `DO_NOT_BUY_YET`, while both correctly retain `formal_buy_authorized=false`.
 
 ## Actual TypeSafe/Jev Use
 - Pinned TypeSafe/Jev workflow executed successfully in run `35849969346`.
@@ -50,6 +54,8 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_PR
 - Fresh Jev + exact Orchestrator lineage verified through `35849969346 -> 35850186518`.
 - Root cause of the remaining user-visible contradiction isolated to display precedence, not research or trading authority.
 - Minimal display-precedence code, regression test, documentation, and changelog change are on the active branch.
+- Live-main drift was rechecked and is confined to production persistence data/report artifacts, so no code replay/rebase is required before a conflict-free merge.
+- The first #293 full-CI attempt was classified as stalled only after exceeding recent successful offline-suite runtimes; no failing assertion has been observed.
 
 ## Current Findings
 - 603596 has a legitimate current terminal research decision and risk-budget advisory, but still no Canonical Formal BUY authority.
@@ -59,12 +65,12 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_PR
 
 ## Blockers
 - No user/login/approval blocker.
-- Merge is blocked only by the new PR's required CI.
+- Merge is blocked only by fresh newest-head required CI.
 
 ## Next Action
-1. Require #293 newest-head blocking CI to pass.
+1. Require the clean newest-head #293 blocking CI to pass.
 2. Merge only after green CI.
-3. Verify main and the post-merge Three-Pillar production refresh no longer expose 603596 under both contradictory account-action layers.
+3. Verify live main and the post-merge Three-Pillar production refresh no longer expose the same current-runtime code under both terminal and preliminary contradictory account-action layers.
 4. Confirm terminal research remains `RESEARCH_ONLY`, risk budget remains `ADVISORY_ONLY`, `formal_buy_authorized=false`, and `no_auto_trade=true`.
 5. Persist the final production checkpoint.
 
@@ -74,6 +80,7 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_PR
 - Do not lower the Jev 0.50 confidence gate or any stock-selection threshold.
 - Do not promote research BUY into Formal BUY.
 - Do not remove the risk-budget advisory layer merely to hide the display conflict.
+- Do not treat stalled CI as green; only a completed newest-head blocking run authorizes merge.
 
 ## Guardrails
 - Jev is advisory research routing only; deterministic guards own dispatch.
