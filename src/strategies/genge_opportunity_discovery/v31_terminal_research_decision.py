@@ -31,7 +31,7 @@ SPECIALIZED_INDUSTRY_PREFIXES = ("J66", "J67", "J68", "B08", "B09", "C32")
 # capital-preservation gates are explicitly PASS and the remaining uncertainty is
 # compensated by valuation / quant evidence.  This layer never grants Formal BUY.
 CAPITAL_MODEL_VERSION = "GEN_GE_RISK_BUDGET_CAPITAL_V1"
-CAPITAL_ACTIONS = {"BUILD", "PROBE", "WATCH", "BLOCK"}
+CAPITAL_ACTIONS = ("BUILD", "PROBE", "WATCH", "BLOCK")
 CRITICAL_CAPITAL_GATES = ("financial_safety", "earnings_authenticity")
 GATE_WEIGHTS = {
     "earnings_authenticity": 0.22,
