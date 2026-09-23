@@ -26,6 +26,17 @@ def _terminal():
         "hard_gate_unknowns": ["moat"],
         "urgent_research": True,
         "urgent_research_reasons": ["P0_EVIDENCE_BLOCKED"],
+        "capital_allocation": {
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "action": "PROBE",
+            "reason": "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": False,
+            "formal_buy_authorized": False,
+            "no_auto_trade": True,
+            "capital_conviction_score": 0.61,
+            "suggested_max_portfolio_pct": 0.8,
+        },
     }
     return {
         "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
@@ -41,6 +52,11 @@ def _terminal():
         "urgent_research_queue": [row],
         "source_deep_lambda_run_id": "123",
         "source_every_industry_run_id": "456",
+        "capital_model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "capital_action_counts": {"BUILD": 0, "PROBE": 1, "WATCH": 0, "BLOCK": 0},
+        "capital_probe_queue": [row],
+        "capital_advisory_authority": "ADVISORY_ONLY",
+        "capital_advisory_automatic_execution_allowed": False,
     }
 
 
@@ -54,6 +70,13 @@ def test_overlay_exposes_research_without_mutating_formal_authority():
     assert out["decision_summary"]["research_gap_count"] == 1
     assert out["decision_summary"]["research_reject_count"] == 0
     assert out["decision_summary"]["urgent_research_count"] == 1
+    assert out["decision_summary"]["research_capital_probe_count"] == 1
+    assert out["decision_summary"]["research_capital_action_counts"]["PROBE"] == 1
+    assert out["terminal_research_snapshot"]["capital_model_version"] == "GEN_GE_RISK_BUDGET_CAPITAL_V1"
+    assert out["terminal_research_snapshot"]["capital_probe_count"] == 1
+    assert out["terminal_research_snapshot"]["capital_probe_queue"][0]["code"] == "600406"
+    assert out["data_health"]["terminal_capital_advisory_authority"] == "ADVISORY_ONLY"
+    assert out["data_health"]["terminal_capital_advisory_automatic_execution_allowed"] is False
     assert "terminal_research" in out["presentation_contract"]["section_order"]
 
 
@@ -65,6 +88,8 @@ def test_markdown_surfaces_holding_and_urgent_research():
     assert "P0_EVIDENCE_BLOCKED" in md
     assert "RESEARCH_GAP" in md
     assert "RESEARCH_ONLY" in md
+    assert "风险预算：BUILD **0** / PROBE **1** / WATCH **0** / BLOCK **0**" in md
+    assert "建议账户仓位上限=0.8%" in md
 
 
 def test_overlay_refuses_fake_formal_buy_authority():
@@ -111,3 +136,31 @@ def test_markdown_overlay_is_idempotent_across_rerenders():
     assert first_stock_mentions >= 1
     assert second.count("国电南瑞 600406") == first_stock_mentions
     assert "## 9. 系统状态" in second
+
+def test_overlay_rejects_capital_authority_escalation():
+    terminal = _terminal()
+    terminal["terminal_rows"][0]["capital_allocation"]["automatic_execution_allowed"] = True
+    try:
+        apply_overlay(_dashboard(), terminal)
+    except ValueError as exc:
+        assert "automatic execution" in str(exc)
+    else:
+        raise AssertionError("expected capital authority violation")
+
+
+def test_overlay_accepts_legacy_terminal_without_capital_model():
+    terminal = _terminal()
+    terminal.pop("capital_model_version")
+    terminal.pop("capital_action_counts")
+    terminal.pop("capital_probe_queue")
+    terminal.pop("capital_advisory_authority")
+    terminal.pop("capital_advisory_automatic_execution_allowed")
+    terminal["terminal_rows"][0].pop("capital_allocation")
+    terminal["urgent_research_queue"][0].pop("capital_allocation", None)
+
+    out = apply_overlay(_dashboard(), terminal)
+    assert out["terminal_research_snapshot"]["capital_model_version"] == ""
+    assert out["terminal_research_snapshot"]["capital_probe_count"] == 0
+    assert out["decision_summary"]["research_capital_probe_count"] == 0
+    assert out["data_health"]["terminal_capital_advisory_available"] is False
+
