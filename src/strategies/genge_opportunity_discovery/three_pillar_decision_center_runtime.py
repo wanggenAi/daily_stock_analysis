@@ -298,6 +298,11 @@ def normalize_terminal_research(
             "research_gap_count": 0,
             "research_reject_count": 0,
             "urgent_research_queue": [],
+            "capital_model_version": "",
+            "capital_action_counts": {"BUILD": 0, "PROBE": 0, "WATCH": 0, "BLOCK": 0},
+            "capital_probe_queue": [],
+            "capital_advisory_authority": "ADVISORY_ONLY",
+            "capital_advisory_automatic_execution_allowed": False,
             "research_authority": "RESEARCH_ONLY",
             "formal_trading_authority": False,
             "automatic_formal_buy_allowed": False,
@@ -331,6 +336,8 @@ def normalize_terminal_research(
     wait: list[dict[str, Any]] = []
     gaps: list[dict[str, Any]] = []
     reject_count = 0
+    capital_action_counts = {"BUILD": 0, "PROBE": 0, "WATCH": 0, "BLOCK": 0}
+    capital_probe_queue: list[dict[str, Any]] = []
     for row in rows:
         decision = str(row.get("research_decision") or "").upper()
         if decision not in TERMINAL_DECISIONS:
@@ -341,6 +348,22 @@ def normalize_terminal_research(
             raise ValueError("terminal research row attempted to authorize Formal BUY")
         if row.get("no_auto_trade") is not True:
             raise ValueError("terminal research row lost no-auto-trade")
+        capital = row.get("capital_allocation")
+        if isinstance(capital, Mapping):
+            action = str(capital.get("action") or "").upper()
+            if action not in capital_action_counts:
+                raise ValueError(f"invalid capital advisory action: {action or 'EMPTY'}")
+            if capital.get("authority") != "ADVISORY_ONLY":
+                raise ValueError("capital advisory attempted to gain authority")
+            if capital.get("automatic_execution_allowed") is not False:
+                raise ValueError("capital advisory cannot enable automatic execution")
+            if capital.get("formal_buy_authorized") is not False:
+                raise ValueError("capital advisory cannot grant Formal BUY")
+            if capital.get("no_auto_trade") is not True:
+                raise ValueError("capital advisory lost no-auto-trade")
+            capital_action_counts[action] += 1
+            if action in {"BUILD", "PROBE"}:
+                capital_probe_queue.append(row)
         if decision == "BUY":
             buy.append(row)
         elif decision == "WAIT_PRICE":
@@ -362,6 +385,18 @@ def normalize_terminal_research(
         raise ValueError("terminal research decision_counts do not match terminal rows")
 
     urgent = [dict(row) for row in (raw.get("urgent_research_queue") or []) if isinstance(row, Mapping)]
+    raw_capital_counts = raw.get("capital_action_counts") if isinstance(raw.get("capital_action_counts"), Mapping) else {}
+    if raw_capital_counts:
+        expected_capital_counts = {key: _int(raw_capital_counts.get(key)) for key in capital_action_counts}
+        if expected_capital_counts != capital_action_counts:
+            raise ValueError("terminal capital_action_counts do not match terminal rows")
+    capital_probe_queue.sort(
+        key=lambda row: (
+            0 if str((row.get("capital_allocation") or {}).get("action") or "").upper() == "BUILD" else 1,
+            -float((row.get("capital_allocation") or {}).get("capital_conviction_score") or 0.0),
+            str(row.get("code") or ""),
+        )
+    )
     return {
         "available": True,
         "contract": TERMINAL_RESEARCH_CONTRACT,
@@ -377,6 +412,11 @@ def normalize_terminal_research(
         "research_gap_count": len(gaps),
         "research_reject_count": reject_count,
         "urgent_research_queue": urgent,
+        "capital_model_version": str(raw.get("capital_model_version") or ""),
+        "capital_action_counts": capital_action_counts,
+        "capital_probe_queue": capital_probe_queue,
+        "capital_advisory_authority": "ADVISORY_ONLY",
+        "capital_advisory_automatic_execution_allowed": False,
         "research_authority": "RESEARCH_ONLY",
         "formal_trading_authority": False,
         "automatic_formal_buy_allowed": False,
@@ -389,10 +429,26 @@ def _research_investor_view(row: Mapping[str, Any]) -> dict[str, Any]:
     item = dict(row)
     decision = str(item.get("research_decision") or "").upper()
     unknowns = [str(x) for x in (item.get("hard_gate_unknowns") or []) if str(x)]
-    if decision == "RESEARCH_GAP":
+    capital = item.get("capital_allocation") if isinstance(item.get("capital_allocation"), Mapping) else {}
+    capital_action = str(capital.get("action") or "").upper()
+    max_pct = _num(capital.get("suggested_max_portfolio_pct")) or 0.0
+    if decision == "RESEARCH_GAP" and capital_action == "PROBE":
         waiting = "、".join(unknowns) or "缺失证据"
-        item["investor_action"] = f"暂不买；等待补齐：{waiting}"
-        item["account_action"] = "DO_NOT_BUY_YET"
+        item["investor_action"] = (
+            f"研究结论仍为RESEARCH_GAP，但风险预算层允许人工小仓试探；"
+            f"建议账户仓位上限约{max_pct:.2f}%，继续补齐：{waiting}"
+        )
+        item["account_action"] = "MANUAL_PROBE_ADVISORY"
+    elif decision == "RESEARCH_GAP":
+        waiting = "、".join(unknowns) or "缺失证据"
+        item["investor_action"] = f"暂不投入新增资金；等待补齐：{waiting}"
+        item["account_action"] = "WATCH_OR_BLOCK"
+    elif decision == "BUY" and capital_action == "BUILD":
+        item["investor_action"] = (
+            f"研究层达到BUY条件；风险预算层建议人工分批建仓，上限约{max_pct:.2f}%；"
+            "仍未获得Formal BUY授权，不自动下单"
+        )
+        item["account_action"] = "MANUAL_BUILD_ADVISORY"
     elif decision == "BUY":
         item["investor_action"] = "研究层达到BUY条件，但未获得Formal BUY授权；不得直接下单"
         item["account_action"] = "RESEARCH_BUY_NOT_FORMAL"
@@ -437,6 +493,14 @@ def _attach_terminal_research(
     opportunities["urgent_evidence_queue"] = [
         _research_investor_view(row) for row in (terminal.get("urgent_research_queue") or [])
     ] if current else []
+    opportunities["research_capital_probe"] = [
+        _research_investor_view(row) for row in (terminal.get("capital_probe_queue") or [])
+    ] if current else []
+    opportunities["research_capital_probe_count"] = len(opportunities["research_capital_probe"])
+    opportunities["capital_model_version"] = terminal.get("capital_model_version") or ""
+    opportunities["capital_action_counts"] = dict(terminal.get("capital_action_counts") or {})
+    opportunities["capital_advisory_authority"] = "ADVISORY_ONLY"
+    opportunities["capital_advisory_automatic_execution_allowed"] = False
     opportunities["research_actionable_count"] = (
         len(opportunities["research_buy"]) + len(opportunities["research_wait_price"])
     )
@@ -459,6 +523,7 @@ def _attach_terminal_research(
             "research_gap_count": opportunities["research_gap_count"],
             "research_reject_count": opportunities["research_reject_count"],
             "urgent_evidence_queue_count": len(opportunities["urgent_evidence_queue"]),
+            "research_capital_probe_count": opportunities["research_capital_probe_count"],
         }
     )
     payload["decision_readiness"].update(
@@ -1020,7 +1085,12 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         f"- 终态来源 Lambda：`{terminal.get('source_deep_lambda_run_id') or '—'}`；当前 Lambda：`{runtime.get('lambda_run_id') or '—'}`。",
         f"- 请求：**{terminal.get('requested_count', 0) if terminal.get('current_for_deep_runtime') else 0}**；研究 BUY：**{len(opportunities.get('research_buy') or [])}**；研究 WAIT_PRICE：**{len(opportunities.get('research_wait_price') or [])}**；研究 RESEARCH_GAP：**{opportunities.get('research_gap_count', 0)}**；研究 REJECT：**{opportunities.get('research_reject_count', 0)}**。",
         f"- 高吸引力但证据不足、优先补证：{_urgent_text(opportunities.get('urgent_evidence_queue') or [])}",
-        "- **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。",
+        f"- 风险预算层 BUILD/PROBE 候选：**{opportunities.get('research_capital_probe_count', 0)}**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。",
+        *[
+            f"  - {row.get('code')} {row.get('name')}: **{(row.get('capital_allocation') or {}).get('action')}**；conviction={(row.get('capital_allocation') or {}).get('capital_conviction_score')}；建议账户上限={(row.get('capital_allocation') or {}).get('suggested_max_portfolio_pct')}%"
+            for row in (opportunities.get("research_capital_probe") or [])
+        ],
+        "- **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。",
         "",
         "> 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。",
         "",
