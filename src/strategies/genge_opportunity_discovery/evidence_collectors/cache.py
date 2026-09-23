@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
+from collections.abc import Callable
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -23,7 +24,12 @@ class EvidenceCache:
         raw = json.dumps(dict(payload), ensure_ascii=False, sort_keys=True, default=str)
         return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
-    def get(self, key: str) -> dict[str, Any] | None:
+    def get(
+        self,
+        key: str,
+        *,
+        accept: Callable[[Mapping[str, Any]], bool] | None = None,
+    ) -> dict[str, Any] | None:
         path = self.cache_dir / f"{key}.json"
         if not path.exists():
             self.cache_misses += 1
@@ -36,6 +42,9 @@ class EvidenceCache:
             return None
         age_days = (datetime.now(timezone.utc) - fetched_at).total_seconds() / 86400
         if age_days > self.ttl_days:
+            self.cache_misses += 1
+            return None
+        if accept is not None and not accept(payload):
             self.cache_misses += 1
             return None
         self.cache_hits += 1
