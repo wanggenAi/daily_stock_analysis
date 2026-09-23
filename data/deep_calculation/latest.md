@@ -1,20 +1,20 @@
 # GenGe Deep Calculation Gap Closure
 
 - execution: **SUCCESS**
-- terminal state: **EVIDENCE_EXHAUSTED**
-- requested: **13**
+- terminal state: **HANDOFF_INCOMPLETE**
+- requested: **12**
 - complete: **0**
-- evidence exhausted: **13**
-- evidence collection attempts: **2**
-- new evidence rows: **28**
-- progressed gates: **3**
-- predictability resolved gates: **2**
-- moat resolved gates: **1**
+- evidence exhausted: **2**
+- evidence collection attempts: **1**
+- new evidence rows: **6**
+- progressed gates: **1**
+- predictability resolved gates: **1**
+- moat resolved gates: **0**
 - material-event failed gates: **0**
 - historical material-event evidence rows: **0**
 - historical material-event failed gates: **0**
 - cumulative material-event risk ledger rows: **0**
 - material-event PASS overrides: **0**
-- unresolved gates: **48**
+- unresolved gates: **7**
 - immediate retry required: **False**
 - UNKNOWN != PASS; no automatic Formal BUY; no auto trade.
