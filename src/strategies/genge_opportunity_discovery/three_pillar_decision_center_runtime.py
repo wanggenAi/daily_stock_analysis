@@ -564,7 +564,7 @@ def summarize_candidate_lifecycle(
     active_rows: list[dict[str, Any]] = []
     dormant_count = 0
     archived_or_invalidated_count = 0
-    event_count = 0
+    retained_history_event_count = 0
     tier_counts: Counter[str] = Counter()
     by_code: dict[str, dict[str, Any]] = {}
     for key, value in candidates.items():
@@ -574,7 +574,7 @@ def summarize_candidate_lifecycle(
         code = _stock_code(row.get("code") or key)
         state_name = str(row.get("lifecycle_state") or "UNKNOWN").upper()
         history = row.get("history") if isinstance(row.get("history"), list) else []
-        event_count += len(history)
+        retained_history_event_count += len(history)
         item = {
             "code": code,
             "name": str(row.get("stock_name") or ""),
@@ -600,6 +600,11 @@ def summarize_candidate_lifecycle(
         normalized = _stock_code(code)
         if normalized in by_code:
             focus.append(dict(by_code[normalized]))
+    authoritative_event_count = (
+        _int(raw.get("event_count"))
+        if raw.get("event_count") is not None
+        else retained_history_event_count
+    )
     return {
         "available": bool(candidates),
         "contract_version": str(raw.get("contract_version") or ""),
@@ -608,7 +613,8 @@ def summarize_candidate_lifecycle(
         "active_candidate_count": len(active_rows),
         "dormant_research_candidate_count": dormant_count,
         "archived_or_invalidated_count": archived_or_invalidated_count,
-        "lifecycle_event_count": event_count,
+        "lifecycle_event_count": authoritative_event_count,
+        "retained_history_event_count": retained_history_event_count,
         "tier_counts": dict(tier_counts),
         "focus_candidates": focus,
         "focus_by_code": {row["code"]: row for row in focus},
