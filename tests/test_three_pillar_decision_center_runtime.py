@@ -783,3 +783,90 @@ def test_candidate_lifecycle_summary_distinguishes_dormant_from_archived():
     assert summary["lifecycle_event_count"] == 9953
     assert summary["retained_history_event_count"] == 4
     assert summary["focus_by_code"]["000504"]["lifecycle_state"] == "DORMANT"
+
+
+def test_current_full_pass_nonholding_is_visible_as_research_only_lead():
+    profiles = _automatic_profiles()
+    profiles["profiles"]["603596"] = {
+        "name": "伯特利",
+        "industry": "C36汽车制造业",
+        "gates": {
+            "earnings_authenticity": {"status": "PASS"},
+            "financial_safety": {"status": "PASS"},
+            "long_term_demand": {"status": "PASS"},
+            "moat": {"status": "PASS"},
+            "predictability": {"status": "PASS"},
+        },
+    }
+
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=profiles,
+        static_profiles={},
+        deep_calculation_status=_status(),
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+    assert pillar["deep_qualified_research_lead_count"] == 1
+    lead = pillar["deep_qualified_research_leads"][0]
+    assert lead["code"] == "603596"
+    assert lead["hard_gate_pass_count"] == 5
+    assert lead["research_authority"] == "RESEARCH_ONLY"
+    assert lead["formal_buy_authorized"] is False
+    assert lead["automatic_execution_allowed"] is False
+    assert lead["account_action"] == "DO_NOT_BUY_YET"
+    assert pillar["canonical_formal_buy_now"] == []
+    assert pillar["canonical_formal_wait_price"] == []
+    assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
+    assert out["no_auto_trade"] is True
+
+    md = render_runtime_markdown(out)
+    assert "## 五类硬门槛已通过的研究线索" in md
+    assert "603596 伯特利" in md
+    assert "硬门槛 **5/5 PASS**" in md
+    assert "当前账户动作 **暂不买**" in md
+    assert "不是 BUY/WAIT_PRICE" in md
+
+
+def test_stale_or_unknown_profile_cannot_surface_as_deep_qualified_lead():
+    profiles = _automatic_profiles()
+    profiles["profiles"]["603596"] = {
+        "name": "伯特利",
+        "industry": "C36汽车制造业",
+        "gates": {
+            "earnings_authenticity": {"status": "PASS"},
+            "financial_safety": {"status": "PASS"},
+            "long_term_demand": {"status": "PASS"},
+            "moat": {"status": "PASS"},
+            "predictability": {"status": "UNKNOWN"},
+        },
+    }
+
+    current = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=profiles,
+        static_profiles={},
+        deep_calculation_status=_status(),
+        industry_links={},
+        era_handoff={},
+    )
+    assert current["pillar_3_deep_opportunities"]["deep_qualified_research_lead_count"] == 0
+
+    all_pass = profiles["profiles"]["603596"]["gates"]
+    all_pass["predictability"] = {"status": "PASS"}
+    stale_status = _status()
+    stale_status["lambda_run_id"] = "newer-runtime"
+    stale = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=profiles,
+        static_profiles={},
+        deep_calculation_status=stale_status,
+        industry_links={},
+        era_handoff={},
+    )
+    assert stale["deep_review_profile_current_for_runtime"] is False
+    assert stale["pillar_3_deep_opportunities"]["deep_qualified_research_lead_count"] == 0
