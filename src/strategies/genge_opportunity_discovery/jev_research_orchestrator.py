@@ -13,6 +13,7 @@ from typing import Any, Mapping
 
 from src.strategies.genge_opportunity_discovery.research_strategy_ledger import (
     append_attempts,
+    current_strategy_exhaustion,
     has_strategy_scope,
     plan_strategy_attempts,
     reconcile_ledger,
@@ -118,6 +119,7 @@ def build_orchestration_plan(
         "selected": [],
         "human_review": [],
         "skipped": [],
+        "lifecycle_transitions": [],
     }
 
     if not _routing_guardrails_ok(routing_payload):
@@ -188,6 +190,51 @@ def build_orchestration_plan(
         )
         row["strategy_attempts"] = strategy_attempts
         strategy_scope = has_strategy_scope(row)
+        exhaustion = current_strategy_exhaustion(row, reconciled_ledger)
+        row["research_strategy_exhaustion"] = exhaustion
+        lifecycle_state = str(triage.get("candidate_lifecycle_state") or "").strip().upper()
+        row["candidate_lifecycle_state"] = lifecycle_state
+        reactivation_epochs = sorted(
+            {
+                str(item.get("evidence_epoch") or "")
+                for item in strategy_attempts
+                if str(item.get("evidence_epoch") or "")
+            }
+        )
+        if lifecycle_state == "DORMANT" and reactivation_epochs:
+            row["pending_lifecycle_reactivation"] = {
+                "event": "RESEARCH_REACTIVATED",
+                "code": code,
+                "evidence_id": (
+                    f"jev-reactivation:{source_workflow_run_id}:{code}:"
+                    + "|".join(reactivation_epochs)
+                ),
+                "reason": "new hard-gate evidence epoch reopened a bounded research strategy",
+                "is_current_holding": False,
+                "research_evidence_changed": True,
+                "research_evidence_epoch": "|".join(reactivation_epochs),
+                "source_run_id": source_workflow_run_id,
+            }
+        if (
+            lifecycle_state != "DORMANT"
+            and exhaustion.get("exhausted") is True
+            and row["is_current_holding"] is False
+        ):
+            base["lifecycle_transitions"].append(
+                {
+                    "event": "RESEARCH_EXHAUSTED",
+                    "code": code,
+                    "evidence_id": (
+                        f"jev-exhaustion:{source_workflow_run_id}:{code}:"
+                        f"{exhaustion.get('closure_epoch') or 'unknown'}"
+                    ),
+                    "reason": "all supported hard-gate strategies exhausted for the current evidence epoch",
+                    "is_current_holding": False,
+                    "research_evidence_changed": False,
+                    "research_evidence_epoch": str(exhaustion.get("closure_epoch") or ""),
+                    "source_run_id": source_workflow_run_id,
+                }
+            )
 
         ruleable_insufficient_evidence = (
             str(raw.get("evidence_state") or "").strip().upper() == "INSUFFICIENT"
@@ -204,7 +251,11 @@ def build_orchestration_plan(
                             "entity_name": row["entity_name"],
                             "route": route,
                             "attention_priority": attention,
-                            "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+                            "reason": (
+                                "RESEARCH_STRATEGIES_EXHAUSTED_DORMANT"
+                                if exhaustion.get("exhausted") is True and row["is_current_holding"] is False
+                                else "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH"
+                            ),
                         }
                     )
                     continue
@@ -237,7 +288,11 @@ def build_orchestration_plan(
                         "entity_name": row["entity_name"],
                         "route": route,
                         "attention_priority": attention,
-                        "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+                        "reason": (
+                            "RESEARCH_STRATEGIES_EXHAUSTED_DORMANT"
+                            if exhaustion.get("exhausted") is True and row["is_current_holding"] is False
+                            else "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH"
+                        ),
                     }
                 )
                 continue
@@ -272,6 +327,10 @@ def build_orchestration_plan(
     candidates.sort(key=_sort_key)
     selected = candidates[:max_dispatch]
     overflow = candidates[max_dispatch:]
+    for row in selected:
+        transition = row.pop("pending_lifecycle_reactivation", None)
+        if isinstance(transition, Mapping):
+            base["lifecycle_transitions"].append(dict(transition))
     for row in overflow:
         base["skipped"].append(
             {
@@ -321,6 +380,13 @@ def build_orchestration_plan(
         "strategy_attempt_count": len(planned_strategy_attempts),
         "strategy_ledger_entry_count": len(
             base["strategy_ledger"].get("entries") or []
+        ),
+        "lifecycle_transition_count": len(base["lifecycle_transitions"]),
+        "research_exhausted_dormant_count": sum(
+            1 for item in base["lifecycle_transitions"] if item.get("event") == "RESEARCH_EXHAUSTED"
+        ),
+        "research_reactivated_count": sum(
+            1 for item in base["lifecycle_transitions"] if item.get("event") == "RESEARCH_REACTIVATED"
         ),
     }
     return base
