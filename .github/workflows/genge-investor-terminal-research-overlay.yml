@@ -80,6 +80,19 @@ jobs:
           assert r['no_auto_trade'] is True
           assert r['requested_count'] == sum(r['decision_counts'].values())
           assert set(r['decision_counts']) == {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}
+          assert r['capital_model_version'] == 'GEN_GE_RISK_BUDGET_CAPITAL_V1'
+          assert r['capital_advisory_authority'] == 'ADVISORY_ONLY'
+          assert r['capital_advisory_automatic_execution_allowed'] is False
+          assert sum(r['capital_action_counts'].values()) == r['requested_count']
+          assert p['decision_summary']['research_capital_probe_count'] == r['capital_probe_count']
+          assert p['decision_summary']['research_capital_action_counts'] == r['capital_action_counts']
+          for row in r['terminal_rows']:
+              cap=row['capital_allocation']
+              assert cap['action'] in {'BUILD','PROBE','WATCH','BLOCK'}
+              assert cap['authority'] == 'ADVISORY_ONLY'
+              assert cap['automatic_execution_allowed'] is False
+              assert cap['formal_buy_authorized'] is False
+              assert cap['no_auto_trade'] is True
           PY
             git add -f data/investor_decision_dashboard/latest.json
             git add INVESTOR_DECISION_DASHBOARD.md
