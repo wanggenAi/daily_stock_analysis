@@ -1,58 +1,58 @@
 {
   "schema_version": 2,
-  "generation": 32,
+  "generation": 33,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "RESEARCH_STRATEGY_LEDGER_PR_CI",
-  "last_observed_main_sha": "30c539fef0c0c6abb2f48c208dad115a6f685a77",
-  "work_branch": "feat/research-strategy-ledger-replay-20260922",
-  "work_head_sha": "dc33fd1ec9f8ce9b164cb6ac22476b6c6600fe2b",
-  "active_pr": 275,
+  "stage": "RISK_BUDGET_OVERLAY_PR_CI_AND_JEV_CONTINUATION_REPLAY",
+  "last_observed_main_sha": "baf6e2c7dbf8cbc45547b809e7c275aa35765ad2",
+  "work_branch": "feat/investor-overlay-capital-advisory-20260923",
+  "work_head_sha": "f9cb2cbb0a09a525cf6f1ba3b3f4ab64fb79e6a4",
+  "active_pr": 279,
   "ci": {
     "status": "IN_PROGRESS",
-    "pr_head": "dc33fd1ec9f8ce9b164cb6ac22476b6c6600fe2b",
-    "pr_ci_run_id": 35703785758,
-    "jev_shadow_run_id": 35703785800,
-    "jev_orchestrator_run_id": 35703785850,
-    "opportunity_discovery_run_id": 35703786261
+    "pr_head": "f9cb2cbb0a09a525cf6f1ba3b3f4ab64fb79e6a4",
+    "pr_ci_run_id": 35814044640,
+    "investor_brief_run_id": 35814044655,
+    "investor_overlay_run_id": 35814044649,
+    "opportunity_discovery_run_id": 35814044617
   },
   "production_or_artifact": {
-    "status": "LEDGER_NOT_MERGED_AWAITING_BLOCKING_CI",
+    "status": "RISK_BUDGET_V1_PRODUCTION_LIVE_PR279_PENDING_ATOMIC_INVESTOR_OVERLAY",
     "verified": [
-      "PR Jev Shadow Evaluation succeeded on latest head.",
-      "PR Jev Research Orchestrator succeeded on latest head.",
-      "PR Opportunity Discovery succeeded on latest head.",
-      "Prior backend failure was a test-scope NameError only; fixed in dc33fd1."
+      "PR #275 research strategy ledger is merged; source Jev run 35705667064 already dispatched exact Deep run 35706039574 successfully.",
+      "Risk-budget V1 is already live in Terminal/Three-Pillar with PROBE=1, WATCH=5, BLOCK=7, BUILD=0 on the verified production snapshot.",
+      "Current production PROBE candidate is 603105 芯能科技 with conviction 0.596 and suggested max portfolio pct 0.72.",
+      "PR #279 specialized Investor Brief and Investor Terminal Research Overlay checks are green on head f9cb2cb; blocking CI backend-gate is still running.",
+      "Main does not contain the autonomous downstream-convergence -> Jev reevaluation logic from stale PR #277."
     ],
     "safety": [
-      "No hard-gate or valuation threshold changes.",
-      "Formal trading authority remains false.",
+      "Formal trading authority remains false for risk-budget/Jev research layers.",
       "UNKNOWN != PASS.",
-      "no_auto_trade remains true."
+      "no_auto_trade remains true.",
+      "Do not duplicate source Jev run 35705667064 or Deep run 35706039574."
     ]
   },
   "pending_operation": {
     "type": "MERGE_PR_AFTER_LATEST_HEAD_BLOCKING_CI",
-    "pr": 275,
-    "head_sha": "dc33fd1ec9f8ce9b164cb6ac22476b6c6600fe2b",
-    "require": "latest-head blocking CI green and mergeable"
+    "pr": 279,
+    "head_sha": "f9cb2cbb0a09a525cf6f1ba3b3f4ab64fb79e6a4",
+    "require": "latest-head blocking CI green and mergeable; re-align with live main if production persistence advances base"
   },
   "completed": [
-    "Reconciled stale recovery cursor from completed PR #270 to live PR #275.",
-    "Read live AGENTS.md, TASK_STATE.md, Jev routing/orchestration state, open PRs and current Actions.",
-    "Identified latest-head CI blocker as NameError caused by test-local evidence epoch variable scope.",
-    "Moved prior_predictability_epoch into test_new_evidence_epoch_reopens_same_supported_strategy.",
-    "Confirmed latest-head Jev Shadow Evaluation, Jev Research Orchestrator and Opportunity Discovery workflows succeed."
+    "Reconciled stale recovery cursor from PR #275 to live main and PR #279.",
+    "Read live AGENTS.md, TASK_STATE.md, machine recovery state, Jev routing and orchestration cursors, open PRs and Actions.",
+    "Verified Jev source run 35705667064 already produced Deep run 35706039574 successfully; no duplicate dispatch.",
+    "Verified current main lacks #277 autonomous Jev continuation logic.",
+    "Created reference-price groundwork branch feat/probe-reference-price-20260923 carrying same-snapshot raw execution price lineage; not yet opened/merged."
   ],
-  "next_action": "Wait only for latest-head blocking CI backend-gate/docker-build; if green and PR is mergeable, merge PR #275, then verify live main and post-merge research/orchestration state. Do not redispatch duplicate Jev/Deep work.",
+  "next_action": "Finish PR #279 latest-head CI and merge with production-main replay if needed; verify atomic Investor Dashboard risk-budget output. Then replay the minimal #277 Jev continuation logic onto latest main, test/merge it, run one lineage-keyed Jev reevaluation from the latest fully converged Deep lineage, and verify deterministic orchestrator/downstream closure. Afterwards finish same-snapshot reference-price + lot-size-aware research-probe execution advisory without granting Formal authority.",
   "do_not_repeat": [
-    "Do not redo #268, #269, #270, #271 or #273.",
-    "Do not reopen superseded #274 unless live GitHub proves a regression.",
-    "Do not rerun completed moat proof.",
-    "Do not dispatch duplicate Deep/Jev work when persisted lineage already proves completion.",
+    "Do not redo #268, #269, #270, #271, #273 or #275.",
+    "Do not merge stale #276/#277 directly; replay their minimal autonomous-continuation logic onto live main.",
+    "Do not rerun source Jev 35705667064 or Deep 35706039574.",
     "Do not lower thresholds to force BUY/WAIT_PRICE.",
     "Do not relax UNKNOWN != PASS, Formal authority or no_auto_trade."
   ],
-  "business_code_baseline_sha": "4d834ed073ac92428a9a598d76a3e1d50635b0df"
+  "business_code_baseline_sha": "3162e8ae58df72364a063eef01d750d2f8cda67d"
 }
