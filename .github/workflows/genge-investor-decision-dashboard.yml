@@ -275,15 +275,6 @@ jobs:
                 --markdown-output INVESTOR_DECISION_DASHBOARD.md \
                 --max-age-minutes 120
             fi
-            # Re-apply the persisted research-only Terminal snapshot before persistence so
-            # the investor dashboard is atomically consistent on every rebuild. The later
-            # workflow_dispatch remains an idempotent convergence fallback.
-            if [ -s data/deep_calculation/latest_research_decisions.json ]; then
-              python -m src.strategies.genge_opportunity_discovery.investor_terminal_research_overlay \
-                --dashboard-json data/investor_decision_dashboard/latest.json \
-                --dashboard-md INVESTOR_DECISION_DASHBOARD.md \
-                --terminal-research-json data/deep_calculation/latest_research_decisions.json
-            fi
             # Re-apply durable execution consumption before every Investor Brief persistence.
             # A fresh Canonical/dashboard rebuild must not silently recreate a one-shot staged ADD
             # that CURRENT_EXECUTION_STATE.json proves has already been consumed.
@@ -292,6 +283,16 @@ jobs:
                 --dashboard data/investor_decision_dashboard/latest.json \
                 --execution-state CURRENT_EXECUTION_STATE.json \
                 --markdown INVESTOR_DECISION_DASHBOARD.md
+            fi
+            # Re-apply the persisted research-only Terminal snapshot after every overlay
+            # that may re-render the dashboard Markdown. This makes the persisted JSON and
+            # Markdown atomically consistent; the later workflow_dispatch remains an
+            # idempotent convergence fallback.
+            if [ -s data/deep_calculation/latest_research_decisions.json ]; then
+              python -m src.strategies.genge_opportunity_discovery.investor_terminal_research_overlay \
+                --dashboard-json data/investor_decision_dashboard/latest.json \
+                --dashboard-md INVESTOR_DECISION_DASHBOARD.md \
+                --terminal-research-json data/deep_calculation/latest_research_decisions.json
             fi
             python - <<'PY'
           import json
