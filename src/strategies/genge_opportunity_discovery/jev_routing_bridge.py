@@ -17,6 +17,7 @@ ALLOWED_ROUTES = {
     "NO_ESCALATION",
     "EVIDENCE_REFRESH",
     "DEEP_RESEARCH",
+    "VALUATION_CLOSURE",
     "HUMAN_REVIEW",
 }
 ALLOWED_PRIORITIES = {"LOW", "MEDIUM", "HIGH"}
@@ -29,9 +30,10 @@ ALLOWED_EVIDENCE_STATES = {
 _PRIORITY_RANK = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
 _ROUTE_RANK = {
     "HUMAN_REVIEW": 0,
-    "DEEP_RESEARCH": 1,
-    "EVIDENCE_REFRESH": 2,
-    "NO_ESCALATION": 3,
+    "VALUATION_CLOSURE": 1,
+    "DEEP_RESEARCH": 2,
+    "EVIDENCE_REFRESH": 3,
+    "NO_ESCALATION": 4,
 }
 
 
@@ -228,7 +230,7 @@ def _finalize(payload: dict[str, Any]) -> dict[str, Any]:
     actionable = sum(
         1
         for row in queue
-        if row.get("route") in {"EVIDENCE_REFRESH", "DEEP_RESEARCH", "HUMAN_REVIEW"}
+        if row.get("route") in {"EVIDENCE_REFRESH", "DEEP_RESEARCH", "VALUATION_CLOSURE", "HUMAN_REVIEW"}
     )
     payload["summary"] = {
         "routing_count": len(queue),
