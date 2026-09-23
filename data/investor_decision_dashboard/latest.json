@@ -1,10 +1,10 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "FOLLOWUP",
-  "generated_at": "2026-09-23T14:25:18+00:00",
-  "canonical_snapshot_id": "5ac20f6d54739d44e849",
-  "canonical_source_run_id": "35690406280",
-  "latest_trade_date": "2026-09-21",
+  "generated_at": "2026-09-23T14:44:58+00:00",
+  "canonical_snapshot_id": "538269c3908f97c328d1",
+  "canonical_source_run_id": "35829289957",
+  "latest_trade_date": "2026-09-22",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
   "holdings_reconciliation": {
@@ -20,7 +20,7 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=YELLOW；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0",
+  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=YELLOW；盘中价仅用于展示/审计；计划立即投入≈¥0",
   "market": {
     "as_of_date": "2026-09-22",
     "status": "YELLOW",
@@ -50,8 +50,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.1,
-        "pnl_pct": -4.43,
+        "current_price": 22.23,
+        "pnl_pct": -3.87,
         "formal_action": "REDUCE_25",
         "canonical_formal_action": "REDUCE_25",
         "formal_action_currently_usable": true,
@@ -90,7 +90,7 @@
         "profit_protection_overlay": {
           "active": false,
           "eligible_from_canonical_value_risk_context": false,
-          "unrealized_profit_pct_display_only": -4.43,
+          "unrealized_profit_pct_display_only": -3.87,
           "profit_alone_is_sell_reason": false,
           "formal_action_mutation_allowed": false,
           "risk_reasons": "",
@@ -98,15 +98,16 @@
           "no_auto_trade": true
         },
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "new_exposure_currently_usable": false
+        "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "001316",
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 29.62,
-        "pnl_pct": 15.05,
+        "current_price": 28.9,
+        "pnl_pct": 12.25,
         "formal_action": "HOLD_REVIEW",
         "canonical_formal_action": "HOLD_REVIEW",
         "formal_action_currently_usable": true,
@@ -131,7 +132,7 @@
         "profit_protection_overlay": {
           "active": false,
           "eligible_from_canonical_value_risk_context": false,
-          "unrealized_profit_pct_display_only": 15.05,
+          "unrealized_profit_pct_display_only": 12.25,
           "profit_alone_is_sell_reason": false,
           "formal_action_mutation_allowed": false,
           "risk_reasons": "",
@@ -139,15 +140,16 @@
           "no_auto_trade": true
         },
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "new_exposure_currently_usable": false
+        "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "601318",
         "name": "中国平安",
         "quantity": 400,
         "average_cost": 55.9658,
-        "current_price": 53.98,
-        "pnl_pct": -3.55,
+        "current_price": 54.46,
+        "pnl_pct": -2.69,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -172,23 +174,24 @@
         "profit_protection_overlay": {
           "active": false,
           "eligible_from_canonical_value_risk_context": false,
-          "unrealized_profit_pct_display_only": -3.55,
+          "unrealized_profit_pct_display_only": -2.69,
           "profit_alone_is_sell_reason": false,
           "formal_action_mutation_allowed": false,
           "risk_reasons": "",
           "authority": "RISK_CONTEXT_ONLY",
           "no_auto_trade": true
         },
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.650<1.00",
-        "new_exposure_currently_usable": false
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.656<1.00",
+        "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE"
       },
       {
         "code": "603993",
         "name": "洛阳钼业",
         "quantity": 1100,
         "average_cost": 18.6244,
-        "current_price": 17.59,
-        "pnl_pct": -5.55,
+        "current_price": 17.81,
+        "pnl_pct": -4.37,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -200,7 +203,7 @@
         "execution_feasibility": null,
         "holding_add_authorized": false,
         "holding_add_max_lots": 1,
-        "holding_add_reason_codes": "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED;VALUATION_CONFIDENCE_HIGH;A_LEVEL_MARGIN_OF_SAFETY_PASS;price_to_neutral=0.625<=0.75;NO_KNOWN_HARD_GATE_FAILURE;STAGED_ADD_CAP_ONE_LOT;STAGED_ADD_NOT_FORMAL_BUY;FORMAL_ACTION_UNCHANGED;HARD_GATE_UNKNOWNS_RETAINED:predictability,long_term_demand,moat,financial_safety,earnings_authenticity;STAGED_ADD_AUTHORIZATION_CONSUMED",
+        "holding_add_reason_codes": "EXISTING_HOLDING_STAGED_ADD_AUTHORIZED;VALUATION_CONFIDENCE_HIGH;A_LEVEL_MARGIN_OF_SAFETY_PASS;price_to_neutral=0.633<=0.75;NO_KNOWN_HARD_GATE_FAILURE;STAGED_ADD_CAP_ONE_LOT;STAGED_ADD_NOT_FORMAL_BUY;FORMAL_ACTION_UNCHANGED;HARD_GATE_UNKNOWNS_RETAINED:predictability,long_term_demand,moat,financial_safety,earnings_authenticity;STAGED_ADD_AUTHORIZATION_CONSUMED",
         "value_low": 18.02971886915772,
         "neutral_value": 28.12766979232306,
         "value_high": 43.065691192510116,
@@ -213,7 +216,7 @@
         "profit_protection_overlay": {
           "active": false,
           "eligible_from_canonical_value_risk_context": false,
-          "unrealized_profit_pct_display_only": -5.55,
+          "unrealized_profit_pct_display_only": -4.37,
           "profit_alone_is_sell_reason": false,
           "formal_action_mutation_allowed": false,
           "risk_reasons": "",
@@ -222,12 +225,13 @@
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
         "new_exposure_currently_usable": false,
+        "price_source": "CANONICAL_FROZEN_PRICE",
         "holding_add_consumption": {
           "status": "CONSUMED",
           "source_canonical_snapshot_id": "4e025e2112441ae19e05",
           "source_canonical_source_run_id": "34879450038",
-          "applied_to_canonical_snapshot_id": "5ac20f6d54739d44e849",
-          "applied_to_canonical_source_run_id": "35690406280",
+          "applied_to_canonical_snapshot_id": "538269c3908f97c328d1",
+          "applied_to_canonical_source_run_id": "35829289957",
           "lineage_match": "CARRIED_FORWARD",
           "consumed_shares": 100,
           "allowance_shares": 100,
@@ -360,8 +364,8 @@
     "trigger_codes": []
   },
   "hourly_context": {
-    "available": false,
-    "research_as_of": ""
+    "available": true,
+    "research_as_of": "2026-09-23T07:12:19Z"
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -410,19 +414,52 @@
       "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
       "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
     ],
-    "evaluated_at": "2026-09-23T14:25:18+00:00",
-    "canonical_generated_at": "2026-09-22T05:34:32+00:00",
-    "canonical_latest_trade_date": "2026-09-21",
-    "canonical_source_run_id": "35690406280",
+    "evaluated_at": "2026-09-23T14:44:58+00:00",
+    "canonical_generated_at": "2026-09-23T07:12:20+00:00",
+    "canonical_latest_trade_date": "2026-09-22",
+    "canonical_source_run_id": "35829289957",
     "expected_min_trade_date": "2026-09-23",
     "market_as_of": "2026-09-22",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
   },
   "formal_new_exposure_allowed": false,
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "available": false,
+    "market_data_status": "DEGRADED",
+    "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": true,
+    "formal_new_exposure_allowed": false,
+    "freshness_fail_closed_reasserted": true
+  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "5ac20f6d54739d44e849",
-    "canonical_source_run_id": "35690406280",
+    "canonical_snapshot_id": "538269c3908f97c328d1",
+    "canonical_source_run_id": "35829289957",
     "matching_consumption_count": 1,
     "exact_lineage_consumption_count": 0,
     "carried_forward_consumption_count": 1,
@@ -450,10 +487,10 @@
     "source_every_industry_run_id": "35870152528",
     "requested_count": 16,
     "decision_counts": {
-      "WAIT_PRICE": 0,
-      "BUY": 1,
       "RESEARCH_GAP": 15,
-      "REJECT": 0
+      "BUY": 1,
+      "REJECT": 0,
+      "WAIT_PRICE": 0
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
