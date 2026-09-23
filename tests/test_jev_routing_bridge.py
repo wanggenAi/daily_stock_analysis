@@ -209,3 +209,26 @@ def test_bridge_carries_research_evidence_epoch_without_authority_change():
     assert row["formal_trading_authority"] is False
     assert row["no_auto_trade"] is True
 
+def test_bridge_accepts_explicit_valuation_closure_route():
+    shadow = _shadow()
+    shadow["rows"][0]["decisions"]["research_route"] = {
+        "type": "choice",
+        "choice": "VALUATION_CLOSURE",
+        "confidence": 0.91,
+        "probabilities": {
+            "VALUATION_CLOSURE": 0.91,
+            "DEEP_RESEARCH": 0.05,
+            "EVIDENCE_REFRESH": 0.02,
+            "HUMAN_REVIEW": 0.01,
+            "NO_ESCALATION": 0.01,
+        },
+    }
+
+    payload = build_routing_bridge(shadow)
+    row = payload["routing_queue"][0]
+
+    assert row["route"] == "VALUATION_CLOSURE"
+    assert row["route_probabilities"]["VALUATION_CLOSURE"] == 0.91
+    assert payload["summary"]["route_counts"]["VALUATION_CLOSURE"] == 1
+    assert payload["summary"]["actionable_research_count"] == 2
+    assert payload["formal_trading_authority"] is False
