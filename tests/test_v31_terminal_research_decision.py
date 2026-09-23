@@ -283,6 +283,23 @@ def test_three_noncritical_unknowns_remain_watch_even_with_discount():
     assert capital["suggested_max_portfolio_pct"] == 0.0
 
 
+
+def test_growth_expectation_blocks_probe_until_price_compensates():
+    gates = _all("PASS")
+    gates["moat"] = "UNKNOWN"
+    valuation = _valuation(pe="8", median="12")
+    valuation[0]["expectation_state"] = "EARNINGS_GROWTH_REQUIRED"
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=valuation,
+    )
+    capital = out["terminal_rows"][0]["capital_allocation"]
+
+    assert capital["action"] == "WATCH"
+    assert capital["reason"] == "EXPECTATION_REQUIRES_GROWTH"
+    assert capital["suggested_max_portfolio_pct"] == 0.0
+
 def test_specialized_industry_stays_watch_without_specialized_valuation_model():
     valuation = _valuation(pe="5", median="10")
     valuation[0]["industry"] = "J68保险业"
