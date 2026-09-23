@@ -1,5 +1,6 @@
 from src.strategies.genge_opportunity_discovery.research_strategy_ledger import (
     append_attempts,
+    current_strategy_exhaustion,
     gate_evidence_fingerprint,
     has_strategy_scope,
     plan_strategy_attempts,
@@ -319,3 +320,40 @@ def test_financial_diagnostic_change_reactivates_financial_gate_strategy():
 
     assert [item["hard_gate"] for item in attempts] == ["financial_safety"]
 
+
+
+def test_current_strategy_exhaustion_requires_exact_deep_reconciliation():
+    row = _row()
+    attempts = plan_strategy_attempts(row, {}, source_workflow_run_id="100")
+    for item in attempts:
+        item["attempt_status"] = "DISPATCH_ACCEPTED"
+        item["deep_run_id"] = "900"
+    ledger = append_attempts({}, attempts)
+
+    assert current_strategy_exhaustion(row, ledger)["exhausted"] is False
+
+    after = _row()
+    after["research_context"]["deep_lambda_run_id"] = "900"
+    reconciled = reconcile_ledger(
+        ledger,
+        [after],
+        current_source_workflow_run_id="101",
+    )
+    status = current_strategy_exhaustion(after, reconciled)
+
+    assert status["exhausted"] is True
+    assert status["gate_count"] == 2
+    assert status["closure_epoch"]
+    assert all(item["exhausted"] is True for item in status["gates"])
+
+
+def test_unsupported_gate_fails_closed_in_exhaustion_status():
+    row = _row()
+    row["research_context"]["unresolved_gates"] = [
+        {"gate": "management_quality", "reason": "NO_SUPPORTED_COLLECTOR"},
+    ]
+
+    status = current_strategy_exhaustion(row, {})
+
+    assert status["exhausted"] is False
+    assert status["gates"][0]["supported"] is False
