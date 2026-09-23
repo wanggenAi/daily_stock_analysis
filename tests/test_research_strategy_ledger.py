@@ -388,3 +388,89 @@ def test_profile_unknown_fallback_is_deduplicated_and_exhaustible():
         reconciled,
         source_workflow_run_id="202",
     ) == []
+
+
+def test_profile_workset_gap_blocks_attempt_without_false_exhaustion():
+    initial = _row()
+    attempts = plan_strategy_attempts(
+        initial,
+        {},
+        source_workflow_run_id="100",
+    )
+    for item in attempts:
+        item["attempt_status"] = "DISPATCH_ACCEPTED"
+        item["deep_run_id"] = "900"
+    ledger = append_attempts({}, attempts)
+
+    blocked = _row()
+    blocked["research_context"]["deep_lambda_run_id"] = "900"
+    blocked["research_context"]["unresolved_gates"].append(
+        {
+            "gate": "profile",
+            "reason": "REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE",
+        }
+    )
+    reconciled = reconcile_ledger(
+        ledger,
+        [blocked],
+        current_source_workflow_run_id="101",
+    )
+
+    assert has_strategy_scope(blocked) is True
+    assert all(
+        item["attempt_status"] == "BLOCKED_WORKSET_COVERAGE"
+        for item in reconciled["entries"]
+    )
+    assert all(item["strategy_exhausted"] is False for item in reconciled["entries"])
+    assert all(item["new_evidence_acquired"] is None for item in reconciled["entries"])
+    assert all(item["workset_coverage_blocked"] is True for item in reconciled["entries"])
+    assert plan_strategy_attempts(
+        blocked,
+        reconciled,
+        source_workflow_run_id="102",
+    ) == []
+
+
+def test_profile_workset_recovery_reopens_same_gate_epoch_after_blocked_dispatch():
+    initial = _row()
+    attempts = plan_strategy_attempts(initial, {}, source_workflow_run_id="100")
+    for item in attempts:
+        item["attempt_status"] = "DISPATCH_ACCEPTED"
+        item["deep_run_id"] = "900"
+    ledger = append_attempts({}, attempts)
+
+    blocked = _row()
+    blocked["research_context"]["deep_lambda_run_id"] = "900"
+    blocked["research_context"]["unresolved_gates"].append(
+        {
+            "gate": "profile",
+            "reason": "REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE",
+        }
+    )
+    reconciled = reconcile_ledger(
+        ledger,
+        [blocked],
+        current_source_workflow_run_id="101",
+    )
+
+    recovered = _row()
+    retried = plan_strategy_attempts(
+        recovered,
+        reconciled,
+        source_workflow_run_id="102",
+    )
+
+    assert {item["hard_gate"] for item in retried} == {
+        "predictability",
+        "financial_safety",
+    }
+    updated = append_attempts(reconciled, retried)
+    assert len(updated["entries"]) == 4
+    assert sum(
+        item["attempt_status"] == "BLOCKED_WORKSET_COVERAGE"
+        for item in updated["entries"]
+    ) == 2
+    assert sum(
+        item["attempt_status"] == "DISPATCH_PLANNED"
+        for item in updated["entries"]
+    ) == 2
