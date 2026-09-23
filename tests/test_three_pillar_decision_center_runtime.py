@@ -936,3 +936,125 @@ def test_stale_or_unknown_profile_cannot_surface_as_deep_qualified_lead():
     )
     assert stale["deep_review_profile_current_for_runtime"] is False
     assert stale["pillar_3_deep_opportunities"]["deep_qualified_research_lead_count"] == 0
+
+
+def _jev_entry_routing(deep_run_id="987654", judgment="ENTRY_NOW"):
+    return {
+        "contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
+        "execution_status": "SUCCESS",
+        "source_workflow_run_id": "jev-entry-1",
+        "formal_trading_authority": False,
+        "automatic_formal_buy_allowed": False,
+        "unknown_is_pass": False,
+        "no_auto_trade": True,
+        "routing_queue": [
+            {
+                "entity_id": "603596",
+                "entity_name": "伯特利",
+                "route": "VALUATION_CLOSURE",
+                "route_confidence": 0.91,
+                "entry_judgment": {
+                    "jev_judgment": judgment,
+                    "validated_judgment": judgment,
+                    "validation_reason": "TEST",
+                    "deterministically_supported": True,
+                    "judgment_confidence": 0.93,
+                    "entry_reason": "TEST",
+                    "entry_trigger": "CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING",
+                    "entry_price_zone_low": None,
+                    "entry_price_zone_high": 43.71,
+                    "reference_price": 29.15,
+                    "reference_trade_date": "2026-09-22",
+                    "initial_manual_position_pct": 1.0 if judgment == "ENTRY_NOW" else 0.0,
+                    "max_manual_position_pct": 3.0,
+                    "add_condition": "REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING",
+                    "do_not_chase_condition": "PRICE_ABOVE_43.7100_REQUIRES_REVALUATION",
+                    "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+                    "source_lineage": {"deep_lambda_run_id": deep_run_id},
+                    "authority": "ADVISORY_ONLY",
+                    "formal_buy_authorized": False,
+                    "automatic_execution_allowed": False,
+                    "no_auto_trade": True,
+                },
+            }
+        ],
+    }
+
+
+def test_current_jev_entry_judgment_is_exposed_without_formal_authority():
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_status(),
+        terminal_research_decisions=_terminal_research("987654"),
+        jev_routing=_jev_entry_routing(),
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+    row = pillar["jev_entry_judgments"][0]
+
+    assert pillar["jev_entry_judgment_status"] == "CURRENT"
+    assert pillar["jev_entry_judgment_count"] == 1
+    assert pillar["jev_entry_now_count"] == 1
+    assert row["code"] == "603596"
+    assert row["validated_judgment"] == "ENTRY_NOW"
+    assert row["entry_price_zone_high"] == 43.71
+    assert row["initial_manual_position_pct"] == 1.0
+    assert row["max_manual_position_pct"] == 3.0
+    assert row["authority"] == "ADVISORY_ONLY"
+    assert row["formal_buy_authorized"] is False
+    assert row["automatic_execution_allowed"] is False
+    assert row["no_auto_trade"] is True
+    assert pillar["canonical_formal_buy_now"] == []
+    assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
+
+    md = render_runtime_markdown(out)
+    assert "## Jev 买入判断（研究建议，不是 Formal BUY）" in md
+    assert "603596 伯特利" in md
+    assert "**ENTRY_NOW**" in md
+    assert "买入价上限=43.71" in md
+    assert "首仓=1.0%" in md
+
+
+def test_stale_jev_entry_lineage_is_fail_closed_from_user_report():
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_status(),
+        terminal_research_decisions=_terminal_research("987654"),
+        jev_routing=_jev_entry_routing("older-deep"),
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+
+    assert pillar["jev_entry_judgments"] == []
+    assert pillar["jev_entry_judgment_count"] == 0
+    assert pillar["jev_entry_now_count"] == 0
+    assert pillar["jev_entry_judgment_stale_row_count"] == 1
+
+
+def test_jev_entry_authority_escalation_is_rejected_from_user_report():
+    routing = _jev_entry_routing()
+    routing["routing_queue"][0]["entry_judgment"]["formal_buy_authorized"] = True
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_status(),
+        terminal_research_decisions=_terminal_research("987654"),
+        jev_routing=routing,
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+
+    assert pillar["jev_entry_judgments"] == []
+    assert pillar["jev_entry_judgment_invalid_row_count"] == 1
+    assert pillar["canonical_formal_buy_now"] == []
