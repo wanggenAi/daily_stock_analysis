@@ -103,6 +103,11 @@ class FakeProvider:
                     "choice": "INSUFFICIENT",
                     "confidence": 0.91,
                 },
+                "entry_judgment": {
+                    "type": "choice",
+                    "choice": "WAIT_EVIDENCE",
+                    "confidence": 0.88,
+                },
             },
         }
 
@@ -196,7 +201,7 @@ def test_fake_live_run_records_model_metrics_and_agreement():
     assert payload["execution_status"] == "SUCCESS"
     assert payload["rows"][0]["served_model"] == "jev-1.13.0"
     assert payload["rows"][0]["evidence_need_agrees_with_existing"] is True
-    assert payload["summary"]["judgments"] == 5
+    assert payload["summary"]["judgments"] == 6
     assert payload["summary"]["evidence_agreement_rate"] == 1.0
     assert payload["summary"]["served_models"] == {"jev-1.13.0": 1}
     assert payload["mutates_authoritative_decision"] is False
@@ -573,7 +578,93 @@ def test_jev_question_set_has_explicit_post_deep_valuation_closure_route():
         QUESTION_SPECS,
     )
 
-    assert QUESTION_SET_VERSION == "GEN_GE_JEV_RESEARCH_ROUTING_V3"
+    assert QUESTION_SET_VERSION == "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4"
     criteria = QUESTION_SPECS["research_route"]["criteria"]
     assert "VALUATION_CLOSURE" in criteria
     assert "five hard gates" in criteria["VALUATION_CLOSURE"].lower()
+
+
+def test_jev_question_set_has_typed_entry_judgment_without_trade_authority():
+    from src.strategies.genge_opportunity_discovery.jev_shadow import (
+        QUESTION_SPECS,
+        STATE_SCHEMA_VERSION,
+    )
+
+    assert STATE_SCHEMA_VERSION == "GEN_GE_JEV_STOCK_STATE_V3"
+    criteria = QUESTION_SPECS["entry_judgment"]["criteria"]
+    assert set(criteria) == {
+        "ENTRY_NOW",
+        "WAIT_PRICE",
+        "WAIT_EVIDENCE",
+        "DO_NOT_CHASE",
+        "INVALIDATED",
+        "NO_JUDGMENT",
+    }
+    assert "Formal BUY" in QUESTION_SPECS["entry_judgment"]["instructions"]
+
+
+def test_state_carries_deterministic_price_and_risk_budget_context_for_entry_judgment():
+    states = build_stock_shadow_states(
+        dashboard={},
+        deep_status={
+            "execution_status": "SUCCESS",
+            "research_terminal_state": "COMPLETE",
+            "lambda_run_id": "deep-603596",
+            "deep_code_epoch_sha": "epoch",
+            "unresolved_reasons": {},
+        },
+        profiles={
+            "profiles": {
+                "603596": {
+                    "name": "伯特利",
+                    "gates": {
+                        gate: {"status": "PASS"}
+                        for gate in (
+                            "predictability",
+                            "long_term_demand",
+                            "moat",
+                            "financial_safety",
+                            "earnings_authenticity",
+                        )
+                    },
+                }
+            }
+        },
+        research_decisions={
+            "terminal_rows": [
+                {
+                    "code": "603596",
+                    "name": "伯特利",
+                    "research_decision": "BUY",
+                    "hard_gate_pass_count": 5,
+                    "hard_gate_failures": [],
+                    "hard_gate_unknowns": [],
+                    "valuation": {
+                        "reference_price": 29.15,
+                        "reference_trade_date": "2026-09-22",
+                        "price_mapping_status": "OK",
+                        "research_buy_price_ceiling": 43.71,
+                        "research_buy_pe_ratio_threshold": 0.8,
+                        "pe_to_history_ratio": 0.5334,
+                    },
+                    "capital_allocation": {
+                        "action": "BUILD",
+                        "authority": "ADVISORY_ONLY",
+                        "automatic_execution_allowed": False,
+                        "formal_buy_authorized": False,
+                        "no_auto_trade": True,
+                        "suggested_max_portfolio_pct": 3.0,
+                    },
+                }
+            ]
+        },
+        research_priority={"queue": [{"code": "603596", "priority": "P1"}]},
+        scope="unresolved",
+        max_entities=5,
+    )
+
+    state = states[0]
+    assert state["triage_context"]["valuation"]["research_buy_price_ceiling"] == 43.71
+    assert state["capital_context"]["suggested_max_portfolio_pct"] == 3.0
+    assert state["capital_context"]["authority"] == "ADVISORY_ONLY"
+    assert state["source_lineage"]["deep_lambda_run_id"] == "deep-603596"
