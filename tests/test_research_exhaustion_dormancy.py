@@ -184,6 +184,54 @@ def test_dormant_candidate_loses_stale_tier_boost_but_new_signal_can_reenter():
     assert "REUNDERWRITE_REQUIRED" in reopened["reason_codes"]
 
 
+def test_dormant_candidate_suppresses_non_material_priority_noise():
+    lifecycle = {
+        "candidates": {
+            "603105": {
+                "stock_name": "芯能科技",
+                "research_tier": "A1-QUALITY / WAIT_PRICE",
+                "lifecycle_state": "DORMANT",
+            }
+        }
+    }
+    coverage = {
+        "securities": [
+            {
+                "code": "603105",
+                "name": "芯能科技",
+                "scopes": ["ACTIVE_CANDIDATE"],
+                "industry_mapped": False,
+                "commodity_monitoring_state": "NOT_APPLICABLE",
+                "peer_monitoring_state": "MAPPED",
+            }
+        ]
+    }
+    hourly = {
+        "rows": [
+            {
+                "code": "603105",
+                "scope": "DEEP_REVIEW_FOCUS",
+                "formal_action": "",
+                "hourly_research_conclusion": "PRICE_ATTRACTIVE_RESEARCH_LEAD",
+                "thesis_status": "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY",
+                "deep_review_priority": "RAISE",
+            }
+        ]
+    }
+
+    row = build_queue(hourly, lifecycle, coverage)["queue"][0]
+
+    assert row["lifecycle_state"] == "DORMANT"
+    assert row["priority_score"] == 0
+    assert row["priority"] == "P3"
+    assert row["mapping_gaps"] == ["INDUSTRY"]
+    assert "RESEARCH_DORMANT_WAIT_NEW_EVIDENCE" in row["reason_codes"]
+    assert "RESEARCH_DORMANT_NON_MATERIAL_SIGNALS_SUPPRESSED" in row["reason_codes"]
+    assert "PRICE_ATTRACTIVE_RESEARCH_LEAD" not in row["reason_codes"]
+    assert "HOURLY_PRIORITY_RAISE" not in row["reason_codes"]
+    assert "MAPPING_GAP" not in row["reason_codes"]
+
+
 def test_unsupported_unresolved_gate_blocks_dormancy_fail_closed():
     row = _row()
     row["research_context"]["unresolved_gates"].append(
