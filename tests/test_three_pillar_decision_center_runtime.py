@@ -738,6 +738,7 @@ def test_candidate_lifecycle_and_system_capabilities_are_visible_in_final_report
 def test_candidate_lifecycle_summary_distinguishes_dormant_from_archived():
     lifecycle = {
         "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
+        "event_count": 9953,
         "candidates": {
             "600406": {
                 "code": "600406",
@@ -779,5 +780,6 @@ def test_candidate_lifecycle_summary_distinguishes_dormant_from_archived():
     assert summary["active_candidate_count"] == 1
     assert summary["dormant_research_candidate_count"] == 1
     assert summary["archived_or_invalidated_count"] == 2
-    assert summary["lifecycle_event_count"] == 4
+    assert summary["lifecycle_event_count"] == 9953
+    assert summary["retained_history_event_count"] == 4
     assert summary["focus_by_code"]["000504"]["lifecycle_state"] == "DORMANT"
