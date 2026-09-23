@@ -459,6 +459,8 @@ def build_stock_shadow_states(
                         research.get("research_priority") or priority_label
                     ),
                     "research_priority_score": priority.get("priority_score"),
+                    "candidate_lifecycle_state": str(priority.get("candidate_lifecycle_state") or ""),
+                    "research_dormant": priority.get("research_dormant") is True,
                     "urgent_research": (
                         research.get("urgent_research") is True
                         or priority_label in {"P0", "P1"}
