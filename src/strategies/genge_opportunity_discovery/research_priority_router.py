@@ -249,21 +249,58 @@ def build_queue(
             reasons.append("CURRENT_HOLDING")
         lifecycle_state = str(l.get("lifecycle_state") or "ACTIVE").strip().upper()
         tier = str(l.get("research_tier") or "")
+        conclusion = str(h.get("hourly_research_conclusion") or "")
+        thesis = str(h.get("thesis_status") or "")
+        structural_reunderwrite = _requires_structural_reunderwrite(
+            is_current_holding=is_current_holding,
+            hourly_row=h,
+        )
+        deep_qualified_boost = int(deep_qualified.get("priority_boost") or 0)
+        dormant_reactivation_signal = lifecycle_state == "DORMANT" and (
+            is_current_holding
+            or conclusion == "NEW_EVIDENCE_REUNDERWRITE_LEAD"
+            or thesis
+            in {
+                "REUNDERWRITE_REQUIRED",
+                "WEAKENING_RESEARCH_SIGNAL",
+                "MIXED_NEW_EVIDENCE",
+                "STRENGTHENING_RESEARCH_SIGNAL",
+            }
+            or structural_reunderwrite
+            or deep_qualified_boost > 0
+        )
+        dormant_locked = (
+            lifecycle_state == "DORMANT"
+            and not is_current_holding
+            and not dormant_reactivation_signal
+        )
         if lifecycle_state == "DORMANT":
             ts = 0
             reasons.append("RESEARCH_DORMANT_WAIT_NEW_EVIDENCE")
+            if dormant_reactivation_signal:
+                reasons.append("DORMANT_NEW_EVIDENCE_REACTIVATION_SIGNAL")
+            else:
+                reasons.append("RESEARCH_DORMANT_NON_MATERIAL_SIGNALS_SUPPRESSED")
         else:
             ts = _tier_score(tier)
             score += ts
             if ts >= 15:
                 reasons.append("HIGH_RESEARCH_TIER")
-        conclusion = str(h.get("hourly_research_conclusion") or "")
-        thesis = str(h.get("thesis_status") or "")
-        structural_reunderwrite = _requires_structural_reunderwrite(is_current_holding=is_current_holding, hourly_row=h)
-        if conclusion in {"PRICE_ATTRACTIVE_RESEARCH_LEAD", "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD"}:
+        if (
+            not dormant_locked
+            and conclusion
+            in {
+                "PRICE_ATTRACTIVE_RESEARCH_LEAD",
+                "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD",
+            }
+        ):
             score += 35
             reasons.append(conclusion)
-        if conclusion == "NEW_EVIDENCE_REUNDERWRITE_LEAD" or thesis == "REUNDERWRITE_REQUIRED" or structural_reunderwrite:
+        if (
+            conclusion == "NEW_EVIDENCE_REUNDERWRITE_LEAD"
+            or thesis == "REUNDERWRITE_REQUIRED"
+            or structural_reunderwrite
+        ):
             score += 45
             reasons.append("REUNDERWRITE_REQUIRED")
             if structural_reunderwrite:
@@ -271,7 +308,10 @@ def build_queue(
         elif thesis in {"WEAKENING_RESEARCH_SIGNAL", "MIXED_NEW_EVIDENCE"}:
             score += 25
             reasons.append("MATERIAL_EVIDENCE_CHANGE")
-        if str(h.get("deep_review_priority") or "") == "RAISE":
+        elif thesis == "STRENGTHENING_RESEARCH_SIGNAL" and lifecycle_state == "DORMANT":
+            score += 25
+            reasons.append("MATERIAL_EVIDENCE_CHANGE")
+        if not dormant_locked and str(h.get("deep_review_priority") or "") == "RAISE":
             score += 15
             reasons.append("HOURLY_PRIORITY_RAISE")
         mapping_gaps: list[str] = []
@@ -284,21 +324,22 @@ def build_queue(
             mapping_gaps.append("COMMODITY_PARTIAL")
         if c.get("peer_monitoring_state") == "APPLICABLE_UNMAPPED":
             mapping_gaps.append("PEER")
-        if mapping_gaps:
+        if mapping_gaps and not dormant_locked:
             score += min(15, 5 * len(mapping_gaps))
             reasons.append("MAPPING_GAP")
         recovery_tier = str(recovery.get("recovery_tier") or "")
         recovery_boost = RECOVERY_TIER_BOOST.get(recovery_tier, 0)
         archetype_boost = int(archetype.get("priority_boost") or 0)
-        if recovery_tier:
+        if recovery_tier and not dormant_locked:
             reasons.append(f"NEAR_BUY_EVIDENCE_RECOVERY_{recovery_tier}")
-        if archetype_boost:
+        if archetype_boost and not dormant_locked:
             reasons.append("SUCCESS_ARCHETYPE_RECALL")
             if archetype.get("archetype_id"):
                 reasons.append(f"ARCHETYPE:{archetype['archetype_id']}")
-        research_overlay_boost = max(recovery_boost, archetype_boost)
+        research_overlay_boost = (
+            0 if dormant_locked else max(recovery_boost, archetype_boost)
+        )
         score += research_overlay_boost
-        deep_qualified_boost = int(deep_qualified.get("priority_boost") or 0)
         if deep_qualified_boost:
             score += deep_qualified_boost
             reasons.append("DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP")
