@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from pathlib import Path
+
 from src.strategies.genge_opportunity_discovery.candidate_lifecycle_state import (
     ACTIVE,
     DORMANT,
@@ -190,3 +192,17 @@ def test_unsupported_unresolved_gate_blocks_dormancy_fail_closed():
     state = research_exhaustion_state(row, _exhausted_ledger(_row()))
     assert state["exhausted"] is False
     assert state["blocker"].startswith("UNSUPPORTED_UNRESOLVED_GATES:")
+
+
+def test_orchestrator_refreshes_decision_center_after_lifecycle_reconcile():
+    workflow = Path(".github/workflows/genge-jev-research-orchestrator.yml").read_text(
+        encoding="utf-8"
+    )
+    reconcile = workflow.index("Reconcile exhausted non-holding research lifecycle")
+    refresh = workflow.index("Refresh three-pillar decision center after lifecycle convergence")
+    publish = workflow.index("Publish orchestration summary")
+
+    assert reconcile < refresh < publish
+    refresh_block = workflow[refresh:publish]
+    assert "gh workflow run genge-three-pillar-decision-center.yml" in refresh_block
+    assert "--ref main" in refresh_block

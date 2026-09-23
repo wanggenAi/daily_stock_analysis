@@ -729,7 +729,57 @@ def test_candidate_lifecycle_and_system_capabilities_are_visible_in_final_report
     md = render_runtime_markdown(out)
     assert "## 本次汇报真正用了哪些系统能力" in md
     assert "Candidate Lifecycle 持续研究记忆" in md
-    assert "当前 ACTIVE **2**；累计生命周期事件 **3**" in md
+    assert "当前 ACTIVE **2**；DORMANT **0**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **3**" in md
     assert "国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 176 次" in md
     assert "价值区间 12.83–26.09" in md
     assert "区位 **UPPER_VALUE**" in md
+
+
+def test_candidate_lifecycle_summary_distinguishes_dormant_from_archived():
+    lifecycle = {
+        "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
+        "event_count": 9953,
+        "candidates": {
+            "600406": {
+                "code": "600406",
+                "stock_name": "国电南瑞",
+                "lifecycle_state": "ACTIVE",
+                "research_tier": "PENDING",
+                "seen_count": 3,
+                "history": [{"event": "RESEEN"}],
+            },
+            "000504": {
+                "code": "000504",
+                "stock_name": "南华生物",
+                "lifecycle_state": "DORMANT",
+                "research_tier": "PENDING",
+                "seen_count": 2,
+                "history": [{"event": "RESEARCH_EXHAUSTED_DORMANT"}],
+            },
+            "600000": {
+                "code": "600000",
+                "stock_name": "归档样例",
+                "lifecycle_state": "ARCHIVED",
+                "research_tier": "PENDING",
+                "seen_count": 1,
+                "history": [{"event": "ARCHIVED"}],
+            },
+            "600001": {
+                "code": "600001",
+                "stock_name": "失效样例",
+                "lifecycle_state": "INVALIDATED",
+                "research_tier": "PENDING",
+                "seen_count": 1,
+                "history": [{"event": "INVALIDATED"}],
+            },
+        },
+    }
+
+    summary = summarize_candidate_lifecycle(lifecycle, ["600406", "000504"])
+
+    assert summary["active_candidate_count"] == 1
+    assert summary["dormant_research_candidate_count"] == 1
+    assert summary["archived_or_invalidated_count"] == 2
+    assert summary["lifecycle_event_count"] == 9953
+    assert summary["retained_history_event_count"] == 4
+    assert summary["focus_by_code"]["000504"]["lifecycle_state"] == "DORMANT"
