@@ -3,89 +3,82 @@
 ## Goal
 Turn the stock research system into a convergent autonomous opportunity engine that surfaces reference-worthy stock codes without fabricating certainty or forcing BUY.
 
-Solve together:
-1. Autonomous research closure for active non-holding RESEARCH_GAP candidates until progression, hard-gate FAIL, or deterministic exhaustion.
-2. Candidate-funnel health: explain real stage attrition before changing thresholds.
-
 ## Current Phase
-JEV_DEEP_CLOSURE_PRODUCTION_VALIDATION_AND_FUNNEL_AUDIT
+RESEARCH_EXHAUSTION_DORMANCY_IMPLEMENTATION
 
 ## Source of Truth
 - Live GitHub refs, Actions, artifacts, and persisted data override this checkpoint.
-- Production bots can advance main after any recorded SHA; always re-read live main before writes, merge, or verification.
+- Production bot persistence may advance main after any recorded SHA.
 
 ## Last Verified Main
-- #283 hand persisted Jev routing to deterministic orchestrator merged as 95be7f92d91fc0e03ac895f7c02c9abe75ba4a2e.
-- #286 keep UNKNOWN gate retries inside research ledger merged as 81a638bb61a8410af9e64898beb6b1cdb2e4f1ea.
-- #287 persist accepted Jev continuation cursor passed blocking CI and merged as f6e4cc465d1019c214479ab7bc2b49d8ff922000.
-- Live main may already be newer due runtime persistence.
+- PR #288 merged as `3cd5d9040a2e279d973db5466107ff6e00b7ddb3`.
+- Post-merge TypeSafe/Jev run `35826965359` succeeded and persisted exact routing lineage.
+- Exact-source deterministic Orchestrator `35827144243` succeeded as NOOP with selected=0 / strategy_attempts=0; no redundant Deep dispatch.
+- Main later advanced through runtime persistence; always re-read live main before merge/write verification.
 
 ## Active Branch
-- Branch: fix/deep-profile-gate-authority-20260923.
+- `feat/research-exhaustion-dormancy-20260923`
+- Core implementation commit: `274ed608245efe16f21570825d2739de2fdc7cec`.
+- Scope: durable research-exhaustion DORMANT state plus deterministic evidence-epoch reactivation; no threshold or Formal strategy change.
 
 ## Active PR
-- PR #288: fix: trust exact Deep gate status over stale retry hints.
-- Branch started from main 9513dfd09d8731e998145694d92cb131f7c5002e; do not treat that as current main.
-- #288 changes research scheduling only: exact Deep PASS/FAIL removes stale upstream unresolved retry scope; UNKNOWN remains researchable.
+- #289 `feat: converge exhausted research candidates into dormancy`.
+- Head before this checkpoint: `adfce73e2fe0a80f6256bb2c5b40a589ae6aa565`.
 
 ## CI
-- #283 blocking PR CI: PASS.
-- #286 blocking PR CI: PASS.
-- #287 blocking PR CI: PASS (ai-governance/backend/docker; web-gate skipped by path).
-- #288 latest-head CI must be read live before merge; never infer green from this checkpoint.
+- Initial #289 CI `35828339588` failed only in `ai-governance` because this checkpoint omitted the required `## CI` heading; backend/docker were skipped downstream of governance.
+- Fix in progress: restore the required heading without changing implementation semantics.
+- Jev/Opportunity/legacy research PR workflows were still running at the last observation.
 
 ## Production / Artifact
-- Confirmed full Every-Industry source: run `35776816635`.
-- Funnel artifact: 4514 valid stocks -> 843 merged valuation-research rows -> 500 V3.1 Deep rows; Deep processed 500/500 with missing=0, complete=1, partial=499 and 2291 unresolved requested hard gates.
-- Current production Deep: `35823336693`, SUCCESS; requested=6, processed=6, missing=0, BUY=0 / WAIT_PRICE=0 / RESEARCH_GAP=6 / REJECT=0.
-- Current deterministic orchestration: `35823998354`, NOOP / WAIT_FOR_NEW_RESEARCH_STATE because no novel strategy remains in the current evidence epoch for the high-priority rows.
-- Research mapping now has explicit industry mapping for 126/126 active candidates; old mapping-gap counts are no longer the dominant bottleneck.
-- Candidate lifecycle remains active=126, archived/invalidated=0; durable exhaustion-to-dormancy semantics remain unfinished.
+- Fresh Jev `35826965359`: 603105 exact Deep profile PASS on earnings_authenticity / financial_safety / predictability; only long_term_demand / moat remain UNKNOWN.
+- Fresh Orchestrator `35827144243`: NOOP / WAIT_FOR_NEW_RESEARCH_STATE; no Deep capacity spent.
+- Broad funnel: 4514 valid -> 843 valuation-research -> 500 Deep; 500/500 processed, complete=1, partial=499, unresolved requested hard gates=2291.
+- Lifecycle before this branch: active=126 / dormant=0 / archived-invalidated=0.
 
 ## Actual TypeSafe/Jev Use
-- Jev run 35817253869 actually executed and persisted data/jev_shadow/latest_routing.json with continuation_from_deep_run_id=35816583696.
-- #283 makes successful persisted Jev routing explicitly dispatch the deterministic Research Orchestrator by source run id.
-- #287 persists the exact accepted continuation Jev run id into the orchestration cursor.
-- Jev remains advisory only; deterministic code owns dispatch eligibility and no trading authority is granted.
-
-## Current Findings
-- Broad recall is no longer the largest observed loss: 500/500 Every-Industry Deep candidates were processed without missing workset rows.
-- The dominant broad-funnel loss is evidence closure: 499/500 remained partial with 2291 unresolved requested hard gates.
-- The Jev/ledger autonomous continuation is live and converges: current orchestration is NOOP when no novel strategy remains in the same evidence epoch.
-- A remaining retry-scope defect is isolated in #288: stale routing missing-evidence text can still name a gate already PASS/FAIL in the exact Deep profile.
-- Live example 603105 has exact PASS on earnings_authenticity, financial_safety and predictability; only long_term_demand and moat remain UNKNOWN.
-- Lifecycle still has 126 ACTIVE and zero archived/invalidated, so exhausted non-holding dormancy/reactivation remains a real unfinished success criterion.
-- These are research-control diagnostics, not investment recommendations.
+- TypeSafe/Jev live path executed in run `35826965359`.
+- Persisted Jev lineage automatically triggered deterministic Orchestrator `35827144243`.
+- Jev stayed advisory-only; deterministic ledger owned retry eligibility; Formal trading authority remained false.
 
 ## Completed
-- Reconciled stale TASK_STATE against live main, open PRs, Actions, persisted Jev routing, orchestration ledger, Deep status, Terminal state, and production observability.
-- Did not return to old consumed branches.
-- Merged #283, #286, #287 only after their blocking CI was green.
-- Opened #288 from a fresh live-main checkpoint with source fix, live-shaped regression tests, changelog, and Jev routing contract documentation.
+- #288 production verification: exact Deep PASS gates are authoritative over stale retry hints.
+- TypeSafe/Jev `35826965359` -> deterministic Orchestrator `35827144243` completed without redundant Deep dispatch.
+- #289 core dormancy implementation and focused contract tests are committed; first focused Orchestrator contract run passed.
+
+## Current Findings
+- #288 is production-verified: exact Deep PASS gates no longer reopen from stale routing missing-evidence text.
+- Dominant funnel loss remains evidence closure, not broad recall/workset coverage.
+- Existing lifecycle has no autonomous research-exhaustion state, so exhausted non-holdings can remain ACTIVE indefinitely.
+- DORMANT must remain distinct from business-quality REJECT/INVALIDATED and must never apply to current holdings.
+
+## In Progress
+- Exact current-epoch exhaustion proof requires EXHAUSTED_NO_PROGRESS for every supported unresolved gate.
+- DORMANT -> ACTIVE occurs only on a new schedulable evidence epoch, terminal research progress, or holding protection.
+- DORMANT removes stale lifecycle-tier priority boost without filtering Broad Discovery.
+- Jev orchestrator will persist lifecycle transitions through optimistic replay from latest main.
 
 ## Blockers
-- No user-only blocker. #288 must pass latest-head blocking CI before merge; production continuation must remain lineage-consistent.
+- No user/login/approval blocker.
+- #289 blocking CI must be green before merge; current governance-only failure is being corrected.
 
 ## Next Action
-1. Finish #288 latest-head blocking CI; merge only if green and mergeable.
-2. Verify post-merge main push checks and the next real Jev -> deterministic orchestrator handoff.
-3. Confirm fresh orchestration no longer spends Deep capacity on profile-missing codes and does not retry exact PASS/FAIL gates.
-4. Compare new requested_profile_count / processed_requested_count / missing_requested_codes against Deep 35816583696.
-5. Continue stage-by-stage funnel audit from confirmed All-A / Every-Industry artifacts and quantify the next largest attrition point.
-6. Trace Runbei plus multiple current priority/near-buy candidates end-to-end after the corrected orchestration epoch.
-7. Implement durable dormant/excluded semantics and deterministic reactivation for exhausted non-holdings if still absent after corrected research closure.
-8. Surface final strategy-attempt/progression/exclusion evidence in investor outputs where not already present.
+1. Run branch PR CI/tests and resolve any contract regression.
+2. Merge only after blocking CI is green.
+3. Verify fresh Jev -> Orchestrator -> lifecycle reconciliation on production main.
+4. Confirm holdings never dorm; confirm eligible exhausted non-holdings leave ACTIVE, or record truthful NO_CHANGE if none meet the exact exhaustion proof.
+5. Continue funnel audit/Runbei tracing only after lifecycle convergence evidence is persisted.
 
 ## Do Not Repeat
-- Do not reopen #268/#269/#270/#271/#283/#286/#287 without a newly proven regression.
-- Do not dispatch duplicate Deep/Jev work when persisted lineage proves it already happened.
-- Do not lower thresholds just to force BUY/WAIT_PRICE.
-- Do not label missing evidence as business-quality FAIL.
+- Do not reopen #268/#269/#270/#271/#283/#286/#287/#288 without a newly proven regression.
+- Do not lower thresholds to force BUY/WAIT_PRICE.
+- Do not label missing evidence as FAIL.
+- Do not return to consumed old branches.
 
 ## Guardrails
 - Jev is advisory research routing only; deterministic guards own dispatch.
 - Formal actions remain Canonical-only; automatic Formal BUY=false.
 - UNKNOWN != PASS; no_auto_trade=true.
-- Missing evidence is not FAIL.
-- Exact Deep profile PASS/FAIL must not be reopened by stale routing missing-evidence text.
-- Exhausted non-holdings must eventually leave ACTIVE; holdings must never be silently dropped.
+- Missing evidence is not business-quality FAIL.
+- Exact Deep PASS/FAIL cannot be reopened by stale routing text.
+- Exhausted non-holdings may dorm only with exact current-epoch ledger proof; holdings must never silently leave ACTIVE.

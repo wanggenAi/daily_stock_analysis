@@ -7,6 +7,8 @@ make candidate lifecycle bookkeeping idempotent and auditable:
 * one canonical snapshot may increment a candidate's ``seen_count`` at most once;
 * absence from one snapshot never archives a candidate automatically;
 * Archived/INVALIDATED candidates may be rediscovered but never auto-reactivate;
+* DORMANT is reserved for deterministic non-holding research exhaustion and may
+  reactivate only when a new schedulable research epoch is proven;
 * upgrades, downgrades, invalidations and reactivations require an explicit,
   uniquely identified evidence event;
 * out-of-order canonical snapshots are rejected instead of silently rewriting
@@ -29,13 +31,16 @@ from .canonical_snapshot import validate_snapshot
 
 LIFECYCLE_CONTRACT_VERSION = "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1"
 ACTIVE = "ACTIVE"
+DORMANT = "DORMANT"
 ARCHIVED = "ARCHIVED"
 INVALIDATED = "INVALIDATED"
-_ALLOWED_STATES = {ACTIVE, ARCHIVED, INVALIDATED}
+_ALLOWED_STATES = {ACTIVE, DORMANT, ARCHIVED, INVALIDATED}
 
 SYSTEM_NEW = "NEW"
 SYSTEM_RESEEN = "RESEEN"
 SYSTEM_REDISCOVERED_REVIEW_REQUIRED = "REDISCOVERED_REVIEW_REQUIRED"
+SYSTEM_RESEARCH_EXHAUSTED_DORMANT = "RESEARCH_EXHAUSTED_DORMANT"
+SYSTEM_RESEARCH_EVIDENCE_REACTIVATED = "RESEARCH_EVIDENCE_REACTIVATED"
 
 EXPLICIT_UPGRADED = "UPGRADED"
 EXPLICIT_DOWNGRADED = "DOWNGRADED"
@@ -445,6 +450,151 @@ def apply_terminal_memory(
     _validate_state(next_state)
     return next_state, events
 
+def apply_research_exhaustion_lifecycle(
+    state: Mapping[str, Any],
+    routing_payload: Mapping[str, Any],
+    strategy_ledger: Mapping[str, Any] | None,
+) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    """Pause exhausted non-holdings and reactivate only on a new research epoch."""
+
+    if not (
+        routing_payload.get("contract") == "GEN_GE_JEV_ROUTING_BRIDGE_V1"
+        and routing_payload.get("execution_status") == "SUCCESS"
+        and routing_payload.get("authority") == "ADVISORY_RESEARCH_ROUTING_ONLY"
+        and routing_payload.get("automatic_dispatch_allowed") is False
+        and routing_payload.get("automatic_formal_buy_allowed") is False
+        and routing_payload.get("formal_trading_authority") is False
+        and routing_payload.get("mutates_authoritative_decision") is False
+        and routing_payload.get("may_suppress_existing_research") is False
+        and routing_payload.get("may_create_or_mutate_formal_action") is False
+        and routing_payload.get("unknown_is_pass") is False
+        and routing_payload.get("no_auto_trade") is True
+    ):
+        raise ValueError("research lifecycle requires a valid fail-closed Jev routing payload")
+
+    source_run_id = str(routing_payload.get("source_workflow_run_id") or "").strip()
+    observed_at = str(routing_payload.get("generated_at") or "").strip()
+    if not source_run_id or not source_run_id.isdigit():
+        raise ValueError("research lifecycle requires exact Jev source_workflow_run_id")
+    if _parse_timestamp(observed_at) is None:
+        raise ValueError("research lifecycle requires routing generated_at")
+
+    from .research_strategy_ledger import (
+        plan_strategy_attempts,
+        reconcile_ledger,
+        research_exhaustion_state,
+    )
+
+    next_state = copy.deepcopy(dict(state))
+    _validate_state(next_state)
+    rows = [
+        row
+        for row in (routing_payload.get("routing_queue") or [])
+        if isinstance(row, Mapping)
+    ]
+    reconciled = reconcile_ledger(
+        strategy_ledger,
+        rows,
+        current_source_workflow_run_id=source_run_id,
+    )
+    events: list[dict[str, Any]] = []
+
+    for row in rows:
+        code = _code(row.get("entity_id"))
+        candidate = next_state["candidates"].get(code)
+        if not isinstance(candidate, dict):
+            continue
+        prior_state = str(candidate.get("lifecycle_state") or ACTIVE)
+        if prior_state in {ARCHIVED, INVALIDATED}:
+            continue
+
+        is_current_holding = row.get("is_current_holding") is True
+        context = row.get("research_context")
+        context = context if isinstance(context, Mapping) else {}
+        decision = str(context.get("research_decision") or "").strip().upper()
+        exhaustion = research_exhaustion_state(row, reconciled)
+        planned = plan_strategy_attempts(
+            row,
+            reconciled,
+            source_workflow_run_id=source_run_id,
+            attempted_at=observed_at,
+        )
+
+        event_name = ""
+        reason = ""
+        target_state = prior_state
+        if (
+            prior_state == ACTIVE
+            and not is_current_holding
+            and decision == "RESEARCH_GAP"
+            and exhaustion.get("exhausted") is True
+        ):
+            target_state = DORMANT
+            event_name = SYSTEM_RESEARCH_EXHAUSTED_DORMANT
+            reason = "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH"
+        elif prior_state == DORMANT and (
+            is_current_holding
+            or bool(planned)
+            or decision in {"BUY", "WAIT_PRICE", "REJECT"}
+        ):
+            target_state = ACTIVE
+            event_name = SYSTEM_RESEARCH_EVIDENCE_REACTIVATED
+            if is_current_holding:
+                reason = "CURRENT_HOLDING_PROTECTION"
+            elif planned:
+                reason = "NEW_SCHEDULABLE_RESEARCH_EVIDENCE_EPOCH"
+            else:
+                reason = f"TERMINAL_RESEARCH_PROGRESS_{decision}"
+
+        if not event_name or target_state == prior_state:
+            continue
+
+        candidate["lifecycle_state"] = target_state
+        candidate["last_research_lifecycle_source_run_id"] = source_run_id
+        candidate["last_research_lifecycle_observed_at"] = observed_at
+        candidate["last_research_lifecycle_reason"] = reason
+        if target_state == DORMANT:
+            candidate["research_dormant_epoch"] = str(
+                exhaustion.get("evidence_epoch_fingerprint") or ""
+            )
+            candidate["next_action"] = "WAIT_FOR_NEW_RESEARCH_EVIDENCE"
+        else:
+            candidate["research_dormant_epoch"] = ""
+            if candidate.get("next_action") == "WAIT_FOR_NEW_RESEARCH_EVIDENCE":
+                candidate["next_action"] = "CONTINUE_RESEARCH"
+
+        event = {
+            "event": event_name,
+            "code": code,
+            "snapshot_id": str(next_state.get("latest_applied_snapshot_id") or ""),
+            "source_run_id": source_run_id,
+            "observed_at": observed_at,
+            "reason": reason,
+            "prior_lifecycle_state": prior_state,
+            "lifecycle_state_after": target_state,
+            "research_evidence_fingerprint": str(
+                row.get("research_evidence_fingerprint") or ""
+            ),
+            "research_epoch": str(exhaustion.get("evidence_epoch_fingerprint") or ""),
+            "supported_gate_count": int(exhaustion.get("supported_gate_count") or 0),
+            "automatic_reactivation": target_state == ACTIVE,
+            "formal_trading_authority": False,
+            "no_auto_trade": True,
+        }
+        _append_event(candidate, event)
+        events.append(event)
+
+    if events:
+        next_state["latest_research_lifecycle_source_run_id"] = source_run_id
+        next_state["latest_research_lifecycle_observed_at"] = observed_at
+        next_state["research_lifecycle_event_count"] = int(
+            next_state.get("research_lifecycle_event_count") or 0
+        ) + len(events)
+        next_state["event_count"] = int(next_state.get("event_count") or 0) + len(events)
+    _validate_state(next_state)
+    return next_state, events
+
+
 def apply_explicit_transition(
     state: Mapping[str, Any],
     transition: Mapping[str, Any],
@@ -481,8 +631,8 @@ def apply_explicit_transition(
     elif event_name == EXPLICIT_INVALIDATED:
         new_state = INVALIDATED
     elif event_name == EXPLICIT_REACTIVATED:
-        if prior_state not in {ARCHIVED, INVALIDATED}:
-            raise ValueError("REACTIVATED requires an Archived/INVALIDATED candidate")
+        if prior_state not in {DORMANT, ARCHIVED, INVALIDATED}:
+            raise ValueError("REACTIVATED requires a DORMANT/Archived/INVALIDATED candidate")
         new_state = ACTIVE
     else:
         new_state = prior_state
