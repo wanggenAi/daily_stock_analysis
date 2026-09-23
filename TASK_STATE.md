@@ -4,7 +4,7 @@
 Turn the stock research system into a convergent autonomous opportunity engine that surfaces reference-worthy stock codes without fabricating certainty, forcing BUY, or presenting contradictory investor actions.
 
 ## Current Phase
-JEV_ENTRY_JUDGMENT_PENDING_IMPLEMENTATION
+VALUATION_PRICE_CLOSURE_PREREQUISITE_REPLAY
 
 ## Source of Truth
 - Live GitHub refs, Actions, artifacts, and persisted data override this checkpoint.
@@ -17,12 +17,14 @@ JEV_ENTRY_JUDGMENT_PENDING_IMPLEMENTATION
 - This checkpoint commit itself will advance main; live GitHub ref remains authoritative after the write.
 
 ## Active Branch
-- None for this completed mission.
-- Consumed branch: `fix/terminal-research-supersedes-qualified-20260923`; do not resume work on it.
+- `fix/valuation-price-closure-replay-20260923`
+- Clean replay from live main `f97730bcd11bc46de4e17ef30b39ddc0a0e3bcfd`.
+- Original #294 branch `fix/valuation-price-closure-20260923` is superseded because it diverged from live main and carried an older TASK_STATE; do not merge it directly.
 
 ## Active PR
-- None for this completed mission.
-- #293 is closed/merged into main.
+- Clean replay PR pending creation from `fix/valuation-price-closure-replay-20260923`.
+- #294 contains the original implementation/validation evidence but is superseded by the clean replay once the replacement PR is opened.
+- #293 remains closed/merged.
 
 ## CI
 - Final #293 branch head: `1e3f9506921996d1642784d297db9f0c9b7878d1`.
@@ -69,10 +71,11 @@ JEV_ENTRY_JUDGMENT_PENDING_IMPLEMENTATION
 - None for this mission.
 
 ## Next Action
-- The #293 display-convergence mission is complete.
-- Next implementation mission: extend the existing TypeSafe/Jev advisory contract from research routing only into **structured entry judgment**, while preserving deterministic validation and all Formal/no-auto-trade authority boundaries.
-- Start from live main and the latest Jev/Deep/Terminal production lineage. Do not reopen the consumed #292/#293 branches.
-- Implement schema, prompt/context assembly, deterministic validation, persistence, report rendering, regression tests, CI, production Jev invocation, and post-production verification for the entry-judgment contract described below.
+1. Finish the clean replay of #294 valuation/price closure on current main and require fresh blocking CI.
+2. Merge the replay only when green; close/supersede stale #294 without losing its evidence.
+3. Production-verify fresh Jev -> deterministic valuation closure -> Terminal -> Three-Pillar for 603596.
+4. Then continue the already-recorded **Jev Structured Entry Judgment** mission below; valuation closure is a prerequisite, not the endpoint.
+5. The structured-entry mission still requires schema -> context -> deterministic validation -> persistence -> report rendering -> tests -> CI -> fresh production Jev -> 603596 acceptance -> final checkpoint.
 
 ## Do Not Repeat
 - Do not reopen or reuse #292 or #293 implementation branches.
@@ -194,3 +197,19 @@ This mission is not complete until:
 8. a fresh production TypeSafe/Jev run exercises the new schema;
 9. production output is verified end-to-end on at least the 603596 acceptance case;
 10. TASK_STATE is updated with the final live main SHA, Jev run, downstream artifact, and user-facing result.
+
+
+## Valuation/Price Closure Prerequisite Checkpoint
+- Original implementation PR: #294 `fix: close five-gate leads through valuation and price`.
+- Original branch head: `dbbd6eb89a9730b06d72469437332bc2ac9b9270`.
+- #294 companion checks succeeded: Jev Shadow `35870891406`, Jev Orchestrator `35870891764`, Opportunity Discovery `35870891162`, Legacy Risk-Capped `35870891108`.
+- #294 blocking CI `35870891301` had syntax/flake8/deterministic/docker checks green while offline pytest was still running at the last read.
+- Because live main advanced and contains the newer Jev Structured Entry Judgment mission plus production persistence, the code/docs/tests were cleanly replayed onto current main instead of merging the diverged branch directly.
+- Replay includes:
+  - typed Jev `VALUATION_CLOSURE` route and price-reference context;
+  - deterministic exact-5/5 PASS valuation-closure override without lowering the global 0.50 confidence guard;
+  - separate Terminal closure dispatch, not a fake Deep redispatch;
+  - Terminal carry-forward for current 5/5-PASS priority follow-up candidates omitted by later bounded Deep worksets;
+  - explicit `research_buy_price_ceiling` reverse-solved from the existing PE_BUY_RATIO=0.80 rule;
+  - regression coverage for the 603596-shaped low-confidence route and later-workset omission case.
+- This prerequisite does **not** satisfy the new Jev Structured Entry Judgment mission by itself. It closes the deterministic valuation/price handoff so Jev can later make a typed ENTRY_NOW / WAIT_PRICE / WAIT_EVIDENCE / DO_NOT_CHASE / INVALIDATED judgment against durable current valuation state.
