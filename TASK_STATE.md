@@ -21,7 +21,7 @@ JEV_ENTRY_JUDGMENT_IMPLEMENTATION
 
 ## Active PR
 - #295 `fix: replay valuation and price closure on current main` is the prerequisite PR.
-- Entry-judgment PR is pending creation from `feat/jev-entry-judgment-20260923`; initially base it on #295 to isolate the feature diff, then retarget to main after #295 merges.
+- #296 `feat: add validated Jev entry judgments` is open from `feat/jev-entry-judgment-20260923`, currently stacked on #295 to isolate the feature diff; retarget to main after #295 merges.
 
 ## CI
 - #295 first CI `35873089047` failed only ai-governance because TASK_STATE exceeded the 120-line limit.
