@@ -7,6 +7,7 @@ on:
     paths:
       - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center.py'
       - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center_runtime.py'
+      - 'data/jev_shadow/latest_routing.json'
       - '.github/workflows/genge-three-pillar-decision-center.yml'
       - 'config/v31_explicit_deep_reviews.json'
       - 'config/era_radar_industry_links.json'
@@ -167,6 +168,19 @@ jobs:
               assert cap['automatic_execution_allowed'] is False
               assert cap['formal_buy_authorized'] is False
               assert cap['no_auto_trade'] is True
+          for row in opp.get('jev_entry_judgments', []):
+              assert row['authority'] == 'ADVISORY_ONLY'
+              assert row['formal_buy_authorized'] is False
+              assert row['automatic_execution_allowed'] is False
+              assert row['no_auto_trade'] is True
+              assert row['source_lineage']['deep_lambda_run_id'] == runtime['lambda_run_id']
+              assert row['validated_judgment'] in {
+                  'ENTRY_NOW','WAIT_PRICE','WAIT_EVIDENCE','DO_NOT_CHASE','INVALIDATED','NO_JUDGMENT'
+              }
+              if row['validated_judgment'] == 'ENTRY_NOW':
+                  assert row['entry_price_zone_high'] is not None
+                  assert row['initial_manual_position_pct'] > 0
+                  assert row['initial_manual_position_pct'] <= row['max_manual_position_pct']
           PY
 
             git add -f data/decision_center/latest.json LATEST_DECISION_CENTER.md
@@ -200,7 +214,7 @@ jobs:
           echo '# GenGe Three-Pillar Decision Center' >> "$GITHUB_STEP_SUMMARY"
           echo '- Pillar 1: current holdings + automatic/explicit deep-review completeness' >> "$GITHUB_STEP_SUMMARY"
           echo '- Pillar 2: world/social structural trends + tactical market-behaviour proxy + validated A-share handoffs' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Pillar 3: Canonical Formal actions and terminal research-only BUY / WAIT_PRICE / REJECT are separate' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Pillar 3: Canonical Formal actions, terminal research, and validated Jev entry judgments are separate' >> "$GITHUB_STEP_SUMMARY"
           echo '- Terminal research is exposed only when its Deep Lambda lineage matches the current runtime; stale research is fail-closed' >> "$GITHUB_STEP_SUMMARY"
           echo '- Deep Calculation Lambda status is visible separately from research completeness' >> "$GITHUB_STEP_SUMMARY"
           echo '- Candidate Lifecycle continuity and production-wired capability visibility are first-class report contracts' >> "$GITHUB_STEP_SUMMARY"
