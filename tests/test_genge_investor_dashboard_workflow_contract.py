@@ -115,6 +115,8 @@ def test_investor_brief_reapplies_terminal_research_before_persistence() -> None
 
     assert "data/deep_calculation/latest_research_decisions.json" in block
     assert "--terminal-research-json data/deep_calculation/latest_research_decisions.json" in block
+    assert "src/strategies/genge_opportunity_discovery/investor_terminal_research_overlay.py" in workflow
+    assert "tests/test_investor_terminal_research_overlay.py" in workflow
     assert "capital_advisory_authority" in block
     assert "research_capital_probe_count" in block
     assert build_at < consumption_at < research_overlay_at < validation_at < commit_at
