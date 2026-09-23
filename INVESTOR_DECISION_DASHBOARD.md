@@ -67,13 +67,14 @@ R86新闻和出版业(STRONG)、P83教育(STRONG)、I64互联网和相关服务(
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**15** 只；研究 BUY **0** / WAIT_PRICE **0** / RESEARCH_GAP **15** / REJECT **0**。
+- 本轮深算：**16** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **15** / REJECT **0**。
 - urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **0** / PROBE **1** / WATCH **2** / BLOCK **12**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **1** / WATCH **2** / BLOCK **12**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
+- 伯特利 603596: **BUILD**；conviction=0.945；建议账户仓位上限=3.0%；研究结论仍为 BUY。
 - 芯能科技 603105: **PROBE**；conviction=0.596；建议账户仓位上限=0.72%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算

@@ -291,15 +291,15 @@
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 118,
     "planned_immediate_cash_cny": 0.0,
-    "research_terminal_requested_count": 15,
-    "research_buy_count": 0,
+    "research_terminal_requested_count": 16,
+    "research_buy_count": 1,
     "research_wait_price_count": 0,
     "research_gap_count": 15,
     "research_reject_count": 0,
     "urgent_research_count": 4,
-    "research_capital_probe_count": 1,
+    "research_capital_probe_count": 2,
     "research_capital_action_counts": {
-      "BUILD": 0,
+      "BUILD": 1,
       "PROBE": 1,
       "WATCH": 2,
       "BLOCK": 12
@@ -448,11 +448,11 @@
     "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
     "source_deep_lambda_run_id": "35872063645",
     "source_every_industry_run_id": "35870152528",
-    "requested_count": 15,
+    "requested_count": 16,
     "decision_counts": {
-      "BUY": 0,
-      "RESEARCH_GAP": 15,
       "WAIT_PRICE": 0,
+      "BUY": 1,
+      "RESEARCH_GAP": 15,
       "REJECT": 0
     },
     "research_authority": "RESEARCH_ONLY",
@@ -461,6 +461,92 @@
     "unknown_is_pass": false,
     "no_auto_trade": true,
     "terminal_rows": [
+      {
+        "capital_allocation": {
+          "action": "BUILD",
+          "authority": "ADVISORY_ONLY",
+          "automatic_execution_allowed": false,
+          "capital_conviction_score": 0.945,
+          "critical_capital_gates": [
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "critical_capital_gates_pass": true,
+          "earnings_quality_component": 0.9,
+          "evidence_score": 1.0,
+          "formal_buy_authorized": false,
+          "gate_weights": {
+            "earnings_authenticity": 0.22,
+            "financial_safety": 0.22,
+            "long_term_demand": 0.2,
+            "moat": 0.2,
+            "predictability": 0.16
+          },
+          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+          "no_auto_trade": true,
+          "probe_rules": {
+            "max_pe_to_history_ratio": 0.9,
+            "max_unknown_gates": 2,
+            "min_capital_conviction_score": 0.52
+          },
+          "quant_score_component": 0.8001,
+          "reason": "ALL_GATES_PASS_AND_RESEARCH_BUY",
+          "suggested_max_portfolio_pct": 3.0,
+          "uncertainty_penalty": 0.0,
+          "unknown_weight": 0.0,
+          "valuation_score": 1.0
+        },
+        "code": "603596",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 5,
+        "hard_gate_unknowns": [],
+        "industry": "C36汽车制造业",
+        "name": "伯特利",
+        "no_auto_trade": true,
+        "quant_score": 80.0059,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": false,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "BUY",
+        "research_priority": "P1",
+        "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "",
+        "success_archetype_similarity_score": null,
+        "urgent_research": false,
+        "urgent_research_reasons": [],
+        "valuation": {
+          "current_pe": 17.95,
+          "distance_to_research_buy_ceiling_pct": 49.97214484679666,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_gate_diagnostics": {
+            "blockers": [],
+            "cash_conversion_pass_threshold": 0.8,
+            "cash_conversion_ratio": 1.1844,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_pass_threshold": 70.0,
+            "earnings_quality_score": 90.0,
+            "financial_disclosure_date": "2026-08-28",
+            "financial_review_status": "OK",
+            "machine_financial_pass_ready": true,
+            "normalized_core_operating_profit": 580089687.17,
+            "operating_cash_flow": 751623839.23
+          },
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 33.65,
+          "pe_to_history_ratio": 0.5334323922734027,
+          "price_mapping_status": "OK",
+          "reference_price": 29.15,
+          "reference_price_basis": "RAW_LATEST_CLOSE",
+          "reference_trade_date": "2026-09-22",
+          "required_profit_growth_pct": -46.65676077265973,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 43.716880222841226
+        }
+      },
       {
         "capital_allocation": {
           "action": "PROBE",
@@ -521,6 +607,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 22.06,
+          "distance_to_research_buy_ceiling_pct": -1.3599274705349051,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 90.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -544,7 +631,9 @@
           "reference_price": 8.53,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -18.897058823529413
+          "required_profit_growth_pct": -18.897058823529413,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 8.413998186763372
         }
       },
       {
@@ -610,6 +699,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 32.03,
+          "distance_to_research_buy_ceiling_pct": null,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 25.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -635,7 +725,9 @@
           "reference_price": null,
           "reference_price_basis": "",
           "reference_trade_date": "",
-          "required_profit_growth_pct": -8.328563251287912
+          "required_profit_growth_pct": -8.328563251287912,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
         }
       },
       {
@@ -700,6 +792,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 15.76,
+          "distance_to_research_buy_ceiling_pct": 7.106598984771595,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 82.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -725,7 +818,9 @@
           "reference_price": 28.35,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -25.30805687203792
+          "required_profit_growth_pct": -25.30805687203792,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 30.36472081218275
         }
       },
       {
@@ -791,6 +886,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 203.97,
+          "distance_to_research_buy_ceiling_pct": 13.455900377506502,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 67.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -817,7 +913,9 @@
           "reference_price": 8.11,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -29.488021571542156
+          "required_profit_growth_pct": -29.488021571542156,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 9.201273520615777
         }
       },
       {
@@ -883,6 +981,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 380.66,
+          "distance_to_research_buy_ceiling_pct": 6.072610728734307,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 25.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -908,7 +1007,9 @@
           "reference_price": 13.41,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -24.579965129180536
+          "required_profit_growth_pct": -24.579965129180536,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 14.224337098723272
         }
       },
       {
@@ -974,6 +1075,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 21.78,
+          "distance_to_research_buy_ceiling_pct": null,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 2.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1000,7 +1102,9 @@
           "reference_price": null,
           "reference_price_basis": "",
           "reference_trade_date": "",
-          "required_profit_growth_pct": -95.09636167146974
+          "required_profit_growth_pct": -95.09636167146974,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
         }
       },
       {
@@ -1066,6 +1170,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 23.88,
+          "distance_to_research_buy_ceiling_pct": 159.79899497487438,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 46.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1092,7 +1197,9 @@
           "reference_price": 5.95,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -69.20696324951643
+          "required_profit_growth_pct": -69.20696324951643,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 15.458040201005026
         }
       },
       {
@@ -1158,6 +1265,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 68.83,
+          "distance_to_research_buy_ceiling_pct": null,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 55.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1185,7 +1293,9 @@
           "reference_price": null,
           "reference_price_basis": "",
           "reference_trade_date": "",
-          "required_profit_growth_pct": -95.52261136552873
+          "required_profit_growth_pct": -95.52261136552873,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
         }
       },
       {
@@ -1253,6 +1363,7 @@
         ],
         "valuation": {
           "current_pe": 22.35,
+          "distance_to_research_buy_ceiling_pct": -3.2125279642058135,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 67.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1279,7 +1390,9 @@
           "reference_price": 22.23,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -17.344674556213015
+          "required_profit_growth_pct": -17.344674556213015,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 21.51585503355705
         }
       },
       {
@@ -1344,6 +1457,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 14.59,
+          "distance_to_research_buy_ceiling_pct": 12.625085675119951,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 55.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1371,7 +1485,9 @@
           "reference_price": 3.81,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -28.967867575462513
+          "required_profit_growth_pct": -28.967867575462513,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 4.29101576422207
         }
       },
       {
@@ -1437,6 +1553,7 @@
         ],
         "valuation": {
           "current_pe": 19.72,
+          "distance_to_research_buy_ceiling_pct": 19.87829614604464,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 90.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1460,7 +1577,9 @@
           "reference_price": 28.9,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -33.265651438240276
+          "required_profit_growth_pct": -33.265651438240276,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 34.6448275862069
         }
       },
       {
@@ -1526,6 +1645,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 11.81,
+          "distance_to_research_buy_ceiling_pct": 72.93818797629127,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 34.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1553,7 +1673,9 @@
           "reference_price": 16.81,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -53.74069721895809
+          "required_profit_growth_pct": -53.74069721895809,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 29.07090939881456
         }
       },
       {
@@ -1621,6 +1743,7 @@
         ],
         "valuation": {
           "current_pe": 6.25,
+          "distance_to_research_buy_ceiling_pct": null,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 65.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1646,7 +1769,9 @@
           "reference_price": null,
           "reference_price_basis": "",
           "reference_trade_date": "",
-          "required_profit_growth_pct": -24.969987995198085
+          "required_profit_growth_pct": -24.969987995198085,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
         }
       },
       {
@@ -1710,6 +1835,7 @@
         ],
         "valuation": {
           "current_pe": 14.17,
+          "distance_to_research_buy_ceiling_pct": 6.958362738179269,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 77.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1733,7 +1859,9 @@
           "reference_price": 17.81,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -25.20453945632093
+          "required_profit_growth_pct": -25.20453945632093,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 19.049284403669727
         }
       },
       {
@@ -1799,6 +1927,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 20.89,
+          "distance_to_research_buy_ceiling_pct": 107.35280038295834,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 55.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1826,7 +1955,9 @@
           "reference_price": 21.08,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -61.41841351925385
+          "required_profit_growth_pct": -61.41841351925385,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 43.709970320727614
         }
       }
     ],
@@ -1896,6 +2027,7 @@
         ],
         "valuation": {
           "current_pe": 22.35,
+          "distance_to_research_buy_ceiling_pct": -3.2125279642058135,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 67.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -1922,7 +2054,9 @@
           "reference_price": 22.23,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -17.344674556213015
+          "required_profit_growth_pct": -17.344674556213015,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 21.51585503355705
         }
       },
       {
@@ -1988,6 +2122,7 @@
         ],
         "valuation": {
           "current_pe": 19.72,
+          "distance_to_research_buy_ceiling_pct": 19.87829614604464,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 90.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -2011,7 +2146,9 @@
           "reference_price": 28.9,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -33.265651438240276
+          "required_profit_growth_pct": -33.265651438240276,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 34.6448275862069
         }
       },
       {
@@ -2079,6 +2216,7 @@
         ],
         "valuation": {
           "current_pe": 6.25,
+          "distance_to_research_buy_ceiling_pct": null,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 65.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -2104,7 +2242,9 @@
           "reference_price": null,
           "reference_price_basis": "",
           "reference_trade_date": "",
-          "required_profit_growth_pct": -24.969987995198085
+          "required_profit_growth_pct": -24.969987995198085,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
         }
       },
       {
@@ -2168,6 +2308,7 @@
         ],
         "valuation": {
           "current_pe": 14.17,
+          "distance_to_research_buy_ceiling_pct": 6.958362738179269,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 77.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -2191,19 +2332,107 @@
           "reference_price": 17.81,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -25.20453945632093
+          "required_profit_growth_pct": -25.20453945632093,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 19.049284403669727
         }
       }
     ],
     "urgent_research_count": 4,
     "capital_model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
     "capital_action_counts": {
-      "BUILD": 0,
+      "BUILD": 1,
       "PROBE": 1,
       "WATCH": 2,
       "BLOCK": 12
     },
     "capital_probe_queue": [
+      {
+        "capital_allocation": {
+          "action": "BUILD",
+          "authority": "ADVISORY_ONLY",
+          "automatic_execution_allowed": false,
+          "capital_conviction_score": 0.945,
+          "critical_capital_gates": [
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "critical_capital_gates_pass": true,
+          "earnings_quality_component": 0.9,
+          "evidence_score": 1.0,
+          "formal_buy_authorized": false,
+          "gate_weights": {
+            "earnings_authenticity": 0.22,
+            "financial_safety": 0.22,
+            "long_term_demand": 0.2,
+            "moat": 0.2,
+            "predictability": 0.16
+          },
+          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+          "no_auto_trade": true,
+          "probe_rules": {
+            "max_pe_to_history_ratio": 0.9,
+            "max_unknown_gates": 2,
+            "min_capital_conviction_score": 0.52
+          },
+          "quant_score_component": 0.8001,
+          "reason": "ALL_GATES_PASS_AND_RESEARCH_BUY",
+          "suggested_max_portfolio_pct": 3.0,
+          "uncertainty_penalty": 0.0,
+          "unknown_weight": 0.0,
+          "valuation_score": 1.0
+        },
+        "code": "603596",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 5,
+        "hard_gate_unknowns": [],
+        "industry": "C36汽车制造业",
+        "name": "伯特利",
+        "no_auto_trade": true,
+        "quant_score": 80.0059,
+        "quant_status": "PRIORITY_RESEARCH",
+        "reopen_on_new_evidence": false,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "BUY",
+        "research_priority": "P1",
+        "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "",
+        "success_archetype_similarity_score": null,
+        "urgent_research": false,
+        "urgent_research_reasons": [],
+        "valuation": {
+          "current_pe": 17.95,
+          "distance_to_research_buy_ceiling_pct": 49.97214484679666,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 90.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_gate_diagnostics": {
+            "blockers": [],
+            "cash_conversion_pass_threshold": 0.8,
+            "cash_conversion_ratio": 1.1844,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_pass_threshold": 70.0,
+            "earnings_quality_score": 90.0,
+            "financial_disclosure_date": "2026-08-28",
+            "financial_review_status": "OK",
+            "machine_financial_pass_ready": true,
+            "normalized_core_operating_profit": 580089687.17,
+            "operating_cash_flow": 751623839.23
+          },
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 33.65,
+          "pe_to_history_ratio": 0.5334323922734027,
+          "price_mapping_status": "OK",
+          "reference_price": 29.15,
+          "reference_price_basis": "RAW_LATEST_CLOSE",
+          "reference_trade_date": "2026-09-22",
+          "required_profit_growth_pct": -46.65676077265973,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 43.716880222841226
+        }
+      },
       {
         "capital_allocation": {
           "action": "PROBE",
@@ -2264,6 +2493,7 @@
         "urgent_research_reasons": [],
         "valuation": {
           "current_pe": 22.06,
+          "distance_to_research_buy_ceiling_pct": -1.3599274705349051,
           "earnings_quality_confidence": "HIGH",
           "earnings_quality_score": 90.0,
           "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
@@ -2287,11 +2517,13 @@
           "reference_price": 8.53,
           "reference_price_basis": "RAW_LATEST_CLOSE",
           "reference_trade_date": "2026-09-22",
-          "required_profit_growth_pct": -18.897058823529413
+          "required_profit_growth_pct": -18.897058823529413,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 8.413998186763372
         }
       }
     ],
-    "capital_probe_count": 1,
+    "capital_probe_count": 2,
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false
   }
