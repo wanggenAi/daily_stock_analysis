@@ -4,118 +4,90 @@
 Maintain a trustworthy stock-research pipeline that produces current, evidence-backed candidates and actionable research-layer entry guidance without granting Formal or automatic trading authority.
 
 ## Current Phase
-JEV_ENTRY_JUDGMENT_PRODUCTION_ACCEPTED
+DORMANT_PRIORITY_SUPPRESSION_IMPLEMENTED_AWAITING_PR_CI
 
 ## Source of Truth
 - Live GitHub main/PR/Actions/artifacts and persisted production data override this checkpoint.
-- Recovery precedence remains: live refs/Actions/artifacts/persisted data > orchestration cursor > recovery checkpoint > this file > chat history.
+- Recovery precedence: live refs/Actions/artifacts/persisted data > orchestration cursor > this file > chat history.
 
 ## Last Verified Main
-- Business/runtime fix merged through PR #299 as `81c005ea8413073f0c2d5d78884eafacd7dce1b7`.
-- Last verified production decision-center persistence before this checkpoint: `d439c52f65077eb7c379f18712f4a8a6ea50191b`.
-- Production persistence may move main after this checkpoint; always re-read live main before any new mutation.
+- Live main before this branch: `0386d2ee390efc0656fbb2f1e2521c6e54922435`.
+- PR #299 merge-push CI `35896490937` is now fully SUCCESS; the prior checkpoint's running-CI note is obsolete.
+- Jev current-lineage entry milestone remains production-accepted; do not replay it.
 
 ## Active Branch / PR
-- No active feature branch for this milestone.
-- PR #299 `fix: replay post-terminal Jev refresh on current main`: MERGED.
-- #298 is superseded and must not be merged.
+- Active branch: `fix/dormant-research-priority-20260924`.
+- Active PR: not yet opened at this checkpoint.
+- Branch starts exactly from live main `0386d2ee390efc0656fbb2f1e2521c6e54922435`.
 
-## CI
-- #299 newest-head CI passed before merge:
-  - CI `35893424341`: SUCCESS
-  - Opportunity Discovery `35893424343`: SUCCESS
-  - Legacy Risk-Capped Research `35893424311`: SUCCESS
-- Merge-push CI `35896490937`: ai-governance SUCCESS, docker-build SUCCESS; backend offline suite was still running at this checkpoint.
-- No failure requiring rollback has been observed.
+## Current Production State
+- Candidate lifecycle: 126 durable candidates = 123 ACTIVE + 3 DORMANT.
+- DORMANT candidates proven by the current deterministic research-strategy ledger:
+  - `600816 建元信托`: all 5 supported unresolved hard-gate strategies EXHAUSTED_NO_PROGRESS.
+  - `601020 华钰矿业`: all 5 supported unresolved hard-gate strategies EXHAUSTED_NO_PROGRESS.
+  - `000504 南华生物`: all 5 supported unresolved hard-gate strategies EXHAUSTED_NO_PROGRESS.
+- Strategy ledger: 164 entries = 104 DISPATCH_ACCEPTED, 3 COMPLETED_GATE_RESOLVED, 37 COMPLETED_EVIDENCE_CHANGED, 20 EXHAUSTED_NO_PROGRESS.
+- `000096` has 4 exhausted gates and `603105` has 1; neither is fully exhausted, so neither may be auto-dormanted.
+- Broad Discovery remains independent from lifecycle and must stay active.
 
-## Production Acceptance
-- Merge-triggered Terminal run `35896490998`: SUCCESS.
-- Terminal persisted exact current Deep lineage `35891640120`.
-- New post-Terminal wake step executed successfully.
-- Exact lineage-keyed Jev V4 run `35896676405` (`GenGe Jev Shadow Evaluation / 35891640120`): SUCCESS.
-- Pinned TypeSafe SDK contract checks: SUCCESS.
-- Live Jev shadow evaluation: SUCCESS.
-- Routing bridge + persisted advisory: SUCCESS.
-- Artifact: `genge-jev-shadow-35896676405-1`, artifact id `10766888595`, digest `sha256:e26320b9eb174576a44a70da53ee53ad333e55b2a343f057a876dbbd440d0bb4`.
-- Routing persistence commit: `a207391703b79bea52f6c35e7fa8cbea4d8df219`.
-- Deterministic Jev Research Orchestrator `35896896445`: SUCCESS.
-- Three-Pillar Decision Center `35896895126`: SUCCESS and persisted current-lineage Jev entry judgment.
-- Follow-up valuation-closure Terminal `35897118130`: SUCCESS.
-- Same Deep lineage dedupe verified: only one Jev run exists with title `GenGe Jev Shadow Evaluation / 35891640120`; repeated Terminal convergence did not create a duplicate Jev run.
-- Reconciler `35897320012`: SUCCESS at this checkpoint.
+## Problem Found
+- DORMANT lifecycle semantics were correct, but `research_priority_router.py` only removed stale research-tier points.
+- DORMANT names could still receive priority from price-only attractiveness, generic hourly `RAISE`, mapping gaps, or stale near-buy/archetype ordering boosts.
+- Production example: `601020 华钰矿业` is DORMANT / WAIT_FOR_NEW_RESEARCH_EVIDENCE, yet latest research priority still showed P3 score 20 from `HOURLY_PRIORITY_RAISE` + mapping noise despite LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY.
+- This creates unnecessary research/Jev churn and conflicts with the rule that exhausted names reopen only on genuinely new evidence / changed evidence epoch.
 
-## Current Jev Routing
-- source_workflow_run_id: `35896676405`
-- continuation_from_deep_run_id: `35891640120`
-- routing_count: 25
-- entry judgments: ENTRY_NOW=1, WAIT_EVIDENCE=24
-- routes: DEEP_RESEARCH=12, EVIDENCE_REFRESH=12, VALUATION_CLOSURE=1
-- Weak/incomplete candidates are not promoted by UNKNOWN; UNKNOWN != PASS remains enforced.
+## Implemented
+- In `research_priority_router.py`, DORMANT non-holdings now suppress non-material priority boosts.
+- Suppressed while dormant without a real reactivation signal:
+  - price-only attractiveness;
+  - generic hourly `deep_review_priority=RAISE`;
+  - mapping-gap score;
+  - near-buy recovery ordering boost;
+  - success-archetype ordering boost;
+  - stale research-tier boost (already suppressed previously).
+- Genuine research progress remains eligible to re-enter priority:
+  - current-holding protection;
+  - `NEW_EVIDENCE_REUNDERWRITE_LEAD`;
+  - material thesis states: REUNDERWRITE_REQUIRED / WEAKENING / MIXED / STRENGTHENING;
+  - current-runtime Deep 5/5 hard-gate PASS.
+- Added regression proving a DORMANT candidate with price-only attractiveness + generic RAISE + mapping gap stays score 0 / P3 and exposes a suppression reason.
+- Existing regression proving explicit new evidence can re-enter priority remains intact.
+- Updated `docs/CHANGELOG.md`.
+- No BUY/WAIT_PRICE/REJECT threshold, hard-gate threshold, Formal authority, Jev authority, or automatic execution rule changed.
 
-## 603596 伯特利 — Accepted Current Research Case
-- Current lineage: Deep `35891640120` -> Jev `35896676405`.
-- Hard gates: 5/5 PASS; no FAIL; no UNKNOWN.
-- Terminal research decision: BUY.
-- Jev validated judgment: ENTRY_NOW.
-- Jev judgment confidence: 0.76; ENTRY_NOW probability: 0.80.
-- Deterministic validation: `JEV_ENTRY_NOW_PASSES_DETERMINISTIC_GUARDS`.
-- Reference price: 28.72, trade date 2026-09-23, basis `RAW_LATEST_CLOSE`.
-- Research buy ceiling / entry zone high: 43.072.
-- Initial manual research position: 1%.
-- Maximum manual research position: 3%.
-- Add condition: `REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING`.
-- Do-not-chase condition: `PRICE_ABOVE_43.0720_REQUIRES_REVALUATION`.
-- Invalidation: `ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY`.
-- Capital layer: BUILD, conviction 0.8954, advisory max 3%.
-- Formal BUY: false.
-- automatic_execution_allowed: false.
-- no_auto_trade: true.
-- Decision Center user-facing action is research/manual-build advisory only, not an executable order.
-
-## Completed
-- Structured Jev entry judgment implementation is live.
-- The stale-lineage gap was fixed by waking one exact-lineage Jev V4 run after Terminal convergence.
-- Current-lineage Jev routing is persisted and consumed by deterministic orchestration.
-- Current 603596 entry guidance is visible in the final Three-Pillar Decision Center.
-- Repeated Terminal convergence is deduplicated against the same Deep lineage.
-- No stale Jev row is promoted as current.
-
-## Current Findings
-- The system now has one defensible current entry candidate rather than forcing broad BUY output.
-- 24/25 Jev rows remain WAIT_EVIDENCE, which is intentional under the evidence/hard-gate contract.
-- 603596 is the current leading research-layer candidate; its result is based on the 2026-09-23 persisted reference close, not a promise about a future/live market price.
-- The remaining project problem is broader candidate-quality convergence: distinguish evidence-exhausted names that should be retired/archived from names worth reopening only when genuinely new evidence appears.
+## TypeSafe / Jev
+- No new Jev call has been made for this code-fix stage; this is deterministic research-priority control.
+- Existing current-lineage Jev run remains `35896676405` for Deep `35891640120`.
+- After merge, Research Learning is path-triggered by `research_priority_router.py`; its persisted `data/research_priority/**` update naturally wakes the existing Jev Shadow workflow.
+- Production acceptance must verify the next natural priority/Jev cycle does not keep same-epoch DORMANT names artificially elevated.
+- Jev remains advisory-only; deterministic orchestration and strategy-ledger evidence epochs control actual Deep dispatch.
 
 ## Blockers
+- Awaiting PR CI and post-merge production verification.
 - No user/login/approval blocker.
-- No production acceptance blocker for the Jev current-lineage entry milestone.
-- Tail CI/overlay/decision-center refresh jobs may still be finishing; consume live Actions state rather than restarting the chain.
 
 ## Next Action
-1. Re-read live main, Actions, latest routing/orchestration, and Decision Center.
-2. Finish/inspect any remaining tail CI only if still active; fix only real failures.
-3. Do not rerun the accepted 603596 lineage merely to make it newer.
-4. Continue the broader stock-selection objective:
-   - classify persistent WAIT_EVIDENCE / exhausted candidates;
-   - archive or remove candidates when credible evidence cannot be obtained after bounded attempts;
-   - reopen only on genuinely new evidence or a changed evidence epoch;
-   - keep broad discovery active so new candidates can enter;
-   - preserve thresholds instead of lowering them to manufacture BUY signals.
-5. Report leading candidates with buy-now-or-not research status, verified trigger/price basis, initial size, add condition, max size, do-not-chase, and invalidation.
+1. Open PR from `fix/dormant-research-priority-20260924` to main.
+2. Run/inspect blocking CI; fix only real failures.
+3. Merge only after blocking CI passes.
+4. Verify push-triggered Research Learning rebuilds research priority.
+5. Verify DORMANT same-epoch names no longer receive non-material priority boosts.
+6. If a new Jev shadow is naturally triggered by the priority persistence, record the actual TypeSafe/Jev run and confirm deterministic orchestration does not redispatch exhausted same-epoch work.
+7. Refresh Three-Pillar/decision state only through existing production chain; do not rerun accepted 603596 lineage for freshness alone.
+8. Then continue broader candidate-quality convergence from the next live checkpoint.
 
 ## Do Not Repeat
 - Do not reopen #292/#293/#294 or merge stale #296/#298.
-- Do not replay #299 again; it is merged and production-accepted.
-- Do not duplicate Jev for Deep `35891640120`; run `35896676405` is the accepted exact-lineage evaluation.
-- Do not reuse historical 29.15 / 2026-09-22 as current 603596 price truth; accepted reference is 28.72 / 2026-09-23 until a newer verified snapshot replaces it.
-- Do not lower Jev, hard-gate, research-selection, or valuation thresholds to force more candidates.
+- Do not replay #299; it is merged and production-accepted.
+- Do not duplicate Jev for Deep `35891640120` merely to make it newer.
+- Do not lower Jev, hard-gate, research-selection, valuation, BUY/WAIT_PRICE/REJECT thresholds.
 - Do not treat UNKNOWN as PASS.
 - Do not promote Research BUY / BUILD / Jev ENTRY_NOW into Canonical Formal BUY.
 
 ## Guardrails
+- Broad Discovery is never filtered by lifecycle.
+- DORMANT is research-control state only and is never a Formal rejection.
 - Jev authority: ADVISORY_ONLY research routing + structured entry judgment.
-- Deterministic code owns eligibility, lineage, numeric price/sizing validation, dispatch, dedupe, and authority boundaries.
+- Deterministic code owns evidence epochs, eligibility, dispatch, dedupe, numeric validation, and authority boundaries.
 - Formal actions remain Canonical-only; `formal_buy_authorized=false`.
 - `automatic_execution_allowed=false`; `no_auto_trade=true`.
-- Risk-budget sizing caps Jev suggestions.
-- Missing verified inputs produce WAIT_EVIDENCE / explicit unlock conditions, never invented numbers.
