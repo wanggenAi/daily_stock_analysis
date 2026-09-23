@@ -216,7 +216,7 @@ def build_orchestration_plan(
                 "source_run_id": source_workflow_run_id,
             }
         if (
-            lifecycle_state != "DORMANT"
+            lifecycle_state == "ACTIVE"
             and exhaustion.get("exhausted") is True
             and row["is_current_holding"] is False
         ):
