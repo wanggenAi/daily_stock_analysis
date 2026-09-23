@@ -4,7 +4,7 @@
 Turn the stock research system into a convergent autonomous opportunity engine that surfaces reference-worthy stock codes without fabricating certainty, forcing BUY, or presenting contradictory investor actions.
 
 ## Current Phase
-TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_COMPLETE
+JEV_ENTRY_JUDGMENT_PENDING_IMPLEMENTATION
 
 ## Source of Truth
 - Live GitHub refs, Actions, artifacts, and persisted data override this checkpoint.
@@ -69,8 +69,10 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_COMPLETE
 - None for this mission.
 
 ## Next Action
-- None for the #293 display-convergence mission; it is at terminal state.
-- Any new research/selection iteration must start from live main, latest production artifacts, and latest Jev/Deep lineage rather than reopening the consumed #293 branch.
+- The #293 display-convergence mission is complete.
+- Next implementation mission: extend the existing TypeSafe/Jev advisory contract from research routing only into **structured entry judgment**, while preserving deterministic validation and all Formal/no-auto-trade authority boundaries.
+- Start from live main and the latest Jev/Deep/Terminal production lineage. Do not reopen the consumed #292/#293 branches.
+- Implement schema, prompt/context assembly, deterministic validation, persistence, report rendering, regression tests, CI, production Jev invocation, and post-production verification for the entry-judgment contract described below.
 
 ## Do Not Repeat
 - Do not reopen or reuse #292 or #293 implementation branches.
@@ -81,7 +83,7 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_COMPLETE
 - Do not treat cancelled/stalled CI as green.
 
 ## Guardrails
-- Jev is advisory research routing only; deterministic guards own dispatch.
+- Jev is advisory **research routing + structured entry judgment**; deterministic guards own dispatch, validation, and all Formal/automatic-execution authority.
 - Formal actions remain Canonical-only; automatic Formal BUY=false.
 - Research capital allocation remains advisory-only and cannot create holding-add or order authority.
 - UNKNOWN != PASS; no_auto_trade=true.
@@ -116,3 +118,79 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_COMPLETE
   6. If confirmation has not occurred and price has already risen above roughly 32.8 CNY, do not chase; rerun valuation/research before any entry.
   7. If any critical or hard gate degrades from PASS to UNKNOWN/FAIL, stop new buying and invalidate the above entry plan until revalidated.
 - The 27.3 / 32.8 CNY levels are execution guardrail zones derived from the prior validated valuation reference, not Canonical Formal orders and not automatic-trading authority.
+
+
+## New Mission: Jev Structured Entry Judgment
+### User Requirement
+- Jev must not be artificially limited to answering only "should this stock continue to Deep Research?".
+- Jev should use its reasoning ability to make a **non-authoritative investment-entry judgment** from verified current evidence.
+- This is a judgment/research capability, **not** trading authority. Jev must never directly create a Canonical Formal BUY, place an order, bypass deterministic guards, or enable automatic execution.
+
+### Required Jev Output
+For each sufficiently researched candidate, the typed Jev advisory should be able to return a structured entry judgment such as:
+- `ENTRY_NOW`: evidence and valuation support entering a research/manual position now.
+- `WAIT_PRICE`: research thesis is acceptable but current price/valuation does not justify entry; return the price/valuation trigger.
+- `WAIT_EVIDENCE`: valuation may be acceptable but evidence is not yet sufficient; return the exact missing evidence and unlock condition.
+- `DO_NOT_CHASE`: thesis may remain valid but price has moved beyond the justified entry zone; return the re-evaluation condition.
+- `INVALIDATED`: current evidence invalidates the entry thesis.
+- `NO_JUDGMENT`: inputs are stale, contradictory, insufficient, or outside the supported contract.
+
+The typed output must also include, where defensible from current verified evidence:
+- `entry_reason`
+- `entry_trigger`
+- `entry_price_zone_low/high` or an explicitly typed non-price trigger when price cannot be defensibly derived
+- `initial_manual_position_pct`
+- `add_condition`
+- `max_manual_position_pct`
+- `do_not_chase_condition`
+- `invalidation_condition`
+- `judgment_confidence`
+- exact evidence/runtime lineage used
+- explicit `authority=ADVISORY_ONLY`
+- `formal_buy_authorized=false`
+- `automatic_execution_allowed=false`
+- `no_auto_trade=true`
+
+### Deterministic Contract
+- Jev may reason about **when an entry is attractive**, but deterministic code must validate every structured field before it is persisted or rendered.
+- Jev must not invent a price target when the verified valuation inputs do not support one.
+- If evidence needed for an entry judgment is missing, output `WAIT_EVIDENCE` or `NO_JUDGMENT`; never silently convert UNKNOWN into PASS.
+- Entry price zones must be traceable to current verified valuation/reference-price inputs and their timestamps/lineage.
+- Position-size suggestions must remain within the deterministic risk-budget cap; Jev may suggest less but may not exceed the validated cap.
+- A Jev `ENTRY_NOW` judgment is **not** a Canonical Formal BUY. The report must label it as research/advisory judgment.
+- Existing deterministic confidence/routing guards remain in force. No lowering of the 0.50 dispatch gate merely to obtain more Jev judgments.
+
+### Reporting Requirement
+- Final user-facing stock reports must consume this Jev entry judgment when available and answer the practical question first:
+  - **Buy now or not?**
+  - **If not now, exactly what price/evidence condition unlocks entry?**
+  - **First position size?**
+  - **When to add?**
+  - **What price/condition means do not chase?**
+  - **What evidence invalidates the plan?**
+- Do not reduce a Jev-qualified candidate to vague prose such as "值得关注 / 最值得盯 / 继续观察" when a defensible structured judgment can be produced.
+
+### 603596 Acceptance Case
+- Use `603596 伯特利` as the first production acceptance case because a prior validated lineage already provides:
+  - 5/5 hard gates PASS
+  - research `BUY`
+  - capital `BUILD`
+  - conviction 0.945
+  - validated risk-budget cap 3%
+  - reference price 29.15 CNY
+  - PE 17.95 vs historical median PE 33.65
+- The new Jev contract should be capable of determining from **fresh/current** evidence whether the stock is `ENTRY_NOW`, `WAIT_PRICE`, `WAIT_EVIDENCE`, `DO_NOT_CHASE`, or `INVALIDATED`, and explain the trigger.
+- Historical values above are acceptance/reference evidence only. Production judgment must use the latest valid lineage and must not copy stale values forward as current facts.
+
+### Completion Criteria
+This mission is not complete until:
+1. typed Jev entry-judgment schema exists;
+2. current verified Deep/Terminal/valuation/risk-budget context is supplied to Jev;
+3. deterministic validation rejects stale, unsupported, over-cap, or authority-escalating outputs;
+4. judgment is persisted with exact lineage;
+5. Three-Pillar/user-facing report renders actionable entry conditions instead of vague watch language;
+6. regression tests cover ENTRY_NOW, WAIT_PRICE, WAIT_EVIDENCE, DO_NOT_CHASE, INVALIDATED, stale-lineage rejection, UNKNOWN != PASS, cap enforcement, and Formal-authority rejection;
+7. PR blocking CI is green;
+8. a fresh production TypeSafe/Jev run exercises the new schema;
+9. production output is verified end-to-end on at least the 603596 acceptance case;
+10. TASK_STATE is updated with the final live main SHA, Jev run, downstream artifact, and user-facing result.
