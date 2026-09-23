@@ -228,6 +228,8 @@ def build_queue(
             "priority": priority,
             "priority_score": score,
             "research_tier": tier,
+            "candidate_lifecycle_state": str(l.get("lifecycle_state") or ""),
+            "research_dormant": str(l.get("lifecycle_state") or "") == "DORMANT",
             "thesis_status": thesis or None,
             "hourly_research_conclusion": conclusion or None,
             "mapping_gaps": mapping_gaps,
