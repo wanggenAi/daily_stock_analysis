@@ -64,6 +64,10 @@ OUTPUT_COLUMNS = [
     "quant_status",
     "quant_rank",
     "quant_score",
+    "reference_price",
+    "reference_trade_date",
+    "reference_price_basis",
+    "price_mapping_status",
     "source_hard_blockers",
     "valuation_provider",
     "valuation_provider_errors",
@@ -621,6 +625,10 @@ def _base_row(
         "quant_status": source.get("quant_status") or source.get("quant_screen_status") or "",
         "quant_rank": source.get("quant_rank") or "",
         "quant_score": source.get("quant_score") or "",
+        "reference_price": _finite(source.get("raw_latest_close")),
+        "reference_trade_date": source.get("raw_latest_trade_date") or source.get("latest_trade_date") or "",
+        "reference_price_basis": "RAW_LATEST_CLOSE" if _finite(source.get("raw_latest_close")) is not None else "",
+        "price_mapping_status": source.get("price_mapping_status") or "",
         "source_hard_blockers": (
             source.get("source_hard_blockers")
             or source.get("hard_blockers")
@@ -917,6 +925,7 @@ def write_report(
                 f"## {row['valuation_research_rank']}. {row['code']} {row['stock_name']}",
                 f"- recall: {row['wide_recall_reason']}",
                 f"- current/reference PE: {row['current_pe']} / {row['historical_median_pe_reference']}",
+                f"- execution reference price: {row.get('reference_price') or 'NA'} @ {row.get('reference_trade_date') or 'NA'} ({row.get('reference_price_basis') or 'NA'}; mapping={row.get('price_mapping_status') or 'NA'})",
                 f"- implied required profit growth: {growth_text}",
                 f"- expectation state: {row['expectation_state']}",
                 f"- earnings quality: {row['earnings_quality_score']} ({row['earnings_quality_confidence']})",
