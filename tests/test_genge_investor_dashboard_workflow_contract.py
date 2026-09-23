@@ -117,7 +117,7 @@ def test_investor_brief_reapplies_terminal_research_before_persistence() -> None
     assert "--terminal-research-json data/deep_calculation/latest_research_decisions.json" in block
     assert "capital_advisory_authority" in block
     assert "research_capital_probe_count" in block
-    assert build_at < research_overlay_at < consumption_at < validation_at < commit_at
+    assert build_at < consumption_at < research_overlay_at < validation_at < commit_at
 
 def test_investor_brief_cannot_reopen_stale_hourly_execution_quotes() -> None:
     workflow = _workflow()
