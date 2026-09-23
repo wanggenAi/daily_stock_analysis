@@ -22,11 +22,11 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_PR
 - Scope: prevent a current terminal research decision from being duplicated by the preliminary Deep-qualified `DO_NOT_BUY_YET` display layer.
 
 ## Active PR
-- Pending creation from the active branch.
+- #293 `fix: converge terminal research display precedence` is open from the active branch.
 
 ## CI
 - Regression added for the exact overlap case: current 5/5 Deep-qualified 603596 plus current terminal `RESEARCH:BUY` / risk-budget `BUILD`.
-- Full blocking PR CI still pending.
+- #293 newest-head blocking CI is required before merge; earlier-head results do not authorize merge.
 - No threshold, Jev confidence gate, Formal authority, or capital model change.
 
 ## Production / Artifact
@@ -62,12 +62,11 @@ TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_PR
 - Merge is blocked only by the new PR's required CI.
 
 ## Next Action
-1. Open the display-convergence PR.
-2. Require newest-head blocking CI to pass.
-3. Merge only after green CI.
-4. Verify main and the post-merge Three-Pillar production refresh no longer expose 603596 under both contradictory account-action layers.
-5. Confirm terminal research remains `RESEARCH_ONLY`, risk budget remains `ADVISORY_ONLY`, `formal_buy_authorized=false`, and `no_auto_trade=true`.
-6. Persist the final production checkpoint.
+1. Require #293 newest-head blocking CI to pass.
+2. Merge only after green CI.
+3. Verify main and the post-merge Three-Pillar production refresh no longer expose 603596 under both contradictory account-action layers.
+4. Confirm terminal research remains `RESEARCH_ONLY`, risk budget remains `ADVISORY_ONLY`, `formal_buy_authorized=false`, and `no_auto_trade=true`.
+5. Persist the final production checkpoint.
 
 ## Do Not Repeat
 - Do not reopen or reuse #292 / `fix/jev-wake-on-research-priority-20260923`.
