@@ -10,7 +10,7 @@ trading authority.
 
 For each successful shadow row, the bridge records:
 
-- research route: NO_ESCALATION / EVIDENCE_REFRESH / DEEP_RESEARCH / HUMAN_REVIEW;
+- research route: NO_ESCALATION / EVIDENCE_REFRESH / DEEP_RESEARCH / VALUATION_CLOSURE / HUMAN_REVIEW;
 - attention priority: LOW / MEDIUM / HIGH;
 - evidence state;
 - needs-more-evidence and needs-deep-research typed judgments;
@@ -60,6 +60,12 @@ queue and dispatch the existing bounded Deep research workflow only when determi
 eligibility and fail-closed guardrails also permit it. Jev never dispatches work
 directly, never suppresses deterministic research obligations, and never grants Formal
 trading authority.
+
+## Post-Deep valuation and price closure
+
+A candidate whose exact current research state has all five hard gates explicitly PASS and whose research decision is already BUY or WAIT_PRICE has no remaining hard-gate research problem. Jev may select `VALUATION_CLOSURE` for this state. The deterministic orchestrator also recognizes the same state directly, so a low-confidence or stale `DEEP_RESEARCH` advisory cannot force an already-resolved candidate back through Deep or stop it at HUMAN_REVIEW.
+
+Valuation closure reuses the existing Terminal research workflow. It remains `RESEARCH_ONLY`: it may preserve or recompute research BUY / WAIT_PRICE and reverse-solve the existing PE BUY threshold into a research buy-price ceiling, but it cannot create Canonical Formal BUY or orders. Current 5/5-PASS priority follow-ups are carried into Terminal even when a later bounded Deep workset omits them, provided the current profile still proves all five gates PASS.
 
 ## Low-confidence deterministic fallback
 
