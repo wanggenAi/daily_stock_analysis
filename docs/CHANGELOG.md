@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [改进] 候选研究生命周期新增 DORMANT 收敛态：仅当非持仓对象在当前证据 epoch 的全部受支持硬门槛策略均被确定性账本证明为 EXHAUSTED_NO_PROGRESS 时休眠；新可调度证据 epoch 或终态研究推进可自动恢复 ACTIVE，持仓永不休眠，Broad Discovery、Formal Authority、UNKNOWN != PASS 与 no-auto-trade 均保持不变。
 - [修复] Jev/Deep 策略账本以精确 Deep `profile_gate_statuses` 作为硬门槛重试的最新权威：已明确 PASS/FAIL 的门槛会覆盖陈旧的 routing-level missing-evidence 标记，不再重复调度；UNKNOWN 仍可进入账本研究，缺失 Deep profile 的对象保持 workset-blocked 而非伪装成证据耗尽，Formal Authority、UNKNOWN != PASS 与 no-auto-trade 不变。
 - [修复] Jev routing 成功持久化后显式、按 source run 去重地 dispatch deterministic Research Orchestrator，不再依赖二级 workflow completion 事件来消费 continuation routing；Jev 仍为 advisory-only，UNKNOWN != PASS，Formal Authority 与 no-auto-trade 不变。
 - [改进] 估值研究队列与 Terminal research valuation snapshot 透传同一量化快照的 raw 收盘参考价、交易日与价格映射状态，为后续研究型风险预算手数可执行性提供同代 PIT 价格输入；不引入实时行情、Formal BUY 或自动交易权限。
