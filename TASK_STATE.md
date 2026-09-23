@@ -28,6 +28,12 @@ VALUATION_PRICE_CLOSURE_IMPLEMENTATION
 - #294 `fix: close five-gate leads through valuation and price`.
 - PR branch is intentionally based on the last code baseline; observed live-main drift before PR creation was production/data persistence only, with no overlapping code files.
 
+## CI
+- PR #294 newest-head CI is authoritative.
+- First CI run `35870528630` failed only `ai-governance` because this checkpoint omitted the required `## CI` heading; backend/docker/web were skipped downstream.
+- This checkpoint restores the required heading; re-read the next newest-head run before merge.
+- No business/test failure has been observed yet.
+
 ## Proven Production Defect
 - `603596 伯特利` is the concrete regression case.
 - Jev run `35849969346` saw it as HIGH attention, evidence `ADEQUATE_FOR_CURRENT_RESEARCH_STATE`, exact Deep 5/5 PASS, existing engine action `RESEARCH:BUY`, quant score 80.0059, PE 17.95 vs historical median reference 33.65.
