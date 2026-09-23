@@ -1091,3 +1091,22 @@ def test_jev_entry_authority_escalation_is_rejected_from_user_report():
     assert pillar["jev_entry_judgments"] == []
     assert pillar["jev_entry_judgment_invalid_row_count"] == 1
     assert pillar["canonical_formal_buy_now"] == []
+
+
+def test_same_lineage_entry_now_is_hidden_when_terminal_bucket_no_longer_buy():
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_status(),
+        terminal_research_decisions=_terminal_research("987654"),
+        jev_routing=_jev_entry_routing(),
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+
+    assert pillar["jev_entry_judgments"] == []
+    assert pillar["jev_entry_judgment_invalid_row_count"] == 1
+    assert pillar["research_gap_count"] == 1
