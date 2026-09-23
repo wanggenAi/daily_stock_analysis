@@ -319,3 +319,158 @@ def test_financial_diagnostic_change_reactivates_financial_gate_strategy():
 
     assert [item["hard_gate"] for item in attempts] == ["financial_safety"]
 
+
+
+def test_profile_unknowns_fill_empty_routing_gate_scope_without_researching_pass_or_fail():
+    row = {
+        "entity_id": "001316",
+        "research_evidence_fingerprint": "fp-live",
+        "research_context": {
+            "unresolved_gates": [],
+            "profile_gate_statuses": {
+                "predictability": {"status": "UNKNOWN", "source": "AUTOMATIC_ATTEMPT"},
+                "long_term_demand": {"status": "UNKNOWN", "source": "AUTOMATIC_ATTEMPT"},
+                "moat": {"status": "UNKNOWN", "source": "AUTOMATIC_ATTEMPT"},
+                "financial_safety": {"status": "PASS", "source": "AUTOMATIC_MACHINE"},
+                "earnings_authenticity": {"status": "FAIL", "source": "AUTOMATIC_MACHINE"},
+            },
+        },
+    }
+
+    attempts = plan_strategy_attempts(row, {}, source_workflow_run_id="200")
+    assert has_strategy_scope(row) is True
+    assert {item["hard_gate"] for item in attempts} == {
+        "predictability",
+        "long_term_demand",
+        "moat",
+    }
+    assert all(item["unresolved_reason"] == "PROFILE_GATE_STATUS_UNKNOWN" for item in attempts)
+
+
+def test_profile_unknown_fallback_is_deduplicated_and_exhaustible():
+    row = {
+        "entity_id": "600406",
+        "research_evidence_fingerprint": "fp-live",
+        "research_context": {
+            "unresolved_gates": [],
+            "profile_gate_statuses": {
+                gate: {
+                    "status": "UNKNOWN",
+                    "source": "AUTOMATIC_ATTEMPT",
+                    "evidence_fingerprint": f"{gate}-same",
+                }
+                for gate in (
+                    "predictability",
+                    "long_term_demand",
+                    "moat",
+                    "financial_safety",
+                    "earnings_authenticity",
+                )
+            },
+            "deep_lambda_run_id": "900",
+        },
+    }
+    attempts = plan_strategy_attempts(row, {}, source_workflow_run_id="200")
+    for item in attempts:
+        item["attempt_status"] = "DISPATCH_ACCEPTED"
+        item["deep_run_id"] = "900"
+    ledger = append_attempts({}, attempts)
+
+    reconciled = reconcile_ledger(
+        ledger,
+        [row],
+        current_source_workflow_run_id="201",
+    )
+    assert len(reconciled["entries"]) == 5
+    assert all(item["attempt_status"] == "EXHAUSTED_NO_PROGRESS" for item in reconciled["entries"])
+    assert plan_strategy_attempts(
+        row,
+        reconciled,
+        source_workflow_run_id="202",
+    ) == []
+
+
+def test_profile_workset_gap_blocks_attempt_without_false_exhaustion():
+    initial = _row()
+    attempts = plan_strategy_attempts(
+        initial,
+        {},
+        source_workflow_run_id="100",
+    )
+    for item in attempts:
+        item["attempt_status"] = "DISPATCH_ACCEPTED"
+        item["deep_run_id"] = "900"
+    ledger = append_attempts({}, attempts)
+
+    blocked = _row()
+    blocked["research_context"]["deep_lambda_run_id"] = "900"
+    blocked["research_context"]["unresolved_gates"].append(
+        {
+            "gate": "profile",
+            "reason": "REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE",
+        }
+    )
+    reconciled = reconcile_ledger(
+        ledger,
+        [blocked],
+        current_source_workflow_run_id="101",
+    )
+
+    assert has_strategy_scope(blocked) is True
+    assert all(
+        item["attempt_status"] == "BLOCKED_WORKSET_COVERAGE"
+        for item in reconciled["entries"]
+    )
+    assert all(item["strategy_exhausted"] is False for item in reconciled["entries"])
+    assert all(item["new_evidence_acquired"] is None for item in reconciled["entries"])
+    assert all(item["workset_coverage_blocked"] is True for item in reconciled["entries"])
+    assert plan_strategy_attempts(
+        blocked,
+        reconciled,
+        source_workflow_run_id="102",
+    ) == []
+
+
+def test_profile_workset_recovery_reopens_same_gate_epoch_after_blocked_dispatch():
+    initial = _row()
+    attempts = plan_strategy_attempts(initial, {}, source_workflow_run_id="100")
+    for item in attempts:
+        item["attempt_status"] = "DISPATCH_ACCEPTED"
+        item["deep_run_id"] = "900"
+    ledger = append_attempts({}, attempts)
+
+    blocked = _row()
+    blocked["research_context"]["deep_lambda_run_id"] = "900"
+    blocked["research_context"]["unresolved_gates"].append(
+        {
+            "gate": "profile",
+            "reason": "REQUESTED_CODE_NOT_PRESENT_IN_DEEP_PROFILE",
+        }
+    )
+    reconciled = reconcile_ledger(
+        ledger,
+        [blocked],
+        current_source_workflow_run_id="101",
+    )
+
+    recovered = _row()
+    retried = plan_strategy_attempts(
+        recovered,
+        reconciled,
+        source_workflow_run_id="102",
+    )
+
+    assert {item["hard_gate"] for item in retried} == {
+        "predictability",
+        "financial_safety",
+    }
+    updated = append_attempts(reconciled, retried)
+    assert len(updated["entries"]) == 4
+    assert sum(
+        item["attempt_status"] == "BLOCKED_WORKSET_COVERAGE"
+        for item in updated["entries"]
+    ) == 2
+    assert sum(
+        item["attempt_status"] == "DISPATCH_PLANNED"
+        for item in updated["entries"]
+    ) == 2

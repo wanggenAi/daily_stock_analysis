@@ -46,6 +46,7 @@ _GATE_STRATEGY = {
 }
 
 _ACTIVE_ATTEMPT_STATUSES = {"DISPATCH_ACCEPTED"}
+_WORKSET_BLOCKED_STATUS = "BLOCKED_WORKSET_COVERAGE"
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
@@ -78,7 +79,7 @@ def normalize_ledger(payload: Mapping[str, Any] | None) -> dict[str, Any]:
     }
 
 
-def unresolved_gates(row: Mapping[str, Any]) -> dict[str, str]:
+def _explicit_unresolved_gates(row: Mapping[str, Any]) -> dict[str, str]:
     context = _mapping(row.get("research_context"))
     result: dict[str, str] = {}
     for item in context.get("unresolved_gates") or []:
@@ -87,6 +88,30 @@ def unresolved_gates(row: Mapping[str, Any]) -> dict[str, str]:
         gate = str(item.get("gate") or "").strip()
         if gate:
             result[gate] = str(item.get("reason") or "").strip()
+    return result
+
+
+def _profile_workset_blocker(row: Mapping[str, Any]) -> str:
+    return str(_explicit_unresolved_gates(row).get("profile") or "").strip()
+
+
+def unresolved_gates(row: Mapping[str, Any]) -> dict[str, str]:
+    context = _mapping(row.get("research_context"))
+    result = _explicit_unresolved_gates(row)
+
+    # Some live priority/holding rows can carry a fully populated Deep
+    # profile_gate_statuses map while the routing-level unresolved_gates list
+    # is empty.  Treat explicit UNKNOWN gate state as unresolved research
+    # scope so the durable strategy ledger still governs retries.  Never infer
+    # FAIL as researchable and never downgrade PASS.
+    statuses = _mapping(context.get("profile_gate_statuses"))
+    for gate, raw_status in statuses.items():
+        gate_name = str(gate or "").strip()
+        if not gate_name or gate_name in result or gate_name not in _GATE_STRATEGY:
+            continue
+        status = str(_mapping(raw_status).get("status") or "").strip().upper()
+        if status == "UNKNOWN":
+            result[gate_name] = "PROFILE_GATE_STATUS_UNKNOWN"
     return result
 
 
@@ -140,6 +165,10 @@ def gate_evidence_fingerprint(
     return hashlib.sha256(encoded).hexdigest()[:20]
 
 
+def _attempt_blocks_replan(entry: Mapping[str, Any]) -> bool:
+    return str(entry.get("attempt_status") or "") != _WORKSET_BLOCKED_STATUS
+
+
 def _same_attempt(
     entry: Mapping[str, Any],
     *,
@@ -191,6 +220,16 @@ def reconcile_ledger(
         if accepted_deep_run_id and observed_deep_run_id != accepted_deep_run_id:
             continue
 
+        workset_blocker = _profile_workset_blocker(row)
+        if workset_blocker:
+            entry["attempt_status"] = _WORKSET_BLOCKED_STATUS
+            entry["new_evidence_acquired"] = None
+            entry["gate_changed"] = None
+            entry["strategy_exhausted"] = False
+            entry["workset_coverage_blocked"] = True
+            entry["workset_coverage_reason"] = workset_blocker
+            continue
+
         gates = unresolved_gates(row)
         gate = str(entry.get("hard_gate") or "")
         previous_reason = str(entry.get("unresolved_reason") or "")
@@ -234,7 +273,7 @@ def plan_strategy_attempts(
     code = _code(row.get("entity_id"))
     stock_fingerprint = evidence_fingerprint(row)
     gates = unresolved_gates(row)
-    if not code or not gates:
+    if not code or not gates or _profile_workset_blocker(row):
         return []
 
     normalized = normalize_ledger(ledger)
@@ -249,7 +288,8 @@ def plan_strategy_attempts(
             unresolved_reason=reason,
         )
         already_attempted = any(
-            _same_attempt(
+            _attempt_blocks_replan(entry)
+            and _same_attempt(
                 entry,
                 code=code,
                 gate=gate,
@@ -301,7 +341,8 @@ def append_attempts(
         if not code or not gate or not strategy or not fingerprint:
             continue
         if any(
-            _same_attempt(
+            _attempt_blocks_replan(entry)
+            and _same_attempt(
                 entry,
                 code=code,
                 gate=gate,
