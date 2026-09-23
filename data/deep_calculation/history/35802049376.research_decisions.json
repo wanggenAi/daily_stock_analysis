@@ -1,6 +1,99 @@
 {
   "all_requested_terminal": true,
   "automatic_formal_buy_allowed": false,
+  "capital_action_counts": {
+    "BLOCK": 7,
+    "BUILD": 0,
+    "PROBE": 1,
+    "WATCH": 5
+  },
+  "capital_advisory_authority": "ADVISORY_ONLY",
+  "capital_advisory_automatic_execution_allowed": false,
+  "capital_model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+  "capital_probe_queue": [
+    {
+      "capital_allocation": {
+        "action": "PROBE",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.596,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.9,
+        "evidence_score": 0.74,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.7614,
+        "reason": "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN",
+        "suggested_max_portfolio_pct": 0.72,
+        "uncertainty_penalty": 0.12,
+        "unknown_weight": 0.4,
+        "valuation_score": 0.531
+      },
+      "code": "603105",
+      "formal_buy_authorized": false,
+      "hard_gate_failures": [],
+      "hard_gate_pass_count": 3,
+      "hard_gate_unknowns": [
+        "long_term_demand",
+        "moat"
+      ],
+      "industry": "D44电力、热力生产和供应业",
+      "name": "芯能科技",
+      "no_auto_trade": true,
+      "quant_score": 76.1386,
+      "quant_status": "PRIORITY_RESEARCH",
+      "reopen_on_new_evidence": true,
+      "research_authority": "RESEARCH_ONLY",
+      "research_decision": "RESEARCH_GAP",
+      "research_priority": "P1",
+      "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+      "screening_attractiveness": "NORMAL",
+      "success_archetype_id": "",
+      "success_archetype_similarity_score": null,
+      "urgent_research": false,
+      "urgent_research_reasons": [],
+      "valuation": {
+        "current_pe": 22.06,
+        "earnings_quality_confidence": "HIGH",
+        "earnings_quality_score": 90.0,
+        "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        "financial_gate_diagnostics": {
+          "blockers": [],
+          "cash_conversion_pass_threshold": 0.8,
+          "cash_conversion_ratio": 4.0656,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_pass_threshold": 70.0,
+          "earnings_quality_score": 90.0,
+          "financial_disclosure_date": "2026-08-26",
+          "financial_review_status": "OK",
+          "machine_financial_pass_ready": true,
+          "normalized_core_operating_profit": 26104678.29,
+          "operating_cash_flow": 98119160.01
+        },
+        "financial_review_status": "OK",
+        "historical_median_pe_reference": 27.2,
+        "pe_to_history_ratio": 0.8110294117647059,
+        "required_profit_growth_pct": -18.897058823529413
+      }
+    }
+  ],
   "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
   "decision_counts": {
     "BUY": 0,
@@ -9,8 +102,8 @@
     "WAIT_PRICE": 0
   },
   "formal_trading_authority": false,
-  "generated_at": "2026-09-23T00:35:09+00:00",
-  "interpretation": "BUY/WAIT_PRICE are research-only outputs and never create Formal/Production authority. UNKNOWN hard gates remain explicit RESEARCH_GAP after bounded evidence recovery; only explicit hard-gate failure is REJECT.",
+  "generated_at": "2026-09-23T02:59:17+00:00",
+  "interpretation": "Research truth and capital sizing are separate: UNKNOWN never becomes PASS or Formal BUY, but bounded manual PROBE sizing may be suggested when critical financial gates are explicitly PASS and valuation/quant evidence compensates for limited noncritical uncertainty.",
   "no_auto_trade": true,
   "requested_count": 13,
   "research_authority": "RESEARCH_ONLY",
@@ -18,6 +111,40 @@
   "source_every_industry_run_id": "35776816635",
   "terminal_rows": [
     {
+      "capital_allocation": {
+        "action": "PROBE",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.596,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.9,
+        "evidence_score": 0.74,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.7614,
+        "reason": "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN",
+        "suggested_max_portfolio_pct": 0.72,
+        "uncertainty_penalty": 0.12,
+        "unknown_weight": 0.4,
+        "valuation_score": 0.531
+      },
       "code": "603105",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -66,6 +193,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "WATCH",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.5614,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.9,
+        "evidence_score": 0.636,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.7023,
+        "reason": "SPECIALIZED_VALUATION_REQUIRED",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.168,
+        "unknown_weight": 0.56,
+        "valuation_score": 0.7981
+      },
       "code": "601236",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -115,6 +276,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.0682,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.25,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.5831,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.2962
+      },
       "code": "002042",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -168,6 +363,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.3344,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.82,
+        "evidence_score": 0.454,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.5672,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.252,
+        "unknown_weight": 0.84,
+        "valuation_score": 0.6735
+      },
       "code": "603369",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -220,6 +449,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.0,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.0,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.5581,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.0
+      },
       "code": "600916",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -278,6 +541,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.2403,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.67,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.5409,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.7664
+      },
       "code": "600610",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -332,6 +629,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "WATCH",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.3228,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.77,
+        "evidence_score": 0.636,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.5288,
+        "reason": "EXPECTATION_REQUIRES_GROWTH",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.168,
+        "unknown_weight": 0.56,
+        "valuation_score": 0.0606
+      },
       "code": "603883",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -381,6 +712,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.1473,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.25,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.5276,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.6573
+      },
       "code": "600640",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -434,6 +799,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "WATCH",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.4933,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.77,
+        "evidence_score": 0.766,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.5267,
+        "reason": "PRICE_MARGIN_TOO_SMALL_FOR_UNCERTAIN_PROBE",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.108,
+        "unknown_weight": 0.36,
+        "valuation_score": 0.2961
+      },
       "code": "600309",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -482,6 +881,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.1402,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.67,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3776,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.4965
+      },
       "code": "600406",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -538,6 +971,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "WATCH",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.5064,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.9,
+        "evidence_score": 0.636,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3622,
+        "reason": "UNCERTAINTY_OR_EDGE_NOT_STRONG_ENOUGH",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.168,
+        "unknown_weight": 0.56,
+        "valuation_score": 0.8503
+      },
       "code": "001316",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -589,6 +1056,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.1702,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.65,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3311,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.666
+      },
       "code": "601318",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -644,6 +1145,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "WATCH",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.6564,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.77,
+        "evidence_score": 0.896,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3135,
+        "reason": "SPECIALIZED_VALUATION_REQUIRED",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.048,
+        "unknown_weight": 0.16,
+        "valuation_score": 0.6712
+      },
       "code": "603993",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -696,6 +1231,40 @@
   "unknown_is_pass": false,
   "urgent_research_queue": [
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.1402,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.67,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3776,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.4965
+      },
       "code": "600406",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -752,6 +1321,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "WATCH",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.5064,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.9,
+        "evidence_score": 0.636,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3622,
+        "reason": "UNCERTAINTY_OR_EDGE_NOT_STRONG_ENOUGH",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.168,
+        "unknown_weight": 0.56,
+        "valuation_score": 0.8503
+      },
       "code": "001316",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -803,6 +1406,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "BLOCK",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.1702,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": false,
+        "earnings_quality_component": 0.65,
+        "evidence_score": 0.35,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3311,
+        "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.3,
+        "unknown_weight": 1.0,
+        "valuation_score": 0.666
+      },
       "code": "601318",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],
@@ -858,6 +1495,40 @@
       }
     },
     {
+      "capital_allocation": {
+        "action": "WATCH",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.6564,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.77,
+        "evidence_score": 0.896,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.3135,
+        "reason": "SPECIALIZED_VALUATION_REQUIRED",
+        "suggested_max_portfolio_pct": 0.0,
+        "uncertainty_penalty": 0.048,
+        "unknown_weight": 0.16,
+        "valuation_score": 0.6712
+      },
       "code": "603993",
       "formal_buy_authorized": false,
       "hard_gate_failures": [],

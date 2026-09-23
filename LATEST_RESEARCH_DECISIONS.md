@@ -12,6 +12,12 @@
 - 601318 中国平安: quant=33.1137, PE/history=0.7503001200480192, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
 - 603993 洛阳钼业: quant=31.3451, PE/history=0.7479546054367907, unknown=predictability, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
 
+## Risk-budget capital advisory
+
+- BUILD: **0** / PROBE: **1** / WATCH: **5** / BLOCK: **7**
+- Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
+- 603105 芯能科技: **PROBE** / conviction=0.596 / max_portfolio=0.72%
+
 ## Terminal rows
 
 - 603105 芯能科技: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
