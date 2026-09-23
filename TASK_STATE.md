@@ -25,7 +25,8 @@ VALUATION_PRICE_CLOSURE_IMPLEMENTATION
 - `fix/valuation-price-closure-20260923`
 
 ## Active PR
-- Not opened yet at this checkpoint.
+- #294 `fix: close five-gate leads through valuation and price`.
+- PR branch is intentionally based on the last code baseline; observed live-main drift before PR creation was production/data persistence only, with no overlapping code files.
 
 ## Proven Production Defect
 - `603596 伯特利` is the concrete regression case.
@@ -67,18 +68,24 @@ A later Deep workset that excludes 603596 must not erase its valuation-closed re
 - Confirmed this is a routing + terminal persistence defect, not a missing business-quality analysis problem.
 - Created the fresh implementation branch from current live main.
 - Recorded the defect and required acceptance behavior here before code changes.
+- Added Jev `VALUATION_CLOSURE` typed route and price-reference context.
+- Added deterministic 5/5-PASS valuation-closure override without lowering the global 0.50 Jev confidence gate.
+- Added Terminal carry-forward for current 5/5-PASS priority follow-ups omitted by a later bounded Deep workset.
+- Added explicit research buy-price ceiling derived from the existing `PE_BUY_RATIO=0.80` policy.
+- Added 603596-shaped regression coverage across Jev schema, routing, orchestrator, workflow handoff, and Terminal persistence.
+- Opened PR #294; CI/merge/production verification remain pending.
 
 ## Blockers
 - None requiring user action.
 
 ## Next Action
-1. Patch Jev schema/routing bridge.
-2. Patch deterministic orchestrator and workflow handoff.
-3. Patch Terminal carry-forward closure and explicit research buy-price ceiling.
-4. Add 603596-shaped regression tests and workflow-contract tests.
-5. Update docs/changelog.
-6. Run PR CI; merge only if blocking CI is green.
-7. Run fresh production Jev -> Orchestrator -> Terminal -> Three-Pillar verification and confirm 603596 no longer falls back to preliminary-only state.
+1. Read #294 newest-head CI and fix any real failures without weakening the contract.
+2. Merge #294 only when blocking CI is green and the PR is mergeable.
+3. Verify post-merge main checks.
+4. Run/observe fresh production Jev -> deterministic Orchestrator -> Terminal -> Three-Pillar lineage.
+5. Confirm 603596 reaches durable valuation closure rather than low-confidence HUMAN_REVIEW/NOOP or preliminary-only fallback.
+6. Confirm Terminal exposes research BUY/WAIT_PRICE plus `research_buy_price_ceiling` while Formal BUY remains false.
+7. Persist final production checkpoint in this file.
 
 ## Do Not Repeat
 - Do not lower Jev 0.50 confidence threshold globally.
