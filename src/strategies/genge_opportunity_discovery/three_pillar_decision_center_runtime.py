@@ -562,7 +562,8 @@ def summarize_candidate_lifecycle(
     raw = dict(state or {})
     candidates = raw.get("candidates") if isinstance(raw.get("candidates"), Mapping) else {}
     active_rows: list[dict[str, Any]] = []
-    archived_count = 0
+    dormant_count = 0
+    archived_or_invalidated_count = 0
     event_count = 0
     tier_counts: Counter[str] = Counter()
     by_code: dict[str, dict[str, Any]] = {}
@@ -589,8 +590,10 @@ def summarize_candidate_lifecycle(
         if state_name == "ACTIVE":
             active_rows.append(item)
             tier_counts[item["research_tier"]] += 1
-        else:
-            archived_count += 1
+        elif state_name == "DORMANT":
+            dormant_count += 1
+        elif state_name in {"ARCHIVED", "INVALIDATED"}:
+            archived_or_invalidated_count += 1
     active_rows.sort(key=lambda row: (-row["seen_count"], row["code"]))
     focus = []
     for code in focus_codes or []:
@@ -603,7 +606,8 @@ def summarize_candidate_lifecycle(
         "latest_applied_snapshot_id": str(raw.get("latest_applied_snapshot_id") or ""),
         "latest_research_as_of": str(raw.get("latest_research_as_of") or ""),
         "active_candidate_count": len(active_rows),
-        "archived_or_invalidated_count": archived_count,
+        "dormant_research_candidate_count": dormant_count,
+        "archived_or_invalidated_count": archived_or_invalidated_count,
         "lifecycle_event_count": event_count,
         "tier_counts": dict(tier_counts),
         "focus_candidates": focus,
@@ -715,7 +719,7 @@ def _attach_capability_visibility(
         {
             "capability": "Candidate Lifecycle 持续研究记忆",
             "status": "ACTIVE" if lifecycle.get("available") else "MISSING",
-            "result": f"active={lifecycle.get('active_candidate_count', 0)} / events={lifecycle.get('lifecycle_event_count', 0)} / focus={len(lifecycle.get('focus_candidates') or [])}",
+            "result": f"active={lifecycle.get('active_candidate_count', 0)} / dormant={lifecycle.get('dormant_research_candidate_count', 0)} / archived-invalidated={lifecycle.get('archived_or_invalidated_count', 0)} / events={lifecycle.get('lifecycle_event_count', 0)} / focus={len(lifecycle.get('focus_candidates') or [])}",
         },
         {
             "capability": "Deep 五类硬门槛 + 官方证据",
@@ -1040,7 +1044,7 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
             for row in ((payload.get("system_capability_visibility") or {}).get("capabilities") or [])
         ],
         "",
-        f"- Candidate Lifecycle：当前 ACTIVE **{(payload.get('candidate_lifecycle') or {}).get('active_candidate_count', 0)}**；累计生命周期事件 **{(payload.get('candidate_lifecycle') or {}).get('lifecycle_event_count', 0)}**。这意味着历史候选会持续研究，而不是第二天扫描不到就消失。",
+        f"- Candidate Lifecycle：当前 ACTIVE **{(payload.get('candidate_lifecycle') or {}).get('active_candidate_count', 0)}**；DORMANT **{(payload.get('candidate_lifecycle') or {}).get('dormant_research_candidate_count', 0)}**；ARCHIVED/INVALIDATED **{(payload.get('candidate_lifecycle') or {}).get('archived_or_invalidated_count', 0)}**；累计生命周期事件 **{(payload.get('candidate_lifecycle') or {}).get('lifecycle_event_count', 0)}**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。",
         "- 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。",
         "",
         "### 当前持仓的持续研究记忆",
