@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-23T09:18:26+00:00",
+  "generated_at": "2026-09-23T09:28:13+00:00",
   "latest_trade_date": "2026-09-22",
   "canonical_snapshot_id": "538269c3908f97c328d1",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -36,6 +36,7 @@
     "research_reject_count": 0,
     "urgent_evidence_queue_count": 0,
     "research_capital_probe_count": 0,
+    "deep_qualified_research_lead_count": 1,
     "holding_valuation_continuity_match_count": 4,
     "active_candidate_lifecycle_count": 123,
     "lifecycle_event_count": 9953,
@@ -1302,7 +1303,32 @@
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false,
     "research_actionable_count": 0,
-    "research_terminal_current": true
+    "research_terminal_current": true,
+    "deep_qualified_research_leads": [
+      {
+        "code": "603596",
+        "name": "伯特利",
+        "industry": "C36汽车制造业",
+        "hard_gate_pass_count": 5,
+        "hard_gate_total_count": 5,
+        "hard_gate_statuses": {
+          "earnings_authenticity": "PASS",
+          "financial_safety": "PASS",
+          "long_term_demand": "PASS",
+          "moat": "PASS",
+          "predictability": "PASS"
+        },
+        "research_authority": "RESEARCH_ONLY",
+        "formal_buy_authorized": false,
+        "automatic_execution_allowed": false,
+        "account_action": "DO_NOT_BUY_YET",
+        "research_action": "CONTINUE_VALUATION_PRICE_AND_AUTHORITY_CLOSURE",
+        "no_auto_trade": true
+      }
+    ],
+    "deep_qualified_research_lead_count": 1,
+    "deep_qualified_research_authority": "RESEARCH_ONLY",
+    "deep_qualified_research_formal_buy_authorized": false
   },
   "today_account_plan": {
     "question": "今天账户里的钱具体怎么处理？",
@@ -1339,7 +1365,8 @@
     "deep_review_profile_current_for_runtime": true,
     "terminal_research_snapshot_available": true,
     "terminal_research_current_for_deep_runtime": true,
-    "terminal_research_all_requested_terminal": true
+    "terminal_research_all_requested_terminal": true,
+    "deep_qualified_research_leads_current": true
   },
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
