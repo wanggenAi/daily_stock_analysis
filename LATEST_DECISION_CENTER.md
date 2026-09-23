@@ -96,7 +96,7 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=126 / events=8043 / focus=4 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=3 / verified-pass=207 / unresolved=15 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35831231832 / unverified-pass=0 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35832239949 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=0 / WAIT=0 / GAP=3 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
@@ -114,10 +114,10 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35830941131`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35831920970`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`35830941131`
-- 触发来源：`JEV_ORCHESTRATOR_35830602991`
+- Lambda run：`35831920970`
+- 触发来源：`JEV_ORCHESTRATOR_35831581691`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
@@ -127,14 +127,14 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 - 尚未解决硬门槛：**15**。
 - 未决原因摘要：涉及 3 只；门槛分布：earnings_authenticity×3、financial_safety×3、long_term_demand×3、moat×3、predictability×3；Top原因：SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×3、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×3、OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×3、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×3、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×2；样例：000504[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；600816[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；601020[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`35830941131`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`35831920970`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`35830941131`；当前 Lambda：`35830941131`。
+- 终态来源 Lambda：`35831920970`；当前 Lambda：`35831920970`。
 - 请求：**3**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**3**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
 - 风险预算层 BUILD/PROBE 候选：**0**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
