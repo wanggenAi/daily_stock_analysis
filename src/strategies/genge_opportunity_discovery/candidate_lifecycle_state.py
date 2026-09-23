@@ -29,9 +29,10 @@ from .canonical_snapshot import validate_snapshot
 
 LIFECYCLE_CONTRACT_VERSION = "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1"
 ACTIVE = "ACTIVE"
+DORMANT = "DORMANT"
 ARCHIVED = "ARCHIVED"
 INVALIDATED = "INVALIDATED"
-_ALLOWED_STATES = {ACTIVE, ARCHIVED, INVALIDATED}
+_ALLOWED_STATES = {ACTIVE, DORMANT, ARCHIVED, INVALIDATED}
 
 SYSTEM_NEW = "NEW"
 SYSTEM_RESEEN = "RESEEN"
@@ -43,6 +44,8 @@ EXPLICIT_PRICE_ONLY_CHANGE = "PRICE_ONLY_CHANGE"
 EXPLICIT_ARCHIVED = "ARCHIVED"
 EXPLICIT_INVALIDATED = "INVALIDATED"
 EXPLICIT_REACTIVATED = "REACTIVATED"
+RESEARCH_EXHAUSTED = "RESEARCH_EXHAUSTED"
+RESEARCH_REACTIVATED = "RESEARCH_REACTIVATED"
 _EXPLICIT_EVENTS = {
     EXPLICIT_UPGRADED,
     EXPLICIT_DOWNGRADED,
@@ -50,6 +53,8 @@ _EXPLICIT_EVENTS = {
     EXPLICIT_ARCHIVED,
     EXPLICIT_INVALIDATED,
     EXPLICIT_REACTIVATED,
+    RESEARCH_EXHAUSTED,
+    RESEARCH_REACTIVATED,
 }
 
 _DURABLE_PRODUCTION_ENTRY_ACTIONS = {"BUY", "ADD", "REDUCE", "EXIT"}
@@ -480,14 +485,26 @@ def apply_explicit_transition(
         new_state = ARCHIVED
     elif event_name == EXPLICIT_INVALIDATED:
         new_state = INVALIDATED
+    elif event_name == RESEARCH_EXHAUSTED:
+        if transition.get("is_current_holding") is not False:
+            raise ValueError("RESEARCH_EXHAUSTED is forbidden for current holdings")
+        if prior_state not in {ACTIVE, DORMANT}:
+            raise ValueError("RESEARCH_EXHAUSTED requires an ACTIVE/DORMANT candidate")
+        new_state = DORMANT
+    elif event_name == RESEARCH_REACTIVATED:
+        if prior_state != DORMANT:
+            raise ValueError("RESEARCH_REACTIVATED requires a DORMANT candidate")
+        if transition.get("research_evidence_changed") is not True:
+            raise ValueError("RESEARCH_REACTIVATED requires changed research evidence")
+        new_state = ACTIVE
     elif event_name == EXPLICIT_REACTIVATED:
-        if prior_state not in {ARCHIVED, INVALIDATED}:
-            raise ValueError("REACTIVATED requires an Archived/INVALIDATED candidate")
+        if prior_state not in {ARCHIVED, INVALIDATED, DORMANT}:
+            raise ValueError("REACTIVATED requires an Archived/INVALIDATED/DORMANT candidate")
         new_state = ACTIVE
     else:
         new_state = prior_state
 
-    if prior_state in {ARCHIVED, INVALIDATED} and event_name in {
+    if prior_state in {DORMANT, ARCHIVED, INVALIDATED} and event_name in {
         EXPLICIT_UPGRADED,
         EXPLICIT_DOWNGRADED,
         EXPLICIT_PRICE_ONLY_CHANGE,
@@ -511,7 +528,9 @@ def apply_explicit_transition(
         "prior_lifecycle_state": prior_state,
         "lifecycle_state_after": new_state,
         "target_tier": target_tier,
-        "automatic_reactivation": False,
+        "automatic_reactivation": event_name == RESEARCH_REACTIVATED,
+        "research_evidence_changed": transition.get("research_evidence_changed") is True,
+        "research_evidence_epoch": str(transition.get("research_evidence_epoch") or ""),
     }
     _append_event(candidate, event)
     next_state["event_count"] = int(next_state.get("event_count") or 0) + 1
