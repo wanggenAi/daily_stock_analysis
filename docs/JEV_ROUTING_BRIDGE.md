@@ -45,6 +45,13 @@ qualifying `main` push persists:
 The persistence job owns the write permission. The secret-bearing live PR job remains
 `contents: read`; PR smoke runs upload artifacts but never persist them to `main`.
 
+A persisted research-priority change under `data/research_priority/**` is also an
+explicit main-branch wake signal for Jev. This matters because Research Learning can
+promote an already-qualified candidate into the bounded priority queue without changing
+Jev source code. The wake only refreshes the 25-entity advisory evaluation and its
+deterministic downstream routing; it does not expand Formal authority, change research
+thresholds, or enable automatic trading.
+
 ## Automatic research dispatch boundary
 
 The routing bridge itself remains advisory: `automatic_dispatch_allowed=false`.
