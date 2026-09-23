@@ -22,6 +22,7 @@ on:
       - ".github/workflows/genge-jev-orchestration-reconciler.yml"
       - ".github/workflows/genge-v31-deep-calculation-lambda.yml"
       - "tests/test_jev_orchestration_reconciler_workflow.py"
+      - "tests/test_jev_continuation_cursor_persistence.py"
       - "tests/test_genge_v31_deep_calculation_workflow_contract.py"
 
 permissions:
@@ -56,6 +57,7 @@ jobs:
           python -m pip install -r .github/requirements-ci.txt
           python -m pytest -q \
             tests/test_jev_orchestration_reconciler_workflow.py \
+            tests/test_jev_continuation_cursor_persistence.py \
             tests/test_genge_v31_deep_calculation_workflow_contract.py
 
   reconcile:
@@ -354,6 +356,67 @@ jobs:
           fi
 
           echo "jev_run_id=$existing" >> "$GITHUB_OUTPUT"
+
+      - name: Persist accepted continuation Jev cursor
+        if: steps.continuation.outputs.jev_run_id != ''
+        env:
+          DEEP_RUN_ID: ${{ steps.inspect.outputs.deep_run_id }}
+          JEV_RUN_ID: ${{ steps.continuation.outputs.jev_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$DEEP_RUN_ID" =~ ^[0-9]+$ ]]
+          [[ "$JEV_RUN_ID" =~ ^[0-9]+$ ]]
+
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            marker="data/jev_shadow/orchestration/latest.json"
+            [ -s "$marker" ] || exit 0
+
+            marker_deep="$(jq -r '.deep_run_id // ""' "$marker")"
+            continuation_deep="$(jq -r '.continuation_from_deep_run_id // ""' "$marker")"
+            if [ "$marker_deep" != "$DEEP_RUN_ID" ] || [ "$continuation_deep" != "$DEEP_RUN_ID" ]; then
+              echo "A newer Jev lineage owns the cursor; not overwriting it."
+              exit 0
+            fi
+
+            DEEP_RUN_ID="$DEEP_RUN_ID" JEV_RUN_ID="$JEV_RUN_ID" python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("data/jev_shadow/orchestration/latest.json")
+          payload = json.loads(path.read_text(encoding="utf-8"))
+          assert str(payload.get("deep_run_id") or "") == os.environ["DEEP_RUN_ID"]
+          assert str(payload.get("continuation_from_deep_run_id") or "") == os.environ["DEEP_RUN_ID"]
+          current_state = str(payload.get("continuation_jev_state") or "")
+          current_run = str(payload.get("continuation_jev_run_id") or "")
+          if current_state == "DISPATCH_ACCEPTED" and current_run == os.environ["JEV_RUN_ID"]:
+              raise SystemExit(0)
+          assert current_state in {"PENDING", "DISPATCH_ACCEPTED"}
+          if current_state == "DISPATCH_ACCEPTED":
+              assert current_run in {"", os.environ["JEV_RUN_ID"]}
+          payload["continuation_jev_state"] = "DISPATCH_ACCEPTED"
+          payload["continuation_jev_run_id"] = os.environ["JEV_RUN_ID"]
+          payload["updated_at"] = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+          path.write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+            git add -f "$marker"
+            if git diff --cached --quiet; then
+              exit 0
+            fi
+            git commit -m "Persist accepted Jev continuation $JEV_RUN_ID [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            [ "$attempt" -lt 4 ] || exit 1
+          done
 
       - name: Publish reconciliation summary
         if: always()
