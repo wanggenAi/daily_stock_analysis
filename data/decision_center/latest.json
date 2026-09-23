@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-23T07:37:27+00:00",
+  "generated_at": "2026-09-23T08:14:18+00:00",
   "latest_trade_date": "2026-09-22",
   "canonical_snapshot_id": "538269c3908f97c328d1",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -37,7 +37,7 @@
     "urgent_evidence_queue_count": 0,
     "research_capital_probe_count": 0,
     "holding_valuation_continuity_match_count": 4,
-    "active_candidate_lifecycle_count": 126,
+    "active_candidate_lifecycle_count": 123,
     "lifecycle_event_count": 8043,
     "investor_action_report_complete": true,
     "investor_evidence_complete": false
@@ -55,8 +55,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.38,
-        "pnl_pct": -3.22,
+        "current_price": 22.23,
+        "pnl_pct": -3.87,
         "formal_action": "REDUCE_25",
         "investor_action": "维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）",
         "neutral_value": 17.457807170543802,
@@ -137,8 +137,8 @@
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 28.44,
-        "pnl_pct": 10.47,
+        "current_price": 28.9,
+        "pnl_pct": 12.25,
         "formal_action": "HOLD_REVIEW",
         "investor_action": "持有观察",
         "neutral_value": 49.36957125214809,
@@ -219,8 +219,8 @@
         "name": "中国平安",
         "quantity": 400,
         "average_cost": 55.9658,
-        "current_price": 53.87,
-        "pnl_pct": -3.74,
+        "current_price": 54.46,
+        "pnl_pct": -2.69,
         "formal_action": "HOLD",
         "investor_action": "继续持有",
         "neutral_value": 83.07,
@@ -301,8 +301,8 @@
         "name": "洛阳钼业",
         "quantity": 1100,
         "average_cost": 18.6244,
-        "current_price": 17.66,
-        "pnl_pct": -5.18,
+        "current_price": 17.81,
+        "pnl_pct": -4.37,
         "formal_action": "HOLD",
         "investor_action": "继续持有；历史分批加仓授权已消费，本轮新增可执行0股",
         "neutral_value": 28.12766979232306,
@@ -388,7 +388,7 @@
       "as_of_date": "2026-09-22",
       "status": "YELLOW",
       "data_quality": "OK",
-      "allow_new_buy": true,
+      "allow_new_buy": false,
       "score": 57.74,
       "position_multiplier": 0.5,
       "advance_ratio": 0.4313,
@@ -1307,14 +1307,14 @@
   "today_account_plan": {
     "question": "今天账户里的钱具体怎么处理？",
     "available_cash_cny": 50000.0,
-    "deployment_budget_cny": 25000.0,
+    "deployment_budget_cny": 0.0,
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
-    "market_session_state": "CLOSED",
-    "market_data_status": "OFF_SESSION",
-    "live_quote_applied_count": 4,
-    "live_quote_expected_count": 4,
+    "market_session_state": "UNKNOWN",
+    "market_data_status": "UNAVAILABLE",
+    "live_quote_applied_count": 0,
+    "live_quote_expected_count": 0,
     "live_quote_coverage_complete": true,
     "immediate_execution_ready": false,
     "cash_action": "KEEP_CASH",
@@ -1448,11 +1448,11 @@
     "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
     "latest_applied_snapshot_id": "538269c3908f97c328d1",
     "latest_research_as_of": "2026-09-23T07:12:19Z",
-    "active_candidate_count": 126,
-    "archived_or_invalidated_count": 0,
+    "active_candidate_count": 123,
+    "archived_or_invalidated_count": 3,
     "lifecycle_event_count": 8043,
     "tier_counts": {
-      "PENDING": 126
+      "PENDING": 123
     },
     "focus_candidates": [
       {
@@ -1684,7 +1684,7 @@
       {
         "capability": "Candidate Lifecycle 持续研究记忆",
         "status": "ACTIVE",
-        "result": "active=126 / events=8043 / focus=4"
+        "result": "active=123 / events=8043 / focus=4"
       },
       {
         "capability": "Deep 五类硬门槛 + 官方证据",
@@ -1709,7 +1709,7 @@
       {
         "capability": "资金计划 + 执行价覆盖",
         "status": "ACTIVE",
-        "result": "cash=50000.0 / immediate=0.0 / quotes=4/4"
+        "result": "cash=50000.0 / immediate=0.0 / quotes=0/0"
       }
     ],
     "interpretation": "Only production-wired capabilities are shown here. A design doc or isolated module does not count as active.",
