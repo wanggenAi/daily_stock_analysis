@@ -1,56 +1,51 @@
 {
   "schema_version": 2,
-  "generation": 41,
+  "generation": 42,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "PR_293_NEWEST_HEAD_CI_RUNNING",
-  "last_observed_main_sha": "f4ac774009136facf82a40205069b1e22963e11f",
-  "work_branch": "fix/terminal-research-supersedes-qualified-20260923",
-  "work_head_sha": "1e3f9506921996d1642784d297db9f0c9b7878d1",
-  "active_pr": 293,
+  "stage": "PR_297_NEWEST_HEAD_CI_RUNNING",
+  "last_observed_main_sha": "cb29b5fa93cf939d6e0b00122b29e68ca64af37d",
+  "work_branch": "feat/jev-entry-judgment-main-replay-20260923",
+  "work_head_sha": "0b97e9cfb5bdc60da78bd8777f74a2abd4b4f5f9",
+  "active_pr": 297,
   "ci": {
-    "pr_292_merge_sha": "27e857007884c560db539581cb599a500389aaa3",
-    "continuation_jev_run_id": 35849969346,
-    "continuation_orchestrator_run_id": 35850186518,
-    "continuation_orchestrator_status": "SUCCESS_NOOP",
-    "pr_293_ci_run_id": 35855835509,
-    "pr_293_backend_job_id": 107164129071,
-    "pr_293_ci_status": "IN_PROGRESS_OFFLINE_TEST_SUITE",
-    "pr_293_other_required_surfaces": "GREEN"
+    "ci_run_id": 35877434660,
+    "jev_shadow_run_id": 35877434654,
+    "opportunity_discovery_run_id": 35877434613,
+    "legacy_risk_capped_run_id": 35877434559,
+    "jev_orchestrator_run_id": 35877434665,
+    "three_pillar_run_id": 35877434799,
+    "status": "CI_AND_JEV_SHADOW_IN_PROGRESS; OTHER_SURFACES_GREEN"
   },
   "production_or_artifact": {
-    "status": "DISPLAY_PRECEDENCE_FIX_PENDING_MERGE",
+    "status": "ENTRY_JUDGMENT_REPLAY_PENDING_MERGE",
     "verified": [
-      "Fresh TypeSafe/Jev run 35849969346 completed 25/25 using served model jev-1.13.0.",
-      "Exact deterministic Orchestrator run 35850186518 consumed that lineage and completed SUCCESS_NOOP because route confidence 0.46 was below the 0.50 auto-route gate.",
-      "No duplicate Deep dispatch was created by the continuation cycle.",
-      "PR #293 implements exact-current terminal-research precedence over the preliminary five-hard-gate research-qualified display without changing Formal authority.",
-      "Current live main has advanced to f4ac774009136facf82a40205069b1e22963e11f through production persistence; current production runtime is newer than the original 603596 overlap snapshot, so post-merge verification must test same-runtime layer exclusivity rather than require the old BUY snapshot to recur."
+      "#295 valuation/price closure is live.",
+      "603596 current Terminal source 35872063645 is 5/5 PASS, RESEARCH_ONLY BUY + advisory BUILD, reference price 29.15, research_buy_price_ceiling 43.716880222841226, max advisory research size 3.0%.",
+      "Latest persisted Jev source 35875806431 is still question-set V3; post-merge fresh V4 is required.",
+      "PR #297 is the clean current-main replay of stale #296; do not merge #296."
     ],
     "safety": [
-      "Jev remains advisory-only and deterministic guards own dispatch.",
-      "Research BUY/BUILD remains RESEARCH_ONLY / ADVISORY_ONLY.",
-      "Formal BUY authority is unchanged; UNKNOWN != PASS; no_auto_trade=true."
+      "Jev remains ADVISORY_ONLY.",
+      "Formal BUY=false; automatic execution=false; UNKNOWN != PASS; no_auto_trade=true."
     ]
   },
   "pending_operation": {
-    "type": "MERGE_PR_293_AFTER_NEWEST_HEAD_GREEN",
-    "require": "Consume CI run 35855835509. Merge PR #293 only if newest-head blocking backend-gate completes successfully, then verify live main and the post-merge Three-Pillar production refresh enforce terminal-over-preliminary display precedence and preserve authority separation."
+    "type": "MERGE_PR_297_AFTER_NEWEST_HEAD_GREEN",
+    "require": "Consume CI 35877434660 and Jev Shadow 35877434654 on head 0b97e9cf. Merge only if blocking checks are green, then verify live main and a fresh production V4 Jev -> persisted routing -> Three-Pillar acceptance for 603596."
   },
   "completed": [
-    "Merged #292 and verified its production wake behavior.",
-    "Completed real TypeSafe/Jev -> deterministic Orchestrator -> bounded Deep -> Provenance -> Terminal -> Investor Overlay -> Three-Pillar lineage.",
-    "Opened #293 with the minimal display-precedence fix, regression test, docs and TASK_STATE checkpoint.",
-    "PR #293 newest-head non-backend checks are green; backend offline suite is the only remaining blocking check."
+    "Skipped superseded #294/#295 stages already consumed by other execution chains.",
+    "Verified #295 production valuation/price closure for 603596.",
+    "Detected stale #296 and adopted clean replay PR #297 instead of duplicating work."
   ],
-  "next_action": "Re-read CI run 35855835509; if backend-gate is green, merge #293, then verify live main and post-merge Three-Pillar production output and persist final TASK_STATE/recovery state.",
+  "next_action": "Poll PR #297 newest-head CI; fix failures if any; merge when green; then consume fresh production V4 Jev and verify 603596 structured entry judgment end to end.",
   "do_not_repeat": [
-    "Do not reopen #292 or its consumed branch.",
-    "Do not rerun Jev 35849969346 or Deep 35849124866 merely to recreate old chat state.",
-    "Do not lower the Jev 0.50 confidence gate or any stock-selection threshold.",
-    "Do not promote research BUY/BUILD into Formal BUY.",
-    "Do not treat an in-progress or stalled CI run as green."
+    "Do not reopen #292/#293/#294/#295.",
+    "Do not merge stale #296.",
+    "Do not lower Jev 0.50 or hard-gate/selection thresholds.",
+    "Do not fabricate current price/valuation or promote research advice to Formal BUY."
   ],
-  "business_code_baseline_sha": "da1b8212b209ff17b823721b4a93dd12eee98f64"
+  "business_code_baseline_sha": "cb29b5fa93cf939d6e0b00122b29e68ca64af37d"
 }
