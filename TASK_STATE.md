@@ -4,79 +4,78 @@
 Turn the stock research system into a convergent autonomous opportunity engine that surfaces reference-worthy stock codes without fabricating certainty or forcing BUY.
 
 ## Current Phase
-DEEP_QUALIFIED_RESEARCH_VISIBILITY_AND_ROUTING
+JEV_RESEARCH_PRIORITY_WAKE_HANDOFF
 
 ## Source of Truth
 - Live GitHub refs, Actions, artifacts, and persisted data override this checkpoint.
 - Production bot persistence may advance main after any recorded SHA.
 
 ## Last Verified Main
-- PR #289 merged and production-verified research-exhaustion dormancy.
-- PR #290 merged and production-verified lifecycle visibility in the final decision center.
-- Main was re-read at `84c68d3937ca9f1cfb5e632a7bbe2c274dd9efdb` before this branch was created; re-read live main before merge/write verification.
+- PR #291 merged as `340dc244a8ea8c5ce75fcd6485e7b824238bf894`.
+- Research Learning production run `35842953818` succeeded and persisted the Deep-qualified priority layer.
+- Working branch was created from live main `021f76dad25264ecf7d17f234ba82016ae4be6ec`; re-read live main before merge and production verification.
 
 ## Active Branch
-- `fix/deep-qualified-research-visibility-20260923`
-- Scope: route current-runtime five-hard-gate PASS research leads into priority ordering and expose them in the final decision center without creating BUY/WAIT_PRICE authority.
+- `fix/jev-wake-on-research-priority-20260923`
+- Scope: make persisted Research Learning priority changes wake the existing TypeSafe/Jev production route; no threshold or authority change.
 
 ## Active PR
-- #291 `fix: surface deep-qualified research leads`.
-- Initial head `5f083545d0e55d1d0cc76ae82b697b16b24dd559`; this checkpoint update advances the head, so use the live PR head for merge verification.
+- Pending creation from the active branch.
 
 ## CI
-- PR #291 Three-Pillar contracts run `35839507326`: 27/27 focused tests passed.
-- PR #291 Jev Orchestrator contracts run `35839507307`: 35/35 focused tests passed.
-- Opportunity fixture, Near-BUY recovery, Success Archetype, Legacy Research, PR Review, governance and Docker checks passed on the initial PR head.
-- Blocking CI `35839507337`: syntax, flake8-critical and deterministic checks passed; offline suite was still running at this checkpoint.
-- This checkpoint commit intentionally retriggers PR checks; merge only after the newest head is green.
+- Branch contract adds a regression test that requires `GenGe Jev Shadow Evaluation` main-push paths to include `data/research_priority/**`.
+- PR blocking CI and same-repository Jev smoke must pass before merge.
 
 ## Production / Artifact
-- Candidate lifecycle is converged: ACTIVE=123, DORMANT=3, ARCHIVED/INVALIDATED=0.
-- DORMANT: 600816 建元信托, 601020 华钰矿业, 000504 南华生物; current holdings remain ACTIVE.
-- Canonical snapshot `538269c3908f97c328d1`: discovery=533, deep_review=382, production=0, holdings=4.
-- Every-Industry run `35829289957`: 843 valuation-research rows -> 500 Deep rows; 500/500 processed.
-- 603596 伯特利 is the only nonholding in that 500-row workset with all five Deep hard gates PASS. It still has no Formal BUY/WAIT_PRICE because valuation/price/authority closure is not complete.
+- Candidate lifecycle: ACTIVE=123, DORMANT=3, ARCHIVED/INVALIDATED=0.
+- Canonical snapshot remains Formal-authoritative; automatic Formal BUY=false.
+- Research Learning run `35842953818` places 603596 伯特利 at P1 with exact-current Deep 5/5 PASS lineage `35831920970`.
+- 603596 has no Formal BUY/WAIT_PRICE; valuation/price/authority closure remains incomplete.
+- Three-Pillar Decision Center already exposes 603596 only as a research-qualified lead with current account action 暂不买.
+- Latest persisted Jev advisory still predates PR #291 and therefore has not consumed the new 603596 P1 state.
 
 ## Actual TypeSafe/Jev Use
-- Current persisted Jev path uses TypeSafe and served model `jev-1.13.0`.
-- 001316 润贝航科 is P0/HIGH-attention but evidence remains insufficient; deterministic strategy ledger currently reports no novel supported strategy in its evidence epoch.
+- Persisted Jev path uses pinned `typesafe-sdk==0.7.0`, requested model `jev-latest`, and last observed served model `jev-1.13.0`.
+- Existing combined selection is holdings -> persisted research-priority queue -> remaining Deep unresolved continuity; 603596 is inside the bounded 25-entity window after the P1 promotion.
+- Root cause of the missing fresh cycle is wake-up wiring, not Jev selection order: the Jev workflow did not listen to `data/research_priority/**` main pushes.
 - Jev remains advisory-only; deterministic guards own dispatch; Formal trading authority remains false.
-- Current fix makes exact-current-runtime five-gate PASS candidates visible to the research-priority queue so future bounded Jev runs do not lose them behind generic P3 ordering.
 
 ## Completed
-- #289 dormancy implementation merged and production-verified.
-- #290 lifecycle display implementation merged and production-verified.
-- Full-A funnel audit traced 4514 valid -> 843 valuation research -> 500 Deep -> 1 five-gate-complete nonholding research lead.
-- Root cause identified: research-priority router did not consume current Deep qualification, and final decision center had no research-only display layer for fully resolved hard gates without Formal authority.
+- #289 research-exhaustion dormancy merged and production-verified.
+- #290 lifecycle visibility merged and production-verified.
+- #291 Deep-qualified research visibility merged and production-verified through Research Learning and Three-Pillar output.
+- 603596 is now visible as the sole nonholding current-runtime 5/5 PASS research lead and is P1 in the persisted priority queue.
+- Missing automatic wake handoff from Research Learning persistence to Jev was isolated to the Jev workflow push-path contract.
 
 ## Current Findings
-- Dominant issue is not broad discovery recall and should not be fixed by lowering thresholds.
-- 603596 伯特利: all five Deep hard gates PASS in current persisted profiles; generic valuation remains non-authoritative/incomplete, so BUY/WAIT_PRICE must remain absent.
-- 001316 润贝航科 remains visible and high priority; its remaining problem is evidence closure, not discovery loss.
-- A trustworthy report needs a distinct research-qualified layer between hard-gate completion and Formal trading action.
+- Broad discovery recall is not the current blocker and thresholds must not be lowered.
+- Jev selection already consumes the persisted priority queue in its existing order.
+- The missing `data/research_priority/**` push path prevents a new priority-only production state from waking Jev.
+- A fresh TypeSafe/Jev cycle is still required to record how 603596 is routed after its P1 promotion.
 
 ## In Progress
-- Research priority: exact current successful Deep profile with 5/5 PASS receives research-order-only boost; stale lineage or UNKNOWN receives none.
-- Decision center: expose nonholding 5/5 PASS profiles as RESEARCH_ONLY / DO_NOT_BUY_YET leads while keeping Canonical BUY/WAIT_PRICE unchanged.
-- Add regression tests for current lineage, stale lineage, UNKNOWN != PASS, and authority separation.
+- Add `data/research_priority/**` to the Jev main-push wake contract.
+- Add a workflow regression test and document the handoff.
+- Open PR, require green CI, merge, then verify the resulting 25-entity production Jev run and exact deterministic Orchestrator lineage.
 
 ## Blockers
 - No user/login/approval blocker.
-- Merge remains blocked until PR CI is green.
+- Merge is blocked only by the new PR's required CI.
 
 ## Next Action
-1. Finish PR #291 newest-head blocking CI and fix any regression without weakening authority or evidence rules.
-2. Merge only after blocking CI is green.
-3. Dispatch/rebuild Research Learning on production main and verify 603596 enters the research-priority/Jev candidate window.
-4. Verify a fresh TypeSafe/Jev -> deterministic Orchestrator cycle and record whether 603596 receives a useful route or truthful NOOP.
-5. Rebuild/verify Three-Pillar Decision Center and confirm 603596 is visible only as a research-qualified lead, never as Formal BUY/WAIT_PRICE.
-6. Persist the final production checkpoint and continue valuation-closure work only if a supported evidence/model path exists.
+1. Open the wake-handoff PR and verify its newest-head CI.
+2. Merge only when blocking CI is green.
+3. Verify the merge-triggered 25-entity TypeSafe/Jev production run contains 603596 and record its typed route, evidence state, attention priority, served model and lineage.
+4. Verify the deterministic Orchestrator consumes that exact Jev lineage and reaches either a supported research dispatch or a truthful NOOP/HUMAN_REVIEW terminal state.
+5. Re-read Three-Pillar output and confirm 603596 remains RESEARCH_ONLY / 暂不买 unless independent Canonical Formal authority has actually changed.
+6. Persist the final production checkpoint; continue valuation/price closure only if a supported evidence/model path exists.
 
 ## Do Not Repeat
 - Do not reopen consumed old branches or PRs without a newly proven regression.
 - Do not lower thresholds to force BUY/WAIT_PRICE.
 - Do not label missing evidence as FAIL.
 - Do not treat a research-qualified lead as a trading recommendation or Formal action.
+- Do not rerun old Jev lineage and call it fresh production verification.
 
 ## Guardrails
 - Jev is advisory research routing only; deterministic guards own dispatch.
