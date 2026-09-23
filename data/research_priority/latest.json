@@ -1,5 +1,5 @@
 {
-  "canonical_snapshot_id": "ede2069c9e422134ded6",
+  "canonical_snapshot_id": "538269c3908f97c328d1",
   "contract_version": "GEN_GE_RESEARCH_PRIORITY_ROUTER_V6_DEEP_QUALIFIED_FOLLOWUP",
   "deep_qualified_profile_changes_order_only": true,
   "deep_qualified_profile_changes_thresholds": false,
@@ -8,8 +8,8 @@
   "formal_action_eligible": false,
   "formal_action_recomputed": false,
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-  "generated_at": "2026-09-23T09:27:18.407682+00:00",
-  "mapping_gap_count": 7,
+  "generated_at": "2026-09-23T11:29:54.944021+00:00",
+  "mapping_gap_count": 9,
   "near_buy_recovery_changes_order_only": true,
   "near_buy_recovery_changes_thresholds": false,
   "near_buy_recovery_count": 0,
@@ -17,7 +17,7 @@
   "no_auto_trade": true,
   "p0_count": 4,
   "p1_count": 3,
-  "partial_mapping_gap_count": 1,
+  "partial_mapping_gap_count": 0,
   "queue": [
     {
       "code": "001316",
@@ -28,7 +28,7 @@
       "formal_action": "HOLD_REVIEW",
       "formal_action_eligible": false,
       "formal_action_recomputed": false,
-      "hourly_research_conclusion": "PRICE_ATTRACTIVE_RESEARCH_LEAD",
+      "hourly_research_conclusion": "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD",
       "lifecycle_state": "ACTIVE",
       "mapping_gaps": [
         "PEER"
@@ -40,7 +40,7 @@
       "priority_score": 110,
       "reason_codes": [
         "CURRENT_HOLDING",
-        "PRICE_ATTRACTIVE_RESEARCH_LEAD",
+        "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD",
         "HOURLY_PRIORITY_RAISE",
         "MAPPING_GAP"
       ],
@@ -51,7 +51,7 @@
       "success_archetype_id": null,
       "success_archetype_similarity_score": null,
       "success_archetype_source_quant_status": null,
-      "thesis_status": "NO_NEW_MATERIAL_EVIDENCE"
+      "thesis_status": "STRENGTHENING_RESEARCH_SIGNAL"
     },
     {
       "code": "601318",
@@ -156,16 +156,19 @@
       "formal_action_recomputed": false,
       "hourly_research_conclusion": "NEW_EVIDENCE_REUNDERWRITE_LEAD",
       "lifecycle_state": "DORMANT",
-      "mapping_gaps": [],
+      "mapping_gaps": [
+        "INDUSTRY"
+      ],
       "name": "南华生物",
       "near_buy_evidence_recovery_tier": null,
       "near_buy_missing_evidence_items": [],
       "priority": "P1",
-      "priority_score": 60,
+      "priority_score": 65,
       "reason_codes": [
         "RESEARCH_DORMANT_WAIT_NEW_EVIDENCE",
         "REUNDERWRITE_REQUIRED",
-        "HOURLY_PRIORITY_RAISE"
+        "HOURLY_PRIORITY_RAISE",
+        "MAPPING_GAP"
       ],
       "research_overlay_boost_combination": "MAX_NOT_SUM",
       "research_overlay_priority_boost": 0,
@@ -187,16 +190,19 @@
       "formal_action_recomputed": false,
       "hourly_research_conclusion": "NEW_EVIDENCE_REUNDERWRITE_LEAD",
       "lifecycle_state": "DORMANT",
-      "mapping_gaps": [],
+      "mapping_gaps": [
+        "INDUSTRY"
+      ],
       "name": "建元信托",
       "near_buy_evidence_recovery_tier": null,
       "near_buy_missing_evidence_items": [],
       "priority": "P1",
-      "priority_score": 60,
+      "priority_score": 65,
       "reason_codes": [
         "RESEARCH_DORMANT_WAIT_NEW_EVIDENCE",
         "REUNDERWRITE_REQUIRED",
-        "HOURLY_PRIORITY_RAISE"
+        "HOURLY_PRIORITY_RAISE",
+        "MAPPING_GAP"
       ],
       "research_overlay_boost_combination": "MAX_NOT_SUM",
       "research_overlay_priority_boost": 0,
@@ -212,7 +218,7 @@
       "deep_hard_gate_complete": true,
       "deep_hard_gate_pass_count": 5,
       "deep_hard_gate_total_count": 5,
-      "deep_profile_source_lambda_run_id": "35831920970",
+      "deep_profile_source_lambda_run_id": "35849124866",
       "formal_action": "",
       "formal_action_eligible": false,
       "formal_action_recomputed": false,
@@ -235,40 +241,6 @@
       "success_archetype_similarity_score": null,
       "success_archetype_source_quant_status": null,
       "thesis_status": "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"
-    },
-    {
-      "code": "601020",
-      "deep_hard_gate_complete": false,
-      "deep_hard_gate_pass_count": 0,
-      "deep_hard_gate_total_count": 5,
-      "deep_profile_source_lambda_run_id": null,
-      "formal_action": "",
-      "formal_action_eligible": false,
-      "formal_action_recomputed": false,
-      "hourly_research_conclusion": "FORMAL_ACTION_UNCHANGED",
-      "lifecycle_state": "DORMANT",
-      "mapping_gaps": [
-        "COMMODITY_PARTIAL",
-        "PEER"
-      ],
-      "name": "华钰矿业",
-      "near_buy_evidence_recovery_tier": null,
-      "near_buy_missing_evidence_items": [],
-      "priority": "P2",
-      "priority_score": 25,
-      "reason_codes": [
-        "RESEARCH_DORMANT_WAIT_NEW_EVIDENCE",
-        "HOURLY_PRIORITY_RAISE",
-        "MAPPING_GAP"
-      ],
-      "research_overlay_boost_combination": "MAX_NOT_SUM",
-      "research_overlay_priority_boost": 0,
-      "research_tier": "PENDING",
-      "success_archetype_evidence_coverage": null,
-      "success_archetype_id": null,
-      "success_archetype_similarity_score": null,
-      "success_archetype_source_quant_status": null,
-      "thesis_status": "NO_NEW_MATERIAL_EVIDENCE"
     },
     {
       "code": "000703",
@@ -434,6 +406,39 @@
       "priority_score": 20,
       "reason_codes": [
         "HOURLY_PRIORITY_RAISE"
+      ],
+      "research_overlay_boost_combination": "MAX_NOT_SUM",
+      "research_overlay_priority_boost": 0,
+      "research_tier": "PENDING",
+      "success_archetype_evidence_coverage": null,
+      "success_archetype_id": null,
+      "success_archetype_similarity_score": null,
+      "success_archetype_source_quant_status": null,
+      "thesis_status": "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"
+    },
+    {
+      "code": "601020",
+      "deep_hard_gate_complete": false,
+      "deep_hard_gate_pass_count": 0,
+      "deep_hard_gate_total_count": 5,
+      "deep_profile_source_lambda_run_id": null,
+      "formal_action": "",
+      "formal_action_eligible": false,
+      "formal_action_recomputed": false,
+      "hourly_research_conclusion": "FORMAL_ACTION_UNCHANGED",
+      "lifecycle_state": "DORMANT",
+      "mapping_gaps": [
+        "INDUSTRY"
+      ],
+      "name": "华钰矿业",
+      "near_buy_evidence_recovery_tier": null,
+      "near_buy_missing_evidence_items": [],
+      "priority": "P3",
+      "priority_score": 20,
+      "reason_codes": [
+        "RESEARCH_DORMANT_WAIT_NEW_EVIDENCE",
+        "HOURLY_PRIORITY_RAISE",
+        "MAPPING_GAP"
       ],
       "research_overlay_boost_combination": "MAX_NOT_SUM",
       "research_overlay_priority_boost": 0,
@@ -899,7 +904,7 @@
       "success_archetype_id": null,
       "success_archetype_similarity_score": null,
       "success_archetype_source_quant_status": null,
-      "thesis_status": "NO_NEW_MATERIAL_EVIDENCE"
+      "thesis_status": "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"
     },
     {
       "code": "000833",
@@ -1250,7 +1255,7 @@
       "success_archetype_id": null,
       "success_archetype_similarity_score": null,
       "success_archetype_source_quant_status": null,
-      "thesis_status": "NO_NEW_MATERIAL_EVIDENCE"
+      "thesis_status": "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"
     },
     {
       "code": "002468",
@@ -1331,7 +1336,7 @@
       "success_archetype_id": null,
       "success_archetype_similarity_score": null,
       "success_archetype_source_quant_status": null,
-      "thesis_status": "NO_NEW_MATERIAL_EVIDENCE"
+      "thesis_status": "LOW_MATERIALITY_OR_NEUTRAL_EVIDENCE_ONLY"
     },
     {
       "code": "002582",
@@ -2789,7 +2794,7 @@
       "success_archetype_id": null,
       "success_archetype_similarity_score": null,
       "success_archetype_source_quant_status": null,
-      "thesis_status": "NO_NEW_MATERIAL_EVIDENCE"
+      "thesis_status": "STRENGTHENING_RESEARCH_SIGNAL"
     },
     {
       "code": "601816",
