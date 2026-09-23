@@ -22,6 +22,7 @@ from typing import Any, Mapping
 
 from .candidate_lifecycle_state import (
     ACTIVE,
+    DORMANT,
     ARCHIVED,
     INVALIDATED,
     LIFECYCLE_CONTRACT_VERSION,
@@ -176,7 +177,7 @@ def bootstrap_state_from_legacy_ledger(path: Path) -> dict[str, Any]:
 
 def _candidate_sort_key(candidate: Mapping[str, Any]) -> tuple[int, int, str]:
     lifecycle = str(candidate.get("lifecycle_state") or "")
-    state_rank = {ACTIVE: 0, ARCHIVED: 1, INVALIDATED: 2}.get(lifecycle, 9)
+    state_rank = {ACTIVE: 0, DORMANT: 1, ARCHIVED: 2, INVALIDATED: 3}.get(lifecycle, 9)
     tier = str(candidate.get("research_tier") or "").upper()
     if tier.startswith("A1"):
         tier_rank = 0
@@ -199,7 +200,7 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
     candidates.sort(key=_candidate_sort_key)
 
     active = [row for row in candidates if row.get("lifecycle_state") == ACTIVE]
-    inactive = [row for row in candidates if row.get("lifecycle_state") in {ARCHIVED, INVALIDATED}]
+    inactive = [row for row in candidates if row.get("lifecycle_state") in {DORMANT, ARCHIVED, INVALIDATED}]
 
     lines = [
         "# V31_CANDIDATE_LEDGER",
@@ -249,7 +250,7 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
 
     lines.extend([
         "",
-        "## Archived / INVALIDATED candidate ledger",
+        "## Dormant / Archived / INVALIDATED candidate ledger",
         "",
         "| Code | Name | Lifecycle State | Tier | Seen | Last Snapshot | Last Event |",
         "| --- | --- | --- | --- | ---: | --- | --- |",
@@ -278,7 +279,7 @@ def render_ledger_projection(state: Mapping[str, Any]) -> str:
         "- `seen_count` counts distinct canonical observations since machine lifecycle migration; legacy counts are audit-only metadata.",
         "- Re-reading the same canonical snapshot is idempotent and must not increment `seen_count`.",
         "- Absence from a snapshot does not automatically archive or invalidate a candidate.",
-        "- Archived/INVALIDATED rediscovery requires explicit evidence-backed reactivation.",
+        "- DORMANT candidates reopen only on a changed research evidence epoch; Archived/INVALIDATED rediscovery still requires explicit evidence-backed reactivation.",
         "- Explicit upgrade/downgrade/archive/invalidate/reactivate events require unique evidence IDs.",
         "- The lifecycle state is downstream memory only; it must never filter broad Discovery.",
         "- Formal actions remain owned by a newly validated Canonical Snapshot, never by this ledger.",
