@@ -163,6 +163,55 @@ jobs:
           echo 'terminal research persistence failed after 4 replays' >&2
           exit 1
 
+      - name: Wake lineage-keyed Jev entry judgment after terminal convergence
+        id: jev_wake
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEEP_RUN_ID: ${{ steps.source.outputs.lambda_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          [[ "$DEEP_RUN_ID" =~ ^[0-9]+$ ]]
+
+          title="GenGe Jev Shadow Evaluation / $DEEP_RUN_ID"
+          existing="$(
+            gh api "repos/$GITHUB_REPOSITORY/actions/workflows/genge-jev-shadow-evaluation.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+              --jq ".workflow_runs[] | select(.display_title == \"$title\") | .id" \
+              | head -1
+          )"
+
+          if [ -z "$existing" ]; then
+            gh workflow run genge-jev-shadow-evaluation.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main \
+              -f continuation_deep_run_id="$DEEP_RUN_ID" \
+              -f scope=combined \
+              -f max_entities=25
+
+            for attempt in $(seq 1 20); do
+              existing="$(
+                gh api "repos/$GITHUB_REPOSITORY/actions/workflows/genge-jev-shadow-evaluation.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+                  --jq ".workflow_runs[] | select(.display_title == \"$title\") | .id" \
+                  | head -1
+              )"
+              [ -n "$existing" ] && break
+              sleep 3
+            done
+          fi
+
+          [[ "$existing" =~ ^[0-9]+$ ]] || {
+            echo "Jev wake outcome is ambiguous for Deep $DEEP_RUN_ID." >&2
+            exit 1
+          }
+
+          status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$existing" --jq '.status // ""')"
+          conclusion="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$existing" --jq '.conclusion // ""')"
+          if [ "$status" = "completed" ] && [ "$conclusion" != "success" ]; then
+            gh run rerun "$existing" --repo "$GITHUB_REPOSITORY"
+          fi
+
+          echo "jev_run_id=$existing" >> "$GITHUB_OUTPUT"
+
       - name: Refresh investor terminal overlay after terminal convergence
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
