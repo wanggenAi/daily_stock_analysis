@@ -232,3 +232,168 @@ def test_bridge_accepts_explicit_valuation_closure_route():
     assert payload["summary"]["route_counts"]["VALUATION_CLOSURE"] == 1
     assert payload["summary"]["actionable_research_count"] == 2
     assert payload["formal_trading_authority"] is False
+
+
+def _entry_ready_shadow(
+    judgment="ENTRY_NOW",
+    *,
+    reference_price=29.15,
+    buy_ceiling=43.71,
+    decision="BUY",
+    unknowns=None,
+    failures=None,
+    max_pct=3.0,
+):
+    shadow = _shadow()
+    row = shadow["rows"][0]
+    row["is_current_holding"] = False
+    row["existing_engine_action"] = f"RESEARCH:{decision}"
+    row["research_context"] = {
+        "research_decision": decision,
+        "hard_gate_pass_count": 5 if not unknowns and not failures else 4,
+        "hard_gate_failures": list(failures or []),
+        "hard_gate_unknowns": list(unknowns or []),
+        "deep_lambda_run_id": "deep-603596",
+    }
+    row["triage_context"] = {
+        "research_priority": "P1",
+        "urgent_research": True,
+        "valuation": {
+            "reference_price": reference_price,
+            "reference_trade_date": "2026-09-22",
+            "price_mapping_status": "OK",
+            "research_buy_price_ceiling": buy_ceiling,
+        },
+    }
+    row["capital_context"] = {
+        "action": "BUILD",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": False,
+        "formal_buy_authorized": False,
+        "no_auto_trade": True,
+        "suggested_max_portfolio_pct": max_pct,
+    }
+    row["source_lineage"] = {"deep_lambda_run_id": "deep-603596"}
+    row["decisions"]["research_route"] = {
+        "type": "choice",
+        "choice": "VALUATION_CLOSURE",
+        "confidence": 0.91,
+    }
+    row["decisions"]["evidence_state"] = {
+        "type": "choice",
+        "choice": "ADEQUATE_FOR_CURRENT_RESEARCH_STATE",
+        "confidence": 0.94,
+    }
+    row["decisions"]["entry_judgment"] = {
+        "type": "choice",
+        "choice": judgment,
+        "confidence": 0.93,
+        "probabilities": {judgment: 0.93},
+    }
+    shadow["rows"] = [row]
+    return shadow
+
+
+def test_entry_now_requires_and_preserves_deterministic_price_and_risk_budget():
+    payload = build_routing_bridge(_entry_ready_shadow())
+    entry = payload["routing_queue"][0]["entry_judgment"]
+
+    assert entry["jev_judgment"] == "ENTRY_NOW"
+    assert entry["validated_judgment"] == "ENTRY_NOW"
+    assert entry["entry_price_zone_high"] == 43.71
+    assert entry["initial_manual_position_pct"] == 1.0
+    assert entry["max_manual_position_pct"] == 3.0
+    assert entry["authority"] == "ADVISORY_ONLY"
+    assert entry["formal_buy_authorized"] is False
+    assert entry["automatic_execution_allowed"] is False
+    assert entry["no_auto_trade"] is True
+    assert payload["summary"]["entry_now_count"] == 1
+
+
+def test_entry_initial_size_never_exceeds_validated_risk_budget_cap():
+    payload = build_routing_bridge(_entry_ready_shadow(max_pct=0.72))
+    entry = payload["routing_queue"][0]["entry_judgment"]
+
+    assert entry["validated_judgment"] == "ENTRY_NOW"
+    assert entry["initial_manual_position_pct"] == 0.72
+    assert entry["max_manual_position_pct"] == 0.72
+
+
+def test_jev_entry_now_is_downgraded_to_wait_price_above_verified_ceiling():
+    payload = build_routing_bridge(
+        _entry_ready_shadow(
+            "ENTRY_NOW",
+            reference_price=45.0,
+            buy_ceiling=43.71,
+            decision="WAIT_PRICE",
+        )
+    )
+    entry = payload["routing_queue"][0]["entry_judgment"]
+
+    assert entry["validated_judgment"] == "WAIT_PRICE"
+    assert entry["validation_reason"] == "PRICE_ABOVE_RESEARCH_BUY_CEILING"
+    assert entry["initial_manual_position_pct"] == 0.0
+
+
+def test_jev_do_not_chase_is_supported_only_above_verified_ceiling():
+    payload = build_routing_bridge(
+        _entry_ready_shadow(
+            "DO_NOT_CHASE",
+            reference_price=45.0,
+            buy_ceiling=43.71,
+            decision="WAIT_PRICE",
+        )
+    )
+    entry = payload["routing_queue"][0]["entry_judgment"]
+
+    assert entry["validated_judgment"] == "DO_NOT_CHASE"
+    assert entry["do_not_chase_condition"] == "PRICE_ABOVE_43.7100_REQUIRES_REVALUATION"
+
+
+def test_unknown_hard_gate_forces_wait_evidence_even_if_jev_says_entry_now():
+    payload = build_routing_bridge(
+        _entry_ready_shadow("ENTRY_NOW", unknowns=["predictability"], decision="RESEARCH_GAP")
+    )
+    entry = payload["routing_queue"][0]["entry_judgment"]
+
+    assert entry["validated_judgment"] == "WAIT_EVIDENCE"
+    assert entry["validation_reason"] == "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE"
+
+
+def test_hard_gate_failure_forces_invalidated_entry_state():
+    payload = build_routing_bridge(
+        _entry_ready_shadow("ENTRY_NOW", failures=["financial_safety"], decision="REJECT")
+    )
+    entry = payload["routing_queue"][0]["entry_judgment"]
+
+    assert entry["validated_judgment"] == "INVALIDATED"
+    assert entry["initial_manual_position_pct"] == 0.0
+
+
+def test_stale_deep_lineage_rejects_jev_entry_now():
+    shadow = _entry_ready_shadow()
+    shadow["rows"][0]["source_lineage"]["deep_lambda_run_id"] = "different-deep"
+    entry = build_routing_bridge(shadow)["routing_queue"][0]["entry_judgment"]
+
+    assert entry["validated_judgment"] == "NO_JUDGMENT"
+    assert entry["validation_reason"] == "DEEP_LINEAGE_MISMATCH"
+    assert entry["deterministically_supported"] is False
+
+
+def test_capital_authority_escalation_rejects_jev_entry_now():
+    shadow = _entry_ready_shadow()
+    shadow["rows"][0]["capital_context"]["formal_buy_authorized"] = True
+    entry = build_routing_bridge(shadow)["routing_queue"][0]["entry_judgment"]
+
+    assert entry["validated_judgment"] == "NO_JUDGMENT"
+    assert entry["validation_reason"] == "CAPITAL_AUTHORITY_GUARDRAIL_MISMATCH"
+    assert entry["formal_buy_authorized"] is False
+
+
+def test_unsupported_jev_invalidation_cannot_override_clean_deterministic_state():
+    entry = build_routing_bridge(_entry_ready_shadow("INVALIDATED"))["routing_queue"][0][
+        "entry_judgment"
+    ]
+
+    assert entry["validated_judgment"] == "NO_JUDGMENT"
+    assert entry["validation_reason"] == "INVALIDATION_NOT_SUPPORTED_BY_DETERMINISTIC_EVIDENCE"

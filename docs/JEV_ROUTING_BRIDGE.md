@@ -18,6 +18,36 @@ For each successful shadow row, the bridge records:
 
 The queue is sorted for operator visibility only.
 
+## Structured entry judgment
+
+The shadow question set also asks Jev for a bounded research entry judgment:
+`ENTRY_NOW`, `WAIT_PRICE`, `WAIT_EVIDENCE`, `DO_NOT_CHASE`,
+`INVALIDATED`, or `NO_JUDGMENT`.
+
+Jev supplies the categorical judgment and confidence; it does **not** invent an
+entry price or position size. The routing bridge deterministically validates the
+judgment against the exact current Deep lineage, hard-gate status, Terminal
+research decision, verified price mapping, `research_buy_price_ceiling`, and
+risk-budget cap.
+
+An `ENTRY_NOW` survives validation only when all five hard gates are explicit
+PASS, the current Terminal decision is research BUY, the verified reference
+price is at or below the research buy-price ceiling, and a valid advisory
+risk-budget cap exists. The initial manual research position is capped at the
+smaller of 1% and the validated risk-budget cap. Jev can be more conservative
+than the deterministic state, but it cannot escalate a blocked state.
+
+Any hard-gate UNKNOWN/RESEARCH_GAP forces `WAIT_EVIDENCE`; explicit hard-gate
+FAIL/REJECT forces `INVALIDATED`; price above the verified ceiling forces at
+least `WAIT_PRICE` and may preserve a Jev `DO_NOT_CHASE`; stale lineage,
+unverified price mapping, unsupported invalidation, or authority drift becomes
+`NO_JUDGMENT`.
+
+Every persisted entry judgment remains `ADVISORY_ONLY` with
+`formal_buy_authorized=false`, `automatic_execution_allowed=false`, and
+`no_auto_trade=true`. The Three-Pillar report exposes only judgments whose
+Deep lineage exactly matches the current runtime.
+
 ## Authority boundary
 
 The bridge is deliberately fail-closed:

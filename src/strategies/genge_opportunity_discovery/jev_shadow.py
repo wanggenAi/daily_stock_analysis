@@ -15,8 +15,8 @@ from datetime import datetime, timezone
 from typing import Any, Mapping, Protocol
 
 CONTRACT = "GEN_GE_JEV_SHADOW_DECISION_V1"
-STATE_SCHEMA_VERSION = "GEN_GE_JEV_STOCK_STATE_V2"
-QUESTION_SET_VERSION = "GEN_GE_JEV_RESEARCH_ROUTING_V3"
+STATE_SCHEMA_VERSION = "GEN_GE_JEV_STOCK_STATE_V3"
+QUESTION_SET_VERSION = "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4"
 
 QUESTION_SPECS: dict[str, dict[str, Any]] = {
     "needs_more_evidence": {
@@ -70,6 +70,30 @@ QUESTION_SPECS: dict[str, dict[str, Any]] = {
                 "The state is materially conflicting, ambiguous, or high-stakes enough that a "
                 "human should inspect it before relying on automated routing."
             ),
+        },
+    },
+    "entry_judgment": {
+        "type": "choice",
+        "instructions": (
+            "Make a research-only/manual-entry judgment from the supplied CURRENT verified state. "
+            "Choose exactly one. ENTRY_NOW means the current evidence, valuation and validated risk "
+            "budget support a manual research entry now; WAIT_PRICE means the thesis is sufficiently "
+            "resolved but price/valuation has not reached the supported research entry threshold; "
+            "WAIT_EVIDENCE means valuation may be acceptable but material evidence or lineage is not "
+            "resolved; DO_NOT_CHASE means the thesis may remain valid but current price/valuation is "
+            "beyond the supported entry zone and should be revalued before entry; INVALIDATED means "
+            "verified evidence currently breaks the entry thesis; NO_JUDGMENT means the supplied state "
+            "is stale, contradictory, unsupported, or insufficient for any defensible entry judgment. "
+            "This is ADVISORY_ONLY research judgment, never a Formal BUY or order instruction. Do not "
+            "invent prices or position sizes; deterministic code derives those from supplied verified inputs."
+        ),
+        "criteria": {
+            "ENTRY_NOW": "Current verified research, valuation and risk-budget state supports a manual research entry now.",
+            "WAIT_PRICE": "Research thesis is sufficiently resolved, but the verified price/valuation entry condition is not met.",
+            "WAIT_EVIDENCE": "Material evidence, hard-gate state, freshness or lineage must be resolved before entry judgment.",
+            "DO_NOT_CHASE": "Current price/valuation is beyond the supported entry zone; revalue before considering entry.",
+            "INVALIDATED": "Verified current evidence invalidates the entry thesis.",
+            "NO_JUDGMENT": "No defensible entry judgment can be made from the supplied current state.",
         },
     },
     "attention_priority": {
@@ -320,6 +344,9 @@ def _valuation_research_context(research: Mapping[str, Any]) -> dict[str, Any]:
         "reference_price_basis",
         "price_mapping_status",
         "pe_to_history_ratio",
+        "research_buy_pe_ratio_threshold",
+        "research_buy_price_ceiling",
+        "distance_to_research_buy_ceiling_pct",
         "required_profit_growth_pct",
         "expectation_state",
         "financial_review_status",
@@ -328,6 +355,23 @@ def _valuation_research_context(research: Mapping[str, Any]) -> dict[str, Any]:
         "financial_gate_diagnostics",
     )
     return {key: valuation.get(key) for key in keys if key in valuation}
+
+
+def _capital_research_context(research: Mapping[str, Any]) -> dict[str, Any]:
+    raw = research.get("capital_allocation") if isinstance(research, Mapping) else None
+    capital = raw if isinstance(raw, Mapping) else {}
+    keys = (
+        "action",
+        "authority",
+        "automatic_execution_allowed",
+        "formal_buy_authorized",
+        "no_auto_trade",
+        "capital_conviction_score",
+        "suggested_max_portfolio_pct",
+        "reason",
+        "model_version",
+    )
+    return {key: capital.get(key) for key in keys if key in capital}
 
 
 def build_stock_shadow_states(
@@ -494,6 +538,7 @@ def build_stock_shadow_states(
                     "mapping_gaps": list(priority.get("mapping_gaps") or [])[:8],
                     "valuation": _valuation_research_context(research),
                 },
+                "capital_context": _capital_research_context(research),
                 "source_lineage": {
                     "dashboard_snapshot_id": str(dashboard_obj.get("canonical_snapshot_id") or ""),
                     "dashboard_source_run_id": str(dashboard_obj.get("canonical_source_run_id") or ""),
@@ -784,6 +829,12 @@ def evaluate_stock_shadow(
             else {},
             "research_context": dict(state.get("research_context") or {})
             if isinstance(state.get("research_context"), Mapping)
+            else {},
+            "capital_context": dict(state.get("capital_context") or {})
+            if isinstance(state.get("capital_context"), Mapping)
+            else {},
+            "source_lineage": dict(state.get("source_lineage") or {})
+            if isinstance(state.get("source_lineage"), Mapping)
             else {},
             "requested_model": config.model,
             "attempt_count": attempts,
