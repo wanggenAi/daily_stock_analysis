@@ -16,7 +16,7 @@ from typing import Any, Mapping, Protocol
 
 CONTRACT = "GEN_GE_JEV_SHADOW_DECISION_V1"
 STATE_SCHEMA_VERSION = "GEN_GE_JEV_STOCK_STATE_V2"
-QUESTION_SET_VERSION = "GEN_GE_JEV_RESEARCH_ROUTING_V2"
+QUESTION_SET_VERSION = "GEN_GE_JEV_RESEARCH_ROUTING_V3"
 
 QUESTION_SPECS: dict[str, dict[str, Any]] = {
     "needs_more_evidence": {
@@ -44,10 +44,12 @@ QUESTION_SPECS: dict[str, dict[str, Any]] = {
         "instructions": (
             "Which research route best fits the supplied state right now? Choose exactly one route. "
             "Differentiate concrete missing/stale source evidence (EVIDENCE_REFRESH) from cases that "
-            "already have enough evidence to require synthesis or conflict resolution (DEEP_RESEARCH), "
-            "and from materially ambiguous/high-stakes cases needing HUMAN_REVIEW. Do not choose "
-            "EVIDENCE_REFRESH solely because some hard gates are UNKNOWN; use the supplied triage and "
-            "gate context. Do not make or imply a trading recommendation."
+            "still need synthesis or conflict resolution (DEEP_RESEARCH). If all five supplied hard "
+            "gates are explicitly PASS and the remaining work is valuation, price-entry threshold, or "
+            "research BUY/WAIT_PRICE closure, choose VALUATION_CLOSURE rather than rerunning Deep. "
+            "Use HUMAN_REVIEW only for materially conflicting, ambiguous, or high-stakes states. Do not "
+            "choose EVIDENCE_REFRESH solely because some hard gates are UNKNOWN; use the supplied triage "
+            "and gate context. Do not make or imply a Formal trading recommendation."
         ),
         "criteria": {
             "NO_ESCALATION": "No urgent extra research is indicated; normal lifecycle refresh is sufficient.",
@@ -56,8 +58,13 @@ QUESTION_SPECS: dict[str, dict[str, Any]] = {
                 "source evidence; gather verified evidence before deeper synthesis."
             ),
             "DEEP_RESEARCH": (
-                "The available state needs deeper synthesis or reasoning now to resolve material "
+                "The available state still needs deeper synthesis or reasoning to resolve material "
                 "uncertainty after or alongside evidence gathering."
+            ),
+            "VALUATION_CLOSURE": (
+                "All five hard gates are explicitly PASS and business-quality research is resolved; "
+                "the next required work is valuation, price-entry threshold, or durable research "
+                "BUY/WAIT_PRICE closure. This is research-only and grants no Formal trading authority."
             ),
             "HUMAN_REVIEW": (
                 "The state is materially conflicting, ambiguous, or high-stakes enough that a "
@@ -308,6 +315,10 @@ def _valuation_research_context(research: Mapping[str, Any]) -> dict[str, Any]:
     keys = (
         "current_pe",
         "historical_median_pe_reference",
+        "reference_price",
+        "reference_trade_date",
+        "reference_price_basis",
+        "price_mapping_status",
         "pe_to_history_ratio",
         "required_profit_growth_pct",
         "expectation_state",
