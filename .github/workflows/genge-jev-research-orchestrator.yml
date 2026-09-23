@@ -131,6 +131,9 @@ jobs:
           test "$(jq -r '.no_auto_trade' "$RUNNER_TEMP/jev-orchestration-plan.json")" = "true"
           echo "should_dispatch=$(jq -r '.should_dispatch' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
           echo "requested_codes=$(jq -r '.requested_codes_csv' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
+          echo "should_dispatch_terminal_closure=$(jq -r '.should_dispatch_terminal_closure // false' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
+          echo "valuation_closure_codes=$(jq -r '.valuation_closure_codes_csv // ""' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
+          echo "valuation_closure_count=$(jq -r '.summary.valuation_closure_count // 0' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
           echo "selected_count=$(jq -r '.summary.selected_count // 0' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
           echo "human_review_count=$(jq -r '.summary.human_review_count // 0' "$RUNNER_TEMP/jev-orchestration-plan.json")" >> "$GITHUB_OUTPUT"
 
@@ -225,6 +228,19 @@ jobs:
           set -euo pipefail
           gh workflow run genge-v31-deep-calculation-lambda.yml             --repo "$GITHUB_REPOSITORY"             --ref main             -f requested_codes="$REQUESTED_CODES"             -f trigger_source="$TRIGGER_SOURCE"
 
+      - name: Dispatch valuation and price closure when no new Deep work is needed
+        if: steps.plan.outputs.should_dispatch_terminal_closure == 'true' && steps.plan.outputs.should_dispatch != 'true'
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VALUATION_CLOSURE_CODES: ${{ steps.plan.outputs.valuation_closure_codes }}
+        run: |
+          set -euo pipefail
+          echo "Dispatching Terminal valuation closure for: $VALUATION_CLOSURE_CODES"
+          gh workflow run genge-v31-terminal-research-decision.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+
       - name: Resolve accepted Deep run
         id: deep
         shell: bash
@@ -259,20 +275,26 @@ jobs:
           TRIGGER_SOURCE: ${{ steps.source.outputs.trigger_source }}
           DEEP_RUN_ID: ${{ steps.deep.outputs.deep_run_id }}
           SHOULD_DISPATCH: ${{ steps.plan.outputs.should_dispatch }}
+          SHOULD_TERMINAL_CLOSURE: ${{ steps.plan.outputs.should_dispatch_terminal_closure }}
         run: |
           set -euo pipefail
-          PLAN="$RUNNER_TEMP/jev-orchestration-plan.json" SOURCE_RUN_ID="$SOURCE_RUN_ID" TRIGGER_SOURCE="$TRIGGER_SOURCE" DEEP_RUN_ID="$DEEP_RUN_ID" SHOULD_DISPATCH="$SHOULD_DISPATCH" python - <<'PY'
+          PLAN="$RUNNER_TEMP/jev-orchestration-plan.json" SOURCE_RUN_ID="$SOURCE_RUN_ID" TRIGGER_SOURCE="$TRIGGER_SOURCE" DEEP_RUN_ID="$DEEP_RUN_ID" SHOULD_DISPATCH="$SHOULD_DISPATCH" SHOULD_TERMINAL_CLOSURE="$SHOULD_TERMINAL_CLOSURE" python - <<'PY'
           import json, os
           from datetime import datetime, timezone
           from pathlib import Path
           plan = json.loads(Path(os.environ["PLAN"]).read_text(encoding="utf-8"))
           ledger = plan.pop("strategy_ledger", {})
           dispatched = os.environ.get("SHOULD_DISPATCH") == "true"
+          terminal_closure = os.environ.get("SHOULD_TERMINAL_CLOSURE") == "true"
           deep_run_id = os.environ.get("DEEP_RUN_ID", "")
           if dispatched:
               plan["lifecycle_state"] = "DEEP_DISPATCH_ACCEPTED"
               plan["deep_run_id"] = deep_run_id
               plan["next_expected_stage"] = "DEEP_COMPLETE_THEN_TERMINAL_AUTO_CHAIN"
+          elif terminal_closure:
+              plan["lifecycle_state"] = "VALUATION_CLOSURE_DISPATCHED"
+              plan["deep_run_id"] = ""
+              plan["next_expected_stage"] = "TERMINAL_THEN_INVESTOR_CONVERGENCE"
           else:
               plan["lifecycle_state"] = "NOOP"
               plan["deep_run_id"] = ""
@@ -350,6 +372,7 @@ jobs:
           echo "# GenGe Jev Research Orchestrator" >> "$GITHUB_STEP_SUMMARY"
           echo "- Jev source run: ${{ steps.source.outputs.source_run_id || 'unresolved' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- selected research codes: ${{ steps.plan.outputs.selected_count || '0' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- valuation closure codes: ${{ steps.plan.outputs.valuation_closure_count || '0' }} (${{ steps.plan.outputs.valuation_closure_codes || 'none' }})" >> "$GITHUB_STEP_SUMMARY"
           echo "- human-review queue: ${{ steps.plan.outputs.human_review_count || '0' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- requested codes: ${{ steps.plan.outputs.requested_codes || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Deep run: ${{ steps.deep.outputs.deep_run_id || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
