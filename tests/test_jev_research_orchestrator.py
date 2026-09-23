@@ -219,6 +219,8 @@ def _scoped_routing(*, fingerprint="fp-1", source_run="200", deep_run=""):
     payload = _routing()
     payload["source_workflow_run_id"] = source_run
     row = payload["routing_queue"][1]
+    row["triage_context"]["candidate_lifecycle_state"] = "ACTIVE"
+    row["triage_context"]["research_dormant"] = False
     row["research_evidence_fingerprint"] = fingerprint
     row["research_context"] = {
         "deep_lambda_run_id": deep_run,
