@@ -317,3 +317,81 @@ def test_workflow_persists_strategy_ledger_only_after_deep_acceptance():
     assert 'entry["attempt_status"] = "DISPATCH_ACCEPTED"' in workflow
     assert "data/jev_shadow/research_strategy_ledger.json" in workflow
 
+def test_five_of_five_research_buy_bypasses_low_confidence_deep_route_into_valuation_closure():
+    payload = _routing()
+    row = payload["routing_queue"][1]
+    row.update(
+        {
+            "entity_id": "603596",
+            "entity_name": "伯特利",
+            "existing_engine_action": "RESEARCH:BUY",
+            "route": "DEEP_RESEARCH",
+            "route_confidence": 0.46,
+            "attention_priority": "HIGH",
+            "evidence_state": "ADEQUATE_FOR_CURRENT_RESEARCH_STATE",
+            "needs_more_evidence": True,
+            "needs_deep_research": False,
+            "triage_context": {
+                "research_priority": "P1",
+                "urgent_research": True,
+                "urgent_research_reasons": [
+                    "DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP"
+                ],
+            },
+            "research_context": {
+                "research_decision": "BUY",
+                "hard_gate_pass_count": 5,
+                "hard_gate_failures": [],
+                "hard_gate_unknowns": [],
+                "profile_gate_statuses": {
+                    gate: {"status": "PASS"}
+                    for gate in (
+                        "predictability",
+                        "long_term_demand",
+                        "moat",
+                        "financial_safety",
+                        "earnings_authenticity",
+                    )
+                },
+            },
+        }
+    )
+    # Remove the ordinary holding Deep row so this case proves valuation closure
+    # can be the only ready action without fabricating a Deep dispatch.
+    payload["routing_queue"] = [
+        item
+        for item in payload["routing_queue"]
+        if item.get("entity_id") not in {"600406", "000001", "601318", "000420"}
+    ]
+
+    plan = build_orchestration_plan(payload, max_dispatch=12)
+
+    assert plan["execution_status"] == "READY"
+    assert plan["should_dispatch"] is False
+    assert plan["requested_codes"] == []
+    assert plan["should_dispatch_terminal_closure"] is True
+    assert plan["valuation_closure_codes"] == ["603596"]
+    closure = plan["valuation_closure"][0]
+    assert closure["route"] == "VALUATION_CLOSURE"
+    assert closure["jev_route"] == "DEEP_RESEARCH"
+    assert closure["dispatch_mode"] == "DETERMINISTIC_VALUATION_CLOSURE"
+    assert (
+        closure["fallback_reason"]
+        == "ALL_HARD_GATES_PASS_REQUIRES_VALUATION_NOT_MORE_DEEP"
+    )
+    assert plan["human_review"] == []
+    assert plan["summary"]["valuation_closure_count"] == 1
+    assert plan["formal_trading_authority"] is False
+    assert plan["no_auto_trade"] is True
+
+
+def test_orchestrator_workflow_dispatches_terminal_for_valuation_closure():
+    from pathlib import Path
+
+    workflow = Path(".github/workflows/genge-jev-research-orchestrator.yml").read_text(
+        encoding="utf-8"
+    )
+    assert "should_dispatch_terminal_closure" in workflow
+    assert "valuation_closure_codes" in workflow
+    assert "gh workflow run genge-v31-terminal-research-decision.yml" in workflow
+    assert "VALUATION_CLOSURE_DISPATCHED" in workflow

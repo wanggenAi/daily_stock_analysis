@@ -21,11 +21,19 @@ from src.strategies.genge_opportunity_discovery.research_strategy_ledger import 
 CONTRACT = "GEN_GE_JEV_RESEARCH_ORCHESTRATION_V1"
 ROUTING_CONTRACT = "GEN_GE_JEV_ROUTING_BRIDGE_V1"
 AUTO_RESEARCH_ROUTES = {"EVIDENCE_REFRESH", "DEEP_RESEARCH"}
+VALUATION_CLOSURE_ROUTE = "VALUATION_CLOSURE"
+REQUIRED_HARD_GATES = (
+    "predictability",
+    "long_term_demand",
+    "moat",
+    "financial_safety",
+    "earnings_authenticity",
+)
 ALLOWED_PRIORITIES = {"HIGH", "MEDIUM", "LOW"}
 MIN_AUTO_ROUTE_CONFIDENCE = 0.5
 _DETERMINISTIC_PRIORITY = {"P0": 0, "P1": 1, "P2": 2, "P3": 3}
 _ATTENTION_RANK = {"HIGH": 0, "MEDIUM": 1, "LOW": 2}
-_ROUTE_RANK = {"DEEP_RESEARCH": 0, "EVIDENCE_REFRESH": 1}
+_ROUTE_RANK = {"VALUATION_CLOSURE": 0, "DEEP_RESEARCH": 1, "EVIDENCE_REFRESH": 2}
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
@@ -63,6 +71,43 @@ def _eligible_by_deterministic_triage(row: Mapping[str, Any]) -> bool:
         or triage.get("urgent_research") is True
         or priority in {"P0", "P1", "P2"}
     )
+
+
+def _deterministic_valuation_closure_ready(row: Mapping[str, Any]) -> bool:
+    """Recognize post-Deep states whose remaining work is valuation/price closure.
+
+    This is intentionally deterministic and research-only. It prevents a fully
+    resolved 5/5-PASS candidate from being sent back through Deep merely because
+    the advisory Jev route is low confidence or uses a pre-closure route label.
+    """
+
+    if row.get("is_current_holding") is True:
+        return False
+    research = _mapping(row.get("research_context"))
+    failures = [str(x) for x in (research.get("hard_gate_failures") or []) if str(x)]
+    unknowns = [str(x) for x in (research.get("hard_gate_unknowns") or []) if str(x)]
+    if failures or unknowns:
+        return False
+
+    statuses = _mapping(research.get("profile_gate_statuses"))
+    if statuses:
+        for gate in REQUIRED_HARD_GATES:
+            raw = _mapping(statuses.get(gate))
+            if str(raw.get("status") or "").strip().upper() != "PASS":
+                return False
+    else:
+        try:
+            if int(research.get("hard_gate_pass_count") or 0) != len(REQUIRED_HARD_GATES):
+                return False
+        except (TypeError, ValueError):
+            return False
+
+    research_decision = str(research.get("research_decision") or "").strip().upper()
+    existing_action = str(row.get("existing_engine_action") or "").strip().upper()
+    return research_decision in {"BUY", "WAIT_PRICE"} or existing_action in {
+        "RESEARCH:BUY",
+        "RESEARCH:WAIT_PRICE",
+    }
 
 
 def _sort_key(row: Mapping[str, Any]) -> tuple[Any, ...]:
@@ -108,6 +153,7 @@ def build_orchestration_plan(
         "automatic_research_dispatch_allowed": True,
         "dispatch_is_research_only": True,
         "dispatch_target": "genge-v31-deep-calculation-lambda.yml",
+        "valuation_closure_dispatch_target": "genge-v31-terminal-research-decision.yml",
         "formal_trading_authority": False,
         "automatic_formal_buy_allowed": False,
         "mutates_authoritative_decision": False,
@@ -116,6 +162,7 @@ def build_orchestration_plan(
         "max_dispatch": max_dispatch,
         "min_auto_route_confidence": MIN_AUTO_ROUTE_CONFIDENCE,
         "selected": [],
+        "valuation_closure": [],
         "human_review": [],
         "skipped": [],
     }
@@ -180,6 +227,17 @@ def build_orchestration_plan(
         }
 
         deterministic_eligible = _eligible_by_deterministic_triage(raw)
+        if deterministic_eligible and _deterministic_valuation_closure_ready(row):
+            row["jev_route"] = route
+            row["route"] = VALUATION_CLOSURE_ROUTE
+            row["dispatch_mode"] = "DETERMINISTIC_VALUATION_CLOSURE"
+            if route != VALUATION_CLOSURE_ROUTE:
+                row["fallback_reason"] = (
+                    "ALL_HARD_GATES_PASS_REQUIRES_VALUATION_NOT_MORE_DEEP"
+                )
+            base["valuation_closure"].append(row)
+            continue
+
         strategy_attempts = plan_strategy_attempts(
             row,
             reconciled_ledger,
@@ -270,6 +328,7 @@ def build_orchestration_plan(
         )
 
     candidates.sort(key=_sort_key)
+    base["valuation_closure"].sort(key=_sort_key)
     selected = candidates[:max_dispatch]
     overflow = candidates[max_dispatch:]
     for row in overflow:
@@ -299,9 +358,18 @@ def build_orchestration_plan(
     base["requested_codes"] = requested_codes
     base["requested_codes_csv"] = ",".join(requested_codes)
     base["should_dispatch"] = bool(requested_codes)
-    base["execution_status"] = "READY" if requested_codes else "NOOP"
+    valuation_closure_codes = [
+        str(row["entity_id"]) for row in base["valuation_closure"]
+    ]
+    base["valuation_closure_codes"] = valuation_closure_codes
+    base["valuation_closure_codes_csv"] = ",".join(valuation_closure_codes)
+    base["should_dispatch_terminal_closure"] = bool(valuation_closure_codes)
+    base["execution_status"] = (
+        "READY" if requested_codes or valuation_closure_codes else "NOOP"
+    )
     base["summary"] = {
         "selected_count": len(selected),
+        "valuation_closure_count": len(base["valuation_closure"]),
         "human_review_count": len(base["human_review"]),
         "skipped_count": len(base["skipped"]),
         "holding_selected_count": sum(
