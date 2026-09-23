@@ -174,6 +174,7 @@ def _attach_deep_qualified_research_leads(
     automatic_profiles: Mapping[str, Any] | None,
     *,
     profile_current_for_runtime: bool,
+    terminal_research_codes: set[str] | None = None,
 ) -> None:
     """Expose fully resolved hard-gate research leads without inventing BUY authority."""
 
@@ -193,6 +194,7 @@ def _attach_deep_qualified_research_leads(
     if not isinstance(raw_profiles, Mapping):
         return
 
+    terminal_codes = terminal_research_codes or set()
     holding_codes = {
         str(row.get("code") or "").strip().zfill(6)
         for row in ((payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or [])
@@ -210,7 +212,12 @@ def _attach_deep_qualified_research_leads(
         if not isinstance(profile, Mapping):
             continue
         code = str(raw_code or "").strip().zfill(6)
-        if not code or code in holding_codes or code in formal_codes:
+        if (
+            not code
+            or code in holding_codes
+            or code in formal_codes
+            or code in terminal_codes
+        ):
             continue
         gates = profile.get("gates")
         if not isinstance(gates, Mapping):
@@ -1045,10 +1052,22 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
+    terminal_research_codes: set[str] = set()
+    if (
+        terminal.get("available") is True
+        and runtime_run_id
+        and str(terminal.get("source_deep_lambda_run_id") or "") == runtime_run_id
+    ):
+        terminal_research_codes = {
+            _stock_code(row.get("code"))
+            for row in ((terminal_research_decisions or {}).get("terminal_rows") or [])
+            if isinstance(row, Mapping) and _stock_code(row.get("code"))
+        }
     _attach_deep_qualified_research_leads(
         payload,
         automatic_profiles,
         profile_current_for_runtime=profile_current_for_runtime,
+        terminal_research_codes=terminal_research_codes,
     )
     valuation_continuity = _attach_holding_valuation_continuity(
         payload, holding_valuation_continuity_state

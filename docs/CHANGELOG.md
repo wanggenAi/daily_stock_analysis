@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] 三支柱决策中心在同一当前 Deep runtime 已有完整 terminal research decision 时，不再重复把同一代码显示为前置 RESEARCH_ONLY / DO_NOT_BUY_YET 研究合格线索，避免与终态研究 BUY/WAIT_PRICE/RESEARCH_GAP 动作产生相反账户语义；Formal Authority、风险预算 advisory-only、UNKNOWN != PASS 与 no-auto-trade 均保持不变。
 - [修复] Research Learning 持久化研究优先级变化后自动唤醒 Jev 路由，避免新的高优先级研究候选停在未消费状态。
 - [改进] Deep 当前成功 runtime 中五类硬门槛全部 PASS 的非持仓对象新增“研究合格”可见层：只提升研究排序并在三支柱决策中心显示为 RESEARCH_ONLY / DO_NOT_BUY_YET，旧 lineage 或任一 UNKNOWN 不提升；Canonical Formal BUY/WAIT_PRICE、阈值、UNKNOWN != PASS 与 no-auto-trade 均保持不变。
 - [改进] 候选研究生命周期新增 DORMANT 收敛态：仅当非持仓对象在当前证据 epoch 的全部受支持硬门槛策略均被确定性账本证明为 EXHAUSTED_NO_PROGRESS 时休眠；新可调度证据 epoch 或终态研究推进可自动恢复 ACTIVE，持仓永不休眠，Broad Discovery、Formal Authority、UNKNOWN != PASS 与 no-auto-trade 均保持不变。

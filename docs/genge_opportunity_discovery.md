@@ -33,7 +33,7 @@ Round 9 后本版本经济参数已冻结，不再启动 Round 10 或继续调�
 
 ## Deep 五门槛研究合格可见层
 
-当且仅当最新成功 Deep runtime 与 profile 的 `lambda_run_id` 精确一致，且盈利真实性、财务安全、长期需求、护城河、可预测性五项硬门槛全部明确为 `PASS` 时，非持仓对象可以进入“研究合格”层。该层只提高后续研究排序，并在三支柱决策中心显示为 `RESEARCH_ONLY / DO_NOT_BUY_YET`，用于继续估值、价格和 Formal authority 闭环；它不会生成或替代 Canonical `BUY/WAIT_PRICE`。旧 lineage、任一 `UNKNOWN` 或非成功 runtime 都不得获得该资格。
+当且仅当最新成功 Deep runtime 与 profile 的 `lambda_run_id` 精确一致，且盈利真实性、财务安全、长期需求、护城河、可预测性五项硬门槛全部明确为 `PASS` 时，非持仓对象可以进入“研究合格”层。该层只提高后续研究排序，并在三支柱决策中心显示为 `RESEARCH_ONLY / DO_NOT_BUY_YET`，用于继续估值、价格和 Formal authority 闭环；它不会生成或替代 Canonical `BUY/WAIT_PRICE`。如果同一当前 Deep runtime 已经为该代码生成完整 terminal research decision，则终态研究层接管展示，前置“研究合格”层不再重复显示该代码，避免同一对象同时出现 `DO_NOT_BUY_YET` 与终态研究动作。终态研究结论和风险预算仍保持 `RESEARCH_ONLY / ADVISORY_ONLY`，不会创建 Formal BUY、持仓加仓授权或自动下单权限。旧 lineage、任一 `UNKNOWN` 或非成功 runtime 都不得获得该资格。
 
 ## 运行命令
 

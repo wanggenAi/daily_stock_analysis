@@ -830,6 +830,72 @@ def test_current_full_pass_nonholding_is_visible_as_research_only_lead():
     assert "不是 BUY/WAIT_PRICE" in md
 
 
+def test_current_terminal_research_supersedes_preliminary_deep_qualified_lead():
+    profiles = _automatic_profiles()
+    profiles["profiles"]["603596"] = {
+        "name": "伯特利",
+        "industry": "C36汽车制造业",
+        "gates": {
+            "earnings_authenticity": {"status": "PASS"},
+            "financial_safety": {"status": "PASS"},
+            "long_term_demand": {"status": "PASS"},
+            "moat": {"status": "PASS"},
+            "predictability": {"status": "PASS"},
+        },
+    }
+    terminal = _terminal_research("987654")
+    terminal_row = terminal["terminal_rows"][0]
+    terminal_row.update(
+        {
+            "code": "603596",
+            "name": "伯特利",
+            "industry": "C36汽车制造业",
+            "research_decision": "BUY",
+            "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
+            "hard_gate_pass_count": 5,
+            "hard_gate_unknowns": [],
+            "reopen_on_new_evidence": False,
+            "capital_allocation": {
+                "action": "BUILD",
+                "authority": "ADVISORY_ONLY",
+                "automatic_execution_allowed": False,
+                "formal_buy_authorized": False,
+                "no_auto_trade": True,
+                "capital_conviction_score": 0.945,
+                "suggested_max_portfolio_pct": 3.0,
+            },
+        }
+    )
+    terminal["decision_counts"] = {"BUY": 1, "WAIT_PRICE": 0, "RESEARCH_GAP": 0, "REJECT": 0}
+    terminal["urgent_research_queue"] = []
+
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=profiles,
+        static_profiles={},
+        deep_calculation_status=_status(),
+        terminal_research_decisions=terminal,
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+
+    assert [row["code"] for row in pillar["research_buy"]] == ["603596"]
+    assert pillar["research_buy"][0]["account_action"] == "MANUAL_BUILD_ADVISORY"
+    assert pillar["research_buy"][0]["formal_buy_authorized"] is False
+    assert pillar["research_buy"][0]["no_auto_trade"] is True
+    assert pillar["deep_qualified_research_lead_count"] == 0
+    assert pillar["deep_qualified_research_leads"] == []
+    assert pillar["canonical_formal_buy_now"] == []
+    assert pillar["canonical_formal_wait_price"] == []
+    assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
+    assert out["no_auto_trade"] is True
+
+    md = render_runtime_markdown(out)
+    assert "当前账户动作 **暂不买**" not in md
+
+
 def test_stale_or_unknown_profile_cannot_surface_as_deep_qualified_lead():
     profiles = _automatic_profiles()
     profiles["profiles"]["603596"] = {
