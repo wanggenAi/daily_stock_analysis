@@ -1,6 +1,6 @@
 # ⚠️ 数据代际陈旧：STALE_UPSTREAM
 
-> 新增仓位已 fail-closed；Formal 决策仅保留作审计/研究显示。原因：`CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION, MARKET_CONTEXT_BEHIND_COMPLETED_SESSION`
+> 新增仓位已 fail-closed；Formal 决策仅保留作审计/研究显示。原因：`CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION`
 
 # 投资决策驾驶舱
 
@@ -8,9 +8,9 @@
 
 ## 1. 最新市场结构（日线）
 
-- 数据日：**2026-09-22**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。
+- 数据日：**2026-09-23**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。
 - 市场状态：**YELLOW**；是否允许新买：**False**；仓位倍率：**0.50**
-- 上涨家数比例：**43.13%**；数据质量：**OK**
+- 上涨家数比例：**32.78%**；数据质量：**OK**
 
 ## 2. 我的持仓怎么办
 
@@ -50,7 +50,7 @@
 
 ## 7. 当前强势方向（辅助，不代替BUY权限）
 
-R86新闻和出版业(STRONG)、P83教育(STRONG)、I64互联网和相关服务(STRONG)、R87广播、电视、电影和录音制作业(STRONG)、I65软件和信息技术服务业(STRONG)、M73研究和试验发展(STRONG)、I63电信、广播电视和卫星传输服务(STRONG)、J68保险业(STRONG)
+O81机动车、电子产品和日用产品修理业(STRONG)、M73研究和试验发展(STRONG)、E49建筑安装业(STRONG)、C40仪器仪表制造业(STRONG)、G60邮政业(STRONG)、M75科技推广和应用服务业(STRONG)、M74专业技术服务业(STRONG)、C39计算机、通信和其他电子设备制造业(STRONG)
 
 ## 8. 其他已确认资产
 
