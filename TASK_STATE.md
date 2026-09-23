@@ -1,88 +1,96 @@
 # Current Mission
 
 ## Goal
-Turn the stock research system into a convergent autonomous opportunity engine that surfaces reference-worthy stock codes without fabricating certainty, forcing BUY, or presenting contradictory investor actions.
+Close the post-Deep valuation/price loop so a non-holding that has all five hard gates PASS cannot stall at a preliminary research lead or disappear when a later Deep workset omits it.
+
+The required chain is:
+1. exact-current 5/5 hard-gate PASS;
+2. valuation / price closure;
+3. durable research BUY or WAIT_PRICE with explicit price threshold;
+4. investor output persistence across later unrelated Deep runtimes;
+5. Formal trading authority remains separate and no-auto-trade remains true.
 
 ## Current Phase
-TERMINAL_RESEARCH_DISPLAY_CONVERGENCE_COMPLETE
+VALUATION_PRICE_CLOSURE_IMPLEMENTATION
 
 ## Source of Truth
 - Live GitHub refs, Actions, artifacts, and persisted data override this checkpoint.
-- Production bot persistence may advance main after any recorded SHA.
+- Production persistence may advance main; re-read live main before merge/production verification.
 
 ## Last Verified Main
-- Pre-checkpoint live main: `83b05e6ef28754d6c010f155c3eb2e16deca8edd`.
-- PR #293 `fix: converge terminal research display precedence` is closed and its fix is present on main as `734c7ca2a2bf7b37830f25b930a4436c2266fda4`.
-- Later main commits are production/report persistence; the latest verified Three-Pillar artifact is generated at `2026-09-23T12:02:50+00:00`.
-- This checkpoint commit itself will advance main; live GitHub ref remains authoritative after the write.
+- Branch started from live main `06497599a91fb6e4d8513d24fe7c7086c0c1f0ac`.
+- Previous #293 display-precedence mission is complete; do not reopen it.
 
 ## Active Branch
-- None for this completed mission.
-- Consumed branch: `fix/terminal-research-supersedes-qualified-20260923`; do not resume work on it.
+- `fix/valuation-price-closure-20260923`
 
 ## Active PR
-- None for this completed mission.
-- #293 is closed/merged into main.
+- Not opened yet at this checkpoint.
 
-## CI
-- Final #293 branch head: `1e3f9506921996d1642784d297db9f0c9b7878d1`.
-- Required CI run `35855835509`: SUCCESS.
-- Jobs: Change Detection SUCCESS; ai-governance SUCCESS; backend-gate SUCCESS; docker-build SUCCESS; web-gate correctly SKIPPED.
-- Same-head companion workflows all succeeded:
-  - Three-Pillar Decision Center `35855835498`
-  - Opportunity Discovery `35855835511`
-  - Legacy Risk-Capped Research `35855835506`
-- Earlier stalled CI `35851756202` finished CANCELLED and was not used as merge authorization.
+## Proven Production Defect
+- `603596 伯特利` is the concrete regression case.
+- Jev run `35849969346` saw it as HIGH attention, evidence `ADEQUATE_FOR_CURRENT_RESEARCH_STATE`, exact Deep 5/5 PASS, existing engine action `RESEARCH:BUY`, quant score 80.0059, PE 17.95 vs historical median reference 33.65.
+- Jev had no valuation/price-closure route. It selected `DEEP_RESEARCH` with route confidence 0.46 while `needs_deep_research=false`.
+- Orchestrator `35850186518` therefore converged to HUMAN_REVIEW / NOOP because 0.46 < 0.50.
+- Historical terminal lineage had already produced research BUY + BUILD for 603596 (capital conviction 0.945, advisory max portfolio 3%), but later Deep runtime `35854781919` omitted 603596 from its requested workset.
+- Current Three-Pillar output therefore regressed to preliminary 5/5-PASS / DO_NOT_BUY_YET visibility instead of preserving the prior valuation-closed research state.
 
-## Production / Artifact
-- Current Three-Pillar artifact: `data/decision_center/latest.json`, generated `2026-09-23T12:02:50+00:00`.
-- `formal_action_source=FINALIZED_CANONICAL_ONLY`; `no_auto_trade=true`.
-- Current terminal research source is Deep `35854781919`: 15 requested, BUY 0, WAIT_PRICE 0, RESEARCH_GAP 15, REJECT 0.
-- Current preliminary Deep-qualified leads: exactly one, `603596 伯特利`, account action `DO_NOT_BUY_YET`, `formal_buy_authorized=false`, `no_auto_trade=true`.
-- Current terminal-research codes and preliminary Deep-qualified codes have intersection size 0. No current-runtime code is displayed under both terminal and preliminary contradictory action layers.
-- `603105 芯能科技` is the current risk-budget `PROBE` advisory: conviction 0.596, suggested portfolio cap 0.72%, while its research decision remains `RESEARCH_GAP`, authority remains `RESEARCH_ONLY / ADVISORY_ONLY`, and Formal BUY remains false.
-- The exact historical overlap case (603596 terminal research BUY + BUILD plus preliminary qualification) is covered by the green #293 regression because the newer Deep terminal source no longer contains 603596.
+## Root Cause
+1. Jev routing schema only supports NO_ESCALATION / EVIDENCE_REFRESH / DEEP_RESEARCH / HUMAN_REVIEW.
+2. There is no explicit `VALUATION_CLOSURE` route for 5/5-PASS names whose remaining work is price/valuation rather than evidence/deep research.
+3. The deterministic orchestrator only dispatches Deep research and has no valuation-closure handoff.
+4. Terminal research iterates the latest Deep `requested_codes`; a fully qualified candidate can lose its terminal BUY/WAIT_PRICE visibility when a later unrelated Deep workset does not request it.
+5. Terminal valuation exposes PE discount logic but does not reverse-solve the existing BUY threshold into an explicit research buy-price ceiling.
 
-## Actual TypeSafe/Jev Use
-- Last relevant production TypeSafe/Jev execution remains run `35849969346`: SUCCESS, 25 entities, requested model `jev-latest`, served model `jev-1.13.0`.
-- Exact deterministic Orchestrator run `35850186518` consumed that Jev lineage and returned `HUMAN_REVIEW / NOOP` because route confidence 0.46 was below the deterministic 0.50 dispatch gate.
-- No new Jev evaluation was required for #293 because the remaining change was display precedence only; Jev selection, confidence, routing authority, thresholds, and research truth were unchanged.
+## Required Fix
+- Add `VALUATION_CLOSURE` to Jev typed routing with instructions that distinguish post-5/5 valuation work from more Deep/evidence work.
+- Add deterministic override: exact 5/5 PASS + no failures/unknowns + research BUY/WAIT_PRICE may enter valuation closure even if Jev route confidence is below 0.50 or Jev mislabels it as DEEP_RESEARCH.
+- Keep Deep dispatch and valuation-closure dispatch separate; valuation closure must not consume a hard-gate research strategy attempt.
+- Reuse the existing Terminal research workflow rather than create a parallel valuation engine.
+- Extend Terminal convergence so current 5/5-PASS priority follow-up candidates remain in valuation closure even when absent from the newest Deep requested workset.
+- Reverse-solve the existing `PE_BUY_RATIO=0.80` into an explicit research buy-price ceiling when price/PE reference data are available.
+- Persist enough lineage/reason fields to prove why a candidate was carried into closure.
+- Preserve Formal Authority, UNKNOWN != PASS, and `no_auto_trade=true`.
+
+## Acceptance Case
+For a 603596-shaped state:
+- all five hard gates PASS;
+- research decision BUY;
+- evidence adequate;
+- P1 / urgent follow-up;
+- Jev route confidence may be 0.46;
+the deterministic plan must not send it to HUMAN_REVIEW merely due low route confidence and must not rerun Deep for already-resolved hard gates. It must request valuation/price closure.
+A later Deep workset that excludes 603596 must not erase its valuation-closed research BUY/WAIT_PRICE state if its current profile remains 5/5 PASS and the priority follow-up is current.
 
 ## Completed
-- #289 research-exhaustion dormancy merged and production-verified.
-- #290 lifecycle visibility merged and production-verified.
-- #291 Deep-qualified research visibility merged and production-verified.
-- #292 Research Learning -> Jev wake handoff merged and production-verified.
-- Fresh Jev + exact Orchestrator lineage `35849969346 -> 35850186518` verified.
-- #293 display-precedence fix merged after fresh newest-head required CI passed.
-- Post-merge production Three-Pillar refresh verified with zero terminal/preliminary code overlap.
-- Formal authority, research/advisory authority separation, UNKNOWN != PASS, and no-auto-trade invariants remain intact.
-
-## Current Findings
-- The contradictory-display bug is closed.
-- `603596 伯特利` remains a reference-worthy research lead in the preliminary Deep-qualified layer, not a Formal BUY.
-- `603105 芯能科技` currently has a bounded manual PROBE advisory, not a Formal BUY.
-- There is currently no Canonical Formal new-stock BUY or WAIT_PRICE in the verified Three-Pillar artifact.
-- The system now exposes research-worthy names without duplicating a current terminal decision with the stale preliminary `DO_NOT_BUY_YET` stage.
+- Reconciled the user-reported behavior against live main and production Jev/Deep/Terminal artifacts.
+- Confirmed this is a routing + terminal persistence defect, not a missing business-quality analysis problem.
+- Created the fresh implementation branch from current live main.
+- Recorded the defect and required acceptance behavior here before code changes.
 
 ## Blockers
-- None for this mission.
+- None requiring user action.
 
 ## Next Action
-- None for the #293 display-convergence mission; it is at terminal state.
-- Any new research/selection iteration must start from live main, latest production artifacts, and latest Jev/Deep lineage rather than reopening the consumed #293 branch.
+1. Patch Jev schema/routing bridge.
+2. Patch deterministic orchestrator and workflow handoff.
+3. Patch Terminal carry-forward closure and explicit research buy-price ceiling.
+4. Add 603596-shaped regression tests and workflow-contract tests.
+5. Update docs/changelog.
+6. Run PR CI; merge only if blocking CI is green.
+7. Run fresh production Jev -> Orchestrator -> Terminal -> Three-Pillar verification and confirm 603596 no longer falls back to preliminary-only state.
 
 ## Do Not Repeat
-- Do not reopen or reuse #292 or #293 implementation branches.
-- Do not rerun old Jev lineage and call it fresh production verification.
-- Do not lower the Jev 0.50 confidence gate or any stock-selection threshold.
-- Do not promote research BUY, PROBE, or Deep-qualified visibility into Formal BUY.
-- Do not remove the risk-budget advisory layer to simplify display semantics.
-- Do not treat cancelled/stalled CI as green.
+- Do not lower Jev 0.50 confidence threshold globally.
+- Do not lower stock-selection or hard-gate thresholds to force BUY.
+- Do not rerun already-PASS hard gates merely to obtain a newer Deep lineage.
+- Do not promote Research BUY/WAIT_PRICE or advisory BUILD into Canonical Formal BUY.
+- Do not create a second valuation engine if existing Terminal valuation can close the state.
 
 ## Guardrails
-- Jev is advisory research routing only; deterministic guards own dispatch.
+- Jev remains advisory.
+- Deterministic guards own dispatch and closure eligibility.
 - Formal actions remain Canonical-only; automatic Formal BUY=false.
-- Research capital allocation remains advisory-only and cannot create holding-add or order authority.
-- UNKNOWN != PASS; no_auto_trade=true.
-- Current terminal research decisions supersede preliminary research-qualified display for the same code and exact Deep runtime.
+- Research capital allocation remains advisory-only.
+- UNKNOWN != PASS.
+- no_auto_trade=true.
