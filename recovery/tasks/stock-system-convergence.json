@@ -1,64 +1,56 @@
 {
   "schema_version": 2,
-  "generation": 40,
+  "generation": 41,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "PRODUCTION_LINEAGE_CONVERGED_DISPLAY_FIX_PENDING",
-  "last_observed_main_sha": "da1b8212b209ff17b823721b4a93dd12eee98f64",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "stage": "PR_293_NEWEST_HEAD_CI_RUNNING",
+  "last_observed_main_sha": "f4ac774009136facf82a40205069b1e22963e11f",
+  "work_branch": "fix/terminal-research-supersedes-qualified-20260923",
+  "work_head_sha": "1e3f9506921996d1642784d297db9f0c9b7878d1",
+  "active_pr": 293,
   "ci": {
     "pr_292_merge_sha": "27e857007884c560db539581cb599a500389aaa3",
-    "initial_jev_run_id": 35848751814,
-    "initial_orchestrator_run_id": 35848953724,
-    "deep_run_id": 35849124866,
-    "provenance_run_id": 35849381115,
-    "terminal_run_id": 35849383598,
-    "overlay_run_id": 35849559567,
-    "three_pillar_run_id": 35849728138,
     "continuation_jev_run_id": 35849969346,
     "continuation_orchestrator_run_id": 35850186518,
-    "continuation_orchestrator_status": "SUCCESS_NOOP"
+    "continuation_orchestrator_status": "SUCCESS_NOOP",
+    "pr_293_ci_run_id": 35855835509,
+    "pr_293_backend_job_id": 107164129071,
+    "pr_293_ci_status": "IN_PROGRESS_OFFLINE_TEST_SUITE",
+    "pr_293_other_required_surfaces": "GREEN"
   },
   "production_or_artifact": {
-    "status": "RESEARCH_BUY_CONVERGED_NO_DUPLICATE_DEEP",
+    "status": "DISPLAY_PRECEDENCE_FIX_PENDING_MERGE",
     "verified": [
-      "Initial main-push TypeSafe/Jev run 35848751814 completed 25/25 and deterministic Orchestrator run 35848953724 selected only 603596.",
-      "Exact Deep run 35849124866 completed SUCCESS/COMPLETE; provenance audit 35849381115 verified PASS evidence lineage.",
-      "Terminal run 35849383598 converged 603596 to RESEARCH_ONLY BUY with five hard gates PASS and advisory BUILD up to 3%, while formal_buy_authorized=false and no_auto_trade=true.",
-      "Investor Overlay 35849559567 and Three-Pillar 35849728138 consumed exact Deep 35849124866; decision center is current_for_deep_runtime=true and Formal action source remains FINALIZED_CANONICAL_ONLY.",
-      "Continuation TypeSafe/Jev run 35849969346 completed 25/25 using jev-1.13.0. For 603596 it now sees existing_engine_action=RESEARCH:BUY and evidence_state=ADEQUATE_FOR_CURRENT_RESEARCH_STATE.",
-      "Continuation deterministic Orchestrator run 35850186518 completed NOOP: should_dispatch=false, requested_codes=[], deep_run_id='', and both write-ahead/Deep-dispatch steps were skipped.",
-      "603596 is human-review only in the continuation because route=DEEP_RESEARCH confidence=0.46 is below min_auto_route_confidence=0.5; no duplicate Deep was created."
-    ],
-    "display_gap": [
-      "LATEST_DECISION_CENTER.md still shows 603596 in the pre-terminal five-gate lead section with stale text 'continue valuation / do not buy yet' even though the exact current terminal section correctly exposes RESEARCH BUY / BUILD.",
-      "Root cause is _attach_deep_qualified_research_leads: it excludes holdings and Canonical BUY/WAIT_PRICE codes but does not exclude codes already resolved by a current terminal research decision."
+      "Fresh TypeSafe/Jev run 35849969346 completed 25/25 using served model jev-1.13.0.",
+      "Exact deterministic Orchestrator run 35850186518 consumed that lineage and completed SUCCESS_NOOP because route confidence 0.46 was below the 0.50 auto-route gate.",
+      "No duplicate Deep dispatch was created by the continuation cycle.",
+      "PR #293 implements exact-current terminal-research precedence over the preliminary five-hard-gate research-qualified display without changing Formal authority.",
+      "Current live main has advanced to f4ac774009136facf82a40205069b1e22963e11f through production persistence; current production runtime is newer than the original 603596 overlap snapshot, so post-merge verification must test same-runtime layer exclusivity rather than require the old BUY snapshot to recur."
     ],
     "safety": [
-      "Research BUY/BUILD is advisory/research-only and does not create Canonical Formal BUY or automatic execution.",
-      "UNKNOWN != PASS and no_auto_trade=true.",
-      "Do not rerun the consumed Jev/Deep lineage."
+      "Jev remains advisory-only and deterministic guards own dispatch.",
+      "Research BUY/BUILD remains RESEARCH_ONLY / ADVISORY_ONLY.",
+      "Formal BUY authority is unchanged; UNKNOWN != PASS; no_auto_trade=true."
     ]
   },
   "pending_operation": {
-    "type": "CREATE_FRESH_DISPLAY_CONSISTENCY_FIX_AND_FINAL_TASK_STATE_PR",
-    "require": "create a fresh branch from current main; make deep-qualified pre-terminal leads exclude codes already covered by the exact current terminal research snapshot; add regression coverage proving a current terminal BUY does not also render stale DO_NOT_BUY_YET lead text; update TASK_STATE with the completed #292 production lineage; run PR CI; merge after green; verify post-merge Three-Pillar output and final authority separation"
+    "type": "MERGE_PR_293_AFTER_NEWEST_HEAD_GREEN",
+    "require": "Consume CI run 35855835509. Merge PR #293 only if newest-head blocking backend-gate completes successfully, then verify live main and the post-merge Three-Pillar production refresh enforce terminal-over-preliminary display precedence and preserve authority separation."
   },
   "completed": [
     "Merged #292 and verified its production wake behavior.",
     "Completed real TypeSafe/Jev -> deterministic Orchestrator -> bounded Deep -> Provenance -> Terminal -> Investor Overlay -> Three-Pillar lineage.",
-    "Obtained one truthful research BUY/BUILD candidate: 603596 伯特利.",
-    "Completed lineage-keyed continuation Jev and proved deterministic NOOP/no duplicate Deep."
+    "Opened #293 with the minimal display-precedence fix, regression test, docs and TASK_STATE checkpoint.",
+    "PR #293 newest-head non-backend checks are green; backend offline suite is the only remaining blocking check."
   ],
-  "next_action": "Create a new display-consistency branch from live main, patch three_pillar_decision_center_runtime.py and its tests, update TASK_STATE.md with terminal production facts, open PR, run CI, merge if green, then verify regenerated decision center no longer contains the stale pre-terminal wording for 603596 and mark recovery COMPLETE.",
+  "next_action": "Re-read CI run 35855835509; if backend-gate is green, merge #293, then verify live main and post-merge Three-Pillar production output and persist final TASK_STATE/recovery state.",
   "do_not_repeat": [
-    "Do not reopen #292 branch or any consumed lineage.",
-    "Do not rerun Deep 35849124866.",
-    "Do not turn research BUY/BUILD into Formal BUY.",
-    "Do not lower thresholds or relax UNKNOWN != PASS / no_auto_trade."
+    "Do not reopen #292 or its consumed branch.",
+    "Do not rerun Jev 35849969346 or Deep 35849124866 merely to recreate old chat state.",
+    "Do not lower the Jev 0.50 confidence gate or any stock-selection threshold.",
+    "Do not promote research BUY/BUILD into Formal BUY.",
+    "Do not treat an in-progress or stalled CI run as green."
   ],
   "business_code_baseline_sha": "da1b8212b209ff17b823721b4a93dd12eee98f64"
 }
