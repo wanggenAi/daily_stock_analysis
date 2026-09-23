@@ -7,6 +7,7 @@ TERMINAL = Path(".github/workflows/genge-v31-terminal-research-decision.yml")
 INVESTOR = Path(".github/workflows/genge-investor-terminal-research-overlay.yml")
 DECISION_CENTER = Path(".github/workflows/genge-three-pillar-decision-center.yml")
 JEV_SHADOW = Path(".github/workflows/genge-jev-shadow-evaluation.yml")
+JEV_ORCHESTRATOR = Path(".github/workflows/genge-jev-research-orchestrator.yml")
 
 
 def test_reconciler_tracks_the_exact_jev_deep_lineage() -> None:
@@ -119,3 +120,23 @@ def test_jev_continuation_does_not_directly_relaunch_deep() -> None:
 
     assert "gh workflow run genge-jev-shadow-evaluation.yml" in continuation
     assert "gh workflow run genge-v31-deep-calculation-lambda.yml" not in continuation
+
+
+def test_persisted_jev_routing_explicitly_hands_off_to_deterministic_orchestrator() -> None:
+    shadow = JEV_SHADOW.read_text(encoding="utf-8")
+    orchestrator = JEV_ORCHESTRATOR.read_text(encoding="utf-8")
+
+    persist_job = shadow.split("  persist-routing-advisory:", 1)[1]
+    assert "actions: write" in persist_job.split("    steps:", 1)[0]
+    dispatch = "Dispatch deterministic research orchestrator for persisted Jev lineage"
+    assert dispatch in persist_job
+    assert "genge-jev-research-orchestrator.yml/runs?event=workflow_dispatch&per_page=100" in persist_job
+    assert 'select(.display_title == \\"GenGe Jev Research Orchestrator / $SOURCE_RUN_ID\\")' in persist_job
+    assert "gh workflow run genge-jev-research-orchestrator.yml" in persist_job
+    assert '-f source_run_id="$SOURCE_RUN_ID"' in persist_job
+    assert "-f max_dispatch=12" in persist_job
+    assert persist_job.index("Persist latest Jev advisory with optimistic replay") < persist_job.index(dispatch)
+
+    assert "workflow_run:" not in orchestrator
+    assert "if: github.event_name == 'workflow_dispatch'" in orchestrator
+    assert "github.event.workflow_run" not in orchestrator
