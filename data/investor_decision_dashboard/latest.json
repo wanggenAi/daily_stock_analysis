@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
   "mode": "EVENT",
-  "generated_at": "2026-09-23T06:57:00+00:00",
+  "generated_at": "2026-09-23T07:00:04+00:00",
   "canonical_snapshot_id": "ede2069c9e422134ded6",
   "canonical_source_run_id": "35827260708",
   "latest_trade_date": "2026-09-22",
@@ -99,7 +99,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-23T14:53:45+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 195
+        "price_age_seconds": 379
       },
       {
         "code": "001316",
@@ -144,7 +144,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-23T14:53:45+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 195
+        "price_age_seconds": 379
       },
       {
         "code": "601318",
@@ -189,7 +189,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-23T14:53:47+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 193
+        "price_age_seconds": 377
       },
       {
         "code": "603993",
@@ -234,7 +234,7 @@
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "price_observed_at": "2026-09-23T14:53:45+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 195,
+        "price_age_seconds": 379,
         "holding_add_consumption": {
           "status": "CONSUMED",
           "source_canonical_snapshot_id": "4e025e2112441ae19e05",
@@ -373,7 +373,9 @@
     "trigger_codes": [
       "001316",
       "601318",
-      "603993"
+      "603993",
+      "000504",
+      "600816"
     ]
   },
   "hourly_context": {
@@ -421,7 +423,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-23T06:57:00+00:00",
+    "evaluated_at": "2026-09-23T07:00:04+00:00",
     "canonical_generated_at": "2026-09-23T06:45:13+00:00",
     "canonical_latest_trade_date": "2026-09-22",
     "canonical_source_run_id": "35827260708",
@@ -493,10 +495,10 @@
     "source_every_industry_run_id": "35827260708",
     "requested_count": 12,
     "decision_counts": {
+      "WAIT_PRICE": 0,
       "RESEARCH_GAP": 12,
-      "REJECT": 0,
       "BUY": 0,
-      "WAIT_PRICE": 0
+      "REJECT": 0
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
