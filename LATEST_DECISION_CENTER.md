@@ -147,4 +147,9 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
   - 603105 芯能科技: **PROBE**；conviction=0.596；建议账户上限=0.72%
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
+## Jev 买入判断（研究建议，不是 Formal BUY）
+
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`35875806431`。
+- Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
+
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
