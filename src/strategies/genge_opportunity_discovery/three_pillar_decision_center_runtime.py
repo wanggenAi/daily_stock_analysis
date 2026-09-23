@@ -439,6 +439,10 @@ def _research_investor_view(row: Mapping[str, Any]) -> dict[str, Any]:
             f"建议账户仓位上限约{max_pct:.2f}%，继续补齐：{waiting}"
         )
         item["account_action"] = "MANUAL_PROBE_ADVISORY"
+    elif decision == "RESEARCH_GAP" and not capital:
+        waiting = "、".join(unknowns) or "缺失证据"
+        item["investor_action"] = f"暂不买；等待补齐：{waiting}"
+        item["account_action"] = "DO_NOT_BUY_YET"
     elif decision == "RESEARCH_GAP":
         waiting = "、".join(unknowns) or "缺失证据"
         item["investor_action"] = f"暂不投入新增资金；等待补齐：{waiting}"
