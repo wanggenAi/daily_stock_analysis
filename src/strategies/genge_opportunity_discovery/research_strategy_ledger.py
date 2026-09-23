@@ -107,10 +107,17 @@ def unresolved_gates(row: Mapping[str, Any]) -> dict[str, str]:
     statuses = _mapping(context.get("profile_gate_statuses"))
     for gate, raw_status in statuses.items():
         gate_name = str(gate or "").strip()
-        if not gate_name or gate_name in result or gate_name not in _GATE_STRATEGY:
+        if not gate_name or gate_name not in _GATE_STRATEGY:
             continue
         status = str(_mapping(raw_status).get("status") or "").strip().upper()
-        if status == "UNKNOWN":
+        # Exact Deep profile state is newer and more specific than the
+        # routing-level missing-evidence projection.  Once a supported gate is
+        # explicitly PASS or FAIL, stale upstream unresolved text must not
+        # schedule another collector attempt for that gate.
+        if status in {"PASS", "FAIL"}:
+            result.pop(gate_name, None)
+            continue
+        if gate_name not in result and status == "UNKNOWN":
             result[gate_name] = "PROFILE_GATE_STATUS_UNKNOWN"
     return result
 
