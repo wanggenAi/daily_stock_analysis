@@ -206,6 +206,115 @@ def test_urgent_queue_does_not_drop_qualified_names_after_first_ten():
     assert {row["code"] for row in out["urgent_research_queue"]} == set(codes)
 
 
+
+def test_noncritical_unknown_can_create_bounded_probe_without_fake_pass():
+    gates = _all("PASS")
+    gates["moat"] = "UNKNOWN"
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(pe="8", median="12"),
+    )
+    row = out["terminal_rows"][0]
+    capital = row["capital_allocation"]
+
+    assert row["research_decision"] == "RESEARCH_GAP"
+    assert row["hard_gate_unknowns"] == ["moat"]
+    assert capital["action"] == "PROBE"
+    assert capital["authority"] == "ADVISORY_ONLY"
+    assert capital["critical_capital_gates_pass"] is True
+    assert 0.5 <= capital["suggested_max_portfolio_pct"] <= 1.5
+    assert capital["automatic_execution_allowed"] is False
+    assert capital["formal_buy_authorized"] is False
+    assert capital["no_auto_trade"] is True
+    assert out["unknown_is_pass"] is False
+    assert out["capital_action_counts"]["PROBE"] == 1
+    assert out["capital_probe_queue"][0]["code"] == "000001"
+
+
+def test_unknown_critical_capital_gate_blocks_probe_even_when_valuation_is_cheap():
+    gates = _all("PASS")
+    gates["financial_safety"] = "UNKNOWN"
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(pe="6", median="12"),
+    )
+    row = out["terminal_rows"][0]
+    capital = row["capital_allocation"]
+
+    assert row["research_decision"] == "RESEARCH_GAP"
+    assert capital["action"] == "BLOCK"
+    assert capital["reason"] == "CRITICAL_CAPITAL_GATES_NOT_PROVEN"
+    assert capital["suggested_max_portfolio_pct"] == 0.0
+
+
+def test_all_pass_research_buy_maps_to_build_advisory_without_formal_authority():
+    out = build_terminal_decisions(
+        profiles_payload=_profile(_all("PASS")),
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(pe="8", median="12"),
+    )
+    row = out["terminal_rows"][0]
+    capital = row["capital_allocation"]
+
+    assert row["research_decision"] == "BUY"
+    assert row["formal_buy_authorized"] is False
+    assert capital["action"] == "BUILD"
+    assert 1.0 <= capital["suggested_max_portfolio_pct"] <= 3.0
+    assert out["capital_action_counts"]["BUILD"] == 1
+    assert out["capital_advisory_authority"] == "ADVISORY_ONLY"
+    assert out["capital_advisory_automatic_execution_allowed"] is False
+
+
+def test_three_noncritical_unknowns_remain_watch_even_with_discount():
+    gates = _all("PASS")
+    gates["predictability"] = "UNKNOWN"
+    gates["long_term_demand"] = "UNKNOWN"
+    gates["moat"] = "UNKNOWN"
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=_valuation(pe="7", median="12"),
+    )
+    capital = out["terminal_rows"][0]["capital_allocation"]
+
+    assert capital["action"] == "WATCH"
+    assert capital["suggested_max_portfolio_pct"] == 0.0
+
+
+
+def test_growth_expectation_blocks_probe_until_price_compensates():
+    gates = _all("PASS")
+    gates["moat"] = "UNKNOWN"
+    valuation = _valuation(pe="8", median="12")
+    valuation[0]["expectation_state"] = "EARNINGS_GROWTH_REQUIRED"
+    out = build_terminal_decisions(
+        profiles_payload=_profile(gates),
+        evidence_payload=_evidence(),
+        valuation_rows=valuation,
+    )
+    capital = out["terminal_rows"][0]["capital_allocation"]
+
+    assert capital["action"] == "WATCH"
+    assert capital["reason"] == "EXPECTATION_REQUIRES_GROWTH"
+    assert capital["suggested_max_portfolio_pct"] == 0.0
+
+def test_specialized_industry_stays_watch_without_specialized_valuation_model():
+    valuation = _valuation(pe="5", median="10")
+    valuation[0]["industry"] = "J68保险业"
+    out = build_terminal_decisions(
+        profiles_payload=_profile(_all("PASS")),
+        evidence_payload=_evidence(),
+        valuation_rows=valuation,
+    )
+    row = out["terminal_rows"][0]
+
+    assert row["research_decision"] == "RESEARCH_GAP"
+    assert row["capital_allocation"]["action"] == "WATCH"
+    assert row["capital_allocation"]["reason"] == "SPECIALIZED_VALUATION_REQUIRED"
+    assert row["capital_allocation"]["suggested_max_portfolio_pct"] == 0.0
+
 def test_terminal_workflow_refreshes_investor_overlay_only_after_persistence() -> None:
     workflow = Path(".github/workflows/genge-v31-terminal-research-decision.yml").read_text(encoding="utf-8")
 

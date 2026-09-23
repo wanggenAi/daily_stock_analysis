@@ -158,6 +158,15 @@ jobs:
               assert row['research_authority'] == 'RESEARCH_ONLY'
               assert row['formal_buy_authorized'] is False
               assert row['no_auto_trade'] is True
+          assert opp['capital_advisory_authority'] == 'ADVISORY_ONLY'
+          assert opp['capital_advisory_automatic_execution_allowed'] is False
+          for row in opp['research_capital_probe']:
+              cap=row['capital_allocation']
+              assert cap['action'] in {'BUILD','PROBE'}
+              assert cap['authority'] == 'ADVISORY_ONLY'
+              assert cap['automatic_execution_allowed'] is False
+              assert cap['formal_buy_authorized'] is False
+              assert cap['no_auto_trade'] is True
           PY
 
             git add -f data/decision_center/latest.json LATEST_DECISION_CENTER.md

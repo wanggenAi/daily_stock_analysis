@@ -26,6 +26,25 @@ GATES = ("predictability", "long_term_demand", "moat", "financial_safety", "earn
 PE_BUY_RATIO = 0.80
 SPECIALIZED_INDUSTRY_PREFIXES = ("J66", "J67", "J68", "B08", "B09", "C32")
 
+# Research truth and capital deployment are deliberately separate.  UNKNOWN never
+# becomes PASS, but a bounded advisory probe may be suggested when the two
+# capital-preservation gates are explicitly PASS and the remaining uncertainty is
+# compensated by valuation / quant evidence.  This layer never grants Formal BUY.
+CAPITAL_MODEL_VERSION = "GEN_GE_RISK_BUDGET_CAPITAL_V1"
+CAPITAL_ACTIONS = ("BUILD", "PROBE", "WATCH", "BLOCK")
+CRITICAL_CAPITAL_GATES = ("financial_safety", "earnings_authenticity")
+GATE_WEIGHTS = {
+    "earnings_authenticity": 0.22,
+    "financial_safety": 0.22,
+    "long_term_demand": 0.20,
+    "moat": 0.20,
+    "predictability": 0.16,
+}
+UNKNOWN_GATE_PRIOR = 0.35
+CAPITAL_PROBE_MAX_UNKNOWN = 2
+CAPITAL_PROBE_MAX_PE_RATIO = 0.90
+CAPITAL_PROBE_MIN_CONVICTION = 0.52
+
 
 def _code(value: Any) -> str:
     text = str(value or "").strip().upper()
@@ -44,6 +63,10 @@ def _num(value: Any) -> float | None:
     except (TypeError, ValueError):
         return None
     return value if value == value else None
+
+
+def _clamp(value: float, low: float = 0.0, high: float = 1.0) -> float:
+    return max(low, min(high, value))
 
 
 def _read_json(path: Path) -> dict[str, Any]:
@@ -163,6 +186,123 @@ def _valuation_decision(row: Mapping[str, Any]) -> tuple[str, str, dict[str, Any
     return "WAIT_PRICE", "ALL_HARD_GATES_PASS_BUT_PRICE_NOT_AT_RESEARCH_BUY_THRESHOLD", snapshot
 
 
+def _capital_allocation_advisory(
+    *,
+    profile: Mapping[str, Any],
+    failed: list[str],
+    unknown: list[str],
+    valuation: Mapping[str, Any],
+    valuation_snapshot: Mapping[str, Any],
+    research_decision: str,
+) -> dict[str, Any]:
+    """Convert uncertainty into bounded advisory sizing instead of fake certainty.
+
+    The research decision remains unchanged.  This function only answers whether
+    the evidence/valuation mix is strong enough to justify a small *manual*
+    research position.  It cannot authorize orders or mutate Formal actions.
+    """
+    gates = profile.get("gates") if isinstance(profile.get("gates"), Mapping) else {}
+    gate_scores: dict[str, float] = {}
+    unknown_weight = 0.0
+    for gate, weight in GATE_WEIGHTS.items():
+        raw = gates.get(gate) if isinstance(gates.get(gate), Mapping) else {}
+        status = str(raw.get("status") or "UNKNOWN").upper()
+        if status == "PASS":
+            gate_scores[gate] = 1.0
+        elif status == "FAIL":
+            gate_scores[gate] = 0.0
+        else:
+            gate_scores[gate] = UNKNOWN_GATE_PRIOR
+            unknown_weight += weight
+
+    evidence_score = sum(GATE_WEIGHTS[g] * gate_scores[g] for g in GATE_WEIGHTS)
+    pe_ratio = _num(valuation_snapshot.get("pe_to_history_ratio"))
+    # 1.05x historical PE => zero valuation support; 0.60x or cheaper => full support.
+    valuation_score = _clamp((1.05 - pe_ratio) / 0.45) if pe_ratio is not None else 0.0
+    quant_score_raw = _num(valuation.get("quant_score"))
+    quant_score = _clamp((quant_score_raw or 0.0) / 100.0)
+    quality_score_raw = _num(valuation_snapshot.get("earnings_quality_score"))
+    quality_score = _clamp((quality_score_raw or 0.0) / 100.0)
+    uncertainty_penalty = 0.30 * unknown_weight
+    conviction = _clamp(
+        0.40 * evidence_score
+        + 0.25 * valuation_score
+        + 0.20 * quant_score
+        + 0.15 * quality_score
+        - uncertainty_penalty
+    )
+
+    financial_diag = (
+        valuation_snapshot.get("financial_gate_diagnostics")
+        if isinstance(valuation_snapshot.get("financial_gate_diagnostics"), Mapping)
+        else {}
+    )
+    critical_pass = all(
+        str((gates.get(g) or {}).get("status") or "UNKNOWN").upper() == "PASS"
+        for g in CRITICAL_CAPITAL_GATES
+    )
+    specialized = str(valuation.get("industry") or "").strip().upper().startswith(
+        SPECIALIZED_INDUSTRY_PREFIXES
+    )
+    action = "WATCH"
+    reason = "UNCERTAINTY_OR_EDGE_NOT_STRONG_ENOUGH"
+    max_portfolio_pct = 0.0
+
+    if failed:
+        action, reason = "BLOCK", "HARD_GATE_FAIL"
+    elif not critical_pass:
+        action, reason = "BLOCK", "CRITICAL_CAPITAL_GATES_NOT_PROVEN"
+    elif financial_diag.get("machine_financial_pass_ready") is not True:
+        action, reason = "BLOCK", "FINANCIAL_DIAGNOSTICS_NOT_PROBE_READY"
+    elif specialized:
+        action, reason = "WATCH", "SPECIALIZED_VALUATION_REQUIRED"
+    elif pe_ratio is None:
+        action, reason = "WATCH", "VALUATION_REFERENCE_INCOMPLETE"
+    elif str(valuation_snapshot.get("expectation_state") or "") != "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE":
+        action, reason = "WATCH", "EXPECTATION_REQUIRES_GROWTH"
+    elif research_decision == "BUY":
+        action, reason = "BUILD", "ALL_GATES_PASS_AND_RESEARCH_BUY"
+        max_portfolio_pct = min(3.0, max(1.0, 3.5 * conviction))
+    elif (
+        len(unknown) <= CAPITAL_PROBE_MAX_UNKNOWN
+        and pe_ratio <= CAPITAL_PROBE_MAX_PE_RATIO
+        and conviction >= CAPITAL_PROBE_MIN_CONVICTION
+    ):
+        action, reason = "PROBE", "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN"
+        max_portfolio_pct = min(
+            1.5,
+            max(0.5, 2.0 * conviction * max(0.0, 1.0 - unknown_weight)),
+        )
+    elif pe_ratio > CAPITAL_PROBE_MAX_PE_RATIO:
+        action, reason = "WATCH", "PRICE_MARGIN_TOO_SMALL_FOR_UNCERTAIN_PROBE"
+
+    return {
+        "model_version": CAPITAL_MODEL_VERSION,
+        "action": action,
+        "reason": reason,
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": False,
+        "formal_buy_authorized": False,
+        "no_auto_trade": True,
+        "critical_capital_gates": list(CRITICAL_CAPITAL_GATES),
+        "critical_capital_gates_pass": critical_pass,
+        "gate_weights": dict(GATE_WEIGHTS),
+        "evidence_score": round(evidence_score, 4),
+        "unknown_weight": round(unknown_weight, 4),
+        "valuation_score": round(valuation_score, 4),
+        "quant_score_component": round(quant_score, 4),
+        "earnings_quality_component": round(quality_score, 4),
+        "uncertainty_penalty": round(uncertainty_penalty, 4),
+        "capital_conviction_score": round(conviction, 4),
+        "suggested_max_portfolio_pct": round(max_portfolio_pct, 2),
+        "probe_rules": {
+            "max_unknown_gates": CAPITAL_PROBE_MAX_UNKNOWN,
+            "max_pe_to_history_ratio": CAPITAL_PROBE_MAX_PE_RATIO,
+            "min_capital_conviction_score": CAPITAL_PROBE_MIN_CONVICTION,
+        },
+    }
+
+
 def build_terminal_decisions(
     *,
     profiles_payload: Mapping[str, Any],
@@ -201,6 +341,23 @@ def build_terminal_decisions(
             decision, reason, _ = _valuation_decision(valuation)
 
         _, _, valuation_snapshot = _valuation_decision(valuation)
+        capital_allocation = _capital_allocation_advisory(
+            profile=profile,
+            failed=failed,
+            unknown=unknown,
+            valuation=valuation,
+            valuation_snapshot=valuation_snapshot,
+            research_decision=decision,
+        ) if profile else {
+            "model_version": CAPITAL_MODEL_VERSION,
+            "action": "BLOCK",
+            "reason": "DEEP_PROFILE_MISSING",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": False,
+            "formal_buy_authorized": False,
+            "no_auto_trade": True,
+            "suggested_max_portfolio_pct": 0.0,
+        }
         quant_score = _num(valuation.get("quant_score"))
         pe_ratio = valuation_snapshot.get("pe_to_history_ratio")
         evidence_blocked = decision == "RESEARCH_GAP" and reason == "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY"
@@ -243,6 +400,7 @@ def build_terminal_decisions(
                 "urgent_research": bool(urgent_reasons),
                 "urgent_research_reasons": urgent_reasons,
                 "valuation": valuation_snapshot,
+                "capital_allocation": capital_allocation,
             }
         )
 
@@ -258,6 +416,21 @@ def build_terminal_decisions(
         )
     )
     counts = {decision: sum(r["research_decision"] == decision for r in rows) for decision in DECISIONS}
+    capital_action_counts = {
+        action: sum((r.get("capital_allocation") or {}).get("action") == action for r in rows)
+        for action in CAPITAL_ACTIONS
+    }
+    capital_probe_queue = [
+        r for r in rows
+        if (r.get("capital_allocation") or {}).get("action") in {"BUILD", "PROBE"}
+    ]
+    capital_probe_queue.sort(
+        key=lambda r: (
+            0 if (r.get("capital_allocation") or {}).get("action") == "BUILD" else 1,
+            -float((r.get("capital_allocation") or {}).get("capital_conviction_score") or 0.0),
+            r["code"],
+        )
+    )
     status = dict(deep_status or {})
     return {
         "contract": CONTRACT,
@@ -274,7 +447,12 @@ def build_terminal_decisions(
         "no_auto_trade": True,
         "terminal_rows": rows,
         "urgent_research_queue": urgent,
-        "interpretation": "BUY/WAIT_PRICE are research-only outputs and never create Formal/Production authority. UNKNOWN hard gates remain explicit RESEARCH_GAP after bounded evidence recovery; only explicit hard-gate failure is REJECT.",
+        "capital_model_version": CAPITAL_MODEL_VERSION,
+        "capital_action_counts": capital_action_counts,
+        "capital_probe_queue": capital_probe_queue,
+        "capital_advisory_authority": "ADVISORY_ONLY",
+        "capital_advisory_automatic_execution_allowed": False,
+        "interpretation": "Research truth and capital sizing are separate: UNKNOWN never becomes PASS or Formal BUY, but bounded manual PROBE sizing may be suggested when critical financial gates are explicitly PASS and valuation/quant evidence compensates for limited noncritical uncertainty.",
     }
 
 
@@ -301,6 +479,18 @@ def render_markdown(payload: Mapping[str, Any]) -> str:
         lines.append(
             f"- {row.get('code')} {row.get('name')}: quant={row.get('quant_score')}, PE/history={ratio}, unknown={','.join(row.get('hard_gate_unknowns') or [])}, financial_blockers={','.join(blockers) or 'NONE'}, urgent={reasons}"
         )
+    lines += ["", "## Risk-budget capital advisory", ""]
+    capital_counts = payload.get("capital_action_counts") or {}
+    lines.append(
+        f"- BUILD: **{capital_counts.get('BUILD', 0)}** / PROBE: **{capital_counts.get('PROBE', 0)}** / WATCH: **{capital_counts.get('WATCH', 0)}** / BLOCK: **{capital_counts.get('BLOCK', 0)}**"
+    )
+    lines.append("- Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.")
+    for row in payload.get("capital_probe_queue") or []:
+        cap = row.get("capital_allocation") or {}
+        lines.append(
+            f"- {row.get('code')} {row.get('name')}: **{cap.get('action')}** / conviction={cap.get('capital_conviction_score')} / max_portfolio={cap.get('suggested_max_portfolio_pct')}%"
+        )
+
     lines += ["", "## Terminal rows", ""]
     for row in payload.get("terminal_rows") or []:
         lines.append(
