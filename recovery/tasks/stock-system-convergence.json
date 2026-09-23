@@ -1,58 +1,53 @@
 {
   "schema_version": 2,
-  "generation": 33,
+  "generation": 34,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "ACTIVE",
   "task_key": "stock-system-convergence",
-  "stage": "RISK_BUDGET_OVERLAY_PR_CI_AND_JEV_CONTINUATION_REPLAY",
-  "last_observed_main_sha": "baf6e2c7dbf8cbc45547b809e7c275aa35765ad2",
-  "work_branch": "feat/investor-overlay-capital-advisory-20260923",
-  "work_head_sha": "f9cb2cbb0a09a525cf6f1ba3b3f4ab64fb79e6a4",
-  "active_pr": 279,
+  "stage": "PR282_MERGED_JEV_CONTINUATION_ORCHESTRATOR_GAP_FIX",
+  "last_observed_main_sha": "57d9846258cb7cb0de0921b2563f6d822750119d",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
-    "status": "IN_PROGRESS",
-    "pr_head": "f9cb2cbb0a09a525cf6f1ba3b3f4ab64fb79e6a4",
-    "pr_ci_run_id": 35814044640,
-    "investor_brief_run_id": 35814044655,
-    "investor_overlay_run_id": 35814044649,
-    "opportunity_discovery_run_id": 35814044617
+    "pr_282_head": "e15390a8fe81ddf018eedd3406b43a578693f970",
+    "pr_282_ci_run_id": 35816791023,
+    "pr_282_ci_status": "SUCCESS"
   },
   "production_or_artifact": {
-    "status": "RISK_BUDGET_V1_PRODUCTION_LIVE_PR279_PENDING_ATOMIC_INVESTOR_OVERLAY",
+    "status": "LATEST_JEV_CONTINUATION_PERSISTED_ORCHESTRATOR_NOT_YET_CONSUMED",
     "verified": [
-      "PR #275 research strategy ledger is merged; source Jev run 35705667064 already dispatched exact Deep run 35706039574 successfully.",
-      "Risk-budget V1 is already live in Terminal/Three-Pillar with PROBE=1, WATCH=5, BLOCK=7, BUILD=0 on the verified production snapshot.",
-      "Current production PROBE candidate is 603105 芯能科技 with conviction 0.596 and suggested max portfolio pct 0.72.",
-      "PR #279 specialized Investor Brief and Investor Terminal Research Overlay checks are green on head f9cb2cb; blocking CI backend-gate is still running.",
-      "Main does not contain the autonomous downstream-convergence -> Jev reevaluation logic from stale PR #277."
+      "PR #282 merged as 57d9846258cb7cb0de0921b2563f6d822750119d after ai-governance, docker-build and backend-gate succeeded.",
+      "Deep run 35816583696 succeeded and downstream Terminal/Investor Overlay/Three-Pillar convergence completed.",
+      "Continuation Jev run 35817253869 succeeded and persisted latest routing with continuation_from_deep_run_id=35816583696.",
+      "Persisted latest routing source_workflow_run_id=35817253869, but orchestration/latest.json still references source_workflow_run_id=35816323387 and lifecycle_state=DECISION_CENTER_REFRESHED."
     ],
     "safety": [
-      "Formal trading authority remains false for risk-budget/Jev research layers.",
+      "Formal trading authority remains false for research layers.",
       "UNKNOWN != PASS.",
       "no_auto_trade remains true.",
-      "Do not duplicate source Jev run 35705667064 or Deep run 35706039574."
+      "Do not duplicate Deep run 35816583696 or Jev run 35817253869."
     ]
   },
   "pending_operation": {
-    "type": "MERGE_PR_AFTER_LATEST_HEAD_BLOCKING_CI",
-    "pr": 279,
-    "head_sha": "f9cb2cbb0a09a525cf6f1ba3b3f4ab64fb79e6a4",
-    "require": "latest-head blocking CI green and mergeable; re-align with live main if production persistence advances base"
+    "type": "FIX_AND_VERIFY_JEV_CONTINUATION_TO_ORCHESTRATOR_HANDOFF",
+    "source_jev_run_id": 35817253869,
+    "continuation_deep_run_id": 35816583696,
+    "require": "ensure exact persisted Jev continuation is deterministically consumed once, then verify any resulting Deep/Terminal/Overlay/Three-Pillar lineage without duplicate dispatch"
   },
   "completed": [
-    "Reconciled stale recovery cursor from PR #275 to live main and PR #279.",
-    "Read live AGENTS.md, TASK_STATE.md, machine recovery state, Jev routing and orchestration cursors, open PRs and Actions.",
-    "Verified Jev source run 35705667064 already produced Deep run 35706039574 successfully; no duplicate dispatch.",
-    "Verified current main lacks #277 autonomous Jev continuation logic.",
-    "Created reference-price groundwork branch feat/probe-reference-price-20260923 carrying same-snapshot raw execution price lineage; not yet opened/merged."
+    "Reconciled stale TASK_STATE/recovery state against live main and open PRs.",
+    "Confirmed #271 through #280 already completed; did not repeat them.",
+    "Verified latest TypeSafe/Jev continuation run 35817253869 executed successfully.",
+    "Verified PR #282 latest-head CI green and merged it.",
+    "Identified a real autonomous-loop gap: latest continuation Jev routing persisted but automatic research orchestrator did not start."
   ],
-  "next_action": "Finish PR #279 latest-head CI and merge with production-main replay if needed; verify atomic Investor Dashboard risk-budget output. Then replay the minimal #277 Jev continuation logic onto latest main, test/merge it, run one lineage-keyed Jev reevaluation from the latest fully converged Deep lineage, and verify deterministic orchestrator/downstream closure. Afterwards finish same-snapshot reference-price + lot-size-aware research-probe execution advisory without granting Formal authority.",
+  "next_action": "Create a latest-main minimal workflow fix that makes successful persisted Jev routing explicitly hand off to the deterministic research orchestrator without double-dispatch risk; add regression coverage, run CI, merge, then verify source Jev run 35817253869 is consumed and downstream lineage converges. After that continue lot-size-aware research-probe execution advisory and refresh TASK_STATE.",
   "do_not_repeat": [
-    "Do not redo #268, #269, #270, #271, #273 or #275.",
-    "Do not merge stale #276/#277 directly; replay their minimal autonomous-continuation logic onto live main.",
-    "Do not rerun source Jev 35705667064 or Deep 35706039574.",
+    "Do not redo or reopen #268 through #282 unless a new regression is proven.",
+    "Do not rerun Deep 35816583696 or Jev 35817253869 merely because chat context was lost.",
     "Do not lower thresholds to force BUY/WAIT_PRICE.",
     "Do not relax UNKNOWN != PASS, Formal authority or no_auto_trade."
   ],
-  "business_code_baseline_sha": "3162e8ae58df72364a063eef01d750d2f8cda67d"
+  "business_code_baseline_sha": "57d9846258cb7cb0de0921b2563f6d822750119d"
 }
