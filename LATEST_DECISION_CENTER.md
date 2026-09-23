@@ -136,7 +136,9 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
 - 终态来源 Lambda：`35802049376`；当前 Lambda：`35802049376`。
 - 请求：**13**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**13**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=37.7596；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=36.2154；暂不买；等待补齐：predictability、long_term_demand、moat)；601318 中国平安(quant=33.1137；暂不买；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603993 洛阳钼业(quant=31.3451；暂不买；等待补齐：predictability)
-- **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；这里只提供研究动作，不会创建 Formal BUY、持仓加仓授权或自动交易。
+- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=37.7596；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=36.2154；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)；601318 中国平安(quant=33.1137；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603993 洛阳钼业(quant=31.3451；暂不投入新增资金；等待补齐：predictability)
+- 风险预算层 BUILD/PROBE 候选：**1**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
+  - 603105 芯能科技: **PROBE**；conviction=0.596；建议账户上限=0.72%
+- **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
