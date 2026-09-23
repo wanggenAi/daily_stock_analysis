@@ -84,7 +84,7 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -94,11 +94,11 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=54.74 / 2026-09-22 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=123 / dormant=3 / archived-invalidated=0 / events=9953 / focus=8 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=123 / dormant=3 / archived-invalidated=0 / events=9953 / focus=4 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=15 / verified-pass=210 / unresolved=64 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35855388775 / unverified-pass=0 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=35871741778 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **ACTIVE** | BUY=0 / WAIT=0 / GAP=15 / REJECT=0 |
+| Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **123**；DORMANT **3**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **9953**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
@@ -114,10 +114,10 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35854781919`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`35869903181`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`35854781919`
-- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
+- Lambda run：`35869903181`
+- 触发来源：`SLOW_LANE_TERMINAL_URGENT_REOPEN`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
@@ -127,7 +127,7 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 - 尚未解决硬门槛：**64**。
 - 未决原因摘要：涉及 15 只；门槛分布：long_term_demand×14、moat×13、predictability×13、earnings_authenticity×12、financial_safety×12；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×14、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×12、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×12、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×10、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×8；样例：000504[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000703[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；001316[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]；002042[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；002375[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`35854781919`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`35869903181`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
@@ -139,12 +139,11 @@ R86新闻和出版业(93.42)、P83教育(82.89)、I64互联网和相关服务(81
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`35854781919`；当前 Lambda：`35854781919`。
-- 请求：**15**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**15**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=37.7596；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=36.2154；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)；601318 中国平安(quant=33.1137；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603993 洛阳钼业(quant=31.3451；暂不投入新增资金；等待补齐：predictability)
-- 风险预算层 BUILD/PROBE 候选：**1**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
-  - 603105 芯能科技: **PROBE**；conviction=0.596；建议账户上限=0.72%
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
+- 终态来源 Lambda：`35854781919`；当前 Lambda：`35869903181`。
+- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：无
+- 风险预算层 BUILD/PROBE 候选：**0**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
