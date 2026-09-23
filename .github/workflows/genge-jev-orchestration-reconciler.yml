@@ -229,7 +229,7 @@ jobs:
                [ "$(jq -r '.pillar_3_deep_opportunities.terminal_research_snapshot.source_deep_lambda_run_id // ""' data/decision_center/latest.json)" = "$DEEP_RUN_ID" ] &&
                [ "$(jq -r '.pillar_3_deep_opportunities.terminal_research_snapshot.current_for_deep_runtime // false' data/decision_center/latest.json)" = "true" ]; then
               stage="DECISION_CENTER_REFRESHED"
-              next_expected="COMPLETE"
+              next_expected="JEV_REEVALUATION"
             fi
 
             SOURCE_RUN_ID="$SOURCE_RUN_ID" DEEP_RUN_ID="$DEEP_RUN_ID" STAGE="$stage" NEXT_EXPECTED="$next_expected" python - <<'PY'
@@ -244,10 +244,21 @@ jobs:
           payload["next_expected_stage"]=os.environ["NEXT_EXPECTED"]
           payload["deep_execution_status"]="SUCCESS"
           payload["production_verification_complete"]=os.environ["STAGE"] == "DECISION_CENTER_REFRESHED"
+          if os.environ["STAGE"] == "DECISION_CENTER_REFRESHED":
+              continuation_deep = str(payload.get("continuation_from_deep_run_id") or "")
+              continuation_state = str(payload.get("continuation_jev_state") or "")
+              if continuation_deep != os.environ["DEEP_RUN_ID"]:
+                  payload["continuation_from_deep_run_id"] = os.environ["DEEP_RUN_ID"]
+                  payload["continuation_jev_state"] = "PENDING"
+                  payload["continuation_jev_run_id"] = ""
+              elif continuation_state not in {"PENDING", "DISPATCH_ACCEPTED"}:
+                  payload["continuation_jev_state"] = "PENDING"
           payload["pending_operation"]=None
           payload["updated_at"]=datetime.now(timezone.utc).replace(microsecond=0).isoformat()
           path.write_text(json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+"\n",encoding="utf-8")
           PY
+
+            continuation_state="$(jq -r '.continuation_jev_state // ""' "$marker")"
 
             git add -f \
               data/deep_calculation/latest_status.json \
@@ -259,6 +270,7 @@ jobs:
             if git diff --cached --quiet; then
               echo "owns_latest=true" >> "$GITHUB_OUTPUT"
               echo "stage=$stage" >> "$GITHUB_OUTPUT"
+              echo "continuation_state=$continuation_state" >> "$GITHUB_OUTPUT"
               if [ "$RECOVER" = "true" ] && [ "$stage" = "DEEP_COMPLETE" ]; then
                 echo "recovery_dispatch=true" >> "$GITHUB_OUTPUT"
               else
@@ -271,6 +283,7 @@ jobs:
             if git push origin HEAD:main; then
               echo "owns_latest=true" >> "$GITHUB_OUTPUT"
               echo "stage=$stage" >> "$GITHUB_OUTPUT"
+              echo "continuation_state=$continuation_state" >> "$GITHUB_OUTPUT"
               if [ "$RECOVER" = "true" ] && [ "$stage" = "DEEP_COMPLETE" ]; then
                 echo "recovery_dispatch=true" >> "$GITHUB_OUTPUT"
               else
@@ -292,6 +305,56 @@ jobs:
           gh workflow run genge-v31-deep-provenance-audit.yml --repo "$GITHUB_REPOSITORY" --ref main
           gh workflow run genge-v31-terminal-research-decision.yml --repo "$GITHUB_REPOSITORY" --ref main
 
+      - name: Dispatch lineage-keyed Jev reevaluation after full downstream convergence
+        id: continuation
+        if: >-
+          steps.persist.outputs.owns_latest == 'true' &&
+          steps.persist.outputs.stage == 'DECISION_CENTER_REFRESHED' &&
+          steps.persist.outputs.continuation_state == 'PENDING'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DEEP_RUN_ID: ${{ steps.inspect.outputs.deep_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          title="GenGe Jev Shadow Evaluation / $DEEP_RUN_ID"
+          existing="$(
+            gh api "repos/$GITHUB_REPOSITORY/actions/workflows/genge-jev-shadow-evaluation.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+              --jq ".workflow_runs[] | select(.display_title == \"$title\") | .id" \
+              | head -1
+          )"
+
+          if [ -z "$existing" ]; then
+            gh workflow run genge-jev-shadow-evaluation.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main \
+              -f continuation_deep_run_id="$DEEP_RUN_ID" \
+              -f scope=combined \
+              -f max_entities=25
+            for attempt in $(seq 1 20); do
+              existing="$(
+                gh api "repos/$GITHUB_REPOSITORY/actions/workflows/genge-jev-shadow-evaluation.yml/runs?branch=main&event=workflow_dispatch&per_page=100" \
+                  --jq ".workflow_runs[] | select(.display_title == \"$title\") | .id" \
+                  | head -1
+              )"
+              [ -n "$existing" ] && break
+              sleep 3
+            done
+          fi
+
+          [[ "$existing" =~ ^[0-9]+$ ]] || {
+            echo "Jev continuation dispatch outcome is ambiguous for Deep $DEEP_RUN_ID." >&2
+            exit 1
+          }
+
+          status="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$existing" --jq '.status // ""')"
+          conclusion="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$existing" --jq '.conclusion // ""')"
+          if [ "$status" = "completed" ] && [ "$conclusion" != "success" ]; then
+            gh run rerun "$existing" --repo "$GITHUB_REPOSITORY"
+          fi
+
+          echo "jev_run_id=$existing" >> "$GITHUB_OUTPUT"
+
       - name: Publish reconciliation summary
         if: always()
         run: |
@@ -300,4 +363,5 @@ jobs:
           echo "- exact Deep run: ${{ steps.inspect.outputs.deep_run_id || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- artifact recovery used: ${{ steps.inspect.outputs.recover || 'false' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- cursor stage: ${{ steps.persist.outputs.stage || 'unchanged' }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- continuation Jev run: ${{ steps.continuation.outputs.jev_run_id || 'none' }}" >> "$GITHUB_STEP_SUMMARY"
           echo "- Jev direct dispatch=false; Formal trading authority=false; UNKNOWN != PASS; no_auto_trade=true" >> "$GITHUB_STEP_SUMMARY"
