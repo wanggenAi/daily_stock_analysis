@@ -567,3 +567,13 @@ def test_financial_gate_diagnostics_are_carried_into_research_context():
     assert diagnostics["cash_conversion_ratio"] == 0.75
     assert diagnostics["operating_cash_flow"] == 100.0
 
+def test_jev_question_set_has_explicit_post_deep_valuation_closure_route():
+    from src.strategies.genge_opportunity_discovery.jev_shadow import (
+        QUESTION_SET_VERSION,
+        QUESTION_SPECS,
+    )
+
+    assert QUESTION_SET_VERSION == "GEN_GE_JEV_RESEARCH_ROUTING_V3"
+    criteria = QUESTION_SPECS["research_route"]["criteria"]
+    assert "VALUATION_CLOSURE" in criteria
+    assert "five hard gates" in criteria["VALUATION_CLOSURE"].lower()
