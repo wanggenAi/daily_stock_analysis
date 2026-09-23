@@ -19,6 +19,7 @@ on:
       - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
       - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_terminal_research_overlay.py"
       - "CURRENT_HOLDINGS.md"
       - "CURRENT_FUNDS.md"
       - "CURRENT_CAPITAL.json"
@@ -33,6 +34,7 @@ on:
       - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
       - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_terminal_research_overlay.py"
       - "CURRENT_HOLDINGS.md"
       - "CURRENT_FUNDS.md"
       - "CURRENT_CAPITAL.json"
@@ -41,6 +43,7 @@ on:
       - "tests/test_v311_dynamic_holding_profit_protection.py"
       - "tests/test_genge_investor_live_execution_overlay.py"
       - "tests/test_genge_investor_manual_execution_quote_overlay.py"
+      - "tests/test_investor_terminal_research_overlay.py"
       - "tests/test_genge_investor_dashboard_workflow_contract.py"
 
 permissions:
@@ -73,6 +76,7 @@ jobs:
             tests/test_v311_dynamic_holding_profit_protection.py \
             tests/test_genge_investor_live_execution_overlay.py \
             tests/test_genge_investor_manual_execution_quote_overlay.py \
+            tests/test_investor_terminal_research_overlay.py \
             tests/test_genge_investor_dashboard_workflow_contract.py
 
   publish-investor-brief:
