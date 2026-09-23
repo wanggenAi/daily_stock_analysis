@@ -7,12 +7,12 @@
 - may suppress deterministic research: **False**
 - UNKNOWN != PASS; no_auto_trade=true
 - routed entities: **25**
-- actionable research routes: **25**
+- actionable research routes: **24**
 - invalid rows: **0**
 
 ## Route counts
 
-- {"DEEP_RESEARCH": 4, "EVIDENCE_REFRESH": 17, "HUMAN_REVIEW": 4}
+- {"DEEP_RESEARCH": 4, "EVIDENCE_REFRESH": 16, "HUMAN_REVIEW": 4, "NO_ESCALATION": 1}
 
 ## Advisory queue
 
@@ -29,7 +29,6 @@
 - 000096 广聚能源 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 - 000415 渤海租赁 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 - 000426 兴业银锡 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
-- 000567 海德股份 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 - 000576 甘化科工 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 - 000703 恒逸石化 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 - 002042 华孚时尚 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
@@ -41,5 +40,6 @@
 - 603369 今世缘 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 - 603416 信捷电气 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 - 603658 安图生物 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
+- 000567 海德股份 | priority=LOW | route=NO_ESCALATION | evidence=INSUFFICIENT | engine=RESEARCH_PRIORITY:P3
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
