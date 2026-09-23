@@ -8,136 +8,22 @@
   "dispatch_target": "genge-v31-deep-calculation-lambda.yml",
   "execution_status": "NOOP",
   "formal_trading_authority": false,
-  "human_review": [
-    {
-      "attention_confidence": 0.88,
-      "attention_priority": "HIGH",
-      "entity_id": "603596",
-      "entity_name": "伯特利",
-      "evidence_state": "ADEQUATE_FOR_CURRENT_RESEARCH_STATE",
-      "existing_engine_action": "RESEARCH:BUY",
-      "formal_trading_authority": false,
-      "is_current_holding": false,
-      "needs_deep_research": false,
-      "needs_more_evidence": true,
-      "no_auto_trade": true,
-      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
-      "research_context": {
-        "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "35849124866",
-        "deep_terminal_state": "COMPLETE",
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 5,
-        "hard_gate_unknowns": [],
-        "profile_gate_statuses": {
-          "earnings_authenticity": {
-            "confidence": "MACHINE",
-            "evidence_fingerprint": "0bc45111871a4bb87148",
-            "source": "AUTOMATIC_MACHINE",
-            "status": "PASS"
-          },
-          "financial_safety": {
-            "confidence": "MACHINE",
-            "evidence_fingerprint": "7a3094f80970f7ae6897",
-            "source": "AUTOMATIC_MACHINE",
-            "status": "PASS"
-          },
-          "long_term_demand": {
-            "confidence": "HIGH",
-            "evidence_fingerprint": "d3cede98fab83104898f",
-            "source": "EXPLICIT_VERIFIED",
-            "status": "PASS"
-          },
-          "moat": {
-            "confidence": "HIGH",
-            "evidence_fingerprint": "da4e5770877c5a5dfc33",
-            "source": "EXPLICIT_VERIFIED",
-            "status": "PASS"
-          },
-          "predictability": {
-            "confidence": "HIGH",
-            "evidence_fingerprint": "775e3fba4f8e1a28448b",
-            "source": "EXPLICIT_VERIFIED",
-            "status": "PASS"
-          }
-        },
-        "research_decision": "BUY",
-        "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
-        "unresolved_gates": []
-      },
-      "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
-      "review_reason": "LOW_OR_MISSING_ROUTE_CONFIDENCE",
-      "route": "DEEP_RESEARCH",
-      "route_confidence": 0.46,
-      "strategy_attempts": [],
-      "triage_context": {
-        "industry": "C36汽车制造业",
-        "mapping_gaps": [],
-        "near_buy_evidence_recovery_tier": null,
-        "near_buy_missing_evidence_items": [],
-        "quant_score": 80.0059,
-        "quant_status": "PRIORITY_RESEARCH",
-        "research_priority": "P1",
-        "research_priority_score": 50,
-        "screening_attractiveness": "NORMAL",
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP"
-        ],
-        "valuation": {
-          "current_pe": 17.95,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_gate_diagnostics": {
-            "blockers": [],
-            "cash_conversion_pass_threshold": 0.8,
-            "cash_conversion_ratio": 1.1844,
-            "earnings_quality_confidence": "HIGH",
-            "earnings_quality_pass_threshold": 70.0,
-            "earnings_quality_score": 90.0,
-            "financial_disclosure_date": "2026-08-28",
-            "financial_review_status": "OK",
-            "machine_financial_pass_ready": true,
-            "normalized_core_operating_profit": 580089687.17,
-            "operating_cash_flow": 751623839.23
-          },
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 33.65,
-          "pe_to_history_ratio": 0.5334323922734027,
-          "required_profit_growth_pct": -46.65676077265973
-        }
-      }
-    }
-  ],
+  "human_review": [],
   "jev_direct_dispatch_allowed": false,
   "lifecycle_state": "NOOP",
   "max_dispatch": 12,
   "min_auto_route_confidence": 0.5,
   "mutates_authoritative_decision": false,
-  "next_expected_stage": "HUMAN_REVIEW",
+  "next_expected_stage": "WAIT_FOR_NEW_RESEARCH_STATE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "35850186518",
+  "orchestrator_run_id": "35876096992",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
   "selected": [],
   "should_dispatch": false,
+  "should_dispatch_terminal_closure": false,
   "skipped": [
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "001316",
-      "entity_name": "润贝航科",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "HUMAN_REVIEW"
-    },
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "600406",
-      "entity_name": "国电南瑞",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "HUMAN_REVIEW"
-    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -147,10 +33,31 @@
     },
     {
       "attention_priority": "HIGH",
+      "entity_id": "001316",
+      "entity_name": "润贝航科",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "600406",
+      "entity_name": "国电南瑞",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
       "entity_id": "601318",
       "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "603596",
+      "entity_name": "伯特利",
+      "reason": "ROUTE_NOT_AUTO_RESEARCH",
+      "route": "VALUATION_CLOSURE"
     },
     {
       "attention_priority": "HIGH",
@@ -168,8 +75,57 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
+      "entity_id": "603105",
+      "entity_name": "芯能科技",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "603369",
+      "entity_name": "今世缘",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000703",
+      "entity_name": "恒逸石化",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "002042",
+      "entity_name": "华孚时尚",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "002375",
+      "entity_name": "亚厦股份",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "002537",
+      "entity_name": "海联金汇",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600610",
+      "entity_name": "中毅达",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600640",
+      "entity_name": "国脉文化",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -177,7 +133,7 @@
       "attention_priority": "MEDIUM",
       "entity_id": "601020",
       "entity_name": "华钰矿业",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
     {
@@ -185,105 +141,56 @@
       "entity_id": "000096",
       "entity_name": "广聚能源",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "000415",
       "entity_name": "渤海租赁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "000426",
       "entity_name": "兴业银锡",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "000526",
       "entity_name": "学大教育",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "000557",
       "entity_name": "西部创业",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "000567",
       "entity_name": "海德股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000703",
-      "entity_name": "恒逸石化",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002042",
-      "entity_name": "华孚时尚",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002375",
-      "entity_name": "亚厦股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002537",
-      "entity_name": "海联金汇",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600610",
-      "entity_name": "中毅达",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600640",
-      "entity_name": "国脉文化",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "603105",
-      "entity_name": "芯能科技",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "603369",
-      "entity_name": "今世缘",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
@@ -294,22 +201,27 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-23T10:40:21+00:00",
-  "source_workflow_head_sha": "c8358b45a1203e64b088ba47293b5d81688d2cac",
+  "source_generated_at": "2026-09-23T14:41:34+00:00",
+  "source_workflow_head_sha": "521229e6907fdde7464bde0c61bc4ec3df23865c",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "35849969346",
+  "source_workflow_run_id": "35875806431",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
     "evidence_refresh_count": 0,
     "holding_selected_count": 0,
-    "human_review_count": 1,
+    "human_review_count": 0,
     "selected_count": 0,
-    "skipped_count": 24,
+    "skipped_count": 25,
     "strategy_attempt_count": 0,
-    "strategy_ledger_entry_count": 164
+    "strategy_ledger_entry_count": 164,
+    "valuation_closure_count": 0
   },
-  "trigger_source": "JEV_ORCHESTRATOR_35849969346",
+  "trigger_source": "JEV_ORCHESTRATOR_35875806431",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-23T10:42:52+00:00"
+  "updated_at": "2026-09-23T14:43:40+00:00",
+  "valuation_closure": [],
+  "valuation_closure_codes": [],
+  "valuation_closure_codes_csv": "",
+  "valuation_closure_dispatch_target": "genge-v31-terminal-research-decision.yml"
 }
