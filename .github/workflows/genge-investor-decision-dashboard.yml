@@ -19,6 +19,7 @@ on:
       - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
       - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_terminal_research_overlay.py"
       - "CURRENT_HOLDINGS.md"
       - "CURRENT_FUNDS.md"
       - "CURRENT_CAPITAL.json"
@@ -33,6 +34,7 @@ on:
       - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
       - "src/strategies/genge_opportunity_discovery/investor_manual_execution_quote_overlay.py"
+      - "src/strategies/genge_opportunity_discovery/investor_terminal_research_overlay.py"
       - "CURRENT_HOLDINGS.md"
       - "CURRENT_FUNDS.md"
       - "CURRENT_CAPITAL.json"
@@ -41,6 +43,7 @@ on:
       - "tests/test_v311_dynamic_holding_profit_protection.py"
       - "tests/test_genge_investor_live_execution_overlay.py"
       - "tests/test_genge_investor_manual_execution_quote_overlay.py"
+      - "tests/test_investor_terminal_research_overlay.py"
       - "tests/test_genge_investor_dashboard_workflow_contract.py"
 
 permissions:
@@ -73,6 +76,7 @@ jobs:
             tests/test_v311_dynamic_holding_profit_protection.py \
             tests/test_genge_investor_live_execution_overlay.py \
             tests/test_genge_investor_manual_execution_quote_overlay.py \
+            tests/test_investor_terminal_research_overlay.py \
             tests/test_genge_investor_dashboard_workflow_contract.py
 
   publish-investor-brief:
@@ -284,6 +288,16 @@ jobs:
                 --execution-state CURRENT_EXECUTION_STATE.json \
                 --markdown INVESTOR_DECISION_DASHBOARD.md
             fi
+            # Re-apply the persisted research-only Terminal snapshot after every overlay
+            # that may re-render the dashboard Markdown. This makes the persisted JSON and
+            # Markdown atomically consistent; the later workflow_dispatch remains an
+            # idempotent convergence fallback.
+            if [ -s data/deep_calculation/latest_research_decisions.json ]; then
+              python -m src.strategies.genge_opportunity_discovery.investor_terminal_research_overlay \
+                --dashboard-json data/investor_decision_dashboard/latest.json \
+                --dashboard-md INVESTOR_DECISION_DASHBOARD.md \
+                --terminal-research-json data/deep_calculation/latest_research_decisions.json
+            fi
             python - <<'PY'
           import json
           from pathlib import Path
@@ -309,6 +323,18 @@ jobs:
               assert consumption['no_auto_trade'] is True
               assert consumption['routine_canonical_refresh_rearms_consumed_add'] is False
               assert consumption['explicit_rearm_required'] is True
+          terminal_research=p.get('terminal_research_snapshot') or {}
+          if Path('data/deep_calculation/latest_research_decisions.json').is_file():
+              assert terminal_research['research_authority'] == 'RESEARCH_ONLY'
+              assert terminal_research['formal_trading_authority'] is False
+              assert terminal_research['automatic_formal_buy_allowed'] is False
+              assert terminal_research['unknown_is_pass'] is False
+              assert terminal_research['no_auto_trade'] is True
+              if terminal_research.get('capital_model_version'):
+                  assert terminal_research['capital_advisory_authority'] == 'ADVISORY_ONLY'
+                  assert terminal_research['capital_advisory_automatic_execution_allowed'] is False
+                  assert sum(terminal_research['capital_action_counts'].values()) == terminal_research['requested_count']
+                  assert p['decision_summary']['research_capital_probe_count'] == terminal_research['capital_probe_count']
           live=p.get('live_execution_overlay') or {}
           if live:
               assert live['formal_action_recomputed'] is False

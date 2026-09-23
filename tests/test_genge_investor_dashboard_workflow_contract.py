@@ -100,6 +100,27 @@ def test_dashboard_explicitly_dispatches_terminal_overlay_after_persistence() ->
     assert "gh workflow run genge-investor-terminal-research-overlay.yml" in workflow[dispatch_at:summary_at]
 
 
+
+def test_investor_brief_reapplies_terminal_research_before_persistence() -> None:
+    workflow = _workflow()
+    block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Dispatch terminal research overlay after investor brief persistence", 1
+    )[0]
+
+    build_at = block.index("investor_decision_dashboard")
+    research_overlay_at = block.index("investor_terminal_research_overlay")
+    consumption_at = block.index("execution_consumption_overlay")
+    validation_at = block.index("terminal_research=p.get('terminal_research_snapshot')")
+    commit_at = block.index('git commit -m "Persist investor decision brief [skip ci]"')
+
+    assert "data/deep_calculation/latest_research_decisions.json" in block
+    assert "--terminal-research-json data/deep_calculation/latest_research_decisions.json" in block
+    assert "src/strategies/genge_opportunity_discovery/investor_terminal_research_overlay.py" in workflow
+    assert "tests/test_investor_terminal_research_overlay.py" in workflow
+    assert "capital_advisory_authority" in block
+    assert "research_capital_probe_count" in block
+    assert build_at < consumption_at < research_overlay_at < validation_at < commit_at
+
 def test_investor_brief_cannot_reopen_stale_hourly_execution_quotes() -> None:
     workflow = _workflow()
     block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
