@@ -335,6 +335,67 @@ def test_matching_terminal_research_is_exposed_separately_from_formal_actions():
     assert out["no_auto_trade"] is True
 
 
+
+def test_current_terminal_probe_is_exposed_as_manual_risk_budget_not_formal_buy():
+    terminal = _terminal_research()
+    capital = {
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "action": "PROBE",
+        "reason": "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": False,
+        "formal_buy_authorized": False,
+        "no_auto_trade": True,
+        "capital_conviction_score": 0.71,
+        "suggested_max_portfolio_pct": 1.1,
+    }
+    terminal["terminal_rows"][0]["capital_allocation"] = capital
+    terminal["urgent_research_queue"][0]["capital_allocation"] = capital
+    terminal["capital_model_version"] = "GEN_GE_RISK_BUDGET_CAPITAL_V1"
+    terminal["capital_action_counts"] = {"BUILD": 0, "PROBE": 1, "WATCH": 0, "BLOCK": 0}
+    terminal["capital_probe_queue"] = [terminal["terminal_rows"][0]]
+    terminal["capital_advisory_authority"] = "ADVISORY_ONLY"
+    terminal["capital_advisory_automatic_execution_allowed"] = False
+
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=_automatic_profiles(),
+        static_profiles={},
+        deep_calculation_status=_terminal_status(),
+        terminal_research_decisions=terminal,
+        industry_links={},
+        era_handoff={},
+    )
+    pillar = out["pillar_3_deep_opportunities"]
+    assert pillar["research_gap_count"] == 1
+    assert pillar["research_capital_probe_count"] == 1
+    assert pillar["research_capital_probe"][0]["account_action"] == "MANUAL_PROBE_ADVISORY"
+    assert "1.10%" in pillar["research_capital_probe"][0]["investor_action"]
+    assert pillar["research_capital_probe"][0]["formal_buy_authorized"] is False
+    assert out["executive_summary"]["research_capital_probe_count"] == 1
+    assert out["formal_action_source"] == "FINALIZED_CANONICAL_ONLY"
+    assert out["no_auto_trade"] is True
+
+    md = render_runtime_markdown(out)
+    assert "风险预算层 BUILD/PROBE 候选：**1**" in md
+    assert "建议账户上限=1.1%" in md
+
+
+def test_capital_advisory_cannot_escalate_execution_authority():
+    terminal = _terminal_research()
+    terminal["terminal_rows"][0]["capital_allocation"] = {
+        "action": "PROBE",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": True,
+        "formal_buy_authorized": False,
+        "no_auto_trade": True,
+    }
+    terminal["capital_action_counts"] = {"BUILD": 0, "PROBE": 1, "WATCH": 0, "BLOCK": 0}
+
+    with pytest.raises(ValueError, match="automatic execution"):
+        normalize_terminal_research(terminal)
+
 def test_stale_terminal_research_is_not_exposed_as_current_actionable_research():
     out = build_runtime_decision_center(
         dashboard=_dashboard(),
