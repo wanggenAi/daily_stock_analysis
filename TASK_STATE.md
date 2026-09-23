@@ -41,6 +41,11 @@ RESEARCH_EXHAUSTION_DORMANCY_IMPLEMENTATION
 - Persisted Jev lineage automatically triggered deterministic Orchestrator `35827144243`.
 - Jev stayed advisory-only; deterministic ledger owned retry eligibility; Formal trading authority remained false.
 
+## Completed
+- #288 production verification: exact Deep PASS gates are authoritative over stale retry hints.
+- TypeSafe/Jev `35826965359` -> deterministic Orchestrator `35827144243` completed without redundant Deep dispatch.
+- #289 core dormancy implementation and focused contract tests are committed; first focused Orchestrator contract run passed.
+
 ## Current Findings
 - #288 is production-verified: exact Deep PASS gates no longer reopen from stale routing missing-evidence text.
 - Dominant funnel loss remains evidence closure, not broad recall/workset coverage.
@@ -52,6 +57,10 @@ RESEARCH_EXHAUSTION_DORMANCY_IMPLEMENTATION
 - DORMANT -> ACTIVE occurs only on a new schedulable evidence epoch, terminal research progress, or holding protection.
 - DORMANT removes stale lifecycle-tier priority boost without filtering Broad Discovery.
 - Jev orchestrator will persist lifecycle transitions through optimistic replay from latest main.
+
+## Blockers
+- No user/login/approval blocker.
+- #289 blocking CI must be green before merge; current governance-only failure is being corrected.
 
 ## Next Action
 1. Run branch PR CI/tests and resolve any contract regression.
