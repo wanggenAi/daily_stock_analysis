@@ -248,6 +248,18 @@ jobs:
           assert routing['may_create_or_mutate_formal_action'] is False
           assert routing['unknown_is_pass'] is False
           assert routing['no_auto_trade'] is True
+          allowed_entry = {'ENTRY_NOW','WAIT_PRICE','WAIT_EVIDENCE','DO_NOT_CHASE','INVALIDATED','NO_JUDGMENT'}
+          for row in routing.get('routing_queue', []):
+              entry=row.get('entry_judgment') or {}
+              assert entry.get('validated_judgment') in allowed_entry
+              assert entry.get('authority') == 'ADVISORY_ONLY'
+              assert entry.get('formal_buy_authorized') is False
+              assert entry.get('automatic_execution_allowed') is False
+              assert entry.get('no_auto_trade') is True
+              if entry.get('validated_judgment') == 'ENTRY_NOW':
+                  assert entry.get('entry_price_zone_high') is not None
+                  assert float(entry.get('initial_manual_position_pct') or 0) > 0
+                  assert float(entry.get('initial_manual_position_pct') or 0) <= float(entry.get('max_manual_position_pct') or 0)
           PY
 
       - name: Persist latest Jev advisory with optimistic replay
@@ -307,4 +319,4 @@ jobs:
           echo '# Jev Research Routing Persistence' >> "$GITHUB_STEP_SUMMARY"
           echo '- source run: `${{ github.run_id }}`' >> "$GITHUB_STEP_SUMMARY"
           echo '- persisted: `data/jev_shadow/latest.json`, `data/jev_shadow/latest_routing.json`, `JEV_RESEARCH_ROUTING.md`' >> "$GITHUB_STEP_SUMMARY"
-          echo '- authority: advisory research routing only; automatic dispatch=false; Formal authority unchanged; UNKNOWN != PASS; no_auto_trade=true' >> "$GITHUB_STEP_SUMMARY"
+          echo '- authority: advisory research routing + entry judgment only; numeric entry fields deterministic; automatic dispatch=false; Formal authority unchanged; UNKNOWN != PASS; no_auto_trade=true' >> "$GITHUB_STEP_SUMMARY"
