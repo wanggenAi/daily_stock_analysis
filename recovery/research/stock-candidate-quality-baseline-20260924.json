@@ -372,6 +372,36 @@
     "other_scope": "All named company codes except 300298 also had independent official_material_event_scan OK rows from Sep23; this does NOT cure the separate failed fundamental official-announcement query.",
     "ttl_predicates_as_of_next_2026_09_24_1830_cst": "All four FAILED are older than six hours, and the one MISSING is older than twenty-four hours, conditional on matching cache identity and restored cache path; verify real fetch_count/new audit rows and cache key after scheduled full-A, not automatic PASS.",
     "expected_first_new_genuine_epoch": "2026-09-24 18:30 China scheduled all-A job; no claim that the run exists before scheduler fires.",
-    "promotion_authorized": false
+    "promotion_authorized": false,
+    "fundamental_collector_scope_diagnosis": {
+      "source": "Original 94-row auto_evidence_audit.csv; collector grouping verified deterministically by row.scope and row.collector, DO NOT merge material-event OK with annual filing success.",
+      "total_audit_rows": 94,
+      "company_scope_audit_rows": 48,
+      "industry_scope_audit_rows": 46,
+      "fundamental_issuer_announcement_queries": 18,
+      "unique_fundamental_issuer_codes": 18,
+      "fundamental_results": {
+        "FAILED": 6,
+        "MISSING": 12,
+        "OK": 0
+      },
+      "exchange_breakdown": {
+        "sse_company_announcement": {
+          "FAILED": 3,
+          "MISSING": 12
+        },
+        "szse_company_announcement": {
+          "FAILED": 3,
+          "MISSING": 0
+        }
+      },
+      "material_event_scans": {
+        "audit_rows": 30,
+        "status_OK": 30,
+        "verified_material_events": 0,
+        "meaning": "Query process completed; zero matched/verified event, cannot count as verified issuer annual/fundamental evidence."
+      },
+      "distinction": "Old 30 OK in 94-audit are all material-event scan process completions. Annual filing fundamental collector had zero usable official result among 18 attempted codes, and coverage only 18/80 deep reviewed; both endpoint retrieval failures and coverage scope require new-epoch observation. No inference that all 80 are uninvestable. PR303 negative-cache TTL is only refetch eligibility, not a resolver for permanent endpoint block or absent annual report."
+    }
   }
 }
