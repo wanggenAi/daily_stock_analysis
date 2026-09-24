@@ -398,10 +398,20 @@
       "material_event_scans": {
         "audit_rows": 30,
         "status_OK": 30,
-        "verified_material_events": 0,
-        "meaning": "Query process completed; zero matched/verified event, cannot count as verified issuer annual/fundamental evidence."
+        "nonzero_verified_event_issuer_rows": 6,
+        "reported_verified_event_count_total": 11,
+        "zero_verified_event_issuer_rows": 24,
+        "issuer_event_counts": {
+          "002332": 1,
+          "000656": 5,
+          "002568": 1,
+          "002268": 2,
+          "000995": 1,
+          "000736": 1
+        },
+        "meaning": "All 30 process statuses OK; 6 issuer rows report 11 verified matched MATERIAL EVENTS, 24 zero. A verified material event is NOT a verified annual fundamental report, and its effect (possibly adverse) is not a moat/demand PASS."
       },
-      "distinction": "Old 30 OK in 94-audit are all material-event scan process completions. Annual filing fundamental collector had zero usable official result among 18 attempted codes, and coverage only 18/80 deep reviewed; both endpoint retrieval failures and coverage scope require new-epoch observation. No inference that all 80 are uninvestable. PR303 negative-cache TTL is only refetch eligibility, not a resolver for permanent endpoint block or absent annual report."
+      "distinction": "Old 30 OK in 94-row audit are separate material-event scan completions (6 codes carry 11 verified matched material events), NOT 30 annual filings. Annual fundamental issuer collector had 0 usable results for 18 targeted issuer codes, covering 18/80 deep reviewed; both source retrieval failure and bounded coverage require new-epoch validation; the 11 material-event verifications must remain independent, with risk direction examined."
     },
     "code_path_verification": {
       "source_file": "src/strategies/genge_opportunity_discovery/evidence_collectors/company_announcements.py",
