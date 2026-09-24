@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `966b9961b76c7cdfc464`
 - latest_research_as_of: `2026-09-23T16:15:09Z`
-- active_candidates: 123
-- dormant_research_candidates: 3
+- active_candidates: 120
+- dormant_research_candidates: 6
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 10003
+- lifecycle_event_count: 10006
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -24,7 +24,6 @@
 | --- | --- | --- | ---: | --- | --- | --- | --- |
 | 000096 | 广聚能源 | PENDING | 184 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 000415 | 渤海租赁 | PENDING | 119 |  |  | 966b9961b76c7cdfc464 | RESEEN |
-| 000426 | 兴业银锡 | PENDING | 119 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 000526 | 学大教育 | PENDING | 198 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 000557 | 西部创业 | PENDING | 2 |  |  | c0c348b578ea819a88ff | RESEEN |
 | 000567 | 海德股份 | PENDING | 78 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
@@ -56,7 +55,6 @@
 | 002537 | 海联金汇 | PENDING | 189 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 002582 | 好想你 | PENDING | 61 |  |  | 6bc0038077fc1b197230 | RESEEN |
 | 002607 | 中公教育 | PENDING | 9 |  |  | d177ad83826140cfe194 | RESEEN |
-| 002612 | 朗姿股份 | PENDING | 200 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 002758 | 浙农股份 | PENDING | 77 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
 | 002811 | 郑中设计 | PENDING | 117 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 002842 | 翔鹭钨业 | PENDING | 119 |  |  | 966b9961b76c7cdfc464 | RESEEN |
@@ -87,7 +85,6 @@
 | 600547 | 山东黄金 | PENDING | 11 |  |  | 3ea881ad523c9ce6a06e | RESEEN |
 | 600610 | 中毅达 | PENDING | 84 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 600640 | 国脉文化 | PENDING | 75 |  |  | 966b9961b76c7cdfc464 | RESEEN |
-| 600661 | 昂立教育 | PENDING | 119 |  |  | 966b9961b76c7cdfc464 | RESEEN |
 | 600690 | 海尔智家 | PENDING | 71 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
 | 600739 | 辽宁成大 | PENDING | 8 |  |  | dbe2947123155cda76e7 | RESEEN |
 | 600754 | 锦江酒店 | PENDING | 197 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
@@ -170,29 +167,6 @@
 - 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
 
 ### 000415 渤海租赁
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 119
-- **last_seen_snapshot_id:** 966b9961b76c7cdfc464
-- **last_seen_source_run_id:** 35886039426
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-04T13:11:19Z — **RESEEN**; snapshot `abde31b77594d24d064b`
-- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
-- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
-- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
-- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
-- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
-- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
-- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
-- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
-- 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
-
-### 000426 兴业银锡
 
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
@@ -885,29 +859,6 @@
 - 2026-09-07T14:12:11Z — **RESEEN**; snapshot `a308c746899cc7c88e90`
 - 2026-09-07T14:35:18Z — **RESEEN**; snapshot `d177ad83826140cfe194`
 
-### 002612 朗姿股份
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 200
-- **last_seen_snapshot_id:** 966b9961b76c7cdfc464
-- **last_seen_source_run_id:** 35886039426
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-21T16:07:35Z — **RESEEN**; snapshot `2db77491e8b9e27f7dbf`
-- 2026-09-21T17:02:51Z — **RESEEN**; snapshot `c21394d85e4bf0b09d9d`
-- 2026-09-22T05:05:46Z — **RESEEN**; snapshot `b3403295ec9494ee585c`
-- 2026-09-22T05:34:32Z — **RESEEN**; snapshot `5ac20f6d54739d44e849`
-- 2026-09-22T16:27:42Z — **RESEEN**; snapshot `530df3c8e1faddfa2ea9`
-- 2026-09-22T19:04:53Z — **RESEEN**; snapshot `451aae130d6597f1d225`
-- 2026-09-22T20:04:52Z — **RESEEN**; snapshot `ea3c4b0384d9f6efec18`
-- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
-- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
-- 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
-
 ### 002758 浙农股份
 
 - **lifecycle_state:** ACTIVE
@@ -1582,29 +1533,6 @@
 - 2026-09-22T16:27:42Z — **RESEEN**; snapshot `530df3c8e1faddfa2ea9`
 - 2026-09-22T19:04:53Z — **RESEEN**; snapshot `451aae130d6597f1d225`
 - 2026-09-22T20:04:52Z — **RESEEN**; snapshot `ea3c4b0384d9f6efec18`
-- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
-- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
-- 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
-
-### 600661 昂立教育
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 119
-- **last_seen_snapshot_id:** 966b9961b76c7cdfc464
-- **last_seen_source_run_id:** 35886039426
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-04T13:11:19Z — **RESEEN**; snapshot `abde31b77594d24d064b`
-- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
-- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
-- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
-- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
-- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
-- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
 - 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
 - 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 - 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
@@ -2855,9 +2783,35 @@
 
 | Code | Name | Tier | Seen | Research Epoch | Last Snapshot | Last Event |
 | --- | --- | --- | ---: | --- | --- | --- |
+| 000426 | 兴业银锡 | PENDING | 119 | ea204932693c962c5925 | 966b9961b76c7cdfc464 | RESEARCH_EXHAUSTED_DORMANT |
 | 000504 | 南华生物 | PENDING | 119 | 600b8e4427b66d8bf266 | 966b9961b76c7cdfc464 | RESEEN |
+| 002612 | 朗姿股份 | PENDING | 200 | 5b191f468471095dbf8a | 966b9961b76c7cdfc464 | RESEARCH_EXHAUSTED_DORMANT |
+| 600661 | 昂立教育 | PENDING | 119 | d870b223168ef71f8c7f | 966b9961b76c7cdfc464 | RESEARCH_EXHAUSTED_DORMANT |
 | 600816 | 建元信托 | PENDING | 128 | a8ae13563da5bf6420ca | 966b9961b76c7cdfc464 | RESEEN |
 | 601020 | 华钰矿业 | PENDING | 119 | bf4973ba54c1969c5d20 | 966b9961b76c7cdfc464 | RESEEN |
+
+### 000426 兴业银锡
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 119
+- **last_seen_snapshot_id:** 966b9961b76c7cdfc464
+- **last_seen_source_run_id:** 35886039426
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
+- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
+- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
+- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
+- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
+- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
+- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
+- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
+- 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
+- 2026-09-24T04:58:22+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `966b9961b76c7cdfc464`
 
 ### 000504 南华生物
 
@@ -2881,6 +2835,52 @@
 - 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 - 2026-09-23T07:37:25+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `538269c3908f97c328d1`
 - 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
+
+### 002612 朗姿股份
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 200
+- **last_seen_snapshot_id:** 966b9961b76c7cdfc464
+- **last_seen_source_run_id:** 35886039426
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-21T17:02:51Z — **RESEEN**; snapshot `c21394d85e4bf0b09d9d`
+- 2026-09-22T05:05:46Z — **RESEEN**; snapshot `b3403295ec9494ee585c`
+- 2026-09-22T05:34:32Z — **RESEEN**; snapshot `5ac20f6d54739d44e849`
+- 2026-09-22T16:27:42Z — **RESEEN**; snapshot `530df3c8e1faddfa2ea9`
+- 2026-09-22T19:04:53Z — **RESEEN**; snapshot `451aae130d6597f1d225`
+- 2026-09-22T20:04:52Z — **RESEEN**; snapshot `ea3c4b0384d9f6efec18`
+- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
+- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
+- 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
+- 2026-09-24T04:58:22+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `966b9961b76c7cdfc464`
+
+### 600661 昂立教育
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 119
+- **last_seen_snapshot_id:** 966b9961b76c7cdfc464
+- **last_seen_source_run_id:** 35886039426
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-04T15:38:36Z — **RESEEN**; snapshot `4488e83cdb3bdc1cfbc9`
+- 2026-09-05T00:59:14Z — **RESEEN**; snapshot `39983b8cd338d5b9b1e4`
+- 2026-09-05T10:49:53Z — **RESEEN**; snapshot `6987b90e3647ff655f51`
+- 2026-09-05T12:21:46Z — **RESEEN**; snapshot `050be7006d8a0c3a7ac9`
+- 2026-09-05T14:11:23Z — **RESEEN**; snapshot `b2591dddc4f629659010`
+- 2026-09-05T15:50:00Z — **RESEEN**; snapshot `610e09cb57bb91c49bf2`
+- 2026-09-23T06:45:12Z — **RESEEN**; snapshot `ede2069c9e422134ded6`
+- 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
+- 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
+- 2026-09-24T04:58:22+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `966b9961b76c7cdfc464`
 
 ### 600816 建元信托
 
