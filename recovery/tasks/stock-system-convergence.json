@@ -1,51 +1,53 @@
 {
   "schema_version": 2,
-  "generation": 42,
+  "generation": 43,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "ACTIVE",
+  "status": "IN_PROGRESS",
   "task_key": "stock-system-convergence",
-  "stage": "PR_297_NEWEST_HEAD_CI_RUNNING",
-  "last_observed_main_sha": "cb29b5fa93cf939d6e0b00122b29e68ca64af37d",
-  "work_branch": "feat/jev-entry-judgment-main-replay-20260923",
-  "work_head_sha": "0b97e9cfb5bdc60da78bd8777f74a2abd4b4f5f9",
-  "active_pr": 297,
+  "stage": "PR301_POST_MERGE_PRODUCTION_VERIFIED_CANDIDATE_QUALITY_NEXT",
+  "last_observed_main_sha": "d0b8d7e3419e5add280321be2a46dbb447c6f0bc",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
-    "ci_run_id": 35877434660,
-    "jev_shadow_run_id": 35877434654,
-    "opportunity_discovery_run_id": 35877434613,
-    "legacy_risk_capped_run_id": 35877434559,
-    "jev_orchestrator_run_id": 35877434665,
-    "three_pillar_run_id": 35877434799,
-    "status": "CI_AND_JEV_SHADOW_IN_PROGRESS; OTHER_SURFACES_GREEN"
+    "run_id": 35949404048,
+    "head_sha": "3a01981185547ae73b231caa67851009a0bba876",
+    "status": "COMPLETED",
+    "conclusion": "SUCCESS",
+    "merge_push_run_id": 35950836329,
+    "merge_push_status_at_last_check": "IN_PROGRESS"
   },
   "production_or_artifact": {
-    "status": "ENTRY_JUDGMENT_REPLAY_PENDING_MERGE",
-    "verified": [
-      "#295 valuation/price closure is live.",
-      "603596 current Terminal source 35872063645 is 5/5 PASS, RESEARCH_ONLY BUY + advisory BUILD, reference price 29.15, research_buy_price_ceiling 43.716880222841226, max advisory research size 3.0%.",
-      "Latest persisted Jev source 35875806431 is still question-set V3; post-merge fresh V4 is required.",
-      "PR #297 is the clean current-main replay of stale #296; do not merge #296."
+    "status": "PR301_VERIFIED_RESEARCH_ONLY",
+    "evidence": [
+      "#301 merged 27b12cd042c0c4ffb6f22d0a534aa55c2014d779",
+      "Research Learning push 35950836333 SUCCESS persisted 37fa1e0fd then explicitly dispatched Jev 35950900132 (workflow_dispatch; 25/25 actual TypeSafe/Jev calls served jev-1.13.0). Independent merge-push Jev 35950836337 also SUCCESS; not handoff evidence.",
+      "Jev orchestrator 35951194702 SUCCESS no Deep retries (24 skipped same-epoch/ineligible/low attention); valuation-only terminal closure 603596 -> terminal 35951305965 -> overlay 35951428522 -> Three-Pillar 35951609762 SUCCESS, latest decision center generated 03:30:19Z at main d0b8d7e.",
+      "Finalizer 35951027897 FAIL CLOSED STALE_UPSTREAM CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION, not Formal success or #301 defect.",
+      "terminal decisions 16: 1 research BUY 603596 and 15 RESEARCH_GAP; latest priority 126, P0 4 P1 3; guardrails from latest Jev routing and deterministic orchestration."
     ],
-    "safety": [
-      "Jev remains ADVISORY_ONLY.",
-      "Formal BUY=false; automatic execution=false; UNKNOWN != PASS; no_auto_trade=true."
-    ]
+    "safety": {
+      "jev_mode": "SHADOW_ADVISORY_ONLY",
+      "formal_trading_authority": false,
+      "formal_buy_authorized": false,
+      "automatic_execution_allowed": false,
+      "no_auto_trade": true,
+      "unknown_is_pass": false
+    }
   },
-  "pending_operation": {
-    "type": "MERGE_PR_297_AFTER_NEWEST_HEAD_GREEN",
-    "require": "Consume CI 35877434660 and Jev Shadow 35877434654 on head 0b97e9cf. Merge only if blocking checks are green, then verify live main and a fresh production V4 Jev -> persisted routing -> Three-Pillar acceptance for 603596."
+  "pending_operation": null,
+  "health": {
+    "recovery": "HEALTHY",
+    "last_error": null
   },
   "completed": [
-    "Skipped superseded #294/#295 stages already consumed by other execution chains.",
-    "Verified #295 production valuation/price closure for 603596.",
-    "Detected stale #296 and adopted clean replay PR #297 instead of duplicating work."
+    "Consumed #301 merged exact-head green PR CI and successful changed-state Research Learning -> explicit Jev dispatch; separated push path and prior Deep continuation.",
+    "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization."
   ],
-  "next_action": "Poll PR #297 newest-head CI; fix failures if any; merge when green; then consume fresh production V4 Jev and verify 603596 structured entry judgment end to end.",
+  "next_action": "Update stale TASK_STATE.md via minimal recovery-only PR from live main with PR301 production evidence, CI/merge verify [skip ci]. Then targeted official-evidence novelty triage and broader discovery without replaying exhausted epoch.",
   "do_not_repeat": [
-    "Do not reopen #292/#293/#294/#295.",
-    "Do not merge stale #296.",
-    "Do not lower Jev 0.50 or hard-gate/selection thresholds.",
-    "Do not fabricate current price/valuation or promote research advice to Formal BUY."
-  ],
-  "business_code_baseline_sha": "cb29b5fa93cf939d6e0b00122b29e68ca64af37d"
+    "#299/#300/#301 already completed.",
+    "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
+    "Do not convert advisory 603596 research BUY to Formal BUY or authorize automatic trade."
+  ]
 }
