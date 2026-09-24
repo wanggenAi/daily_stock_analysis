@@ -1,22 +1,26 @@
 {
   "schema_version": 2,
-  "generation": 47,
+  "generation": 48,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
   "stage": "PR302_DOCS_AND_PR303_NEGATIVE_EVIDENCE_CACHE_EXACT_HEAD_CI",
-  "last_observed_main_sha": "d0b8d7e3419e5add280321be2a46dbb447c6f0bc",
+  "last_observed_main_sha": "a0984a253dca358ce7e64420e5fbe6c33521d139",
   "work_branch": "fix/opportunity-negative-evidence-cache-retry-20260924",
   "work_head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
   "active_pr": 303,
   "ci": {
     "run_id": 35953529795,
     "head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
-    "status": "QUEUED",
+    "status": "IN_PROGRESS",
     "conclusion": null,
     "companion_checkpoint_pr": 302,
     "companion_ci_run_id": 35952453384,
-    "companion_ci_status": "IN_PROGRESS"
+    "companion_ci_status": "IN_PROGRESS",
+    "pr303_opportunity_fixture_run_id": 35953529804,
+    "pr303_opportunity_fixture_conclusion": "SUCCESS",
+    "pr303_legacy_run_id": 35953529751,
+    "pr303_legacy_conclusion": "SUCCESS"
   },
   "production_or_artifact": {
     "status": "PR301_VERIFIED_RESEARCH_ONLY",
@@ -26,7 +30,9 @@
       "Jev orchestrator 35951194702 SUCCESS no Deep retries (24 skipped same-epoch/ineligible/low attention); valuation-only terminal closure 603596 -> terminal 35951305965 -> overlay 35951428522 -> Three-Pillar 35951609762 SUCCESS, latest decision center generated 03:30:19Z at main d0b8d7e.",
       "Finalizer 35951027897 FAIL CLOSED STALE_UPSTREAM CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION, not Formal success or #301 defect.",
       "terminal decisions 16: 1 research BUY 603596 and 15 RESEARCH_GAP; latest priority 126, P0 4 P1 3; guardrails from latest Jev routing and deterministic orchestration.",
-      "Distinct 35937745622 all-a real artifact as-of 2026-09-23: official universe 5222, effective scan 4515 price coverage 100%, 80 deep-reviewed 0 strict ready; 79/80 company evidence and 80/80 exit-profile fail. Current EvidenceCache stores FAILED/MISSING as long as 14 days; observed stale source-failure cache hits in all-A artifact, targeted short negative TTL fix prepared and locally tested (9 cases)."
+      "Distinct 35937745622 all-a real artifact as-of 2026-09-23: official universe 5222, effective scan 4515 price coverage 100%, 80 deep-reviewed 0 strict ready; 79/80 company evidence and 80/80 exit-profile fail. Current EvidenceCache stores FAILED/MISSING as long as 14 days; observed stale source-failure cache hits in all-A artifact, targeted short negative TTL fix prepared and locally tested (9 cases).",
+      "Actual all-A exit-profile history: requested168/168 success, candidate and reference coverage both 100%, data quality OK, but exit strategy health NO_VALIDATED_EXIT_EDGE (zero approved cohorts/candidates). This is a real unresolved backtest/edge gate, not merely another missing-data fetch; retain 0 Formal BUY.",
+      "2026-09-24 issuer texts surfaced 001316 restricted-share 86,338 cancellation pending shareholder approval (not demand/moat proof); 603993 2026-09-19 TAZARA participation guarantee risk lead (SSE original PDF not accessible in verification environment). Both require primary-file lineage and materiality assessment before promotion; no new epoch dispatched."
     ],
     "safety": {
       "jev_mode": "SHADOW_ADVISORY_ONLY",
@@ -47,7 +53,7 @@
     "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization.",
     "Distinct broad-discovery negative-evidence cache cause reproduced: default14-day FAILED/MISSING hits; PR #303 two-file bounded 6h/24h cache read-retry correction created at head 22a32553; local nine isolated regression tests passed."
   ],
-  "next_action": "Consume and merge docs-only #302 exact-head CI 35952453384 with [skip ci] squash once green; consume #303 exact-head CI 35953529795 and relevant opportunity fixture, correct regressions and merge ordinary code (NO skip ci) only when all checks green; verify genuine newer All-A production artifact separately; no reused existing trading authority.",
+  "next_action": "Track exact-head #302 CI 35952453384 to success, then squash [skip ci] and verify TASK_STATE on advancing live main. Track exact-head #303 CI 35953529795 (fixture 35953529804 green and legacy 35953529751 green), merge normally only on fully green CI after review. Post-merge verify genuine *new* All-A run beyond 2026-09-23 epoch, cache FAILED/MISSING refresh and independent exit edge; no stale Finalizer retries.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
