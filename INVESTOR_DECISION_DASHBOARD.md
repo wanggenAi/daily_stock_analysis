@@ -65,28 +65,24 @@ A02林业(STRONG)、O81机动车、电子产品和日用产品修理业(STRONG)�
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**19** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **18** / REJECT **0**。
-- urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
+- 本轮深算：**3** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **2** / REJECT **0**。
+- urgent research：**0** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **1** / WATCH **6** / BLOCK **11**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **0** / WATCH **1** / BLOCK **1**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
 - 伯特利 603596: **BUILD**；conviction=0.8955；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 芯能科技 603105: **PROBE**；conviction=0.596；建议账户仓位上限=0.72%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
 | 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
 |---|---|---|---|---|
-| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
-| 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
+| 600406 | — | 本轮 workset 未包含 | — | — |
+| 001316 | — | 本轮 workset 未包含 | — | — |
+| 601318 | — | 本轮 workset 未包含 | — | — |
+| 603993 | — | 本轮 workset 未包含 | — | — |
 
 ### Urgent evidence queue
 
-- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
+- 暂无。
