@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generation": 59,
+  "generation": 60,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_DOCS_CHECKPOINT_CI_AND_GENUINE_NEW_MARKET_EVIDENCE_EPOCH",
+  "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "PR303_POSTMERGE_VERIFIED_PR304_DOCS_ONLY_WAITING_EXACT_HEAD_CI",
-  "last_observed_main_sha": "acb16668882db622bc9d21eee20c91f9faa6715c",
+  "stage": "PR304_EXACT_HEAD_BACKEND_RETRY_ATTEMPT_2_PENDING_AFTER_SIX_HOUR_STALL",
+  "last_observed_main_sha": "b4f5e38447f6ffff7a56cebc3b719b198214995b",
   "work_branch": "docs/stock-pr303-postmerge-verified-checkpoint-20260924",
   "work_head_sha": "66afa487a6075eff5369b36d98ba555b9de1d964",
   "active_pr": 304,
@@ -44,10 +44,15 @@
     "post_merge_ci_finished_at": "2026-09-24T04:36:32Z",
     "post_merge_ci_artifact_id": 10790721519,
     "pr304_docs_ci_run_id": 35956675210,
-    "pr304_docs_ci_status": "IN_PROGRESS_BACKEND_OFFLINE",
+    "pr304_docs_ci_status": "IN_PROGRESS_BACKEND_RETRY_ATTEMPT_2",
     "pr304_docs_companion_fixture_conclusion": "SUCCESS",
     "pr304_docs_companion_legacy_conclusion": "SUCCESS",
-    "pr304_docs_review_conclusion": "SUCCESS"
+    "pr304_docs_review_conclusion": "SUCCESS",
+    "pr304_docs_ci_previous_attempt_status": "ATTEMPT_1_CANCELLED_2026-09-24T10:41:32Z_AT_6H",
+    "pr304_docs_ci_attempt": 2,
+    "pr304_docs_ci_backend_job_id": 107600526161,
+    "pr304_docs_ci_offline_diagnostic_artifact_id": 10803217385,
+    "pr304_docs_ci_initial_last_log_test": "test_hotspot_detail_uses_constituent_fallback_when_board_change_summary_fails"
   },
   "production_or_artifact": {
     "status": "PR303_CACHE_FIX_MERGED_NO_NEW_GENUINE_ALL_A_EVIDENCE_YET",
@@ -80,7 +85,8 @@
       "automatic_execution_allowed": false,
       "no_auto_trade": true,
       "unknown_is_pass": false
-    }
+    },
+    "current_market_gate": "After 2026-09-24 10:30Z scheduled Full-A only; no genuine Sep24 artifact verified as of 10:43Z, no manual fixture promotion."
   },
   "pending_operation": {
     "type": "DOCS_ONLY_PR304_EXACT_HEAD_CI_BEFORE_MERGE",
@@ -91,7 +97,14 @@
     "legacy_run_id": 35956675178,
     "review_run_id": 35956673830,
     "merge_intent": "After all required exact-head checks success, squash merge with [skip ci] because only TASK_STATE.md docs",
-    "genuine_next_all_a_local": "2026-09-24T18:30:00+08:00"
+    "genuine_next_all_a_local": "2026-09-24T18:30:00+08:00",
+    "operation_id": "stock-pr304-backend-exacthead-retry2",
+    "kind": "CI_RETRY_VERIFICATION",
+    "target": "PR304_HEAD_66afa487a6075eff5369b36d98ba555b9de1d964",
+    "phase": "PREPARED",
+    "idempotency": "CI_35956675210_ATTEMPT_2_ONLY_NO_DUPLICATE_RETRY",
+    "prepared_generation": 60,
+    "retry_backend_job_id": 107600526161
   },
   "health": {
     "recovery": "HEALTHY",
@@ -106,9 +119,10 @@
     "Verified and persisted independent real All-A artifact audit and 001316/603993 primary-source/risk triage in task-scoped recovery/research/stock-candidate-quality-baseline-20260924.json; identified 98/98 cache hits, no real fetch in previous epoch and 751-row independent broad pool.",
     "Consumed auto Deep 35955222216, provenance 35955570041, terminal 35955571857, Jev Shadow 35955691559 with 25 verified TypeSafe calls, and downstream orchestrator 35955845032; compared duplicate artifacts against 35934671719 and confirmed ZERO net changed issuer/industry evidence despite 37 per-run rows.",
     "Verified PR303 normal merge-push exact-head CI 35955214939 SUCCESS, backend/docker/governance all green; verified subsequent main runtime persistence and latest Three-Pillar 04:35:51Z still 2026-09-23 trade date with 0 new buy, 4 partial holding reviews, 1 research-only BUY.",
-    "Created one-file main TASK_STATE.md stable handoff docs-only PR #304 at exact head ad3db2e9174c; current open mergeable, exact-head CI 35956567288 running; previous #303 normal merge push CI already SUCCESS."
+    "Created one-file main TASK_STATE.md stable handoff docs-only PR #304 at exact head ad3db2e9174c; current open mergeable, exact-head CI 35956567288 running; previous #303 normal merge push CI already SUCCESS.",
+    "Attempt1 CI 35956675210 CANCELLED after ~6 hours at 6% offline pytest; uploaded diagnostic artifact 10803217385. Last test started was AlphaSift constituent fallback with unmocked external board-source classification (suspected transient hang, not proven code failure). Exact head unchanged; re-ran only cancelled backend-gate via job 107496428275, run attempt2 confirmed in_progress job 107600526161. No evidence/market epoch promoted."
   ],
-  "next_action": "First finish docs-only PR304 exact-head corrected CI 35956675210 (backend offline pending, governance/docker passed, companion fixture/legacy/review passed); after green squash merge [skip ci], read true main TASK_STATE. Preserve independent prior-filed verified CNINFO 688289/600048 filings as primary research leads, do not mistakenly classify those as NEW post-Sep23 evidence epoch, and do not promote weakened interim metrics to fundamental PASS. Next genuine Sep24 full-A after 18:30 CST only.",
+  "next_action": "Verify only CI 35956675210 attempt2 exact head 66afa487, check backend offline terminal pass and companion required checks; if rerun stalls/fails, isolate AlphaSift network-leaking test and fix with non-docs exact-head CI, never bypass. Only then re-read live main/mergeability and squash docs-only PR304 [skip ci]. Check genuine scheduled Full-A Sep24 production run/artifact now after 18:30 CST, reconcile trade date/source identity, not old Every-Industry.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
