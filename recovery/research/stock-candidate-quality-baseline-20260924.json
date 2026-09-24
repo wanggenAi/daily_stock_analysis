@@ -314,5 +314,64 @@
       "status": "SECONDARY_REPRODUCTION_ONLY_NOT_VERIFIED_PRIMARY_PDF",
       "research_next": "This is a genuine source-retrieval research lead versus primary-confirmed contraction in 600048/688289/000596, NOT higher investment rank nor fundamental PASS. Retrieve original SSE PDF, issuer 2025 audited annual and 2026 H1 full table/risk narrative, verify one-off/base-effect and project comparability, then reconcile 2026-09-24 scan. Never infer all-year durability from YoY interim growth."
     }
+  },
+  "original_all_a_negative_cache_case_audit": {
+    "source_run_id": 35937745622,
+    "source_artifact_id": 10784936699,
+    "source_csv": "all_a_full_scan/20260924/_deep_review/20260924_003411/auto_evidence_audit.csv",
+    "source_audit_rows": 94,
+    "interpretation": "Distinct scope=company original 2025 annual-report official-collector attempts; all case rows below were INCLUDED in prior collector workset. FAILED/MISSING stored before Sept23 scan and then reused cache_hit=True. Original 2026 interim disclosures support actual published-file existence but DO NOT prove particular annual-report query endpoint or parser would succeed. Do not conflate annual-report and interim-document types.",
+    "rows": [
+      {
+        "code": "000596",
+        "collector": "szse_company_announcement",
+        "status": "FAILED",
+        "issue": "announcement_query_failed",
+        "cached_at": "2026-09-21T15:12:23Z",
+        "cache_hit": true,
+        "detail": "Connection reset by peer",
+        "confirmed_preexisting_primary": "CNINFO 2026 H1 summary Aug29"
+      },
+      {
+        "code": "688575",
+        "collector": "sse_company_announcement",
+        "status": "FAILED",
+        "issue": "announcement_query_failed",
+        "cached_at": "2026-09-21T15:12:24Z",
+        "cache_hit": true,
+        "detail": "SSE official query failure; original SSE PDF still not verified"
+      },
+      {
+        "code": "600048",
+        "collector": "sse_company_announcement",
+        "status": "FAILED",
+        "issue": "announcement_query_failed",
+        "cached_at": "2026-09-21T15:12:25Z",
+        "cache_hit": true,
+        "confirmed_preexisting_primary": "Issuer CNINFO 2026 H1 summary Aug27, not same SSE endpoint/year"
+      },
+      {
+        "code": "688289",
+        "collector": "sse_company_announcement",
+        "status": "FAILED",
+        "issue": "announcement_query_failed",
+        "cached_at": "2026-09-21T15:12:25Z",
+        "cache_hit": true,
+        "confirmed_preexisting_primary": "Issuer CNINFO 2026 H1 full Aug27, not same SSE endpoint/year"
+      },
+      {
+        "code": "600104",
+        "collector": "sse_company_announcement",
+        "status": "MISSING",
+        "issue": "announcement_not_found",
+        "cached_at": "2026-09-19T07:07:34Z",
+        "cache_hit": true,
+        "detail": "No annual-report announcement found on official disclosure endpoint"
+      }
+    ],
+    "other_scope": "All named company codes except 300298 also had independent official_material_event_scan OK rows from Sep23; this does NOT cure the separate failed fundamental official-announcement query.",
+    "ttl_predicates_as_of_next_2026_09_24_1830_cst": "All four FAILED are older than six hours, and the one MISSING is older than twenty-four hours, conditional on matching cache identity and restored cache path; verify real fetch_count/new audit rows and cache key after scheduled full-A, not automatic PASS.",
+    "expected_first_new_genuine_epoch": "2026-09-24 18:30 China scheduled all-A job; no claim that the run exists before scheduler fires.",
+    "promotion_authorized": false
   }
 }
