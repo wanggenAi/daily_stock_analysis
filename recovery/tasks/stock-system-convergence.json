@@ -1,18 +1,18 @@
 {
   "schema_version": 2,
-  "generation": 45,
+  "generation": 46,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
+  "status": "IN_PROGRESS",
   "task_key": "stock-system-convergence",
-  "stage": "PR302_DOCS_ONLY_EXACT_HEAD_CI_PENDING",
+  "stage": "PR302_CI_RUNNING_NEW_DISCOVERY_CACHE_FIX_PREPARED",
   "last_observed_main_sha": "d0b8d7e3419e5add280321be2a46dbb447c6f0bc",
   "work_branch": "docs/stock-pr301-production-checkpoint-20260924",
-  "work_head_sha": "479bac8b232a7032b8c0fd90f3721fb71780d7c5",
+  "work_head_sha": "c117a61d8130b950cce3862c2462b9f69d188870",
   "active_pr": 302,
   "ci": {
-    "run_id": null,
-    "head_sha": "479bac8b232a7032b8c0fd90f3721fb71780d7c5",
-    "status": "AWAITING_RUN",
+    "run_id": 35952453384,
+    "head_sha": "c117a61d8130b950cce3862c2462b9f69d188870",
+    "status": "IN_PROGRESS",
     "conclusion": null
   },
   "production_or_artifact": {
@@ -22,7 +22,8 @@
       "Research Learning push 35950836333 SUCCESS persisted 37fa1e0fd then explicitly dispatched Jev 35950900132 (workflow_dispatch; 25/25 actual TypeSafe/Jev calls served jev-1.13.0). Independent merge-push Jev 35950836337 also SUCCESS; not handoff evidence.",
       "Jev orchestrator 35951194702 SUCCESS no Deep retries (24 skipped same-epoch/ineligible/low attention); valuation-only terminal closure 603596 -> terminal 35951305965 -> overlay 35951428522 -> Three-Pillar 35951609762 SUCCESS, latest decision center generated 03:30:19Z at main d0b8d7e.",
       "Finalizer 35951027897 FAIL CLOSED STALE_UPSTREAM CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION, not Formal success or #301 defect.",
-      "terminal decisions 16: 1 research BUY 603596 and 15 RESEARCH_GAP; latest priority 126, P0 4 P1 3; guardrails from latest Jev routing and deterministic orchestration."
+      "terminal decisions 16: 1 research BUY 603596 and 15 RESEARCH_GAP; latest priority 126, P0 4 P1 3; guardrails from latest Jev routing and deterministic orchestration.",
+      "Distinct 35937745622 all-a real artifact as-of 2026-09-23: official universe 5222, effective scan 4515 price coverage 100%, 80 deep-reviewed 0 strict ready; 79/80 company evidence and 80/80 exit-profile fail. Current EvidenceCache stores FAILED/MISSING as long as 14 days; observed stale source-failure cache hits in all-A artifact, targeted short negative TTL fix prepared and locally tested (9 cases)."
     ],
     "safety": {
       "jev_mode": "SHADOW_ADVISORY_ONLY",
@@ -33,7 +34,14 @@
       "unknown_is_pass": false
     }
   },
-  "pending_operation": null,
+  "pending_operation": {
+    "operation_id": "negative-cache-evidence-20260924",
+    "kind": "CREATE_FOCUSED_BUSINESS_BRANCH",
+    "target": "fix/opportunity-negative-evidence-cache-retry-20260924 from f856f8a3161637c9e103217005ded049bc66bda0",
+    "phase": "PREPARED",
+    "idempotency": "Recheck exact branch and GitHub PR before any create/update.",
+    "prepared_generation": 46
+  },
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
@@ -42,7 +50,7 @@
     "Consumed #301 merged exact-head green PR CI and successful changed-state Research Learning -> explicit Jev dispatch; separated push path and prior Deep continuation.",
     "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization."
   ],
-  "next_action": "Consume exact-head #302 checks and merge docs-only [skip ci] if green; verify main and then continue official new-evidence/broader discovery without duplicate Deep.",
+  "next_action": "Create targeted negative-cache TTL business branch from live f856 and run exact-head business CI; #302 docs-only CI 35952453384 still running at prior check. No old Deep or trade authority changes.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
