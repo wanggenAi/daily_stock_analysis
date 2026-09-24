@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-24T08:18:06+00:00",
+  "generated_at": "2026-09-24T09:41:01+00:00",
   "latest_trade_date": "2026-09-23",
   "canonical_snapshot_id": "966b9961b76c7cdfc464",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -58,8 +58,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.27,
-        "pnl_pct": -3.7,
+        "current_price": 22.38,
+        "pnl_pct": -3.22,
         "formal_action": "REDUCE_25",
         "investor_action": "维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）",
         "neutral_value": 17.457807170543802,
@@ -140,8 +140,8 @@
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 27.71,
-        "pnl_pct": 7.63,
+        "current_price": 28.44,
+        "pnl_pct": 10.47,
         "formal_action": "HOLD_REVIEW",
         "investor_action": "持有观察",
         "neutral_value": 49.36957125214809,
@@ -222,8 +222,8 @@
         "name": "中国平安",
         "quantity": 400,
         "average_cost": 55.9658,
-        "current_price": 53.25,
-        "pnl_pct": -4.85,
+        "current_price": 53.87,
+        "pnl_pct": -3.74,
         "formal_action": "HOLD",
         "investor_action": "继续持有",
         "neutral_value": 83.07,
@@ -304,8 +304,8 @@
         "name": "洛阳钼业",
         "quantity": 1100,
         "average_cost": 18.6244,
-        "current_price": 17.08,
-        "pnl_pct": -8.29,
+        "current_price": 17.66,
+        "pnl_pct": -5.18,
         "formal_action": "HOLD",
         "investor_action": "继续持有；历史分批加仓授权已消费，本轮新增可执行0股",
         "neutral_value": 28.12766979232306,
@@ -5983,9 +5983,9 @@
     "operations": [],
     "market_session_state": "CLOSED",
     "market_data_status": "OFF_SESSION",
-    "live_quote_applied_count": 4,
+    "live_quote_applied_count": 0,
     "live_quote_expected_count": 4,
-    "live_quote_coverage_complete": true,
+    "live_quote_coverage_complete": false,
     "immediate_execution_ready": false,
     "cash_action": "KEEP_CASH",
     "plain_language": "本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。",
@@ -5997,7 +5997,7 @@
     "structural_trend_evidence_available": true,
     "validated_macro_to_a_share_handoff_available": false,
     "terminal_opportunity_result_available": true,
-    "live_execution_quote_coverage_complete": true,
+    "live_execution_quote_coverage_complete": false,
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
     "financial_capital_evidence_available": false,
     "capital_flow_multi_layer_covered": false,
@@ -6544,7 +6544,7 @@
       {
         "capability": "资金计划 + 执行价覆盖",
         "status": "ACTIVE",
-        "result": "cash=50000.0 / immediate=0.0 / quotes=4/4"
+        "result": "cash=50000.0 / immediate=0.0 / quotes=0/4"
       }
     ],
     "interpretation": "Only production-wired capabilities are shown here. A design doc or isolated module does not count as active.",
@@ -6557,7 +6557,8 @@
     "limitations": [
       "DEEP_RESEARCH_EVIDENCE_PARTIAL",
       "FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING",
-      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED"
+      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED",
+      "LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION"
     ],
     "interpretation": "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action without promoting missing evidence. EVIDENCE completeness is tracked separately.",
     "no_auto_trade": true
