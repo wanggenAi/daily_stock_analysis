@@ -125,5 +125,94 @@
     "automatic_execution_allowed": false,
     "no_auto_trade": true,
     "unknown_is_pass": false
+  },
+  "candidate_gap_triage": {
+    "source": {
+      "genuine_all_a_run_id": 35937745622,
+      "artifact_id": 10784936699,
+      "market_as_of": "2026-09-23",
+      "file": "strict_gate_audit.csv",
+      "joined_file": "top80_evidence_queue.csv",
+      "audit_rows": 80,
+      "method": "Deterministically count failed_gates excluding exit_profile_* solely to prioritize follow-up research, not stock rank/score/approval. Exit strategy still NO_VALIDATED_EXIT_EDGE for every one."
+    },
+    "gate_failure_counts_in_80": {
+      "exit_profile_passed": 80,
+      "company_evidence": 79,
+      "hard_logic_medium": 79,
+      "financial_passed": 70,
+      "valuation_not_failed": 56,
+      "industry_evidence": 20
+    },
+    "low_non_exit_gap_research_leads": [
+      {
+        "code": "600048",
+        "name": "保利发展",
+        "quant_rank": 9,
+        "quant_score": 85.0143,
+        "non_exit_failed": [
+          "company_evidence",
+          "hard_logic_medium"
+        ],
+        "missing_company_original": true
+      },
+      {
+        "code": "688575",
+        "name": "亚辉龙",
+        "quant_rank": 10,
+        "quant_score": 84.8997,
+        "non_exit_failed": [
+          "company_evidence",
+          "hard_logic_medium"
+        ],
+        "missing_company_original": true
+      },
+      {
+        "code": "000596",
+        "name": "古井贡酒",
+        "quant_rank": 18,
+        "quant_score": 83.4195,
+        "non_exit_failed": [
+          "company_evidence",
+          "hard_logic_medium"
+        ],
+        "missing_company_original": true
+      },
+      {
+        "code": "600104",
+        "name": "上汽集团",
+        "quant_rank": 13,
+        "quant_score": 84.1989,
+        "non_exit_failed": [
+          "company_evidence",
+          "hard_logic_medium"
+        ],
+        "missing_company_original": true
+      },
+      {
+        "code": "688289",
+        "name": "圣湘生物",
+        "quant_rank": 14,
+        "quant_score": 83.8911,
+        "non_exit_failed": [
+          "company_evidence",
+          "hard_logic_medium"
+        ],
+        "missing_company_original": true
+      },
+      {
+        "code": "300298",
+        "name": "三诺生物",
+        "quant_rank": 39,
+        "quant_score": 78.7645,
+        "non_exit_failed": [
+          "financial_passed",
+          "valuation_not_failed"
+        ],
+        "company_evidence_verified_in_original_artifact": true
+      }
+    ],
+    "interpretation": "These are research-workflow diagnostics, not a stock recommendation or A-ready list. All six also fail multiple exit-profile subchecks; original source reports one company_evidence=true of 80 (300298), and several missing company_evidence/hard_logic are coupled rather than independent causes. Prioritize original issuer multi-year PDFs and independently validated exit cohorts before any promotion. Quant scores and ranks refer strictly to old Sep23 artifact.",
+    "next_epoch_check": "Compare evidence coverage for these six and diversified 751-pool leads on genuine Sep24 full-A after its scheduled run; forbid pass inference from ranked queue or partial filings."
   }
 }
