@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36048538409",
+  "orchestrator_run_id": "36052944611",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,13 +24,6 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -54,15 +47,22 @@
     },
     {
       "attention_priority": "HIGH",
-      "entity_id": "600095",
-      "entity_name": "湘财股份",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "HIGH",
       "entity_id": "000504",
       "entity_name": "南华生物",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "600095",
+      "entity_name": "湘财股份",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -103,13 +103,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "603105",
       "entity_name": "芯能科技",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -140,6 +133,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "601069",
       "entity_name": "西部黄金",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-24T19:29:25+00:00",
-  "source_workflow_head_sha": "48ff4951de0b163e2d3f7f5a92dc235aa53bc4e1",
+  "source_generated_at": "2026-09-24T20:08:48+00:00",
+  "source_workflow_head_sha": "b72d18b2719bd9ab87e35aeba82bbb70948a5980",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36048291402",
+  "source_workflow_run_id": "36052628117",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 191,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36048291402",
+  "trigger_source": "JEV_ORCHESTRATOR_36052628117",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-24T19:31:46+00:00",
+  "updated_at": "2026-09-24T20:11:03+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.74,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.94,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
