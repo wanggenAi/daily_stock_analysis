@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "35957542030",
+  "orchestrator_run_id": "35957922719",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,8 +54,22 @@
     },
     {
       "attention_priority": "HIGH",
+      "entity_id": "002612",
+      "entity_name": "朗姿股份",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "HIGH",
       "entity_id": "000504",
       "entity_name": "南华生物",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "600661",
+      "entity_name": "昂立教育",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -124,13 +138,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "002612",
-      "entity_name": "朗姿股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "600309",
       "entity_name": "万华化学",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -140,13 +147,6 @@
       "attention_priority": "LOW",
       "entity_id": "600640",
       "entity_name": "国脉文化",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600661",
-      "entity_name": "昂立教育",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-24T04:52:49+00:00",
-  "source_workflow_head_sha": "74745889f6cda07d51bdb12b5577b38ba0b9bc50",
+  "source_generated_at": "2026-09-24T04:58:22+00:00",
+  "source_workflow_head_sha": "a8953c195addb6d7140c4e1f700e18ee2db3ce6f",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "35957318237",
+  "source_workflow_run_id": "35957781156",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 181,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_35957318237",
+  "trigger_source": "JEV_ORCHESTRATOR_35957781156",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-24T04:54:47+00:00",
+  "updated_at": "2026-09-24T05:00:19+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.66,
+      "attention_confidence": 0.67,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "35956949172",
+        "deep_lambda_run_id": "35957479519",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
