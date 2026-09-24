@@ -116,3 +116,9 @@ For `combined` and `unresolved` scopes, the shadow input order is now:
 
 Near-BUY hard-gate missing items from the priority router are carried into the non-authoritative research context as explicit unresolved research needs. This changes only which bounded research states Jev is allowed to inspect; it does not weaken hard gates, create Formal authority, or turn UNKNOWN into PASS.
 
+
+## Research Learning persistence handoff
+
+GitHub Actions pushes made with `GITHUB_TOKEN` do not start downstream `push` workflows. When Research Learning successfully persists a changed `data/research_priority/**` state to `main`, it explicitly dispatches the existing `GenGe Jev Shadow Evaluation` workflow (combined scope, 25 entities) with `actions: write`. The dispatch runs only after a successful push; an unchanged queue or failed persistence does not trigger this handoff. The pre-existing `data/research_priority/**` push trigger remains for independent pushes made outside the Research Learning workflow.
+
+This path invokes actual TypeSafe/Jev only inside the existing shadow job. It remains advisory-only: deterministic strategy-ledger eligibility and evidence-epoch deduplication control any downstream research dispatch. No Canonical Formal actions, threshold changes, or automatic trading permissions are introduced.
