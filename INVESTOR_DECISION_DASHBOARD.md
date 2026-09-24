@@ -63,10 +63,10 @@ O81机动车、电子产品和日用产品修理业(STRONG)、M73研究和试验
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**2** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **1** / REJECT **0**。
-- urgent research：**0** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
+- 本轮深算：**4** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **3** / REJECT **0**。
+- urgent research：**2** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **0** / WATCH **0** / BLOCK **1**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **0** / WATCH **1** / BLOCK **2**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
@@ -83,4 +83,5 @@ O81机动车、电子产品和日用产品修理业(STRONG)、M73研究和试验
 
 ### Urgent evidence queue
 
-- 暂无。
+- 朗姿股份 002612: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 昂立教育 600661: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
