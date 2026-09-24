@@ -8,17 +8,17 @@
 
 | 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |
 |---|---:|---:|---:|---|---|---|---|---|
-| 国电南瑞 600406 | 22.20 | 17.46 | -4.00 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=190 | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 27.78 | 49.37 | 7.90 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=192 | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | 53.27 | 83.07 | -4.82 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=117 | DEEP_REVIEW_PARTIAL |
-| 洛阳钼业 603993 | 17.07 | 28.13 | -8.35 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=159 | DEEP_REVIEW_PARTIAL |
+| 国电南瑞 600406 | 22.27 | 17.46 | -3.70 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=190 | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 27.71 | 49.37 | 7.63 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=192 | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | 53.25 | 83.07 | -4.85 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=117 | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | 17.08 | 28.13 | -8.29 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=159 | DEEP_REVIEW_PARTIAL |
 
 ### 每只持仓的决策链
 
-- **国电南瑞 600406**：现价 22.20 / 价值中枢 17.46（价/值 1.27；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=190**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
-- **润贝航科 001316**：现价 27.78 / 价值中枢 49.37（价/值 0.56；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=192**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
-- **中国平安 601318**：现价 53.27 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=117**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.648<1.00`。
-- **洛阳钼业 603993**：现价 17.07 / 价值中枢 28.13（价/值 0.61；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=159**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
+- **国电南瑞 600406**：现价 22.27 / 价值中枢 17.46（价/值 1.28；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=190**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
+- **润贝航科 001316**：现价 27.71 / 价值中枢 49.37（价/值 0.56；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=192**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
+- **中国平安 601318**：现价 53.25 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=117**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.648<1.00`。
+- **洛阳钼业 603993**：现价 17.08 / 价值中枢 28.13（价/值 0.61；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=159**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -63,7 +63,7 @@ O81机动车、电子产品和日用产品修理业(90.13)、M73研究和试验�
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥25000.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**4/4**；交易时段：**ACTIVE_AFTERNOON**；行情状态：**OK**。
+- 盘中价覆盖：**4/4**；交易时段：**CLOSED**；行情状态：**OFF_SESSION**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
