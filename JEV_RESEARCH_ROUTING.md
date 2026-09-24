@@ -12,7 +12,7 @@
 
 ## Route counts
 
-- {"DEEP_RESEARCH": 20, "EVIDENCE_REFRESH": 4, "VALUATION_CLOSURE": 1}
+- {"DEEP_RESEARCH": 19, "EVIDENCE_REFRESH": 5, "VALUATION_CLOSURE": 1}
 
 ## Advisory queue
 
@@ -21,7 +21,9 @@
 - 603993 洛阳钼业 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:HOLD
 - 600406 国电南瑞 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:REDUCE_25
 - 603596 伯特利 | priority=HIGH | route=VALUATION_CLOSURE | evidence=ADEQUATE_FOR_CURRENT_RESEARCH_STATE | entry=ENTRY_NOW | engine=RESEARCH:BUY
+- 002612 朗姿股份 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 000504 南华生物 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
+- 600661 昂立教育 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 600816 建元信托 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
 - 000426 兴业银锡 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 000096 广聚能源 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
@@ -31,10 +33,8 @@
 - 000567 海德股份 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 000576 甘化科工 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 001309 德明利 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
-- 002612 朗姿股份 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 600309 万华化学 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 600640 国脉文化 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
-- 600661 昂立教育 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 601069 西部黄金 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603038 华立股份 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603105 芯能科技 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
