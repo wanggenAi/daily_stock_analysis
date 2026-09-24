@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "generation": 54,
+  "generation": 55,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_GENUINE_NEW_MARKET_EVIDENCE_EPOCH",
   "task_key": "stock-system-convergence",
@@ -75,11 +75,14 @@
     }
   },
   "pending_operation": {
-    "type": "GENUINE_NEXT_MARKET_EVIDENCE_EPOCH",
-    "last_completed_full_a_run_id": 35937745622,
-    "last_completed_market_date": "2026-09-23",
-    "next_scheduled_full_a_local": "2026-09-24T18:30:00+08:00",
-    "proof_required": "real full-A production job and artifact with Sept24 market close + actual new source/filing materiality, not fixture or per-run duplicate Deep"
+    "type": "DOCS_ONLY_STABLE_TASK_STATE_PR",
+    "branch": "docs/stock-pr303-postmerge-verified-checkpoint-20260924",
+    "base_sha": "acb16668882db622bc9d21eee20c91f9faa6715c",
+    "allowed_paths": [
+      "TASK_STATE.md"
+    ],
+    "intent": "update stale PR302 reference in stable main handoff following PR303 merge/CI, without rerunning prior production",
+    "pr": null
   },
   "health": {
     "recovery": "HEALTHY",
@@ -95,7 +98,7 @@
     "Consumed auto Deep 35955222216, provenance 35955570041, terminal 35955571857, Jev Shadow 35955691559 with 25 verified TypeSafe calls, and downstream orchestrator 35955845032; compared duplicate artifacts against 35934671719 and confirmed ZERO net changed issuer/industry evidence despite 37 per-run rows.",
     "Verified PR303 normal merge-push exact-head CI 35955214939 SUCCESS, backend/docker/governance all green; verified subsequent main runtime persistence and latest Three-Pillar 04:35:51Z still 2026-09-23 trade date with 0 new buy, 4 partial holding reviews, 1 research-only BUY."
   ],
-  "next_action": "New real All-A production is scheduled by .github/workflows/genge-opportunity-discovery.yml at 2026-09-24 18:30 China time after completed 2026-09-24 market session. Find its scheduled genuine production job/artifact (not fixture), compare negative-cache actual fetches vs real 35937745622 baseline 98/98 cache hits, primary issuer PDF content/date/materiality and strict gate/exit validated-cohort evidence. Avoid repeating auto Deep 35955222216 duplicate same source 35886039426; never promote 001316/603993 or any research BUY without verified gates. Workflow-only trigger duplicate repair was blocked by tool and is documented in merged PR #303 comment 5807747928.",
+  "next_action": "Publish one-file stable TASK_STATE.md checkpoint from verified main acb16668882d via docs-only PR; consume exact head CI before [skip ci] squash merge; do not retrigger genuine production. Genuine All-A first new market epoch still future 2026-09-24 18:30 CST; details in gen54 evidence.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
