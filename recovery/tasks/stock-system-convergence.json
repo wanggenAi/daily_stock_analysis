@@ -1,21 +1,19 @@
 {
   "schema_version": 2,
-  "generation": 44,
+  "generation": 45,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "PR301_DOCS_ONLY_CHECKPOINT_PR_CREATION",
+  "stage": "PR302_DOCS_ONLY_EXACT_HEAD_CI_PENDING",
   "last_observed_main_sha": "d0b8d7e3419e5add280321be2a46dbb447c6f0bc",
   "work_branch": "docs/stock-pr301-production-checkpoint-20260924",
   "work_head_sha": "479bac8b232a7032b8c0fd90f3721fb71780d7c5",
-  "active_pr": null,
+  "active_pr": 302,
   "ci": {
-    "run_id": 35949404048,
-    "head_sha": "3a01981185547ae73b231caa67851009a0bba876",
-    "status": "COMPLETED",
-    "conclusion": "SUCCESS",
-    "merge_push_run_id": 35950836329,
-    "merge_push_status_at_last_check": "IN_PROGRESS"
+    "run_id": null,
+    "head_sha": "479bac8b232a7032b8c0fd90f3721fb71780d7c5",
+    "status": "AWAITING_RUN",
+    "conclusion": null
   },
   "production_or_artifact": {
     "status": "PR301_VERIFIED_RESEARCH_ONLY",
@@ -35,14 +33,7 @@
       "unknown_is_pass": false
     }
   },
-  "pending_operation": {
-    "operation_id": "checkpoint-pr301-docs-479bac8b",
-    "kind": "CREATE_PR",
-    "target": "docs/stock-pr301-production-checkpoint-20260924 -> main",
-    "phase": "PREPARED",
-    "idempotency": "Search all PRs for the exact head branch before any retry.",
-    "prepared_generation": 44
-  },
+  "pending_operation": null,
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
@@ -51,7 +42,7 @@
     "Consumed #301 merged exact-head green PR CI and successful changed-state Research Learning -> explicit Jev dispatch; separated push path and prior Deep continuation.",
     "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization."
   ],
-  "next_action": "Create the one-file TASK_STATE docs-only PR from exact head, wait for exact-head checks, squash merge [skip ci] only when green; then continue official-evidence candidate quality.",
+  "next_action": "Consume exact-head #302 checks and merge docs-only [skip ci] if green; verify main and then continue official new-evidence/broader discovery without duplicate Deep.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
