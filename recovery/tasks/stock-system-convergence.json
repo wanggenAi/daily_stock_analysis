@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 60,
+  "generation": 61,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "PR304_EXACT_HEAD_BACKEND_RETRY_ATTEMPT_2_PENDING_AFTER_SIX_HOUR_STALL",
+  "stage": "PR304_ATTEMPT2_BACKEND_OFFLINE_IN_PROGRESS_SEP24_FULL_A_NOT_YET_OBSERVED",
   "last_observed_main_sha": "b4f5e38447f6ffff7a56cebc3b719b198214995b",
   "work_branch": "docs/stock-pr303-postmerge-verified-checkpoint-20260924",
   "work_head_sha": "66afa487a6075eff5369b36d98ba555b9de1d964",
@@ -44,7 +44,7 @@
     "post_merge_ci_finished_at": "2026-09-24T04:36:32Z",
     "post_merge_ci_artifact_id": 10790721519,
     "pr304_docs_ci_run_id": 35956675210,
-    "pr304_docs_ci_status": "IN_PROGRESS_BACKEND_RETRY_ATTEMPT_2",
+    "pr304_docs_ci_status": "ATTEMPT2_IN_PROGRESS_BACKEND_OFFLINE",
     "pr304_docs_companion_fixture_conclusion": "SUCCESS",
     "pr304_docs_companion_legacy_conclusion": "SUCCESS",
     "pr304_docs_review_conclusion": "SUCCESS",
@@ -86,7 +86,7 @@
       "no_auto_trade": true,
       "unknown_is_pass": false
     },
-    "current_market_gate": "After 2026-09-24 10:30Z scheduled Full-A only; no genuine Sep24 artifact verified as of 10:43Z, no manual fixture promotion."
+    "current_market_gate": "Post 2026-09-24 18:30 CST GitHub date-filtered scheduled runs (23 records) show no genuine GenGe Opportunity Discovery scheduled run/artifact yet; latest scheduled unrelated PIT sector backtest 10:32:29Z. Recheck; do not substitute fixture/old upstream."
   },
   "pending_operation": {
     "type": "DOCS_ONLY_PR304_EXACT_HEAD_CI_BEFORE_MERGE",
@@ -101,10 +101,11 @@
     "operation_id": "stock-pr304-backend-exacthead-retry2",
     "kind": "CI_RETRY_VERIFICATION",
     "target": "PR304_HEAD_66afa487a6075eff5369b36d98ba555b9de1d964",
-    "phase": "PREPARED",
+    "phase": "OBSERVED_COMMITTED",
     "idempotency": "CI_35956675210_ATTEMPT_2_ONLY_NO_DUPLICATE_RETRY",
     "prepared_generation": 60,
-    "retry_backend_job_id": 107600526161
+    "retry_backend_job_id": 107600526161,
+    "observed_attempt": 2
   },
   "health": {
     "recovery": "HEALTHY",
@@ -122,7 +123,7 @@
     "Created one-file main TASK_STATE.md stable handoff docs-only PR #304 at exact head ad3db2e9174c; current open mergeable, exact-head CI 35956567288 running; previous #303 normal merge push CI already SUCCESS.",
     "Attempt1 CI 35956675210 CANCELLED after ~6 hours at 6% offline pytest; uploaded diagnostic artifact 10803217385. Last test started was AlphaSift constituent fallback with unmocked external board-source classification (suspected transient hang, not proven code failure). Exact head unchanged; re-ran only cancelled backend-gate via job 107496428275, run attempt2 confirmed in_progress job 107600526161. No evidence/market epoch promoted."
   ],
-  "next_action": "Verify only CI 35956675210 attempt2 exact head 66afa487, check backend offline terminal pass and companion required checks; if rerun stalls/fails, isolate AlphaSift network-leaking test and fix with non-docs exact-head CI, never bypass. Only then re-read live main/mergeability and squash docs-only PR304 [skip ci]. Check genuine scheduled Full-A Sep24 production run/artifact now after 18:30 CST, reconcile trade date/source identity, not old Every-Industry.",
+  "next_action": "Observe existing exact-head CI 35956675210 attempt2/backend job 107600526161 until terminal; no duplicate retry. If all required checks green, re-read live main/TASK_STATE/PR mergeability then docs-only [skip ci] squash merge; otherwise diagnose repeat AlphaSift offline stall and minimal test-only fix with full exact-head CI. Independently requery Sep24 genuine scheduled Full-A/artifacts; require source fingerprint/trade date/complete production proof.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
