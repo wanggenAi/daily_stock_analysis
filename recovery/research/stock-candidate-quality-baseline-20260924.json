@@ -402,6 +402,14 @@
         "meaning": "Query process completed; zero matched/verified event, cannot count as verified issuer annual/fundamental evidence."
       },
       "distinction": "Old 30 OK in 94-audit are all material-event scan process completions. Annual filing fundamental collector had zero usable official result among 18 attempted codes, and coverage only 18/80 deep reviewed; both endpoint retrieval failures and coverage scope require new-epoch observation. No inference that all 80 are uninvestable. PR303 negative-cache TTL is only refetch eligibility, not a resolver for permanent endpoint block or absent annual report."
+    },
+    "code_path_verification": {
+      "source_file": "src/strategies/genge_opportunity_discovery/evidence_collectors/company_announcements.py",
+      "verified_as_of_main": "2026-09-24",
+      "lineage": "_announcement_candidates routes 6xxxxx exclusively to _query_sse and 0/2/3xxxxx exclusively to _query_szse; CNINFO fallback only unsupported other code families with known org_id.",
+      "requested_document": "annual_report, report_period=str(as_of.year-1) = 2025 for genuine 2026-09-23 scan; deterministic cache key collector + six-digit code + annual_report + report_period + version=4",
+      "qualification": "Aug 2026 issuer H1 summary/full CNINFO PDFs are independently useful risk triage but NOT exact originally queried 2025 annual-report source nor equivalent first-party SSE/SZSE endpoint lineage; do not infer those preexisting H1 PDFs by themselves prove original 2025 annual collector fault beyond proven exchange timeout/empty result. Negative TTL fix allows retries but no fallback, and permanent official-source endpoint failure may persist.",
+      "safe_followup": "Inspect new scheduled run's exact 2025 issuer annual original URLs, response/publish dates, collector status and content hashes; if retrieval continues failing, engineer tested exchange-origin compliant fallback and bounded 18/80 coverage before any gate promotion."
     }
   }
 }
