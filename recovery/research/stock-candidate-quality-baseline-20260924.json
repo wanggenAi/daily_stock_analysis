@@ -1,0 +1,129 @@
+{
+  "schema_version": 1,
+  "repository": "wanggenAi/daily_stock_analysis",
+  "task_key": "stock-system-convergence",
+  "review_date": "2026-09-24",
+  "original_genuine_all_a": {
+    "workflow_run_id": 35937745622,
+    "artifact_id": 10784936699,
+    "artifact_name": "genge-all-a-v31-one-shot",
+    "artifact_sha256": "ac5694e13e4d0724f4b4ec0870e6afbe316a194901972b277f9ef9802c3933e4",
+    "reported_as_of_trade_date": "2026-09-23",
+    "official_universe": 5222,
+    "effective_scan": 4515,
+    "price_data_coverage": 1,
+    "deep_reviewed": 80,
+    "strict_ready": 0,
+    "company_evidence_gate_failures": 79,
+    "exit_profile_gate_failures": 80,
+    "formal_buy_count": 0
+  },
+  "recovered_baseline": {
+    "auto_evidence": {
+      "task_count": 98,
+      "cache_hit_count": 98,
+      "cache_miss_count": 0,
+      "actual_fetch_count": 0,
+      "fetch_success_count": 0,
+      "audit_rows": 94,
+      "audit_status_counts": {
+        "OK": 30,
+        "MISSING": 51,
+        "FAILED": 13
+      },
+      "company_task_count": 30,
+      "official_announcement_negative_company_count": 18,
+      "comment": "Original full-A audit establishes a genuine all-cache-hit run, NOT success of the new 6h/24h retry; next genuine All-A must measure real fetch and primary provenance."
+    },
+    "independent_discovery": {
+      "candidate_count": 751,
+      "industry_count": 83,
+      "formal_signal_eligible": false,
+      "illustrative_outside_top80": {
+        "code": "603105",
+        "name": "芯能科技",
+        "quant_rank": 90,
+        "quant_status": "PRIORITY_RESEARCH",
+        "as_of": "2026-09-23",
+        "gate_state": "NOT_VERIFIED",
+        "interpretation": "Research backlog only: not top-80 evidence queue, no proven entry or trade."
+      }
+    },
+    "exit_strategy": {
+      "strategy_health": "NO_VALIDATED_EXIT_EDGE",
+      "history_requested": 168,
+      "history_success": 168,
+      "history_actual_fresh_fetch": 0,
+      "history_cache_hits": 168,
+      "coverage_quality": "OK",
+      "validated_cohorts": 0,
+      "interpretation": "Exit-profile failure is a validation/edge problem, not merely a failed fetch; do not loosen."
+    }
+  },
+  "candidate_source_triage": [
+    {
+      "code": "001316",
+      "issuer": "润贝航科",
+      "publication_date": "2026-08-24",
+      "primary_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-24/6298d3a6-b2c7-44e3-9f23-6008cba888f5.PDF",
+      "evidence_type": "financing_plan_change",
+      "document_title": "公告2026-057终止可转债并撤回",
+      "verified_facts": [
+        "June adjusted proposed convertible issue <=430,000,000 CNY; Aug21 board approved cancellation and withdrawal, Aug24 disclosed",
+        "Issuer attributes decision to capital-market conditions and business strategic planning; issuer claims operations are stable and no material adverse impact"
+      ],
+      "open_materiality": [
+        "Check effect on planned project financing and funding substitute in subsequent audited issuer report or disclosure",
+        "No proof of long-term demand, moat or predictable cash flows; published before original All-A as-of date"
+      ],
+      "gate_promotions": []
+    },
+    {
+      "code": "001316",
+      "issuer": "润贝航科",
+      "publication_date": "2026-09-24",
+      "secondary_url": "https://money.finance.sina.com.cn/corp/view/vCB_AllBulletinDetail.php?id=12619732&stockid=001316",
+      "evidence_type": "restricted_stock_cancellation_proposal",
+      "secondary_text_only": true,
+      "verified_facts": [
+        "News-hosted issuer disclosure states proposed 86,338 restricted shares cancellation subject to shareholder vote"
+      ],
+      "open_materiality": [
+        "Locate matching original SZSE filing and board/shareholder results",
+        "Governance/share count event is not demand/moat proof"
+      ],
+      "gate_promotions": []
+    },
+    {
+      "code": "603993",
+      "issuer": "洛阳钼业",
+      "publication_date": "2026-09-19",
+      "secondary_disclosure_press_url": "https://epaper.cs.com.cn/zgzqb/html/2026-09/19/nw.D110000zgzqb_20260919_2-B008.htm",
+      "unretrieved_primary_url": "https://static.sse.com.cn/disclosure/listedinfo/announcement/c/new/2026-09-19/603993_20260919_UK55.pdf",
+      "evidence_type": "participating_company_financial_guarantee",
+      "reproduced_issuer_statement": [
+        "TAZARA JV borrowers total proposed loans <=6,960,800,000 CNY; company 5% guarantee principal cap <=348,040,000 CNY",
+        "Investee projects had not started operations according to reproduced disclosure"
+      ],
+      "open_materiality": [
+        "SSE original PDF inaccessible in this verification environment; fetch original full PDF and verify table/financial exposure before gate use",
+        "Evaluate contingent liabilities and operating-risk materiality relative to current audited issuer capital and foreign-project economics; does not prove predictability PASS"
+      ],
+      "gate_promotions": []
+    }
+  ],
+  "acceptance_for_next_genuine_epoch": [
+    "Full-A or equivalent real production scan with fresh trading date or independently evidenced primary-source change; code-change trigger/fixture alone is insufficient",
+    "Audit cache counters real fetch, response provenance and filing dates; a failed retry remains UNKNOWN",
+    "Reconcile current candidate ledger, independent broad 751 pool and 30/80 auto-company coverage before further optimization",
+    "Preserve NO_VALIDATED_EXIT_EDGE and prohibit Formal/automatic trade absent fully validated gates"
+  ],
+  "safety": {
+    "jev_mode": "SHADOW_ADVISORY_ONLY",
+    "formal_trading_authority": false,
+    "formal_buy_authorized": false,
+    "automatic_execution_allowed": false,
+    "no_auto_trade": true,
+    "unknown_is_pass": false
+  }
+}
