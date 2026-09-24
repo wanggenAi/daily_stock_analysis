@@ -1,19 +1,22 @@
 {
   "schema_version": 2,
-  "generation": 46,
+  "generation": 47,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "IN_PROGRESS",
+  "status": "WAITING_CI",
   "task_key": "stock-system-convergence",
-  "stage": "PR302_CI_RUNNING_NEW_DISCOVERY_CACHE_FIX_PREPARED",
+  "stage": "PR302_DOCS_AND_PR303_NEGATIVE_EVIDENCE_CACHE_EXACT_HEAD_CI",
   "last_observed_main_sha": "d0b8d7e3419e5add280321be2a46dbb447c6f0bc",
-  "work_branch": "docs/stock-pr301-production-checkpoint-20260924",
-  "work_head_sha": "c117a61d8130b950cce3862c2462b9f69d188870",
-  "active_pr": 302,
+  "work_branch": "fix/opportunity-negative-evidence-cache-retry-20260924",
+  "work_head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
+  "active_pr": 303,
   "ci": {
-    "run_id": 35952453384,
-    "head_sha": "c117a61d8130b950cce3862c2462b9f69d188870",
-    "status": "IN_PROGRESS",
-    "conclusion": null
+    "run_id": 35953529795,
+    "head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
+    "status": "QUEUED",
+    "conclusion": null,
+    "companion_checkpoint_pr": 302,
+    "companion_ci_run_id": 35952453384,
+    "companion_ci_status": "IN_PROGRESS"
   },
   "production_or_artifact": {
     "status": "PR301_VERIFIED_RESEARCH_ONLY",
@@ -34,23 +37,17 @@
       "unknown_is_pass": false
     }
   },
-  "pending_operation": {
-    "operation_id": "negative-cache-evidence-20260924",
-    "kind": "CREATE_FOCUSED_BUSINESS_BRANCH",
-    "target": "fix/opportunity-negative-evidence-cache-retry-20260924 from f856f8a3161637c9e103217005ded049bc66bda0",
-    "phase": "PREPARED",
-    "idempotency": "Recheck exact branch and GitHub PR before any create/update.",
-    "prepared_generation": 46
-  },
+  "pending_operation": null,
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
   },
   "completed": [
     "Consumed #301 merged exact-head green PR CI and successful changed-state Research Learning -> explicit Jev dispatch; separated push path and prior Deep continuation.",
-    "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization."
+    "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization.",
+    "Distinct broad-discovery negative-evidence cache cause reproduced: default14-day FAILED/MISSING hits; PR #303 two-file bounded 6h/24h cache read-retry correction created at head 22a32553; local nine isolated regression tests passed."
   ],
-  "next_action": "Create targeted negative-cache TTL business branch from live f856 and run exact-head business CI; #302 docs-only CI 35952453384 still running at prior check. No old Deep or trade authority changes.",
+  "next_action": "Consume and merge docs-only #302 exact-head CI 35952453384 with [skip ci] squash once green; consume #303 exact-head CI 35953529795 and relevant opportunity fixture, correct regressions and merge ordinary code (NO skip ci) only when all checks green; verify genuine newer All-A production artifact separately; no reused existing trading authority.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
