@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 63,
+  "generation": 64,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR304_MERGED_GENUINE_20260924_SCHEDULED_FULL_A_NOT_YET_TRIGGERED_OR_LISTED",
+  "stage": "20260924_2000_LOCAL_RECHECK_GENUINE_SCHEDULED_FULL_A_NOT_OBSERVED",
   "last_observed_main_sha": "5f9e9f2b8d8185163de524675d07139fac998637",
   "work_branch": null,
   "work_head_sha": null,
@@ -58,7 +58,7 @@
     "pr304_docs_offline_diagnostic_success_artifact_id": 10804262427
   },
   "production_or_artifact": {
-    "status": "PR304_MERGED_GENUINE_SEP24_SCHEDULED_FULL_A_NOT_PROVEN",
+    "status": "WAITING_PRODUCTION_SCHEDULE_NOT_OBSERVED",
     "evidence": [
       "#301 merged 27b12cd042c0c4ffb6f22d0a534aa55c2014d779",
       "Research Learning push 35950836333 SUCCESS persisted 37fa1e0fd then explicitly dispatched Jev 35950900132 (workflow_dispatch; 25/25 actual TypeSafe/Jev calls served jev-1.13.0). Independent merge-push Jev 35950836337 also SUCCESS; not handoff evidence.",
@@ -89,10 +89,11 @@
       "no_auto_trade": true,
       "unknown_is_pass": false
     },
-    "current_market_gate": "NOT_PROVEN: 2026-09-24 schedule runs query returns 23 records; only PIT sector backtest observed after 10:30Z. No GenGe Opportunity Discovery schedule run or full production artifact found. Production machine trade date remains 2026-09-23 (Every-Industry source 35959373557). Do not infer schedule failure yet, or promote fixture/old upstream.",
-    "next_verify_at_local": "2026-09-24T20:00:00+08:00",
-    "next_verify_at_utc": "2026-09-24T12:00:00Z",
-    "genuine_full_a_evidence_status": "NOT_PROVEN"
+    "current_market_gate": "As of Beijing 2026-09-24 around 20:01, GitHub Sep24 event=schedule run list (26 total) includes 4 after 10:30Z but zero GenGe Opportunity Discovery schedule runs. No new genuine Full-A artifact/source fingerprint/trade-date; canonical production machine latest_trade_date=2026-09-23 and source=35959373557. Historical run 35937745622 event workflow_dispatch is not qualifying Sep24 schedule.",
+    "next_verify_at_local": "2026-09-24T21:30:00+08:00",
+    "next_verify_at_utc": "2026-09-24T13:30:00Z",
+    "genuine_full_a_evidence_status": "NOT_PROVEN",
+    "next_weekday_schedule_at_local": "2026-09-25T18:30:00+08:00"
   },
   "pending_operation": null,
   "health": {
@@ -112,7 +113,7 @@
     "Attempt1 CI 35956675210 CANCELLED after ~6 hours at 6% offline pytest; uploaded diagnostic artifact 10803217385. Last test started was AlphaSift constituent fallback with unmocked external board-source classification (suspected transient hang, not proven code failure). Exact head unchanged; re-ran only cancelled backend-gate via job 107496428275, run attempt2 confirmed in_progress job 107600526161. No evidence/market epoch promoted.",
     "PR304 docs-only exact head 66afa487a6075eff5369b36d98ba555b9de1d964 CI 35956675210 attempt2 SUCCESS, backend offline SUCCESS artifact 10804262427; [skip ci] squash merged to 5f9e9f2b8d8185163de524675d07139fac998637, main and TASK_STATE verified."
   ],
-  "next_action": "At 2026-09-24 20:00 China time (12:00Z), read GitHub schedule runs for Sep24; if genuine GenGe Opportunity Discovery exists, verify schedule event, all-a-production-report job success, run source/head/trade date and full artifact before comparing evidence fingerprint against Sep23 baseline. If still absent, retain WAITING_PRODUCTION/NOT_PROVEN and inspect next Sep25 weekday schedule after 18:30 CST. Never manually dispatch, replay Deep or infer BUY.",
+  "next_action": "At or after 2026-09-24 21:30 Asia/Shanghai, requery GitHub Sep24 event=schedule GenGe Opportunity Discovery. If found, inspect workflow run event, all-a-production-report job result, complete genge-all-a-v31-one-shot artifact, as-of trade date 2026-09-24 and novel source fingerprint. If no Sep24 run, keep NOT_PROVEN, examine scheduler enabled/runs audit without manual trigger, and inspect next Friday 2026-09-25 18:30 schedule (verify its completion after sufficient run time); no CI rerun/PR/Deep/auto trading.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
