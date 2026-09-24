@@ -4,61 +4,61 @@
 Produce trustworthy, current, evidence-backed stock-research candidates and research-only entry guidance without granting Formal or automatic trading authority.
 
 ## Current Phase
-DORMANT_PRIORITY_PRODUCTION_VERIFIED_JEV_HANDOFF_PR301_AWAITING_CI
+PR301_PRODUCTION_VERIFIED_CANDIDATE_QUALITY_CONVERGENCE
 
 ## Last Verified Main
-- Live main at verification: `d618190132b2ab70731d5c3809c34ac89ea58788`. Always re-read live GitHub refs.
-- PR #300 merged as `0713f3c242bef7e990fbed6fc1183c04d263b0f4`; do not replay #299/#300.
+- Immediately before this checkpoint branch: `d0b8d7e3419e5add280321be2a46dbb447c6f0bc` (2026-09-24 03:30:19Z). Always re-read live main; runtime persistence advances the ref.
+- #301 merged 2026-09-24 03:17:27Z: `27b12cd042c0c4ffb6f22d0a534aa55c2014d779`; final PR head `3a01981185547ae73b231caa67851009a0bba876`.
+- #299/#300/#301 work is consumed. Do not replay old branches or previously exhausted evidence epochs.
 
 ## Active Branch
-- `fix/learning-jev-explicit-handoff-20260924`, based on live main above.
+- No active *business* branch after #301; the one-file checkpoint branch `docs/stock-pr301-production-checkpoint-20260924` is documentation-only.
 
 ## Active PR
-- #301: `fix: dispatch Jev after research learning persistence`.
-- PR #301 changes only the Research Learning workflow handoff, a workflow contract test and documentation/checkpoint. No selection or authority logic changes.
+- #302: docs-only PR for this TASK_STATE checkpoint; do not mistake unrelated older open PRs for this mission.
+- Volatile cursor: `state/chatgpt-recovery:recovery/tasks/stock-system-convergence.json`.
 
 ## CI
-- PR #300 CI `35902995467`: SUCCESS. Merge-push CI `35904993413`: SUCCESS.
-- Post-merge Research Learning `35904993386`: SUCCESS; persisted `22a185875a9c3b3d2e7a72688945fee851334c13`; verified from the live job log.
-- #301 CI: pending at this checkpoint; re-read exact PR head and checks.
+- #301 exact-head repository CI `35949404048`: SUCCESS.
+- #301 PR-head live TypeSafe/Jev shadow `35949404151`: SUCCESS.
+- #301 merge-push repository CI `35950836329`: SUCCESS on merge SHA `27b12cd`; independent merge-push Jev `35950836337`: SUCCESS.
+- Do not confuse PR-head checks, merge-push workflows, natural Research Learning persistence, or explicit Deep continuation.
 
 ## Production / Artifact
-- Latest priority at verification: `data/research_priority/latest.json` generated `2026-09-23T23:41:13Z`, queue=126, P0=4, P1=3.
-- DORMANT `601020`: score=0/P3, `RESEARCH_DORMANT_NON_MATERIAL_SIGNALS_SUPPRESSED`. DORMANT `000504` and `600816`: score=65/P1 via evidence-reactivation/re-underwrite signals; neither is a Formal BUY.
-- Latest Jev shadow `35935194769`: SUCCESS; 25/25 live TypeSafe/Jev calls served by `jev-1.13.0`; source event `workflow_dispatch` and Deep continuation `35934671719`. This is NOT proof of the Research Learning natural priority-push trigger.
-- Latest deterministic orchestration `35935372930`: no new Deep/evidence-refresh dispatch; 24 skipped (same-epoch/no deterministic eligibility/low attention), 1 valuation closure (603596).
-- Latest Decision Center `data/decision_center/latest.json` generated `2026-09-23T23:56:02Z`; no_auto_trade=true, formal action source FINALIZED_CANONICAL_ONLY, formal_action_recomputed=false. The latest Deep runtime `35934671719` is EVIDENCE_EXHAUSTED for 15 requested objects; no speculative UNKNOWN promotion.
-- Latest terminal research decisions: 16 terminal rows, 1 research BUY (603596), 15 RESEARCH_GAP. These are research-only and may be stale relative to newer market data.
+- **Verified natural changed-state handoff**: post-merge push Research Learning `35950836333` SUCCESS; job log shows successful changed-state commit/push `37fa1e0fd` at 03:18:24Z, followed by explicit `gh workflow run` at 03:18:27Z. Resulting Jev **workflow_dispatch** `35950900132` SUCCESS, with 25/25 real TypeSafe calls served by `jev-1.13.0`. Persisted `data/research_priority/learning_lineage.json` binds Learning run `35950836333`; persisted `data/jev_shadow/latest_routing.json` binds Jev source `35950900132`, event `workflow_dispatch`.
+- Separate independent merge-push Jev `35950836337` also SUCCESS 25/25, but is **not** evidence of the changed-state explicit handoff. Earlier Deep-continuation Jev `35935194769` likewise does not prove it.
+- Deterministic orchestrator `35951194702` SUCCESS for explicit Jev source `35950900132`: zero new Deep dispatches, 24 skipped due to same-epoch exhaustion/ineligibility/low attention, one **research-only** valuation closure for `603596`. Latest cursor: `data/jev_shadow/orchestration/latest.json`, `VALUATION_CLOSURE_DISPATCHED`; no pending operation. Downstream terminal `35951305965`, terminal investor overlay `35951428522`, and Three-Pillar `35951609762` SUCCESS; newest `data/decision_center/latest.json` generated 2026-09-24 03:30:19Z.
+- Finalizer `35951027897` **failed closed** with `STALE_UPSTREAM: CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION`; stale canonical input was refused. This is expected safety behavior, not a Formal success and not automatically a defect in #301. A valid newer canonical evidence event is required for a fresh Finalizer attempt.
+- Latest persisted priority (`2026-09-24T03:18:23Z`): 126 queued, P0=4, P1=3. Dormant `601020` remains suppressed; `000504` and `600816` only have research re-underwrite signals, not Formal BUY.
+- Latest terminal research (`2026-09-24T03:25:59Z`): 16 rows, one **research-only** BUY (`603596`) and 15 RESEARCH_GAP. Latest Decision Center reports new_buy_now_count=0, new_wait_price_count=0 and four holdings with partial Deep evidence; do not present research BUY as executable.
+- Mapping coverage still has six applicable-unmapped peers: `000415,000426,001316,600309,603416,603658`; commodity gap `600309`. Lack of verified evidence is a visible research gap, not a reason to infer PASS or fabricate peers.
 
 ## Completed
-- Verified post-merge dormant suppression from live persisted priority and Research Learning log; the original dormant-priority fix is production-proven.
-- Verified real Jev advisory invocation, deterministic same-epoch no-redispatch, and downstream Decision Center fail-closed on the newest persisted lineage.
-- Identified an unproven automatic handoff: a Research Learning persistence push uses GITHUB_TOKEN, which does not trigger a downstream push workflow. The later observed Jev invocation came from explicit Deep continuation.
-- Created #301 to explicitly dispatch existing Jev shadow only after changed Research Learning state was successfully pushed, with regression test and docs.
+- Reconciled stale PR301-awaiting-CI checkpoint against live GitHub and verified PR-head checks, merge-push CI, *actual changed-state Research Learning to explicit Jev handoff*, real TypeSafe calls, same-epoch suppression, and downstream research-only convergence.
+- Confirmed stale-input Finalizer safety denial and latest persisted advisory/formal separation.
 
 ## Current Findings
-- #301 preserves the independent `data/research_priority/**` push trigger for non-GITHUB_TOKEN updates; workflow_dispatch bridges GitHub Actions persistence updates.
-- Existing hard-gate strategy ledger remains the dispatch authority and prevents exhausted same-evidence-epoch work.
-- Candidate quality is the next distinct workstream: latest 16 terminal research objects contain one research BUY but 15 evidence gaps, so prioritize genuinely new official evidence and broader candidate discovery rather than replaying exhausted work.
+- Candidate-quality bottleneck is **novel, verifiable official evidence** and new broad-universe discovery, not another identical Deep pass. `001316` lacks official-evidence closure for long-term demand/moat/predictability and a reviewed PEER mapping; `603993` predictability remains UNKNOWN despite other verified gates. These are research targets, **not** gate promotions.
+- `603105` is a separate secondary research lead with missing evidence and price near the previous research ceiling; current date/price/filing must be revalidated before any actionable judgment.
+- Historical `data/production_status/latest.json` is older than the latest persisted Decision Center and has code drift; do not treat its dated health summary as fresh canonical authorization.
 
 ## Blockers
-- #301 exact-head CI/merge and first post-merge *changed-state* Research Learning -> Jev dispatch must be observed.
-- No known user/login/approval blocker at this checkpoint.
+- No user login/approval blocker identified for independent official-source research and repository checks.
+- The existing canonical source for Finalizer `35951027897` is stale and cannot be used for new Formal action. Current, compatible upstream data is a prerequisite, not a reason to disable freshness checks.
 
 ## Next Action
-1. Confirm PR #301 CI and exact head, then merge only if green and mergeable; re-read live main after merge.
-2. Observe the natural merge-triggered Research Learning rebuild when it occurs. Inspect actual successful persistence and the resulting explicit Jev workflow_dispatch; verify 25 real TypeSafe/Jev calls and persisted advisory routing or record the exact blocker. Do not fabricate a natural run from the unrelated Deep continuation.
-3. Verify deterministic orchestration still suppresses same evidence epoch and downstream Decision Center/Three-Pillar stays fail-closed.
-4. Persist the final production checkpoint to TASK_STATE after verification. If no changed priority was persisted, mark the handoff not-yet-live-verified and use the next real changed-state event.
-5. Continue candidate-quality convergence from current Broad Discovery and evidence-mapping gaps, prioritizing verifiable official evidence and novelty over zero-signal retries.
+1. Consume this checkpoint PR's exact-head CI and merge only when green; use `[skip ci]` squash title for this **docs-only** PR as recovery protocol requires. Then verify live main and checkpoint `TASK_STATE.md` merge; do not launch duplicate production research solely for the documentation update.
+2. Continue distinct **candidate-quality** work: read current discovery/terminal artifacts and supported official filings; identify real *new* evidence and its publication date/lineage. Begin with high-attention unresolved evidence (`001316` plus appropriate comparison set), and widen candidate discovery outside exhausted 15-object epochs. Missing official support stays UNKNOWN.
+3. Only a genuinely changed compatible evidence/workset epoch may justify subsequent bounded deterministic research dispatch; reconcile the strategy ledger first, then track any new downstream artifacts/Decision Center to terminal.
+4. Re-check live main, open mission PRs and current data after any runtime state advance. Keep the volatile recovery state task-scoped, CAS-fenced and aligned to live GitHub.
 
 ## Do Not Repeat
-- Do not reopen #300, replay #299, duplicate Deep `35891640120` for freshness, rerun V3.1.1 repair or recycle stale branches.
-- Do not treat a successful explicit Deep-continuation Jev run as proof of priority-persistence automatic handoff.
-- Do not issue duplicate Deep requests for exhausted same-epoch strategies.
-- Do not lower hard gates, valuation or BUY/WAIT_PRICE/REJECT thresholds or turn DORMANT into Formal REJECT.
+- Never reopen #299/#300/#301, duplicate Deep `35934671719`, or replay Jev `35950900132` merely for freshness.
+- Do not treat successful explicit Deep-continuation, merge-push Jev, or PR-head Jev as proof of natural changed-state handoff; it is separately verified here.
+- No old-snapshot Finalizer retries that override `STALE_UPSTREAM`, no unsupported evidence/peer promotion, no zero-signal DORMANT loops.
+- Do not lower hard gates, strategy novelty restrictions, valuation thresholds or research eligibility to manufacture recommendations.
 
 ## Guardrails
-- Broad Discovery is independent of lifecycle.
-- Jev remains SHADOW/ADVISORY_ONLY; deterministic code owns evidence epochs, eligibility, dispatch and numeric validation.
-- Formal actions are Canonical-only; `formal_trading_authority=false`, `formal_buy_authorized=false`, `automatic_execution_allowed=false`, `no_auto_trade=true`; UNKNOWN != PASS.
+- Jev: **SHADOW / ADVISORY_ONLY**. Deterministic code owns evidence epochs, numerical validation and bounded research dispatch.
+- Formal decisions: **FINALIZED_CANONICAL_ONLY**; `formal_trading_authority=false`, `formal_buy_authorized=false`, `automatic_execution_allowed=false`, `no_auto_trade=true`, `UNKNOWN != PASS`. Research-only `ENTRY_NOW` / BUY do not authorize transactions.
+- Broad Discovery is independent of candidate lifecycle and must remain open to new real evidence and opportunities.
