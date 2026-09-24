@@ -31,3 +31,26 @@ def test_terminal_convergence_wakes_lineage_keyed_jev_entry_judgment():
     assert "-f scope=combined" in wake_block
     assert "-f max_entities=25" in wake_block
     assert 'gh run rerun "$existing"' in wake_block
+
+
+def test_research_learning_wakes_jev_only_after_successful_persistence():
+    workflow = Path(
+        ".github/workflows/genge-research-learning.yml"
+    ).read_text(encoding="utf-8")
+
+    assert "  actions: write" in workflow
+    assert "id: persist_learning" in workflow
+    assert 'if git diff --cached --quiet; then echo "No learning state change to persist"; exit 0; fi' in workflow
+    assert 'if git push origin HEAD:main; then echo "persisted=true" >> "$GITHUB_OUTPUT"; exit 0; fi' in workflow
+    wake = workflow.index("Wake Jev shadow after persisted research priority update")
+    persist = workflow.index("Build and persist learning state with optimistic replay")
+    upload = workflow.index("Upload research learning artifact")
+    assert persist < wake < upload
+    wake_block = workflow[wake:upload]
+    assert "if: steps.persist_learning.outputs.persisted == 'true'" in wake_block
+    assert "GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}" in wake_block
+    assert "gh workflow run genge-jev-shadow-evaluation.yml" in wake_block
+    assert "--ref main" in wake_block
+    assert "-f scope=combined" in wake_block
+    assert "-f max_entities=25" in wake_block
+    assert "formal" not in wake_block.lower()
