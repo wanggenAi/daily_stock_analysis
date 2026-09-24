@@ -1,30 +1,34 @@
 {
   "schema_version": 2,
-  "generation": 50,
+  "generation": 51,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
+  "status": "VERIFYING_POST_MERGE",
   "task_key": "stock-system-convergence",
-  "stage": "PR302_DOCS_MERGED_PR303_CACHE_FIX_WAITING_EXACT_HEAD_CI",
-  "last_observed_main_sha": "c3c751b5bc9428f2c13bc3a0975d1ea1a2fb1350",
-  "work_branch": "fix/opportunity-negative-evidence-cache-retry-20260924",
-  "work_head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
-  "active_pr": 303,
+  "stage": "PR303_MERGED_POST_MERGE_CI_AND_REAL_EVIDENCE_EPOCH_VERIFICATION",
+  "last_observed_main_sha": "524da0bf39d7eaf0fbde745de821aa5ca19cafda",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
-    "run_id": 35953529795,
-    "head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
-    "status": "IN_PROGRESS",
-    "conclusion": null,
-    "companion_checkpoint_pr": 302,
-    "companion_ci_run_id": 35952453384,
-    "companion_ci_status": "SUCCESS_MERGED",
-    "pr303_opportunity_fixture_run_id": 35953529804,
-    "pr303_opportunity_fixture_conclusion": "SUCCESS",
-    "pr303_legacy_run_id": 35953529751,
-    "pr303_legacy_conclusion": "SUCCESS",
-    "companion_merge_commit": "c3c751b5bc9428f2c13bc3a0975d1ea1a2fb1350"
+    "pr303_exact_head_run_id": 35953529795,
+    "pr303_head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
+    "pr303_exact_head_conclusion": "SUCCESS",
+    "pr303_companion_fixture_run_id": 35953529804,
+    "pr303_companion_legacy_run_id": 35953529751,
+    "pr303_review_run_id": 35953529921,
+    "pr303_merged_at": "2026-09-24T04:20:14Z",
+    "pr303_squash_merge_commit": "524da0bf39d7eaf0fbde745de821aa5ca19cafda",
+    "post_merge_ci_run_id": 35955214939,
+    "post_merge_ci_status": "IN_PROGRESS",
+    "post_merge_opportunity_fixture_run_id": 35955215040,
+    "post_merge_opportunity_fixture_status": "IN_PROGRESS",
+    "auto_evidence_change_trigger_run_id": 35955215076,
+    "auto_evidence_change_trigger_conclusion": "SUCCESS",
+    "auto_deep_run_id": 35955222216,
+    "auto_deep_status": "IN_PROGRESS"
   },
   "production_or_artifact": {
-    "status": "PR301_VERIFIED_RESEARCH_ONLY",
+    "status": "PR303_CACHE_FIX_MERGED_NO_NEW_GENUINE_ALL_A_EVIDENCE_YET",
     "evidence": [
       "#301 merged 27b12cd042c0c4ffb6f22d0a534aa55c2014d779",
       "Research Learning push 35950836333 SUCCESS persisted 37fa1e0fd then explicitly dispatched Jev 35950900132 (workflow_dispatch; 25/25 actual TypeSafe/Jev calls served jev-1.13.0). Independent merge-push Jev 35950836337 also SUCCESS; not handoff evidence.",
@@ -33,7 +37,9 @@
       "terminal decisions 16: 1 research BUY 603596 and 15 RESEARCH_GAP; latest priority 126, P0 4 P1 3; guardrails from latest Jev routing and deterministic orchestration.",
       "Distinct 35937745622 all-a real artifact as-of 2026-09-23: official universe 5222, effective scan 4515 price coverage 100%, 80 deep-reviewed 0 strict ready; 79/80 company evidence and 80/80 exit-profile fail. Current EvidenceCache stores FAILED/MISSING as long as 14 days; observed stale source-failure cache hits in all-A artifact, targeted short negative TTL fix prepared and locally tested (9 cases).",
       "Actual all-A exit-profile history: requested168/168 success, candidate and reference coverage both 100%, data quality OK, but exit strategy health NO_VALIDATED_EXIT_EDGE (zero approved cohorts/candidates). This is a real unresolved backtest/edge gate, not merely another missing-data fetch; retain 0 Formal BUY.",
-      "2026-09-24 issuer texts surfaced 001316 restricted-share 86,338 cancellation pending shareholder approval (not demand/moat proof); 603993 2026-09-19 TAZARA participation guarantee risk lead (SSE original PDF not accessible in verification environment). Both require primary-file lineage and materiality assessment before promotion; no new epoch dispatched."
+      "2026-09-24 issuer texts surfaced 001316 restricted-share 86,338 cancellation pending shareholder approval (not demand/moat proof); 603993 2026-09-19 TAZARA participation guarantee risk lead (SSE original PDF not accessible in verification environment). Both require primary-file lineage and materiality assessment before promotion; no new epoch dispatched.",
+      "PR303 exact-head repository CI 35953529795 SUCCESS and all exact-head check-runs successful or expected skipped; ordinary squash merge 524da0bf39d7eaf0fbde745de821aa5ca19cafda at 04:20:14Z, verified live main.",
+      "Push evidence-layer change trigger 35955215076 SUCCESS auto-dispatched Deep workflow 35955222216 (EVIDENCE_LAYER_CHANGE) from cache.py code path; code-change trigger is NOT itself proof of novel issuer evidence/market epoch. Track no duplicate consumed evidence dispatch."
     ],
     "safety": {
       "jev_mode": "SHADOW_ADVISORY_ONLY",
@@ -44,7 +50,15 @@
       "unknown_is_pass": false
     }
   },
-  "pending_operation": null,
+  "pending_operation": {
+    "type": "POST_MERGE_CI_AND_AUTO_DEEP_OBSERVATION",
+    "run_ids": [
+      35955214939,
+      35955215040,
+      35955222216
+    ],
+    "expected_main_sha": "524da0bf39d7eaf0fbde745de821aa5ca19cafda"
+  },
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
@@ -53,12 +67,14 @@
     "Consumed #301 merged exact-head green PR CI and successful changed-state Research Learning -> explicit Jev dispatch; separated push path and prior Deep continuation.",
     "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization.",
     "Distinct broad-discovery negative-evidence cache cause reproduced: default14-day FAILED/MISSING hits; PR #303 two-file bounded 6h/24h cache read-retry correction created at head 22a32553; local nine isolated regression tests passed.",
-    "PR302 docs-only exact-head CI 35952453384 SUCCESS; [skip ci] squash merged c3c751b5bc9428f2c13bc3a0975d1ea1a2fb1350, verified latest main TASK_STATE contains genuine PR301 changed-state handoff and candidate-quality phase."
+    "PR302 docs-only exact-head CI 35952453384 SUCCESS; [skip ci] squash merged c3c751b5bc9428f2c13bc3a0975d1ea1a2fb1350, verified latest main TASK_STATE contains genuine PR301 changed-state handoff and candidate-quality phase.",
+    "PR303 exact-head CI 35953529795 SUCCESS; Opportunity fixture, Legacy and PR Review passed; normal squash merge at 524da0bf39d7eaf0fbde745de821aa5ca19cafda without [skip ci] verified on live main."
   ],
-  "next_action": "Consume #303 head22a32553 exact-head CI 35953529795; current PR Review/Opportunity fixture/Legacy green. If all required green, normal squash merge without [skip ci], verify post-merge CI and real evidence regeneration at a genuinely new market/evidence epoch. Exit strategy stays NO_VALIDATED_EXIT_EDGE and no trade.",
+  "next_action": "Consume post-merge CI 35955214939, opportunity fixture 35955215040 and auto EVIDENCE_LAYER_CHANGE Deep 35955222216 terminal jobs/artifacts; verify code-trigger is not mistaken for new official evidence, avoid duplicate dispatch and old exhausted epoch; refresh live main/runtime/decision center and assess genuinely new official primary filings for 001316/603993 and new 2026-09-24 market/evidence epoch. Never equate fixture success or code-change Deep to fresh full-A proof. Keep zero Formal/automatic trading.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
-    "Do not convert advisory 603596 research BUY to Formal BUY or authorize automatic trade."
+    "Do not convert advisory 603596 research BUY to Formal BUY or authorize automatic trade.",
+    "PR303 already squash merged 524da0bf39d7eaf0fbde745de821aa5ca19cafda; do not re-open or create another cache-TTL fix PR."
   ]
 }
