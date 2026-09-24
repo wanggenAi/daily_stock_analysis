@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-24T05:18:40+00:00",
+  "generated_at": "2026-09-24T05:21:33+00:00",
   "latest_trade_date": "2026-09-23",
   "canonical_snapshot_id": "966b9961b76c7cdfc464",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -690,7 +690,7 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-09-24T05:15:03+00:00",
+      "generated_at": "2026-09-24T05:21:05+00:00",
       "source_deep_lambda_run_id": "35958003629",
       "source_every_industry_run_id": "35956833145",
       "requested_count": 17,
@@ -2157,7 +2157,7 @@
           "reopen_on_new_evidence": true,
           "research_authority": "RESEARCH_ONLY",
           "research_decision": "RESEARCH_GAP",
-          "research_priority": "P2",
+          "research_priority": "P3",
           "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
           "screening_attractiveness": "NORMAL",
           "success_archetype_id": "",
@@ -4537,7 +4537,7 @@
         "reopen_on_new_evidence": true,
         "research_authority": "RESEARCH_ONLY",
         "research_decision": "RESEARCH_GAP",
-        "research_priority": "P2",
+        "research_priority": "P3",
         "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
         "screening_attractiveness": "NORMAL",
         "success_archetype_id": "",
@@ -5463,14 +5463,14 @@
         "initial_manual_position_pct": 1.0,
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "ENTRY_NOW",
-        "judgment_confidence": 0.75,
+        "judgment_confidence": 0.74,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.01,
-          "ENTRY_NOW": 0.79,
-          "INVALIDATED": 0.0,
+          "ENTRY_NOW": 0.78,
+          "INVALIDATED": 0.01,
           "NO_JUDGMENT": 0.01,
-          "WAIT_EVIDENCE": 0.15,
-          "WAIT_PRICE": 0.04
+          "WAIT_EVIDENCE": 0.14,
+          "WAIT_PRICE": 0.05
         },
         "max_manual_position_pct": 3.0,
         "no_auto_trade": true,
@@ -5486,8 +5486,8 @@
         "validation_reason": "JEV_ENTRY_NOW_PASSES_DETERMINISTIC_GUARDS",
         "terminal_research_bucket": "BUY",
         "jev_route": "VALUATION_CLOSURE",
-        "jev_route_confidence": 0.95,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.93,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "001316",
@@ -5528,8 +5528,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.42,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.41,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "601069",
@@ -5570,8 +5570,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.35,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.32,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "601318",
@@ -5612,8 +5612,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.25,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.32,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "603986",
@@ -5655,7 +5655,7 @@
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
         "jev_route_confidence": 0.41,
-        "source_jev_run_id": "35959182680"
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "600640",
@@ -5696,8 +5696,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.33,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.37,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "600816",
@@ -5738,8 +5738,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.47,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.4,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "000504",
@@ -5780,8 +5780,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.49,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.5,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "600406",
@@ -5803,9 +5803,9 @@
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.02,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.0,
+          "INVALIDATED": 0.01,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.98,
+          "WAIT_EVIDENCE": 0.97,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -5822,8 +5822,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.26,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.29,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "001309",
@@ -5845,9 +5845,9 @@
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.04,
+          "INVALIDATED": 0.03,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.96,
+          "WAIT_EVIDENCE": 0.97,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -5864,8 +5864,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.45,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.41,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "603105",
@@ -5885,8 +5885,8 @@
         "jev_judgment": "WAIT_EVIDENCE",
         "judgment_confidence": 0.94,
         "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.01,
-          "ENTRY_NOW": 0.03,
+          "DO_NOT_CHASE": 0.02,
+          "ENTRY_NOW": 0.02,
           "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.0,
           "WAIT_EVIDENCE": 0.95,
@@ -5906,8 +5906,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.5,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.53,
+        "source_jev_run_id": "35959252598"
       },
       {
         "code": "603993",
@@ -5925,7 +5925,7 @@
         "initial_manual_position_pct": 0.0,
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
-        "judgment_confidence": 0.93,
+        "judgment_confidence": 0.94,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.03,
@@ -5948,13 +5948,13 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.5,
-        "source_jev_run_id": "35959182680"
+        "jev_route_confidence": 0.45,
+        "source_jev_run_id": "35959252598"
       }
     ],
     "jev_entry_judgment_count": 12,
     "jev_entry_now_count": 1,
-    "jev_entry_judgment_source_run_id": "35959182680",
+    "jev_entry_judgment_source_run_id": "35959252598",
     "jev_entry_judgment_stale_row_count": 0,
     "jev_entry_judgment_invalid_row_count": 13,
     "jev_entry_judgment_status": "CURRENT",
