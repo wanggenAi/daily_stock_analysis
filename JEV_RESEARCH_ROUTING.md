@@ -12,14 +12,14 @@
 
 ## Route counts
 
-- {"DEEP_RESEARCH": 12, "EVIDENCE_REFRESH": 12, "VALUATION_CLOSURE": 1}
+- {"DEEP_RESEARCH": 13, "EVIDENCE_REFRESH": 11, "VALUATION_CLOSURE": 1}
 
 ## Advisory queue
 
+- 601318 中国平安 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:HOLD
 - 603993 洛阳钼业 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:HOLD
 - 001316 润贝航科 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:HOLD_REVIEW
 - 600406 国电南瑞 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:REDUCE_25
-- 601318 中国平安 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:HOLD
 - 603596 伯特利 | priority=HIGH | route=VALUATION_CLOSURE | evidence=ADEQUATE_FOR_CURRENT_RESEARCH_STATE | entry=ENTRY_NOW | engine=RESEARCH:BUY
 - 000504 南华生物 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 600095 湘财股份 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
