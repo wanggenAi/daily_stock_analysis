@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 52,
+  "generation": 53,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "VERIFYING_POST_MERGE",
+  "status": "WAITING_POST_MERGE_CI_AND_GENUINE_MARKET_EVIDENCE_EPOCH",
   "task_key": "stock-system-convergence",
-  "stage": "PR303_MERGED_POST_MERGE_CI_AND_REAL_EVIDENCE_EPOCH_VERIFICATION",
+  "stage": "PR303_MERGED_DEEP_SAME_EPOCH_DISAMBIGUATED_POST_MERGE_CI_AND_SEP24_MARKET_CLOSE_PENDING",
   "last_observed_main_sha": "524da0bf39d7eaf0fbde745de821aa5ca19cafda",
   "work_branch": null,
   "work_head_sha": null,
@@ -21,11 +21,25 @@
     "post_merge_ci_run_id": 35955214939,
     "post_merge_ci_status": "IN_PROGRESS",
     "post_merge_opportunity_fixture_run_id": 35955215040,
-    "post_merge_opportunity_fixture_status": "IN_PROGRESS",
+    "post_merge_opportunity_fixture_status": "SUCCESS_FIXTURE_ONLY_PRODUCTION_SKIPPED",
     "auto_evidence_change_trigger_run_id": 35955215076,
     "auto_evidence_change_trigger_conclusion": "SUCCESS",
     "auto_deep_run_id": 35955222216,
-    "auto_deep_status": "IN_PROGRESS"
+    "auto_deep_status": "SUCCESS_BUT_SAME_UPSTREAM_AND_IDENTICAL_QUALIFIED_EVIDENCE",
+    "auto_deep_source_run_id": 35886039426,
+    "auto_deep_duplicate_of": 35934671719,
+    "deep_provenance_audit_run_id": 35955570041,
+    "deep_provenance_audit_conclusion": "SUCCESS",
+    "terminal_research_run_id": 35955571857,
+    "terminal_research_conclusion": "SUCCESS",
+    "jev_shadow_run_id": 35955691559,
+    "jev_actual_call_count": 25,
+    "jev_served_model": "jev-1.13.0",
+    "jev_shadow_conclusion": "SUCCESS",
+    "jev_orchestrator_run_id": 35955845032,
+    "jev_orchestrator_conclusion": "SUCCESS",
+    "jev_reconciler_run_id": 35955921104,
+    "jev_reconciler_conclusion": "SUCCESS"
   },
   "production_or_artifact": {
     "status": "PR303_CACHE_FIX_MERGED_NO_NEW_GENUINE_ALL_A_EVIDENCE_YET",
@@ -41,7 +55,11 @@
       "PR303 exact-head repository CI 35953529795 SUCCESS and all exact-head check-runs successful or expected skipped; ordinary squash merge 524da0bf39d7eaf0fbde745de821aa5ca19cafda at 04:20:14Z, verified live main.",
       "Push evidence-layer change trigger 35955215076 SUCCESS auto-dispatched Deep workflow 35955222216 (EVIDENCE_LAYER_CHANGE) from cache.py code path; code-change trigger is NOT itself proof of novel issuer evidence/market epoch. Track no duplicate consumed evidence dispatch.",
       "Downloaded and independently inspected real All-A 35937745622 artifact 10784936699 (sha256 ac5694e13e4d...): as-of 2026-09-23, 98 automated evidence tasks, 98 cache hits, 0 actual fetch, audit 51 MISSING 13 FAILED 30 OK; 30 official company collection tasks vs 80 deep-reviewed; 751 independent discovery rows across 83 industries including research-only 603105 rank90 outside top80; exit history 168/168 covered but NO_VALIDATED_EXIT_EDGE. Reproducible quality baseline in recovery/research/stock-candidate-quality-baseline-20260924.json.",
-      "Reviewed SZSE primary 001316 2026-08-24 convertible withdrawal (up to RMB430M proposed funding cancellation) as financing/capex followup only; Sep24 proposed restricted share cancellation remains procedural and original SZSE link not retrieved; 603993 Sep19 TAZARA joint-venture loan guarantee reproduced in CSJ issuer disclosure, original SSE PDF not fetchable here. No qualitative gate promotion or new evidence epoch claimed."
+      "Reviewed SZSE primary 001316 2026-08-24 convertible withdrawal (up to RMB430M proposed funding cancellation) as financing/capex followup only; Sep24 proposed restricted share cancellation remains procedural and original SZSE link not retrieved; 603993 Sep19 TAZARA joint-venture loan guarantee reproduced in CSJ issuer disclosure, original SSE PDF not fetchable here. No qualitative gate promotion or new evidence epoch claimed.",
+      "Post-#303 cache-only push 35955215076 auto-dispatched Deep 35955222216 SUCCESS and real refetch attempts 121+61; verified source upstream Every-Industry run 35886039426 is identical to historical consumed Deep 35934671719. Deterministic direct comparison: old/new 23 company and 14 industry evidence rows identical after volatile time exclusion, 152 audit identities/statuses identical (MISSING114 OK22 FAILED16); hence per-run 37 'new' rows are NOT 37 net new distinct official evidence. Old and new: 3 progressed gates, 15/15 EVIDENCE_EXHAUSTED, 64 unresolved. Do NOT dispatch this same source again.",
+      "True TypeSafe/Jev SHADOW calls from post-deep 35955691559: 25 calls /25 SUCCESS, actual jev-1.13.0 served all 25; source is repeated exhausted evidence, so routing advisory only; orchestrator 35955845032 and reconciler 35955921104 SUCCESS, 24 same-epoch research routes skipped, only existing valuation closure. Formal authority false, unknown_is_pass false.",
+      "Full-A workflow .github/workflows/genge-opportunity-discovery.yml schedules genuine production at weekdays 10:30Z = 18:30 Asia/Shanghai. Post-merge push fixture 35955215040 SUCCESS explicitly skipped production; next 2026-09-24 close is not yet available at 04:32Z.",
+      "Newly exposed auto-trigger duplicate defect: broad .github/workflows/genge-v31-evidence-change-trigger.yml wildcard dispatches Deep on cache.py-only changes and replays old upstream. Attempted targeted authorized workflow edit, but tool safety gate blocked writing protected workflow file; GitHub Issues disabled (410) prevents issue creation. Created branch fix/deep-trigger-skip-cache-only-20260924 but it remains unchanged/no PR. Pending guard change requires compatible authorized workflow-write mechanism; no safety bypass."
     ],
     "safety": {
       "jev_mode": "SHADOW_ADVISORY_ONLY",
@@ -53,13 +71,12 @@
     }
   },
   "pending_operation": {
-    "type": "POST_MERGE_CI_AND_AUTO_DEEP_OBSERVATION",
-    "run_ids": [
-      35955214939,
-      35955215040,
-      35955222216
-    ],
-    "expected_main_sha": "524da0bf39d7eaf0fbde745de821aa5ca19cafda"
+    "type": "POST_MERGE_CI_AND_NEXT_GENUINE_MARKET_EPOCH",
+    "post_merge_ci_run_id": 35955214939,
+    "expected_ci_head_sha": "524da0bf39d7eaf0fbde745de821aa5ca19cafda",
+    "next_scheduled_full_a_time_local": "2026-09-24 18:30 Asia/Shanghai",
+    "requires": "genuine 2026-09-24 completed market date, new All-A artifact and official primary evidence/exit gate provenance",
+    "do_not_dispatch_consumed_source_id": 35886039426
   },
   "health": {
     "recovery": "HEALTHY",
@@ -71,14 +88,16 @@
     "Distinct broad-discovery negative-evidence cache cause reproduced: default14-day FAILED/MISSING hits; PR #303 two-file bounded 6h/24h cache read-retry correction created at head 22a32553; local nine isolated regression tests passed.",
     "PR302 docs-only exact-head CI 35952453384 SUCCESS; [skip ci] squash merged c3c751b5bc9428f2c13bc3a0975d1ea1a2fb1350, verified latest main TASK_STATE contains genuine PR301 changed-state handoff and candidate-quality phase.",
     "PR303 exact-head CI 35953529795 SUCCESS; Opportunity fixture, Legacy and PR Review passed; normal squash merge at 524da0bf39d7eaf0fbde745de821aa5ca19cafda without [skip ci] verified on live main.",
-    "Verified and persisted independent real All-A artifact audit and 001316/603993 primary-source/risk triage in task-scoped recovery/research/stock-candidate-quality-baseline-20260924.json; identified 98/98 cache hits, no real fetch in previous epoch and 751-row independent broad pool."
+    "Verified and persisted independent real All-A artifact audit and 001316/603993 primary-source/risk triage in task-scoped recovery/research/stock-candidate-quality-baseline-20260924.json; identified 98/98 cache hits, no real fetch in previous epoch and 751-row independent broad pool.",
+    "Consumed auto Deep 35955222216, provenance 35955570041, terminal 35955571857, Jev Shadow 35955691559 with 25 verified TypeSafe calls, and downstream orchestrator 35955845032; compared duplicate artifacts against 35934671719 and confirmed ZERO net changed issuer/industry evidence despite 37 per-run rows."
   ],
-  "next_action": "Finish post-merge push CI 35955214939 and auto deep 35955222216; post-merge fixture 35955215040 SUCCESS but All-A job SKIPPED. Inspect auto-deep source/evidence fingerprint to avoid mistaking cache-code trigger for new market evidence; use baseline recovery/research/stock-candidate-quality-baseline-20260924.json to compare next genuine All-A artifact. 001316 financing event and 603993 guarantee are risk followups, no promotion.",
+  "next_action": "First wait for post-merge exact-sha push CI 35955214939 terminal result; inspect failed job diagnostics if needed. Do not dispatch 35886039426 old same-epoch Deep/TypeSafe again. Follow genuine scheduled 2026-09-24 18:30 CST All-A run after Sep24 close; verify it executed production (not fixture/skipped), newly fetched FAILED/MISSING 6h/24h entries versus verified baseline, official PDF lineage and materiality, 80 review/751 independent pool quality; keep NO_VALIDATED_EXIT_EDGE and 0 Formal/auto buys. Workflow duplicate-trigger guard write was blocked; preserve as explicit maintenance issue rather than bypassing.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
     "Do not convert advisory 603596 research BUY to Formal BUY or authorize automatic trade.",
-    "PR303 already squash merged 524da0bf39d7eaf0fbde745de821aa5ca19cafda; do not re-open or create another cache-TTL fix PR."
+    "PR303 already squash merged 524da0bf39d7eaf0fbde745de821aa5ca19cafda; do not re-open or create another cache-TTL fix PR.",
+    "Do not credit auto Deep 35955222216 per-run 37 evidence rows as novel: stable company/industry/audit identities exactly match consumed 35934671719, both same upstream 35886039426."
   ],
   "research_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json"
 }
