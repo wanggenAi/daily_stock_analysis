@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-24T04:48:02+00:00",
+  "generated_at": "2026-09-24T04:49:32+00:00",
   "latest_trade_date": "2026-09-23",
   "canonical_snapshot_id": "966b9961b76c7cdfc464",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -27,8 +27,8 @@
     "deep_calculation_execution_status": "SUCCESS",
     "deep_calculation_research_outcome": "EVIDENCE_EXHAUSTED",
     "deep_calculation_terminal_state": "EVIDENCE_EXHAUSTED",
-    "deep_calculation_unresolved_gate_count": 91,
-    "deep_calculation_progressed_gate_count": 7,
+    "deep_calculation_unresolved_gate_count": 4,
+    "deep_calculation_progressed_gate_count": 1,
     "research_terminal_requested_count": 0,
     "research_buy_count": 0,
     "research_wait_price_count": 0,
@@ -690,14 +690,14 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-09-24T04:32:26+00:00",
-      "source_deep_lambda_run_id": "35955222216",
+      "generated_at": "2026-09-24T04:47:59+00:00",
+      "source_deep_lambda_run_id": "35956603875",
       "source_every_industry_run_id": "35886039426",
-      "requested_count": 16,
+      "requested_count": 23,
       "decision_counts": {
         "BUY": 1,
         "WAIT_PRICE": 0,
-        "RESEARCH_GAP": 15,
+        "RESEARCH_GAP": 22,
         "REJECT": 0
       },
       "all_requested_terminal": true,
@@ -793,6 +793,98 @@
       "research_gap": [
         {
           "capital_allocation": {
+            "action": "WATCH",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.6249,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": true,
+            "earnings_quality_component": 0.9,
+            "evidence_score": 0.636,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.7675,
+            "reason": "UNCERTAINTY_OR_EDGE_NOT_STRONG_ENOUGH",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.168,
+            "unknown_weight": 0.56,
+            "valuation_score": 1.0
+          },
+          "code": "002612",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 2,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "moat"
+          ],
+          "industry": "C18纺织服装、服饰业",
+          "name": "朗姿股份",
+          "no_auto_trade": true,
+          "quant_score": 76.7501,
+          "quant_status": "PRIORITY_RESEARCH",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "HIGH",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": true,
+          "urgent_research_reasons": [
+            "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          ],
+          "valuation": {
+            "current_pe": 7.39,
+            "distance_to_research_buy_ceiling_pct": 333.1799729364006,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 90.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 2.0407,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 90.0,
+              "financial_disclosure_date": "2026-08-29",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": true,
+              "normalized_core_operating_profit": 184151924.47,
+              "operating_cash_flow": 330987265.78
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 40.015,
+            "pe_to_history_ratio": 0.1846807447207297,
+            "price_mapping_status": "OK",
+            "reference_price": 17.23,
+            "reference_price_basis": "RAW_LATEST_CLOSE",
+            "reference_trade_date": "2026-09-23",
+            "required_profit_growth_pct": -81.53192552792703,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": 74.63690933694183
+          }
+        },
+        {
+          "capital_allocation": {
             "action": "PROBE",
             "authority": "ADVISORY_ONLY",
             "automatic_execution_allowed": false,
@@ -878,6 +970,102 @@
             "required_profit_growth_pct": -18.897058823529413,
             "research_buy_pe_ratio_threshold": 0.8,
             "research_buy_price_ceiling": 8.07862194016319
+          }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.3292,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.69,
+            "evidence_score": 0.35,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.6783,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.3,
+            "unknown_weight": 1.0,
+            "valuation_score": 1.0
+          },
+          "code": "600661",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 0,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "moat",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "P83教育",
+          "name": "昂立教育",
+          "no_auto_trade": true,
+          "quant_score": 67.8299,
+          "quant_status": "PRIORITY_RESEARCH",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "HIGH",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": true,
+          "urgent_research_reasons": [
+            "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          ],
+          "valuation": {
+            "current_pe": 22.61,
+            "distance_to_research_buy_ceiling_pct": null,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 69.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 4.6071,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 69.0,
+              "financial_disclosure_date": "2026-08-15",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": 25398014.47,
+              "operating_cash_flow": 155840733.14
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 40.91,
+            "pe_to_history_ratio": 0.552676607186507,
+            "price_mapping_status": "",
+            "reference_price": null,
+            "reference_price_basis": "",
+            "reference_trade_date": "",
+            "required_profit_growth_pct": -44.7323392813493,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": null
           }
         },
         {
@@ -1548,6 +1736,101 @@
             "action": "BLOCK",
             "authority": "ADVISORY_ONLY",
             "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.2149,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.17,
+            "evidence_score": 0.35,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.4972,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.3,
+            "unknown_weight": 1.0,
+            "valuation_score": 1.0
+          },
+          "code": "603038",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 0,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "moat",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "C41其他制造业",
+          "name": "华立股份",
+          "no_auto_trade": true,
+          "quant_score": 49.7177,
+          "quant_status": "HARD_REJECT",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "NORMAL",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": false,
+          "urgent_research_reasons": [],
+          "valuation": {
+            "current_pe": 55.77,
+            "distance_to_research_buy_ceiling_pct": null,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 17.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD",
+                "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 0.7453,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 17.0,
+              "financial_disclosure_date": "2026-08-28",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": 32956368.78,
+              "operating_cash_flow": 69231488.04
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 126.75,
+            "pe_to_history_ratio": 0.44,
+            "price_mapping_status": "",
+            "reference_price": null,
+            "reference_price_basis": "",
+            "reference_trade_date": "",
+            "required_profit_growth_pct": -56.00000000000001,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": null
+          }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
             "capital_conviction_score": 0.031,
             "critical_capital_gates": [
               "financial_safety",
@@ -1635,6 +1918,101 @@
             "required_profit_growth_pct": -8.328563251287912,
             "research_buy_pe_ratio_threshold": 0.8,
             "research_buy_price_ceiling": 3.403459256946612
+          }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.3624,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.55,
+            "evidence_score": 0.48,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.3894,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.24,
+            "unknown_weight": 0.8,
+            "valuation_score": 1.0
+          },
+          "code": "001309",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 1,
+          "hard_gate_unknowns": [
+            "predictability",
+            "moat",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "C39计算机、通信和其他电子设备制造业",
+          "name": "德明利",
+          "no_auto_trade": true,
+          "quant_score": 38.9389,
+          "quant_status": "HARD_REJECT",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "NORMAL",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": false,
+          "urgent_research_reasons": [],
+          "valuation": {
+            "current_pe": 21.95,
+            "distance_to_research_buy_ceiling_pct": 83.07061503416857,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 55.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD",
+                "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD",
+                "OPERATING_CASH_FLOW_NON_POSITIVE"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": -1.1194,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 55.0,
+              "financial_disclosure_date": "2026-08-28",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": 5966004902.99,
+              "operating_cash_flow": -6735565797.74
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 50.23,
+            "pe_to_history_ratio": 0.4369898467051563,
+            "price_mapping_status": "OK",
+            "reference_price": 410.32,
+            "reference_price_basis": "RAW_LATEST_CLOSE",
+            "reference_trade_date": "2026-09-23",
+            "required_profit_growth_pct": -56.30101532948437,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": 751.1753476082005
           }
         },
         {
@@ -2020,6 +2398,96 @@
         },
         {
           "capital_allocation": {
+            "action": "WATCH",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.5361,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": true,
+            "earnings_quality_component": 0.9,
+            "evidence_score": 0.636,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.3237,
+            "reason": "SPECIALIZED_VALUATION_REQUIRED",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.168,
+            "unknown_weight": 0.56,
+            "valuation_score": 1.0
+          },
+          "code": "601069",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 2,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "moat"
+          ],
+          "industry": "B09有色金属矿采选业",
+          "name": "西部黄金",
+          "no_auto_trade": true,
+          "quant_score": 32.3676,
+          "quant_status": "HARD_REJECT",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "NORMAL",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": false,
+          "urgent_research_reasons": [],
+          "valuation": {
+            "current_pe": 33.25,
+            "distance_to_research_buy_ceiling_pct": 90.08721804511279,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 90.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 2.534,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 90.0,
+              "financial_disclosure_date": "2026-08-25",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": true,
+              "normalized_core_operating_profit": 543373257.31,
+              "operating_cash_flow": 1385369804.24
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 79.005,
+            "pe_to_history_ratio": 0.42085943927599523,
+            "price_mapping_status": "OK",
+            "reference_price": 26.79,
+            "reference_price_basis": "RAW_LATEST_CLOSE",
+            "reference_trade_date": "2026-09-23",
+            "required_profit_growth_pct": -57.91405607240048,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": 50.92436571428571
+          }
+        },
+        {
+          "capital_allocation": {
             "action": "BLOCK",
             "authority": "ADVISORY_ONLY",
             "automatic_execution_allowed": false,
@@ -2203,9 +2671,194 @@
             "research_buy_pe_ratio_threshold": 0.8,
             "research_buy_price_ceiling": 18.88884685956246
           }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.3667,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.69,
+            "evidence_score": 0.48,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.3059,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.24,
+            "unknown_weight": 0.8,
+            "valuation_score": 1.0
+          },
+          "code": "000426",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 1,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "B09有色金属矿采选业",
+          "name": "兴业银锡",
+          "no_auto_trade": true,
+          "quant_score": 30.5884,
+          "quant_status": "HARD_REJECT",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P2",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "NORMAL",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": false,
+          "urgent_research_reasons": [],
+          "valuation": {
+            "current_pe": 26.79,
+            "distance_to_research_buy_ceiling_pct": 33.78126166480031,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 69.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 0.9094,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 69.0,
+              "financial_disclosure_date": "2026-08-29",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": 1816087159.18,
+              "operating_cash_flow": 2112766541.0
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 44.8,
+            "pe_to_history_ratio": 0.5979910714285714,
+            "price_mapping_status": "OK",
+            "reference_price": 34.37,
+            "reference_price_basis": "RAW_LATEST_CLOSE",
+            "reference_trade_date": "2026-09-23",
+            "required_profit_growth_pct": -40.200892857142854,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": 45.98061963419186
+          }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.4713,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.69,
+            "evidence_score": 0.61,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.2692,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.18,
+            "unknown_weight": 0.6,
+            "valuation_score": 1.0
+          },
+          "code": "603986",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 2,
+          "hard_gate_unknowns": [
+            "predictability",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "C39计算机、通信和其他电子设备制造业",
+          "name": "兆易创新",
+          "no_auto_trade": true,
+          "quant_score": 26.9159,
+          "quant_status": "HARD_REJECT",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "NORMAL",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": false,
+          "urgent_research_reasons": [],
+          "valuation": {
+            "current_pe": 35.0,
+            "distance_to_research_buy_ceiling_pct": 85.38285714285716,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 69.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 0.8785,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 69.0,
+              "financial_disclosure_date": "2026-08-19",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": 4883033478.93,
+              "operating_cash_flow": 6048341057.06
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 81.105,
+            "pe_to_history_ratio": 0.431539362554713,
+            "price_mapping_status": "OK",
+            "reference_price": 398.72,
+            "reference_price_basis": "RAW_LATEST_CLOSE",
+            "reference_trade_date": "2026-09-23",
+            "required_profit_growth_pct": -56.8460637445287,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": 739.1585280000002
+          }
         }
       ],
-      "research_gap_count": 15,
+      "research_gap_count": 22,
       "research_reject_count": 0,
       "urgent_research_queue": [
         {
@@ -2582,14 +3235,202 @@
             "research_buy_pe_ratio_threshold": 0.8,
             "research_buy_price_ceiling": 18.88884685956246
           }
+        },
+        {
+          "capital_allocation": {
+            "action": "WATCH",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.6249,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": true,
+            "earnings_quality_component": 0.9,
+            "evidence_score": 0.636,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.7675,
+            "reason": "UNCERTAINTY_OR_EDGE_NOT_STRONG_ENOUGH",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.168,
+            "unknown_weight": 0.56,
+            "valuation_score": 1.0
+          },
+          "code": "002612",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 2,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "moat"
+          ],
+          "industry": "C18纺织服装、服饰业",
+          "name": "朗姿股份",
+          "no_auto_trade": true,
+          "quant_score": 76.7501,
+          "quant_status": "PRIORITY_RESEARCH",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "HIGH",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": true,
+          "urgent_research_reasons": [
+            "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          ],
+          "valuation": {
+            "current_pe": 7.39,
+            "distance_to_research_buy_ceiling_pct": 333.1799729364006,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 90.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 2.0407,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 90.0,
+              "financial_disclosure_date": "2026-08-29",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": true,
+              "normalized_core_operating_profit": 184151924.47,
+              "operating_cash_flow": 330987265.78
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 40.015,
+            "pe_to_history_ratio": 0.1846807447207297,
+            "price_mapping_status": "OK",
+            "reference_price": 17.23,
+            "reference_price_basis": "RAW_LATEST_CLOSE",
+            "reference_trade_date": "2026-09-23",
+            "required_profit_growth_pct": -81.53192552792703,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": 74.63690933694183
+          }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.3292,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.69,
+            "evidence_score": 0.35,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.6783,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.3,
+            "unknown_weight": 1.0,
+            "valuation_score": 1.0
+          },
+          "code": "600661",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 0,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "moat",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "P83教育",
+          "name": "昂立教育",
+          "no_auto_trade": true,
+          "quant_score": 67.8299,
+          "quant_status": "PRIORITY_RESEARCH",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P3",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "HIGH",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": true,
+          "urgent_research_reasons": [
+            "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+          ],
+          "valuation": {
+            "current_pe": 22.61,
+            "distance_to_research_buy_ceiling_pct": null,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_score": 69.0,
+            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": 4.6071,
+              "earnings_quality_confidence": "HIGH",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": 69.0,
+              "financial_disclosure_date": "2026-08-15",
+              "financial_review_status": "OK",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": 25398014.47,
+              "operating_cash_flow": 155840733.14
+            },
+            "financial_review_status": "OK",
+            "historical_median_pe_reference": 40.91,
+            "pe_to_history_ratio": 0.552676607186507,
+            "price_mapping_status": "",
+            "reference_price": null,
+            "reference_price_basis": "",
+            "reference_trade_date": "",
+            "required_profit_growth_pct": -44.7323392813493,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": null
+          }
         }
       ],
       "capital_model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
       "capital_action_counts": {
         "BUILD": 1,
         "PROBE": 1,
-        "WATCH": 2,
-        "BLOCK": 12
+        "WATCH": 4,
+        "BLOCK": 17
       },
       "capital_probe_queue": [
         {
@@ -2790,8 +3631,8 @@
     "capital_action_counts": {
       "BUILD": 1,
       "PROBE": 1,
-      "WATCH": 2,
-      "BLOCK": 12
+      "WATCH": 4,
+      "BLOCK": 17
     },
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false,
@@ -2872,34 +3713,34 @@
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "35956603875",
+    "lambda_run_id": "35956949172",
     "lambda_run_attempt": "1",
     "source_run_id": "35886039426",
-    "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
-    "generated_at": "2026-09-24T04:45:46+00:00",
+    "trigger_source": "JEV_ORCHESTRATOR_35956666977",
+    "generated_at": "2026-09-24T04:48:09+00:00",
     "run_state": "COMPLETED",
     "execution_status": "SUCCESS",
     "research_outcome": "EVIDENCE_EXHAUSTED",
     "research_terminal_state": "EVIDENCE_EXHAUSTED",
-    "requested_count": 22,
+    "requested_count": 1,
     "requested_count_available": true,
-    "processed_requested_count": 22,
+    "processed_requested_count": 1,
     "processed_requested_count_available": true,
     "complete_requested_count": 0,
     "complete_requested_count_available": true,
-    "partial_requested_count": 22,
+    "partial_requested_count": 1,
     "partial_requested_count_available": true,
-    "evidence_exhausted_requested_count": 22,
+    "evidence_exhausted_requested_count": 1,
     "evidence_exhausted_requested_count_available": true,
     "handoff_incomplete_requested_count": 0,
     "handoff_incomplete_requested_count_available": true,
     "profile_count": 500,
     "profile_count_available": true,
-    "requested_profile_count": 22,
+    "requested_profile_count": 1,
     "requested_profile_count_available": true,
     "workset_coverage_known": true,
     "workset_coverage_complete": true,
-    "unresolved_requested_gate_count": 91,
+    "unresolved_requested_gate_count": 4,
     "unresolved_requested_gate_count_available": true,
     "missing_requested_codes": [],
     "missing_requested_codes_available": true,
@@ -2909,147 +3750,18 @@
         "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
         "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
         "predictability": "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
-      },
-      "000504": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "000703": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
-      },
-      "001309": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "MULTI_YEAR_POSITIVITY_NOT_PROVEN"
-      },
-      "001316": {
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "002042": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "002375": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "predictability": "REVENUE_STABILITY_THRESHOLD_NOT_MET"
-      },
-      "002537": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "002612": {
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "EARNINGS_STABILITY_THRESHOLD_NOT_MET"
-      },
-      "600406": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "600610": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "600640": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "600661": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "600816": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "601020": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
-      },
-      "601069": {
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "601318": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "603038": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "603105": {
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET"
-      },
-      "603369": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
-        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE"
-      },
-      "603986": {
-        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
-        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
-      },
-      "603993": {
-        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
       }
     },
     "gap_closure_attempt_count": 2,
-    "new_evidence_count": 55,
-    "progressed_gate_count": 7,
-    "hard_gate_count": 2500,
-    "pass_gate_count": 212,
-    "fail_gate_count": 2,
-    "verified_pass_gate_count": 212,
+    "new_evidence_count": 5,
+    "progressed_gate_count": 1,
+    "hard_gate_count": 0,
+    "pass_gate_count": 0,
+    "fail_gate_count": 0,
+    "verified_pass_gate_count": 0,
     "unverified_pass_gate_count": 0,
-    "provenance_audit_complete": true,
-    "provenance_audit_run_id": "35957028026",
+    "provenance_audit_complete": false,
+    "provenance_audit_run_id": "",
     "material_event_failed_gate_count": 0,
     "historical_material_event_evidence_count": 0,
     "historical_material_event_failed_gate_count": 0,
@@ -3066,12 +3778,12 @@
     "no_auto_trade": true,
     "interpretation": "execution_succeeded means compute finished; COMPLETE means all requested hard gates resolved; EVIDENCE_EXHAUSTED means bounded same-run recovery finished for materialized profiles while unresolved UNKNOWN gates remain; HANDOFF_INCOMPLETE means the run finished but one or more requested codes never entered the Deep profile workset.",
     "status_source": "TERMINAL_STATUS",
-    "last_terminal_run_id": "35956603875",
+    "last_terminal_run_id": "35956949172",
     "last_terminal_execution_status": "SUCCESS",
     "last_terminal_research_terminal_state": "EVIDENCE_EXHAUSTED"
   },
   "deep_review_profile_source": "AUTOMATIC_DEEP_CALCULATION",
-  "deep_review_profile_lambda_run_id": "35956603875",
+  "deep_review_profile_lambda_run_id": "35956949172",
   "deep_review_profile_current_for_runtime": true,
   "deep_review_profile_lineage_state": "CURRENT",
   "holding_valuation_continuity": {
@@ -3333,12 +4045,12 @@
       {
         "capability": "Deep 五类硬门槛 + 官方证据",
         "status": "ACTIVE",
-        "result": "requested=22 / verified-pass=212 / unresolved=91"
+        "result": "requested=1 / verified-pass=0 / unresolved=4"
       },
       {
         "capability": "Deep Provenance 证据审计",
-        "status": "ACTIVE",
-        "result": "audit=True / run=35957028026 / unverified-pass=0"
+        "status": "PARTIAL",
+        "result": "audit=False / run=— / unverified-pass=0"
       },
       {
         "capability": "世界 / 社会 / 资本趋势雷达",
