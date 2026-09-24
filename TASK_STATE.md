@@ -11,9 +11,12 @@ PR301_PRODUCTION_VERIFIED_CANDIDATE_QUALITY_CONVERGENCE
 - #301 merged 2026-09-24 03:17:27Z: `27b12cd042c0c4ffb6f22d0a534aa55c2014d779`; final PR head `3a01981185547ae73b231caa67851009a0bba876`.
 - #299/#300/#301 work is consumed. Do not replay old branches or previously exhausted evidence epochs.
 
-## Active Branch / PR
-- No active *business* PR for this mission at the verified checkpoint. Unrelated older open PRs exist and must not be treated as a current convergence branch.
-- This docs-only checkpoint branch may be in PR/merge processing; verify by live PR refs. Volatile execution cursor: `state/chatgpt-recovery:recovery/tasks/stock-system-convergence.json`.
+## Active Branch
+- No active *business* branch after #301; the one-file checkpoint branch `docs/stock-pr301-production-checkpoint-20260924` is documentation-only.
+
+## Active PR
+- #302: docs-only PR for this TASK_STATE checkpoint; do not mistake unrelated older open PRs for this mission.
+- Volatile cursor: `state/chatgpt-recovery:recovery/tasks/stock-system-convergence.json`.
 
 ## CI
 - #301 exact-head repository CI `35949404048`: SUCCESS.
