@@ -44,7 +44,7 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
 
 env:
   TZ: Asia/Shanghai
@@ -236,6 +236,7 @@ jobs:
           echo "SUCCESS_ARCHETYPE_EXACT_DISPATCH=$strict_preferred" >> "$GITHUB_ENV"
 
       - name: Build and persist learning state with optimistic replay
+        id: persist_learning
         run: |
           set -euo pipefail
           git config user.name "genge-v311-research-learning-bot"
@@ -359,11 +360,27 @@ jobs:
             git add -f data/research_priority data/price_value_history data/formal_decision_outcomes data/success_archetype_outcomes data/production_observability/latest.json
             if git diff --cached --quiet; then echo "No learning state change to persist"; exit 0; fi
             git commit -m "Persist V3.1.1 research learning state [skip ci]"
-            if git push origin HEAD:main; then exit 0; fi
+            if git push origin HEAD:main; then echo "persisted=true" >> "$GITHUB_OUTPUT"; exit 0; fi
             echo "push race detected; replaying learning state from newest origin/main" >&2
           done
           echo "research-learning persistence failed after 4 optimistic replay attempts" >&2
           exit 1
+
+      # GITHUB_TOKEN pushes do not produce downstream push workflows. Dispatch only
+      # after a real persistence push; the existing Jev push path still handles
+      # independent user/PAT priority updates.
+      - name: Wake Jev shadow after persisted research priority update
+        if: steps.persist_learning.outputs.persisted == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-jev-shadow-evaluation.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f scope=combined \
+            -f max_entities=25
+          echo "Explicitly dispatched advisory-only Jev after Research Learning persistence."
 
       - name: Upload research learning artifact
         if: always()
