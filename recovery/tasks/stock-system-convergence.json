@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "generation": 61,
+  "generation": 62,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
+  "status": "WAITING_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR304_ATTEMPT2_BACKEND_OFFLINE_IN_PROGRESS_SEP24_FULL_A_NOT_YET_OBSERVED",
-  "last_observed_main_sha": "b4f5e38447f6ffff7a56cebc3b719b198214995b",
-  "work_branch": "docs/stock-pr303-postmerge-verified-checkpoint-20260924",
-  "work_head_sha": "66afa487a6075eff5369b36d98ba555b9de1d964",
-  "active_pr": 304,
+  "stage": "PR304_DOCS_ONLY_MERGED_EXACT_HEAD_CI_GREEN_WAIT_GENUINE_20260924_FULL_A",
+  "last_observed_main_sha": "5f9e9f2b8d8185163de524675d07139fac998637",
+  "work_branch": null,
+  "work_head_sha": null,
+  "active_pr": null,
   "ci": {
     "pr303_exact_head_run_id": 35953529795,
     "pr303_head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
@@ -44,7 +44,7 @@
     "post_merge_ci_finished_at": "2026-09-24T04:36:32Z",
     "post_merge_ci_artifact_id": 10790721519,
     "pr304_docs_ci_run_id": 35956675210,
-    "pr304_docs_ci_status": "ATTEMPT2_IN_PROGRESS_BACKEND_OFFLINE",
+    "pr304_docs_ci_status": "SUCCESS_ATTEMPT2_EXACT_HEAD",
     "pr304_docs_companion_fixture_conclusion": "SUCCESS",
     "pr304_docs_companion_legacy_conclusion": "SUCCESS",
     "pr304_docs_review_conclusion": "SUCCESS",
@@ -52,10 +52,13 @@
     "pr304_docs_ci_attempt": 2,
     "pr304_docs_ci_backend_job_id": 107600526161,
     "pr304_docs_ci_offline_diagnostic_artifact_id": 10803217385,
-    "pr304_docs_ci_initial_last_log_test": "test_hotspot_detail_uses_constituent_fallback_when_board_change_summary_fails"
+    "pr304_docs_ci_initial_last_log_test": "test_hotspot_detail_uses_constituent_fallback_when_board_change_summary_fails",
+    "pr304_docs_merge_sha": "5f9e9f2b8d8185163de524675d07139fac998637",
+    "pr304_docs_backend_conclusion": "SUCCESS_ATTEMPT2",
+    "pr304_docs_offline_diagnostic_success_artifact_id": 10804262427
   },
   "production_or_artifact": {
-    "status": "PR303_CACHE_FIX_MERGED_NO_NEW_GENUINE_ALL_A_EVIDENCE_YET",
+    "status": "PR304_MERGED_GENUINE_SEP24_SCHEDULED_FULL_A_NOT_PROVEN",
     "evidence": [
       "#301 merged 27b12cd042c0c4ffb6f22d0a534aa55c2014d779",
       "Research Learning push 35950836333 SUCCESS persisted 37fa1e0fd then explicitly dispatched Jev 35950900132 (workflow_dispatch; 25/25 actual TypeSafe/Jev calls served jev-1.13.0). Independent merge-push Jev 35950836337 also SUCCESS; not handoff evidence.",
@@ -86,27 +89,9 @@
       "no_auto_trade": true,
       "unknown_is_pass": false
     },
-    "current_market_gate": "Post 2026-09-24 18:30 CST GitHub date-filtered scheduled runs (23 records) show no genuine GenGe Opportunity Discovery scheduled run/artifact yet; latest scheduled unrelated PIT sector backtest 10:32:29Z. Recheck; do not substitute fixture/old upstream."
+    "current_market_gate": "Date-filtered 2026-09-24 scheduled workflows contain no GenGe Opportunity Discovery genuine run/artifact at latest query; NOT_PROVEN."
   },
-  "pending_operation": {
-    "type": "DOCS_ONLY_PR304_EXACT_HEAD_CI_BEFORE_MERGE",
-    "pr": 304,
-    "head_sha": "66afa487a6075eff5369b36d98ba555b9de1d964",
-    "ci_run_id": 35956675210,
-    "opportunity_fixture_run_id": 35956675340,
-    "legacy_run_id": 35956675178,
-    "review_run_id": 35956673830,
-    "merge_intent": "After all required exact-head checks success, squash merge with [skip ci] because only TASK_STATE.md docs",
-    "genuine_next_all_a_local": "2026-09-24T18:30:00+08:00",
-    "operation_id": "stock-pr304-backend-exacthead-retry2",
-    "kind": "CI_RETRY_VERIFICATION",
-    "target": "PR304_HEAD_66afa487a6075eff5369b36d98ba555b9de1d964",
-    "phase": "OBSERVED_COMMITTED",
-    "idempotency": "CI_35956675210_ATTEMPT_2_ONLY_NO_DUPLICATE_RETRY",
-    "prepared_generation": 60,
-    "retry_backend_job_id": 107600526161,
-    "observed_attempt": 2
-  },
+  "pending_operation": null,
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
@@ -121,9 +106,10 @@
     "Consumed auto Deep 35955222216, provenance 35955570041, terminal 35955571857, Jev Shadow 35955691559 with 25 verified TypeSafe calls, and downstream orchestrator 35955845032; compared duplicate artifacts against 35934671719 and confirmed ZERO net changed issuer/industry evidence despite 37 per-run rows.",
     "Verified PR303 normal merge-push exact-head CI 35955214939 SUCCESS, backend/docker/governance all green; verified subsequent main runtime persistence and latest Three-Pillar 04:35:51Z still 2026-09-23 trade date with 0 new buy, 4 partial holding reviews, 1 research-only BUY.",
     "Created one-file main TASK_STATE.md stable handoff docs-only PR #304 at exact head ad3db2e9174c; current open mergeable, exact-head CI 35956567288 running; previous #303 normal merge push CI already SUCCESS.",
-    "Attempt1 CI 35956675210 CANCELLED after ~6 hours at 6% offline pytest; uploaded diagnostic artifact 10803217385. Last test started was AlphaSift constituent fallback with unmocked external board-source classification (suspected transient hang, not proven code failure). Exact head unchanged; re-ran only cancelled backend-gate via job 107496428275, run attempt2 confirmed in_progress job 107600526161. No evidence/market epoch promoted."
+    "Attempt1 CI 35956675210 CANCELLED after ~6 hours at 6% offline pytest; uploaded diagnostic artifact 10803217385. Last test started was AlphaSift constituent fallback with unmocked external board-source classification (suspected transient hang, not proven code failure). Exact head unchanged; re-ran only cancelled backend-gate via job 107496428275, run attempt2 confirmed in_progress job 107600526161. No evidence/market epoch promoted.",
+    "PR304 docs-only exact head 66afa487a6075eff5369b36d98ba555b9de1d964 CI 35956675210 attempt2 SUCCESS, backend offline SUCCESS artifact 10804262427; [skip ci] squash merged to 5f9e9f2b8d8185163de524675d07139fac998637, main and TASK_STATE verified."
   ],
-  "next_action": "Observe existing exact-head CI 35956675210 attempt2/backend job 107600526161 until terminal; no duplicate retry. If all required checks green, re-read live main/TASK_STATE/PR mergeability then docs-only [skip ci] squash merge; otherwise diagnose repeat AlphaSift offline stall and minimal test-only fix with full exact-head CI. Independently requery Sep24 genuine scheduled Full-A/artifacts; require source fingerprint/trade date/complete production proof.",
+  "next_action": "No active PR/CI. Requery 2026-09-24 scheduled GenGe Opportunity Discovery run after 18:30 CST; verify successful all-a-production-report job, full artifact, 2026-09-24 trade date and distinct source fingerprint before updating any research gate. Do not dispatch duplicate Deep, re-run CI or promote fixture.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
