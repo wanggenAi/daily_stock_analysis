@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 48,
+  "generation": 49,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_CI",
+  "status": "IN_PROGRESS",
   "task_key": "stock-system-convergence",
-  "stage": "PR302_DOCS_AND_PR303_NEGATIVE_EVIDENCE_CACHE_EXACT_HEAD_CI",
+  "stage": "PR302_DOCS_EXACT_HEAD_GREEN_MERGE_INTENT",
   "last_observed_main_sha": "a0984a253dca358ce7e64420e5fbe6c33521d139",
   "work_branch": "fix/opportunity-negative-evidence-cache-retry-20260924",
   "work_head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
@@ -16,7 +16,7 @@
     "conclusion": null,
     "companion_checkpoint_pr": 302,
     "companion_ci_run_id": 35952453384,
-    "companion_ci_status": "IN_PROGRESS",
+    "companion_ci_status": "SUCCESS",
     "pr303_opportunity_fixture_run_id": 35953529804,
     "pr303_opportunity_fixture_conclusion": "SUCCESS",
     "pr303_legacy_run_id": 35953529751,
@@ -43,7 +43,14 @@
       "unknown_is_pass": false
     }
   },
-  "pending_operation": null,
+  "pending_operation": {
+    "operation_id": "merge-docs-pr302-c117a61d",
+    "kind": "MERGE_PR",
+    "target": "PR302 head c117a61d8130b950cce3862c2462b9f69d188870 [skip ci] squash",
+    "phase": "PREPARED",
+    "idempotency": "Query PR302 merged state and live main TASK_STATE before any retry",
+    "prepared_generation": 49
+  },
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
@@ -53,7 +60,7 @@
     "Verified latest data/jev_shadow/latest_routing.json source 35950900132 and same-epoch orchestration; finalizer stale upstream denial not authorization.",
     "Distinct broad-discovery negative-evidence cache cause reproduced: default14-day FAILED/MISSING hits; PR #303 two-file bounded 6h/24h cache read-retry correction created at head 22a32553; local nine isolated regression tests passed."
   ],
-  "next_action": "Track exact-head #302 CI 35952453384 to success, then squash [skip ci] and verify TASK_STATE on advancing live main. Track exact-head #303 CI 35953529795 (fixture 35953529804 green and legacy 35953529751 green), merge normally only on fully green CI after review. Post-merge verify genuine *new* All-A run beyond 2026-09-23 epoch, cache FAILED/MISSING refresh and independent exit edge; no stale Finalizer retries.",
+  "next_action": "Squash merge green docs-only PR302 with [skip ci], exact head c117a61d; verify live main TASK_STATE, then continue active business PR303 CI and eventual normal merge.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
