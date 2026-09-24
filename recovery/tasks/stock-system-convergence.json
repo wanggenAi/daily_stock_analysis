@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "generation": 55,
+  "generation": 56,
   "repository": "wanggenAi/daily_stock_analysis",
-  "status": "WAITING_GENUINE_NEW_MARKET_EVIDENCE_EPOCH",
+  "status": "WAITING_DOCS_CHECKPOINT_CI_AND_GENUINE_NEW_MARKET_EVIDENCE_EPOCH",
   "task_key": "stock-system-convergence",
-  "stage": "PR303_MERGE_POSTMERGE_CI_AND_SAME_EPOCH_DOWNSTREAM_VERIFIED_WAITING_SEP24_GENUINE_ALL_A",
+  "stage": "PR303_POSTMERGE_VERIFIED_PR304_DOCS_ONLY_WAITING_EXACT_HEAD_CI",
   "last_observed_main_sha": "acb16668882db622bc9d21eee20c91f9faa6715c",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "work_branch": "docs/stock-pr303-postmerge-verified-checkpoint-20260924",
+  "work_head_sha": "ad3db2e9174cd7cb5b77b1d2583b1c0cc02199c3",
+  "active_pr": 304,
   "ci": {
     "pr303_exact_head_run_id": 35953529795,
     "pr303_head_sha": "22a32553f4e57c713f15657414879763b5614dc1",
@@ -42,7 +42,9 @@
     "jev_reconciler_conclusion": "SUCCESS",
     "post_merge_ci_head_sha": "524da0bf39d7eaf0fbde745de821aa5ca19cafda",
     "post_merge_ci_finished_at": "2026-09-24T04:36:32Z",
-    "post_merge_ci_artifact_id": 10790721519
+    "post_merge_ci_artifact_id": 10790721519,
+    "pr304_docs_ci_run_id": 35956567288,
+    "pr304_docs_ci_status": "IN_PROGRESS"
   },
   "production_or_artifact": {
     "status": "PR303_CACHE_FIX_MERGED_NO_NEW_GENUINE_ALL_A_EVIDENCE_YET",
@@ -75,14 +77,15 @@
     }
   },
   "pending_operation": {
-    "type": "DOCS_ONLY_STABLE_TASK_STATE_PR",
-    "branch": "docs/stock-pr303-postmerge-verified-checkpoint-20260924",
-    "base_sha": "acb16668882db622bc9d21eee20c91f9faa6715c",
-    "allowed_paths": [
-      "TASK_STATE.md"
-    ],
-    "intent": "update stale PR302 reference in stable main handoff following PR303 merge/CI, without rerunning prior production",
-    "pr": null
+    "type": "DOCS_ONLY_PR304_EXACT_HEAD_CI_BEFORE_MERGE",
+    "pr": 304,
+    "head_sha": "ad3db2e9174cd7cb5b77b1d2583b1c0cc02199c3",
+    "ci_run_id": 35956567288,
+    "opportunity_fixture_run_id": 35956567303,
+    "legacy_run_id": 35956567273,
+    "review_run_id": 35956567278,
+    "merge_intent": "After all required exact-head checks success, squash merge with [skip ci] because only TASK_STATE.md docs and no business code",
+    "genuine_next_all_a_local": "2026-09-24T18:30:00+08:00"
   },
   "health": {
     "recovery": "HEALTHY",
@@ -96,9 +99,10 @@
     "PR303 exact-head CI 35953529795 SUCCESS; Opportunity fixture, Legacy and PR Review passed; normal squash merge at 524da0bf39d7eaf0fbde745de821aa5ca19cafda without [skip ci] verified on live main.",
     "Verified and persisted independent real All-A artifact audit and 001316/603993 primary-source/risk triage in task-scoped recovery/research/stock-candidate-quality-baseline-20260924.json; identified 98/98 cache hits, no real fetch in previous epoch and 751-row independent broad pool.",
     "Consumed auto Deep 35955222216, provenance 35955570041, terminal 35955571857, Jev Shadow 35955691559 with 25 verified TypeSafe calls, and downstream orchestrator 35955845032; compared duplicate artifacts against 35934671719 and confirmed ZERO net changed issuer/industry evidence despite 37 per-run rows.",
-    "Verified PR303 normal merge-push exact-head CI 35955214939 SUCCESS, backend/docker/governance all green; verified subsequent main runtime persistence and latest Three-Pillar 04:35:51Z still 2026-09-23 trade date with 0 new buy, 4 partial holding reviews, 1 research-only BUY."
+    "Verified PR303 normal merge-push exact-head CI 35955214939 SUCCESS, backend/docker/governance all green; verified subsequent main runtime persistence and latest Three-Pillar 04:35:51Z still 2026-09-23 trade date with 0 new buy, 4 partial holding reviews, 1 research-only BUY.",
+    "Created one-file main TASK_STATE.md stable handoff docs-only PR #304 at exact head ad3db2e9174c; current open mergeable, exact-head CI 35956567288 running; previous #303 normal merge push CI already SUCCESS."
   ],
-  "next_action": "Publish one-file stable TASK_STATE.md checkpoint from verified main acb16668882d via docs-only PR; consume exact head CI before [skip ci] squash merge; do not retrigger genuine production. Genuine All-A first new market epoch still future 2026-09-24 18:30 CST; details in gen54 evidence.",
+  "next_action": "Consume docs-only PR304 exact head ad3db2e9174c complete CI 35956567288, fixture 35956567303, Legacy 35956567273, Review 35956567278; if all required checks green and PR still mergeable exact head, squash merge with [skip ci] per recovery-only docs protocol, verify updated TASK_STATE on true live main and no duplicate triggered production. Then await first genuine scheduled 18:30 CST Sep24 full-A epoch; no forced stale scan.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
