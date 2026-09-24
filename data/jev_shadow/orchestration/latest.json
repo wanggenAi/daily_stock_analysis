@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36008475370",
+  "orchestrator_run_id": "36009198385",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,13 +24,6 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -49,6 +42,13 @@
       "attention_priority": "HIGH",
       "entity_id": "600406",
       "entity_name": "国电南瑞",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -166,13 +166,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000567",
-      "entity_name": "海德股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "000576",
       "entity_name": "甘化科工",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -191,13 +184,20 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000567",
+      "entity_name": "海德股份",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-24T13:50:10+00:00",
-  "source_workflow_head_sha": "6a73817f460fb0a452a27588e33a6e90dcb2b990",
+  "source_generated_at": "2026-09-24T13:56:08+00:00",
+  "source_workflow_head_sha": "b366aa0be8370618cc934e52467afe78d2aff7fb",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36007982183",
+  "source_workflow_run_id": "36008898925",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 184,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36007982183",
+  "trigger_source": "JEV_ORCHESTRATOR_36008898925",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-24T13:52:25+00:00",
+  "updated_at": "2026-09-24T13:58:21+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.68,
+      "attention_confidence": 0.74,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "35986111481",
+        "deep_lambda_run_id": "36007934299",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.96,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
