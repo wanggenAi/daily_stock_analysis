@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-24T20:20:51+00:00",
+  "generated_at": "2026-09-24T20:32:14+00:00",
   "latest_trade_date": "2026-09-24",
   "canonical_snapshot_id": "10971df61c9e0878e2ea",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -27,7 +27,7 @@
     "deep_calculation_execution_status": "SUCCESS",
     "deep_calculation_research_outcome": "EVIDENCE_EXHAUSTED",
     "deep_calculation_terminal_state": "EVIDENCE_EXHAUSTED",
-    "deep_calculation_unresolved_gate_count": 68,
+    "deep_calculation_unresolved_gate_count": 70,
     "deep_calculation_progressed_gate_count": 6,
     "research_terminal_requested_count": 19,
     "research_buy_count": 1,
@@ -41,7 +41,7 @@
     "deep_qualified_research_lead_count": 0,
     "holding_valuation_continuity_match_count": 4,
     "active_candidate_lifecycle_count": 118,
-    "lifecycle_event_count": 10258,
+    "lifecycle_event_count": 10308,
     "investor_action_report_complete": true,
     "investor_evidence_complete": false
   },
@@ -121,16 +121,16 @@
           "price_value_zone": "UPPER_VALUE",
           "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
           "decision_date": "2026-09-24",
-          "canonical_snapshot_id": "977a0f2c7ae860acb046"
+          "canonical_snapshot_id": "7a0770f7c7838a437f39"
         },
         "candidate_lifecycle": {
           "code": "600406",
           "name": "国电南瑞",
           "lifecycle_state": "ACTIVE",
           "research_tier": "PENDING",
-          "seen_count": 193,
+          "seen_count": 194,
           "last_event": "RESEEN",
-          "last_event_at": "2026-09-24T19:20:43Z",
+          "last_event_at": "2026-09-24T20:20:24Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
         }
@@ -203,16 +203,16 @@
           "price_value_zone": "FAIR_VALUE",
           "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
           "decision_date": "2026-09-24",
-          "canonical_snapshot_id": "977a0f2c7ae860acb046"
+          "canonical_snapshot_id": "7a0770f7c7838a437f39"
         },
         "candidate_lifecycle": {
           "code": "001316",
           "name": "润贝航科",
           "lifecycle_state": "ACTIVE",
           "research_tier": "PENDING",
-          "seen_count": 195,
+          "seen_count": 196,
           "last_event": "RESEEN",
-          "last_event_at": "2026-09-24T19:20:43Z",
+          "last_event_at": "2026-09-24T20:20:24Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
         }
@@ -285,16 +285,16 @@
           "price_value_zone": "UNKNOWN",
           "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.641<1.00",
           "decision_date": "2026-09-24",
-          "canonical_snapshot_id": "977a0f2c7ae860acb046"
+          "canonical_snapshot_id": "7a0770f7c7838a437f39"
         },
         "candidate_lifecycle": {
           "code": "601318",
           "name": "中国平安",
           "lifecycle_state": "ACTIVE",
           "research_tier": "PENDING",
-          "seen_count": 120,
+          "seen_count": 121,
           "last_event": "RESEEN",
-          "last_event_at": "2026-09-24T19:20:43Z",
+          "last_event_at": "2026-09-24T20:20:24Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
         }
@@ -367,16 +367,16 @@
           "price_value_zone": "BELOW_VALUE",
           "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
           "decision_date": "2026-09-24",
-          "canonical_snapshot_id": "977a0f2c7ae860acb046"
+          "canonical_snapshot_id": "7a0770f7c7838a437f39"
         },
         "candidate_lifecycle": {
           "code": "603993",
           "name": "洛阳钼业",
           "lifecycle_state": "ACTIVE",
           "research_tier": "PENDING",
-          "seen_count": 162,
+          "seen_count": 163,
           "last_event": "RESEEN",
-          "last_event_at": "2026-09-24T19:20:43Z",
+          "last_event_at": "2026-09-24T20:20:24Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
         }
@@ -691,9 +691,9 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-09-24T20:15:20+00:00",
-      "source_deep_lambda_run_id": "36047520208",
-      "source_every_industry_run_id": "36046164815",
+      "generated_at": "2026-09-24T20:28:21+00:00",
+      "source_deep_lambda_run_id": "36054204832",
+      "source_every_industry_run_id": "36052948780",
       "requested_count": 19,
       "decision_counts": {
         "BUY": 1,
@@ -1355,101 +1355,6 @@
             "action": "BLOCK",
             "authority": "ADVISORY_ONLY",
             "automatic_execution_allowed": false,
-            "capital_conviction_score": 0.279,
-            "critical_capital_gates": [
-              "financial_safety",
-              "earnings_authenticity"
-            ],
-            "critical_capital_gates_pass": false,
-            "earnings_quality_component": 0.0,
-            "evidence_score": 0.454,
-            "formal_buy_authorized": false,
-            "gate_weights": {
-              "earnings_authenticity": 0.22,
-              "financial_safety": 0.22,
-              "long_term_demand": 0.2,
-              "moat": 0.2,
-              "predictability": 0.16
-            },
-            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
-            "no_auto_trade": true,
-            "probe_rules": {
-              "max_pe_to_history_ratio": 0.9,
-              "max_unknown_gates": 2,
-              "min_capital_conviction_score": 0.52
-            },
-            "quant_score_component": 0.4971,
-            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
-            "suggested_max_portfolio_pct": 0.0,
-            "uncertainty_penalty": 0.252,
-            "unknown_weight": 0.84,
-            "valuation_score": 1.0
-          },
-          "code": "600827",
-          "formal_buy_authorized": false,
-          "hard_gate_failures": [],
-          "hard_gate_pass_count": 1,
-          "hard_gate_unknowns": [
-            "long_term_demand",
-            "moat",
-            "financial_safety",
-            "earnings_authenticity"
-          ],
-          "industry": "F52零售业",
-          "name": "百联股份",
-          "no_auto_trade": true,
-          "quant_score": 49.7098,
-          "quant_status": "SECONDARY_RESEARCH",
-          "reopen_on_new_evidence": true,
-          "research_authority": "RESEARCH_ONLY",
-          "research_decision": "RESEARCH_GAP",
-          "research_priority": "P1",
-          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-          "screening_attractiveness": "NORMAL",
-          "success_archetype_id": "",
-          "success_archetype_similarity_score": null,
-          "urgent_research": false,
-          "urgent_research_reasons": [],
-          "valuation": {
-            "current_pe": 11.36,
-            "distance_to_research_buy_ceiling_pct": 63.873239436619734,
-            "earnings_quality_confidence": "HIGH",
-            "earnings_quality_score": 0.0,
-            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-            "financial_gate_diagnostics": {
-              "blockers": [
-                "CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD",
-                "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD",
-                "OPERATING_CASH_FLOW_NON_POSITIVE"
-              ],
-              "cash_conversion_pass_threshold": 0.8,
-              "cash_conversion_ratio": -0.374,
-              "earnings_quality_confidence": "HIGH",
-              "earnings_quality_pass_threshold": 70.0,
-              "earnings_quality_score": 0.0,
-              "financial_disclosure_date": "2026-08-29",
-              "financial_review_status": "OK",
-              "machine_financial_pass_ready": false,
-              "normalized_core_operating_profit": 198356269.24,
-              "operating_cash_flow": -300616047.21
-            },
-            "financial_review_status": "OK",
-            "historical_median_pe_reference": 23.27,
-            "pe_to_history_ratio": 0.4881822088525999,
-            "price_mapping_status": "OK",
-            "reference_price": 7.73,
-            "reference_price_basis": "RAW_LATEST_CLOSE",
-            "reference_trade_date": "2026-09-24",
-            "required_profit_growth_pct": -51.18177911474001,
-            "research_buy_pe_ratio_threshold": 0.8,
-            "research_buy_price_ceiling": 12.667401408450706
-          }
-        },
-        {
-          "capital_allocation": {
-            "action": "BLOCK",
-            "authority": "ADVISORY_ONLY",
-            "automatic_execution_allowed": false,
             "capital_conviction_score": 0.2135,
             "critical_capital_gates": [
               "financial_safety",
@@ -1731,96 +1636,6 @@
             "required_profit_growth_pct": -24.969987995198085,
             "research_buy_pe_ratio_threshold": 0.8,
             "research_buy_price_ceiling": null
-          }
-        },
-        {
-          "capital_allocation": {
-            "action": "WATCH",
-            "authority": "ADVISORY_ONLY",
-            "automatic_execution_allowed": false,
-            "capital_conviction_score": 0.5362,
-            "critical_capital_gates": [
-              "financial_safety",
-              "earnings_authenticity"
-            ],
-            "critical_capital_gates_pass": true,
-            "earnings_quality_component": 0.9,
-            "evidence_score": 0.636,
-            "formal_buy_authorized": false,
-            "gate_weights": {
-              "earnings_authenticity": 0.22,
-              "financial_safety": 0.22,
-              "long_term_demand": 0.2,
-              "moat": 0.2,
-              "predictability": 0.16
-            },
-            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
-            "no_auto_trade": true,
-            "probe_rules": {
-              "max_pe_to_history_ratio": 0.9,
-              "max_unknown_gates": 2,
-              "min_capital_conviction_score": 0.52
-            },
-            "quant_score_component": 0.3241,
-            "reason": "SPECIALIZED_VALUATION_REQUIRED",
-            "suggested_max_portfolio_pct": 0.0,
-            "uncertainty_penalty": 0.168,
-            "unknown_weight": 0.56,
-            "valuation_score": 1.0
-          },
-          "code": "600095",
-          "formal_buy_authorized": false,
-          "hard_gate_failures": [],
-          "hard_gate_pass_count": 2,
-          "hard_gate_unknowns": [
-            "predictability",
-            "long_term_demand",
-            "moat"
-          ],
-          "industry": "J67资本市场服务",
-          "name": "湘财股份",
-          "no_auto_trade": true,
-          "quant_score": 32.4104,
-          "quant_status": "LOW_PRIORITY",
-          "reopen_on_new_evidence": true,
-          "research_authority": "RESEARCH_ONLY",
-          "research_decision": "RESEARCH_GAP",
-          "research_priority": "P1",
-          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-          "screening_attractiveness": "NORMAL",
-          "success_archetype_id": "",
-          "success_archetype_similarity_score": null,
-          "urgent_research": false,
-          "urgent_research_reasons": [],
-          "valuation": {
-            "current_pe": 32.06,
-            "distance_to_research_buy_ceiling_pct": 108.57142857142858,
-            "earnings_quality_confidence": "HIGH",
-            "earnings_quality_score": 90.0,
-            "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-            "financial_gate_diagnostics": {
-              "blockers": [],
-              "cash_conversion_pass_threshold": 0.8,
-              "cash_conversion_ratio": 1.5848,
-              "earnings_quality_confidence": "HIGH",
-              "earnings_quality_pass_threshold": 70.0,
-              "earnings_quality_score": 90.0,
-              "financial_disclosure_date": "2026-08-27",
-              "financial_review_status": "OK",
-              "machine_financial_pass_ready": true,
-              "normalized_core_operating_profit": 501606238.59,
-              "operating_cash_flow": 836752047.89
-            },
-            "financial_review_status": "OK",
-            "historical_median_pe_reference": 83.58500000000001,
-            "pe_to_history_ratio": 0.3835616438356164,
-            "price_mapping_status": "OK",
-            "reference_price": 8.82,
-            "reference_price_basis": "RAW_LATEST_CLOSE",
-            "reference_trade_date": "2026-09-24",
-            "required_profit_growth_pct": -61.64383561643836,
-            "research_buy_pe_ratio_threshold": 0.8,
-            "research_buy_price_ceiling": 18.396
           }
         },
         {
@@ -2465,6 +2280,203 @@
             "research_buy_pe_ratio_threshold": 0.8,
             "research_buy_price_ceiling": 33.21827586206897
           }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.0,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.0,
+            "evidence_score": 0.35,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.0,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.3,
+            "unknown_weight": 1.0,
+            "valuation_score": 0.0
+          },
+          "code": "600095",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 0,
+          "hard_gate_unknowns": [
+            "predictability",
+            "long_term_demand",
+            "moat",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "J67资本市场服务",
+          "name": "湘财股份",
+          "no_auto_trade": true,
+          "quant_score": null,
+          "quant_status": "",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P1",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "NORMAL",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": false,
+          "urgent_research_reasons": [],
+          "valuation": {
+            "current_pe": null,
+            "distance_to_research_buy_ceiling_pct": null,
+            "earnings_quality_confidence": "",
+            "earnings_quality_score": null,
+            "expectation_state": "",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "FINANCIAL_REVIEW_STATUS_NOT_OK",
+                "EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH",
+                "CASH_CONVERSION_RATIO_MISSING",
+                "EARNINGS_QUALITY_SCORE_MISSING",
+                "NORMALIZED_CORE_OPERATING_PROFIT_MISSING",
+                "OPERATING_CASH_FLOW_MISSING"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": null,
+              "earnings_quality_confidence": "",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": null,
+              "financial_disclosure_date": "",
+              "financial_review_status": "",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": null,
+              "operating_cash_flow": null
+            },
+            "financial_review_status": "",
+            "historical_median_pe_reference": null,
+            "pe_to_history_ratio": null,
+            "price_mapping_status": "",
+            "reference_price": null,
+            "reference_price_basis": "",
+            "reference_trade_date": "",
+            "required_profit_growth_pct": null,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": null
+          }
+        },
+        {
+          "capital_allocation": {
+            "action": "BLOCK",
+            "authority": "ADVISORY_ONLY",
+            "automatic_execution_allowed": false,
+            "capital_conviction_score": 0.0,
+            "critical_capital_gates": [
+              "financial_safety",
+              "earnings_authenticity"
+            ],
+            "critical_capital_gates_pass": false,
+            "earnings_quality_component": 0.0,
+            "evidence_score": 0.454,
+            "formal_buy_authorized": false,
+            "gate_weights": {
+              "earnings_authenticity": 0.22,
+              "financial_safety": 0.22,
+              "long_term_demand": 0.2,
+              "moat": 0.2,
+              "predictability": 0.16
+            },
+            "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+            "no_auto_trade": true,
+            "probe_rules": {
+              "max_pe_to_history_ratio": 0.9,
+              "max_unknown_gates": 2,
+              "min_capital_conviction_score": 0.52
+            },
+            "quant_score_component": 0.0,
+            "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+            "suggested_max_portfolio_pct": 0.0,
+            "uncertainty_penalty": 0.252,
+            "unknown_weight": 0.84,
+            "valuation_score": 0.0
+          },
+          "code": "600827",
+          "formal_buy_authorized": false,
+          "hard_gate_failures": [],
+          "hard_gate_pass_count": 1,
+          "hard_gate_unknowns": [
+            "long_term_demand",
+            "moat",
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "industry": "F52零售业",
+          "name": "百联股份",
+          "no_auto_trade": true,
+          "quant_score": null,
+          "quant_status": "",
+          "reopen_on_new_evidence": true,
+          "research_authority": "RESEARCH_ONLY",
+          "research_decision": "RESEARCH_GAP",
+          "research_priority": "P1",
+          "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+          "screening_attractiveness": "NORMAL",
+          "success_archetype_id": "",
+          "success_archetype_similarity_score": null,
+          "urgent_research": false,
+          "urgent_research_reasons": [],
+          "valuation": {
+            "current_pe": null,
+            "distance_to_research_buy_ceiling_pct": null,
+            "earnings_quality_confidence": "",
+            "earnings_quality_score": null,
+            "expectation_state": "",
+            "financial_gate_diagnostics": {
+              "blockers": [
+                "FINANCIAL_REVIEW_STATUS_NOT_OK",
+                "EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH",
+                "CASH_CONVERSION_RATIO_MISSING",
+                "EARNINGS_QUALITY_SCORE_MISSING",
+                "NORMALIZED_CORE_OPERATING_PROFIT_MISSING",
+                "OPERATING_CASH_FLOW_MISSING"
+              ],
+              "cash_conversion_pass_threshold": 0.8,
+              "cash_conversion_ratio": null,
+              "earnings_quality_confidence": "",
+              "earnings_quality_pass_threshold": 70.0,
+              "earnings_quality_score": null,
+              "financial_disclosure_date": "",
+              "financial_review_status": "",
+              "machine_financial_pass_ready": false,
+              "normalized_core_operating_profit": null,
+              "operating_cash_flow": null
+            },
+            "financial_review_status": "",
+            "historical_median_pe_reference": null,
+            "pe_to_history_ratio": null,
+            "price_mapping_status": "",
+            "reference_price": null,
+            "reference_price_basis": "",
+            "reference_trade_date": "",
+            "required_profit_growth_pct": null,
+            "research_buy_pe_ratio_threshold": 0.8,
+            "research_buy_price_ceiling": null
+          }
         }
       ],
       "research_gap_count": 18,
@@ -2850,8 +2862,8 @@
       "capital_action_counts": {
         "BUILD": 1,
         "PROBE": 1,
-        "WATCH": 6,
-        "BLOCK": 11
+        "WATCH": 5,
+        "BLOCK": 12
       },
       "capital_probe_queue": [
         {
@@ -3707,103 +3719,6 @@
           "action": "BLOCK",
           "authority": "ADVISORY_ONLY",
           "automatic_execution_allowed": false,
-          "capital_conviction_score": 0.279,
-          "critical_capital_gates": [
-            "financial_safety",
-            "earnings_authenticity"
-          ],
-          "critical_capital_gates_pass": false,
-          "earnings_quality_component": 0.0,
-          "evidence_score": 0.454,
-          "formal_buy_authorized": false,
-          "gate_weights": {
-            "earnings_authenticity": 0.22,
-            "financial_safety": 0.22,
-            "long_term_demand": 0.2,
-            "moat": 0.2,
-            "predictability": 0.16
-          },
-          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
-          "no_auto_trade": true,
-          "probe_rules": {
-            "max_pe_to_history_ratio": 0.9,
-            "max_unknown_gates": 2,
-            "min_capital_conviction_score": 0.52
-          },
-          "quant_score_component": 0.4971,
-          "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
-          "suggested_max_portfolio_pct": 0.0,
-          "uncertainty_penalty": 0.252,
-          "unknown_weight": 0.84,
-          "valuation_score": 1.0
-        },
-        "code": "600827",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 1,
-        "hard_gate_unknowns": [
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "F52零售业",
-        "name": "百联股份",
-        "no_auto_trade": true,
-        "quant_score": 49.7098,
-        "quant_status": "SECONDARY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P1",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "NORMAL",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": false,
-        "urgent_research_reasons": [],
-        "valuation": {
-          "current_pe": 11.36,
-          "distance_to_research_buy_ceiling_pct": 63.873239436619734,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 0.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_gate_diagnostics": {
-            "blockers": [
-              "CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD",
-              "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD",
-              "OPERATING_CASH_FLOW_NON_POSITIVE"
-            ],
-            "cash_conversion_pass_threshold": 0.8,
-            "cash_conversion_ratio": -0.374,
-            "earnings_quality_confidence": "HIGH",
-            "earnings_quality_pass_threshold": 70.0,
-            "earnings_quality_score": 0.0,
-            "financial_disclosure_date": "2026-08-29",
-            "financial_review_status": "OK",
-            "machine_financial_pass_ready": false,
-            "normalized_core_operating_profit": 198356269.24,
-            "operating_cash_flow": -300616047.21
-          },
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 23.27,
-          "pe_to_history_ratio": 0.4881822088525999,
-          "price_mapping_status": "OK",
-          "reference_price": 7.73,
-          "reference_price_basis": "RAW_LATEST_CLOSE",
-          "reference_trade_date": "2026-09-24",
-          "required_profit_growth_pct": -51.18177911474001,
-          "research_buy_pe_ratio_threshold": 0.8,
-          "research_buy_price_ceiling": 12.667401408450706
-        },
-        "investor_action": "暂不投入新增资金；等待补齐：long_term_demand、moat、financial_safety、earnings_authenticity",
-        "account_action": "WATCH_OR_BLOCK"
-      },
-      {
-        "capital_allocation": {
-          "action": "BLOCK",
-          "authority": "ADVISORY_ONLY",
-          "automatic_execution_allowed": false,
           "capital_conviction_score": 0.2135,
           "critical_capital_gates": [
             "financial_safety",
@@ -4091,98 +4006,6 @@
           "research_buy_price_ceiling": null
         },
         "investor_action": "暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity",
-        "account_action": "WATCH_OR_BLOCK"
-      },
-      {
-        "capital_allocation": {
-          "action": "WATCH",
-          "authority": "ADVISORY_ONLY",
-          "automatic_execution_allowed": false,
-          "capital_conviction_score": 0.5362,
-          "critical_capital_gates": [
-            "financial_safety",
-            "earnings_authenticity"
-          ],
-          "critical_capital_gates_pass": true,
-          "earnings_quality_component": 0.9,
-          "evidence_score": 0.636,
-          "formal_buy_authorized": false,
-          "gate_weights": {
-            "earnings_authenticity": 0.22,
-            "financial_safety": 0.22,
-            "long_term_demand": 0.2,
-            "moat": 0.2,
-            "predictability": 0.16
-          },
-          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
-          "no_auto_trade": true,
-          "probe_rules": {
-            "max_pe_to_history_ratio": 0.9,
-            "max_unknown_gates": 2,
-            "min_capital_conviction_score": 0.52
-          },
-          "quant_score_component": 0.3241,
-          "reason": "SPECIALIZED_VALUATION_REQUIRED",
-          "suggested_max_portfolio_pct": 0.0,
-          "uncertainty_penalty": 0.168,
-          "unknown_weight": 0.56,
-          "valuation_score": 1.0
-        },
-        "code": "600095",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 2,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "industry": "J67资本市场服务",
-        "name": "湘财股份",
-        "no_auto_trade": true,
-        "quant_score": 32.4104,
-        "quant_status": "LOW_PRIORITY",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P1",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "NORMAL",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": false,
-        "urgent_research_reasons": [],
-        "valuation": {
-          "current_pe": 32.06,
-          "distance_to_research_buy_ceiling_pct": 108.57142857142858,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 90.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_gate_diagnostics": {
-            "blockers": [],
-            "cash_conversion_pass_threshold": 0.8,
-            "cash_conversion_ratio": 1.5848,
-            "earnings_quality_confidence": "HIGH",
-            "earnings_quality_pass_threshold": 70.0,
-            "earnings_quality_score": 90.0,
-            "financial_disclosure_date": "2026-08-27",
-            "financial_review_status": "OK",
-            "machine_financial_pass_ready": true,
-            "normalized_core_operating_profit": 501606238.59,
-            "operating_cash_flow": 836752047.89
-          },
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 83.58500000000001,
-          "pe_to_history_ratio": 0.3835616438356164,
-          "price_mapping_status": "OK",
-          "reference_price": 8.82,
-          "reference_price_basis": "RAW_LATEST_CLOSE",
-          "reference_trade_date": "2026-09-24",
-          "required_profit_growth_pct": -61.64383561643836,
-          "research_buy_pe_ratio_threshold": 0.8,
-          "research_buy_price_ceiling": 18.396
-        },
-        "investor_action": "暂不投入新增资金；等待补齐：predictability、long_term_demand、moat",
         "account_action": "WATCH_OR_BLOCK"
       },
       {
@@ -4841,6 +4664,207 @@
         },
         "investor_action": "暂不投入新增资金；等待补齐：predictability、long_term_demand、moat",
         "account_action": "WATCH_OR_BLOCK"
+      },
+      {
+        "capital_allocation": {
+          "action": "BLOCK",
+          "authority": "ADVISORY_ONLY",
+          "automatic_execution_allowed": false,
+          "capital_conviction_score": 0.0,
+          "critical_capital_gates": [
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "critical_capital_gates_pass": false,
+          "earnings_quality_component": 0.0,
+          "evidence_score": 0.35,
+          "formal_buy_authorized": false,
+          "gate_weights": {
+            "earnings_authenticity": 0.22,
+            "financial_safety": 0.22,
+            "long_term_demand": 0.2,
+            "moat": 0.2,
+            "predictability": 0.16
+          },
+          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+          "no_auto_trade": true,
+          "probe_rules": {
+            "max_pe_to_history_ratio": 0.9,
+            "max_unknown_gates": 2,
+            "min_capital_conviction_score": 0.52
+          },
+          "quant_score_component": 0.0,
+          "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+          "suggested_max_portfolio_pct": 0.0,
+          "uncertainty_penalty": 0.3,
+          "unknown_weight": 1.0,
+          "valuation_score": 0.0
+        },
+        "code": "600095",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 0,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat",
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "industry": "J67资本市场服务",
+        "name": "湘财股份",
+        "no_auto_trade": true,
+        "quant_score": null,
+        "quant_status": "",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "RESEARCH_GAP",
+        "research_priority": "P1",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "",
+        "success_archetype_similarity_score": null,
+        "urgent_research": false,
+        "urgent_research_reasons": [],
+        "valuation": {
+          "current_pe": null,
+          "distance_to_research_buy_ceiling_pct": null,
+          "earnings_quality_confidence": "",
+          "earnings_quality_score": null,
+          "expectation_state": "",
+          "financial_gate_diagnostics": {
+            "blockers": [
+              "FINANCIAL_REVIEW_STATUS_NOT_OK",
+              "EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH",
+              "CASH_CONVERSION_RATIO_MISSING",
+              "EARNINGS_QUALITY_SCORE_MISSING",
+              "NORMALIZED_CORE_OPERATING_PROFIT_MISSING",
+              "OPERATING_CASH_FLOW_MISSING"
+            ],
+            "cash_conversion_pass_threshold": 0.8,
+            "cash_conversion_ratio": null,
+            "earnings_quality_confidence": "",
+            "earnings_quality_pass_threshold": 70.0,
+            "earnings_quality_score": null,
+            "financial_disclosure_date": "",
+            "financial_review_status": "",
+            "machine_financial_pass_ready": false,
+            "normalized_core_operating_profit": null,
+            "operating_cash_flow": null
+          },
+          "financial_review_status": "",
+          "historical_median_pe_reference": null,
+          "pe_to_history_ratio": null,
+          "price_mapping_status": "",
+          "reference_price": null,
+          "reference_price_basis": "",
+          "reference_trade_date": "",
+          "required_profit_growth_pct": null,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
+        },
+        "investor_action": "暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity",
+        "account_action": "WATCH_OR_BLOCK"
+      },
+      {
+        "capital_allocation": {
+          "action": "BLOCK",
+          "authority": "ADVISORY_ONLY",
+          "automatic_execution_allowed": false,
+          "capital_conviction_score": 0.0,
+          "critical_capital_gates": [
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "critical_capital_gates_pass": false,
+          "earnings_quality_component": 0.0,
+          "evidence_score": 0.454,
+          "formal_buy_authorized": false,
+          "gate_weights": {
+            "earnings_authenticity": 0.22,
+            "financial_safety": 0.22,
+            "long_term_demand": 0.2,
+            "moat": 0.2,
+            "predictability": 0.16
+          },
+          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+          "no_auto_trade": true,
+          "probe_rules": {
+            "max_pe_to_history_ratio": 0.9,
+            "max_unknown_gates": 2,
+            "min_capital_conviction_score": 0.52
+          },
+          "quant_score_component": 0.0,
+          "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+          "suggested_max_portfolio_pct": 0.0,
+          "uncertainty_penalty": 0.252,
+          "unknown_weight": 0.84,
+          "valuation_score": 0.0
+        },
+        "code": "600827",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 1,
+        "hard_gate_unknowns": [
+          "long_term_demand",
+          "moat",
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "industry": "F52零售业",
+        "name": "百联股份",
+        "no_auto_trade": true,
+        "quant_score": null,
+        "quant_status": "",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "RESEARCH_GAP",
+        "research_priority": "P1",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "",
+        "success_archetype_similarity_score": null,
+        "urgent_research": false,
+        "urgent_research_reasons": [],
+        "valuation": {
+          "current_pe": null,
+          "distance_to_research_buy_ceiling_pct": null,
+          "earnings_quality_confidence": "",
+          "earnings_quality_score": null,
+          "expectation_state": "",
+          "financial_gate_diagnostics": {
+            "blockers": [
+              "FINANCIAL_REVIEW_STATUS_NOT_OK",
+              "EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH",
+              "CASH_CONVERSION_RATIO_MISSING",
+              "EARNINGS_QUALITY_SCORE_MISSING",
+              "NORMALIZED_CORE_OPERATING_PROFIT_MISSING",
+              "OPERATING_CASH_FLOW_MISSING"
+            ],
+            "cash_conversion_pass_threshold": 0.8,
+            "cash_conversion_ratio": null,
+            "earnings_quality_confidence": "",
+            "earnings_quality_pass_threshold": 70.0,
+            "earnings_quality_score": null,
+            "financial_disclosure_date": "",
+            "financial_review_status": "",
+            "machine_financial_pass_ready": false,
+            "normalized_core_operating_profit": null,
+            "operating_cash_flow": null
+          },
+          "financial_review_status": "",
+          "historical_median_pe_reference": null,
+          "pe_to_history_ratio": null,
+          "price_mapping_status": "",
+          "reference_price": null,
+          "reference_price_basis": "",
+          "reference_trade_date": "",
+          "required_profit_growth_pct": null,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
+        },
+        "investor_action": "暂不投入新增资金；等待补齐：long_term_demand、moat、financial_safety、earnings_authenticity",
+        "account_action": "WATCH_OR_BLOCK"
       }
     ],
     "research_gap_count": 18,
@@ -5416,8 +5440,8 @@
     "capital_action_counts": {
       "BUILD": 1,
       "PROBE": 1,
-      "WATCH": 6,
-      "BLOCK": 11
+      "WATCH": 5,
+      "BLOCK": 12
     },
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false,
@@ -5440,14 +5464,14 @@
         "initial_manual_position_pct": 1.0,
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "ENTRY_NOW",
-        "judgment_confidence": 0.77,
+        "judgment_confidence": 0.78,
         "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.01,
-          "ENTRY_NOW": 0.81,
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.83,
           "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.01,
           "WAIT_EVIDENCE": 0.13,
-          "WAIT_PRICE": 0.04
+          "WAIT_PRICE": 0.03
         },
         "max_manual_position_pct": 3.0,
         "no_auto_trade": true,
@@ -5456,15 +5480,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "ENTRY_NOW",
         "validation_reason": "JEV_ENTRY_NOW_PASSES_DETERMINISTIC_GUARDS",
         "terminal_research_bucket": "BUY",
         "jev_route": "VALUATION_CLOSURE",
-        "jev_route_confidence": 0.94,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.95,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "001316",
@@ -5498,15 +5522,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.41,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.45,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "600640",
@@ -5540,15 +5564,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.39,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.33,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "600961",
@@ -5582,15 +5606,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.43,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.45,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "601069",
@@ -5624,15 +5648,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.32,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.35,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "601318",
@@ -5666,15 +5690,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
-        "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.25,
-        "source_jev_run_id": "36052730218"
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.26,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "601628",
@@ -5708,15 +5732,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.4,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.44,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "603986",
@@ -5750,15 +5774,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.46,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.38,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "002811",
@@ -5778,11 +5802,11 @@
         "jev_judgment": "WAIT_EVIDENCE",
         "judgment_confidence": 0.98,
         "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.0,
+          "DO_NOT_CHASE": 0.01,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.0,
+          "INVALIDATED": 0.01,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 1.0,
+          "WAIT_EVIDENCE": 0.98,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -5792,15 +5816,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.34,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.38,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "600095",
@@ -5809,50 +5833,8 @@
         "authority": "ADVISORY_ONLY",
         "automatic_execution_allowed": false,
         "deterministically_supported": true,
-        "do_not_chase_condition": "PRICE_ABOVE_18.3960_REQUIRES_REVALUATION",
-        "entry_price_zone_high": 18.396,
-        "entry_price_zone_low": null,
-        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
-        "formal_buy_authorized": false,
-        "initial_manual_position_pct": 0.0,
-        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
-        "jev_judgment": "WAIT_EVIDENCE",
-        "judgment_confidence": 0.98,
-        "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.01,
-          "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.0,
-          "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.99,
-          "WAIT_PRICE": 0.0
-        },
-        "max_manual_position_pct": 0.0,
-        "no_auto_trade": true,
-        "reference_price": 8.82,
-        "reference_trade_date": "2026-09-24",
-        "source_lineage": {
-          "dashboard_snapshot_id": "10971df61c9e0878e2ea",
-          "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
-        },
-        "validated_judgment": "WAIT_EVIDENCE",
-        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "terminal_research_bucket": "RESEARCH_GAP",
-        "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.48,
-        "source_jev_run_id": "36052730218"
-      },
-      {
-        "code": "600827",
-        "name": "百联股份",
-        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
-        "authority": "ADVISORY_ONLY",
-        "automatic_execution_allowed": false,
-        "deterministically_supported": true,
-        "do_not_chase_condition": "PRICE_ABOVE_12.6674_REQUIRES_REVALUATION",
-        "entry_price_zone_high": 12.6674,
+        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
+        "entry_price_zone_high": null,
         "entry_price_zone_low": null,
         "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
@@ -5864,27 +5846,111 @@
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.02,
-          "NO_JUDGMENT": 0.0,
+          "INVALIDATED": 0.0,
+          "NO_JUDGMENT": 0.02,
           "WAIT_EVIDENCE": 0.98,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
         "no_auto_trade": true,
-        "reference_price": 7.73,
-        "reference_trade_date": "2026-09-24",
+        "reference_price": null,
+        "reference_trade_date": "",
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.43,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.58,
+        "source_jev_run_id": "36055104165"
+      },
+      {
+        "code": "600816",
+        "name": "建元信托",
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "deterministically_supported": true,
+        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
+        "entry_price_zone_high": null,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "judgment_confidence": 0.98,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.0,
+          "INVALIDATED": 0.0,
+          "NO_JUDGMENT": 0.01,
+          "WAIT_EVIDENCE": 0.99,
+          "WAIT_PRICE": 0.0
+        },
+        "max_manual_position_pct": 0.0,
+        "no_auto_trade": true,
+        "reference_price": null,
+        "reference_trade_date": "",
+        "source_lineage": {
+          "dashboard_snapshot_id": "10971df61c9e0878e2ea",
+          "dashboard_source_run_id": "36023358118",
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
+        },
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.42,
+        "source_jev_run_id": "36055104165"
+      },
+      {
+        "code": "600827",
+        "name": "百联股份",
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "deterministically_supported": true,
+        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
+        "entry_price_zone_high": null,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "judgment_confidence": 0.98,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.0,
+          "INVALIDATED": 0.0,
+          "NO_JUDGMENT": 0.02,
+          "WAIT_EVIDENCE": 0.98,
+          "WAIT_PRICE": 0.0
+        },
+        "max_manual_position_pct": 0.0,
+        "no_auto_trade": true,
+        "reference_price": null,
+        "reference_trade_date": "",
+        "source_lineage": {
+          "dashboard_snapshot_id": "10971df61c9e0878e2ea",
+          "dashboard_source_run_id": "36023358118",
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
+        },
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.58,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "603038",
@@ -5907,110 +5973,26 @@
           "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.0,
           "INVALIDATED": 0.01,
-          "NO_JUDGMENT": 0.01,
-          "WAIT_EVIDENCE": 0.98,
-          "WAIT_PRICE": 0.0
-        },
-        "max_manual_position_pct": 0.0,
-        "no_auto_trade": true,
-        "reference_price": null,
-        "reference_trade_date": "",
-        "source_lineage": {
-          "dashboard_snapshot_id": "10971df61c9e0878e2ea",
-          "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
-        },
-        "validated_judgment": "WAIT_EVIDENCE",
-        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "terminal_research_bucket": "RESEARCH_GAP",
-        "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.45,
-        "source_jev_run_id": "36052730218"
-      },
-      {
-        "code": "600816",
-        "name": "建元信托",
-        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
-        "authority": "ADVISORY_ONLY",
-        "automatic_execution_allowed": false,
-        "deterministically_supported": true,
-        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
-        "entry_price_zone_high": null,
-        "entry_price_zone_low": null,
-        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
-        "formal_buy_authorized": false,
-        "initial_manual_position_pct": 0.0,
-        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
-        "jev_judgment": "WAIT_EVIDENCE",
-        "judgment_confidence": 0.97,
-        "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.0,
-          "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.01,
-          "NO_JUDGMENT": 0.01,
-          "WAIT_EVIDENCE": 0.98,
-          "WAIT_PRICE": 0.0
-        },
-        "max_manual_position_pct": 0.0,
-        "no_auto_trade": true,
-        "reference_price": null,
-        "reference_trade_date": "",
-        "source_lineage": {
-          "dashboard_snapshot_id": "10971df61c9e0878e2ea",
-          "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
-        },
-        "validated_judgment": "WAIT_EVIDENCE",
-        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "terminal_research_bucket": "RESEARCH_GAP",
-        "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.47,
-        "source_jev_run_id": "36052730218"
-      },
-      {
-        "code": "600309",
-        "name": "万华化学",
-        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
-        "authority": "ADVISORY_ONLY",
-        "automatic_execution_allowed": false,
-        "deterministically_supported": true,
-        "do_not_chase_condition": "PRICE_ABOVE_60.6039_REQUIRES_REVALUATION",
-        "entry_price_zone_high": 60.6039,
-        "entry_price_zone_low": null,
-        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
-        "formal_buy_authorized": false,
-        "initial_manual_position_pct": 0.0,
-        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
-        "jev_judgment": "WAIT_EVIDENCE",
-        "judgment_confidence": 0.96,
-        "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.02,
-          "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.97,
-          "WAIT_PRICE": 0.01
+          "WAIT_EVIDENCE": 0.99,
+          "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
         "no_auto_trade": true,
-        "reference_price": 69.45,
-        "reference_trade_date": "2026-09-24",
+        "reference_price": null,
+        "reference_trade_date": "",
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
-        "jev_route": "DEEP_RESEARCH",
+        "jev_route": "EVIDENCE_REFRESH",
         "jev_route_confidence": 0.45,
-        "source_jev_run_id": "36052730218"
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "600406",
@@ -6028,13 +6010,13 @@
         "initial_manual_position_pct": 0.0,
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
-        "judgment_confidence": 0.96,
+        "judgment_confidence": 0.97,
         "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.02,
+          "DO_NOT_CHASE": 0.01,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.01,
-          "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.97,
+          "INVALIDATED": 0.0,
+          "NO_JUDGMENT": 0.01,
+          "WAIT_EVIDENCE": 0.98,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -6044,15 +6026,57 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.24,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.18,
+        "source_jev_run_id": "36055104165"
+      },
+      {
+        "code": "001309",
+        "name": "德明利",
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "deterministically_supported": true,
+        "do_not_chase_condition": "PRICE_ABOVE_722.0854_REQUIRES_REVALUATION",
+        "entry_price_zone_high": 722.0854,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "judgment_confidence": 0.96,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.0,
+          "INVALIDATED": 0.02,
+          "NO_JUDGMENT": 0.0,
+          "WAIT_EVIDENCE": 0.98,
+          "WAIT_PRICE": 0.0
+        },
+        "max_manual_position_pct": 0.0,
+        "no_auto_trade": true,
+        "reference_price": 394.43,
+        "reference_trade_date": "2026-09-24",
+        "source_lineage": {
+          "dashboard_snapshot_id": "10971df61c9e0878e2ea",
+          "dashboard_source_run_id": "36023358118",
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
+        },
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "jev_route": "DEEP_RESEARCH",
+        "jev_route_confidence": 0.47,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "603105",
@@ -6086,15 +6110,15 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.53,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.5,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "000504",
@@ -6128,25 +6152,25 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.45,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.47,
+        "source_jev_run_id": "36055104165"
       },
       {
-        "code": "001309",
-        "name": "德明利",
+        "code": "600309",
+        "name": "万华化学",
         "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
         "authority": "ADVISORY_ONLY",
         "automatic_execution_allowed": false,
         "deterministically_supported": true,
-        "do_not_chase_condition": "PRICE_ABOVE_722.0854_REQUIRES_REVALUATION",
-        "entry_price_zone_high": 722.0854,
+        "do_not_chase_condition": "PRICE_ABOVE_60.6039_REQUIRES_REVALUATION",
+        "entry_price_zone_high": 60.6039,
         "entry_price_zone_low": null,
         "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
@@ -6156,29 +6180,29 @@
         "jev_judgment": "WAIT_EVIDENCE",
         "judgment_confidence": 0.95,
         "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.0,
+          "DO_NOT_CHASE": 0.02,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.03,
+          "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.0,
           "WAIT_EVIDENCE": 0.97,
-          "WAIT_PRICE": 0.0
+          "WAIT_PRICE": 0.01
         },
         "max_manual_position_pct": 0.0,
         "no_auto_trade": true,
-        "reference_price": 394.43,
+        "reference_price": 69.45,
         "reference_trade_date": "2026-09-24",
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.51,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.5,
+        "source_jev_run_id": "36055104165"
       },
       {
         "code": "603993",
@@ -6196,14 +6220,14 @@
         "initial_manual_position_pct": 0.0,
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
-        "judgment_confidence": 0.94,
+        "judgment_confidence": 0.95,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
-          "ENTRY_NOW": 0.03,
+          "ENTRY_NOW": 0.02,
           "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.95,
-          "WAIT_PRICE": 0.02
+          "WAIT_EVIDENCE": 0.97,
+          "WAIT_PRICE": 0.01
         },
         "max_manual_position_pct": 0.0,
         "no_auto_trade": true,
@@ -6212,20 +6236,20 @@
         "source_lineage": {
           "dashboard_snapshot_id": "10971df61c9e0878e2ea",
           "dashboard_source_run_id": "36023358118",
-          "deep_code_epoch_sha": "55a4a06b4591b452b998b5203a06c97dc9cfe1b0",
-          "deep_lambda_run_id": "36047520208"
+          "deep_code_epoch_sha": "d406c1ac59840cf28a17ffbdad420f60ab1200ad",
+          "deep_lambda_run_id": "36054204832"
         },
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.47,
-        "source_jev_run_id": "36052730218"
+        "jev_route_confidence": 0.43,
+        "source_jev_run_id": "36055104165"
       }
     ],
     "jev_entry_judgment_count": 19,
     "jev_entry_now_count": 1,
-    "jev_entry_judgment_source_run_id": "36052730218",
+    "jev_entry_judgment_source_run_id": "36055104165",
     "jev_entry_judgment_stale_row_count": 0,
     "jev_entry_judgment_invalid_row_count": 6,
     "jev_entry_judgment_status": "CURRENT",
@@ -6276,11 +6300,11 @@
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "36047520208",
+    "lambda_run_id": "36054204832",
     "lambda_run_attempt": "1",
-    "source_run_id": "36046164815",
+    "source_run_id": "36052948780",
     "trigger_source": "EVERY_INDUSTRY_READY",
-    "generated_at": "2026-09-24T19:25:36+00:00",
+    "generated_at": "2026-09-24T20:26:08+00:00",
     "run_state": "COMPLETED",
     "execution_status": "SUCCESS",
     "research_outcome": "EVIDENCE_EXHAUSTED",
@@ -6297,13 +6321,13 @@
     "evidence_exhausted_requested_count_available": true,
     "handoff_incomplete_requested_count": 0,
     "handoff_incomplete_requested_count_available": true,
-    "profile_count": 500,
+    "profile_count": 502,
     "profile_count_available": true,
     "requested_profile_count": 18,
     "requested_profile_count_available": true,
     "workset_coverage_known": true,
     "workset_coverage_complete": true,
-    "unresolved_requested_gate_count": 68,
+    "unresolved_requested_gate_count": 70,
     "unresolved_requested_gate_count_available": true,
     "missing_requested_codes": [],
     "missing_requested_codes_available": true,
@@ -6334,6 +6358,8 @@
         "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
       },
       "600095": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
         "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
         "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
         "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
@@ -6416,13 +6442,13 @@
     "gap_closure_attempt_count": 2,
     "new_evidence_count": 43,
     "progressed_gate_count": 6,
-    "hard_gate_count": 2500,
+    "hard_gate_count": 2510,
     "pass_gate_count": 227,
     "fail_gate_count": 2,
     "verified_pass_gate_count": 227,
     "unverified_pass_gate_count": 0,
     "provenance_audit_complete": true,
-    "provenance_audit_run_id": "36048078606",
+    "provenance_audit_run_id": "36054852893",
     "material_event_failed_gate_count": 0,
     "historical_material_event_evidence_count": 0,
     "historical_material_event_failed_gate_count": 0,
@@ -6439,19 +6465,19 @@
     "no_auto_trade": true,
     "interpretation": "execution_succeeded means compute finished; COMPLETE means all requested hard gates resolved; EVIDENCE_EXHAUSTED means bounded same-run recovery finished for materialized profiles while unresolved UNKNOWN gates remain; HANDOFF_INCOMPLETE means the run finished but one or more requested codes never entered the Deep profile workset.",
     "status_source": "TERMINAL_STATUS",
-    "last_terminal_run_id": "36047520208",
+    "last_terminal_run_id": "36054204832",
     "last_terminal_execution_status": "SUCCESS",
     "last_terminal_research_terminal_state": "EVIDENCE_EXHAUSTED"
   },
   "deep_review_profile_source": "AUTOMATIC_DEEP_CALCULATION",
-  "deep_review_profile_lambda_run_id": "36047520208",
+  "deep_review_profile_lambda_run_id": "36054204832",
   "deep_review_profile_current_for_runtime": true,
   "deep_review_profile_lineage_state": "CURRENT",
   "holding_valuation_continuity": {
     "available": true,
     "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
-    "latest_applied_snapshot_id": "977a0f2c7ae860acb046",
-    "latest_applied_source_run_id": "36046164815",
+    "latest_applied_snapshot_id": "7a0770f7c7838a437f39",
+    "latest_applied_source_run_id": "36052948780",
     "tracked_holding_count": 6,
     "current_portfolio_match_count": 4,
     "formal_action_recomputed": false,
@@ -6461,13 +6487,13 @@
   "candidate_lifecycle": {
     "available": true,
     "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
-    "latest_applied_snapshot_id": "977a0f2c7ae860acb046",
-    "latest_research_as_of": "2026-09-24T19:20:43Z",
+    "latest_applied_snapshot_id": "7a0770f7c7838a437f39",
+    "latest_research_as_of": "2026-09-24T20:20:24Z",
     "active_candidate_count": 118,
     "dormant_research_candidate_count": 8,
     "archived_or_invalidated_count": 0,
-    "lifecycle_event_count": 10258,
-    "retained_history_event_count": 8114,
+    "lifecycle_event_count": 10308,
+    "retained_history_event_count": 8126,
     "tier_counts": {
       "PENDING": 118
     },
@@ -6477,9 +6503,9 @@
         "name": "国电南瑞",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 193,
+        "seen_count": 194,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6488,9 +6514,9 @@
         "name": "润贝航科",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 195,
+        "seen_count": 196,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6499,9 +6525,9 @@
         "name": "中国平安",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 120,
+        "seen_count": 121,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6510,9 +6536,9 @@
         "name": "洛阳钼业",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 162,
+        "seen_count": 163,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6521,9 +6547,9 @@
         "name": "国电南瑞",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 193,
+        "seen_count": 194,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6532,9 +6558,9 @@
         "name": "中国平安",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 120,
+        "seen_count": 121,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6543,9 +6569,9 @@
         "name": "洛阳钼业",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 162,
+        "seen_count": 163,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6554,9 +6580,9 @@
         "name": "润贝航科",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 195,
+        "seen_count": 196,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       }
@@ -6567,9 +6593,9 @@
         "name": "国电南瑞",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 193,
+        "seen_count": 194,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6578,9 +6604,9 @@
         "name": "润贝航科",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 195,
+        "seen_count": 196,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6589,9 +6615,9 @@
         "name": "中国平安",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 120,
+        "seen_count": 121,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6600,9 +6626,9 @@
         "name": "洛阳钼业",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 162,
+        "seen_count": 163,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       }
@@ -6613,9 +6639,9 @@
         "name": "毅昌科技",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 205,
+        "seen_count": 206,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6624,9 +6650,9 @@
         "name": "东方证券",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 205,
+        "seen_count": 206,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6635,9 +6661,9 @@
         "name": "中海油服",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 205,
+        "seen_count": 206,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6646,9 +6672,9 @@
         "name": "珀莱雅",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 205,
+        "seen_count": 206,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6657,9 +6683,9 @@
         "name": "学大教育",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 203,
+        "seen_count": 204,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6668,9 +6694,9 @@
         "name": "中原证券",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 203,
+        "seen_count": 204,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6679,9 +6705,9 @@
         "name": "锦江酒店",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 202,
+        "seen_count": 203,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6690,9 +6716,9 @@
         "name": "顺控发展",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 200,
+        "seen_count": 201,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6701,9 +6727,9 @@
         "name": "润贝航科",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 195,
+        "seen_count": 196,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       },
@@ -6712,9 +6738,9 @@
         "name": "海联金汇",
         "lifecycle_state": "ACTIVE",
         "research_tier": "PENDING",
-        "seen_count": 194,
+        "seen_count": 195,
         "last_event": "RESEEN",
-        "last_event_at": "2026-09-24T19:20:43Z",
+        "last_event_at": "2026-09-24T20:20:24Z",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       }
@@ -6745,17 +6771,17 @@
       {
         "capability": "Candidate Lifecycle 持续研究记忆",
         "status": "ACTIVE",
-        "result": "active=118 / dormant=8 / archived-invalidated=0 / events=10258 / focus=8"
+        "result": "active=118 / dormant=8 / archived-invalidated=0 / events=10308 / focus=8"
       },
       {
         "capability": "Deep 五类硬门槛 + 官方证据",
         "status": "ACTIVE",
-        "result": "requested=18 / verified-pass=227 / unresolved=68"
+        "result": "requested=18 / verified-pass=227 / unresolved=70"
       },
       {
         "capability": "Deep Provenance 证据审计",
         "status": "ACTIVE",
-        "result": "audit=True / run=36048078606 / unverified-pass=0"
+        "result": "audit=True / run=36054852893 / unverified-pass=0"
       },
       {
         "capability": "世界 / 社会 / 资本趋势雷达",
