@@ -1,10 +1,10 @@
 {
   "schema_version": 2,
-  "generation": 62,
+  "generation": 63,
   "repository": "wanggenAi/daily_stock_analysis",
   "status": "WAITING_PRODUCTION",
   "task_key": "stock-system-convergence",
-  "stage": "PR304_DOCS_ONLY_MERGED_EXACT_HEAD_CI_GREEN_WAIT_GENUINE_20260924_FULL_A",
+  "stage": "PR304_MERGED_GENUINE_20260924_SCHEDULED_FULL_A_NOT_YET_TRIGGERED_OR_LISTED",
   "last_observed_main_sha": "5f9e9f2b8d8185163de524675d07139fac998637",
   "work_branch": null,
   "work_head_sha": null,
@@ -89,7 +89,10 @@
       "no_auto_trade": true,
       "unknown_is_pass": false
     },
-    "current_market_gate": "Date-filtered 2026-09-24 scheduled workflows contain no GenGe Opportunity Discovery genuine run/artifact at latest query; NOT_PROVEN."
+    "current_market_gate": "NOT_PROVEN: 2026-09-24 schedule runs query returns 23 records; only PIT sector backtest observed after 10:30Z. No GenGe Opportunity Discovery schedule run or full production artifact found. Production machine trade date remains 2026-09-23 (Every-Industry source 35959373557). Do not infer schedule failure yet, or promote fixture/old upstream.",
+    "next_verify_at_local": "2026-09-24T20:00:00+08:00",
+    "next_verify_at_utc": "2026-09-24T12:00:00Z",
+    "genuine_full_a_evidence_status": "NOT_PROVEN"
   },
   "pending_operation": null,
   "health": {
@@ -109,7 +112,7 @@
     "Attempt1 CI 35956675210 CANCELLED after ~6 hours at 6% offline pytest; uploaded diagnostic artifact 10803217385. Last test started was AlphaSift constituent fallback with unmocked external board-source classification (suspected transient hang, not proven code failure). Exact head unchanged; re-ran only cancelled backend-gate via job 107496428275, run attempt2 confirmed in_progress job 107600526161. No evidence/market epoch promoted.",
     "PR304 docs-only exact head 66afa487a6075eff5369b36d98ba555b9de1d964 CI 35956675210 attempt2 SUCCESS, backend offline SUCCESS artifact 10804262427; [skip ci] squash merged to 5f9e9f2b8d8185163de524675d07139fac998637, main and TASK_STATE verified."
   ],
-  "next_action": "No active PR/CI. Requery 2026-09-24 scheduled GenGe Opportunity Discovery run after 18:30 CST; verify successful all-a-production-report job, full artifact, 2026-09-24 trade date and distinct source fingerprint before updating any research gate. Do not dispatch duplicate Deep, re-run CI or promote fixture.",
+  "next_action": "At 2026-09-24 20:00 China time (12:00Z), read GitHub schedule runs for Sep24; if genuine GenGe Opportunity Discovery exists, verify schedule event, all-a-production-report job success, run source/head/trade date and full artifact before comparing evidence fingerprint against Sep23 baseline. If still absent, retain WAITING_PRODUCTION/NOT_PROVEN and inspect next Sep25 weekday schedule after 18:30 CST. Never manually dispatch, replay Deep or infer BUY.",
   "do_not_repeat": [
     "#299/#300/#301 already completed.",
     "Do not re-dispatch 35950900132 or re-run Deep 35934671719 without new evidence epoch.",
