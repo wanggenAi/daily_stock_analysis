@@ -5,7 +5,7 @@
 - requested: **2**
 - complete: **0**
 - evidence exhausted: **2**
-- evidence collection attempts: **1**
+- evidence collection attempts: **2**
 - new evidence rows: **3**
 - progressed gates: **1**
 - predictability resolved gates: **1**
