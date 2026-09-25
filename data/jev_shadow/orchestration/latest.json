@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36197841589",
+  "orchestrator_run_id": "36201331371",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -124,6 +124,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "603038",
       "entity_name": "华立股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -184,20 +191,13 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-25T22:40:08+00:00",
-  "source_workflow_head_sha": "6fabbe20aa3547bb183c386d4f41bcb0b93269ee",
+  "source_generated_at": "2026-09-25T23:30:45+00:00",
+  "source_workflow_head_sha": "e37ea625626445f6edd1e06609921285cc781681",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36197675172",
+  "source_workflow_run_id": "36201194126",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36197675172",
+  "trigger_source": "JEV_ORCHESTRATOR_36201194126",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-25T22:42:19+00:00",
+  "updated_at": "2026-09-25T23:32:51+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.78,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.96,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
