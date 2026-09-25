@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-25T01:57:39+00:00",
+  "generated_at": "2026-09-25T05:24:29+00:00",
   "latest_trade_date": "2026-09-24",
   "canonical_snapshot_id": "c00e16d1b3e5352ba9ab",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -691,7 +691,7 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-09-25T01:54:33+00:00",
+      "generated_at": "2026-09-25T05:24:24+00:00",
       "source_deep_lambda_run_id": "36083122406",
       "source_every_industry_run_id": "36082296833",
       "requested_count": 19,
@@ -5466,11 +5466,11 @@
         "jev_judgment": "ENTRY_NOW",
         "judgment_confidence": 0.78,
         "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.01,
+          "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.82,
           "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.01,
-          "WAIT_EVIDENCE": 0.13,
+          "WAIT_EVIDENCE": 0.14,
           "WAIT_PRICE": 0.03
         },
         "max_manual_position_pct": 3.0,
@@ -5488,7 +5488,7 @@
         "terminal_research_bucket": "BUY",
         "jev_route": "VALUATION_CLOSURE",
         "jev_route_confidence": 0.95,
-        "source_jev_run_id": "36083626503"
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "001316",
@@ -5529,8 +5529,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.4,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.39,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "600640",
@@ -5571,8 +5571,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.31,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.36,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "600961",
@@ -5613,8 +5613,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.43,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.42,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "601069",
@@ -5655,8 +5655,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.38,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.37,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "601318",
@@ -5696,9 +5696,9 @@
         "validated_judgment": "WAIT_EVIDENCE",
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
-        "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.3,
-        "source_jev_run_id": "36083626503"
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.24,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "601628",
@@ -5740,7 +5740,7 @@
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
         "jev_route_confidence": 0.36,
-        "source_jev_run_id": "36083626503"
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "603986",
@@ -5781,8 +5781,50 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.41,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.4,
+        "source_jev_run_id": "36098098579"
+      },
+      {
+        "code": "002811",
+        "name": "郑中设计",
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "deterministically_supported": true,
+        "do_not_chase_condition": "PRICE_ABOVE_39.9474_REQUIRES_REVALUATION",
+        "entry_price_zone_high": 39.9474,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "judgment_confidence": 0.98,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.01,
+          "ENTRY_NOW": 0.0,
+          "INVALIDATED": 0.01,
+          "NO_JUDGMENT": 0.0,
+          "WAIT_EVIDENCE": 0.98,
+          "WAIT_PRICE": 0.0
+        },
+        "max_manual_position_pct": 0.0,
+        "no_auto_trade": true,
+        "reference_price": 16.36,
+        "reference_trade_date": "2026-09-24",
+        "source_lineage": {
+          "dashboard_snapshot_id": "c00e16d1b3e5352ba9ab",
+          "dashboard_source_run_id": "36072690227",
+          "deep_code_epoch_sha": "a791674dc89264802f036f70ecc6ca2ec2c7ddf8",
+          "deep_lambda_run_id": "36083122406"
+        },
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.32,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "600816",
@@ -5804,9 +5846,9 @@
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.01,
+          "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.01,
-          "WAIT_EVIDENCE": 0.98,
+          "WAIT_EVIDENCE": 0.99,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -5823,8 +5865,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.44,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.46,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "603038",
@@ -5865,50 +5907,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.47,
-        "source_jev_run_id": "36083626503"
-      },
-      {
-        "code": "002811",
-        "name": "郑中设计",
-        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
-        "authority": "ADVISORY_ONLY",
-        "automatic_execution_allowed": false,
-        "deterministically_supported": true,
-        "do_not_chase_condition": "PRICE_ABOVE_39.9474_REQUIRES_REVALUATION",
-        "entry_price_zone_high": 39.9474,
-        "entry_price_zone_low": null,
-        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
-        "formal_buy_authorized": false,
-        "initial_manual_position_pct": 0.0,
-        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
-        "jev_judgment": "WAIT_EVIDENCE",
-        "judgment_confidence": 0.97,
-        "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.01,
-          "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.01,
-          "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.98,
-          "WAIT_PRICE": 0.0
-        },
-        "max_manual_position_pct": 0.0,
-        "no_auto_trade": true,
-        "reference_price": 16.36,
-        "reference_trade_date": "2026-09-24",
-        "source_lineage": {
-          "dashboard_snapshot_id": "c00e16d1b3e5352ba9ab",
-          "dashboard_source_run_id": "36072690227",
-          "deep_code_epoch_sha": "a791674dc89264802f036f70ecc6ca2ec2c7ddf8",
-          "deep_lambda_run_id": "36083122406"
-        },
-        "validated_judgment": "WAIT_EVIDENCE",
-        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "terminal_research_bucket": "RESEARCH_GAP",
-        "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.35,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.41,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "001309",
@@ -5949,8 +5949,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.49,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.46,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "600406",
@@ -5972,9 +5972,9 @@
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.02,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.0,
-          "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.98,
+          "INVALIDATED": 0.01,
+          "NO_JUDGMENT": 0.01,
+          "WAIT_EVIDENCE": 0.96,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -5991,8 +5991,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.25,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.21,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "603993",
@@ -6033,8 +6033,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.46,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.41,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "000504",
@@ -6075,8 +6075,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.48,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.49,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "600309",
@@ -6117,8 +6117,8 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.48,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.49,
+        "source_jev_run_id": "36098098579"
       },
       {
         "code": "603105",
@@ -6138,11 +6138,11 @@
         "jev_judgment": "WAIT_EVIDENCE",
         "judgment_confidence": 0.94,
         "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.02,
+          "DO_NOT_CHASE": 0.01,
           "ENTRY_NOW": 0.02,
           "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.95,
+          "WAIT_EVIDENCE": 0.96,
           "WAIT_PRICE": 0.01
         },
         "max_manual_position_pct": 0.72,
@@ -6159,13 +6159,13 @@
         "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
         "terminal_research_bucket": "RESEARCH_GAP",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.53,
-        "source_jev_run_id": "36083626503"
+        "jev_route_confidence": 0.46,
+        "source_jev_run_id": "36098098579"
       }
     ],
     "jev_entry_judgment_count": 17,
     "jev_entry_now_count": 1,
-    "jev_entry_judgment_source_run_id": "36083626503",
+    "jev_entry_judgment_source_run_id": "36098098579",
     "jev_entry_judgment_stale_row_count": 0,
     "jev_entry_judgment_invalid_row_count": 8,
     "jev_entry_judgment_status": "CURRENT",
