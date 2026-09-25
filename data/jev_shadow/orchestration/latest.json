@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36101785360",
+  "orchestrator_run_id": "36109331983",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,13 +24,6 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -49,6 +42,13 @@
       "attention_priority": "HIGH",
       "entity_id": "600406",
       "entity_name": "国电南瑞",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -190,14 +190,14 @@
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-25T06:11:19+00:00",
-  "source_workflow_head_sha": "c2eb27f45732960b202016770745440b0433db84",
+  "source_generated_at": "2026-09-25T07:45:37+00:00",
+  "source_workflow_head_sha": "35f0154780b29f05afbd3bd8ac4ffa216eb55815",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36101644731",
+  "source_workflow_run_id": "36109139320",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36101644731",
+  "trigger_source": "JEV_ORCHESTRATOR_36109139320",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-25T06:13:35+00:00",
+  "updated_at": "2026-09-25T07:47:52+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.71,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.96,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
