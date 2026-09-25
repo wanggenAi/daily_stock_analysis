@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36143371928",
+  "orchestrator_run_id": "36143774253",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -124,6 +124,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "603038",
       "entity_name": "华立股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -183,21 +190,14 @@
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-25T13:48:27+00:00",
-  "source_workflow_head_sha": "96adcbc05b0902e874403f4ba33d16836ce84de0",
+  "source_generated_at": "2026-09-25T13:52:15+00:00",
+  "source_workflow_head_sha": "fed599ceffad9ca08e6a8773bcf40b8c9bb8f87b",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36142987657",
+  "source_workflow_run_id": "36143499000",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,9 +210,9 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36142987657",
+  "trigger_source": "JEV_ORCHESTRATOR_36143499000",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-25T13:50:26+00:00",
+  "updated_at": "2026-09-25T13:54:19+00:00",
   "valuation_closure": [
     {
       "attention_confidence": 0.73,
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36110564171",
+        "deep_lambda_run_id": "36142776093",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.94,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
