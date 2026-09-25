@@ -3,6 +3,11 @@
 ## Goal
 Deliver trustworthy, up-to-date, official-evidence-backed A-share research candidates and research-only entry/exit guidance. Preserve deterministic quality gates and **zero Formal or automatic trading authorization**.
 
+### Owner-prioritized parallel deliverable: Investor Decision Report V4 (approved 2026-09-25)
+- **Durable source / mandatory continuation read:** `docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md` (live main). User explicitly requests complete implementation by continuing stock monitors: compact, genuinely decision-useful living report for confirmed holdings/funds, official/material events & meeting outcomes, verified formal actionable candidate rankings with valuation/buy/sell conditions, trend -> moat company drill-down, independent cycle-bottom thesis, cash plan, and measured outcomes.
+- **Status:** `SPEC_CAPTURED; IMPLEMENTATION_PENDING`. Existing offline interactive HTML mockup is illustrative only, **not production**. Do not claim implemented or verified from the document/prototype. Canonical/Formal permissions and research-gate integrity unchanged.
+- **Concurrency:** Continue the existing All-A/evidence production-verification workstream alongside V4; before work check live main, AGENTS, this TASK_STATE, open PRs/checks and latest `state/chatgpt-recovery` volatile generation. Use a distinct V4 branch/PR and dedicated recovery sidecar; never overwrite another monitor's generation/PR/evidence. Resume V4 P0 then P1→P5 per spec, checkpoint each real milestone, verify exact-head CI and genuine production before completion.
+
 ## Current Phase
 `PR303_POSTMERGE_VERIFIED_WAIT_GENUINE_20260924_ALL_A_EVIDENCE_EPOCH`
 
@@ -46,6 +51,7 @@ Deliver trustworthy, up-to-date, official-evidence-backed A-share research candi
 - Protected-workflow write was blocked by tool safety checks; this remains an explicitly documented later maintenance action, not an applied code fix.
 
 ## Next Action
+0. **New owner-approved V4 parallel priority:** implement `docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md` P0→P5 from the first uncompleted phase (report schema/provenance mapping → holding/event integration → qualified opportunities/evidence metabolism → trend/cycle drill-down → UI and production verification), preserving all current canonical/trading gates and concurrent research cursor. Do not ask user to restate this scope; production proof required.
 1. **Actual future data gate**: `.github/workflows/genge-opportunity-discovery.yml` runs genuine weekday All-A production at `10:30 UTC = 18:30 Asia/Shanghai`. After the completed **2026-09-24** market close, locate the next *scheduled* real production job, check its source/head/trade epoch and artifact. As of this checkpoint, this market/evidence epoch was **not yet available**. Do not confuse push fixture, code-change Deep or an old cached result for it.
 2. In that genuine new artifact, compare `EvidenceCache` actual network fetches and issuer report dates versus previous 98/98 cache hits and zero actual fetches. Evaluate official primary PDF content, time validity, scope, counter-evidence and materiality for `001316`, `603993` and diversified 751-row discovery; surface evidence gaps honestly. `NO_VALIDATED_EXIT_EDGE` persists until genuinely validated independent strategy cohorts emerge.
 3. Before any new automated Deep/TypeSafe dispatch, reconcile **new** compatible upstream research/evidence fingerprint with strategy ledger; old upstream `35886039426` and Deep `35934671719` / `35955222216` are consumed. Fix erroneous **cache-only** workflow-trigger replay only through a properly authorized, tested and exact-head green workflow PR; proposed path exclusion + tests are recorded in PR #303 comment.
