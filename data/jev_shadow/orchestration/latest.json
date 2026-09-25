@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36184285200",
+  "orchestrator_run_id": "36186080127",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -89,13 +89,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "601069",
-      "entity_name": "西部黄金",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "603105",
       "entity_name": "芯能科技",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -124,8 +117,8 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
+      "entity_id": "601069",
+      "entity_name": "西部黄金",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -191,13 +184,20 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-25T20:11:16+00:00",
-  "source_workflow_head_sha": "d88a999262202eb71ee0e3c2310500f9b18d234f",
+  "source_generated_at": "2026-09-25T20:29:02+00:00",
+  "source_workflow_head_sha": "c4674573e2c9126e6eccd1fbebe16ae3db75d4f5",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36183925019",
+  "source_workflow_run_id": "36185721149",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36183925019",
+  "trigger_source": "JEV_ORCHESTRATOR_36185721149",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-25T20:13:41+00:00",
+  "updated_at": "2026-09-25T20:31:11+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.76,
+      "attention_confidence": 0.7,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36175540584",
+        "deep_lambda_run_id": "36185058183",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
