@@ -25,7 +25,7 @@ def issuer_collection_coverage(
     base: dict[str, Any] = {
         "contract": "GEN_GE_ISSUER_COVERAGE_AUDIT_V1",
         "requested_queue_count": len(selected),
-        "fundamental_fetch_budget": fundamental_budget,
+        "configured_fundamental_limit": fundamental_budget,
         "auto_evidence_budget": auto_evidence_budget,
         "independent_net_new_issuer_evidence_verified": False,
         "strict_eligibility_changed": False,
