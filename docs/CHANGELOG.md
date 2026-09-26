@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [新功能] 新增只读 V4 P0 投资展示映射及字段来源/时间/降级契约；Canonical、持仓、资金、市场与趋势独立标明来源，默认不产生可执行买单，跨代、过期或缺失数据严格阻断。
 - [修复] Research Learning 使用 GITHUB_TOKEN 持久化优先级时，显式按实际 push 成功状态派发 Jev shadow；无变化或 push 失败不触发，保留外部 push 路径，Jev 仅 advisory、Formal/自动交易权限不变。
 - [修复] DORMANT 研究候选不再因 price-only、通用 hourly priority raise、mapping gap 或旧 recovery/archetype 排序信号重新获得研究优先级；仅当前持仓保护、明确新材料证据/重估信号或当前 Deep 5/5 PASS 可解除休眠排序抑制，Broad Discovery、Jev advisory-only、Formal Authority、UNKNOWN != PASS 与 no-auto-trade 均保持不变。
 - [新功能] Jev 新增结构化买入判断 `ENTRY_NOW/WAIT_PRICE/WAIT_EVIDENCE/DO_NOT_CHASE/INVALIDATED/NO_JUDGMENT`：Jev 负责分类判断，deterministic 层用当前 Deep lineage、5/5 硬门槛、Terminal 决策、research buy-price ceiling 与风险预算校验价格/仓位；三支柱报告直接展示买入触发、首仓、最大研究仓位、不追与失效条件，Formal BUY、自动执行、UNKNOWN != PASS 与 no-auto-trade 均保持不变。
