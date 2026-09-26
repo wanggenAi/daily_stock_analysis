@@ -4,8 +4,8 @@
 Maintain two **independent** owner-approved tasks: living V4 investor report and trustworthy official-source research. Each uses its own generation/blob CAS cursor on `state/chatgpt-recovery`; this document is a cross-lane index, not a combined cursor. GitHub live refs, artifacts and code override this checkpoint.
 
 ## Current Phase
-- **V4:** generation **5** (`recovery/tasks/investor-decision-report-v4.json`; last verified blob `2ff1c760d2c272ec1364c3d85c4b9e40dcd270a3`). P0 merged; partial P1 fresh-main replacement PR #309 awaiting exact-head checks; V4 **not yet production verified**.
-- **R:** generation **70** (`recovery/tasks/stock-system-convergence.json`; last verified blob `6c5fe054ff150396f9a279bd35396964908f5d73`). Company-level official evidence coverage instrumentation PR #307 awaits exact-head checks. Canonical market freshness still stale.
+- **V4:** generation **6** (`recovery/tasks/investor-decision-report-v4.json`; last verified blob `f14f78d1d96a3b224d6e5c1daf807ca53ee730ed`). P0 merged; partial P1 fresh-main replacement PR #309 awaiting exact-head checks; V4 **not yet production verified**.
+- **R:** generation **71** (`recovery/tasks/stock-system-convergence.json`; last verified blob `3851726de1326d45bbf7861bf2593d5c2d48b1e9`). Company-level official evidence coverage instrumentation PR #307 awaits exact-head checks. Canonical market freshness still stale.
 
 ## Last Verified Main
 - Snapshot at replacement preparation: `4760a3609de3e8b7b02b213c5c91befb7cf2507d`; runtime persisted commits advanced main during this work. **Always reread live main** before writing.
@@ -17,8 +17,8 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 
 ## Active PR
 - #305 V4 P0: **merged**, squash commit `53641d376cafd08f0197a619250dae729d8699e1`, exact-head CI green.
-- #306 V4 P1 **partial**: replacement #309 from main 4760a360 (old #306 preserved open for audit), fresh exact-head checks must pass; do not treat old PR success as replacement success.
-- #307 research issuer coverage audit: replacement #310 from main 4760a360 (old #307 preserved open), fresh exact-head checks must pass.
+- #306 V4 P1 **partial**: replacement #309 from main 4760a360 (old #306 preserved), with negative tests requiring independently verified official originals and approval documents; latest head as recorded above needs fresh exact-head CI.
+- #307 research issuer coverage audit: replacement #310 from main 4760a360 (old #307 preserved), now distinguishes 15 annual vs 30 material-event cached scans in real Sep24 sample; latest head needs fresh exact-head CI.
 - Docs-only replacement of old #308 from latest main; no cursor changes.
 
 ## CI
@@ -36,7 +36,7 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 ## Completed
 - Consumed PR #299–304 and their previously dispatched same-epoch research; P0 #305 code merged.
 - R generation68 independently compared real Sep23 vs Sep24 All-A artifacts and consumed older Jev/Overlay; R generation69 isolated coverage code at PR307.
-- V4 generation4 isolated partial P1 broker/event source mapping at PR306; the two sidecars remain separate.
+- V4 generation6 hardened P1 issuer-original source/proposal outcome guardrails on replacement PR309; the two sidecars remain separate.
 
 ## Current Findings
 - Production configuration: All-A research queue 80 vs separate `--fundamental-limit 30`, `--deep-review-size 30`, bounded `auto_evidence_limit <= 50`. An 80-name queue does NOT prove 80 real company fetches. Issuer collector has deterministic per-report-period cache with 6h FAILED and 24h MISSING retry TTL. PR307 exposes real issuer attempted, cache-only and unattempted counts; do not call a provider bug proven without artifact data.
