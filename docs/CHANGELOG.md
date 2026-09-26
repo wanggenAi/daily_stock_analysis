@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 - [改进] All-A 生产报告新增公司级证据真实抓取覆盖审计，区分实际非缓存尝试、仅缓存和未覆盖代码；未找到审计时明确 UNKNOWN，不把原始 URL 或旧公开材料冒充当期新证据。
+- [改进] V4 P1 新增只读券商报价及持仓证据时间核对、已消费授权、基金缺失与股东提案/正式决议区分；所有历史数据仅展示，未完成实时交易条件前可执行数量保持为零。
 - [新功能] 新增只读 V4 P0 投资展示映射及字段来源/时间/降级契约；Canonical、持仓、资金、市场与趋势独立标明来源，默认不产生可执行买单，跨代、过期或缺失数据严格阻断。
 - [修复] Research Learning 使用 GITHUB_TOKEN 持久化优先级时，显式按实际 push 成功状态派发 Jev shadow；无变化或 push 失败不触发，保留外部 push 路径，Jev 仅 advisory、Formal/自动交易权限不变。
 - [修复] DORMANT 研究候选不再因 price-only、通用 hourly priority raise、mapping gap 或旧 recovery/archetype 排序信号重新获得研究优先级；仅当前持仓保护、明确新材料证据/重估信号或当前 Deep 5/5 PASS 可解除休眠排序抑制，Broad Discovery、Jev advisory-only、Formal Authority、UNKNOWN != PASS 与 no-auto-trade 均保持不变。
