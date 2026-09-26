@@ -1,17 +1,17 @@
 {
   "schema_version": 2,
-  "generation": 68,
+  "generation": 69,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "SCHEDULED_ALL_A_ARTIFACT_AUDITED_CANONICAL_STALE_RESEARCH_ONLY",
-  "stage": "20260926_AUDIT_REAL_SEP24_MARKET_ARTIFACT_AND_CONSUME_PREVIOUS_JEV_OVERLAY",
-  "previous_checkpoint_generation": 67,
+  "status": "ISSUER_COLLECTION_BUDGET_DISCREPANCY_PROVEN_AUDIT_PR307_PENDING_CANONICAL_STALE",
+  "stage": "20260926_STATIC_COLLECTOR_TRACE_AND_ISOLATED_COVERAGE_DIAGNOSTICS",
+  "previous_checkpoint_generation": 68,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "9e2e656f4ef74e4a45a59744a962289a16ebe834",
-  "work_branch": null,
-  "work_head_sha": null,
-  "active_pr": null,
+  "last_observed_main_sha": "48692e6712c51a3655bc9331ece6ad6616521243",
+  "work_branch": "fix/research-issuer-coverage-audit-20260926",
+  "work_head_sha": "b92e00e9fa1d6c9220d22a07c63eb29268aa9081",
+  "active_pr": 307,
   "parallel_v4_task": "recovery/tasks/investor-decision-report-v4.json",
   "evidence": {
     "historical_20260923_all_a": {
@@ -148,6 +148,88 @@
       "finalizer_run_id": 36228226920,
       "finalizer_conclusion": "failure",
       "caution": "new later lineage observed; do not redispatch consumed run, new_evidence_count is not proof of independently new issuer material"
+    },
+    "issuer_collector_static_trace": {
+      "verified_on": "2026-09-26",
+      "workflow_path": ".github/workflows/genge-all-a-v31-once.yml",
+      "workflow_config": {
+        "evidence_queue_size": 80,
+        "deep_review_size": 30,
+        "fundamental_limit": 30
+      },
+      "code_paths": [
+        "src/strategies/genge_opportunity_discovery/all_a_full_scan.py",
+        "src/strategies/genge_opportunity_discovery/evidence_collectors/company_announcements.py",
+        "src/strategies/genge_opportunity_discovery/evidence_collectors/cache.py"
+      ],
+      "runtime_auto_evidence_cap": "min(50,max(deep_review_size, active_review_count + 10, priority_exit_count + active_review_count))",
+      "findings": [
+        "80 research queue is not 80 issuer network attempts; budgeted fundamentals and auto evidence are distinct, and not all selected codes enter issuer collector",
+        "issuer collector targets bounded rows[:limit] then uses deterministic annual report-period cache and a separate 6h FAILED/24h MISSING TTL; success retention longer",
+        "Sep24 All-A artifact audit did not prove new primary official issuer fetch or new 2026-09-25 market session"
+      ],
+      "proven_root_cause_scope": "OBSERVABILITY_GAP_IN_PUBLISHED_COVERAGE; NOT_YET_PROVEN_PROVIDER_OR_OFFICIAL_ENDPOINT_BUG",
+      "audit_pr": {
+        "number": 307,
+        "head": "b92e00e9fa1d6c9220d22a07c63eb29268aa9081",
+        "status": "OPEN_CI_PENDING",
+        "scope": "issuer attempted/cached/not-attempted additive metrics in genuine All-A run_summary only",
+        "no_collection_threshold_change": true
+      }
+    },
+    "more_recent_live_runs_checked": {
+      "observed_main": "48692e6712c51a3655bc9331ece6ad6616521243",
+      "runs": [
+        {
+          "run_id": 36235066513,
+          "name": "GenGe Deep Terminal Reconciler",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "reconcile",
+              "conclusion": "success"
+            }
+          ],
+          "artifacts": []
+        },
+        {
+          "run_id": 36234273800,
+          "name": "GenGe Jev Orchestration Reconciler",
+          "conclusion": "success",
+          "jobs": [
+            {
+              "name": "contracts",
+              "conclusion": "success"
+            },
+            {
+              "name": "reconcile",
+              "conclusion": "success"
+            }
+          ],
+          "artifacts": []
+        },
+        {
+          "run_id": 36234097598,
+          "name": "GenGe Investor Terminal Research Overlay",
+          "conclusion": "success",
+          "artifact_id": 10903039256
+        },
+        {
+          "run_id": 36233952841,
+          "name": "GenGe Candidate Terminal Review",
+          "conclusion": "success",
+          "terminalize_job": "skipped",
+          "artifacts": []
+        },
+        {
+          "run_id": 36233952735,
+          "name": "GenGe V3.1.1 Production Finalizer",
+          "conclusion": "skipped",
+          "artifacts": []
+        }
+      ],
+      "net_new_market_session_2026_09_25": "NOT_PROVEN",
+      "actual_project_jev_calls_this_chat": 0
     }
   },
   "last_consumed": {
@@ -168,12 +250,11 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "Re-read live refs and both separate cursors before acting; V4 P0 independent branch PR #305 exists; do not edit V4 cursor here.",
-    "Sep23 vs Sep24 market All-A artifact audit completed: 41 real noncached INDUSTRY-only attempts, zero OK original URL among them; issuer paths did not show genuine fresh noncached official fetch. Nine differing stable archive identities (eight company older 2026-Mar/Apr disclosures) are NOT proof of newly published official issuer material. Investigate issuer collector selection/negative cache and dated genuinely new material without replaying consumed same epoch.",
-    "Locate genuine finished 2026-09-25 market-session source/canonical lineage; latest observed Sep26 decision_center remains market as-of Sep24. Do not override finalizer stale guard.",
-    "Consume newer existing Deep/Terminal/Jev/Overlay lineages by run/artifact IDs from live first; later Deep 36228219860 SUCCESS artifact 10902085528 already observed, 18 processed 0 complete; Finalizer 36228226920 FAILED. No blind redispatch.",
-    "Check scheduled All-A market as-of from genuine artifacts, 30/80 official company evidence coverage, 40 independent exit exploration and original 001316/603993 event provenance; isolate proven collector false negatives before modifying.",
-    "Next research code fixes must use separate audited branch/exact-head CI and no changes to decision authority or research thresholds."
+    "Verify PR307 exact-head CI/clean mergeability/review and latest main; merge audit-only patch only after required green; verify postmerge and genuine next All-A run artifact, distinguish missing audit from zero.",
+    "Use actual collected CSV report metrics to verify 30/80 budget and issuer attempted/cache/not-attempted partition. Do not raise budgets or declare official endpoint bug without proven independent network-fetch/counterfactual evidence.",
+    "Find real completed 2026-09-25 market-session Canonical lineage in genuine production artifacts; if absent, retain stale Finalizer gate; do not promote as-of Sep24 to Sep25.",
+    "Continue stable original-source publication/report-period fingerprint comparison for 001316/603993 and independent exit cohort using only new evidence epochs; do not duplicate consumed Deep/Terminal.",
+    "Coordinate research separately from V4 P1 PR306 and cursor generation4; never edit V4 sidecar."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
