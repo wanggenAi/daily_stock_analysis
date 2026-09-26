@@ -1,23 +1,61 @@
-# Current mission — dual-lane checkpoint (2026-09-26)
+# Current Mission
 
-GitHub **live main/PR/workflows/artifacts** override this document. Two **independent per-task CAS cursors** reside on `state/chatgpt-recovery` and must never be overwritten together. Read `AGENTS.md` and `docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md` first. Snapshot base main at preparation: `91295ee0665a8603f3ccf0b3410fd352e43b9ffb`; runtime writes may have advanced main.
+## Goal
+Maintain two **independent** owner-approved tasks: living V4 investor report and trustworthy official-source research. Each uses its own generation/blob CAS cursor on `state/chatgpt-recovery`; this document is a cross-lane index, not a combined cursor. GitHub live refs, artifacts and code override this checkpoint.
 
-## V4 investor decision report — independent task
-- Cursor: `recovery/tasks/investor-decision-report-v4.json` generation **4** (blob at last checkpoint `7821a703d4b8202372196835ed14cb8c131ea353`). Re-fetch and compare SHA/generation before any write.
-- P0 read-only schema PR **#305** exact head `15dfa2541766cd5c44a9a6714e03f7274bfd8bcc` required exact-head CI SUCCESS, squash merged to main as `53641d376cafd08f0197a619250dae729d8699e1`. Subsequent main commits are mostly runtime data; P0 has **not** been wired to production Web/API, and there is **no V4 production acceptance**.
-- P1 **partial** dated source integration PR **#306** on `feat/investor-decision-v4-p1-source-integration-20260926`, last checked exact head `4852a7b6978832627a19c4f7c6a6530e7775a4b0`: historical broker quote/position timestamps, consumed authorizations, missing confirmed funds and proposal/resolution display. At this checkpoint backend exact-head CI still running, Docker + AI governance green, Web skipped; do not claim merged until exact-head checks and live PR confirm.
-- **V4 next action:** inspect live PR #306 head, required checks, reviews and current main; if genuinely green/mergeable, exact-head merge and verify postmerge. Then continue P1 **without** inventing execution privileges: independently validated live holdings/funds/quotes, official original events, consumption, lot/T+1/cash and integration tests. P2–P5 remain pending. All current P1 projection executable quantities remain 0.
+## Current Phase
+- **V4:** generation **4** (`recovery/tasks/investor-decision-report-v4.json`; last verified blob `7821a703d4b8202372196835ed14cb8c131ea353`). P0 merged; partial P1 PR #306 awaiting exact-head checks; V4 **not yet production verified**.
+- **R:** generation **69** (`recovery/tasks/stock-system-convergence.json`; last verified blob `fd7b6d5d5fb760c525176122ceed760a663b4137`). Company-level official evidence coverage instrumentation PR #307 awaits exact-head checks. Canonical market freshness still stale.
 
-## R / stock-system-convergence — independent task
-- Cursor: `recovery/tasks/stock-system-convergence.json` generation **69** (last checkpoint blob `fd7b6d5d5fb760c525176122ceed760a663b4137`). Re-fetch and compare before any research-only write; **never edit the V4 cursor here**.
-- Genuine Sep25-triggered All-A `36154161688` artifact `10874605479` actually has **Sep24 market as-of** (5,222 official universe, 4,514 effective scan, 80 reviewed, 0 strict-ready, 77 company-evidence failed, 78 exit-confidence failed). Compared vs Sep23 artifact `10784936699`: Sep24 sample 86 audit entries, 45 cached, 41 noncached **industry-only** attempts and zero confirmed fresh original issuer network success. Different archival fingerprints included older Mar/Apr documents, not proof of newly published official company evidence.
-- Subsequent consumed existing lineage: Deep `36228219860` SUCCESS artifact `10902085528`, 18 processed/0 complete; Finalizer `36228226920` FAILURE. Older Jev `36221808179` SUCCESS artifact `10899446912`, 25 real project advisory calls, and Overlay `36221815168` SUCCESS artifact `10899526494` consumed once. Never repeat consumed same-source Deep/Terminal/Jev jobs.
-- Code trace: scheduled All-A requests **80** evidence-queue entries but has independent `--fundamental-limit 30` and bounded `auto_evidence_limit <= 50`. 80 selected is **not** 80 company collection attempts. The company collector uses per-period deterministic cache, 6h FAILED and 24h MISSING negative TTL. Do not claim an official endpoint defect or fix false negatives until actual attempted/failed/not-attempted partitions and original documents prove it.
-- Audit-only, separate research PR **#307** on `fix/research-issuer-coverage-audit-20260926`, last checked head `b92e00e9fa1d6c9220d22a07c63eb29268aa9081`: add issuer actual/cached/unattempted diagnostic to genuine All-A run summary. At checkpoint exact-head CI in progress. No changed signal gates, cache TTL, source routing or trade permissions.
-- **R next action:** verify PR #307 exact-head required CI, live main/conflicts/review; merge only if actually green. Inspect next genuine production All-A artifact for issuer audit counts and independent publication-period fingerprints. Find true finalized Sep25 **market** source before lifting stale Finalizer block, preserve independent exit validation and no fabricated primary evidence. No new All-A/Deep dispatch just to refresh a summary.
+## Last Verified Main
+- Snapshot at shared checkpoint preparation: `91295ee0665a8603f3ccf0b3410fd352e43b9ffb`; runtime persisted commits advanced main during this work. **Always reread live main** before writing.
 
-## Joint invariants and coordination
-- Both tasks are independently recoverable, with distinct branches/PRs/CAS. This file is only a short cross-lane index, never a shared generation counter.
-- Current persisted `data/decision_center/latest.json` was last independently checked at generated `2026-09-26T09:56:24Z` but still references Canonical market **Sep24**, 4 holdings, no new Formal BUY. Later runtime report generation is not fresher market provenance. Latest broker quote snapshot is Sep22, historical display-only; current confirmed fund data unavailable. Planning cash is not verified live broker cash.
-- `formal_trading_authority=false`, `formal_buy_authorized=false`, `automatic_execution_allowed=false`, `no_auto_trade=true`, `UNKNOWN != PASS`; only existing finalized **fresh** Canonical can confer Formal action, after all independent broker/market/consumption gates. Jev `SHADOW/ADVISORY_ONLY`; this handoff's chat did not call project Jev. No orders, no manual stale Canonical promotion, no automatic Formal BUY.
-- Resume by latest GitHub exact refs, per-PR checks/artifacts, and both independently re-read recovery cursors. Old PRs #299–#304 and earlier same-epoch runs are consumed. After verified milestone update **only the owned** task cursor with its live blob SHA and generation CAS. Do not manufacture green CI, net-new issuer evidence or production release.
+## Active Branch
+- V4 P1: `feat/investor-decision-v4-p1-source-integration-20260926` (head at checkpoint `4852a7b6978832627a19c4f7c6a6530e7775a4b0`).
+- Independent R: `fix/research-issuer-coverage-audit-20260926` (head at checkpoint `b92e00e9fa1d6c9220d22a07c63eb29268aa9081`).
+- This documentation-only checkpoint: `chore/dual-lane-task-state-20260926`, distinct from both lanes.
+
+## Active PR
+- #305 V4 P0: **merged**, squash commit `53641d376cafd08f0197a619250dae729d8699e1`, exact-head CI green.
+- #306 V4 P1 **partial**: open at checkpoint, backend exact-head CI running, Docker/AI governance success, Web skipped.
+- #307 research issuer coverage audit: open at checkpoint, exact-head CI running, Docker/AI governance success, Web skipped.
+- This docs-only PR #308: no cursor changes; test script requires all headings in this file.
+
+## CI
+- PR #305 exact-head all applicable required checks SUCCESS; post-merge push CI `36235084280` was running at earlier check; reverify live.
+- PR #306 exact head `4852a7b6978832627a19c4f7c6a6530e7775a4b0` and PR #307 `b92e00e9fa1d6c9220d22a07c63eb29268aa9081` are NOT certified merged/green yet. Recheck current exact-head checks, reviews and conflicts before merging.
+- Do not treat a skipped downstream job or successful research workflow as fresh Canonical authorization.
+
+## Production / Artifact
+- P0 implementation **code merged only**; not wired into actual Web/API and no live V4 production acceptance.
+- Latest verified genuine scheduled All-A run `36154161688`, artifact `10874605479`, triggered Sep25 but real market **as-of Sep24**: official universe 5,222, scanned 4,514, 80 Deep reviewed, 0 strict-ready, 77 company-evidence failures, 78 exit-confidence failures, 0 independently validated exit cohorts.
+- Compared Sep23 artifact `10784936699` to Sep24: 41 noncached INDUSTRY-only attempts, zero confirmed fresh official issuer fetch; differing old archive records do not establish independently new Sep25 publications.
+- Subsequent Deep `36228219860` SUCCESS artifact `10902085528` (18 processed/0 complete); its Finalizer `36228226920` FAILURE. Older Jev `36221808179` SUCCESS artifact `10899446912` (25 actual project advisory calls) and Overlay `36221815168` SUCCESS artifact `10899526494` were consumed once.
+- Persisted decision-center market date last verified Sep24 (generated Sep26 09:56Z), 4 confirmed holdings, 0 new Formal BUY; Sep22 broker quote is historical only; no sufficiently current confirmed funds.
+
+## Completed
+- Consumed PR #299–304 and their previously dispatched same-epoch research; P0 #305 code merged.
+- R generation68 independently compared real Sep23 vs Sep24 All-A artifacts and consumed older Jev/Overlay; R generation69 isolated coverage code at PR307.
+- V4 generation4 isolated partial P1 broker/event source mapping at PR306; the two sidecars remain separate.
+
+## Current Findings
+- Production configuration: All-A research queue 80 vs separate `--fundamental-limit 30`, `--deep-review-size 30`, bounded `auto_evidence_limit <= 50`. An 80-name queue does NOT prove 80 real company fetches. Issuer collector has deterministic per-report-period cache with 6h FAILED and 24h MISSING retry TTL. PR307 exposes real issuer attempted, cache-only and unattempted counts; do not call a provider bug proven without artifact data.
+- V4 P1 currently remains **read-only** and gives zero executable orders even with historical or same-session display quotes. It distinguishes consumed authority and proposal vs approved corporate outcome.
+
+## Blockers
+- Fresh real market Sep25 Canonical lineage is unproven; Finalizer correctly remains fail-closed. Strict-ready and independent exit-validation evidence gaps persist.
+- P1 needs genuinely current user-confirmed funds, broker position/quote timing, independent original corporate event outcomes, authoritative lot/T+1/cash reconciliation before any feasibility display. Current PR306 is only a partial, conservative source integration.
+
+## Next Action
+1. At resume re-read current main, `AGENTS.md`, V4 plan, two **separate** recovery cursors/generations/blob SHAs, active PRs, CI, runs/artifacts and persisted Canonical.
+2. **V4 ONLY:** verify PR306 exact head and required checks/reviews/mergeability; merge if genuinely green/authorized and verify postmerge main; CAS-update only `investor-decision-report-v4.json`. Continue P1 full current-source/lot/T+1/cash/event wiring, then P2–P5 with actual production proof.
+3. **R ONLY:** verify PR307 exact head and required checks; if genuinely green, merge audit-only code and inspect NEXT real All-A production artifact with actual issuer coverage counts and source publication/fingerprint lineage. CAS-update only `stock-system-convergence.json`. Do not blindly rerun consumed Deep/Terminal.
+4. After any stable milestone, update this compact summary without overwriting contemporary runtime data or task-scoped volatile cursors. A merged P1 source increment is NOT full V4 production.
+
+## Do Not Repeat
+- Do not replay #299–304, old upstream `35886039426`, duplicate Deep `35934671719`/`35955222216`, or already consumed newer industry/Deep/Terminal/Jev/Overlay source IDs. Do not force a new market date from a Sep25 trigger with Sep24 as-of, or assume green workflow = fresh official original documents.
+- Do not run project Jev and claim it occurred if only supervisory external classification ran; current recovery chat actually used GitHub tools, project Jev **not used**.
+
+## Guardrails
+- `formal_trading_authority=false`, `formal_buy_authorized=false`, `automatic_execution_allowed=false`, `no_auto_trade=true`, `UNKNOWN != PASS`; existing genuinely fresh finalized Canonical is the only Formal decision authority.
+- Never place brokerage orders, infer missing cash/fund positions, override stale source guards, or interpret Jev advisory/research BUY as automatic Formal BUY.
