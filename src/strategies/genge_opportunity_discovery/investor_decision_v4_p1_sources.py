@@ -7,11 +7,29 @@ it never grants current trade executability from a quote, position or lifecycle.
 from __future__ import annotations
 
 from datetime import datetime
+from urllib.parse import urlsplit
 from typing import Any, Mapping
 
 from .investor_decision_v4_projection import project_v4_p0
 
 CONTRACT = "GEN_GE_INVESTOR_PRESENTATION_V4_P1_SOURCES"
+
+_OFFICIAL_ISSUER_HOSTS = frozenset({
+    "static.cninfo.com.cn", "www.cninfo.com.cn", "www.sse.com.cn",
+    "static.sse.com.cn", "www.szse.cn", "disc.static.szse.cn",
+})
+
+
+def _official_original_url(value: Any) -> bool:
+    """Accept documented original-host URLs only; HTTPS lookalikes fail closed."""
+    if not isinstance(value, str):
+        return False
+    try:
+        url = urlsplit(value)
+        return url.scheme == "https" and url.hostname in _OFFICIAL_ISSUER_HOSTS
+    except ValueError:
+        return False
+
 
 
 def _mapping(value: Any) -> Mapping[str, Any]:
@@ -123,11 +141,16 @@ def project_v4_p1_sources(
             continue
         publication = _iso(event.get("publication_at"))
         original = event.get("original_url")
-        if not publication or not isinstance(original, str) or not original.startswith("https://"):
+        if not (publication and _official_original_url(original)
+                and event.get("original_document_verified") is True):
             continue
         outcome = str(event.get("outcome_status") or "UNKNOWN").upper()
         stage = str(event.get("stage") or "UNKNOWN").upper()
-        verified_approval = stage == "RESOLUTION" and outcome == "APPROVED" and _iso(event.get("outcome_at"))
+        verified_approval = bool(
+            stage == "RESOLUTION" and outcome == "APPROVED"
+            and _iso(event.get("outcome_at")) is not None
+            and event.get("outcome_document_verified") is True
+        )
         validated_events.append({
             "code": event.get("code"), "title": event.get("title"),
             "original_url": original, "publication_at": publication.isoformat(),
