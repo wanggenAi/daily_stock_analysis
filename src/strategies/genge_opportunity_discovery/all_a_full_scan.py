@@ -4878,7 +4878,7 @@ def run_scan(
         "evidence_queue_count": len(top80),
         "issuer_collection_coverage": issuer_collection_coverage(
             top80, deep_report / "auto_evidence_audit.csv",
-            fundamental_budget=max(config.fundamental_limit, len(active_review_codes)),
+            fundamental_budget=config.fundamental_limit,
             auto_evidence_budget=auto_evidence_budget,
         ),
         "analysis_candidate_count_including_active_review": len(analysis_candidates),
