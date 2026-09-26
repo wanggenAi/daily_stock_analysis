@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36258100378",
+  "orchestrator_run_id": "36258222227",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -110,13 +110,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "603038",
       "entity_name": "华立股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -190,14 +183,21 @@
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-26T17:10:22+00:00",
-  "source_workflow_head_sha": "2d1f1fe4e3cf286435bd6de9431b4442822f02e0",
+  "source_generated_at": "2026-09-26T17:12:30+00:00",
+  "source_workflow_head_sha": "c2d34e5b7d29d92bb1ad4b08dfbc66fb75750bc9",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36257970516",
+  "source_workflow_run_id": "36258023247",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,9 +210,9 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36257970516",
+  "trigger_source": "JEV_ORCHESTRATOR_36258023247",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-26T17:12:27+00:00",
+  "updated_at": "2026-09-26T17:14:32+00:00",
   "valuation_closure": [
     {
       "attention_confidence": 0.75,
