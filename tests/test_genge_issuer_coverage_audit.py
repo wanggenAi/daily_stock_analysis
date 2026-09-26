@@ -58,3 +58,25 @@ def test_noncached_ok_url_still_not_net_new_verified(tmp_path):
                                         auto_evidence_budget=30)
     assert result["issuer_noncached_ok_original_url_codes"] == 1
     assert result["independent_net_new_issuer_evidence_verified"] is False
+
+
+def test_material_event_scan_is_counted_separately_from_annual_fetch(tmp_path):
+    audit = tmp_path / "audit.csv"
+    _write(audit, [
+        {"scope": "company", "collector": "sse_company_announcement", "code": "603993",
+         "cache_hit": "True", "status": "OK", "original_url": "https://example.org/old-annual"},
+        {"scope": "company", "collector": "official_material_event_scan", "code": "603993",
+         "cache_hit": "True", "status": "OK", "original_url": "https://example.org/old-event"},
+        {"scope": "company", "collector": "official_material_event_scan", "code": "001316",
+         "cache_hit": "False", "status": "MISSING", "original_url": ""},
+    ])
+    result = issuer_collection_coverage(_queue(), audit, fundamental_budget=30,
+                                        auto_evidence_budget=30)
+    assert result["issuer_audited_codes"] == 1
+    assert result["issuer_not_audited_codes"] == 2  # annual extraction
+    assert result["material_event_audited_codes"] == 2
+    assert result["material_event_noncached_attempted_codes"] == 1
+    assert result["material_event_cached_only_codes"] == 1
+    assert result["company_any_collector_audited_codes"] == 2
+    assert result["company_any_collector_not_audited_codes"] == 1
+    assert not result["independent_net_new_issuer_evidence_verified"]
