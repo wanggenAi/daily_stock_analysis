@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "generation": 67,
+  "generation": 68,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "DEEP_TERMINAL_SUCCESS_DOWNSTREAM_PENDING_CANONICAL_STALE",
-  "stage": "20260926_NEW_DEEP_AND_TERMINAL_COMPLETED_TRACK_JEV_OVERLAY_AND_STALE_CANONICAL",
-  "previous_checkpoint_generation": 66,
+  "status": "SCHEDULED_ALL_A_ARTIFACT_AUDITED_CANONICAL_STALE_RESEARCH_ONLY",
+  "stage": "20260926_AUDIT_REAL_SEP24_MARKET_ARTIFACT_AND_CONSUME_PREVIOUS_JEV_OVERLAY",
+  "previous_checkpoint_generation": 67,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "fe4275081d598eabcdeec45b5ddfd8f2aedc41be",
+  "last_observed_main_sha": "9e2e656f4ef74e4a45a59744a962289a16ebe834",
   "work_branch": null,
   "work_head_sha": null,
   "active_pr": null,
@@ -46,7 +46,24 @@
       "exit_profile_confidence_failed": 78,
       "exit_health": "NO_VALIDATED_EXIT_EDGE",
       "validated_cohorts": 0,
-      "artifact_internal_evidence_fetch_delta": "NOT_YET_AUDITED"
+      "artifact_internal_evidence_fetch_delta": {
+        "baseline_artifact_id": 10784936699,
+        "baseline_report_market_as_of": "2026-09-23",
+        "new_report_market_as_of": "2026-09-24",
+        "baseline_audit_rows": 94,
+        "baseline_cached_rows": 94,
+        "new_audit_rows": 86,
+        "new_cached_rows": 45,
+        "new_non_cached_rows": 41,
+        "new_non_cached_scope": "INDUSTRY_ONLY",
+        "new_non_cached_ok_original_url": 0,
+        "new_evidence_archive_identities_vs_baseline": 9,
+        "new_company_archive_identities": 8,
+        "new_company_archive_publication_period": "2026-03 to 2026-04; previously published disclosures, not genuinely new Sep25 official issuer materials",
+        "verified_fresh_official_issuer_network_fetched": 0,
+        "independent_new_sep25_market_epoch": "NOT_PROVEN",
+        "provenance_note": "Archive comparisons use exact scope/code/original_url/evidence_date/content_hash, NOT collection timestamp. Differences reflect basket/source composition and older documents; not evidence of newly published Sep25 source."
+      }
     },
     "new_industry": {
       "run_id": 36220774737,
@@ -80,7 +97,7 @@
     },
     "last_checked_decision_center": {
       "path": "data/decision_center/latest.json",
-      "generated_at": "2026-09-26T05:33:55Z",
+      "generated_at": "2026-09-26T08:10:59Z",
       "latest_trade_date": "2026-09-24",
       "holdings_count": 4,
       "holdings_deep_complete": 0,
@@ -98,14 +115,39 @@
     },
     "jev_followup": {
       "run_id": 36221808179,
-      "status": "in_progress",
-      "conclusion": null,
-      "actual_type_safe_calls": "PENDING_LOG_VERIFICATION"
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_id": 10899446912,
+      "actual_type_safe_calls": 25,
+      "served_model": "jev-1.13.0",
+      "execution_status": "SUCCESS",
+      "advisory_mode": "SHADOW_ONLY",
+      "entry_now_advisory": 1,
+      "wait_evidence_advisory": 24,
+      "consumed_once": true,
+      "interaction_jev_calls": 0
     },
     "overlay_followup": {
       "run_id": 36221815168,
-      "status": "in_progress",
-      "conclusion": null
+      "status": "completed",
+      "conclusion": "success",
+      "artifact_id": 10899526494,
+      "consumed_once": true
+    },
+    "later_research_production_observed": {
+      "deep_run_id": 36228219860,
+      "source_run_id": 36227449013,
+      "artifact_id": 10902085528,
+      "conclusion": "success",
+      "requested": 18,
+      "processed": 18,
+      "complete": 0,
+      "progressed_gates": 6,
+      "research_outcome": "EVIDENCE_EXHAUSTED",
+      "formal_trading_authority": false,
+      "finalizer_run_id": 36228226920,
+      "finalizer_conclusion": "failure",
+      "caution": "new later lineage observed; do not redispatch consumed run, new_evidence_count is not proof of independently new issuer material"
     }
   },
   "last_consumed": {
@@ -126,14 +168,12 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "MONITOR BOOT: re-read live main, AGENTS.md, TASK_STATE.md, this task plus independent V4 cursor, current PRs/workflows/runs/artifacts, and current persisted canonical/dashboard/Jev state. Reconcile by run IDs and exact trade dates before writes.",
-    "AUDIT TRUE SEP25 SCHEDULED ALL-A: open artifact 10874605479 and independently compare real noncached issuer/industry fetches and stable primary-evidence identities against Sep23 baseline; do not infer novelty merely from run count. Its report as_of=2026-09-24 despite Sep25 run time; locate any later genuine finalized 2026-09-25 session artifact or explicitly retain stale block.",
-    "CONSUMED NEW INDUSTRY 36220774737 -> DEEP 36221429486 SUCCESS artifact 10898684800 -> TERMINAL 36221724947 SUCCESS. Next inspect genuine Deep artifact source fingerprint/net-new evidence, then follow existing Jev 36221808179 and Overlay 36221815168 currently pending/verify live; verify actual model calls, deterministic orchestrator and latest Three-Pillar exactly once, do NOT redispatch Deep or Terminal.",
-    "FIX AUTHORITY FRESHNESS ROOT CAUSE ONLY AFTER EVIDENCE: finalizer 36221434943 failed closed after 82 green tests due stale upstream canonical session; dependent handoff 36220732176 failed. Resolve actual trade-date/source-lineage mismatch for 2026-09-25 (without altering thresholds), exact-head CI then genuine production end-to-end validation. No manual override or old Canonical promotion.",
-    "EXIT EDGE/ISSUER QUALITY: 2026-09-24 80 reviewed -> 0 strict ready, 77 issuer-evidence failures, 78 exit-confidence failures and no independent validated cohort. Compare negative-cache fix real network fetch audit; measure 30 issuer vs 80 deep coverage and 40 independent rotating exit-profile exploration. Boundedly repair confirmed collection/validation false negatives, never manufacture PASS or lower gates.",
-    "PROVENANCE TRIAGE: original issuer dated filings, event proposal vs approved outcome, materiality and counterevidence for 001316,603993 and diversified discovery; resume exhausted codes only for independently new evidence fingerprint/issuer period.",
-    "WORKFLOW MAINTENANCE: old cache-only trigger duplicate remains unmodified; only modify protected workflows with authorized capability, isolated tested PR and full exact-head CI; never bypass tool safety.",
-    "HANDOFF: after every concrete production or authority transition, CAS this task generation and update TASK_STATE stable summary without overwriting independent V4 cursor. Stop ONLY at actual verified terminal milestones; not at another pending summary."
+    "Re-read live refs and both separate cursors before acting; V4 P0 independent branch PR #305 exists; do not edit V4 cursor here.",
+    "Sep23 vs Sep24 market All-A artifact audit completed: 41 real noncached INDUSTRY-only attempts, zero OK original URL among them; issuer paths did not show genuine fresh noncached official fetch. Nine differing stable archive identities (eight company older 2026-Mar/Apr disclosures) are NOT proof of newly published official issuer material. Investigate issuer collector selection/negative cache and dated genuinely new material without replaying consumed same epoch.",
+    "Locate genuine finished 2026-09-25 market-session source/canonical lineage; latest observed Sep26 decision_center remains market as-of Sep24. Do not override finalizer stale guard.",
+    "Consume newer existing Deep/Terminal/Jev/Overlay lineages by run/artifact IDs from live first; later Deep 36228219860 SUCCESS artifact 10902085528 already observed, 18 processed 0 complete; Finalizer 36228226920 FAILED. No blind redispatch.",
+    "Check scheduled All-A market as-of from genuine artifacts, 30/80 official company evidence coverage, 40 independent exit exploration and original 001316/603993 event provenance; isolate proven collector false negatives before modifying.",
+    "Next research code fixes must use separate audited branch/exact-head CI and no changes to decision authority or research thresholds."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
