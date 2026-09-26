@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36209955288",
+  "orchestrator_run_id": "36220726166",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -110,6 +110,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "603038",
       "entity_name": "华立股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -152,13 +159,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "000596",
       "entity_name": "古井贡酒",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -187,17 +187,17 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-26T01:53:40+00:00",
-  "source_workflow_head_sha": "9e3c6f294710e0085567db4c8b1969b516091025",
+  "source_generated_at": "2026-09-26T05:24:26+00:00",
+  "source_workflow_head_sha": "abf168361308259ea0de47a64c459ee69865df13",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36209839776",
+  "source_workflow_run_id": "36220620273",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36209839776",
+  "trigger_source": "JEV_ORCHESTRATOR_36220620273",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-26T01:55:54+00:00",
+  "updated_at": "2026-09-26T05:26:44+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.76,
+      "attention_confidence": 0.69,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.94,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
