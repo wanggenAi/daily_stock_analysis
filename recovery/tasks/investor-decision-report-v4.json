@@ -3,8 +3,8 @@
   "task_key": "investor-decision-report-v4",
   "repository": "wanggenAi/daily_stock_analysis",
   "owner_approved_on": "2026-09-25",
-  "status": "P0_MERGED_P1_DATED_SOURCES_PR306_EXACT_HEAD_CI_PENDING",
-  "phase": "P1_DATED_SOURCE_INTEGRATION_PR_OPEN",
+  "status": "P1_FRESH_MAIN_REPLACEMENT_PR309_EXACT_HEAD_CI_PENDING",
+  "phase": "P1_DATED_SOURCE_REPLACEMENT_PR309_CI_PENDING",
   "plan_on_main": "docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md",
   "task_register_on_main": "TASK_STATE.md",
   "registration_commits": {
@@ -13,11 +13,10 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "Verify latest live main and PR306 exact head, required exact-head checks, reviews, conflicts; merge only if authorized and all required green; check postmerge main/CI.",
-    "Continue P1 remaining original official events, real feed freshness, live quote/position sync, exact Canonical consumption, lot/T+1/cash **within existing authority**; only when full end-to-end evidence exists may owner-facing execution feasibility differ from zero.",
-    "P0 PR305 merged 53641d376cafd08f0197a619250dae729d8699e1 but projection still not wired into live product; no V4 production verified.",
-    "Do not edit parallel research cursor stock-system-convergence; research PR307 is separately owned.",
-    "P2–P5 still pending, never treat research/Jev as Formal, UNKNOWN never PASS, no auto trade."
+    "Re-read live main and PR309 head/base/reviews/new exact-head checks; only merge fresh replacement when actually all required green and live clean, verify postmerge CI and main; close old PR306 only after replacement verified merged.",
+    "P1 still only source read-only, not full production. Integrate actual independently verified user-confirmed funds/broker timestamps, issuer outcomes, consumed authority, lot/T+1/cash under existing Canonical after verified merge; UNKNOWN remains blocked.",
+    "Keep research generation69+ independent; audit PR310 is separate, no research code/cursor written by V4 task.",
+    "V4 P2-P5 pending. No auto trading, no Formal BUY from stale or Jev."
   ],
   "coordination": {
     "parallel_task": "recovery/tasks/stock-system-convergence.json",
@@ -39,12 +38,13 @@
     "V4 parallel-task pointer and phased next actions committed to live TASK_STATE.md.",
     "Created independent branch feat/investor-decision-v4-p0-contract-20260926 from live main 9e2e656f4ef74e4a45a59744a962289a16ebe834; P0 additive projection, fail-closed tests, source/as-of/fallback contract and changelog committed; PR #305 opened.",
     "P0 PR #305 exact head 15dfa2541766cd5c44a9a6714e03f7274bfd8bcc checks green and GitHub squash merged as 53641d376cafd08f0197a619250dae729d8699e1; live main and PR merged verified.",
-    "Created independent V4 P1 partial source reconciliation PR #306 exact head 4852a7b6978832627a19c4f7c6a6530e7775a4b0; awaits required exact-head green CI; not merged or production verified."
+    "Created independent V4 P1 partial source reconciliation PR #306 exact head 4852a7b6978832627a19c4f7c6a6530e7775a4b0; awaits required exact-head green CI; not merged or production verified.",
+    "Verified original PR306 clean at main 4760a360 but behind85; created fresh-main replacement PR309 with only four intended V4 P1 files, new exact-head CI required; original kept for traceability."
   ],
   "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 4,
+  "generation": 5,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Start V4 P0 immediately in independent branch/PR while parallel stock-system-convergence generation 66 audits real 2026-09-25 scheduled All-A production. Do not block V4 on stale formal upstream; empty/stale states must be visibly honest.",
@@ -74,19 +74,29 @@
     "review_list": "empty",
     "merge_verified": true
   },
-  "previous_checkpoint_generation": 3,
-  "last_observed_main_sha": "48692e6712c51a3655bc9331ece6ad6616521243",
+  "previous_checkpoint_generation": 4,
+  "last_observed_main_sha": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
   "p1": {
-    "branch": "feat/investor-decision-v4-p1-source-integration-20260926",
-    "pr": 306,
-    "pr_url": "https://github.com/wanggenAi/daily_stock_analysis/pull/306",
-    "head_sha": "4852a7b6978832627a19c4f7c6a6530e7775a4b0",
-    "initial_base_sha": "53641d376cafd08f0197a619250dae729d8699e1",
-    "status": "PARTIAL_P1_PR_CI_PENDING_NOT_MERGED",
+    "branch": "feat/v4-p1-dated-sources-main-sync-20260926",
+    "pr": 309,
+    "pr_url": "https://github.com/wanggenAi/daily_stock_analysis/pull/309",
+    "head_sha": "4884b8a7869a71a2a8e74ad6761624ddd1cbcca5",
+    "initial_base_sha": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
+    "status": "FRESH_MAIN_REPLACEMENT_EXACT_HEAD_CI_PENDING_NOT_MERGED",
     "scope": "read-only dated broker quote/position, consumed authority, missing fund and proposal vs approved outcome mapping; no executable actions or live Web/API integration",
     "web_gate": "skipped_no_web_changes",
     "exact_head_backend_gate": "in_progress_at_last_check",
     "exact_head_docker_build": "success_at_last_check",
-    "exact_head_ai_governance": "success_at_last_check"
+    "exact_head_ai_governance": "success_at_last_check",
+    "original_pr": 306,
+    "original_head_sha": "4852a7b6978832627a19c4f7c6a6530e7775a4b0",
+    "superseded_pr_306_remains_open": true,
+    "why": "At main 4760a360 old PR306 exact-head had passed checks but diverged ahead5/behind85; main modifications since merge base had zero direct file overlap but stale merge would include broad runtime commit drift. Clean new source-only branch/PR created without force push.",
+    "new_exact_head_checks_last_seen": {
+      "ai_governance": "SUCCESS",
+      "docker_build": "SUCCESS",
+      "backend_gate": "IN_PROGRESS",
+      "web_gate": "SKIPPED"
+    }
   }
 }
