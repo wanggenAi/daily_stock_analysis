@@ -34,7 +34,12 @@ def issuer_collection_coverage(
         return {**base, "status": "AUDIT_MISSING",
                 "issuer_audited_codes": None, "issuer_network_attempted_codes": None,
                 "issuer_cached_only_codes": None, "issuer_not_audited_codes": None,
-                "issuer_noncached_ok_original_url_codes": None}
+                "issuer_noncached_ok_original_url_codes": None,
+                "material_event_audited_codes": None,
+                "material_event_noncached_attempted_codes": None,
+                "material_event_cached_only_codes": None,
+                "company_any_collector_audited_codes": None,
+                "company_any_collector_not_audited_codes": None}
     with path.open(encoding="utf-8", newline="") as stream:
         rows = list(csv.DictReader(stream))
     issuer_rows = [
@@ -43,6 +48,19 @@ def issuer_collection_coverage(
         and "company_announcement" in str(r.get("collector") or "").strip().lower()
         and str(r.get("code") or "").strip().zfill(6) in selected
     ]
+    # Material-event scanning is a different collection unit from original
+    # annual-report source extraction. Account for it separately: otherwise
+    # 30/80 touched issuers can be mislabeled 15/80 just because 15 have
+    # annual-report collector rows.
+    event_rows = [
+        r for r in rows
+        if str(r.get("scope") or "").strip().lower() == "company"
+        and str(r.get("collector") or "").strip().lower() == "official_material_event_scan"
+        and str(r.get("code") or "").strip().zfill(6) in selected
+    ]
+    event_audited = {str(r["code"]).strip().zfill(6) for r in event_rows}
+    event_attempted = {str(r["code"]).strip().zfill(6) for r in event_rows
+                       if str(r.get("cache_hit") or "").lower() not in ("true", "1", "yes")}
     audited = {str(r["code"]).strip().zfill(6) for r in issuer_rows}
     attempted = {str(r["code"]).strip().zfill(6) for r in issuer_rows
                  if str(r.get("cache_hit") or "").lower() not in ("true", "1", "yes")}
@@ -56,8 +74,13 @@ def issuer_collection_coverage(
         "issuer_audited_codes": len(audited),
         "issuer_network_attempted_codes": len(attempted),
         "issuer_cached_only_codes": len(cached_only),
-        "issuer_not_audited_codes": len(selected - audited),
+        "issuer_not_audited_codes": len(selected - audited),  # annual-report extraction only
         "issuer_noncached_ok_original_url_codes": len(url_ok),
+        "material_event_audited_codes": len(event_audited),
+        "material_event_noncached_attempted_codes": len(event_attempted),
+        "material_event_cached_only_codes": len(event_audited - event_attempted),
+        "company_any_collector_audited_codes": len(audited | event_audited),
+        "company_any_collector_not_audited_codes": len(selected - (audited | event_audited)),
         "issuer_not_audited_code_sample": sorted(selected - audited)[:20],
         "source_file": str(path),
         "note": ("An OK original URL only establishes collection, never a net-new "
