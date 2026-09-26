@@ -3,7 +3,7 @@
   "task_key": "investor-decision-report-v4",
   "repository": "wanggenAi/daily_stock_analysis",
   "owner_approved_on": "2026-09-25",
-  "status": "SPEC_CAPTURED_IMPLEMENTATION_PENDING",
+  "status": "SPEC_CAPTURED_IMPLEMENTATION_PENDING_MONITOR_HANDOFF_READY",
   "phase": "P0_MAPPING_AND_PRESENTATION_CONTRACT_PENDING",
   "plan_on_main": "docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md",
   "task_register_on_main": "TASK_STATE.md",
@@ -13,12 +13,14 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "P0: survey current dashboard/three-pillar/radar/cycle/official-events/fund/execution/terminal payloads, draft additive field authority/freshness/lineage mapping, tests and owner-first view contract.",
-    "P1: holdings and confirmed funds, material official issuer announcements/shareholder meeting outcome vs proposal, canonical formal action lifecycle and executable constraint handling.",
-    "P2: qualify/rank only formally eligible, fresh actionable opportunities; independent valuation/exit controls, bounded missing-evidence retirement and reopen only on genuine new source fingerprint.",
-    "P3: trend and cycle radars -> real demand/bottleneck/moat/earnings -> company mapping -> independent research/valuation/formal authorization, no automatic promotion.",
-    "P4: implement compact existing-Web/report cockpit + drilldowns/material-diff/performance; preserve JSON/Markdown parity across downstream overlay rerender.",
-    "P5: exact-head tests/CI, merge, verify main, genuine production artifact and current feed freshness; checkpoint outcomes as milestones."
+    "BOOT/OWNERSHIP: read live AGENTS.md, TASK_STATE.md, docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md, live main/PRs/CI and this V4 cursor; inspect separate recovery/tasks/stock-system-convergence.json generation 66 without modifying it. Check if another V4 branch/PR/code already exists before creating one.",
+    "P0: map existing investor dashboard, decision_center, holdings, confirmed funds and capital snapshots, original events, formal authority/lifecycle and trade freshness fields to a stable additive V4 presentation contract. Define full field/source/as-of/fallback mapping, conditional top-page action semantics and acceptance tests. Commit and PR independently; exact-head checks.",
+    "P1: integrate confirmed holdings/funds and official/material events, proposal vs approved outcome, authorized lot/T+1/cash plans, change feed and distinct stale-quote/position-sync/consumed-authority guards. Test gaps and valid hold states.",
+    "P2: expose only fresh canonical FORMAL_ACTIONABLE or FORMAL_WAIT_PRICE opportunities; separate research-only, exhausted parked, explicit contradictions and zero eligible. Bounded genuine new-source reopening; no automatic Formal promotion; repeat-run idempotency and exit-validation checks.",
+    "P3: independent officially evidenced trends/cycle troughs to industry bottlenecks and A-share issuers, full source lineage/dated falsifiers, company underwriting, valuation and eligibility. Reject policy-headline-only or structural-decline false bottom.",
+    "P4: implement low-noise living cockpit and drill-down within existing dsa-web/report paths, per-feed as-of/freshness, official changes, actionable lot-size/cash plan and result/outcome ledger. Preserve JSON/Markdown/Web overlay parity; changelog and PR screenshots.",
+    "P5: after each phase require commit, standalone PR, exact-head required green CI, approved merge and genuine production artifacts/UI verification. Never claim V4 completed from mockup/fixture/old V3 dashboard. Keep measured result ledger and update V4 generation with verified phase evidence.",
+    "CROSS-LANE: keep 2026-09-25 scheduled All-A run 36154161688 artifact 10874605479 (report as_of=2026-09-24) and new Deep run 36221429486 under convergence lane; do not duplicate them. New canonical freshness refusal is a research-lane blocker, not approval to fabricate actionable V4 buys."
   ],
   "coordination": {
     "parallel_task": "recovery/tasks/stock-system-convergence.json",
@@ -41,5 +43,17 @@
   ],
   "verified_code_merged": false,
   "verified_production": false,
-  "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal."
+  "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
+  "generation": 1,
+  "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
+  "last_monitor_coordination_utc": "2026-09-26",
+  "monitor_priority": "Start V4 P0 immediately in independent branch/PR while parallel stock-system-convergence generation 66 audits real 2026-09-25 scheduled All-A production. Do not block V4 on stale formal upstream; empty/stale states must be visibly honest.",
+  "monitor_go_no_go": {
+    "phase_P0_work_may_start": true,
+    "V4_code_merged": false,
+    "V4_production_verified": false,
+    "independent_research_latest": "See convergence generation 66; NOT automatically a fresh Canonical",
+    "no_spec_restatement_needed": true,
+    "stale_executable_market_data_must_block": true
+  }
 }
