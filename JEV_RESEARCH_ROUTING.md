@@ -12,7 +12,7 @@
 
 ## Route counts
 
-- {"DEEP_RESEARCH": 16, "EVIDENCE_REFRESH": 8, "VALUATION_CLOSURE": 1}
+- {"DEEP_RESEARCH": 17, "EVIDENCE_REFRESH": 7, "VALUATION_CLOSURE": 1}
 
 ## Advisory queue
 
@@ -29,7 +29,6 @@
 - 002811 郑中设计 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 600640 国脉文化 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 601069 西部黄金 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
-- 601628 中国人寿 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 603038 华立股份 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 000096 广聚能源 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 000415 渤海租赁 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
@@ -40,6 +39,7 @@
 - 000596 古井贡酒 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 000682 东方电子 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603416 信捷电气 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
-- 603658 安图生物 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 603658 安图生物 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 601628 中国人寿 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
