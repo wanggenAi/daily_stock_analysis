@@ -1,16 +1,16 @@
 {
   "schema_version": 2,
-  "generation": 70,
+  "generation": 71,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "FRESH_MAIN_ISSUER_AUDIT_PR310_CI_PENDING_LATEST_DEEP_NO_NET_NEW_PRIMARY",
-  "stage": "20260926_SAFE_MAIN_SYNC_AND_INDEPENDENT_STABLE_FINGERPRINT_COMPARISON",
-  "previous_checkpoint_generation": 69,
+  "status": "ANNUAL_VS_EVENT_COVERAGE_ACTUAL_ARTIFACT_AUDITED_PR310_CI_PENDING",
+  "stage": "20260926_SEP24_ALL_A_REAL_CSV_ISSUER_PARTITIONS_AND_FRESH_SOURCE_DIAGNOSTICS",
+  "previous_checkpoint_generation": 70,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
+  "last_observed_main_sha": "12cbf87df73db0cbaf1df800a59f0ebfce5b6829",
   "work_branch": "fix/research-issuer-audit-main-sync-20260926",
-  "work_head_sha": "aabf3df4d62e3db252b540d6938ec09af636255f",
+  "work_head_sha": "350a073d098cabea7ff3336a4c385bd9850e059c",
   "active_pr": 310,
   "parallel_v4_task": "recovery/tasks/investor-decision-report-v4.json",
   "evidence": {
@@ -171,15 +171,16 @@
       "proven_root_cause_scope": "OBSERVABILITY_GAP_IN_PUBLISHED_COVERAGE; NOT_YET_PROVEN_PROVIDER_OR_OFFICIAL_ENDPOINT_BUG",
       "audit_pr": {
         "number": 310,
-        "head": "aabf3df4d62e3db252b540d6938ec09af636255f",
-        "status": "FRESH_MAIN_REPLACEMENT_EXACT_HEAD_CI_PENDING",
+        "head": "350a073d098cabea7ff3336a4c385bd9850e059c",
+        "status": "FRESH_MAIN_REVISED_ISSUER_ANNUAL_VS_EVENT_CI_PENDING",
         "scope": "issuer attempted/cached/not-attempted additive metrics in genuine All-A run_summary only",
         "no_collection_threshold_change": true,
         "original_pr": 307,
         "original_head": "b92e00e9fa1d6c9220d22a07c63eb29268aa9081",
         "base": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
         "old_pr_remains_open": true,
-        "why": "Original PR307 behind85 while exact-head green; fresh-main-only five intended files, no force push."
+        "why": "Original PR307 behind85 while exact-head green; fresh-main-only five intended files, no force push.",
+        "extended_metrics": "Annual issuer extractors, distinct official material event scan, their unique code union, not-touched/attempted/cached counters separately with regression test"
       }
     },
     "more_recent_live_runs_checked": {
@@ -285,6 +286,28 @@
         "no_new_canonical_authority": true
       },
       "note": "A current run's new_evidence_count=43 is inventory count and network fetches can succeed without a new source fingerprint; genuine All-A issuer coverage PR310 separate. Last genuine scheduled All-A confirmed source is Sep24; 2026-09-25 market as-of NOT_PROVEN. Do not redispatch consumed Deep/Terminal/Jev."
+    },
+    "scheduled_all_a_csv_detailed_audit": {
+      "run_id": 36154161688,
+      "artifact_id": 10874605479,
+      "real_market_as_of": "2026-09-24",
+      "top_queue_unique_codes": 80,
+      "annual_issuer_audit_rows": 15,
+      "annual_issuer_unique_codes": 15,
+      "annual_cached_only_unique_codes": 15,
+      "annual_noncached_attempted_unique_codes": 0,
+      "material_event_audit_rows": 30,
+      "material_event_unique_codes": 30,
+      "material_event_cached_only_codes": 30,
+      "material_event_noncached_attempted_codes": 0,
+      "annual_subset_of_event_codes": true,
+      "company_any_collector_touched_codes": 30,
+      "company_any_collector_not_touched_codes": 50,
+      "industry_noncached_audit_rows": 41,
+      "company_noncached_audit_rows": 0,
+      "strict_ready": 0,
+      "source": "Downloaded original artifact archive, joined top80_evidence_queue.csv and auto_evidence_audit.csv by exact code; annual vs material event collector differ and must not be merged as one attempt counter.",
+      "no_new_primary_claim": true
     }
   },
   "last_consumed": {
@@ -305,11 +328,10 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "Re-read live main and PR310 exact-head new CI/reviews/mergeability; safely merge only replacement with new required checks green and clean; close stale old PR307 only after verified new merge.",
-    "On genuinely next All-A production artifact after PR310 lands inspect issuer_collection_coverage: 80 queue vs configured fundamental 30, actual noncached issuer attempts, cached-only vs not-audited; compare original source period/hash rather than per-run new_evidence_count.",
-    "Most recent actual Every-Industry 36245056550 / Deep 36245831682 were downloaded; 27 issuer + 16 industry inventory with 37 stable fingerprints matched prior Deep 10902085528 exactly (0 independently added). Do NOT redispatch same Deep/Jev/Terminal; await verifiably changed source epoch.",
-    "Find completed genuine 2026-09-25 market source and current Canonical; latest verified artifacts still Sep24 and Finalizer failed; no stale guard bypass.",
-    "Keep V4 cursor independent; no V4 task file changes from research lane."
+    "PR310 current exact head 350a073d098cabea7ff3336a4c385bd9850e059c has changed after expanded independent real CSV audit; re-read latest live main, exact-head checks, reviews/threads/conflict. Only merge after required fresh CI green and clean, verify postmerge artifact.",
+    "After PR310 true integration inspect NEXT genuinely executed production All-A run artifact's new issuer_collection_coverage per collector and source publication/fingerprint; current downloaded Sep24 artifact is baseline only and has no additive new summary key yet.",
+    "Independent same-workset newer Deep 36245831682 / artifact10907432408 vs older 36228219860 / 10902085528 had exactly same 37 stable fingerprints, 0 added; never redistribute used source run. Latest Finalizer 36245843960 fails stale Sep24 source, no new Formal.",
+    "Keep V4 independent cursor generation6 and PR309; do not modify it from research lane."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
