@@ -72,9 +72,12 @@ def test_consumption_is_exposed_without_rearming_authority():
 def test_proposals_are_not_resolutions_and_unsupported_events_are_excluded():
     events = [
         {"code": "603993", "stage": "PROPOSAL", "outcome_status": "APPROVED",
-         "original_url": "https://example.org/original", "publication_at": "2026-09-23T09:00:00+08:00"},
+         "original_url": "https://static.cninfo.com.cn/finalpage/2026-09-23/proposal.pdf",
+         "original_document_verified": True, "publication_at": "2026-09-23T09:00:00+08:00"},
         {"code": "603993", "stage": "RESOLUTION", "outcome_status": "APPROVED",
-         "original_url": "https://example.org/result", "publication_at": "2026-09-24T09:00:00+08:00",
+         "original_url": "https://static.sse.com.cn/disclosure/listedinfo/result.pdf",
+         "original_document_verified": True, "outcome_document_verified": True,
+         "publication_at": "2026-09-24T09:00:00+08:00",
          "outcome_at": "2026-09-24T09:00:00+08:00"},
         {"stage": "PROPOSAL", "outcome_status": "APPROVED", "original_url": "nonsource",
          "publication_at": "bad"},
@@ -91,3 +94,23 @@ def test_projection_is_repeatable_without_mutating_sources():
         project_v4_p1_sources(source, broker_quotes=q, confirmed_positions=p)
     )
     assert snapshot == (repr(source), repr(q), repr(p))
+
+
+def test_unverified_or_spoofed_official_event_never_becomes_approval():
+    base_event = {
+        "code": "603993", "stage": "RESOLUTION", "outcome_status": "APPROVED",
+        "publication_at": "2026-09-24T09:00:00+08:00",
+        "outcome_at": "2026-09-24T09:00:00+08:00",
+        "original_url": "https://static.sse.com.cn/disclosure/approved.pdf",
+    }
+    spoofed = {**base_event, "original_url": "https://static.sse.com.cn.evil.test/approved.pdf",
+               "original_document_verified": True, "outcome_document_verified": True}
+    no_source_proof = {**base_event, "outcome_document_verified": True}
+    no_outcome_proof = {**base_event, "original_document_verified": True}
+    out = project_v4_p1_sources(base(), official_events=[
+        spoofed, no_source_proof, no_outcome_proof,
+    ])
+    assert len(out["official_events"]) == 1
+    assert out["official_events"][0]["outcome"] == "UNVERIFIED_OUTCOME"
+    assert out["formal_buy_now"] == []
+    assert out["holdings"][0]["executable_shares"] == 0
