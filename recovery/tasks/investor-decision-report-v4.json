@@ -3,8 +3,8 @@
   "task_key": "investor-decision-report-v4",
   "repository": "wanggenAi/daily_stock_analysis",
   "owner_approved_on": "2026-09-25",
-  "status": "P0_CODE_MERGED_P1_IMPLEMENTATION_PENDING",
-  "phase": "P1_HOLDINGS_EVENTS_QUOTES_CONSUMPTION_PENDING",
+  "status": "P0_MERGED_P1_DATED_SOURCES_PR306_EXACT_HEAD_CI_PENDING",
+  "phase": "P1_DATED_SOURCE_INTEGRATION_PR_OPEN",
   "plan_on_main": "docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md",
   "task_register_on_main": "TASK_STATE.md",
   "registration_commits": {
@@ -13,10 +13,11 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "P1 start from latest live main after recheck AGENTS/V4 plan/parallel research cursor and pending P0 postmerge CI; no P0 production claim.",
-    "Wire P1 purely as additive V4 projection with user-confirmed holdings/fund evidence, original issuer proposal/outcome semantics, observed quote timestamps, consumed authority and lot/T+1/cash display-only conditions; test stale/missing/mismatch/idempotent cases. Do not imply P0 has execution capability.",
-    "Keep stock-system-convergence research cursor independent and do not edit from V4 lane.",
-    "Follow existing current canonical-only authority and no-auto-trade fail closed; P2–P5 remain pending."
+    "Verify latest live main and PR306 exact head, required exact-head checks, reviews, conflicts; merge only if authorized and all required green; check postmerge main/CI.",
+    "Continue P1 remaining original official events, real feed freshness, live quote/position sync, exact Canonical consumption, lot/T+1/cash **within existing authority**; only when full end-to-end evidence exists may owner-facing execution feasibility differ from zero.",
+    "P0 PR305 merged 53641d376cafd08f0197a619250dae729d8699e1 but projection still not wired into live product; no V4 production verified.",
+    "Do not edit parallel research cursor stock-system-convergence; research PR307 is separately owned.",
+    "P2–P5 still pending, never treat research/Jev as Formal, UNKNOWN never PASS, no auto trade."
   ],
   "coordination": {
     "parallel_task": "recovery/tasks/stock-system-convergence.json",
@@ -37,12 +38,13 @@
     "Self-contained owner-approved V4 specification committed to live main.",
     "V4 parallel-task pointer and phased next actions committed to live TASK_STATE.md.",
     "Created independent branch feat/investor-decision-v4-p0-contract-20260926 from live main 9e2e656f4ef74e4a45a59744a962289a16ebe834; P0 additive projection, fail-closed tests, source/as-of/fallback contract and changelog committed; PR #305 opened.",
-    "P0 PR #305 exact head 15dfa2541766cd5c44a9a6714e03f7274bfd8bcc checks green and GitHub squash merged as 53641d376cafd08f0197a619250dae729d8699e1; live main and PR merged verified."
+    "P0 PR #305 exact head 15dfa2541766cd5c44a9a6714e03f7274bfd8bcc checks green and GitHub squash merged as 53641d376cafd08f0197a619250dae729d8699e1; live main and PR merged verified.",
+    "Created independent V4 P1 partial source reconciliation PR #306 exact head 4852a7b6978832627a19c4f7c6a6530e7775a4b0; awaits required exact-head green CI; not merged or production verified."
   ],
   "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 3,
+  "generation": 4,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Start V4 P0 immediately in independent branch/PR while parallel stock-system-convergence generation 66 audits real 2026-09-25 scheduled All-A production. Do not block V4 on stale formal upstream; empty/stale states must be visibly honest.",
@@ -72,6 +74,19 @@
     "review_list": "empty",
     "merge_verified": true
   },
-  "previous_checkpoint_generation": 2,
-  "last_observed_main_sha": "53641d376cafd08f0197a619250dae729d8699e1"
+  "previous_checkpoint_generation": 3,
+  "last_observed_main_sha": "48692e6712c51a3655bc9331ece6ad6616521243",
+  "p1": {
+    "branch": "feat/investor-decision-v4-p1-source-integration-20260926",
+    "pr": 306,
+    "pr_url": "https://github.com/wanggenAi/daily_stock_analysis/pull/306",
+    "head_sha": "4852a7b6978832627a19c4f7c6a6530e7775a4b0",
+    "initial_base_sha": "53641d376cafd08f0197a619250dae729d8699e1",
+    "status": "PARTIAL_P1_PR_CI_PENDING_NOT_MERGED",
+    "scope": "read-only dated broker quote/position, consumed authority, missing fund and proposal vs approved outcome mapping; no executable actions or live Web/API integration",
+    "web_gate": "skipped_no_web_changes",
+    "exact_head_backend_gate": "in_progress_at_last_check",
+    "exact_head_docker_build": "success_at_last_check",
+    "exact_head_ai_governance": "success_at_last_check"
+  }
 }
