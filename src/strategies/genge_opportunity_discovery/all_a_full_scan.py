@@ -33,6 +33,9 @@ from src.strategies.genge_cycle_bottom.current_snapshot import load_industry_ali
 from src.strategies.genge_cycle_bottom.features import coerce_date, prepare_price_frame
 from src.strategies.genge_cycle_bottom.fundamentals import PublicFundamentalLoader
 from src.strategies.genge_cycle_bottom.industry_evidence import load_evidence_csv, load_industry_evidence_schema
+from src.strategies.genge_opportunity_discovery.evidence_collectors.issuer_coverage_audit import (
+    issuer_collection_coverage,
+)
 from src.strategies.genge_opportunity_discovery.pipeline import RULE_VERSION, run_opportunity_discovery
 from src.strategies.genge_opportunity_discovery.exit_profile import (
     HIGH_CONFIDENCE_SAMPLE_COUNT,
@@ -4739,6 +4742,11 @@ def run_scan(
         config.evidence_queue_size + len(active_review_codes),
         len(exit_profile_priority_code_set | active_review_codes),
     )
+    auto_evidence_budget = min(50, max(
+            config.deep_review_size,
+            len(active_review_codes) + 10,
+            len(exit_profile_priority_codes) + len(active_review_codes),
+        ))
     deep_report, deep_summary = run_opportunity_discovery(
         inputs=inputs,
         requested_codes=[item.code for item in inputs],
@@ -4767,11 +4775,7 @@ def run_scan(
         ledger_path=config.forward_ledger_file,
         run_mode="full",
         evidence_cache_dir=config.evidence_cache_dir,
-        auto_evidence_limit=min(50, max(
-            config.deep_review_size,
-            len(active_review_codes) + 10,
-            len(exit_profile_priority_codes) + len(active_review_codes),
-        )),
+        auto_evidence_limit=auto_evidence_budget,
         state_dir=config.state_dir / "deep_pipeline",
     )
     profiles, input_exit_distribution = _exit_profiles(Path(exit_profile_file))
@@ -4872,6 +4876,11 @@ def run_scan(
         "priority_research_count": sum(row.get("quant_status") == "PRIORITY_RESEARCH" for row in quant_rows),
         "secondary_research_count": sum(row.get("quant_status") == "SECONDARY_RESEARCH" for row in quant_rows),
         "evidence_queue_count": len(top80),
+        "issuer_collection_coverage": issuer_collection_coverage(
+            top80, deep_report / "auto_evidence_audit.csv",
+            fundamental_budget=max(config.fundamental_limit, len(active_review_codes)),
+            auto_evidence_budget=auto_evidence_budget,
+        ),
         "analysis_candidate_count_including_active_review": len(analysis_candidates),
         "active_signal_review_count": len(active_review_codes),
         "active_signal_review_refreshed_count": len(active_review_rows),
