@@ -1,16 +1,16 @@
 {
   "schema_version": 2,
-  "generation": 71,
+  "generation": 72,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "ANNUAL_VS_EVENT_COVERAGE_ACTUAL_ARTIFACT_AUDITED_PR310_CI_PENDING",
-  "stage": "20260926_SEP24_ALL_A_REAL_CSV_ISSUER_PARTITIONS_AND_FRESH_SOURCE_DIAGNOSTICS",
-  "previous_checkpoint_generation": 70,
+  "status": "ISSUER_PR310_CONFLICT_RESOLVED_SAFE_MERGE_COMMIT_NEW_EXACT_CI_PENDING",
+  "stage": "20260926_SEPARATE_ANNUAL_EVENT_AUDIT_CURRENT_MAIN_RECONCILED",
+  "previous_checkpoint_generation": 71,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "12cbf87df73db0cbaf1df800a59f0ebfce5b6829",
+  "last_observed_main_sha": "6dddf93fb299303da7bfb2748d2d0b19aad98f21",
   "work_branch": "fix/research-issuer-audit-main-sync-20260926",
-  "work_head_sha": "350a073d098cabea7ff3336a4c385bd9850e059c",
+  "work_head_sha": "d74fd2d88f14eb4c561aae631afb4de5b26a596f",
   "active_pr": 310,
   "parallel_v4_task": "recovery/tasks/investor-decision-report-v4.json",
   "evidence": {
@@ -171,16 +171,17 @@
       "proven_root_cause_scope": "OBSERVABILITY_GAP_IN_PUBLISHED_COVERAGE; NOT_YET_PROVEN_PROVIDER_OR_OFFICIAL_ENDPOINT_BUG",
       "audit_pr": {
         "number": 310,
-        "head": "350a073d098cabea7ff3336a4c385bd9850e059c",
-        "status": "FRESH_MAIN_REVISED_ISSUER_ANNUAL_VS_EVENT_CI_PENDING",
+        "head": "d74fd2d88f14eb4c561aae631afb4de5b26a596f",
+        "status": "MAIN_MERGE_RESOLUTION_COMMIT_NEW_EXACT_HEAD_CHECKS_PENDING",
         "scope": "issuer attempted/cached/not-attempted additive metrics in genuine All-A run_summary only",
         "no_collection_threshold_change": true,
         "original_pr": 307,
         "original_head": "b92e00e9fa1d6c9220d22a07c63eb29268aa9081",
-        "base": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
+        "base": "6dddf93fb299303da7bfb2748d2d0b19aad98f21",
         "old_pr_remains_open": true,
         "why": "Original PR307 behind85 while exact-head green; fresh-main-only five intended files, no force push.",
-        "extended_metrics": "Annual issuer extractors, distinct official material event scan, their unique code union, not-touched/attempted/cached counters separately with regression test"
+        "extended_metrics": "Annual issuer extractors, distinct official material event scan, their unique code union, not-touched/attempted/cached counters separately with regression test",
+        "resolution": "PR309 merged and introduced CHANGELOG overlap; used Git objects to create 2-parent merge commit with original PR310 head first parent and verified new main second parent, tree based on new main preserving four research file blob identities and explicit flat combined CHANGELOG; advanced old branch only through nonforce fast-forward update_ref; no loss of either lane changes."
       }
     },
     "more_recent_live_runs_checked": {
@@ -328,10 +329,10 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "PR310 current exact head 350a073d098cabea7ff3336a4c385bd9850e059c has changed after expanded independent real CSV audit; re-read latest live main, exact-head checks, reviews/threads/conflict. Only merge after required fresh CI green and clean, verify postmerge artifact.",
-    "After PR310 true integration inspect NEXT genuinely executed production All-A run artifact's new issuer_collection_coverage per collector and source publication/fingerprint; current downloaded Sep24 artifact is baseline only and has no additive new summary key yet.",
-    "Independent same-workset newer Deep 36245831682 / artifact10907432408 vs older 36228219860 / 10902085528 had exactly same 37 stable fingerprints, 0 added; never redistribute used source run. Latest Finalizer 36245843960 fails stale Sep24 source, no new Formal.",
-    "Keep V4 independent cursor generation6 and PR309; do not modify it from research lane."
+    "Re-read PR310 current exact-head d74fd2d88f14eb4c561aae631afb4de5b26a596f required CI, reviews, threads and current main; merge only if current required checks pass and GitHub mergeability clean, not old 350a checks; verify postmerge main.",
+    "Consume genuine next executed production All-A artifact that includes new issuer_collection_coverage field; if no actual run, do not fabricate outcome or manually restart consumed Deep/Terminal/Jev. Prior genuine Sep24 artifact 10874605479 80 queue, 15 cached annual, 30 cached event, 30 union touched, 50 untouched; no noncached company evidence.",
+    "Compare unchanged 37 stable fingerprints newer Deep 10907432408 vs older 10902085528; 0 added independently. No fresh Sep25 finalized Canonical, retain stale guards.",
+    "V4 cursor separate at generation7 and PR309 successfully merged but postmerge CI pending; do not overwrite it."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
@@ -352,5 +353,8 @@
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
-  }
+  },
+  "completed": [
+    "Verified PR310 old head was exact-head CI green and had no reviews, but became GitHub dirty after PR309 merged due to shared CHANGELOG. Safely merged live main into existing PR310 using nonforce fast-forward two-parent commit d74fd2d88f14eb4c561aae631afb4de5b26a596f; PR310 now clean/unstable solely awaiting NEW exact-head CI."
+  ]
 }
