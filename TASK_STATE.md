@@ -4,26 +4,26 @@
 Maintain two **independent** owner-approved tasks: living V4 investor report and trustworthy official-source research. Each uses its own generation/blob CAS cursor on `state/chatgpt-recovery`; this document is a cross-lane index, not a combined cursor. GitHub live refs, artifacts and code override this checkpoint.
 
 ## Current Phase
-- **V4:** generation **6** (`recovery/tasks/investor-decision-report-v4.json`; last verified blob `f14f78d1d96a3b224d6e5c1daf807ca53ee730ed`). P0 merged; partial P1 fresh-main replacement PR #309 awaiting exact-head checks; V4 **not yet production verified**.
-- **R:** generation **71** (`recovery/tasks/stock-system-convergence.json`; last verified blob `3851726de1326d45bbf7861bf2593d5c2d48b1e9`). Company-level official evidence coverage instrumentation PR #307 awaits exact-head checks. Canonical market freshness still stale.
+- **V4:** generation **7** (`recovery/tasks/investor-decision-report-v4.json`; last verified blob `cf9378858fc958823a09e2c81bb4609f30c9ab57`). P0 merged; partial P1 PR #309 squash-merged as 6dddf93fb299303da7bfb2748d2d0b19aad98f21; post-merge CI pending; V4 **not yet production verified**.
+- **R:** generation **72** (`recovery/tasks/stock-system-convergence.json`; last verified blob `08e7b3a99e33b1b7e1f6df9e4133e30ed06e0dc4`). Research-only issuer coverage PR #310 safely merged main into feature branch without force-push; new exact-head CI pending. Canonical market freshness still stale.
 
 ## Last Verified Main
-- Snapshot at replacement preparation: `4760a3609de3e8b7b02b213c5c91befb7cf2507d`; runtime persisted commits advanced main during this work. **Always reread live main** before writing.
+- Post V4 #309 merge: `6dddf93fb299303da7bfb2748d2d0b19aad98f21`; runtime persisted commits advanced main during this work. **Always reread live main** before writing.
 
 ## Active Branch
-- V4 P1 replacement #309: `feat/v4-p1-dated-sources-main-sync-20260926` (head `3c2d76939830e72384de3eb67c3aef2a49b3b98a`). Old #306 unchanged and open until verified replacement.
-- Independent R replacement #310: `fix/research-issuer-audit-main-sync-20260926` (head `350a073d098cabea7ff3336a4c385bd9850e059c`). Old #307 unchanged and open until verified replacement.
+- V4 P1 PR #309 merged: head `3c2d76939830e72384de3eb67c3aef2a49b3b98a`, main squash `6dddf93fb299303da7bfb2748d2d0b19aad98f21`; old #306 still open for traceability pending close.
+- Independent R replacement #310: `fix/research-issuer-audit-main-sync-20260926` (head `d74fd2d88f14eb4c561aae631afb4de5b26a596f`). Old #307 unchanged and open until verified replacement.
 - Documentation replacement: `chore/dual-lane-task-state-main-sync-20260926`, old #308 retained open until verified replacement.
 
 ## Active PR
 - #305 V4 P0: **merged**, squash commit `53641d376cafd08f0197a619250dae729d8699e1`, exact-head CI green.
-- #306 V4 P1 **partial**: replacement #309 from main 4760a360 (old #306 preserved), with negative tests requiring independently verified official originals and approval documents; latest head as recorded above needs fresh exact-head CI.
-- #307 research issuer coverage audit: replacement #310 from main 4760a360 (old #307 preserved), now distinguishes 15 annual vs 30 material-event cached scans in real Sep24 sample; latest head needs fresh exact-head CI.
+- #309 V4 P1 **partial**: merged into main at 6dddf93f with new exact-head checks SUCCESS and reviewed source guardrails; post-merge main CI pending; original #306 is superseded.
+- #310 research issuer coverage audit: safe nonforce two-parent merge of main 6dddf93f and original PR #310 head resolved shared CHANGELOG; new head d74fd2d88f requires new exact-head CI, old #307 remains open.
 - Docs-only replacement of old #308 from latest main; no cursor changes.
 
 ## CI
 - PR #305 exact-head all applicable required checks SUCCESS; post-merge push CI `36235084280` was running at earlier check; reverify live.
-- Old #306/#307 had successful exact-head CI but 85 commits behind main; replacement #309 head `3c2d76939830e72384de3eb67c3aef2a49b3b98a` and replacement #310 head `350a073d098cabea7ff3336a4c385bd9850e059c` require new exact-head CI before merging. Recheck current exact-head checks, reviews and conflicts before merging.
+- Old #306/#307 had successful exact-head CI but 85 commits behind main; merged #309 head `3c2d76939830e72384de3eb67c3aef2a49b3b98a` and research #310 new head `d74fd2d88f14eb4c561aae631afb4de5b26a596f` research #310 requires new exact-head CI before merge. #309 already merged; verify postmerge push CI.
 - Do not treat a skipped downstream job or successful research workflow as fresh Canonical authorization.
 
 ## Production / Artifact
@@ -35,8 +35,8 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 
 ## Completed
 - Consumed PR #299–304 and their previously dispatched same-epoch research; P0 #305 code merged.
-- R generation68 independently compared real Sep23 vs Sep24 All-A artifacts and consumed older Jev/Overlay; R generation69 isolated coverage code at PR307.
-- V4 generation6 hardened P1 issuer-original source/proposal outcome guardrails on replacement PR309; the two sidecars remain separate.
+- R generation68 independently compared real Sep23 vs Sep24 All-A artifacts and consumed older Jev/Overlay; R generation72 independently resolved PR310 conflict after #309 merge, using nonforce two-parent merge commit; new CI pending.
+- V4 generation7 merged hardened P1 issuer-original source/proposal outcome guardrails on replacement PR309; the two sidecars remain separate.
 
 ## Current Findings
 - Production configuration: All-A research queue 80 vs separate `--fundamental-limit 30`, `--deep-review-size 30`, bounded `auto_evidence_limit <= 50`. An 80-name queue does NOT prove 80 real company fetches. Issuer collector has deterministic per-report-period cache with 6h FAILED and 24h MISSING retry TTL. PR307 exposes real issuer attempted, cache-only and unattempted counts; do not call a provider bug proven without artifact data.
@@ -48,7 +48,7 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 
 ## Next Action
 1. At resume re-read current main, `AGENTS.md`, V4 plan, two **separate** recovery cursors/generations/blob SHAs, active PRs, CI, runs/artifacts and persisted Canonical.
-2. **V4 ONLY:** verify replacement #309 exact head and required checks/reviews/mergeability; merge if genuinely green/authorized and verify postmerge main; CAS-update only `investor-decision-report-v4.json`. Continue P1 full current-source/lot/T+1/cash/event wiring, then P2–P5 with actual production proof.
+2. **V4 ONLY:** verify merged #309 postmerge main CI, keep source integration read-only; CAS-update only V4 cursor. Continue P1 live confirmed inputs/lot/T+1/cash/event wiring, then P2-P5 with production proof.
 3. **R ONLY:** verify replacement #310 exact head and required checks; if genuinely green, merge audit-only code and inspect NEXT real All-A production artifact with actual issuer coverage counts and source publication/fingerprint lineage. CAS-update only `stock-system-convergence.json`. Do not blindly rerun consumed Deep/Terminal.
 4. After any stable milestone, update this compact summary without overwriting contemporary runtime data or task-scoped volatile cursors. A merged P1 source increment is NOT full V4 production.
 
