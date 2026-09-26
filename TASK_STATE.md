@@ -4,15 +4,15 @@
 Maintain two **independent** owner-approved tasks: living V4 investor report and trustworthy official-source research. Each uses its own generation/blob CAS cursor on `state/chatgpt-recovery`; this document is a cross-lane index, not a combined cursor. GitHub live refs, artifacts and code override this checkpoint.
 
 ## Current Phase
-- **V4:** generation **4** (`recovery/tasks/investor-decision-report-v4.json`; last verified blob `7821a703d4b8202372196835ed14cb8c131ea353`). P0 merged; partial P1 fresh-main replacement PR #309 awaiting exact-head checks; V4 **not yet production verified**.
-- **R:** generation **69** (`recovery/tasks/stock-system-convergence.json`; last verified blob `fd7b6d5d5fb760c525176122ceed760a663b4137`). Company-level official evidence coverage instrumentation PR #307 awaits exact-head checks. Canonical market freshness still stale.
+- **V4:** generation **5** (`recovery/tasks/investor-decision-report-v4.json`; last verified blob `2ff1c760d2c272ec1364c3d85c4b9e40dcd270a3`). P0 merged; partial P1 fresh-main replacement PR #309 awaiting exact-head checks; V4 **not yet production verified**.
+- **R:** generation **70** (`recovery/tasks/stock-system-convergence.json`; last verified blob `6c5fe054ff150396f9a279bd35396964908f5d73`). Company-level official evidence coverage instrumentation PR #307 awaits exact-head checks. Canonical market freshness still stale.
 
 ## Last Verified Main
 - Snapshot at replacement preparation: `4760a3609de3e8b7b02b213c5c91befb7cf2507d`; runtime persisted commits advanced main during this work. **Always reread live main** before writing.
 
 ## Active Branch
-- V4 P1 replacement #309: `feat/v4-p1-dated-sources-main-sync-20260926` (head `4884b8a7869a71a2a8e74ad6761624ddd1cbcca5`). Old #306 unchanged and open until verified replacement.
-- Independent R replacement #310: `fix/research-issuer-audit-main-sync-20260926` (head `aabf3df4d62e3db252b540d6938ec09af636255f`). Old #307 unchanged and open until verified replacement.
+- V4 P1 replacement #309: `feat/v4-p1-dated-sources-main-sync-20260926` (head `3c2d76939830e72384de3eb67c3aef2a49b3b98a`). Old #306 unchanged and open until verified replacement.
+- Independent R replacement #310: `fix/research-issuer-audit-main-sync-20260926` (head `350a073d098cabea7ff3336a4c385bd9850e059c`). Old #307 unchanged and open until verified replacement.
 - Documentation replacement: `chore/dual-lane-task-state-main-sync-20260926`, old #308 retained open until verified replacement.
 
 ## Active PR
@@ -23,7 +23,7 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 
 ## CI
 - PR #305 exact-head all applicable required checks SUCCESS; post-merge push CI `36235084280` was running at earlier check; reverify live.
-- Old #306/#307 had successful exact-head CI but 85 commits behind main; replacement #309 head `4884b8a7869a71a2a8e74ad6761624ddd1cbcca5` and replacement #310 head `aabf3df4d62e3db252b540d6938ec09af636255f` require new exact-head CI before merging. Recheck current exact-head checks, reviews and conflicts before merging.
+- Old #306/#307 had successful exact-head CI but 85 commits behind main; replacement #309 head `3c2d76939830e72384de3eb67c3aef2a49b3b98a` and replacement #310 head `350a073d098cabea7ff3336a4c385bd9850e059c` require new exact-head CI before merging. Recheck current exact-head checks, reviews and conflicts before merging.
 - Do not treat a skipped downstream job or successful research workflow as fresh Canonical authorization.
 
 ## Production / Artifact
@@ -55,6 +55,10 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 ## Do Not Repeat
 - Do not replay #299–304, old upstream `35886039426`, duplicate Deep `35934671719`/`35955222216`, or already consumed newer industry/Deep/Terminal/Jev/Overlay source IDs. Do not force a new market date from a Sep25 trigger with Sep24 as-of, or assume green workflow = fresh official original documents.
 - Do not run project Jev and claim it occurred if only supervisory external classification ran; current recovery chat actually used GitHub tools, project Jev **not used**.
+
+
+- **Updated evidence checkpoint:** newer actual Deep artifact 10907432408 (run 36245831682) vs consumed 10902085528 has 37 stable (scope,code,original_url,date,content_hash) identities on both sides, 0 additions; 43 per-run evidence records are not independently new originals. Actual scheduled Sep24 All-A artifact 10874605479 has 80 unique queue codes, 15 cached annual issuer extractors, separate 30 cached material-event issuer scans, 30 unique issuer codes touched, 50 with neither collector; 41 noncached industry rows, 0 noncached company rows. Latest Finalizer 36245843960 fails same stale market-date guard.
+- PR #309 now additionally rejects unverified original event URLs and unproven approvals with negative tests. PR #310 now distinguishes annual-report audit coverage from material-event collector coverage with a separate regression test; newer exact-head checks are pending and old PR success does not transfer.
 
 ## Guardrails
 - `formal_trading_authority=false`, `formal_buy_authorized=false`, `automatic_execution_allowed=false`, `no_auto_trade=true`, `UNKNOWN != PASS`; existing genuinely fresh finalized Canonical is the only Formal decision authority.
