@@ -14,3 +14,7 @@ The current durable broker quote file `data/manual_execution_quotes/latest.json`
 | Capital, lot size, T+1 | existing Canonical planner and actual fresh broker evidence | broker session and current plan epoch | NOT yet end-to-end verified in this increment; zero executable shares and zero planned immediate cash |
 
 All P1 source fields are display-only, with `executable_shares=0`; P1 execution-feasible calculations and V4 Web integration are subsequent work. Regression tests include historical and same-session quotes, broker mismatch, consumed authority, proposal/outcome distinction, missing fund data and deterministic replay. No real official event is asserted from test fixtures.
+
+## Original issuer provenance boundary
+
+P1 does **not** autonomously verify issuer documents. Its caller must provide an independently checked, dated original on an explicitly allowlisted SSE/SZSE/CNINFO host and set `original_document_verified=true`; merely supplying an HTTPS string or third-party event title is insufficient. A RESOLUTION can display APPROVED only if `outcome_document_verified=true` and a valid outcome timestamp also accompany a verified original. Unverified records are omitted or their outcome remains `UNVERIFIED_OUTCOME`, never elevated to actionable authority. These synthetic tests do not establish that any particular live issuer proposal or approval actually occurred.
