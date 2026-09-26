@@ -23,7 +23,7 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 
 ## CI
 - PR #305 exact-head all applicable required checks SUCCESS; post-merge push CI `36235084280` was running at earlier check; reverify live.
-- Old #306/#307 had successful exact-head CI but 85 commits behind main; merged #309 head `3c2d76939830e72384de3eb67c3aef2a49b3b98a` and research #310 new head `d74fd2d88f14eb4c561aae631afb4de5b26a596f` research #310 requires new exact-head CI before merge. #309 already merged; verify postmerge push CI.
+- Old #306/#307 had successful exact-head CI but 85 commits behind main; merged #309 head `3c2d76939830e72384de3eb67c3aef2a49b3b98a` and research #310 new head `d74fd2d88f14eb4c561aae631afb4de5b26a596f`; research #310 requires new exact-head CI before merge. #309 already merged; verify postmerge push CI.
 - Do not treat a skipped downstream job or successful research workflow as fresh Canonical authorization.
 
 ## Production / Artifact
@@ -31,7 +31,7 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 - Latest verified genuine scheduled All-A run `36154161688`, artifact `10874605479`, triggered Sep25 but real market **as-of Sep24**: official universe 5,222, scanned 4,514, 80 Deep reviewed, 0 strict-ready, 77 company-evidence failures, 78 exit-confidence failures, 0 independently validated exit cohorts.
 - Compared Sep23 artifact `10784936699` to Sep24: 41 noncached INDUSTRY-only attempts, zero confirmed fresh official issuer fetch; differing old archive records do not establish independently new Sep25 publications.
 - Subsequent Deep `36228219860` SUCCESS artifact `10902085528` (18 processed/0 complete); its Finalizer `36228226920` FAILURE. Older Jev `36221808179` SUCCESS artifact `10899446912` (25 actual project advisory calls) and Overlay `36221815168` SUCCESS artifact `10899526494` were consumed once.
-- Persisted decision-center market date last verified Sep24 (generated Sep26 09:56Z), 4 confirmed holdings, 0 new Formal BUY; Sep22 broker quote is historical only; no sufficiently current confirmed funds.
+- Persisted decision-center market date most recently checked remains Sep24 (generated Sep26 14:43Z), 4 confirmed holdings, 0 new Formal BUY; Sep22 broker quote is historical only; no sufficiently current confirmed funds.
 
 ## Completed
 - Consumed PR #299–304 and their previously dispatched same-epoch research; P0 #305 code merged.
@@ -39,12 +39,12 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 - V4 generation7 merged hardened P1 issuer-original source/proposal outcome guardrails on replacement PR309; the two sidecars remain separate.
 
 ## Current Findings
-- Production configuration: All-A research queue 80 vs separate `--fundamental-limit 30`, `--deep-review-size 30`, bounded `auto_evidence_limit <= 50`. An 80-name queue does NOT prove 80 real company fetches. Issuer collector has deterministic per-report-period cache with 6h FAILED and 24h MISSING retry TTL. PR307 exposes real issuer attempted, cache-only and unattempted counts; do not call a provider bug proven without artifact data.
+- Production configuration: All-A research queue 80 vs separate `--fundamental-limit 30`, `--deep-review-size 30`, bounded `auto_evidence_limit <= 50`. An 80-name queue does NOT prove 80 real company fetches. Issuer collector has deterministic per-report-period cache with 6h FAILED and 24h MISSING retry TTL. PR #310 will expose separate annual/event issuer attempted, cached-only and unattempted counts once merged and validated; do not call a provider bug proven without artifact data.
 - V4 P1 currently remains **read-only** and gives zero executable orders even with historical or same-session display quotes. It distinguishes consumed authority and proposal vs approved corporate outcome.
 
 ## Blockers
 - Fresh real market Sep25 Canonical lineage is unproven; Finalizer correctly remains fail-closed. Strict-ready and independent exit-validation evidence gaps persist.
-- P1 needs genuinely current user-confirmed funds, broker position/quote timing, independent original corporate event outcomes, authoritative lot/T+1/cash reconciliation before any feasibility display. Current PR306 is only a partial, conservative source integration.
+- P1 needs genuinely current user-confirmed funds, broker position/quote timing, independent original corporate event outcomes, authoritative lot/T+1/cash reconciliation before any feasibility display. Merged PR #309 is only a partial, conservative source integration; production feed wiring is still pending.
 
 ## Next Action
 1. At resume re-read current main, `AGENTS.md`, V4 plan, two **separate** recovery cursors/generations/blob SHAs, active PRs, CI, runs/artifacts and persisted Canonical.
