@@ -3,8 +3,8 @@
   "task_key": "investor-decision-report-v4",
   "repository": "wanggenAi/daily_stock_analysis",
   "owner_approved_on": "2026-09-25",
-  "status": "P1_FRESH_MAIN_PR309_OFFICIAL_SOURCE_FAIL_CLOSED_CI_PENDING",
-  "phase": "P1_SOURCE_ORIGINAL_PROVENANCE_TESTED_IN_PR_PENDING_CI",
+  "status": "P1_DATED_SOURCES_PR309_MERGED_POSTMERGE_CI_PENDING_NOT_PRODUCTION",
+  "phase": "P1_REMAINING_LIVE_FEEDS_UNVERIFIED",
   "plan_on_main": "docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md",
   "task_register_on_main": "TASK_STATE.md",
   "registration_commits": {
@@ -13,9 +13,10 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "Only merge PR309 after latest head 3c2d... actual required new exact-head CI green, empty blocking review threads, live mergeability and rechecked main compatibility; verify squash main/postmerge. Old #306 must remain traceable until replacement proven merged.",
-    "Continue P1 verified issuer documents, confirmed funds and live broker quote/position/cash/lot/T+1 integration as additive presentation; do not invent execution or approve unverified outcomes.",
-    "Research PR310/cursor independent; V4 production not yet verified."
+    "Check postmerge main 6dddf93f exact-head push CI, currently in progress; distinguish code merged vs production Web/API V4 not wired.",
+    "P1 next: consume only genuinely user-confirmed current broker positions/funds/cash and precise quote timestamps, source-verified actual issuer outcomes, consumed authority and lot/T+1 constraints; keep execution eligibility=0 until complete evidence and existing finalized Canonical gates.",
+    "Coordinate separately with research PR310 new merge-safe head d74fd2d88f14eb4c561aae631afb4de5b26a596f; NEVER write research cursor from V4; P2-P5 not accepted.",
+    "Old PR306 can be closed as superseded only once new PR merge/postmerge validation confirmed, preserving full audit trail."
   ],
   "coordination": {
     "parallel_task": "recovery/tasks/stock-system-convergence.json",
@@ -39,12 +40,13 @@
     "P0 PR #305 exact head 15dfa2541766cd5c44a9a6714e03f7274bfd8bcc checks green and GitHub squash merged as 53641d376cafd08f0197a619250dae729d8699e1; live main and PR merged verified.",
     "Created independent V4 P1 partial source reconciliation PR #306 exact head 4852a7b6978832627a19c4f7c6a6530e7775a4b0; awaits required exact-head green CI; not merged or production verified.",
     "Verified original PR306 clean at main 4760a360 but behind85; created fresh-main replacement PR309 with only four intended V4 P1 files, new exact-head CI required; original kept for traceability.",
-    "Semantically audited partial P1 PR309: tightened official-event fail-closed original/outcome provenance against spoofed HTTPS; added negative tests and updated source doc; fresh exact-head CI pending. Verified main's later runtime commits did not overlap P1 files."
+    "Semantically audited partial P1 PR309: tightened official-event fail-closed original/outcome provenance against spoofed HTTPS; added negative tests and updated source doc; fresh exact-head CI pending. Verified main's later runtime commits did not overlap P1 files.",
+    "Verified fresh-main PR309 exact head 3c2d76939830e72384de3eb67c3aef2a49b3b98a backend/docker/governance success, web skipped, empty reviews/threads and clean GitHub mergeability on then-live main 46fd067e; squash merged to main 6dddf93fb299303da7bfb2748d2d0b19aad98f21 without force; main and PR merged proof re-read; postmerge CI pending."
   ],
   "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 6,
+  "generation": 7,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Start V4 P0 immediately in independent branch/PR while parallel stock-system-convergence generation 66 audits real 2026-09-25 scheduled All-A production. Do not block V4 on stale formal upstream; empty/stale states must be visibly honest.",
@@ -74,15 +76,15 @@
     "review_list": "empty",
     "merge_verified": true
   },
-  "previous_checkpoint_generation": 5,
-  "last_observed_main_sha": "12cbf87df73db0cbaf1df800a59f0ebfce5b6829",
+  "previous_checkpoint_generation": 6,
+  "last_observed_main_sha": "6dddf93fb299303da7bfb2748d2d0b19aad98f21",
   "p1": {
     "branch": "feat/v4-p1-dated-sources-main-sync-20260926",
     "pr": 309,
     "pr_url": "https://github.com/wanggenAi/daily_stock_analysis/pull/309",
     "head_sha": "3c2d76939830e72384de3eb67c3aef2a49b3b98a",
     "initial_base_sha": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
-    "status": "FRESH_MAIN_REPLACEMENT_SOURCE_PROVENANCE_TESTS_CI_PENDING",
+    "status": "PARTIAL_SOURCE_RECONCILIATION_MERGED_POSTMERGE_CI_PENDING",
     "scope": "read-only dated broker quote/position, consumed authority, missing fund and proposal vs approved outcome mapping; no executable actions or live Web/API integration",
     "web_gate": "skipped_no_web_changes",
     "exact_head_backend_gate": "in_progress_at_last_check",
@@ -97,6 +99,12 @@
       "backend_gate": "IN_PROGRESS",
       "docker_build": "IN_PROGRESS"
     },
-    "semantic_revision": "Require official SSE/SZSE/CNINFO original host + explicit independent source verification; approved resolutions require separately verified outcome document and dated outcome. Negative tests for spoof host and no approval proof."
+    "semantic_revision": "Require official SSE/SZSE/CNINFO original host + explicit independent source verification; approved resolutions require separately verified outcome document and dated outcome. Negative tests for spoof host and no approval proof.",
+    "merge_commit_sha": "6dddf93fb299303da7bfb2748d2d0b19aad98f21",
+    "required_exact_head_ci": "SUCCESS_BACKEND_DOCKER_AI_GOVERNANCE",
+    "reviews": "EMPTY",
+    "threads": "EMPTY",
+    "original_pr_306": "NOT_MERGED_SUPERSEDED",
+    "production_verified": false
   }
 }
