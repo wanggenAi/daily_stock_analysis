@@ -6,7 +6,7 @@ it never grants current trade executability from a quote, position or lifecycle.
 """
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import datetime
 from typing import Any, Mapping
 
 from .investor_decision_v4_projection import project_v4_p0
