@@ -3,8 +3,8 @@
   "task_key": "investor-decision-report-v4",
   "repository": "wanggenAi/daily_stock_analysis",
   "owner_approved_on": "2026-09-25",
-  "status": "P0_IMPLEMENTED_IN_INDEPENDENT_PR_CI_PENDING",
-  "phase": "P0_EXACT_HEAD_CHECKS_PENDING",
+  "status": "P0_CODE_MERGED_P1_IMPLEMENTATION_PENDING",
+  "phase": "P1_HOLDINGS_EVENTS_QUOTES_CONSUMPTION_PENDING",
   "plan_on_main": "docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md",
   "task_register_on_main": "TASK_STATE.md",
   "registration_commits": {
@@ -13,11 +13,10 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "Before any mutation reread exact PR #305 head, latest main and required CI; do not force-merge failing/incomplete checks or confuse PR-created with V4 production.",
-    "After exact-head CI green and review check, verify no incompatible concurrent main changes and merge P0 if mergeable; verify postmerge main and checks, then mark P0 implementation merged while preserving P1–P5 pending.",
-    "P1: integrate current validated user-confirmed holdings/funds, issuer events, proposal/resolution, executable quote timestamps, consumed authority, lot/T+1/cash; add actual projection and UI tests. Never derive execution from P0 recorded action.",
-    "Keep research lane separate; generation 68 audit of scheduled market Sep24 artifact and older Jev/Overlay already persisted; no duplicated Deep/Terminal.",
-    "Never treat fresh report generation as new market trade date, Jev entry as Formal BUY or any UNKNOWN as PASS."
+    "P1 start from latest live main after recheck AGENTS/V4 plan/parallel research cursor and pending P0 postmerge CI; no P0 production claim.",
+    "Wire P1 purely as additive V4 projection with user-confirmed holdings/fund evidence, original issuer proposal/outcome semantics, observed quote timestamps, consumed authority and lot/T+1/cash display-only conditions; test stale/missing/mismatch/idempotent cases. Do not imply P0 has execution capability.",
+    "Keep stock-system-convergence research cursor independent and do not edit from V4 lane.",
+    "Follow existing current canonical-only authority and no-auto-trade fail closed; P2–P5 remain pending."
   ],
   "coordination": {
     "parallel_task": "recovery/tasks/stock-system-convergence.json",
@@ -37,12 +36,13 @@
   "completed": [
     "Self-contained owner-approved V4 specification committed to live main.",
     "V4 parallel-task pointer and phased next actions committed to live TASK_STATE.md.",
-    "Created independent branch feat/investor-decision-v4-p0-contract-20260926 from live main 9e2e656f4ef74e4a45a59744a962289a16ebe834; P0 additive projection, fail-closed tests, source/as-of/fallback contract and changelog committed; PR #305 opened."
+    "Created independent branch feat/investor-decision-v4-p0-contract-20260926 from live main 9e2e656f4ef74e4a45a59744a962289a16ebe834; P0 additive projection, fail-closed tests, source/as-of/fallback contract and changelog committed; PR #305 opened.",
+    "P0 PR #305 exact head 15dfa2541766cd5c44a9a6714e03f7274bfd8bcc checks green and GitHub squash merged as 53641d376cafd08f0197a619250dae729d8699e1; live main and PR merged verified."
   ],
-  "verified_code_merged": false,
+  "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 2,
+  "generation": 3,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Start V4 P0 immediately in independent branch/PR while parallel stock-system-convergence generation 66 audits real 2026-09-25 scheduled All-A production. Do not block V4 on stale formal upstream; empty/stale states must be visibly honest.",
@@ -60,8 +60,18 @@
     "pr_url": "https://github.com/wanggenAi/daily_stock_analysis/pull/305",
     "head_sha": "15dfa2541766cd5c44a9a6714e03f7274bfd8bcc",
     "initial_base_sha": "9e2e656f4ef74e4a45a59744a962289a16ebe834",
-    "state": "CI_PENDING_NOT_MERGED",
+    "state": "MERGED_POSTMERGE_PRODUCTION_NOT_VERIFIED",
     "scope": "P0 read-only projection; not wired to production Web/API or Formal authority",
-    "research_cursor_last_seen_generation": 68
-  }
+    "research_cursor_last_seen_generation": 68,
+    "merge_commit_sha": "53641d376cafd08f0197a619250dae729d8699e1",
+    "required_exact_head_ci": "success",
+    "backend_gate": "success",
+    "docker_build": "success",
+    "ai_governance": "success",
+    "web_gate": "skipped_no_web_changes",
+    "review_list": "empty",
+    "merge_verified": true
+  },
+  "previous_checkpoint_generation": 2,
+  "last_observed_main_sha": "53641d376cafd08f0197a619250dae729d8699e1"
 }
