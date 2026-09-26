@@ -1,17 +1,17 @@
 {
   "schema_version": 2,
-  "generation": 69,
+  "generation": 70,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "ISSUER_COLLECTION_BUDGET_DISCREPANCY_PROVEN_AUDIT_PR307_PENDING_CANONICAL_STALE",
-  "stage": "20260926_STATIC_COLLECTOR_TRACE_AND_ISOLATED_COVERAGE_DIAGNOSTICS",
-  "previous_checkpoint_generation": 68,
+  "status": "FRESH_MAIN_ISSUER_AUDIT_PR310_CI_PENDING_LATEST_DEEP_NO_NET_NEW_PRIMARY",
+  "stage": "20260926_SAFE_MAIN_SYNC_AND_INDEPENDENT_STABLE_FINGERPRINT_COMPARISON",
+  "previous_checkpoint_generation": 69,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "48692e6712c51a3655bc9331ece6ad6616521243",
-  "work_branch": "fix/research-issuer-coverage-audit-20260926",
-  "work_head_sha": "b92e00e9fa1d6c9220d22a07c63eb29268aa9081",
-  "active_pr": 307,
+  "last_observed_main_sha": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
+  "work_branch": "fix/research-issuer-audit-main-sync-20260926",
+  "work_head_sha": "aabf3df4d62e3db252b540d6938ec09af636255f",
+  "active_pr": 310,
   "parallel_v4_task": "recovery/tasks/investor-decision-report-v4.json",
   "evidence": {
     "historical_20260923_all_a": {
@@ -170,11 +170,16 @@
       ],
       "proven_root_cause_scope": "OBSERVABILITY_GAP_IN_PUBLISHED_COVERAGE; NOT_YET_PROVEN_PROVIDER_OR_OFFICIAL_ENDPOINT_BUG",
       "audit_pr": {
-        "number": 307,
-        "head": "b92e00e9fa1d6c9220d22a07c63eb29268aa9081",
-        "status": "OPEN_CI_PENDING",
+        "number": 310,
+        "head": "aabf3df4d62e3db252b540d6938ec09af636255f",
+        "status": "FRESH_MAIN_REPLACEMENT_EXACT_HEAD_CI_PENDING",
         "scope": "issuer attempted/cached/not-attempted additive metrics in genuine All-A run_summary only",
-        "no_collection_threshold_change": true
+        "no_collection_threshold_change": true,
+        "original_pr": 307,
+        "original_head": "b92e00e9fa1d6c9220d22a07c63eb29268aa9081",
+        "base": "4760a3609de3e8b7b02b213c5c91befb7cf2507d",
+        "old_pr_remains_open": true,
+        "why": "Original PR307 behind85 while exact-head green; fresh-main-only five intended files, no force push."
       }
     },
     "more_recent_live_runs_checked": {
@@ -230,6 +235,56 @@
       ],
       "net_new_market_session_2026_09_25": "NOT_PROVEN",
       "actual_project_jev_calls_this_chat": 0
+    },
+    "latest_downstream_research_provenance": {
+      "every_industry": {
+        "run_id": 36245056550,
+        "artifact_id": 10907162960,
+        "conclusion": "success",
+        "canonical_latest_trade_date": "2026-09-24",
+        "canonical_source_run_id": "36245056550"
+      },
+      "deep": {
+        "run_id": 36245831682,
+        "artifact_id": 10907432408,
+        "source_run_id": "36245056550",
+        "conclusion": "success",
+        "requested": 18,
+        "processed": 18,
+        "complete": 0,
+        "progressed_gates": 6,
+        "reported_new_evidence_count": 43,
+        "company_evidence_rows": 27,
+        "industry_evidence_rows": 16,
+        "collection_attempt_1": {
+          "company_task_count": 18,
+          "company_actual_fetch_count": 22,
+          "company_success_count": 4,
+          "company_missing_count": 14
+        },
+        "collection_attempt_2": {
+          "company_task_count": 8,
+          "company_actual_fetch_count": 9,
+          "company_success_count": 1,
+          "company_missing_count": 7
+        }
+      },
+      "older_deep_comparison": {
+        "run_id": 36228219860,
+        "artifact_id": 10902085528,
+        "stable_identity": "scope + code + original_url + evidence_date + content_hash; exclude collection_time",
+        "previous_distinct_stable_fingerprints": 37,
+        "new_distinct_stable_fingerprints": 37,
+        "added": 0,
+        "removed": 0,
+        "independently_net_new_primary_evidence": false
+      },
+      "finalizer": {
+        "run_id": 36245843960,
+        "conclusion": "failure",
+        "no_new_canonical_authority": true
+      },
+      "note": "A current run's new_evidence_count=43 is inventory count and network fetches can succeed without a new source fingerprint; genuine All-A issuer coverage PR310 separate. Last genuine scheduled All-A confirmed source is Sep24; 2026-09-25 market as-of NOT_PROVEN. Do not redispatch consumed Deep/Terminal/Jev."
     }
   },
   "last_consumed": {
@@ -250,11 +305,11 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "Verify PR307 exact-head CI/clean mergeability/review and latest main; merge audit-only patch only after required green; verify postmerge and genuine next All-A run artifact, distinguish missing audit from zero.",
-    "Use actual collected CSV report metrics to verify 30/80 budget and issuer attempted/cache/not-attempted partition. Do not raise budgets or declare official endpoint bug without proven independent network-fetch/counterfactual evidence.",
-    "Find real completed 2026-09-25 market-session Canonical lineage in genuine production artifacts; if absent, retain stale Finalizer gate; do not promote as-of Sep24 to Sep25.",
-    "Continue stable original-source publication/report-period fingerprint comparison for 001316/603993 and independent exit cohort using only new evidence epochs; do not duplicate consumed Deep/Terminal.",
-    "Coordinate research separately from V4 P1 PR306 and cursor generation4; never edit V4 sidecar."
+    "Re-read live main and PR310 exact-head new CI/reviews/mergeability; safely merge only replacement with new required checks green and clean; close stale old PR307 only after verified new merge.",
+    "On genuinely next All-A production artifact after PR310 lands inspect issuer_collection_coverage: 80 queue vs configured fundamental 30, actual noncached issuer attempts, cached-only vs not-audited; compare original source period/hash rather than per-run new_evidence_count.",
+    "Most recent actual Every-Industry 36245056550 / Deep 36245831682 were downloaded; 27 issuer + 16 industry inventory with 37 stable fingerprints matched prior Deep 10902085528 exactly (0 independently added). Do NOT redispatch same Deep/Jev/Terminal; await verifiably changed source epoch.",
+    "Find completed genuine 2026-09-25 market source and current Canonical; latest verified artifacts still Sep24 and Finalizer failed; no stale guard bypass.",
+    "Keep V4 cursor independent; no V4 task file changes from research lane."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
