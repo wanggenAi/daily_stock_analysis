@@ -64,13 +64,23 @@ class _TextParser(HTMLParser):
         super().__init__()
         self.parts: list[str] = []
 
+    def handle_starttag(self, tag, attrs):
+        # A real line break separates statements; inline spans do not.
+        if tag.lower() == "br":
+            self.parts.append(" ")
+
     def handle_data(self, data):
-        text = " ".join(data.split())
-        if text:
-            self.parts.append(text)
+        # The official release uses nested inline spans around some figures.
+        # Inserting a space for every HTML text node breaks labels/percentages,
+        # while preserving original text plus block boundaries does not.
+        self.parts.append(data)
+
+    def handle_endtag(self, tag):
+        if tag.lower() in {"p", "div", "tr", "td", "li", "h1", "h2", "h3", "h4", "h5", "h6"}:
+            self.parts.append(" ")
 
     def text(self) -> str:
-        return " ".join(self.parts)
+        return " ".join("".join(self.parts).split())
 
 
 @dataclass(frozen=True)
