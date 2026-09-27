@@ -1,0 +1,260 @@
+{
+  "blocking_reasons": [
+    "FUND_POSITION_CONFIRMATION_MISSING",
+    "NO_CURRENT_BROKER_CASH_OR_POSITION_PROOF",
+    "NO_CURRENT_EXECUTABLE_QUOTE_PROOF",
+    "NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION",
+    "STALE_OR_UNVERIFIED_MARKET_SESSION"
+  ],
+  "canonical_sha256": "792866a802aa7a88261a71c84fd3b91c549bae3e29f99f2557d16f57fdeff437",
+  "canonical_snapshot_id": "66c3dfc6b56e166443a5",
+  "canonical_source_run_id": "36100215062",
+  "contract_version": "GEN_GE_INVESTOR_CHATGPT_HANDOFF_V1",
+  "event_audit": {
+    "closure_status": "UNKNOWN",
+    "signal_digest": null,
+    "status": "NO_INDEPENDENT_ORIGINAL_OUTCOME_VERIFICATION",
+    "verified_official_events": []
+  },
+  "feeds": {
+    "broker_cash": {
+      "amount_cny": null,
+      "as_of": null,
+      "status": "UNKNOWN"
+    },
+    "dated_manual_quotes": {
+      "as_of": null,
+      "status": "MISSING_OR_WRONG_EPOCH"
+    },
+    "decision_outcomes": {
+      "as_of": null,
+      "status": "LINK_ONLY_NOT_REVALIDATED"
+    },
+    "equities": {
+      "as_of": "2026-09-24",
+      "status": "REPO_RECONCILED_NOT_LIVE_BROKER"
+    },
+    "era_cycle": {
+      "as_of": "2026-09-20T16:17:47Z",
+      "status": "DATED_RESEARCH_ONLY"
+    },
+    "executable_quotes": {
+      "as_of": null,
+      "status": "UNVERIFIED"
+    },
+    "formal_opportunities": {
+      "as_of": "2026-09-24",
+      "status": "NO_NEW_EXECUTION_VERIFIED_BY_HANDOFF"
+    },
+    "funds": {
+      "as_of": null,
+      "status": "UNVERIFIED"
+    },
+    "market_eod": {
+      "as_of": "2026-09-24",
+      "expected_min_trade_date": "2026-09-25",
+      "status": "STALE_OR_UNVERIFIED",
+      "upstream_status": "STALE_UPSTREAM"
+    },
+    "official_issuer": {
+      "as_of": null,
+      "status": "ORIGINAL_SOURCE_COVERAGE_NOT_PROVEN"
+    },
+    "planning_cash": {
+      "amount_cny": 50000,
+      "as_of": "2026-09-20",
+      "status": "DATED_PLANNING_ONLY"
+    },
+    "realized_personal_pnl": {
+      "as_of": null,
+      "status": "UNKNOWN_NO_VERIFIED_FILLS"
+    },
+    "reference_quotes": {
+      "as_of": "2026-09-24",
+      "status": "FROZEN_CANONICAL_ONLY"
+    },
+    "research_only": {
+      "as_of": "2026-09-24",
+      "status": "RESEARCH_ONLY"
+    }
+  },
+  "formal_buy_now": [],
+  "formal_wait_price": [],
+  "generated_at": "2026-09-27T23:17:07+00:00",
+  "holdings": [
+    {
+      "code": "600406",
+      "executable_shares": 0,
+      "frozen_reference_price": 22.27,
+      "last_reported_quantity": 200,
+      "name": "国电南瑞",
+      "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
+      "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
+      "recorded_formal_action": "REDUCE_25",
+      "reference_as_of": "2026-09-24",
+      "source_path": "data/investor_decision_dashboard/latest.json",
+      "valuation_confidence": "HIGH",
+      "value_range": [
+        12.835466291779003,
+        26.087004962365256
+      ]
+    },
+    {
+      "code": "001316",
+      "executable_shares": 0,
+      "frozen_reference_price": 27.71,
+      "last_reported_quantity": 200,
+      "name": "润贝航科",
+      "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
+      "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
+      "recorded_formal_action": "HOLD_REVIEW",
+      "reference_as_of": "2026-09-24",
+      "source_path": "data/investor_decision_dashboard/latest.json",
+      "valuation_confidence": "LOW",
+      "value_range": [
+        21.644645478526556,
+        70.29254879749493
+      ]
+    },
+    {
+      "code": "601318",
+      "executable_shares": 0,
+      "frozen_reference_price": 53.25,
+      "last_reported_quantity": 400,
+      "name": "中国平安",
+      "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
+      "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.641<1.00",
+      "recorded_formal_action": "HOLD",
+      "reference_as_of": "2026-09-24",
+      "source_path": "data/investor_decision_dashboard/latest.json",
+      "valuation_confidence": "MEDIUM",
+      "value_range": [
+        null,
+        null
+      ]
+    },
+    {
+      "code": "603993",
+      "executable_shares": 0,
+      "frozen_reference_price": 17.08,
+      "last_reported_quantity": 1100,
+      "name": "洛阳钼业",
+      "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
+      "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+      "recorded_formal_action": "HOLD",
+      "reference_as_of": "2026-09-24",
+      "source_path": "data/investor_decision_dashboard/latest.json",
+      "valuation_confidence": "HIGH",
+      "value_range": [
+        18.02971886915772,
+        43.065691192510116
+      ]
+    }
+  ],
+  "holdings_truncated": 0,
+  "lineage": {
+    "canonical_matches_dashboard": true,
+    "canonical_trade_date_present": true,
+    "center_matches_dashboard": true,
+    "exchange_calendar_independently_verified": false,
+    "live_broker_positions_verified": false,
+    "market_matches_dashboard": true
+  },
+  "market_session_as_of": "2026-09-24",
+  "no_auto_trade": true,
+  "production_provenance": {
+    "finalizer_run_id": "36101050876",
+    "market_artifact_as_of_join": "UNVERIFIED",
+    "market_artifact_id": "10874605479",
+    "market_run_id": "36154161688"
+  },
+  "research_audit": {
+    "research_buy_count": 1,
+    "research_gap_count": 18,
+    "research_is_not_formal": true,
+    "upstream_formal_buy_now_count": 0,
+    "upstream_formal_wait_count": 0
+  },
+  "snapshot_id": "3d971f05392a37e481ada083",
+  "source_files": {
+    "broker_quotes": {
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b6be622af21f1bcddc0aee5c51ae9b038b753b2c",
+      "immutable_git_blob_sha": "b6be622af21f1bcddc0aee5c51ae9b038b753b2c",
+      "path": "data/manual_execution_quotes/latest.json",
+      "sha256": "638ed83336571b338a48b88182a03dae36c3bf547f3d0d10610655fc5e787a65"
+    },
+    "dashboard": {
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/18490fdf120fb4a588a193452f32d354da0c75f9",
+      "immutable_git_blob_sha": "18490fdf120fb4a588a193452f32d354da0c75f9",
+      "path": "data/investor_decision_dashboard/latest.json",
+      "sha256": "9d056e855d859c8adebd9570cc35ba9fba650dbe19be2d3f353b262f65b1c8df"
+    },
+    "decision_center": {
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/7082c997d87434cbe2353f9f1fd8ec7bc9fe2b52",
+      "immutable_git_blob_sha": "7082c997d87434cbe2353f9f1fd8ec7bc9fe2b52",
+      "path": "data/decision_center/latest.json",
+      "sha256": "9acf4d0e43e532fe914b1e9be82daedab9b7fccf9f98dec05bf70f47be9697ce"
+    },
+    "era_radar": {
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/07327d6283c887d40f1bf41fba81c99ac0690823",
+      "immutable_git_blob_sha": "07327d6283c887d40f1bf41fba81c99ac0690823",
+      "path": "data/era_radar/latest.json",
+      "sha256": "5afd498fea435409ac8887b310d1873142c4e4d29cbdbdc6d70e7d6f8d3bda28"
+    },
+    "fund_register": {
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/6923d96f3e133462f8070117d5c6ce1491afac0b",
+      "immutable_git_blob_sha": "6923d96f3e133462f8070117d5c6ce1491afac0b",
+      "path": "CURRENT_FUNDS.md",
+      "sha256": "34998c31e6c5ca7ff8c7698d272cf7ca5c58d3fc4ead50aa6465357cab34db20"
+    },
+    "outcomes": {
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/8abf311a7fb620c957c008d7b8f943767f991487",
+      "immutable_git_blob_sha": "8abf311a7fb620c957c008d7b8f943767f991487",
+      "path": "data/formal_decision_outcomes/latest.json",
+      "sha256": "1ab1848c6fda4de1836d216b604aac7ca726e81109facc1fcbb81a4efb0d3e4b"
+    },
+    "planning_capital": {
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b31f3fec7f0731da559f4ccdbe87c08638a1397d",
+      "immutable_git_blob_sha": "b31f3fec7f0731da559f4ccdbe87c08638a1397d",
+      "path": "CURRENT_CAPITAL.json",
+      "sha256": "b31ca1e1e03a6709d305ff39b0eaf70f9248c4f58d122c0f8aa8d839360133e5"
+    }
+  },
+  "trend_research": [
+    {
+      "as_of": "2026-09-20T16:17:47Z",
+      "authority": "RESEARCH_ONLY",
+      "lifecycle": "EMERGING",
+      "source_path": "data/era_radar/latest.json",
+      "trend_id": "advanced_manufacturing"
+    },
+    {
+      "as_of": "2026-09-20T16:17:47Z",
+      "authority": "RESEARCH_ONLY",
+      "lifecycle": "EMERGING",
+      "source_path": "data/era_radar/latest.json",
+      "trend_id": "automotive_industry"
+    },
+    {
+      "as_of": "2026-09-20T16:17:47Z",
+      "authority": "RESEARCH_ONLY",
+      "lifecycle": "EMERGING",
+      "source_path": "data/era_radar/latest.json",
+      "trend_id": "demographic_longevity"
+    },
+    {
+      "as_of": "2026-09-20T16:17:47Z",
+      "authority": "RESEARCH_ONLY",
+      "lifecycle": "EMERGING",
+      "source_path": "data/era_radar/latest.json",
+      "trend_id": "digital_infrastructure"
+    },
+    {
+      "as_of": "2026-09-20T16:17:47Z",
+      "authority": "RESEARCH_ONLY",
+      "lifecycle": "EMERGING",
+      "source_path": "data/era_radar/latest.json",
+      "trend_id": "electrification_infrastructure"
+    }
+  ]
+}
