@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36297942742",
+  "orchestrator_run_id": "36298059660",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -124,6 +124,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "000096",
+      "entity_name": "广聚能源",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "000415",
       "entity_name": "渤海租赁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -184,20 +191,13 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000096",
-      "entity_name": "广聚能源",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-27T05:41:17+00:00",
-  "source_workflow_head_sha": "083df895ae0a2b2b22cd4b7f3dd9eea568a24a0f",
+  "source_generated_at": "2026-09-27T05:43:43+00:00",
+  "source_workflow_head_sha": "3b114530c480e436d80f40d17e4c3727a24379e8",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36297834079",
+  "source_workflow_run_id": "36297882842",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36297834079",
+  "trigger_source": "JEV_ORCHESTRATOR_36297882842",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-27T05:43:25+00:00",
+  "updated_at": "2026-09-27T05:45:45+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.68,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.94,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
