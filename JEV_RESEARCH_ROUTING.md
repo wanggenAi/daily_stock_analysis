@@ -12,7 +12,7 @@
 
 ## Route counts
 
-- {"DEEP_RESEARCH": 15, "EVIDENCE_REFRESH": 9, "VALUATION_CLOSURE": 1}
+- {"DEEP_RESEARCH": 16, "EVIDENCE_REFRESH": 8, "VALUATION_CLOSURE": 1}
 
 ## Advisory queue
 
@@ -40,6 +40,6 @@
 - 000596 古井贡酒 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 000682 东方电子 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603416 信捷电气 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
-- 603658 安图生物 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 603658 安图生物 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
