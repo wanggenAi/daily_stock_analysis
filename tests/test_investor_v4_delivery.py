@@ -180,3 +180,12 @@ def test_missing_remote_and_old_local_never_claim_current_market(tmp_path):
     assert result["hand_off"]["feeds"]["market_eod"]["status"] == "STALE_OR_UNVERIFIED"
     assert result["hand_off"]["feeds"]["broker_cash"]["amount_cny"] is None
     assert result["execution_allowed"] is False
+
+
+def test_immutable_source_url_with_unexpected_port_is_not_trusted(tmp_path):
+    data = sample()
+    data["source_files"]["dashboard"]["immutable_blob_url"] = (
+        "https://api.github.com:444/repos/example/repo/git/blobs/" + "a" * 40
+    )
+    save_local(tmp_path, data)
+    assert latest_report(root=tmp_path, repo="")["status"] == "UNAVAILABLE"
