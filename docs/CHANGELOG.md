@@ -8,7 +8,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
-- [修复] Era Radar 国家统计局固定资产投资采集器保留原始 HTML 内联节点连续文本，仅在段落、表格单元等结构边界分隔，修复分片指标误判为缺失而中断整批生产；必需指标缺失继续拒绝发布。
 - [新功能] V4 H1 在原有 Investor Brief 产线后追加只读有界 GitHub 交接清单及 Markdown，校验 Canonical 血缘、分源标注过期和缺证；不新增 GPT API、交易授权或并行调度。
 - [改进] All-A 生产报告新增公司级证据真实抓取覆盖审计，区分实际非缓存尝试、仅缓存和未覆盖代码；未找到审计时明确 UNKNOWN，不把原始 URL 或旧公开材料冒充当期新证据。
 - [改进] V4 P1 新增只读券商报价及持仓证据时间核对、已消费授权、基金缺失与股东提案/正式决议区分；所有历史数据仅展示，未完成实时交易条件前可执行数量保持为零。
@@ -160,6 +159,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - [修复] 修复 Web 回测运行未传分析日期范围、股票代码未归一化导致后端成功返回但结果为空的问题，并为空候选和行情不足返回诊断信息。
 - [文档] 补充回测请求链路说明：`analysis_date_from/analysis_date_to` 与 `code` 的输入边界、归一化与筛选顺序，以及历史行情不足或候选集为空时回测返回成功响应，在 `message` 与 `diagnostics`（含 `empty_reason`）中提供可诊断信息，并同步更新 `docs/full-guide.md`、`docs/full-guide_EN.md` 示例。
 - [修复] 回测代码匹配新增非法市场后缀/长度兜底：如 `600519.HK`、`600519.SZ`、`SH000001` 不再静默回落到其它有效代码，并在日期筛选重跑时对齐旧回测结果的分析日期，避免历史快照日期命中但结果列表仍为空。
+
+- [修复] Era Radar 国家统计局固定资产投资采集器保留原始 HTML 内联节点连续文本，仅在段落、表格单元等结构边界分隔，修复分片指标误判为缺失而中断整批生产；必需指标缺失继续拒绝发布。
 
 ## [3.23.0] - 2026-06-20
 
