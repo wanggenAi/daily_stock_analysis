@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36360166947",
+  "orchestrator_run_id": "36360347526",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -75,6 +75,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "601069",
+      "entity_name": "西部黄金",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "603105",
       "entity_name": "芯能科技",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -98,13 +105,6 @@
       "attention_priority": "MEDIUM",
       "entity_id": "600640",
       "entity_name": "国脉文化",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "601069",
-      "entity_name": "西部黄金",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -190,14 +190,14 @@
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-27T23:52:22+00:00",
-  "source_workflow_head_sha": "4e7241f376db666b21c67b5fc35c5a8327225eba",
+  "source_generated_at": "2026-09-27T23:55:45+00:00",
+  "source_workflow_head_sha": "bf6746498f0b0d0a7b86f29d971e9f1213b66956",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36359964404",
+  "source_workflow_run_id": "36360243128",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36359964404",
+  "trigger_source": "JEV_ORCHESTRATOR_36360243128",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-27T23:54:35+00:00",
+  "updated_at": "2026-09-27T23:57:46+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.75,
+      "attention_confidence": 0.71,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36347801644",
+        "deep_lambda_run_id": "36359858332",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.93,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
