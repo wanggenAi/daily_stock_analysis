@@ -53,6 +53,8 @@ def _parse_manifest(raw: bytes) -> dict[str, Any]:
         raise ValueError("H1 source or freshness metadata absent")
     if feeds["market_eod"].get("as_of") != value["market_session_as_of"]:
         raise ValueError("H1 market/feed dates disagree")
+    if not isinstance(source_files.get("dashboard"), dict) or "sha256" not in source_files["dashboard"]:
+        raise ValueError("H1 publication-time dashboard source missing")
     for name, source in source_files.items():
         if not isinstance(name, str) or not isinstance(source, dict):
             raise ValueError("Malformed H1 source reference")
