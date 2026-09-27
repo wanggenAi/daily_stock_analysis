@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36280375121",
+  "orchestrator_run_id": "36286707803",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -75,6 +75,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "601069",
+      "entity_name": "西部黄金",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "603105",
       "entity_name": "芯能科技",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -103,8 +110,8 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "601069",
-      "entity_name": "西部黄金",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -166,6 +173,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "000682",
+      "entity_name": "东方电子",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -177,27 +191,13 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000682",
-      "entity_name": "东方电子",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-26T23:43:58+00:00",
-  "source_workflow_head_sha": "b575701a1043e492b0801ab33f2da4f46906d89e",
+  "source_generated_at": "2026-09-27T01:49:17+00:00",
+  "source_workflow_head_sha": "354c6672aba2cfd01846db56fe5979680a9629d0",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36280271735",
+  "source_workflow_run_id": "36286608975",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36280271735",
+  "trigger_source": "JEV_ORCHESTRATOR_36286608975",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-26T23:46:08+00:00",
+  "updated_at": "2026-09-27T01:51:28+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.7,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36279950708",
+        "deep_lambda_run_id": "36285572352",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
