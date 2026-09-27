@@ -1,5 +1,6 @@
 """H1 handoff must not turn dated advisory feeds into fresh trade authority."""
 import copy
+import hashlib
 import json
 from pathlib import Path
 
@@ -148,6 +149,11 @@ def test_bounded_sources_are_exact_local_files_without_invented_links(tmp_path):
     m = build_handoff(tmp_path, canonical)
     assert len(m["holdings"]) == 16 and m["holdings_truncated"] == 9
     assert "sha256" in m["source_files"]["dashboard"]
+    raw = path.read_bytes()
+    git_blob = hashlib.sha1(b"blob " + str(len(raw)).encode() + b"\0" + raw).hexdigest()
+    assert m["source_files"]["dashboard"]["immutable_git_blob_sha"] == git_blob
+    assert m["source_files"]["dashboard"]["immutable_blob_url"].endswith("/" + git_blob)
+    assert "pinned Git blob" in render_markdown(m)
     assert m["source_files"]["outcomes"]["status"] == "MISSING"
     assert "CURRENT_FUNDS.md" not in render_markdown(m)  # missing files are not linked
     assert "https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/investor_decision_dashboard/latest.json" in render_markdown(m)
