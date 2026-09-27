@@ -1,17 +1,17 @@
 {
   "schema_version": 2,
-  "generation": 73,
+  "generation": 74,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "ISSUER_COVERAGE_PR310_MERGED_NEXT_GENUINE_ALL_A_PRODUCTION_ARTIFACT_PENDING",
-  "stage": "POSTMERGE_ISSUER_COLLECTION_COVERAGE_PRODUCTION_PROOF",
-  "previous_checkpoint_generation": 72,
+  "status": "PR310_MERGED_PRODUCTION_AUDIT_PENDING_AND_NBS_RADAR_PR314_EXACT_CI_IN_PROGRESS",
+  "stage": "ISSUER_AUDIT_AWAIT_NEW_ALL_A_AND_NBS_COLLECTOR_HTML_PARSER_REPAIR",
+  "previous_checkpoint_generation": 73,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "8162682f250cbd3eaa440f2312b5c6a56600f970",
-  "work_branch": "fix/research-issuer-audit-main-sync-20260926",
-  "work_head_sha": "d74fd2d88f14eb4c561aae631afb4de5b26a596f",
-  "active_pr": null,
+  "last_observed_main_sha": "b8d4f68c0688e29af59ede7c78c3fec1d4fdfceb",
+  "work_branch": "fix/era-radar-nbs-inline-html-20260928",
+  "work_head_sha": "087e9b477105af7f580e9fd88b675b360496b08d",
+  "active_pr": 314,
   "parallel_v4_task": "recovery/tasks/investor-decision-report-v4.json",
   "evidence": {
     "historical_20260923_all_a": {
@@ -311,6 +311,25 @@
       "strict_ready": 0,
       "source": "Downloaded original artifact archive, joined top80_evidence_queue.csv and auto_evidence_audit.csv by exact code; annual vs material event collector differ and must not be merged as one attempt counter.",
       "no_new_primary_claim": true
+    },
+    "nbs_radar_repair": {
+      "observed_failed_run": 36351674022,
+      "job_id": 108711639298,
+      "failed_source": "NbsFixedAssetInvestmentCollector",
+      "other_collectors": "WorldBank/MIIT policy/MIIT statistics/PBC succeeded",
+      "error": "ValueError missing total_fixed_asset_investment, industrial_investment, manufacturing_investment, infrastructure_investment",
+      "official_current_release": "https://www.stats.gov.cn/zwfwck/sjfb/202609/t20260915_1965309.html",
+      "official_release_published": "2026-09-15 10:00 China time",
+      "root_cause": "HTML text-node segmentation plausibly breaks contiguous published figures/labels; still requires real network postmerge proof",
+      "pr": 314,
+      "head": "087e9b477105af7f580e9fd88b675b360496b08d",
+      "regression": "styled inline <span> 6 expected industrial capex metrics, missing original industrial field still fails closed",
+      "deterministic_contracts": "SUCCESS at exact head",
+      "era_radar_deterministic_gate": "SUCCESS at exact head",
+      "backend": "IN_PROGRESS",
+      "docker": "IN_PROGRESS",
+      "production_verified": false,
+      "safety": "NO_PUBLISH on any configured failure; no altered raw metric/threshold/trading authority"
     }
   },
   "last_consumed": {
@@ -331,10 +350,10 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "PR #310 audit-only issuer collection coverage merged exact-head d74fd2d88f14eb4c561aae631afb4de5b26a596f (backend/docker/ai-governance all SUCCESS) as e84b184b3f6f47c8315c6144bb1dd43c614f30eb; original superseded #307 closed, do not retry/re-merge.",
-    "Read next genuinely executed postmerge scheduled All-A run; download actual genge-all-a-production-report and verify issuer_collection_coverage annual/event/touched/attempted/cached/untouched code counts and immutable distinct original source URL/document period/content hash versus prior real Sep24 artifact 10874605479. No new postmerge genuine All-A run independently seen as of this checkpoint; do not claim effectiveness just from merged code.",
-    "Trace verified fresh completed exchange-session upstream; existing investor/dashboard last as-of Sep24, current market-data freshness blocked. Keep stale Finalizer fail-closed and no Formal authorization, do not manually re-dispatch consumed Deep/Terminal/Jev.",
-    "V4 is separate: the independent cursor was last seen gen9 and H1 implementation PR313 new exact head 329948d298eb5e4ea1f71d3af2fb8b0c3e221089 is undergoing exact-head CI; do not edit V4 cursor or duplicate H1."
+    "Research issuer PR310 is merged/consumed; download and compare the NEXT genuinely scheduled All-A artifact produced after its merge, including annual/events/union touched vs untouched and stable original-source fingerprints, market trade date and independent new materials; never replay consumed Deep/Jev.",
+    "Finish independent Era Radar NBS collector PR314: verify exact-head required backend/docker/governance plus live-specific deterministic checks, review current main/conflicts; merge only when safe. The original 2026-09-15 release does publish total/industrial/manufacturing/infrastructure metrics; the prior HTML parser introduced spaces across inline text nodes. After approved merge verify automatic genuine live-production run and five configured source health statuses, current 2026-09-15 publication/time and INDUSTRIAL_CAPITAL observations. Do not claim real repair on fixture green; keep atomic NO_PUBLISH if any collector genuinely fails.",
+    "Existing decision dashboard as-of Sep24 is stale relative to Sep25 completed session; formal exposures remain blocked until independently verified current source; do not invent cash, issuer materials or Fresh Canonical.",
+    "V4 separate cursor latest last observed gen9 with H1 PR313 awaiting exact-head backend; TASK_STATE cross-lane PR311 verified merged as b8d4f68c0688e29af59ede7c78c3fec1d4fdfceb. Never overwrite V4 cursor."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
@@ -358,6 +377,7 @@
   },
   "completed": [
     "Verified PR310 old head was exact-head CI green and had no reviews, but became GitHub dirty after PR309 merged due to shared CHANGELOG. Safely merged live main into existing PR310 using nonforce fast-forward two-parent commit d74fd2d88f14eb4c561aae631afb4de5b26a596f; PR310 now clean/unstable solely awaiting NEW exact-head CI.",
-    "Rechecked original PR310 exact head d74fd2d88f14eb4c561aae631afb4de5b26a596f backend/docker/ai-governance completed SUCCESS, original PR310 independently merged on 2026-09-27T01:27:06Z as e84b184b3f6f47c8315c6144bb1dd43c614f30eb; old #307 closed unmerged with replacement audit comment. No independently verified postmerge All-A production artifact yet."
+    "Rechecked original PR310 exact head d74fd2d88f14eb4c561aae631afb4de5b26a596f backend/docker/ai-governance completed SUCCESS, original PR310 independently merged on 2026-09-27T01:27:06Z as e84b184b3f6f47c8315c6144bb1dd43c614f30eb; old #307 closed unmerged with replacement audit comment. No independently verified postmerge All-A production artifact yet.",
+    "Investigated genuine 2026-09-27 Era Radar live job 108711639298 failure: configured NBS fixed-asset-investment collector reported four mandatory missing metrics and atomic NO_PUBLISH although four other configured collectors succeeded; checked current 2026-09-15 NBS official release really includes the four current-period figures. Submitted minimal text-node-boundary fix with split-inline-span and absent-field regressions in independent PR314 at 087e9b477105af7f580e9fd88b675b360496b08d; deterministic contracts and Era Radar deterministic gate success, full exact CI + genuine live proof pending."
   ]
 }
