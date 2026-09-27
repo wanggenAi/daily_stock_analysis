@@ -150,6 +150,7 @@ def test_bounded_sources_are_exact_local_files_without_invented_links(tmp_path):
     assert "sha256" in m["source_files"]["dashboard"]
     assert m["source_files"]["outcomes"]["status"] == "MISSING"
     assert "CURRENT_FUNDS.md" not in render_markdown(m)  # missing files are not linked
+    assert "https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/investor_decision_dashboard/latest.json" in render_markdown(m)
 
 
 def test_only_proven_radar_is_labeled_research_only(tmp_path):
