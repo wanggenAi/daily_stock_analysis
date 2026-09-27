@@ -73,6 +73,7 @@ describe('InvestorV4Page historical-only web source', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     window.localStorage.clear();
+    window.localStorage.setItem('dsa.uiLanguage', 'zh');
     vi.mocked(investorV4Api.latest).mockResolvedValue(stale);
   });
 
