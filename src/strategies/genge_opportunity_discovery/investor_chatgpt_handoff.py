@@ -280,7 +280,7 @@ def render_markdown(m: Mapping[str, Any]) -> str:
     ]
     for source in m["source_files"].values():
         if "sha256" in source:
-            lines.append("- " + source["path"] + " (sha256 " + source["sha256"] + ")")
+            lines.append("- [" + source["path"] + "](https://github.com/wanggenAi/daily_stock_analysis/blob/main/" + source["path"] + ") (sha256 " + source["sha256"] + ")")
     lines += ["", "Verify current main and the machine handoff before following these paths.",
               "Drill into original documents only when independently verified.", ""]
     return "\n".join(lines)
