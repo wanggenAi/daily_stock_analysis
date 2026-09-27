@@ -1,0 +1,20 @@
+# V4 — ChatGPT Web on-demand investor research prompt
+
+**Contract:** [V4 automated background / on-demand ChatGPT task](INVESTOR_V4_ON_DEMAND_CHATGPT_TASK.md). This is a **user-initiated ChatGPT Web conversation** with the connected GitHub integration, not a GitHub Actions GPT API job and not an automatic trigger when the separate stock site opens. No API key is necessary for this ChatGPT Web invocation. Only existing lawful/authorized data sources may be read. The permanent packet `INVESTOR_CHATGPT_HANDOFF.md` and `data/investor_chatgpt_handoff/latest.json` are **planned H1 outputs and do not exist until H1 passes production**; use the fallback below until then.
+
+## Owner's one-sentence request
+
+> 读取我的 GitHub 仓库 `wanggenAi/daily_stock_analysis` 的最新真实生产状态和最新投资研究数据，先看 `INVESTOR_CHATGPT_HANDOFF.md` 及其 JSON（尚未落地时读取现有的 `LATEST_DECISION_CENTER.md`、`data/decision_center/latest.json`、`data/investor_decision_dashboard/latest.json`、`data/formal_decision_outcomes/latest.json`），核查最新交易日、数据/公告来源、当前已确认持仓、价格与估值时效、Formal 与研究建议的差异和历史预测验证，再只在必要时深入读取原始证据，为我生成简明的持仓优先投资研究报告：有哪些新变化、建议及价格/股数条件、支持与反对证据、独立的新机会、市场及趋势/周期、资金约束、过去建议表现。缺失或过期数据必须明确标记，不得猜测交易、成交价、现金、正式买卖权限或盈利，也不要为了给出买入建议降低证据门槛。
+
+## Execution checklist for ChatGPT (human-auditable)
+
+1. Actually fetch GitHub live main SHA, read `AGENTS.md` only where necessary to interpret source authority, then current handoff (once shipped) and exact current referenced files. Until H1 ships, use the existing fallback source paths above and `CURRENT_HOLDINGS.md`, `CURRENT_FUNDS.md`, `CURRENT_CAPITAL.json`, official issuer audit and research detail as warranted. Report both source as-of and your retrieval time; do not assume the current chat's past SHA or a latest file's generation timestamp establishes fresh exchange-session data.
+2. Verify the immutable authoritative snapshot lineage and source dates; check real latest exchange trading session, including holidays; if newer than current Canonical, clearly mark stale. Verify any quoted original issuer filing, report scope/period and proposal versus actual passed resolution before stating it as fact. Do not turn new Jev or terminal research-only BUY into formally authorized BUY.
+3. Begin with concise known holdings, funds status, meaningful changes, capital exposure and market gate. For any proposed action show executable proof only if actual current formal authority, lot/T+1, price/cash/portfolio evidence all pass; otherwise show reason for deferral and analysis-only cases. Present qualified new candidates only when proofs exist; zero qualified is valid.
+4. For each substantive thesis present key supporting and contradictory original evidence with direct links, issuer period/publication/effective dates, value/entry range and assumptions, rationale invalidation and exit risk. Separate verified original facts, model interpretation, unknowns and high-stakes uncertainties. Cite repo files as supporting audit where useful but do not substitute a generated markdown narrative for independent primary evidence.
+5. Include automatic **advice-market-outcome** scorecard from immutable decision history, not cherry-picked anecdotes. Compare to defined benchmark/horizon and discuss adverse moves. Separately present **actual account P&L** only when verified fills/costs/fees were available. No daily owner log or broker automation is assumed.
+6. This interaction should not mutate the GitHub repo, issue orders, fetch private broker account information without permission, or require the owner to explain earlier project checkpoints. If a linked file is missing or stale, state the precise limitation instead of making up research. Suggest necessary background *software* improvements separately from the investor-facing report.
+
+## Migration test after H1/H2
+
+Run the same one-sentence owner request in ChatGPT Web against the **live H1 output**, verify that a new on-demand research answer uses at least the current investor dashboard and one independent issuer original source for any nontrivial positive claim when available, explicitly handles missing/stale parts, and does not falsely claim the separate stock website itself ran GPT.
