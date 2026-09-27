@@ -73,7 +73,7 @@ def _parse_manifest(raw: bytes) -> dict[str, Any]:
                 or not re.fullmatch(
                     r"/repos/[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+/git/blobs/"
                     + re.escape(source["immutable_git_blob_sha"]), parsed.path
-                ) or parsed.query or parsed.fragment or parsed.username or parsed.password):
+                ) or parsed.query or parsed.fragment or parsed.username or parsed.password or parsed.port is not None):
             raise ValueError("H1 immutable source URL invalid")
     if not isinstance(value.get("blocking_reasons"), list) or not all(
         isinstance(x, str) for x in value["blocking_reasons"]
