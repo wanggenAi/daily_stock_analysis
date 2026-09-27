@@ -15,6 +15,7 @@ on:
     paths:
       - ".github/workflows/genge-investor-decision-dashboard.yml"
       - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
+      - "src/strategies/genge_opportunity_discovery/investor_chatgpt_handoff.py"
       - "src/strategies/genge_opportunity_discovery/holding_valuation_continuity.py"
       - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
@@ -30,6 +31,7 @@ on:
     paths:
       - ".github/workflows/genge-investor-decision-dashboard.yml"
       - "src/strategies/genge_opportunity_discovery/investor_decision_dashboard.py"
+      - "src/strategies/genge_opportunity_discovery/investor_chatgpt_handoff.py"
       - "src/strategies/genge_opportunity_discovery/holding_valuation_continuity.py"
       - "src/strategies/genge_opportunity_discovery/production_model.py"
       - "src/strategies/genge_opportunity_discovery/investor_live_execution_overlay.py"
@@ -45,6 +47,7 @@ on:
       - "tests/test_genge_investor_manual_execution_quote_overlay.py"
       - "tests/test_investor_terminal_research_overlay.py"
       - "tests/test_genge_investor_dashboard_workflow_contract.py"
+      - "tests/test_investor_chatgpt_handoff.py"
 
 permissions:
   contents: write
@@ -77,7 +80,8 @@ jobs:
             tests/test_genge_investor_live_execution_overlay.py \
             tests/test_genge_investor_manual_execution_quote_overlay.py \
             tests/test_investor_terminal_research_overlay.py \
-            tests/test_genge_investor_dashboard_workflow_contract.py
+            tests/test_genge_investor_dashboard_workflow_contract.py \
+            tests/test_investor_chatgpt_handoff.py
 
   publish-investor-brief:
     name: Publish investor decision brief
@@ -345,7 +349,16 @@ jobs:
                   assert live['automatic_formal_buy_allowed'] is False
                   assert live['evidence_authority'] == 'USER_CONFIRMED_BROKER_SCREENSHOT'
           PY
-            git add -f data/investor_decision_dashboard/latest.json; git add INVESTOR_DECISION_DASHBOARD.md
+            # H1 runs after all overlays and records finalized source lineage.
+            python -m src.strategies.genge_opportunity_discovery.investor_chatgpt_handoff \
+              --canonical "$CANONICAL" \
+              --finalizer-run-id "$FINALIZER_RUN_ID" \
+              --market-run-id "${MARKET_RUN_ID:-}" \
+              --market-artifact-id "${MARKET_ARTIFACT_ID:-}" \
+              --json-output data/investor_chatgpt_handoff/latest.json \
+              --markdown-output INVESTOR_CHATGPT_HANDOFF.md
+            git add -f data/investor_decision_dashboard/latest.json data/investor_chatgpt_handoff/latest.json
+            git add INVESTOR_DECISION_DASHBOARD.md INVESTOR_CHATGPT_HANDOFF.md
             if git diff --cached --quiet; then break; fi
             git commit -m "Persist investor decision brief [skip ci]"
             if git push origin HEAD:main; then break; fi
@@ -372,5 +385,7 @@ jobs:
           path: |
             INVESTOR_DECISION_DASHBOARD.md
             data/investor_decision_dashboard/latest.json
+            data/investor_chatgpt_handoff/latest.json
+            INVESTOR_CHATGPT_HANDOFF.md
           if-no-files-found: warn
           retention-days: 30

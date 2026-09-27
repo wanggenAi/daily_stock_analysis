@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [新功能] V4 H1 在原有 Investor Brief 产线后追加只读有界 GitHub 交接清单及 Markdown，校验 Canonical 血缘、分源标注过期和缺证；不新增 GPT API、交易授权或并行调度。
 - [改进] All-A 生产报告新增公司级证据真实抓取覆盖审计，区分实际非缓存尝试、仅缓存和未覆盖代码；未找到审计时明确 UNKNOWN，不把原始 URL 或旧公开材料冒充当期新证据。
 - [改进] V4 P1 新增只读券商报价及持仓证据时间核对、已消费授权、基金缺失与股东提案/正式决议区分；所有历史数据仅展示，未完成实时交易条件前可执行数量保持为零。
 - [新功能] 新增只读 V4 P0 投资展示映射及字段来源/时间/降级契约；Canonical、持仓、资金、市场与趋势独立标明来源，默认不产生可执行买单，跨代、过期或缺失数据严格阻断。

@@ -157,3 +157,22 @@ def test_investor_brief_validation_accepts_terminal_research_section_in_presenta
         "'terminal_wait_price','capital_deployment','final_operation_table']"
     )
     assert expected in workflow
+
+
+def test_v4_h1_runs_after_final_overlays_and_persists_in_same_commit() -> None:
+    workflow = _workflow()
+    block = workflow.split("- name: Build and persist investor-first action dashboard", 1)[1].split(
+        "- name: Dispatch terminal research overlay after investor brief persistence", 1
+    )[0]
+    research_at = block.index("investor_terminal_research_overlay")
+    handoff_at = block.index("python -m src.strategies.genge_opportunity_discovery.investor_chatgpt_handoff")
+    commit_at = block.index('git commit -m "Persist investor decision brief [skip ci]"')
+    assert research_at < handoff_at < commit_at
+    assert '--canonical "$CANONICAL"' in block
+    assert '--finalizer-run-id "$FINALIZER_RUN_ID"' in block
+    assert "data/investor_chatgpt_handoff/latest.json" in block
+    assert "INVESTOR_CHATGPT_HANDOFF.md" in block
+    assert "tests/test_investor_chatgpt_handoff.py" in workflow
+    assert "data/investor_chatgpt_handoff/latest.json" in workflow.split(
+        "- name: Upload investor decision artifact", 1
+    )[1]
