@@ -115,7 +115,7 @@ function immutableSourceUrl(input?: string): string | undefined {
     const url = new URL(input);
     if (url.protocol !== 'https:' || url.hostname !== 'api.github.com') return undefined;
     if (!/^\/repos\/[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+\/git\/blobs\/[a-f0-9]{40}$/.test(url.pathname)) return undefined;
-    if (url.username || url.password || url.search || url.hash) return undefined;
+    if (url.username || url.password || url.search || url.hash || url.port) return undefined;
     return url.href;
   } catch {
     return undefined;
