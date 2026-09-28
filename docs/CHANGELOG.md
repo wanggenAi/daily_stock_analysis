@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] 盘后独立恢复工作流在当日真实 Canonical/市场数据未证明新鲜且无活跃生产链时，限次恢复既有全A生产扫描；扫描或 Finalizer 仍旧时明确失败，不将定时执行/报告生成时间冒充行情新鲜度。
 - [修复] 投资报告持久化前按真实交易日阻止较旧 Finalizer/事件重放覆盖较新市场代际，快照不匹配或日期缺失安全失败；不生成新 Formal 动作或交易授权。
 - [新功能] V4 H1 在原有 Investor Brief 产线后追加只读有界 GitHub 交接清单及 Markdown，校验 Canonical 血缘、分源标注过期和缺证；不新增 GPT API、交易授权或并行调度。
 - [改进] All-A 生产报告新增公司级证据真实抓取覆盖审计，区分实际非缓存尝试、仅缓存和未覆盖代码；未找到审计时明确 UNKNOWN，不把原始 URL 或旧公开材料冒充当期新证据。
