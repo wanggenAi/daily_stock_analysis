@@ -61,6 +61,12 @@ def test_active_industry_or_finalizer_pipeline_prevents_duplicate_source_work():
     assert result["action"] == "DEFER"
 
 
+def test_busy_push_fixture_cannot_block_full_market_recovery():
+    fixture = _run(99, status="in_progress", event="push")
+    fixture["name"] = "GenGe Opportunity Discovery"
+    assert _decide(None, downstream=[fixture])["action"] == "DISPATCH"
+
+
 def test_only_real_postclose_production_events_count_as_attempts():
     prior_premarket = _run(1, at="2026-09-28T00:22:45Z", event="workflow_dispatch")
     non_producer = _run(2, at="2026-09-28T11:30:00Z", event="push")
