@@ -3,8 +3,8 @@
   "task_key": "investor-decision-report-v4",
   "repository": "wanggenAi/daily_stock_analysis",
   "owner_approved_on": "2026-09-25",
-  "status": "H1_PRODUCTION_VERIFIED_H3_CI_PENDING_H4_DATE_INTEGRITY_PR317_OPEN",
-  "phase": "H3_EXACT_HEAD_CI_AND_PARALLEL_EXISTING_H4_OBSERVER_DATE_REPAIR",
+  "status": "H1_VERIFIED_H3_EXACT_HEAD_BACKEND_FAILED_H4_EXACT_HEAD_GREEN_NO_MERGE",
+  "phase": "H3_API_ROUTE_INTEGRATION_CORRECTION_REQUIRED_AND_H4_MERGE_RECONCILIATION",
   "plan_on_main": "docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md",
   "task_register_on_main": "TASK_STATE.md",
   "registration_commits": {
@@ -13,10 +13,10 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "H3 PR315 head be168958c54cbeabd9fa9bd368a96dd72ad38c72 exact-head backend gate still IN_PROGRESS; docker/web/web-contract/governance SUCCESS. On final backend success recheck main mergeability and reviews; squash merge only exact current head, then verify actual main code/postmerge CI/deployed real Web/API separately. Do not claim site deployed without known reachable URL.",
-    "H4 separate PR317 head76c697264a9bd42cecbd97874d22380f2aa1df61 fixes independently confirmed date-integrity bug; await its OWN exact-head backend/docker/governance, verify tests. This is partial H4 only; no adjusted/benchmark or duplicate epoch validation, no presumed valid historical existing scores.",
-    "H1 genuine production verified independently; source market as-of Sep24 and funds/broker quotes absent. Full H3 deployment, user-initiated H2 live read, full H4/H5 proof remain pending.",
-    "Research cursor independent generation76 confirms genuinely verified NBS live postmerge run36363691094 and awaited existing All-A run36362003421. Do not mutate sibling."
+    "H3 PR315 exact head be168958c54cbeabd9fa9bd368a96dd72ad38c72 is open, latest CI run36363741442 completed FAILURE: backend-gate failed 1 test tests/test_investor_v4_api.py::test_investor_v4_is_registered_under_existing_versioned_api (route '/api/v1/investor-v4/latest' not found by inspected flattened create_app().routes). 5594 passed, 2 deselected. Docker, Web and AI governance success; separately H3 Web contract success. This is a real blocker: inspect actual create_app mounted public route, FastAPI included router behavior and API route registration. Do not bypass/delete the test or merge until a runtime ASGI TestClient GET and route/openapi checks prove real endpoint; then new exact-head CI.",
+    "H4 PR317 exact-head 76c697264a9bd42cecbd97874d22380f2aa1df61 CI run36364172311 success, empty reviews/threads. Verify live main, exact mergeability and semantic integration for true-market-date regression; approved merge only without concurrent change/conflict. Still H4 partial, no proof of adjusted prices, independent benchmark or existing historic outcomes.",
+    "H1 already verified genuine production. Independent research sibling was separately updated to generation77 using original verified post-#310 production artifact 10947650329; do not mutate sibling or redispatch consumed All-A. Keep market as-of Sep24 stale and no broker cash. Do not represent H3 Web/API deployed until independent reachable production check.",
+    "PR318 is docs-only cross-lane index and should not independently override separate latest R/V4 cursors; rebase/reconcile only after respective current facts checked."
   ],
   "coordination": {
     "parallel_task": "recovery/tasks/stock-system-convergence.json",
@@ -49,12 +49,13 @@
     "H1 independent production acceptance: genuine postmerge main-triggered GenGe Investor Decision Brief workflow 36358061682 COMPLETED/SUCCESS on H1 merge e0fe48d64215403794e198d05184a755a893c96a; artifact 10944229980 contains both new H1 JSON and Markdown plus dashboard JSON/Markdown; zip independently checked actual dashboard SHA256 and Canonical ID/run agreement, Markdown snapshot agreement; original authoritative Finalizer run 36101050876 artifact 10849516699 separately downloaded and exact raw Canonical SHA256, snapshot ID, source run verified; content-addressed decision-center source blob independently fetchable despite mutable current main. Market remains as-of Sep24, not fresh Sep25/28; zero provably executable buys, missing live funds/broker.",
     "Genuine H1 producer verified: V4 H3 read-only existing Web/API integration independently coded and submitted as PR315 feat/v4-h3-readonly-web-delivery-20260928; exact-head green CI and deployed API/Web not yet claimed. Bounded public GitHub main-only manifest fetch with verified Git blob or marked local fallback, pinned source links, existing navigation bilingual, zero trade authority; no GPT API.",
     "Identified actual PR315 prior exact-head backend failures via job108732699817: new deployment-only env excluded from hidden config registry, and incorrectly iterating APIRouter.routes with nested _IncludedRouter. Fixed on existing H3 PR branch with commits 0b1467b3 and be168958; latest head exact CI started. H3 is NOT merged or deployed.",
-    "H4 date-integrity code/tests/docs committed in independent PR317 from newest main 91700069, root cause independently confirmed genuine Sep28 generated hourly file with Sep24 latest_trade_date/quote observed. Existing forward outcome scorecard 693 records, 961 observed horizons generated Sep27 is NOT source-date reaudited; PR pending full current-head CI and does not assert full H4 or trade performance."
+    "H4 date-integrity code/tests/docs committed in independent PR317 from newest main 91700069, root cause independently confirmed genuine Sep28 generated hourly file with Sep24 latest_trade_date/quote observed. Existing forward outcome scorecard 693 records, 961 observed horizons generated Sep27 is NOT source-date reaudited; PR pending full current-head CI and does not assert full H4 or trade performance.",
+    "2026-09-28 independent exact-head CI diagnosis: H3 PR315 CI run36363741442 FAILED one real API route integration test; no merge. H4 PR317 exact-head CI 36364172311 SUCCESS, not merged or production accepted."
   ],
   "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 14,
+  "generation": 15,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Start V4 P0 immediately in independent branch/PR while parallel stock-system-convergence generation 66 audits real 2026-09-25 scheduled All-A production. Do not block V4 on stale formal upstream; empty/stale states must be visibly honest.",
@@ -89,7 +90,7 @@
     "review_list": "empty",
     "merge_verified": true
   },
-  "previous_checkpoint_generation": 13,
+  "previous_checkpoint_generation": 14,
   "last_observed_main_sha": "917000695b2c9499fced8c3730501940c7844a0a",
   "p1": {
     "branch": "feat/v4-p1-dated-sources-main-sync-20260926",
@@ -182,6 +183,19 @@
       ],
       "fix_scope": "Deployment-only V4 GitHub env explicitly hidden in config registry; integrated API route test resolves actual mounted create_app() paths; zero change to delivery/trade authority.",
       "new_exact_head_ci": "PENDING_RUNNING_AT_CHECKPOINT"
+    },
+    "latest_exact_head_audit": {
+      "pr": 315,
+      "sha": "be168958c54cbeabd9fa9bd368a96dd72ad38c72",
+      "ci_run": 36363741442,
+      "ci_conclusion": "failure",
+      "backend_job_id": 108745950137,
+      "backend_test_result": "5594 passed, 1 failed, 2 deselected, 342 subtests passed",
+      "failing_test": "tests/test_investor_v4_api.py::test_investor_v4_is_registered_under_existing_versioned_api",
+      "failure": "assert /api/v1/investor-v4/latest in flattened create_app().routes failed",
+      "other_checks": "ai-governance/docker-build/web-gate SUCCESS; H3 Web contract standalone SUCCESS",
+      "remedy": "Check actual ASGI route registration with TestClient/openapi and fix correct integration; no disabling of failing safety test",
+      "production_verified": false
     }
   },
   "h4": {
@@ -194,6 +208,16 @@
     "actual_fix": "Require actual latest_trade_date + offset-aware quote observed date matches Shanghai trade date after 15:00 + status OK and explicit provider. Dedup one quote per symbol/real session selecting newest originally observed timestamp. Preserve all Canonical record source evidence, Formal gates, outcomes observer and independent R cursor; add negative regression tests and docs.",
     "unverified": "CI pending, not merged, no regenerated real production. Unadjusted provider quote (no corporate action adjustments/independent benchmark), duplicate unchanged Canonical decisions, market/provenance caveats mean full H4 NOT ACCEPTED.",
     "current_live_v2_outcome_old_record_count": 693,
-    "current_live_v2_observed_horizons_not_independently_revalidated": 961
+    "current_live_v2_observed_horizons_not_independently_revalidated": 961,
+    "latest_ci": {
+      "pr": 317,
+      "sha": "76c697264a9bd42cecbd97874d22380f2aa1df61",
+      "ci_run": 36364172311,
+      "conclusion": "success",
+      "reviews": 0,
+      "threads": 0,
+      "merge_verified": false,
+      "production_verified": false
+    }
   }
 }
