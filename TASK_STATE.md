@@ -1,4 +1,6 @@
-# Current Mission — independent task cross-index
+# Current Mission
+
+**Index:** independent V4 and stock research task checkpoints.
 
 **Observed:** 2026-09-28 UTC; all SHAs, generations, PRs and workflow statuses below are a *checkpoint*, not a live lock. Before acting, reread live main, AGENTS.md, this file, BOTH separate task-scoped CAS cursor blobs on `state/chatgpt-recovery`, open PRs, fresh exact-head CI, reviews, real main and artifacts. GitHub live facts override stale prose. Do not write one task's cursor from another task's branch.
 
