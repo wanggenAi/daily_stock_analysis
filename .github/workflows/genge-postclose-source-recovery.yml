@@ -10,6 +10,11 @@ on:
     workflows: ["Era Capital Trend Radar Live"]
     types: [completed]
   workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/genge-postclose-source-recovery.yml"
+      - "scripts/decide_postclose_recovery.py"
+      - "tests/test_decide_postclose_recovery.py"
 
 permissions:
   contents: read
@@ -20,11 +25,23 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test-postclose-recovery:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install pytest
+      - run: python -m pytest -q tests/test_decide_postclose_recovery.py
+
   recover-unfinished-session:
     if: >-
-      github.event_name != 'workflow_run' ||
+      github.event_name != 'pull_request' &&
+      (github.event_name != 'workflow_run' ||
       (github.event.workflow_run.conclusion == 'success' &&
-       github.event.workflow_run.event == 'schedule')
+       github.event.workflow_run.event == 'schedule'))
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -75,8 +92,3 @@ jobs:
             echo "::error::Expected completed-session source still unproven after bounded scans. Inspect upstream price-date evidence and Finalizer."
             exit 1
           fi
-
-      - name: Verify postclose recovery helper contract
-        if: always()
-        run: |
-          python -m pytest -q tests/test_decide_postclose_recovery.py
