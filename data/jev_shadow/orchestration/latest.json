@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36459830256",
+  "orchestrator_run_id": "36472238001",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -42,13 +49,6 @@
       "attention_priority": "HIGH",
       "entity_id": "600406",
       "entity_name": "国电南瑞",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -173,13 +173,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -191,13 +184,20 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-28T17:40:12+00:00",
-  "source_workflow_head_sha": "1d2dcc8049614158d8fcbc1c637ab23742c0fff8",
+  "source_generated_at": "2026-09-28T19:25:52+00:00",
+  "source_workflow_head_sha": "c953409f6c632760e3284a50a9a4e9faac4a2c73",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36459556710",
+  "source_workflow_run_id": "36471966686",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36459556710",
+  "trigger_source": "JEV_ORCHESTRATOR_36471966686",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-28T17:43:32+00:00",
+  "updated_at": "2026-09-28T19:28:12+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.76,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36434067845",
+        "deep_lambda_run_id": "36470921995",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,13 +274,13 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.94,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
         "near_buy_evidence_recovery_tier": null,
         "near_buy_missing_evidence_items": [],
-        "quant_score": 55.266,
+        "quant_score": 53.5368,
         "quant_status": "SECONDARY_RESEARCH",
         "research_priority": "P1",
         "research_priority_score": 50,
@@ -312,12 +312,12 @@
           "historical_median_pe_reference": 33.65,
           "pe_to_history_ratio": 0.5334323922734027,
           "price_mapping_status": "OK",
-          "reference_price": 28.55,
+          "reference_price": 28.0,
           "reference_price_basis": "RAW_LATEST_CLOSE",
-          "reference_trade_date": "2026-09-24",
+          "reference_trade_date": "2026-09-28",
           "required_profit_growth_pct": -46.65676077265973,
           "research_buy_pe_ratio_threshold": 0.8,
-          "research_buy_price_ceiling": 42.81704735376045
+          "research_buy_price_ceiling": 41.99220055710307
         }
       }
     }
