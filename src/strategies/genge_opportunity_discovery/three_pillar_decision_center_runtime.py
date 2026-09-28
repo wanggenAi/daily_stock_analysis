@@ -21,6 +21,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .three_pillar_decision_center import build_decision_center, render_markdown
+from .holding_valuation_watch import build_holding_valuation_watch
 
 RUNTIME_CONTRACT = "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2"
 TERMINAL_RESEARCH_CONTRACT = "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1"
@@ -1198,6 +1199,10 @@ def build_runtime_decision_center(
         payload, holding_valuation_continuity_state
     )
     _attach_capability_visibility(payload, candidate_lifecycle_state, valuation_continuity)
+    payload["holding_valuation_watch"] = build_holding_valuation_watch(dashboard, payload)
+    payload["executive_summary"]["discounted_holding_watch_count"] = len(
+        payload["holding_valuation_watch"]["rows"]
+    )
     _finalize_investor_report_readiness(payload)
     return payload
 
@@ -1259,6 +1264,32 @@ def _urgent_text(rows: list[Mapping[str, Any]]) -> str:
 
 def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
     base = render_markdown(payload).rstrip()
+    watch = payload.get("holding_valuation_watch") or {}
+    watch_lines = [
+        "### 估值折价观察（非买单）",
+        "",
+        "100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。",
+        "",
+    ]
+    for row in watch.get("rows") or []:
+        scenario = row["non_authorized_scenario"]
+        watch_lines.append(
+            f"- **{row['name']} {row['code']}**：{row['price_as_of']}收盘参考价"
+            f"¥{row['reference_price']:.2f}，低于模型估值下沿"
+            f"¥{row['model_value_low']:.2f}约{row['discount_to_model_low_pct']:.2f}%；"
+            f"现有{row['existing_shares_from_confirmed_snapshot']}股；"
+            f"假设额外100股约¥{scenario['estimated_cash_cny_ex_fees']:.0f}，"
+            f"平均成本约¥{scenario['estimated_new_average_cost_ex_fees']:.4f}（未计费用）。"
+            f"**实际可执行0股；不产生新Formal BUY。**"
+            f" 阻断原因：{', '.join(row['blockers'])}。"
+        )
+    if not watch.get("rows"):
+        watch_lines.append("- 本次没有可验证的高置信度、低于模型估值下沿的持仓观察对象。")
+    base = base.replace(
+        "### 每只持仓的决策链",
+        "\n".join(watch_lines) + "\n\n### 每只持仓的决策链",
+        1,
+    )
     runtime = payload.get("deep_calculation_runtime") or {}
     source = payload.get("deep_review_profile_source") or "UNKNOWN"
     profile_run_id = payload.get("deep_review_profile_lambda_run_id") or ""
