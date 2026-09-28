@@ -1,0 +1,82 @@
+name: GenGe Postclose Source Recovery
+
+on:
+  schedule:
+    # Independent fallback if the 18:30 Beijing Opportunity Discovery cron is dropped.
+    - cron: "30 12 * * 1-5"  # 20:30 Beijing
+    - cron: "10 15 * * 1-5"  # 23:10 Beijing
+  workflow_run:
+    # Independent completed scheduled producer event if the fallback cron is dropped.
+    workflows: ["Era Capital Trend Radar Live"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-postclose-source-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover-unfinished-session:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'schedule')
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Check latest published session and actual producer/downstream activity
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git show origin/main:data/investor_decision_dashboard/latest.json > /tmp/postclose-dashboard.json || : > /tmp/postclose-dashboard.json
+
+          # Only schedule/manual full-production producers count as attempts.
+          gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?event=schedule&per_page=60" > /tmp/postclose-scheduled.json
+          gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?event=workflow_dispatch&per_page=60" > /tmp/postclose-dispatched.json
+          jq -s '{workflow_runs: ((.[0].workflow_runs // []) + (.[1].workflow_runs // []))}'             /tmp/postclose-scheduled.json /tmp/postclose-dispatched.json > /tmp/postclose-upstream.json
+
+          # Do not start another full scan while a full producer or its authority chain is active.
+          mkdir -p /tmp/postclose-active
+          for workflow in genge-opportunity-discovery.yml genge-all-a-v31-once.yml genge-v31-industry-research.yml genge-v311-production-finalizer.yml; do
+            for status in queued in_progress; do
+              gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow}/runs?status=${status}&per_page=60"                 > "/tmp/postclose-active/${workflow}-${status}.json"
+            done
+          done
+          jq -s '{workflow_runs: [.[].workflow_runs[]]}' /tmp/postclose-active/*.json             > /tmp/postclose-downstream.json
+
+          python -m scripts.decide_postclose_recovery             --dashboard /tmp/postclose-dashboard.json             --upstream /tmp/postclose-upstream.json             --downstream /tmp/postclose-downstream.json             --decision-file /tmp/postclose-decision.json
+          jq -r '"- result: \\(.action); reason=\\(.reason); expected_trade_date=\\(.expected_trade_date); postclose_source_attempts=\\(.postclose_attempts)"'             /tmp/postclose-decision.json >> "$GITHUB_STEP_SUMMARY"
+
+          action="$(jq -r '.action' /tmp/postclose-decision.json)"
+          if [ "$action" = "SATISFIED" ]; then
+            echo "Verified same-session source and market freshness already published."
+          elif [ "$action" = "DEFER" ]; then
+            echo "An active upstream/downstream run or ineligible time prevents duplicate dispatch."
+          elif [ "$action" = "DISPATCH" ]; then
+            # Reuse the EXISTING downstream-triggering full-production workflow.
+            # Success here means ENQUEUED only, not fresh-source acceptance.
+            gh workflow run genge-opportunity-discovery.yml --repo "$GITHUB_REPOSITORY" --ref main
+            echo "- Recovery producer dispatched; fresh market, Finalizer and report still require independent verification."               >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::error::Expected completed-session source still unproven after bounded scans. Inspect upstream price-date evidence and Finalizer."
+            exit 1
+          fi
+
+      - name: Verify postclose recovery helper contract
+        if: always()
+        run: |
+          python -m pytest -q tests/test_decide_postclose_recovery.py
