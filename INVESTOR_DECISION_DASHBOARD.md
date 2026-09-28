@@ -4,15 +4,13 @@
 
 # 投资决策驾驶舱
 
-> 市场=RED；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
+> 数据代际=STALE_UPSTREAM；禁止新增仓位；市场=RED；盘中价仅用于展示/审计；计划立即投入≈¥0
 
 ## 1. 最新市场结构（日线）
 
 - 数据日：**2026-09-24**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。
 - 市场状态：**RED**；是否允许新买：**False**；仓位倍率：**0.00**
 - 上涨家数比例：**19.94%**；数据质量：**OK**
-
-- 盘中执行价覆盖：**0/4只**；行情状态：**OFF_SESSION**；最新行情时间：**—**；正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。
 
 ## 2. 我的持仓怎么办
 
@@ -60,7 +58,7 @@ A02林业(STRONG)、O81机动车、电子产品和日用产品修理业(STRONG)�
 
 ## 9. 系统状态（最后看）
 
-- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**可用**；资金源：**USER_CONFIRMED_FLOOR**
+- Canonical：**正常**；持仓同步：**HOLDINGS_IN_SYNC**；Terminal：**暂无可用产物**；资金源：**USER_CONFIRMED_FLOOR**
 - Formal Action：**持久状态，不因报表重跑而累计执行**；REDUCE 百分比执行层只允许向下取整，不得放大 Canonical 授权。
 - Profit Protection Overlay 只展示盈利与价值/风险上下文；**profit alone 不是 SELL rationale，overlay 不得改写 Formal Action。**
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
