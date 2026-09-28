@@ -65,10 +65,10 @@ A02林业(STRONG)、B07石油和天然气开采业(NEUTRAL)、A03畜牧业(NEUTR
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**23** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **22** / REJECT **0**。
+- 本轮深算：**24** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **23** / REJECT **0**。
 - urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **1** / WATCH **7** / BLOCK **14**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **1** / WATCH **7** / BLOCK **15**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
