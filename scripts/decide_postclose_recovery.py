@@ -76,8 +76,12 @@ def decide_recovery(
         "checked_at": evaluated_at.astimezone(timezone.utc).isoformat(),
         "postclose_attempts": 0,
     }
-    if local.weekday() >= 5 or local.time() < time(19, 0):
-        return {**result, "action": "DEFER", "reason": "NOT_POSTCLOSE_WEEKDAY"}
+    # The next-day 01:00 recovery still targets yesterday's completed session,
+    # before today's trading has begun. Include Saturday 01:00 for Friday.
+    evening = local.weekday() < 5 and local.time() >= time(19, 0)
+    next_morning = local.weekday() in {1, 2, 3, 4, 5} and local.time() < time(8, 0)
+    if not (evening or next_morning):
+        return {**result, "action": "DEFER", "reason": "OUTSIDE_POSTCLOSE_RECOVERY_WINDOW"}
     if _fresh_dashboard(dashboard, expected):
         return {**result, "action": "SATISFIED", "reason": "MATCHED_VERIFIED_MARKET_EPOCH"}
     valid_producers = [
