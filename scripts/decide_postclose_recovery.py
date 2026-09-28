@@ -90,8 +90,19 @@ def decide_recovery(
     ]
     attempts = len({str(run.get("id")) for run in valid_producers if run.get("id") is not None})
     result["postclose_attempts"] = attempts
+    # This repository runs many push/PR fixture-only Opportunity Discovery jobs.
+    # Those are NOT a full-A producer and must never block a real catch-up.
+    def active_full_pipeline(run: Mapping[str, Any]) -> bool:
+        if not _run_after_close(run, expected):
+            return False
+        if run.get("name") == "GenGe Opportunity Discovery":
+            return run.get("event") in _SOURCE_EVENTS
+        if run.get("name") == "GenGe All-A V3.1.1 One Shot":
+            return run.get("event") == "workflow_dispatch"
+        return True
+
     all_active = list(valid_producers) + [
-        run for run in downstream_runs if _run_after_close(run, expected)
+        run for run in downstream_runs if active_full_pipeline(run)
     ]
     if any(str(run.get("status")) in _ACTIVE for run in all_active):
         return {**result, "action": "DEFER", "reason": "POSTCLOSE_PIPELINE_ACTIVE"}
