@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36480753884",
+  "orchestrator_run_id": "36481162499",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,13 +24,6 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -51,6 +44,20 @@
       "entity_name": "国电南瑞",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000783",
+      "entity_name": "长江证券",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -103,13 +110,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000783",
-      "entity_name": "长江证券",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "000833",
       "entity_name": "粤桂股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -119,6 +119,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "603038",
       "entity_name": "华立股份",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "603605",
+      "entity_name": "珀莱雅",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -180,13 +187,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "603605",
-      "entity_name": "珀莱雅",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-28T20:38:58+00:00",
-  "source_workflow_head_sha": "31a5b9d9c9dade76114d046065c4915df4bdb268",
+  "source_generated_at": "2026-09-28T20:42:27+00:00",
+  "source_workflow_head_sha": "0b22aff130c2e64522542f5b089460cb079fd337",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36480187611",
+  "source_workflow_run_id": "36480927923",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36480187611",
+  "trigger_source": "JEV_ORCHESTRATOR_36480927923",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-28T20:41:09+00:00",
+  "updated_at": "2026-09-28T20:44:41+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.65,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36470921995",
+        "deep_lambda_run_id": "36479953590",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.93,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
