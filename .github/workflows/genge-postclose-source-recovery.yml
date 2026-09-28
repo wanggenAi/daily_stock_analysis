@@ -64,7 +64,8 @@ jobs:
           # Only schedule/manual full-production producers count as attempts.
           gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?event=schedule&per_page=60" > /tmp/postclose-scheduled.json
           gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-opportunity-discovery.yml/runs?event=workflow_dispatch&per_page=60" > /tmp/postclose-dispatched.json
-          jq -s '{workflow_runs: ((.[0].workflow_runs // []) + (.[1].workflow_runs // []))}'             /tmp/postclose-scheduled.json /tmp/postclose-dispatched.json > /tmp/postclose-upstream.json
+          gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-all-a-v31-once.yml/runs?event=workflow_dispatch&per_page=60" > /tmp/postclose-one-shot.json
+          jq -s '{workflow_runs: ((.[0].workflow_runs // []) + (.[1].workflow_runs // []) + (.[2].workflow_runs // []))}'             /tmp/postclose-scheduled.json /tmp/postclose-dispatched.json /tmp/postclose-one-shot.json > /tmp/postclose-upstream.json
 
           # Do not start another full scan while a full producer or its authority chain is active.
           mkdir -p /tmp/postclose-active
