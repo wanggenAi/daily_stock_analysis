@@ -2,12 +2,14 @@
 import json
 
 from api.v1.endpoints import investor_v4
-from api.v1.router import router
+from api.app import create_app
 
 
 def test_investor_v4_is_registered_under_existing_versioned_api():
-    paths = {route.path for route in router.routes}
-    assert "/investor-v4/latest" in paths
+    # Assert the public route after the application mounts the v1 router.
+    # router.routes itself may also contain nested _IncludedRouter entries.
+    paths = {route.path for route in create_app().routes if hasattr(route, "path")}
+    assert "/api/v1/investor-v4/latest" in paths
 
 
 def test_route_returns_no_cache_and_dated_non_actionable_payload(monkeypatch):
