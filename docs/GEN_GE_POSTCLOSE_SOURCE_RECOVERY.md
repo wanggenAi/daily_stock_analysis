@@ -14,8 +14,11 @@ though its report-generation timestamp advanced on Sep 28.
 ## Recovery scope
 
 `.github/workflows/genge-postclose-source-recovery.yml` uses two *independent
-fallback* weekday triggers (20:30 / 23:10 Beijing), and the already-scheduled
+fallback* weekday triggers (20:30 / 23:10 Beijing), next-day 01:00
+(Tue-Sat Beijing) previous-session catchup, and the already-scheduled
 Era Capital Trend Radar Live completion as a separate workflow-run signal.
+A one-time push trigger of this watchdog on its own merge to main can also
+repair a missed previous session during the 00:00–08:00 recovery window.
 This does not replace the existing 18:30 full-A schedule or create a competing
 valuation model. When the latest published investor dashboard does **not**
 prove that `latest_trade_date`, Canonical trade date, market-regime date,
@@ -28,7 +31,7 @@ the watchdog:
 2. Defers while the corresponding current-session producer, explicit One Shot,
    Every-Industry, or Finalizer is queued/in progress.
 3. Allows at most two postclose full-production source *attempts in total* for
-   the current local day (existing 18:30 + recovery, or two bounded recoveries
+   the target completed local session (existing 18:30 + recovery, or two bounded recoveries
    if 18:30 never started); dispatches the existing Opportunity Discovery
    workflow, whose normal Every-Industry -> Finalizer chain remains authoritative.
    A successful Finalizer now directly triggers Investor Brief refresh; this
@@ -38,7 +41,8 @@ the watchdog:
    or fabricating market data.
 
 A successful dispatch is **only an accepted request**, never production
-acceptance. GitHub scheduled delivery is best effort; the extra time slots and
+acceptance. GitHub scheduled delivery is best effort; the extra time slots, next-day
+catchup, one-time merge trigger and
 independent workflow-run signal reduce but cannot eliminate missing events.
 On exchange holidays, the existing weekday-based freshness model deliberately
 fails closed; future calendar integration is distinct work.
