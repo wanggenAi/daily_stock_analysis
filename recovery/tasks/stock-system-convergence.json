@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "generation": 76,
+  "generation": 77,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "NBS_REAL_POSTMERGE_PRODUCTION_VERIFIED_ALL_A_COVERAGE_AUDIT_PENDING",
+  "status": "POST_PR310_REAL_ALL_A_ISSUER_COVERAGE_PRODUCTION_AUDITED_MARKET_ASOF_STILL_SEP24",
   "stage": "VERIFY_NEXT_COMPLETED_ALL_A_GENUINE_ARTIFACT",
-  "previous_checkpoint_generation": 75,
+  "previous_checkpoint_generation": 76,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "f479b0873bed959eda6311829d21aec5e1ff9f5b",
+  "last_observed_main_sha": "e64dc007e7e26cc9975a54dd7890629627eb341c",
   "work_branch": "fix/era-radar-nbs-inline-fresh-main-20260928",
   "work_head_sha": "1580aecbfd1cc16e25b7c002d5d5c6bcc69273f5",
   "active_pr": null,
@@ -379,6 +379,37 @@
       "research_handoff_queue": 0,
       "formal_trading_authority": false,
       "no_auto_trade": true
+    },
+    "post_pr310_real_all_a_20260928": {
+      "run_id": 36362003421,
+      "artifact_id": 10947650329,
+      "artifact_name": "genge-all-a-v31-one-shot",
+      "verified_run_job": "all-a-v31 completed/success",
+      "actual_market_as_of": "2026-09-24",
+      "next_trade_date": "2026-09-28",
+      "universe": 5222,
+      "effective_scan": 4514,
+      "deep_review": 80,
+      "strict_ready": 0,
+      "issuer_coverage_contract": "GEN_GE_ISSUER_COVERAGE_AUDIT_V1",
+      "requested_queue": 80,
+      "configured_fundamental_limit": 30,
+      "auto_evidence_budget": 30,
+      "annual_issuer_audited": 15,
+      "annual_cached_only": 15,
+      "annual_noncached_attempted": 0,
+      "material_events_audited": 30,
+      "material_events_cached_only": 30,
+      "material_events_noncached_attempted": 0,
+      "distinct_company_any_collector_touched": 30,
+      "distinct_company_any_collector_untouched": 50,
+      "original_non_cached_ok_urls": 0,
+      "independent_new_issuer_evidence_verified": false,
+      "strict_gate_company_evidence_failed": 77,
+      "strict_gate_exit_confidence_failed": 78,
+      "independent_exit_validation": "NO_VALIDATED_EXIT_EDGE",
+      "artifact_audit": "Downloaded real workflow artifact ZIP and independently read all_a_full_scan/20260928/run_summary.json and _deep_review/20260928_004900/auto_evidence_audit.csv: full inventory 86 audit rows; no company noncached collection. Market universe and price cache still as-of Sep24, despite workflow executed Sep28. Production audit field shipped, acquisition freshness remains unsolved.",
+      "tests_scope": "This is real production instrumentation acceptance only, not fresh source acquisition or Formal trade authorization."
     }
   },
   "last_consumed": {
@@ -399,10 +430,9 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "NBS real postmerge 36363691094 is DONE: five configured collectors SUCCESS, NBS 6 live Sep15 published industrial-capital observations independently reread in persisted main evidence snapshot 5b97a84a0ed0c8e3c259, artifact10946950648 and persist commit f479b08. Do not dispatch this fixed period again; source period August 2026 and Sept15 publication are not Sept28 fresh market prices or Formal trading authority.",
-    "Next previously started genuine All-A run36362003421, owner workflow_dispatch 2026-09-28T00:22:45Z on post-#310 main236b9be remains in progress at last observation. On completion inspect real production artifact issuer_collection_coverage: annual/events/unique union, touched/not-touched and independently newly published original-source fingerprints; strict readiness and as-of must be assessed, do not launch duplicate or invent Sep25 trade date.",
-    "Legacy original #314 is superseded by verified #316 merge; may close #314 as unmerged duplicate for audit now, preserving full original thread and branch. Never merge #314.",
-    "Formal Canonical/market EOD as-of Sep24, broker cash/funds and original issuer events independently unverified; fail closed. V4 sibling cursor independent gen13 H3 PR315 updated tests CI in progress."
+    "Completed: #310 coverage instrumentation real production verified on run36362003421 artifact10947650329; DO NOT redispatch that consumed exact epoch. NEW ROOT PROBLEM: September28 real run is still Sep24 market, company annual/event collectors all cache, top80 only30 unique issuer touched, zero noncached company source. Trace market feed date and company-cache/collector routing using original-code/source evidence without relaxing gates; first determine a distinct newer completed-market epoch before further dispatch.",
+    "Do not label cached issuer returns or industry 41 noncached rows as net-new issuer original publications; any future remedy needs minimal isolated tested PR with fresh source proof, no changes to BUY thresholds or trading authority.",
+    "Keep V4 separate, currently gen14 at last read with H3 #315 CI failing 1 API mounted path integration test, H4 #317 exact-head CI green but GitHub mergeability dirty due moving main, and checkpoint #318 dirty; avoid writing sibling. Allow independent executor to reconcile PRs safely."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
@@ -429,6 +459,7 @@
     "Rechecked original PR310 exact head d74fd2d88f14eb4c561aae631afb4de5b26a596f backend/docker/ai-governance completed SUCCESS, original PR310 independently merged on 2026-09-27T01:27:06Z as e84b184b3f6f47c8315c6144bb1dd43c614f30eb; old #307 closed unmerged with replacement audit comment. No independently verified postmerge All-A production artifact yet.",
     "Investigated genuine 2026-09-27 Era Radar live job 108711639298 failure: configured NBS fixed-asset-investment collector reported four mandatory missing metrics and atomic NO_PUBLISH although four other configured collectors succeeded; checked current 2026-09-15 NBS official release really includes the four current-period figures. Submitted minimal text-node-boundary fix with split-inline-span and absent-field regressions in independent PR314 at 087e9b477105af7f580e9fd88b675b360496b08d; deterministic contracts and Era Radar deterministic gate success, full exact CI + genuine live proof pending.",
     "PR316 fresh-main replacement of conflicted PR314: independently exact-head green backend/docker/ai-governance and Era Radar deterministic contracts, no reviews or unresolved threads, GitHub clean mergeability, squash merged 2026-09-28T00:50:28Z as fde4bdad27b51497baf7b984d7c74eeb35abc475; real postmerge NBS run36363691094 started and is not yet accepted.",
-    "REAL NBS production acceptance: push-on-merged-main Era Capital Trend Radar Live 36363691094 completed SUCCESS, separate live-production + deterministic-contracts SUCCESS, all five configured collectors succeeded (6+1+5+6+4=22 observations). NBS original released 2026-09-15T02:00Z, six NBS real metrics under INDUSTRIAL_CAPITAL independently reread in immutable research evidence snapshot 5b97a84a0ed0c8e3c259, durable main persist f479b0873bed959eda6311829d21aec5e1ff9f5b, artifact10946950648; research-only no auto-trade. NBS issue resolved for verified original reporting period, not fresh market Formal."
+    "REAL NBS production acceptance: push-on-merged-main Era Capital Trend Radar Live 36363691094 completed SUCCESS, separate live-production + deterministic-contracts SUCCESS, all five configured collectors succeeded (6+1+5+6+4=22 observations). NBS original released 2026-09-15T02:00Z, six NBS real metrics under INDUSTRIAL_CAPITAL independently reread in immutable research evidence snapshot 5b97a84a0ed0c8e3c259, durable main persist f479b0873bed959eda6311829d21aec5e1ff9f5b, artifact10946950648; research-only no auto-trade. NBS issue resolved for verified original reporting period, not fresh market Formal.",
+    "2026-09-28 read-only independently verified true post-#310 All-A artifact 10947650329 run 36362003421: additive issuer collection coverage present, 80 queue, annual 15 cache-only, events 30 cache-only, unique touched 30 / untouched 50, company noncached 0, strict-ready 0, market as-of Sep24. No new trading permission."
   ]
 }
