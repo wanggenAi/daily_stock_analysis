@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36472238001",
+  "orchestrator_run_id": "36480469813",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,13 +24,6 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -49,6 +42,13 @@
       "attention_priority": "HIGH",
       "entity_id": "600406",
       "entity_name": "国电南瑞",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -117,13 +117,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "600640",
-      "entity_name": "国脉文化",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "603038",
       "entity_name": "华立股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -173,8 +166,22 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "603605",
+      "entity_name": "珀莱雅",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -184,20 +191,13 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-28T19:25:52+00:00",
-  "source_workflow_head_sha": "c953409f6c632760e3284a50a9a4e9faac4a2c73",
+  "source_generated_at": "2026-09-28T20:35:20+00:00",
+  "source_workflow_head_sha": "bc8c57f6d29f54b58a28873fac4f62b894cb500c",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36471966686",
+  "source_workflow_run_id": "36480068889",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36471966686",
+  "trigger_source": "JEV_ORCHESTRATOR_36480068889",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-28T19:28:12+00:00",
+  "updated_at": "2026-09-28T20:39:01+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.73,
+      "attention_confidence": 0.72,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
