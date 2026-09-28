@@ -5,11 +5,16 @@ on:
     # Independent fallback if the 18:30 Beijing Opportunity Discovery cron is dropped.
     - cron: "30 12 * * 1-5"  # 20:30 Beijing
     - cron: "10 15 * * 1-5"  # 23:10 Beijing
+    - cron: "0 17 * * 1-5"   # Tue-Sat 01:00 Beijing, previous completed session
   workflow_run:
     # Independent completed scheduled producer event if the fallback cron is dropped.
     workflows: ["Era Capital Trend Radar Live"]
     types: [completed]
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/genge-postclose-source-recovery.yml"
   pull_request:
     paths:
       - ".github/workflows/genge-postclose-source-recovery.yml"
