@@ -10,8 +10,9 @@ from __future__ import annotations
 import argparse
 import json
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal, InvalidOperation
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from statistics import median
 from typing import Any
@@ -43,20 +44,47 @@ def load_history(path: Path) -> list[dict[str, Any]]:
 
 
 def load_daily_prices(root: Path) -> dict[str, dict[str, Decimal]]:
+    """Use the actual market/quote date, never the overlay publication date.
+
+    This is a conservative, *unadjusted reference-quote* observer. It must not
+    invent five market sessions by counting multiple reports of one stale quote.
+    Invalid, undated, pre-close or conflicting source dates are excluded; a
+    dedicated corporate-action-adjusted benchmark is still needed for full H4.
+    """
     by_code: dict[str, dict[str, Decimal]] = defaultdict(dict)
+    observed_by_key: dict[tuple[str, str], datetime] = {}
+    shanghai = ZoneInfo("Asia/Shanghai")
     for path in sorted(root.glob("????-??-??/*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
-        except Exception:
+            market_date = date.fromisoformat(str(payload.get("latest_trade_date") or ""))
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
             continue
-        date = str(payload.get("generated_at_beijing") or payload.get("generated_at") or path.parent.name)[:10]
         for row in payload.get("rows") or []:
             if not isinstance(row, dict):
                 continue
-            code = str(row.get("code") or "").zfill(6)
+            code = str(row.get("code") or "").strip()
             price = _dec(row.get("latest_price"))
-            if code and price is not None:
-                by_code[code][date] = price
+            if (not (len(code) == 6 and code.isdigit()) or price is None
+                    or row.get("latest_price_status") != "OK"
+                    or not row.get("latest_price_provider")):
+                continue
+            try:
+                stamp = datetime.fromisoformat(
+                    str(row.get("latest_price_observed_at") or "").replace("Z", "+00:00")
+                )
+                if stamp.tzinfo is None:
+                    continue
+                observed = stamp.astimezone(shanghai)
+            except (ValueError, TypeError, OverflowError):
+                continue
+            if observed.date() != market_date or (observed.hour, observed.minute) < (15, 0):
+                continue
+            market_day = market_date.isoformat()
+            key = (code, market_day)
+            if key not in observed_by_key or observed > observed_by_key[key]:
+                by_code[code][market_day] = price
+                observed_by_key[key] = observed
     return by_code
 
 
@@ -133,6 +161,10 @@ def evaluate(records: list[dict[str, Any]], daily_prices: dict[str, dict[str, De
         "contract_version": CONTRACT_VERSION,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "horizons_trading_days": list(HORIZONS),
+        "forward_price_basis": "SOURCE_DATED_AFTER_CLOSE_UNADJUSTED_REFERENCE",
+        "corporate_action_adjustment_verified": False,
+        "independent_benchmark_verified": False,
+        "full_v4_h4_acceptance": False,
         "record_count": len(out),
         "observed_horizon_count": observed,
         "pending_horizon_count": pending,
