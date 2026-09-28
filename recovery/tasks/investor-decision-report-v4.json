@@ -13,6 +13,7 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
+    "CRITICAL NEW REAL REGRESSION: latest generated Sep28 22:11 Beijing investor brief and 22:12 decision center both reverted actual market as-of from Sep24 (earlier 21:56) BACK TO Sep21, new Canonical snapshot 5ac20f6d54739d44e849 / source run35690406280, formal_action_recomputed=false. FIRST diagnose event/publisher stale Canonical selection and prevent older-asof downstream overlay from overwriting later validated market context. Do not mark stale source 'fresh', do not wipe historical authoritative provenance or grant new trade authority.",
     "Owner 2026-09-28 after-close priority: fulfill owner_report_readiness_priority_20260928 acceptance in dependency order, NOT just status. Keep research cursor ownership independent; read current sibling before analysis.",
     "H3 PR315: ASGI actual request integration test committed on existing PR branch as 40f2be05b2ec5b065cdf7d0ce720bab6df8db58f (replaced fragile app.routes introspection with actual GET + exact payload + no-store). THIS IS A CODE PATCH ONLY: inspect new exact-head CI and ensure actual endpoint works; if failed, fix real routing. Reconcile shared CHANGELOG against live main, review full intended diff, merge only green and safe; verify deployed page/API with real current H1 handoff and dates.",
     "Coordinate P0 research-owned true Sep28 market as-of and issuer 80/30/50 source proof via its own independent cursor; do not claim V4 fresh just because hourly quote/publisher generated today. H1 latest producer production already previously proven but now stale input must remain prominently labeled.",
@@ -53,12 +54,13 @@
     "H4 date-integrity code/tests/docs committed in independent PR317 from newest main 91700069, root cause independently confirmed genuine Sep28 generated hourly file with Sep24 latest_trade_date/quote observed. Existing forward outcome scorecard 693 records, 961 observed horizons generated Sep27 is NOT source-date reaudited; PR pending full current-head CI and does not assert full H4 or trade performance.",
     "2026-09-28 independent exact-head CI diagnosis: H3 PR315 CI run36363741442 FAILED one real API route integration test; no merge. H4 PR317 exact-head CI 36364172311 SUCCESS, not merged or production accepted.",
     "2026-09-28 H4 date-integrity PR317 independently exact-head checks green (36364172311 backend/docker/governance success), empty reviews/threads, clean mergeability; squash merged with exact head to b43117750a1802536380ca8595a346a3f89c9458 and independently reread actual main source. PARTIAL H4 ONLY: postmerge production not verified, historic scorecard remains untrusted.",
-    "2026-09-28 after-close owner requirement recorded with objective evidence gates; real code change PR315 mounted endpoint test commit 40f2be05b2ec5b065cdf7d0ce720bab6df8db58f (CI and deployment not yet proven). GitHub Issues endpoint 410 disabled; task tracked here instead."
+    "2026-09-28 after-close owner requirement recorded with objective evidence gates; real code change PR315 mounted endpoint test commit 40f2be05b2ec5b065cdf7d0ce720bab6df8db58f (CI and deployment not yet proven). GitHub Issues endpoint 410 disabled; task tracked here instead.",
+    "2026-09-28 22:12 Beijing verified severe report source-epoch backward regression (Sep24 -> Sep21) despite later generated timestamp; highest priority changed to proving and repairing actual publisher monotonic source epoch. Merely scheduling fresh full scan without repairing regression will not produce reliable owner report."
   ],
   "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 17,
+  "generation": 18,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Consume owner_report_readiness_priority_20260928 on current CAS V4 cursor as first outcome; substantive implementation with exact CI and real source/prod artifacts, not repeat project progress or phantom fresh data.",
@@ -93,7 +95,7 @@
     "review_list": "empty",
     "merge_verified": true
   },
-  "previous_checkpoint_generation": 16,
+  "previous_checkpoint_generation": 17,
   "last_observed_main_sha": "b43117750a1802536380ca8595a346a3f89c9458",
   "p1": {
     "branch": "feat/v4-p1-dated-sources-main-sync-20260926",
@@ -273,5 +275,17 @@
       }
     ],
     "do_not_mark_complete_until": "Distinct production session provenance + exact-head CI + actual deployed website/API + verified evidence-rich handoff and on-demand ChatGPT audit; if sources truly missing, transparent fail-closed report is acceptable but cannot count as fresh decision-ready."
+  },
+  "newly_verified_severe_regression_20260928_2212_beijing": {
+    "observed_at": "2026-09-28T14:12:12Z",
+    "previous_center_generated": "2026-09-28T13:56:33Z",
+    "previous_market_asof": "2026-09-24",
+    "newer_center_generated": "2026-09-28T14:12:12Z",
+    "newer_market_asof": "2026-09-21",
+    "newer_canonical_snapshot_id": "5ac20f6d54739d44e849",
+    "newer_investor_brief_generated": "2026-09-28T14:11:29Z",
+    "newer_investor_brief_canonical_source_run_id": "35690406280",
+    "independent_verification": "Both newest main data/decision_center/latest.json and data/investor_decision_dashboard/latest.json were reread and now regress from Sep24 to Sep21 despite same-day later generated timestamps; formal_action_recomputed=false, report correctly STALE_UPSTREAM.",
+    "critical_next_action": "TRACE AND BLOCK STALE-EPOCH PUBLISHER REGRESSION! Inspect which event/Deep/older Finalizer selects Sep21 and overwrites an existing Sep24 current report. Enforce source-lineage-valid monotonic completed-session market/asof and snapshot integrity at BOTH existing investor report persistence and three-pillar rendering, including concurrency overlap; retain last newer validated report rather than replacing it with older Canonical on unrelated overlay. No new Formal approval or loss of newest independently valid source. Add regression reproducing Sep24->Sep21 replay from older Deep event; exact-head CI, distinct genuine production proving no rollback after concurrent event overlays."
   }
 }
