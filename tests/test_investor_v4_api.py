@@ -1,15 +1,28 @@
 """V4 read-only API routing and no-cache contract."""
 import json
 
+from fastapi.testclient import TestClient
+
 from api.v1.endpoints import investor_v4
 from api.app import create_app
 
 
-def test_investor_v4_is_registered_under_existing_versioned_api():
-    # Assert the public route after the application mounts the v1 router.
-    # router.routes itself may also contain nested _IncludedRouter entries.
-    paths = {route.path for route in create_app().routes if hasattr(route, "path")}
-    assert "/api/v1/investor-v4/latest" in paths
+def test_investor_v4_is_registered_under_existing_versioned_api(monkeypatch):
+    # Exercise the mounted ASGI endpoint, not router-internal route layouts:
+    # recent FastAPI can retain nested _IncludedRouter entries.
+    # This still fails for a missing route, a mis-mounted prefix, a 404/500,
+    # or incorrect delivery/cache semantics in the actual application.
+    sentinel = {
+        "status": "AVAILABLE_DATED_READ_ONLY",
+        "hand_off": {"market_session_as_of": "2026-09-24", "formal_buy_now": []},
+        "execution_allowed": False,
+    }
+    monkeypatch.setattr(investor_v4, "latest_report", lambda: sentinel)
+    with TestClient(create_app()) as client:
+        response = client.get("/api/v1/investor-v4/latest")
+    assert response.status_code == 200
+    assert response.json() == sentinel
+    assert response.headers["cache-control"] == "no-store, max-age=0"
 
 
 def test_route_returns_no_cache_and_dated_non_actionable_payload(monkeypatch):
