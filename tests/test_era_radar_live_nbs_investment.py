@@ -64,3 +64,60 @@ def test_nbs_collector_fails_closed_when_required_investment_schema_changes():
         assert "industrial_investment" in str(exc)
     else:
         raise AssertionError("collector must fail closed on changed NBS investment schema")
+
+
+def test_live_official_inline_spans_do_not_split_required_investment_metrics():
+    """NBS may style numeric/text nodes separately inside the same sentence."""
+    styled = (
+        ARTICLE
+        .replace(
+            "全国固定资产投资（不含农户）293092亿元，同比下降7.2%",
+            "全国固定资产投资（不含农户）<span>293092</span>亿元，"
+            "<span>同比</span>下降<span>7.2</span>%",
+        )
+        .replace(
+            "工业投资同比下降2.9%",
+            "<span>工业投资</span>同比<span>下降2.9%</span>",
+        )
+        .replace(
+            "制造业投资下降2.3%",
+            "<span>制造业投资</span><span>下降2.3%</span>",
+        )
+        .replace(
+            "基础设施投资（口径详见附注1）同比下降4.0%",
+            "基础设施投资（口径详见附注1）<span>同比</span>"
+            "<span>下降4.0%</span>",
+        )
+    )
+    collector = NbsFixedAssetInvestmentCollector(
+        index_fetcher=_index,
+        article_fetcher=lambda _: styled,
+        clock=lambda: "2026-09-27T12:00:00Z",
+    )
+    rows = list(collector.collect("2026-09-27T12:00:00Z"))
+    assert len(rows) == 6
+    assert {r.topic_keys[0] for r in rows} == {
+        "macro_industrial_capex", "industrial_capex_cycle",
+        "manufacturing_capex", "infrastructure_capex",
+        "equipment_investment", "digital_infrastructure",
+    }
+    assert all(r.published_at == "2026-09-15T02:00:00Z" for r in rows)
+    assert all(r.family == "INDUSTRIAL_CAPITAL" for r in rows)
+    assert all(r.direction == (-1 if r.topic_keys[0] not in {
+        "equipment_investment", "digital_infrastructure"} else 1) for r in rows)
+
+
+def test_inline_spans_do_not_allow_missing_official_metric_to_pass():
+    # Fix token boundaries, not the business requirement for every metric.
+    styled = ARTICLE.replace("工业投资同比下降2.9%", "工业投资数据另发")
+    collector = NbsFixedAssetInvestmentCollector(
+        index_fetcher=_index,
+        article_fetcher=lambda _: styled,
+        clock=lambda: "2026-09-27T12:00:00Z",
+    )
+    try:
+        list(collector.collect("2026-09-27T12:00:00Z"))
+    except ValueError as exc:
+        assert "industrial_investment" in str(exc)
+    else:
+        raise AssertionError("missing independently stated industrial metric must fail closed")
