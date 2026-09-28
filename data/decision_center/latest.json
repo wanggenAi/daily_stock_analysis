@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-28T00:12:34+00:00",
+  "generated_at": "2026-09-28T00:56:01+00:00",
   "latest_trade_date": "2026-09-24",
   "canonical_snapshot_id": "66c3dfc6b56e166443a5",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -19,11 +19,11 @@
     "validated_macro_handoffs": 0,
     "new_buy_now_count": 0,
     "new_wait_price_count": 0,
-    "terminal_reject_count": 120,
+    "terminal_reject_count": 0,
     "available_cash_cny": 50000.0,
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
-    "capital_flow_evidence_status": "PARTIAL",
+    "capital_flow_evidence_status": "MULTI_LAYER_COVERED",
     "deep_calculation_execution_status": "SUCCESS",
     "deep_calculation_research_outcome": "EVIDENCE_EXHAUSTED",
     "deep_calculation_terminal_state": "EVIDENCE_EXHAUSTED",
@@ -385,7 +385,7 @@
   },
   "pillar_2_world_social_market_capital_map": {
     "question": "世界和社会正在往哪里走，钱可能流向哪里，A股该研究什么？",
-    "research_as_of": "2026-09-20T16:17:47Z",
+    "research_as_of": "2026-09-28T00:54:16Z",
     "direct_fund_flow_claimed": false,
     "a_share_market_snapshot": {
       "as_of_date": "2026-09-24",
@@ -410,18 +410,18 @@
       {
         "trend_id": "digital_infrastructure",
         "lifecycle": "EMERGING",
-        "confidence_score": 33.69,
+        "confidence_score": 53.1,
         "structural_score": 57.06,
-        "industrial_score": 62.5,
-        "cyclical_score": 67.5,
-        "evidence_count": 3,
-        "independent_families": 2,
+        "industrial_score": 72.44,
+        "cyclical_score": 77.44,
+        "evidence_count": 4,
+        "independent_families": 3,
         "a_share_research_industries": [],
         "components": {
-          "evidence_quality": 91.78,
+          "evidence_quality": 93.59,
           "financial_crowding": 50.0,
           "global_confirmation": 67.33,
-          "industrial_capex": 50.0,
+          "industrial_capex": 89.78,
           "investable_bottleneck_strength": 50.0,
           "policy_commitment": 50.0,
           "profit_pool_quality": 50.0,
@@ -474,6 +474,29 @@
           "policy_commitment": 50.0,
           "profit_pool_quality": 50.0,
           "real_demand_confirmation": 100.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "equipment_investment",
+        "lifecycle": "EMERGING",
+        "confidence_score": 14.65,
+        "structural_score": 50.0,
+        "industrial_score": 56.89,
+        "cyclical_score": 56.89,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 76.17,
+          "financial_crowding": 50.0,
+          "global_confirmation": 50.0,
+          "industrial_capex": 77.55,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
           "structural_demand": 50.0,
           "technology_enablement": 50.0
         }
@@ -577,22 +600,43 @@
         }
       },
       {
-        "trend_id": "electrification_infrastructure",
+        "trend_id": "manufacturing_capex",
         "lifecycle": "EMERGING",
-        "confidence_score": 0.0,
+        "confidence_score": 10.7,
         "structural_score": 50.0,
-        "industrial_score": 50.0,
-        "cyclical_score": 50.0,
+        "industrial_score": 44.23,
+        "cyclical_score": 44.23,
         "evidence_count": 1,
-        "independent_families": 0,
-        "a_share_research_industries": [
-          "电力设备"
-        ],
+        "independent_families": 1,
+        "a_share_research_industries": [],
         "components": {
-          "evidence_quality": 50.0,
+          "evidence_quality": 28.08,
           "financial_crowding": 50.0,
           "global_confirmation": 50.0,
-          "industrial_capex": 50.0,
+          "industrial_capex": 26.93,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        }
+      },
+      {
+        "trend_id": "industrial_capex_cycle",
+        "lifecycle": "EMERGING",
+        "confidence_score": 10.67,
+        "structural_score": 50.0,
+        "industrial_score": 44.13,
+        "cyclical_score": 44.13,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 27.72,
+          "financial_crowding": 50.0,
+          "global_confirmation": 50.0,
+          "industrial_capex": 26.54,
           "investable_bottleneck_strength": 50.0,
           "policy_commitment": 50.0,
           "profit_pool_quality": 50.0,
@@ -649,38 +693,37 @@
     "intersection_status": "NO_VALIDATED_A_SHARE_HANDOFF",
     "interpretation_rule": "结构趋势回答中长期需求/利润池可能去哪里；市场行为代理回答近期风险偏好在哪里；只有经过映射和后续全权限深算的交集，才能进入个股决策。",
     "capital_evidence_coverage": {
-      "status": "PARTIAL",
-      "evidence_count": 12,
+      "status": "MULTI_LAYER_COVERED",
+      "evidence_count": 22,
       "family_counts": {
         "POLICY_CAPITAL": 1,
-        "INDUSTRIAL_CAPITAL": 0,
-        "FINANCIAL_CAPITAL": 0,
+        "INDUSTRIAL_CAPITAL": 6,
+        "FINANCIAL_CAPITAL": 4,
         "REAL_DEMAND": 5,
         "TECHNOLOGY": 0,
         "GLOBAL_STRUCTURE": 6
       },
       "covered_capital_layers": [
         "POLICY_CAPITAL",
+        "INDUSTRIAL_CAPITAL",
+        "FINANCIAL_CAPITAL",
         "REAL_DEMAND"
       ],
-      "missing_capital_layers": [
-        "INDUSTRIAL_CAPITAL",
-        "FINANCIAL_CAPITAL"
-      ],
+      "missing_capital_layers": [],
       "policy_capital_evidence_available": true,
-      "industrial_capital_evidence_available": false,
-      "financial_capital_evidence_available": false,
+      "industrial_capital_evidence_available": true,
+      "financial_capital_evidence_available": true,
       "real_demand_evidence_available": true,
       "direct_stock_fund_flow_claimed": false,
       "interpretation": "Policy/industrial/financial capital and real-demand evidence are separate layers. Missing FINANCIAL_CAPITAL must remain explicit; market-strength proxies never become direct fund-flow evidence."
     },
-    "direct_financial_capital_evidence_available": false
+    "direct_financial_capital_evidence_available": true
   },
   "pillar_3_deep_opportunities": {
     "question": "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
     "buy_now": [],
     "wait_price": [],
-    "terminal_reject_count": 120,
+    "terminal_reject_count": 0,
     "invalid_unauthorized_buy_count": 0,
     "macro_research_handoffs": [],
     "actionable_count": 0,
@@ -6098,8 +6141,8 @@
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
-    "market_session_state": "CLOSED",
-    "market_data_status": "OFF_SESSION",
+    "market_session_state": "UNKNOWN",
+    "market_data_status": "DEGRADED",
     "live_quote_applied_count": 0,
     "live_quote_expected_count": 4,
     "live_quote_coverage_complete": false,
@@ -6113,11 +6156,11 @@
     "all_holdings_explicit_deep_review_complete": false,
     "structural_trend_evidence_available": true,
     "validated_macro_to_a_share_handoff_available": false,
-    "terminal_opportunity_result_available": true,
+    "terminal_opportunity_result_available": false,
     "live_execution_quote_coverage_complete": false,
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
-    "financial_capital_evidence_available": false,
-    "capital_flow_multi_layer_covered": false,
+    "financial_capital_evidence_available": true,
+    "capital_flow_multi_layer_covered": true,
     "deep_calculation_last_run_completed": true,
     "deep_calculation_last_run_successful": true,
     "deep_calculation_process_terminal": true,
@@ -6583,7 +6626,7 @@
     "interpretation": "Candidate Lifecycle preserves research continuity across scans; it does not filter broad discovery and cannot create Formal trading authority."
   },
   "system_capability_visibility": {
-    "status": "ACTIVE_WITH_LIMITATIONS",
+    "status": "ACTIVE",
     "capabilities": [
       {
         "capability": "市场大趋势 / 全A脉搏",
@@ -6617,8 +6660,8 @@
       },
       {
         "capability": "世界 / 社会 / 资本趋势雷达",
-        "status": "PARTIAL",
-        "result": "POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6"
+        "status": "MULTI_LAYER_COVERED",
+        "result": "POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6"
       },
       {
         "capability": "Deep Research Terminal",
@@ -6640,7 +6683,6 @@
     "evidence_complete": false,
     "limitations": [
       "DEEP_RESEARCH_EVIDENCE_PARTIAL",
-      "FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING",
       "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED",
       "LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION"
     ],

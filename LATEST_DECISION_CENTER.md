@@ -32,19 +32,19 @@
 
 | 趋势 | 信心 | 结构 | 产业 | A股研究映射 |
 |---|---:|---:|---:|---|
-| digital_infrastructure | 33.69 | 57.06 | 62.50 | 尚未映射 |
+| digital_infrastructure | 53.10 | 57.06 | 72.44 | 尚未映射 |
 | software_digital_economy | 31.92 | 50.00 | 62.44 | 尚未映射 |
 | automotive_industry | 16.09 | 50.00 | 62.50 | 汽车 |
+| equipment_investment | 14.65 | 50.00 | 56.89 | 尚未映射 |
 | demographic_longevity | 14.64 | 60.32 | 50.00 | 医药 |
 | urbanization_services | 14.18 | 58.08 | 50.00 | 尚未映射 |
 | research_intensity | 13.95 | 55.04 | 50.00 | 尚未映射 |
 | advanced_manufacturing | 11.11 | 48.19 | 45.69 | 专用设备、电气机械、工程机械 |
-| electrification_infrastructure | 0.00 | 50.00 | 50.00 | 电力设备 |
 
 ### 资金流证据覆盖
 
-- 覆盖状态：**PARTIAL**；政策资本 **1**；产业资本 **0**；金融资本 **0**；真实需求 **5**。
-- **金融资本 live 证据尚未覆盖，因此当前不能声称‘资金流已经看清’；行业强弱只作为市场行为代理。**
+- 覆盖状态：**MULTI_LAYER_COVERED**；政策资本 **1**；产业资本 **6**；金融资本 **4**；真实需求 **5**。
+- 金融资本已有直接证据，但仍需与政策、产业资本、真实需求和个股深算交叉验证。
 
 ### 近期市场行为代理
 
@@ -58,12 +58,12 @@ A02林业(100.00)、O81机动车、电子产品和日用产品修理业(91.23)�
 - **本轮没有已授权新股 BUY。**
 - **本轮没有合格 WAIT_PRICE。**
 
-- Formal/Production Candidate Terminal REJECT：**120**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
+- Formal/Production Candidate Terminal REJECT：**0**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
 
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥0.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**CLOSED**；行情状态：**OFF_SESSION**。
+- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
@@ -77,14 +77,14 @@ A02林业(100.00)、O81机动车、电子产品和日用产品修理业(91.23)�
 - 全部持仓显式深算完整：**False**
 - 世界/社会结构趋势证据可用：**True**
 - 已验证趋势→A股交接可用：**False**
-- Terminal 机会结果可用：**True**
+- Terminal 机会结果可用：**False**
 
 > UNKNOWN != PASS；研究趋势不自动变成 BUY；no_auto_trade=true。
 
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、FINANCIAL_CAPITAL_LIVE_EVIDENCE_MISSING、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -97,7 +97,7 @@ A02林业(100.00)、O81机动车、电子产品和日用产品修理业(91.23)�
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=118 / dormant=8 / archived-invalidated=0 / events=10508 / focus=8 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=18 / verified-pass=227 / unresolved=70 |
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=36360654764 / unverified-pass=0 |
-| 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=0 / FINANCIAL_CAPITAL=0 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
+| 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=18 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
