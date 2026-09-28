@@ -1,4 +1,6 @@
-# Current Mission — evidence-backed owner investment reporting
+# Current Mission
+
+Evidence-backed owner investment reporting
 
 **2026-09-28 after-close owner directive:** The system must do real unattended original-data updates that let ChatGPT Web, **on explicit owner request**, independently verify sources, synthesize an evidence-rich, holdings-first investment report and clearly separate current public market facts from program advisory versus formal existing permissions. Merely publishing a newly generated JSON with an old market date is **not completion**. Existing stock website must display a useful timestamped program report *without any new GPT API*.
 
