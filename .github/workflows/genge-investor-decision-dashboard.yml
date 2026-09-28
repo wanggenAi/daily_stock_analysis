@@ -81,7 +81,8 @@ jobs:
             tests/test_genge_investor_manual_execution_quote_overlay.py \
             tests/test_investor_terminal_research_overlay.py \
             tests/test_genge_investor_dashboard_workflow_contract.py \
-            tests/test_investor_chatgpt_handoff.py
+            tests/test_investor_chatgpt_handoff.py \
+            tests/test_guard_investor_report_epoch.py
 
   publish-investor-brief:
     name: Publish investor decision brief
@@ -232,8 +233,16 @@ jobs:
           set -euo pipefail
           git config user.name "genge-investor-brief-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          previous_dashboard_file="$(mktemp)"
           for attempt in 1 2 3 4; do
             git fetch origin main; git reset --hard origin/main
+            # Read the latest successfully persisted market epoch on each retry;
+            # a later workflow_run may point to an OLDER authorized Canonical.
+            if [ -s data/investor_decision_dashboard/latest.json ]; then
+              cp data/investor_decision_dashboard/latest.json "$previous_dashboard_file"
+            else
+              : > "$previous_dashboard_file"
+            fi
             hourly_overlay=""
             if [ -s data/hourly_deep_overlay/latest.json ]; then
               if CANONICAL="$CANONICAL" HOURLY="data/hourly_deep_overlay/latest.json" python - <<'PY'
@@ -357,6 +366,12 @@ jobs:
               --market-artifact-id "${MARKET_ARTIFACT_ID:-}" \
               --json-output data/investor_chatgpt_handoff/latest.json \
               --markdown-output INVESTOR_CHATGPT_HANDOFF.md
+            # Do not let an out-of-order authorized Finalizer/artifact overwrite
+            # a newer already published exchange-market epoch. No change to
+            # Formal authority; old source remains auditable, not 'fresh'.
+            python -m scripts.guard_investor_report_epoch \
+              --previous "$previous_dashboard_file" \
+              --candidate data/investor_decision_dashboard/latest.json
             git add -f data/investor_decision_dashboard/latest.json data/investor_chatgpt_handoff/latest.json
             git add INVESTOR_DECISION_DASHBOARD.md INVESTOR_CHATGPT_HANDOFF.md
             if git diff --cached --quiet; then break; fi
