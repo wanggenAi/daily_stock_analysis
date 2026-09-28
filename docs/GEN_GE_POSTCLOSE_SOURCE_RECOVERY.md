@@ -23,13 +23,16 @@ and the `freshness_contract.fresh` flag all match the completed session,
 the watchdog:
 
 1. Checks actual schedule/manual production runs from the existing
-   `genge-opportunity-discovery.yml`. PR/push fixture-only runs do not count.
+   `genge-opportunity-discovery.yml` AND explicit `genge-all-a-v31-once.yml`
+   One Shot runs. PR/push fixture-only runs do not count.
 2. Defers while the corresponding current-session producer, explicit One Shot,
    Every-Industry, or Finalizer is queued/in progress.
 3. Allows at most two postclose full-production source *attempts in total* for
    the current local day (existing 18:30 + recovery, or two bounded recoveries
    if 18:30 never started); dispatches the existing Opportunity Discovery
    workflow, whose normal Every-Industry -> Finalizer chain remains authoritative.
+   A successful Finalizer now directly triggers Investor Brief refresh; this
+   does not bypass the existing strict source-date guards.
 4. If both attempts are consumed with no current-session report and no active
    pipeline, fails visibly with `EXHAUSTED` rather than refreshing timestamps
    or fabricating market data.
