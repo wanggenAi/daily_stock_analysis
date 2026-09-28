@@ -1,11 +1,11 @@
 {
   "schema_version": 2,
-  "generation": 80,
+  "generation": 81,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
   "status": "POST_PR310_REAL_ALL_A_ISSUER_COVERAGE_PRODUCTION_AUDITED_MARKET_ASOF_STILL_SEP24",
   "stage": "TRACE_STALE_MARKET_EPOCH_AND_REAL_ISSUER_ORIGINAL_EVIDENCE",
-  "previous_checkpoint_generation": 79,
+  "previous_checkpoint_generation": 80,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
   "last_observed_main_sha": "e64dc007e7e26cc9975a54dd7890629627eb341c",
@@ -430,6 +430,7 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
+    "ACTUAL FIX PR319 now open (head 4612c329): bounded publisher 'previous published market date' vs candidate safeguard before main push; regression tests. Follow exact-head CI/PR review and real postmerge incident proof. NO completion claim from opening PR; old Finalizer selection and actual Sep28 post-close source remain separate work.",
     "CRITICAL NEW REAL REGRESSION: latest generated Sep28 22:11 Beijing investor brief and 22:12 decision center both reverted actual market as-of from Sep24 (earlier 21:56) BACK TO Sep21, new Canonical snapshot 5ac20f6d54739d44e849 / source run35690406280, formal_action_recomputed=false. FIRST diagnose event/publisher stale Canonical selection and prevent older-asof downstream overlay from overwriting later validated market context. Do not mark stale source 'fresh', do not wipe historical authoritative provenance or grant new trade authority.",
     "CRITICAL VERIFIED CALENDAR CORRECTION: Sep25-27 2026 A-share Mid-Autumn closure (SSE official), so already-consumed All-A 36362003421 started PREMARKET Sep28 08:22 Beijing and its Sep24 as-of is VALID at that point. Do NOT label that morning artifact a faulty stale feed or redispatch it. The real problem is absence of a proven POST-SEP28-CLOSE+4H fresh Canonical report by Sep28 21:56.",
     "First inspect distinct newer completed real All-A / Canonical / Finalizer Actions+artifacts after Sep28 19:00 Beijing (15:00 close + existing 4h publication grace), see if postgrace dispatch/schedule exists. all-a-v31-once.yml currently workflow_dispatch only; existing investor brief cron16:20 Beijing alone is not a fresh trading-session trigger. Diagnose durable and idempotent post-grace orchestration/fallback/schedule with source proof before proposing minimal PR. NEVER reconsume morning run 36362003421.",
@@ -465,7 +466,8 @@
     "2026-09-28 read-only independently verified true post-#310 All-A artifact 10947650329 run 36362003421: additive issuer collection coverage present, 80 queue, annual 15 cache-only, events 30 cache-only, unique touched 30 / untouched 50, company noncached 0, strict-ready 0, market as-of Sep24. No new trading permission.",
     "2026-09-28 after-close owner directive registered with research-only generation78 acceptance; real stale market and issuer coverage proven from already-consumed run and current report; no fresh collection, PR fix, or new session success is claimed by this checkpoint.",
     "Official SSE calendar independently verified on 2026-09-28: Sep25-27 Mid-Autumn closure, Sep28 reopen; original consumed All-A Sep28 08:22 Beijing as-of Sep24 was legitimately last prior market session (not evidence of morning feed bug). New actual blocker is verified post-close+4h current-session production readiness; document + test orchestration before adding expensive daily duplicate dispatch.",
-    "2026-09-28 22:12 Beijing verified severe report source-epoch backward regression (Sep24 -> Sep21) despite later generated timestamp; highest priority changed to proving and repairing actual publisher monotonic source epoch. Merely scheduling fresh full scan without repairing regression will not produce reliable owner report."
+    "2026-09-28 22:12 Beijing verified severe report source-epoch backward regression (Sep24 -> Sep21) despite later generated timestamp; highest priority changed to proving and repairing actual publisher monotonic source epoch. Merely scheduling fresh full scan without repairing regression will not produce reliable owner report.",
+    "Submitted real independently scoped existing Investor Brief publisher regression guard as PR319, with tests and CI wiring; pending exact-head CI/merge/production and true post-close source proof."
   ],
   "owner_report_data_contract_20260928": {
     "requested_on": "2026-09-28 after close Asia/Shanghai",
@@ -521,5 +523,13 @@
     "newer_investor_brief_canonical_source_run_id": "35690406280",
     "independent_verification": "Both newest main data/decision_center/latest.json and data/investor_decision_dashboard/latest.json were reread and now regress from Sep24 to Sep21 despite same-day later generated timestamps; formal_action_recomputed=false, report correctly STALE_UPSTREAM.",
     "critical_next_action": "TRACE AND BLOCK STALE-EPOCH PUBLISHER REGRESSION! Inspect which event/Deep/older Finalizer selects Sep21 and overwrites an existing Sep24 current report. Enforce source-lineage-valid monotonic completed-session market/asof and snapshot integrity at BOTH existing investor report persistence and three-pillar rendering, including concurrency overlap; retain last newer validated report rather than replacing it with older Canonical on unrelated overlay. No new Formal approval or loss of newest independently valid source. Add regression reproducing Sep24->Sep21 replay from older Deep event; exact-head CI, distinct genuine production proving no rollback after concurrent event overlays."
+  },
+  "publisher_regression_pr319": {
+    "number": 319,
+    "branch": "fix/investor-report-regressive-epoch-guard-20260928",
+    "head_at_creation": "4612c329c066878c93a655f694d637645901ca69",
+    "url": "https://github.com/wanggenAi/daily_stock_analysis/pull/319",
+    "scope": "Actual publisher fail-closed date rollback gate + deterministic tests + workflow hook and docs. Sep24 21:56 -> Sep21 22:12 live regression confirmed. This is PREVENTION OF FURTHER ROLLBACK only, not a new session, not a root cause fix of candidate Finalizer run-order selection, not merged or production verified.",
+    "next": "Inspect exact-head PR319 CI, test same-session overlay, older-date replay and main push retries, resolve changed-scope reviews; merge only when green/safe; independently confirm postmerge out-of-order reproduction, then fix newest-valid-source selection and postclose+4h Canonical workflow with separate verified targeted changes. Other H3 PR315 and stale root PR318 remain independent."
   }
 }
