@@ -2,12 +2,12 @@
 
 - execution: **SUCCESS**
 - terminal state: **EVIDENCE_EXHAUSTED**
-- requested: **18**
+- requested: **22**
 - complete: **0**
-- evidence exhausted: **18**
+- evidence exhausted: **22**
 - evidence collection attempts: **2**
-- new evidence rows: **43**
-- progressed gates: **6**
+- new evidence rows: **51**
+- progressed gates: **10**
 - predictability resolved gates: **2**
 - moat resolved gates: **2**
 - material-event failed gates: **0**
@@ -15,6 +15,6 @@
 - historical material-event failed gates: **0**
 - cumulative material-event risk ledger rows: **0**
 - material-event PASS overrides: **0**
-- unresolved gates: **70**
+- unresolved gates: **82**
 - immediate retry required: **False**
 - UNKNOWN != PASS; no automatic Formal BUY; no auto trade.
