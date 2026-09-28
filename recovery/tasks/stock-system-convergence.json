@@ -1,14 +1,14 @@
 {
   "schema_version": 2,
-  "generation": 75,
+  "generation": 76,
   "repository": "wanggenAi/daily_stock_analysis",
   "task_key": "stock-system-convergence",
-  "status": "PR316_MERGED_EXACT_HEAD_GREEN_POSTMERGE_NETWORK_PRODUCTION_IN_PROGRESS",
-  "stage": "VERIFY_NBS_REAL_POSTMERGE_AND_NEW_ALL_A_ISSUER_COVERAGE",
-  "previous_checkpoint_generation": 74,
+  "status": "NBS_REAL_POSTMERGE_PRODUCTION_VERIFIED_ALL_A_COVERAGE_AUDIT_PENDING",
+  "stage": "VERIFY_NEXT_COMPLETED_ALL_A_GENUINE_ARTIFACT",
+  "previous_checkpoint_generation": 75,
   "previous_checkpoint_git_commit": "7004a103f982c58d38f7f5e40a8381fdd3605ce1",
   "historical_audit_path": "recovery/research/stock-candidate-quality-baseline-20260924.json",
-  "last_observed_main_sha": "fde4bdad27b51497baf7b984d7c74eeb35abc475",
+  "last_observed_main_sha": "f479b0873bed959eda6311829d21aec5e1ff9f5b",
   "work_branch": "fix/era-radar-nbs-inline-fresh-main-20260928",
   "work_head_sha": "1580aecbfd1cc16e25b7c002d5d5c6bcc69273f5",
   "active_pr": null,
@@ -328,7 +328,7 @@
       "era_radar_deterministic_gate": "SUCCESS at exact head",
       "backend": "IN_PROGRESS",
       "docker": "IN_PROGRESS",
-      "production_verified": false,
+      "production_verified": true,
       "safety": "NO_PUBLISH on any configured failure; no altered raw metric/threshold/trading authority",
       "original_pr": 314,
       "replacement_pr": 316,
@@ -345,7 +345,40 @@
       "merge_verified": true,
       "merge_commit_sha": "fde4bdad27b51497baf7b984d7c74eeb35abc475",
       "postmerge_live_run_id": 36363691094,
-      "postmerge_live_status_at_checkpoint": "IN_PROGRESS"
+      "postmerge_live_status_at_checkpoint": "COMPLETED_SUCCESS",
+      "postmerge_live_artifact_id": 10946950648,
+      "persist_commit": "f479b0873bed959eda6311829d21aec5e1ff9f5b",
+      "persist_snapshot_id": "5b97a84a0ed0c8e3c259",
+      "evidence_fingerprint": "644791cb75e40bd0876bb0ea8629e36cea5bdeb9234548c618ed827db2990aea",
+      "live_source_health": {
+        "WorldBankChinaStructuralCollector": {
+          "status": "SUCCESS",
+          "observations": 6
+        },
+        "MiitPolicyCollector": {
+          "status": "SUCCESS",
+          "observations": 1
+        },
+        "MiitStatisticsCollector": {
+          "status": "SUCCESS",
+          "observations": 5
+        },
+        "NbsFixedAssetInvestmentCollector": {
+          "status": "SUCCESS",
+          "observations": 6
+        },
+        "PbcFinancialStatisticsCollector": {
+          "status": "SUCCESS",
+          "observations": 4
+        }
+      },
+      "nbs_live_official_period": "2026-08",
+      "nbs_live_official_published_at": "2026-09-15T02:00:00Z",
+      "nbs_official_url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260915_1965309.html",
+      "observed_persisted_evidence_count": 22,
+      "research_handoff_queue": 0,
+      "formal_trading_authority": false,
+      "no_auto_trade": true
     }
   },
   "last_consumed": {
@@ -366,9 +399,10 @@
     "historical_jev_actual_calls": 25
   },
   "next_actions": [
-    "Postmerge Era Capital Trend Radar Live run36363691094 began at 2026-09-28T00:50:31Z on exact merge SHA fde4bdad; inspect jobs, five real sources, official Sep15 original NBS publication/metrics, live durable truth and actual artifact. Deterministic green is not network verification; do not rerun or claim success before postmerge evidence.",
-    "All-A genuine owner-dispatched run36362003421 began 2026-09-28T00:22:45Z on live main 236b9be5 after merged PR310. It was in progress at this checkpoint. Read completed artifact and issuer_collection_coverage metrics (annual/events/union touched-vs-untouched) and compare stable original source fingerprints to prior audited baseline; do not launch duplicate or infer fresh market session until as-of inspected.",
-    "Production dashboard still market-as-of Sep24; keep strict fail-closed until genuine fresh canonical, original issuer evidence and broker inputs verified; V4 sibling cursor is independent gen12+ and H3 CI not research task."
+    "NBS real postmerge 36363691094 is DONE: five configured collectors SUCCESS, NBS 6 live Sep15 published industrial-capital observations independently reread in persisted main evidence snapshot 5b97a84a0ed0c8e3c259, artifact10946950648 and persist commit f479b08. Do not dispatch this fixed period again; source period August 2026 and Sept15 publication are not Sept28 fresh market prices or Formal trading authority.",
+    "Next previously started genuine All-A run36362003421, owner workflow_dispatch 2026-09-28T00:22:45Z on post-#310 main236b9be remains in progress at last observation. On completion inspect real production artifact issuer_collection_coverage: annual/events/unique union, touched/not-touched and independently newly published original-source fingerprints; strict readiness and as-of must be assessed, do not launch duplicate or invent Sep25 trade date.",
+    "Legacy original #314 is superseded by verified #316 merge; may close #314 as unmerged duplicate for audit now, preserving full original thread and branch. Never merge #314.",
+    "Formal Canonical/market EOD as-of Sep24, broker cash/funds and original issuer events independently unverified; fail closed. V4 sibling cursor independent gen13 H3 PR315 updated tests CI in progress."
   ],
   "do_not_repeat": [
     "Do not rerun/merge completed PR299-304 or exhausted same-epoch upstream 35886039426/deep 35934671719 or 35955222216",
@@ -385,7 +419,7 @@
     "unknown_is_pass": false,
     "stale_authority_fail_closed": true
   },
-  "pending_operation": "Await actual postmerge NBS live workflow run36363691094 and already-started genuine All-A run36362003421; only inspect existing artifacts, no duplicate dispatch.",
+  "pending_operation": "Await the genuine already-running All-A workflow36362003421 completion; audit next issuer coverage and market as-of; NBS fixed period success completed.",
   "health": {
     "recovery": "HEALTHY",
     "last_error": null
@@ -394,6 +428,7 @@
     "Verified PR310 old head was exact-head CI green and had no reviews, but became GitHub dirty after PR309 merged due to shared CHANGELOG. Safely merged live main into existing PR310 using nonforce fast-forward two-parent commit d74fd2d88f14eb4c561aae631afb4de5b26a596f; PR310 now clean/unstable solely awaiting NEW exact-head CI.",
     "Rechecked original PR310 exact head d74fd2d88f14eb4c561aae631afb4de5b26a596f backend/docker/ai-governance completed SUCCESS, original PR310 independently merged on 2026-09-27T01:27:06Z as e84b184b3f6f47c8315c6144bb1dd43c614f30eb; old #307 closed unmerged with replacement audit comment. No independently verified postmerge All-A production artifact yet.",
     "Investigated genuine 2026-09-27 Era Radar live job 108711639298 failure: configured NBS fixed-asset-investment collector reported four mandatory missing metrics and atomic NO_PUBLISH although four other configured collectors succeeded; checked current 2026-09-15 NBS official release really includes the four current-period figures. Submitted minimal text-node-boundary fix with split-inline-span and absent-field regressions in independent PR314 at 087e9b477105af7f580e9fd88b675b360496b08d; deterministic contracts and Era Radar deterministic gate success, full exact CI + genuine live proof pending.",
-    "PR316 fresh-main replacement of conflicted PR314: independently exact-head green backend/docker/ai-governance and Era Radar deterministic contracts, no reviews or unresolved threads, GitHub clean mergeability, squash merged 2026-09-28T00:50:28Z as fde4bdad27b51497baf7b984d7c74eeb35abc475; real postmerge NBS run36363691094 started and is not yet accepted."
+    "PR316 fresh-main replacement of conflicted PR314: independently exact-head green backend/docker/ai-governance and Era Radar deterministic contracts, no reviews or unresolved threads, GitHub clean mergeability, squash merged 2026-09-28T00:50:28Z as fde4bdad27b51497baf7b984d7c74eeb35abc475; real postmerge NBS run36363691094 started and is not yet accepted.",
+    "REAL NBS production acceptance: push-on-merged-main Era Capital Trend Radar Live 36363691094 completed SUCCESS, separate live-production + deterministic-contracts SUCCESS, all five configured collectors succeeded (6+1+5+6+4=22 observations). NBS original released 2026-09-15T02:00Z, six NBS real metrics under INDUSTRIAL_CAPITAL independently reread in immutable research evidence snapshot 5b97a84a0ed0c8e3c259, durable main persist f479b0873bed959eda6311829d21aec5e1ff9f5b, artifact10946950648; research-only no auto-trade. NBS issue resolved for verified original reporting period, not fresh market Formal."
   ]
 }
