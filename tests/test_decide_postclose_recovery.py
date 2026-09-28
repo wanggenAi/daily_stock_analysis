@@ -80,6 +80,20 @@ def test_two_completed_postclose_scans_fail_explicitly_if_still_stale():
     assert result["postclose_attempts"] == 2
 
 
+def test_next_morning_still_recovers_previous_completed_session():
+    tuesday_0100 = datetime(2026, 9, 28, 17, 0, tzinfo=timezone.utc)
+    result = _decide(_dashboard(day="2026-09-24", fresh=False, market="2026-09-24"), now=tuesday_0100)
+    assert result["expected_trade_date"] == "2026-09-28"
+    assert result["action"] == "DISPATCH"
+
+
+def test_saturday_early_morning_may_recover_friday_session():
+    saturday_0100 = datetime(2026, 10, 2, 17, 0, tzinfo=timezone.utc)
+    result = _decide(now=saturday_0100)
+    assert result["expected_trade_date"] == "2026-10-02"
+    assert result["action"] == "DISPATCH"
+
+
 def test_not_weekday_postclose_defers_instead_of_guessing_session():
     morning = datetime(2026, 9, 28, 6, 0, tzinfo=timezone.utc)
     saturday = datetime(2026, 10, 3, 13, 0, tzinfo=timezone.utc)
@@ -94,6 +108,8 @@ def test_workflow_has_independent_bounded_recovery_triggers_and_real_producer():
     ).read_text(encoding="utf-8")
     assert 'cron: "30 12 * * 1-5"' in workflow
     assert 'cron: "10 15 * * 1-5"' in workflow
+    assert 'cron: "0 17 * * 1-5"' in workflow
+    assert 'branches: [main]' in workflow
     assert 'workflows: ["Era Capital Trend Radar Live"]' in workflow
     assert "python -m scripts.decide_postclose_recovery" in workflow
     assert "gh workflow run genge-opportunity-discovery.yml" in workflow
