@@ -59,7 +59,7 @@ jobs:
           jq -s '{workflow_runs: [.[].workflow_runs[]]}' /tmp/postclose-active/*.json             > /tmp/postclose-downstream.json
 
           python -m scripts.decide_postclose_recovery             --dashboard /tmp/postclose-dashboard.json             --upstream /tmp/postclose-upstream.json             --downstream /tmp/postclose-downstream.json             --decision-file /tmp/postclose-decision.json
-          jq -r '"- result: \\(.action); reason=\\(.reason); expected_trade_date=\\(.expected_trade_date); postclose_source_attempts=\\(.postclose_attempts)"'             /tmp/postclose-decision.json >> "$GITHUB_STEP_SUMMARY"
+          jq -r '"- result: \(.action); reason=\(.reason); expected_trade_date=\(.expected_trade_date); postclose_source_attempts=\(.postclose_attempts)"'             /tmp/postclose-decision.json >> "$GITHUB_STEP_SUMMARY"
 
           action="$(jq -r '.action' /tmp/postclose-decision.json)"
           if [ "$action" = "SATISFIED" ]; then
