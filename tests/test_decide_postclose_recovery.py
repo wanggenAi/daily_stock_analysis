@@ -98,3 +98,8 @@ def test_workflow_has_independent_bounded_recovery_triggers_and_real_producer():
     assert "python -m scripts.decide_postclose_recovery" in workflow
     assert "gh workflow run genge-opportunity-discovery.yml" in workflow
     assert "genge-all-a-v31-once.yml" in workflow
+    investor = (
+        Path(__file__).resolve().parents[1]
+        / ".github/workflows/genge-investor-decision-dashboard.yml"
+    ).read_text(encoding="utf-8")
+    assert '"GenGe V3.1.1 Production Finalizer"' in investor
