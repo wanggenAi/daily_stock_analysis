@@ -66,27 +66,29 @@ O81机动车、电子产品和日用产品修理业(STRONG)、K70房地产业(ST
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
 - 本轮深算：**26** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **25** / REJECT **0**。
-- urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
+- urgent research：**6** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **1** / WATCH **7** / BLOCK **17**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **1** / WATCH **8** / BLOCK **16**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
-- 伯特利 603596: **BUILD**；conviction=0.8922；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 芯能科技 603105: **PROBE**；conviction=0.5969；建议账户仓位上限=0.72%；研究结论仍为 RESEARCH_GAP。
+- 伯特利 603596: **BUILD**；conviction=0.9449；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 芯能科技 603105: **PROBE**；conviction=0.5931；建议账户仓位上限=0.71%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
 | 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
 |---|---|---|---|---|
-| XD国电南 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
+| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
 | 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
 | 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
 | 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
 
 ### Urgent evidence queue
 
-- XD国电南 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
+- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
+- 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
 - 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
-- 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
+- 古井贡酒 000596: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 百联股份 600827: RESEARCH_GAP；gaps=long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
