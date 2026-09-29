@@ -1,0 +1,472 @@
+{
+  "as_of": "2026-09-29",
+  "audit": [
+    {
+      "cache_hit": false,
+      "code": "000596",
+      "collected_at": "2026-09-29T19:36:25+00:00",
+      "collector": "official_material_event_scan",
+      "detail": "announcements=140;matched=0;representatives=0;selected=0;verified=0;pages=5;partial_reasons=none;nonblocking_failures=none",
+      "industry": "C15酒、饮料和精制茶制造业",
+      "issue": "material_event_scan_complete",
+      "original_url": "",
+      "scope": "company",
+      "source_domain": "",
+      "status": "OK",
+      "stock_name": "古井贡酒",
+      "title": ""
+    },
+    {
+      "cache_hit": false,
+      "code": "",
+      "collected_at": "2026-09-29T19:36:41+00:00",
+      "collector": "miit_public_data",
+      "detail": "Fetched official page with html_text, but no canonical industry or configured alias was located.",
+      "industry": "C15酒、饮料和精制茶制造业",
+      "issue": "industry_keyword_not_found",
+      "original_url": "https://www.miit.gov.cn/gxsj/index.html",
+      "scope": "industry",
+      "source_domain": "www.miit.gov.cn",
+      "status": "MISSING",
+      "stock_name": "",
+      "title": "工业和信息化部公开数据"
+    },
+    {
+      "cache_hit": false,
+      "code": "",
+      "collected_at": "2026-09-29T19:36:42+00:00",
+      "collector": "ndrc_public_data",
+      "detail": "Fetched official page with html_text, but no canonical industry or configured alias was located.",
+      "industry": "C15酒、饮料和精制茶制造业",
+      "issue": "industry_keyword_not_found",
+      "original_url": "https://www.ndrc.gov.cn/fgsj/",
+      "scope": "industry",
+      "source_domain": "www.ndrc.gov.cn",
+      "status": "MISSING",
+      "stock_name": "",
+      "title": "国家发展改革委公开数据"
+    }
+  ],
+  "automatic_formal_buy_allowed": false,
+  "company_evidence": [
+    {
+      "code": "000596",
+      "collector": "szse_company_announcement",
+      "comparison_period": "2026-04-29",
+      "confidence": "HIGH",
+      "content_hash": "8f92fefd5feca4d22da968c629a04f918142b2097ae9392b403988c2b25e7644",
+      "date": "2026-04-29",
+      "direction": "NEGATIVE",
+      "evidence_direction": "NEGATIVE",
+      "evidence_name": "定期报告原文数值",
+      "evidence_status": "VERIFIED",
+      "evidence_value": "营业收入（元） 18,831,982,591.24 23,577,928,065.99 -20.13% 20,253,526,598.02",
+      "extraction_confidence": "HIGH",
+      "extraction_method": "LEGACY_SAME_LINE",
+      "extraction_reason": "EXISTING_SAME_LINE_EXTRACTION_VERIFIED",
+      "extraction_status": "VALUE_VERIFIED",
+      "indicator": "定期报告原文数值",
+      "industry": "C15酒、饮料和精制茶制造业",
+      "normalized_summary": "古井贡酒：2025年年度报告：营业收入（元） 18,831,982,591.24 23,577,928,065.99 -20.13% 20,253,526,598.02",
+      "original_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/9fbb3a29-2c9a-4f57-baca-b6e80c3f405f.PDF",
+      "parse_status": "VALUE_VERIFIED",
+      "parser": "szse_company_announcement",
+      "publish_date": "2026-04-29",
+      "raw_excerpt": "营业收入（元） 18,831,982,591.24 23,577,928,065.99 -20.13% 20,253,526,598.02",
+      "scope": "company",
+      "source": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/9fbb3a29-2c9a-4f57-baca-b6e80c3f405f.PDF",
+      "source_domain": "disc.static.szse.cn",
+      "source_type": "EXCHANGE_DISCLOSURE",
+      "stock_name": "古井贡酒",
+      "title": "古井贡酒：2025年年度报告",
+      "unit": "",
+      "unknown_is_pass": false,
+      "value": "18831982591.24",
+      "value_recovered": false,
+      "value_verified": true,
+      "warning_flags": ""
+    },
+    {
+      "adopted_for_gate": false,
+      "authority_crossed": false,
+      "code": "000596",
+      "collected_at": "2026-09-29T19:36:21+00:00",
+      "content_hash": "eaaf3b1ccab15b7118ec83756565e90c52235c3d010fb4b8b30146163eabb25e",
+      "coverage_count": 1,
+      "coverage_years": [
+        2021
+      ],
+      "cyclical_or_resource": false,
+      "evidence_kind": "multi_year_predictability",
+      "evidence_status": "OBSERVED_CONTEXT",
+      "formal_decision": false,
+      "indicator": "predictability_multi_year_official",
+      "industry": "C15酒、饮料和精制茶制造业",
+      "metrics_by_year": [
+        {
+          "fiscal_year": 2025,
+          "metric_provenance": {
+            "net_profit": {
+              "excerpt": "归属于上市公司股东的净利润\n(元) \n3,549,108,530.34 5,517,251,073.10 -35.67% 4,589,164,052.80 \n归属于上市公司股东的扣除非经\n常性损益的净利润(元) \n 3,489,463,594.30 5,457,155,276.12 -36.06% 4,495,219,187.57 \n经营活动产生的",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 3549108530.34,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 3549108530.34,
+              "verified": true
+            },
+            "operating_cash_flow": {
+              "excerpt": "经营活动产生的现金流量净额\n(元) \n1,947,212,977.00 4,727,652,873.85 -58.81% 4,496,206,034.42 \n基本每股收益(元/股) 6.71 10.44 -35.73% 8.68 \n稀释每股收益(元/股) 6.71 10.44 -35.73% 8.68 \n加权平均净资产收益率 14.28% 23.8",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 1947212977.0,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 1947212977.0,
+              "verified": true
+            },
+            "revenue": {
+              "excerpt": "",
+              "extraction_mode": null,
+              "raw_value": null,
+              "reason": "QUARTERLY_METRIC_NOT_ANNUAL",
+              "unit": null,
+              "unit_source": null,
+              "value_yuan": null,
+              "verified": false
+            }
+          },
+          "net_profit": 3549108530.34,
+          "normalization_unit": "CNY_YUAN",
+          "operating_cash_flow": 1947212977.0,
+          "revenue": null,
+          "unit_provenance_required": true
+        },
+        {
+          "fiscal_year": 2024,
+          "metric_provenance": {
+            "net_profit": {
+              "excerpt": "归属于上市公司股东的净利润\n(元) \n5,517,251,073.10 4,589,164,052.80 20.22% 3,143,144,732.08 \n归属于上市公司股东的扣除非经\n常性损益的净利润(元) \n5,457,155,276.12 4,495,219,187.57 21.40% 3,066,543,993.35 \n经营活动产生的现金流",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 5517251073.1,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 5517251073.1,
+              "verified": true
+            },
+            "operating_cash_flow": {
+              "excerpt": "经营活动产生的现金流量净额\n(元) \n4,727,652,873.85 4,496,206,034.42 5.15% 3,107,914,579.48 \n基本每股收益(元/股) 10.44 8.68 20.28% 5.95 \n 2024 年年度报告 \n~ 8 ~ \n \n稀释每股收益(元/股) 10.44 8.68 20.28% 5.95 \n加权平均",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 4727652873.85,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 4727652873.85,
+              "verified": true
+            },
+            "revenue": {
+              "excerpt": "",
+              "extraction_mode": null,
+              "raw_value": null,
+              "reason": "QUARTERLY_METRIC_NOT_ANNUAL",
+              "unit": null,
+              "unit_source": null,
+              "value_yuan": null,
+              "verified": false
+            }
+          },
+          "net_profit": 5517251073.1,
+          "normalization_unit": "CNY_YUAN",
+          "operating_cash_flow": 4727652873.85,
+          "revenue": null,
+          "unit_provenance_required": true
+        },
+        {
+          "fiscal_year": 2023,
+          "metric_provenance": {
+            "net_profit": {
+              "excerpt": "归属于上市公司股东的净利润\n(元) \n4,589,164,052.80 3,143,144,732.08 46.01% 2,297,894,413.25 \n归属于上市公司股东的扣除非经\n常性损益的净利润(元) \n4,495,219,187.57 3,066,543,993.35 46.59% 2,186,239,468.68 \n经营活动产生的现金流",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 4589164052.8,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 4589164052.8,
+              "verified": true
+            },
+            "operating_cash_flow": {
+              "excerpt": "经营活动产生的现金流量净额\n(元) \n4,496,206,034.42 3,107,914,579.48 44.67% 5,254,308,127.79 \n基本每股收益(元/股) 8.68 5.95 45.88% 4.45 \n 2023 年年度报告 \n~ 8 ~ \n \n稀释每股收益(元/股) 8.68 5.95 45.88% 4.45 \n加权平均净",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 4496206034.42,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 4496206034.42,
+              "verified": true
+            },
+            "revenue": {
+              "excerpt": "",
+              "extraction_mode": null,
+              "raw_value": null,
+              "reason": "QUARTERLY_METRIC_NOT_ANNUAL",
+              "unit": null,
+              "unit_source": null,
+              "value_yuan": null,
+              "verified": false
+            }
+          },
+          "net_profit": 4589164052.8,
+          "normalization_unit": "CNY_YUAN",
+          "operating_cash_flow": 4496206034.42,
+          "revenue": null,
+          "unit_provenance_required": true
+        },
+        {
+          "fiscal_year": 2022,
+          "metric_provenance": {
+            "net_profit": {
+              "excerpt": "归属于上市公司股东的净利润\n(元) \n3,143,144,732.08 2,297,894,413.25 36.78% 1,854,576,249.29 \n归属于上市公司股东的扣除非经\n常性损益的净利润(元) \n3,066,543,993.35 2,186,239,468.68 40.27% 1,773,011,307.05 \n经营活动产生的现金流",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 3143144732.08,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 3143144732.08,
+              "verified": true
+            },
+            "operating_cash_flow": {
+              "excerpt": "经营活动产生的现金流量净额\n(元) \n3,107,914,579.48 5,254,308,127.79 -40.85% 3,624,543,525.53 \n基本每股收益(元/股) 5.95 4.45 33.71% 3.68 \n 2022 年年度报告 \n~ 8 ~ \n \n稀释每股收益(元/股) 5.95 4.45 33.71% 3.68 \n加权平均",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 3107914579.48,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 3107914579.48,
+              "verified": true
+            },
+            "revenue": {
+              "excerpt": "",
+              "extraction_mode": null,
+              "raw_value": null,
+              "reason": "QUARTERLY_METRIC_NOT_ANNUAL",
+              "unit": null,
+              "unit_source": null,
+              "value_yuan": null,
+              "verified": false
+            }
+          },
+          "net_profit": 3143144732.08,
+          "normalization_unit": "CNY_YUAN",
+          "operating_cash_flow": 3107914579.48,
+          "revenue": null,
+          "unit_provenance_required": true
+        },
+        {
+          "fiscal_year": 2021,
+          "metric_provenance": {
+            "net_profit": {
+              "excerpt": "归属于上市公司股东的净利润\n(元) \n2,297,894,413.25 1,854,576,249.29 23.90% 2,097,527,739.86 \n归属于上市公司股东的扣除非经\n常性损益的净利润(元) \n2,186,239,468.68 1,773,011,307.05 23.31% 1,891,097,157.37 \n经营活动产生的现金流",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 2297894413.25,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 2297894413.25,
+              "verified": true
+            },
+            "operating_cash_flow": {
+              "excerpt": "经营活动产生的现金流量净额\n(元) \n5,254,308,127.79 3,624,543,525.53 44.96% 192,447,063.45 \n基本每股收益(元/股) 4.45 3.68 20.92% 4.17 \n 2021 年年度报告 \n~ 8 ~ \n \n稀释每股收益(元/股) 4.45 3.68 20.92% 4.17 \n加权平均净资产",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 5254308127.79,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 5254308127.79,
+              "verified": true
+            },
+            "revenue": {
+              "excerpt": "营业收入(元) 13,269,826,266.04 10,292,064,534.41 28.93% 10,416,961,584.23 \n归属于上市公司股东的净利润\n(元) \n2,297,894,413.25 1,854,576,249.29 23.90% 2,097,527,739.86 \n归属于上市公司股东的扣除非经\n常性",
+              "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+              "raw_value": 13269826266.04,
+              "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+              "unit": "元",
+              "unit_source": "METRIC_LABEL",
+              "value_yuan": 13269826266.04,
+              "verified": true
+            }
+          },
+          "net_profit": 2297894413.25,
+          "normalization_unit": "CNY_YUAN",
+          "operating_cash_flow": 5254308127.79,
+          "revenue": 13269826266.04,
+          "unit_provenance_required": true
+        }
+      ],
+      "moat_adopted_for_gate": false,
+      "moat_classification": "UNKNOWN",
+      "moat_evidence_status": "OBSERVED_CONTEXT",
+      "moat_reason_code": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
+      "moat_rule_version": "DURABLE_MOAT_MULTI_YEAR_OFFICIAL_V1",
+      "moat_signals_by_year": [
+        {
+          "fiscal_year": 2025,
+          "signals": []
+        },
+        {
+          "fiscal_year": 2024,
+          "signals": []
+        },
+        {
+          "fiscal_year": 2023,
+          "signals": []
+        },
+        {
+          "fiscal_year": 2022,
+          "signals": [
+            {
+              "category": "ip_scale",
+              "excerpt": "三)科技赋能,品质根基更加牢固全面推进原粮基地种植,为“酿好酒”提供坚实保障。高质高效完成白酒新国标的切换,全面从严,食品安全主体责任得到进一步落实。不断探索酿酒副产物处理新思路。公司获得发明专利9项、授权实用新型专利62项。多项技术创新成果达到国际国内领先水平,并在公司实现成果转化。(四)业务导向,持续推进数字化建设全面开启数字化转型,完成企业信息化架构,打破信息孤岛、优化业务流程;以智能制造、绿色酿造为核心,搭建白酒工业互联网平台,数字化古井再上新台阶。着力开发场景化应用,为业务赋能,实现管理数",
+              "fiscal_year": 2022,
+              "strength": "SUPPORTING"
+            }
+          ]
+        },
+        {
+          "fiscal_year": 2021,
+          "signals": []
+        }
+      ],
+      "normalization_unit": "CNY_YUAN",
+      "normalized_summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2021]; unit_provenance=required; normalization=CNY_YUAN",
+      "original_url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/9fbb3a29-2c9a-4f57-baca-b6e80c3f405f.PDF",
+      "predictability_classification": "UNKNOWN",
+      "publish_date": "2026-04-29",
+      "query_diagnostic": "",
+      "query_source": "SZSE_PRIMARY",
+      "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+      "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+      "source_domain": "disc.static.szse.cn",
+      "source_type": "OFFICIAL_REPORT",
+      "source_urls": [
+        "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-04-29/9fbb3a29-2c9a-4f57-baca-b6e80c3f405f.PDF",
+        "https://disc.static.szse.cn/download/disc/disk03/finalpage/2025-04-25/abddbb2c-50e1-4a63-bdf3-dadde8b1f3ee.PDF",
+        "https://disc.static.szse.cn/download/disc/disk03/finalpage/2024-04-26/1fe5760e-0b81-4b13-96c3-76df2331c8d0.PDF",
+        "https://disc.static.szse.cn/download/disc/disk03/finalpage/2023-04-28/7bcff8c8-4f2b-4560-82f4-6fa514dd0568.PDF",
+        "https://disc.static.szse.cn/download/disc/disk03/finalpage/2022-04-30/37bddeef-a35d-4fba-b250-c5e1837597b5.PDF"
+      ],
+      "unit_provenance_required": true
+    }
+  ],
+  "contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
+  "formal_trading_authority": false,
+  "industry_evidence": [
+    {
+      "code": "",
+      "collector": "nbs_public_data",
+      "comparison_period": "2026-09-28",
+      "confidence": "MEDIUM",
+      "content_hash": "7731d5e18d8f41630e495201dd02f3948751c8412598bddca9b4e5c06ffad06e",
+      "date": "2026-09-28",
+      "direction": "NEGATIVE",
+      "evidence_direction": "NEGATIVE",
+      "evidence_name": "政府或行业具体文章数据",
+      "evidence_status": "VERIFIED",
+      "evidence_value": "酒、饮料和精制茶制造业 9018.2 -7.7 5974.9 -6.1 1431.0 -",
+      "extraction_confidence": "MEDIUM",
+      "indicator": "政府或行业具体文章数据",
+      "industry": "C15酒、饮料和精制茶制造业",
+      "normalized_summary": "2026年1—8月份全国规模以上工业企业利润增长15.7%（匹配词：规模以上工业企业利润）：酒、饮料和精制茶制造业 9018.2 -7.7 5974.9 -6.1 1431.0 -",
+      "original_url": "https://www.stats.gov.cn/sj/zxfb/202609/t20260928_1965425.html",
+      "parse_status": "OK",
+      "parser": "html_text",
+      "publish_date": "2026-09-28",
+      "raw_excerpt": "酒、饮料和精制茶制造业 9018.2 -7.7 5974.9 -6.1 1431.0 -",
+      "scope": "industry",
+      "source": "https://www.stats.gov.cn/sj/zxfb/202609/t20260928_1965425.html",
+      "source_domain": "www.stats.gov.cn",
+      "source_type": "OFFICIAL_REPORT",
+      "stock_name": "",
+      "title": "2026年1—8月份全国规模以上工业企业利润增长15.7%",
+      "unit": "",
+      "value": "-7.7",
+      "warning_flags": ""
+    }
+  ],
+  "material_event_risk_ledger": [],
+  "material_event_risk_ledger_complete": true,
+  "no_auto_trade": true,
+  "requested_codes": [
+    "000596"
+  ],
+  "summary": {
+    "attempts": [
+      {
+        "actual_fetch_count": 11,
+        "audit_count": 3,
+        "cache_dir": "data/cache/v31_deep_gap_closure/attempt-1",
+        "cache_hit_count": 0,
+        "cache_miss_count": 5,
+        "company_actual_fetch_count": 2,
+        "company_event_active_count": 0,
+        "company_event_actual_fetch_count": 5,
+        "company_event_document_fetch_success_count": 0,
+        "company_event_evidence_rows": 0,
+        "company_event_failure_count": 0,
+        "company_event_partial_count": 0,
+        "company_event_resolved_count": 0,
+        "company_event_task_count": 1,
+        "company_evidence_rows": 1,
+        "company_extraction_status_counts": {
+          "AMBIGUOUS_MATCH": 0,
+          "PARSE_FAILED": 0,
+          "SOURCE_DATA_ABSENT": 0,
+          "SOURCE_FETCH_FAILED": 0,
+          "STRUCTURE_RECOVERY_FAILED": 0,
+          "VALUE_RECOVERED": 0,
+          "VALUE_VERIFIED": 1
+        },
+        "company_failure_count": 0,
+        "company_fetch_success_count": 1,
+        "company_missing_count": 0,
+        "company_task_count": 1,
+        "company_typed_extraction_contract": "robust_typed_v1",
+        "enabled": true,
+        "executed": true,
+        "failed_count": 0,
+        "fetch_success_count": 5,
+        "industry_actual_fetch_count": 4,
+        "industry_alias_expansion_count": 1,
+        "industry_evidence_rows": 1,
+        "industry_failure_count": 0,
+        "industry_fetch_success_count": 4,
+        "industry_missing_count": 2,
+        "industry_task_count": 3,
+        "missing_count": 2,
+        "partially_verified_count": 0,
+        "requested_target_count": 1,
+        "task_count": 5,
+        "unknown_is_pass": false,
+        "verified_count": 2
+      }
+    ],
+    "bounded_retry_exhausted": false,
+    "collection_attempt_count": 1,
+    "final_failed_count": 0,
+    "final_missing_count": 2,
+    "historical_verified_material_event_count": 0,
+    "material_event_risk_ledger_complete": true,
+    "material_event_risk_ledger_count": 0,
+    "max_collection_attempts": 2,
+    "multi_year_predictability_evidence_count": 1,
+    "multi_year_predictability_requested_count": 1,
+    "multi_year_predictability_verified_count": 0,
+    "quality_contract_unchanged": true,
+    "retry_scope_optimized": true,
+    "unique_company_evidence_count": 2,
+    "unique_evidence_count": 3,
+    "unique_industry_evidence_count": 1
+  },
+  "unknown_is_pass": false
+}
