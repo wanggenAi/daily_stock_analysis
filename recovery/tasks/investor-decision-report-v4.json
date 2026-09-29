@@ -3,7 +3,7 @@
   "task_key": "investor-decision-report-v4",
   "repository": "wanggenAi/daily_stock_analysis",
   "owner_approved_on": "2026-09-25",
-  "status": "H1_PRODUCTION_VERIFIED_H4_DATE_INTEGRITY_PR317_MERGED_H3_CI_FAILURE",
+  "status": "H3_PR322_MAIN_MERGED_POSTMERGE_H3_WEB_CONTRACT_GREEN_GLOBAL_CI_PENDING_DEPLOYMENT_UNVERIFIED",
   "phase": "H4_DATE_INTEGRITY_MERGED_NOT_PRODUCTION_VERIFIED_AND_H3_UNMERGED",
   "plan_on_main": "docs/INVESTOR_DECISION_REPORT_V4_EXECUTION_TASK.md",
   "task_register_on_main": "TASK_STATE.md",
@@ -13,12 +13,11 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "CRITICAL NEW REAL REGRESSION: latest generated Sep28 22:11 Beijing investor brief and 22:12 decision center both reverted actual market as-of from Sep24 (earlier 21:56) BACK TO Sep21, new Canonical snapshot 5ac20f6d54739d44e849 / source run35690406280, formal_action_recomputed=false. FIRST diagnose event/publisher stale Canonical selection and prevent older-asof downstream overlay from overwriting later validated market context. Do not mark stale source 'fresh', do not wipe historical authoritative provenance or grant new trade authority.",
-    "Owner 2026-09-28 after-close priority: fulfill owner_report_readiness_priority_20260928 acceptance in dependency order, NOT just status. Keep research cursor ownership independent; read current sibling before analysis.",
-    "H3 PR315: ASGI actual request integration test committed on existing PR branch as 40f2be05b2ec5b065cdf7d0ce720bab6df8db58f (replaced fragile app.routes introspection with actual GET + exact payload + no-store). THIS IS A CODE PATCH ONLY: inspect new exact-head CI and ensure actual endpoint works; if failed, fix real routing. Reconcile shared CHANGELOG against live main, review full intended diff, merge only green and safe; verify deployed page/API with real current H1 handoff and dates.",
-    "Coordinate P0 research-owned true Sep28 market as-of and issuer 80/30/50 source proof via its own independent cursor; do not claim V4 fresh just because hourly quote/publisher generated today. H1 latest producer production already previously proven but now stale input must remain prominently labeled.",
-    "Confirm PR317 partial date-integrity postmerge observer production with actual source observation date; implement full 5/20/60 benchmark-adjusted/dedup outcomes without historical score inflation. Broker-verified holdings/funds/cash/fills absent => UNKNOWN, never infer trading authority or actual account P&L.",
-    "H5 run actual on-demand ChatGPT Web verification using current GitHub pinned manifest, original issuer and independent public market evidence to produce owner holdings-first post-close report; source timestamp and claim-to-evidence checks before acceptance."
+    "PR322 H3 MERGED (main ddd81b35), postmerge H3 Web contract run36645259946 SUCCESS. Read exact postmerge global CI run36645259874 to completion; independently verify /api/v1/investor-v4/latest and /investor-v4 on genuinely reachable deployed stock site with real screenshot; deployment URL / env not proven. No fake site or screenshot.",
+    "Current Sep29 Canonical d1081f09e9e6ad2aec26 persists in Dashboard/H1, but current center latest generated Sep30 Beijing 06:39 vs Dashboard/H1 03:24, same-source newly overlaid center. H1 embedded center_matches_dashboard true proves ONLY at H1 publication time. Inspect current blobs/lineage at each ChatGPT Web request; fix proven producer co-publication race in bounded PR after checking existing open owners; do not cause cyclical workflow retriggers or forge freshness.",
+    "Current user planning capital 50,000 CNY remains dated Sep20 only; live broker cash, fund shares and broker executions UNKNOWN. Missing exchange independent check, live quote and issuer original evidence remain real blockers. No Formal BUY inferred from research BUY.",
+    "Research-owned official issuer coverage 80/30/50 and noncached official originals remains separate from V4; do not mutate research cursor. Current research cursor was independently read at Gen82 but must re-read live when taking action.",
+    "Cross-lane old #318 task index is stale; do not merge unchanged index over current production evidence. Old #315 H3 superseded by merged #322, coordinate closure without running duplicate H3 development."
   ],
   "coordination": {
     "parallel_task": "recovery/tasks/stock-system-convergence.json",
@@ -55,12 +54,13 @@
     "2026-09-28 independent exact-head CI diagnosis: H3 PR315 CI run36363741442 FAILED one real API route integration test; no merge. H4 PR317 exact-head CI 36364172311 SUCCESS, not merged or production accepted.",
     "2026-09-28 H4 date-integrity PR317 independently exact-head checks green (36364172311 backend/docker/governance success), empty reviews/threads, clean mergeability; squash merged with exact head to b43117750a1802536380ca8595a346a3f89c9458 and independently reread actual main source. PARTIAL H4 ONLY: postmerge production not verified, historic scorecard remains untrusted.",
     "2026-09-28 after-close owner requirement recorded with objective evidence gates; real code change PR315 mounted endpoint test commit 40f2be05b2ec5b065cdf7d0ce720bab6df8db58f (CI and deployment not yet proven). GitHub Issues endpoint 410 disabled; task tracked here instead.",
-    "2026-09-28 22:12 Beijing verified severe report source-epoch backward regression (Sep24 -> Sep21) despite later generated timestamp; highest priority changed to proving and repairing actual publisher monotonic source epoch. Merely scheduling fresh full scan without repairing regression will not produce reliable owner report."
+    "2026-09-28 22:12 Beijing verified severe report source-epoch backward regression (Sep24 -> Sep21) despite later generated timestamp; highest priority changed to proving and repairing actual publisher monotonic source epoch. Merely scheduling fresh full scan without repairing regression will not produce reliable owner report.",
+    "2026-09-30T07:28+08:00 H3 exact scoped PR322 successfully squash merged into live main ddd81b350fd9ea7c3af09f2ea42d5f077fafa943 after zero changed file overlap over 420 newer main commits, exact-head full CI and H3 contract GREEN with zero unresolved review threads. Postmerge H3 contract run36645259946 SUCCESS; full postmerge global CI run36645259874 still in progress; deployed URL/API browser screenshot not verified, so H3 production not DONE. No other cursor updated."
   ],
   "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 18,
+  "generation": 19,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Consume owner_report_readiness_priority_20260928 on current CAS V4 cursor as first outcome; substantive implementation with exact CI and real source/prod artifacts, not repeat project progress or phantom fresh data.",
@@ -95,8 +95,8 @@
     "review_list": "empty",
     "merge_verified": true
   },
-  "previous_checkpoint_generation": 17,
-  "last_observed_main_sha": "b43117750a1802536380ca8595a346a3f89c9458",
+  "previous_checkpoint_generation": 18,
+  "last_observed_main_sha": "ddd81b350fd9ea7c3af09f2ea42d5f077fafa943",
   "p1": {
     "branch": "feat/v4-p1-dated-sources-main-sync-20260926",
     "pr": 309,
@@ -287,5 +287,35 @@
     "newer_investor_brief_canonical_source_run_id": "35690406280",
     "independent_verification": "Both newest main data/decision_center/latest.json and data/investor_decision_dashboard/latest.json were reread and now regress from Sep24 to Sep21 despite same-day later generated timestamps; formal_action_recomputed=false, report correctly STALE_UPSTREAM.",
     "critical_next_action": "TRACE AND BLOCK STALE-EPOCH PUBLISHER REGRESSION! Inspect which event/Deep/older Finalizer selects Sep21 and overwrites an existing Sep24 current report. Enforce source-lineage-valid monotonic completed-session market/asof and snapshot integrity at BOTH existing investor report persistence and three-pillar rendering, including concurrency overlap; retain last newer validated report rather than replacing it with older Canonical on unrelated overlay. No new Formal approval or loss of newest independently valid source. Add regression reproducing Sep24->Sep21 replay from older Deep event; exact-head CI, distinct genuine production proving no rollback after concurrent event overlays."
+  },
+  "stage": "H3_POSTMERGE_CI_AND_DEPLOYED_WEB_API_PROOF_PLUS_H1_LIVE_CENTER_DRIFT_RECONCILIATION",
+  "v4_h3_merged_20260930": {
+    "observed_on": "2026-09-30T07:28+08:00",
+    "pr": 322,
+    "exact_head": "ae2149ae75cb082b817fcd2cb05d840ec86a0026",
+    "merge_commit": "ddd81b350fd9ea7c3af09f2ea42d5f077fafa943",
+    "original_pr315": "OPEN_SUPERSEDED_DONT_MERGE",
+    "semantic_audit": "PR322 one commit 16 expected H3 files; exact old-base vs premerge main 6739ce9 blobs identical for every existing changed file; other PR322 files absent in both. Main had advanced 420 runtime commits, without overlap on 16 exact files.",
+    "exact_head_ci_run": 36502191593,
+    "exact_head_ci": "SUCCESS backend-gate/docker-build/web-gate/ai-governance",
+    "exact_head_h3_contract_run": 36502191557,
+    "exact_head_h3_contract": "SUCCESS",
+    "unresolved_review_threads": 0,
+    "postmerge_h3_contract_run": 36645259946,
+    "postmerge_h3_contract": "SUCCESS",
+    "postmerge_global_ci_run": 36645259874,
+    "postmerge_global_ci": "IN_PROGRESS_AT_CHECKPOINT",
+    "api_route": "/api/v1/investor-v4/latest",
+    "web_route": "/investor-v4",
+    "deployed_url": "UNVERIFIED_NO_OWNER_HOSTING_URL",
+    "real_browser_screenshot": "UNVERIFIED",
+    "source_h1_contract": "Existing /data/investor_chatgpt_handoff/latest.json read-only; live broker still unknown; no new GPT API/auto-trade.",
+    "observed_live_center_vs_h1_drift": {
+      "trade_date": "2026-09-29",
+      "canonical": "d1081f09e9e6ad2aec26",
+      "center_generated": "2026-09-29T22:39:47+00:00",
+      "dashboard_handoff_generated": "2026-09-29T19:24:27+00:00",
+      "caution": "Handoff's recorded center_matches_dashboard=true is publication-time only. Live current center has newer blob; do not claim live three-way convergence or completed H5."
+    }
   }
 }
