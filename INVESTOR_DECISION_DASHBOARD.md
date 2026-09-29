@@ -76,21 +76,21 @@ O81机动车、电子产品和日用产品修理业(STRONG)、K70房地产业(ST
 
 ### 风险预算 BUILD / PROBE
 
-- 伯特利 603596: **BUILD**；conviction=0.8921；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 芯能科技 603105: **PROBE**；conviction=0.5826；建议账户仓位上限=0.7%；研究结论仍为 RESEARCH_GAP。
+- 伯特利 603596: **BUILD**；conviction=0.8922；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 芯能科技 603105: **PROBE**；conviction=0.5969；建议账户仓位上限=0.72%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
 | 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
 |---|---|---|---|---|
-| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
+| XD国电南 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
 | 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
 | 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
 | 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
 
 ### Urgent evidence queue
 
+- XD国电南 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
 - 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
