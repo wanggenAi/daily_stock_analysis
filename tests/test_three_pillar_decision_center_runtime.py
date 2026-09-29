@@ -4,6 +4,7 @@ import pytest
 
 from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_runtime import (
     build_runtime_decision_center,
+    _attach_research_deadlocks,
     choose_deep_review_config,
     normalize_runtime,
     normalize_terminal_research,
@@ -1174,3 +1175,29 @@ def test_incomplete_or_stale_terminal_cannot_claim_current_research_deadlock():
         assert bucket["research_deadlock_count"] == 0
         assert bucket["research_deadlocks"] == []
         assert out["executive_summary"]["research_deadlock_count"] == 0
+
+
+def test_bounded_deadlock_report_prioritizes_held_stock_before_other_gaps():
+    other_codes = [f"{n:06d}" for n in range(1, 12)]
+    all_codes = other_codes + ["001316"]
+    payload = {
+        "pillar_1_holdings_deep_analysis": {
+            "rows": [{"code": "001316", "name": "润贝航科", "formal_action": "HOLD_REVIEW"}]
+        },
+        "pillar_3_deep_opportunities": {
+            "terminal_research_snapshot": {"current_for_deep_runtime": True},
+            "research_gap": [{"code": code, "name": code} for code in all_codes],
+        },
+        "executive_summary": {},
+    }
+    runtime = normalize_runtime(_terminal_status())
+    runtime["unresolved_reasons"] = {
+        code: {"moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET"}
+        for code in all_codes
+    }
+    _attach_research_deadlocks(payload, runtime)
+    rows = payload["pillar_3_deep_opportunities"]["research_deadlocks"]
+    assert len(rows) == 12
+    assert rows[0]["code"] == "001316"
+    assert rows[0]["existing_formal_holding_action_unchanged"] == "HOLD_REVIEW"
+    assert payload["pillar_1_holdings_deep_analysis"]["rows"][0]["formal_action"] == "HOLD_REVIEW"
