@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **24**
-- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **23** / REJECT: **0**
+- requested: **25**
+- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **24** / REJECT: **0**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -14,7 +14,7 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **1** / WATCH: **7** / BLOCK: **15**
+- BUILD: **1** / PROBE: **1** / WATCH: **7** / BLOCK: **16**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8921 / max_portfolio=3.0%
 - 603105 芯能科技: **PROBE** / conviction=0.5826 / max_portfolio=0.7%
@@ -23,6 +23,7 @@
 
 - 603596 伯特利: **BUY** / ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT
 - 603105 芯能科技: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 000596 古井贡酒: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 002811 郑中设计: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000504 南华生物: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600640 国脉文化: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
