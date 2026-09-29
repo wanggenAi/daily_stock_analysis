@@ -13,7 +13,7 @@
   },
   "authoritative_instruction": "Re-read live main, AGENTS.md, TASK_STATE.md, this V4 plan and most recent recovery/tasks/stock-system-convergence.json generation; original live GitHub reality overrides snapshot fields. Continue implementation P0 through P5 in a V4-specific branch/PR, preserving independent ongoing All-A verification and current canonical/production gates.",
   "next_actions": [
-    "NEW P0 PROVED: real Sep29 Dashboard evaluator freshness status OK/fresh=true/formal_new_exposure_allowed=true while corresponding H1 market_eod STALE_OR_UNVERIFIED with upstream_status OK due builder impossible status==FRESH check. Scoped actual fix PR325 head79d013a (CI36646029986/Brief contract36646029979 pending) aligns real OK and adds positive evaluator + negative contradictory tests. Review and merge only exact-head green; then production verify H1 regenerated with UPSTREAM_FRESH_CALENDAR_UNVERIFIED, still broker/calendar unknown and 0 executable.",
+    "V4 FIRST: PR325 current exact head a974aed3 includes REAL OK contract + expected minimum trading date fail-closed + actual evaluator + 6 contradictory safety flag/enum tests +3 expected-session negative cases. Check exact-head global CI run36646214291, Investor Brief contract run36646214507, review/threads/current main overlapping CHANGELOG; merge only if safe and green. Then independently inspect genuine postmerge publisher, actual H1/MD UPSTREAM_FRESH_CALENDAR_UNVERIFIED status with current source dates while broker/exchange remain unverified.",
     "PR322 H3 MERGED (main ddd81b35), postmerge H3 Web contract run36645259946 SUCCESS. Read exact postmerge global CI run36645259874 to completion; independently verify /api/v1/investor-v4/latest and /investor-v4 on genuinely reachable deployed stock site with real screenshot; deployment URL / env not proven. No fake site or screenshot.",
     "Current Sep29 Canonical d1081f09e9e6ad2aec26 persists in Dashboard/H1, but current center latest generated Sep30 Beijing 06:39 vs Dashboard/H1 03:24, same-source newly overlaid center. H1 embedded center_matches_dashboard true proves ONLY at H1 publication time. Inspect current blobs/lineage at each ChatGPT Web request; fix proven producer co-publication race in bounded PR after checking existing open owners; do not cause cyclical workflow retriggers or forge freshness.",
     "Current user planning capital 50,000 CNY remains dated Sep20 only; live broker cash, fund shares and broker executions UNKNOWN. Missing exchange independent check, live quote and issuer original evidence remain real blockers. No Formal BUY inferred from research BUY.",
@@ -57,12 +57,13 @@
     "2026-09-28 after-close owner requirement recorded with objective evidence gates; real code change PR315 mounted endpoint test commit 40f2be05b2ec5b065cdf7d0ce720bab6df8db58f (CI and deployment not yet proven). GitHub Issues endpoint 410 disabled; task tracked here instead.",
     "2026-09-28 22:12 Beijing verified severe report source-epoch backward regression (Sep24 -> Sep21) despite later generated timestamp; highest priority changed to proving and repairing actual publisher monotonic source epoch. Merely scheduling fresh full scan without repairing regression will not produce reliable owner report.",
     "2026-09-30T07:28+08:00 H3 exact scoped PR322 successfully squash merged into live main ddd81b350fd9ea7c3af09f2ea42d5f077fafa943 after zero changed file overlap over 420 newer main commits, exact-head full CI and H3 contract GREEN with zero unresolved review threads. Postmerge H3 contract run36645259946 SUCCESS; full postmerge global CI run36645259874 still in progress; deployed URL/API browser screenshot not verified, so H3 production not DONE. No other cursor updated.",
-    "2026-09-30 ~07:35 +08 identified actual current H1 production false-stale enum defect using persisted Sep29 dashboard OK and H1 STALE. Submitted independently scoped H1+test+docs PR325 (not merged); no changes to BUY thresholds, broker assumptions or execution permissions. H3 #322 previously verified merged; root docs replacement PR324 pending exact-head CI."
+    "2026-09-30 ~07:35 +08 identified actual current H1 production false-stale enum defect using persisted Sep29 dashboard OK and H1 STALE. Submitted independently scoped H1+test+docs PR325 (not merged); no changes to BUY thresholds, broker assumptions or execution permissions. H3 #322 previously verified merged; root docs replacement PR324 pending exact-head CI.",
+    "2026-09-30 PR325 head a974aed3 now includes additional validated-as-code fail-closed expected_min_trade_date protection and date-spoofing negative regression; exact-head checks launched/queued. No successful CI or merge claimed."
   ],
   "verified_code_merged": true,
   "verified_production": false,
   "source_of_truth": "Always live GitHub and current real artifacts; this sidecar is continuity metadata, not a trade signal.",
-  "generation": 20,
+  "generation": 21,
   "monitor_handoff_verified_against_main": "935fe812c02f66d5e5a03d96a7e6022210d52fcc",
   "last_monitor_coordination_utc": "2026-09-26",
   "monitor_priority": "Consume owner_report_readiness_priority_20260928 on current CAS V4 cursor as first outcome; substantive implementation with exact CI and real source/prod artifacts, not repeat project progress or phantom fresh data.",
@@ -97,7 +98,7 @@
     "review_list": "empty",
     "merge_verified": true
   },
-  "previous_checkpoint_generation": 19,
+  "previous_checkpoint_generation": 20,
   "last_observed_main_sha": "ddd81b350fd9ea7c3af09f2ea42d5f077fafa943",
   "p1": {
     "branch": "feat/v4-p1-dated-sources-main-sync-20260926",
@@ -290,7 +291,7 @@
     "independent_verification": "Both newest main data/decision_center/latest.json and data/investor_decision_dashboard/latest.json were reread and now regress from Sep24 to Sep21 despite same-day later generated timestamps; formal_action_recomputed=false, report correctly STALE_UPSTREAM.",
     "critical_next_action": "TRACE AND BLOCK STALE-EPOCH PUBLISHER REGRESSION! Inspect which event/Deep/older Finalizer selects Sep21 and overwrites an existing Sep24 current report. Enforce source-lineage-valid monotonic completed-session market/asof and snapshot integrity at BOTH existing investor report persistence and three-pillar rendering, including concurrency overlap; retain last newer validated report rather than replacing it with older Canonical on unrelated overlay. No new Formal approval or loss of newest independently valid source. Add regression reproducing Sep24->Sep21 replay from older Deep event; exact-head CI, distinct genuine production proving no rollback after concurrent event overlays."
   },
-  "stage": "H3_POSTMERGE_GLOBAL_CI_PENDING_H1_REAL_EVALUATOR_OK_FIX_EXACT_HEAD_CI_PENDING_DEPLOYMENT_UNVERIFIED",
+  "stage": "H1_PR325_CURRENT_EXACT_HEAD_TESTING_AND_H3_POSTMERGE_FULL_CI_DEPLOYMENT_PENDING",
   "v4_h3_merged_20260930": {
     "observed_on": "2026-09-30T07:28+08:00",
     "pr": 322,
@@ -335,10 +336,11 @@
     "actual_handoff_upstream_status": "OK",
     "root_cause": "H1 code checked status==FRESH, but real generation_freshness.evaluate_generation_freshness emits OK/STALE_UPSTREAM/UNVERIFIABLE. Existing fake test manually used FRESH and hid production mismatch.",
     "pr": 325,
-    "exact_head": "79d013a3502ce73d095b5c64b8344b052eaadf4f",
+    "exact_head": "a974aed331e2839b4e4ed0e2b0b5fb3a0205eda1",
     "url": "https://github.com/wanggenAi/daily_stock_analysis/pull/325",
     "fix": "Require real OK + fresh=true + upstream formal_new_exposure_allowed=true + dashboard formal_new_exposure_allowed=true + unchanged market source lineage. Keep independently unverified exchange calendar/broker funds/fills/quotes blocked. Add real evaluator integration, 6 contradiction negative cases, market epoch negative, Markdown positive.",
-    "ci": "RUNNING at head 79d013a, global CI run36646029986 and Investor Decision Brief contract run36646029979. NOT yet merged or production accepted.",
-    "acceptance": "Exact-head CI + review, safe integration with current main especially concurrent #323 CHANGELOG, then genuine postmerge Investor Brief workflow + actual persisted H1 status UPSTREAM_FRESH_CALENDAR_UNVERIFIED only if true latest evaluator OK and full source/market lineage. Cross-verify no broker or trade proof and zero H1 executable shares. Full H3 deployed page separately unverified."
+    "ci": "Current exact head a974aed331e2839b4e4ed0e2b0b5fb3a0205eda1: global CI 36646214291 QUEUED and Investor Decision Brief contract 36646214507 QUEUED on last observation; former 79d13... is superseded for checks, not a completed result.",
+    "acceptance": "Exact-head CI + review, safe integration with current main especially concurrent #323 CHANGELOG, then genuine postmerge Investor Brief workflow + actual persisted H1 status UPSTREAM_FRESH_CALENDAR_UNVERIFIED only if true latest evaluator OK and full source/market lineage. Cross-verify no broker or trade proof and zero H1 executable shares. Full H3 deployed page separately unverified.",
+    "additional_fail_closed": "After diagnosis also requires strict parseable expected_min_trade_date <= actual market date, so spoofed/contradictory OK status cannot mark a stale session fresh; three negative date variants and Markdown status assertion included. No trade authorization."
   }
 }
