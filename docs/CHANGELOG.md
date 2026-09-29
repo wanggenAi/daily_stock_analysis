@@ -8,6 +8,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] H1 ChatGPT 交接沿用真实代际新鲜度判定的 `OK` 枚举，而非不存在的 `FRESH`；只有同代市场、fresh=true、上下游新增风险许可位都成立时才标记上游当期，仍明确阻断未核实交易日历、券商资金、实时成交报价和任何自动交易。
 - [新功能] V4 H3 在现有 FastAPI/Web 增加只读、按交易日明确标注的 H1 持仓优先研报页面，公开 GitHub 交接清单可选拉取并核验源 blob，失败时只显示有标记的本地历史快照；不新增 GPT API 或交易权限。
 - [改进] 三支柱持仓新增高置信度估值下沿折价观察与100股只读成本情景，解释市场RED/旧额度已用/深算缺证/券商数据缺失造成的零新增买入；不改Formal BUY/阈值，也不生成可执行委托。
 - [修复] 盘后独立恢复工作流在当日真实 Canonical/市场数据未证明新鲜且无活跃生产链时，限次恢复既有全A生产扫描；扫描或 Finalizer 仍旧时明确失败，不将定时执行/报告生成时间冒充行情新鲜度。
