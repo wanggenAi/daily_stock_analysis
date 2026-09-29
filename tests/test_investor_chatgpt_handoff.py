@@ -224,6 +224,9 @@ def test_mismatched_freshness_bits_cannot_claim_current_market(
     d["freshness_contract"].update({
         "status": status, "fresh": fresh,
         "formal_new_exposure_allowed": contract_allowed,
+        # Make the completed-session check PASS so these negative cases
+        # actually isolate the status and the two independent authority bits.
+        "expected_min_trade_date": "2026-09-24",
     })
     d["formal_new_exposure_allowed"] = dashboard_allowed
     path.write_text(json.dumps(d), encoding="utf-8")
@@ -238,6 +241,7 @@ def test_market_date_conflict_stays_blocked_even_when_freshness_bits_are_ok(tmp_
     d["freshness_contract"].update({
         "status": "OK", "fresh": True,
         "formal_new_exposure_allowed": True,
+        "expected_min_trade_date": "2026-09-24",
     })
     d["formal_new_exposure_allowed"] = True
     d["market"]["as_of_date"] = "2026-09-23"
