@@ -292,10 +292,10 @@
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 132,
     "planned_immediate_cash_cny": 0.0,
-    "research_terminal_requested_count": 24,
+    "research_terminal_requested_count": 25,
     "research_buy_count": 1,
     "research_wait_price_count": 0,
-    "research_gap_count": 23,
+    "research_gap_count": 24,
     "research_reject_count": 0,
     "urgent_research_count": 4,
     "research_capital_probe_count": 2,
@@ -303,7 +303,7 @@
       "BUILD": 1,
       "PROBE": 1,
       "WATCH": 7,
-      "BLOCK": 15
+      "BLOCK": 16
     }
   },
   "capital_direction": {
@@ -442,14 +442,14 @@
   "terminal_research_snapshot": {
     "available": true,
     "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-    "source_deep_lambda_run_id": "36504625619",
+    "source_deep_lambda_run_id": "36505790535",
     "source_every_industry_run_id": "36503739504",
-    "requested_count": 24,
+    "requested_count": 25,
     "decision_counts": {
+      "RESEARCH_GAP": 24,
       "WAIT_PRICE": 0,
-      "RESEARCH_GAP": 23,
-      "BUY": 1,
-      "REJECT": 0
+      "REJECT": 0,
+      "BUY": 1
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
@@ -630,6 +630,100 @@
           "required_profit_growth_pct": -18.897058823529413,
           "research_buy_pe_ratio_threshold": 0.8,
           "research_buy_price_ceiling": 8.81842248413418
+        }
+      },
+      {
+        "capital_allocation": {
+          "action": "BLOCK",
+          "authority": "ADVISORY_ONLY",
+          "automatic_execution_allowed": false,
+          "capital_conviction_score": 0.3079,
+          "critical_capital_gates": [
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "critical_capital_gates_pass": false,
+          "earnings_quality_component": 0.82,
+          "evidence_score": 0.35,
+          "formal_buy_authorized": false,
+          "gate_weights": {
+            "earnings_authenticity": 0.22,
+            "financial_safety": 0.22,
+            "long_term_demand": 0.2,
+            "moat": 0.2,
+            "predictability": 0.16
+          },
+          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+          "no_auto_trade": true,
+          "probe_rules": {
+            "max_pe_to_history_ratio": 0.9,
+            "max_unknown_gates": 2,
+            "min_capital_conviction_score": 0.52
+          },
+          "quant_score_component": 0.5755,
+          "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+          "suggested_max_portfolio_pct": 0.0,
+          "uncertainty_penalty": 0.3,
+          "unknown_weight": 1.0,
+          "valuation_score": 0.9192
+        },
+        "code": "000596",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 0,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat",
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "industry": "C15酒、饮料和精制茶制造业",
+        "name": "古井贡酒",
+        "no_auto_trade": true,
+        "quant_score": 57.5454,
+        "quant_status": "SECONDARY_RESEARCH",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "RESEARCH_GAP",
+        "research_priority": "P3",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "",
+        "success_archetype_similarity_score": null,
+        "urgent_research": false,
+        "urgent_research_reasons": [],
+        "valuation": {
+          "current_pe": 17.78,
+          "distance_to_research_buy_ceiling_pct": 25.71428571428571,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_score": 82.0,
+          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+          "financial_gate_diagnostics": {
+            "blockers": [
+              "CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD"
+            ],
+            "cash_conversion_pass_threshold": 0.8,
+            "cash_conversion_ratio": 0.6978,
+            "earnings_quality_confidence": "HIGH",
+            "earnings_quality_pass_threshold": 70.0,
+            "earnings_quality_score": 82.0,
+            "financial_disclosure_date": "2026-08-29",
+            "financial_review_status": "OK",
+            "machine_financial_pass_ready": false,
+            "normalized_core_operating_profit": 2150029442.57,
+            "operating_cash_flow": 1542535137.6
+          },
+          "financial_review_status": "OK",
+          "historical_median_pe_reference": 27.939999999999998,
+          "pe_to_history_ratio": 0.6363636363636365,
+          "price_mapping_status": "OK",
+          "reference_price": 87.9,
+          "reference_price_basis": "RAW_LATEST_CLOSE",
+          "reference_trade_date": "2026-09-28",
+          "required_profit_growth_pct": -36.36363636363635,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": 110.50285714285715
         }
       },
       {
@@ -3076,7 +3170,7 @@
       "BUILD": 1,
       "PROBE": 1,
       "WATCH": 7,
-      "BLOCK": 15
+      "BLOCK": 16
     },
     "capital_probe_queue": [
       {
