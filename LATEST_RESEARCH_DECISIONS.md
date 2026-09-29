@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **25**
-- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **24** / REJECT: **0**
+- requested: **26**
+- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **25** / REJECT: **0**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -14,7 +14,7 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **1** / WATCH: **7** / BLOCK: **16**
+- BUILD: **1** / PROBE: **1** / WATCH: **7** / BLOCK: **17**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8921 / max_portfolio=3.0%
 - 603105 芯能科技: **PROBE** / conviction=0.5826 / max_portfolio=0.7%
@@ -31,6 +31,7 @@
 - 600309 万华化学: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600816 建元信托: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600338 西藏珠峰: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 000703 恒逸石化: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 601318 中国平安: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600406 国电南瑞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 601628 中国人寿: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
