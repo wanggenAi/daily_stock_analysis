@@ -61,3 +61,10 @@ Maintain two **independent** owner-approved tasks: living V4 investor report and
 ## Guardrails
 - `formal_trading_authority=false`, `formal_buy_authorized=false`, `automatic_execution_allowed=false`, `no_auto_trade=true`, `UNKNOWN != PASS`; existing genuinely fresh finalized Canonical is the only Formal decision authority.
 - Never place brokerage orders, infer missing cash/fund positions, override stale source guards, or interpret Jev advisory/research BUY as automatic Formal BUY.
+
+## Scoped checkpoint: 2026-09-29 discounted holding valuation watch
+- Owner request: explain why a high-confidence existing holding below its model value floor is not yet executable, and show clearly labeled 100-share cash/cost scenario beside genuine Formal actions. No changes to existing BUY thresholds or trading authority.
+- Branch: `feat/holding-valuation-watch-20260929` from verified main `b37d7c9a174dd103f4d9a298b389e0a84774a441`. Changes: read-only `holding_valuation_watch.py`, integration in existing three-pillar runtime/Markdown and workflow contract tests, `tests/test_holding_valuation_watch.py`, `docs/GEN_GE_HOLDING_ENTRY_WATCH.md`; GitHub live state outranks this checkpoint.
+- Verified baseline: 2026-09-28 market date Canonical/market freshness OK; registered CMOC 603993 1100 x ¥18.6244, EOD ¥16.83 vs high-confidence lower model bound ≈¥18.03, 4/5 Deep gates PASS, predictability UNKNOWN. Market RED/position multiplier 0; previously consumed 100-share add; no new Formal ADD; planning ¥50,000 not current broker cash. **NOT authorization to buy**.
+- Acceptance: exact-head contract, backend, Docker CI and review, then merge if safe; existing real Three-Pillar workflow must publish a same-session JSON + Markdown containing blocked scenario and unchanged zero executable orders. Scope owns no separate V4/research cursors or duplicate source scans.
+- Rollback: revert this bounded helper/integration/test/workflow/docs delta; retain all prior valuation/authority and no-auto-trade semantics.
