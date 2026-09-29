@@ -1,0 +1,40 @@
+name: Investor V4 H3 Web contract
+
+on:
+  pull_request:
+    paths:
+      - 'apps/dsa-web/src/pages/InvestorV4Page.tsx'
+      - 'apps/dsa-web/src/pages/__tests__/InvestorV4Page.test.tsx'
+      - 'apps/dsa-web/src/api/investorV4.ts'
+      - 'apps/dsa-web/src/App.tsx'
+      - 'apps/dsa-web/src/components/layout/SidebarNav.tsx'
+      - 'apps/dsa-web/src/i18n/uiText.ts'
+      - '.github/workflows/investor-v4-h3-web-contract.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/dsa-web/src/pages/InvestorV4Page.tsx'
+      - 'apps/dsa-web/src/pages/__tests__/InvestorV4Page.test.tsx'
+      - 'apps/dsa-web/src/api/investorV4.ts'
+      - '.github/workflows/investor-v4-h3-web-contract.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  web-contract:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/dsa-web
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: apps/dsa-web/package-lock.json
+      - name: Install exact lockfile dependencies
+        run: npm ci
+      - name: Verify investor V4 stale/missing/ChatGPT boundary in the real Web component
+        run: npm test -- src/pages/__tests__/InvestorV4Page.test.tsx

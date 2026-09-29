@@ -88,6 +88,9 @@ WEB_SETTINGS_HIDDEN_FROM_UI = {
     "JEV_TIMEOUT_SECONDS",
     "JEV_MAX_RETRIES",
     "TYPESAFE_API_KEY",
+    # V4 H3 public manifest repository is a server deployment setting, not
+    # a mutable user-facing Web preference or brokerage authority.
+    "INVESTOR_V4_GITHUB_REPO",
 }
 
 _FIELD_DEFINITIONS: Dict[str, Dict[str, Any]] = {
