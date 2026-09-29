@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36582445821",
+  "orchestrator_run_id": "36587690500",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -46,23 +53,16 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
       "attention_priority": "MEDIUM",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
+      "entity_id": "000783",
+      "entity_name": "长江证券",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000783",
-      "entity_name": "长江证券",
+      "entity_id": "000833",
+      "entity_name": "粤桂股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -82,15 +82,15 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000703",
-      "entity_name": "恒逸石化",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000833",
-      "entity_name": "粤桂股份",
+      "entity_id": "000703",
+      "entity_name": "恒逸石化",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -173,8 +173,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "002016",
-      "entity_name": "世荣兆业",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -190,14 +190,14 @@
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-29T14:23:58+00:00",
-  "source_workflow_head_sha": "cc56fa9b0c7c3888c93bd5626c9d6136e2bb3307",
+  "source_generated_at": "2026-09-29T15:05:16+00:00",
+  "source_workflow_head_sha": "7dbe8ffa0874f64f1580ca272ddc6e4b07954099",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36582142008",
+  "source_workflow_run_id": "36587255752",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36582142008",
+  "trigger_source": "JEV_ORCHESTRATOR_36587255752",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-29T14:26:07+00:00",
+  "updated_at": "2026-09-29T15:08:38+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.71,
+      "attention_confidence": 0.7,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
