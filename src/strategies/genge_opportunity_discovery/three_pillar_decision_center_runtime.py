@@ -708,6 +708,7 @@ def _attach_research_deadlocks(payload: dict[str, Any], runtime: Mapping[str, An
             if existing is not None:
                 existing["research_deadlock"] = diagnosis
             deadlocks.append(diagnosis)
+    deadlocks.sort(key=lambda row: (not row["is_current_holding"], row["code"]))
     opportunities["research_deadlocks"] = deadlocks
     opportunities["research_deadlock_count"] = len(deadlocks)
     payload["executive_summary"]["research_deadlock_count"] = len(deadlocks)
