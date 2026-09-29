@@ -100,8 +100,12 @@ def build_handoff(root: Path, canonical_file: Path, *,
              or str(freshness["canonical_source_run_id"]) == run_id)
         and (not freshness.get("canonical_latest_trade_date")
              or freshness["canonical_latest_trade_date"] == market_date))
-    fresh = bool(market_matches and freshness.get("status") == "FRESH"
+    # generation_freshness.evaluate_generation_freshness emits OK, not FRESH.
+    # Require every upstream safety bit; a dated, upstream-fresh report still
+    # NEVER proves live broker cash, executable quotes or exchange calendar.
+    fresh = bool(market_matches and freshness.get("status") == "OK"
                  and freshness.get("fresh") is True
+                 and freshness.get("formal_new_exposure_allowed") is True
                  and dashboard.get("formal_new_exposure_allowed") is True)
     verified_radar = bool(radar and radar.get("formal_trading_authority") is False
                           and radar.get("no_auto_trade") is True)
