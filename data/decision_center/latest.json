@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-28T23:52:19+00:00",
+  "generated_at": "2026-09-29T00:05:50+00:00",
   "latest_trade_date": "2026-09-28",
   "canonical_snapshot_id": "72d11b234ae1d74fa052",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -42,6 +42,7 @@
     "holding_valuation_continuity_match_count": 4,
     "active_candidate_lifecycle_count": 118,
     "lifecycle_event_count": 10608,
+    "discounted_holding_watch_count": 1,
     "investor_action_report_complete": true,
     "investor_evidence_complete": false
   },
@@ -7682,6 +7683,76 @@
     ],
     "interpretation": "Only production-wired capabilities are shown here. A design doc or isolated module does not count as active.",
     "no_auto_trade": true
+  },
+  "holding_valuation_watch": {
+    "contract_version": "GEN_GE_HOLDING_VALUATION_WATCH_V1",
+    "authority": "READ_ONLY_RESEARCH_SCENARIO",
+    "source_epoch_verified": true,
+    "deep_profile_lineage_verified": true,
+    "canonical_snapshot_id": "72d11b234ae1d74fa052",
+    "market_as_of": "2026-09-28",
+    "model_screen_rule": "HIGH_CONFIDENCE_PRICE_BELOW_MODEL_LOW_ONLY",
+    "no_threshold_change": true,
+    "no_auto_trade": true,
+    "formal_action_recomputed": false,
+    "buy_now": [],
+    "executable_orders": [],
+    "rows": [
+      {
+        "code": "603993",
+        "name": "洛阳钼业",
+        "price_as_of": "2026-09-28",
+        "price_evidence": "CANONICAL_EOD_NOT_LIVE",
+        "reference_price": 16.83,
+        "model_value_low": 18.02971886915772,
+        "model_neutral_value": 28.12766979232306,
+        "valuation_confidence": "HIGH",
+        "discount_to_model_low_pct": 6.65,
+        "existing_shares_from_confirmed_snapshot": 1100,
+        "registered_stock_value_cny": 49521.0,
+        "existing_registered_stock_concentration_pct": 37.38,
+        "deep_gate_pass_count": 4,
+        "deep_gate_unverified": [
+          "predictability"
+        ],
+        "formal_action_unchanged": "HOLD",
+        "existing_add_allowance_consumed": true,
+        "market_state": "RED",
+        "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
+        "reason": "PRICE_BELOW_MODELED_LOWER_VALUE_BOUND",
+        "non_authorized_scenario": {
+          "kind": "ILLUSTRATIVE_100_SHARES_ONLY",
+          "shares": 100,
+          "assumed_price": 16.83,
+          "estimated_cash_cny_ex_fees": 1683.0,
+          "planning_cash_cny_as_of": "2026-09-20",
+          "planning_cash_cny": 50000.0,
+          "planning_cash_after_cny_ex_fees": 48317.0,
+          "estimated_new_total_shares": 1200,
+          "estimated_new_average_cost_ex_fees": 18.4749,
+          "loss_if_scenario_price_falls_another_10pct_cny": 168.3,
+          "is_order": false,
+          "authorized": false,
+          "executable_shares": 0,
+          "order_limit_price": null
+        },
+        "blockers": [
+          "MARKET_NEW_BUY_DISABLED",
+          "NO_CURRENT_FORMAL_HOLDING_ADD",
+          "PRIOR_ADD_ALLOWANCE_CONSUMED",
+          "DEEP_GATES_NOT_ALL_PASS",
+          "BROKER_CASH_UNVERIFIED_LIVE",
+          "EXECUTION_QUOTE_NOT_LIVE"
+        ],
+        "manual_recheck": [
+          "CURRENT_SESSION_PRICE_AND_MARKET_REGIME",
+          "LATEST_MATERIAL_FILINGS_AND_COMMODITY_RISKS",
+          "CURRENT_CANONICAL_ADD_AUTHORITY_AND_PRIOR_CONSUMPTION",
+          "ACTUAL_BROKER_SHARES_AND_AVAILABLE_CASH",
+          "LIVE_QUOTE_LOT_AND_POSITION_EXPOSURE"
+        ]
+      }
+    ]
   },
   "investor_report_readiness": {
     "status": "ACTION_COMPLETE",

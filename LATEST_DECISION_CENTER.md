@@ -13,6 +13,12 @@
 | 中国平安 601318 | 52.40 | 83.07 | -6.37 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=127 | DEEP_REVIEW_PARTIAL |
 | 洛阳钼业 603993 | 16.83 | 28.13 | -9.63 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=169 | DEEP_REVIEW_PARTIAL |
 
+### 估值折价观察（非买单）
+
+100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
+
+- **洛阳钼业 603993**：2026-09-28收盘参考价¥16.83，低于模型估值下沿¥18.03约6.65%；现有1100股；假设额外100股约¥1683，平均成本约¥18.4749（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：MARKET_NEW_BUY_DISABLED, NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+
 ### 每只持仓的决策链
 
 - **国电南瑞 600406**：现价 22.64 / 价值中枢 17.46（价/值 1.30；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=200**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
