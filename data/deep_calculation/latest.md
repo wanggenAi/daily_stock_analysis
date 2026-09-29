@@ -2,11 +2,11 @@
 
 - execution: **SUCCESS**
 - terminal state: **EVIDENCE_EXHAUSTED**
-- requested: **24**
-- complete: **1**
+- requested: **23**
+- complete: **0**
 - evidence exhausted: **23**
 - evidence collection attempts: **2**
-- new evidence rows: **54**
+- new evidence rows: **52**
 - progressed gates: **10**
 - predictability resolved gates: **2**
 - moat resolved gates: **2**
