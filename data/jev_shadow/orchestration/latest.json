@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36630948629",
+  "orchestrator_run_id": "36640212995",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -29,33 +29,47 @@
       "entity_id": "001316",
       "entity_name": "润贝航科",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "HIGH",
       "entity_id": "600406",
       "entity_name": "国电南瑞",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "HIGH",
       "entity_id": "601318",
       "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
       "entity_name": "洛阳钼业",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "MEDIUM",
       "entity_id": "000596",
       "entity_name": "古井贡酒",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000703",
+      "entity_name": "恒逸石化",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "002811",
+      "entity_name": "郑中设计",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -103,8 +117,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000703",
-      "entity_name": "恒逸石化",
+      "entity_id": "000682",
+      "entity_name": "东方电子",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -152,22 +166,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "002811",
-      "entity_name": "郑中设计",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "600309",
       "entity_name": "万华化学",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -187,17 +187,17 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000682",
-      "entity_name": "东方电子",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-29T21:05:07+00:00",
-  "source_workflow_head_sha": "e6b7a02b578e52ed90b57f3468afe75a36ef67db",
+  "source_generated_at": "2026-09-29T22:32:25+00:00",
+  "source_workflow_head_sha": "011c69215c8b29ae2ab219e7f5a9936f5b051676",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36630483840",
+  "source_workflow_run_id": "36640002851",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 202,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36630483840",
+  "trigger_source": "JEV_ORCHESTRATOR_36640002851",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-29T21:07:33+00:00",
+  "updated_at": "2026-09-29T22:34:28+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.71,
+      "attention_confidence": 0.69,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36620041513",
+        "deep_lambda_run_id": "36639426114",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
