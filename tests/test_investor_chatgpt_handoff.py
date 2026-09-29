@@ -198,6 +198,7 @@ def test_real_generation_freshness_ok_is_accepted_without_trade_authority(tmp_pa
     path.write_text(json.dumps(d), encoding="utf-8")
     m = build_handoff(tmp_path, canonical_path)
     assert m["feeds"]["market_eod"]["status"] == "UPSTREAM_FRESH_CALENDAR_UNVERIFIED"
+    assert "Market state: UPSTREAM_FRESH_CALENDAR_UNVERIFIED" in render_markdown(m)
     assert "STALE_OR_UNVERIFIED_MARKET_SESSION" not in m["blocking_reasons"]
     assert m["lineage"]["exchange_calendar_independently_verified"] is False
     assert m["lineage"]["live_broker_positions_verified"] is False
