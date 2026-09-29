@@ -4,6 +4,7 @@ import pytest
 
 from src.strategies.genge_opportunity_discovery.three_pillar_decision_center_runtime import (
     build_runtime_decision_center,
+    _attach_research_deadlocks,
     choose_deep_review_config,
     normalize_runtime,
     normalize_terminal_research,
@@ -1110,3 +1111,93 @@ def test_same_lineage_entry_now_is_hidden_when_terminal_bucket_no_longer_buy():
     assert pillar["jev_entry_judgments"] == []
     assert pillar["jev_entry_judgment_invalid_row_count"] == 1
     assert pillar["research_gap_count"] == 1
+
+
+def test_exhausted_research_is_translated_to_repair_tasks_without_action_promotion():
+    profiles = _automatic_profiles()
+    profiles["lambda_run_id"] = "999999"
+    terminal = _terminal_status()
+    terminal["unresolved_reasons"] = {
+        "600406": {
+            "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+            "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
+            "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        }
+    }
+    out = build_runtime_decision_center(
+        dashboard=_dashboard(),
+        era_radar=_era(),
+        automatic_profiles=profiles,
+        static_profiles={},
+        deep_calculation_status=terminal,
+        terminal_research_decisions=_terminal_research("999999"),
+        industry_links={},
+        era_handoff={},
+    )
+    bucket = out["pillar_3_deep_opportunities"]
+    assert bucket["research_deadlock_count"] == 1
+    diagnosis = bucket["research_deadlocks"][0]
+    assert diagnosis["code"] == "600406"
+    assert diagnosis["bounded_retries_finished"] is True
+    assert diagnosis["identical_evidence_auto_retry_allowed"] is False
+    assert diagnosis["new_formal_buy_authorized"] is False
+    assert diagnosis["existing_formal_holding_action_unchanged"] == "HOLD"
+    assert {task["remediation"] for task in diagnosis["unresolved_tasks"]} == {
+        "AUDIT_ANNUAL_METRIC_EXTRACTION_THEN_RECHECK_UNCHANGED_STABILITY_RULES",
+        "COLLECT_INDEPENDENT_MULTI_YEAR_COMPETITIVE_BARRIER_PROOF",
+        "VERIFY_PRIMARY_DEMAND_DOCUMENTS_AND_INDEPENDENT_CORROBORATION",
+    }
+    assert out["pillar_1_holdings_deep_analysis"]["rows"][0]["formal_action"] == "HOLD"
+    assert bucket["research_gap"][0]["research_deadlock"] == diagnosis
+    assert out["no_auto_trade"] is True
+    md = render_runtime_markdown(out)
+    assert "已耗尽补证的研究僵局" in md
+    assert "AUDIT_ANNUAL_METRIC_EXTRACTION" in md
+
+
+def test_incomplete_or_stale_terminal_cannot_claim_current_research_deadlock():
+    profiles = _automatic_profiles()
+    for status, terminal_lambda in (
+        (_status(), "different-lambda"),
+        (_terminal_status(), "different-lambda"),
+    ):
+        out = build_runtime_decision_center(
+            dashboard=_dashboard(),
+            era_radar=_era(),
+            automatic_profiles=profiles,
+            static_profiles={},
+            deep_calculation_status=status,
+            terminal_research_decisions=_terminal_research(terminal_lambda),
+            industry_links={},
+            era_handoff={},
+        )
+        bucket = out["pillar_3_deep_opportunities"]
+        assert bucket["research_deadlock_count"] == 0
+        assert bucket["research_deadlocks"] == []
+        assert out["executive_summary"]["research_deadlock_count"] == 0
+
+
+def test_bounded_deadlock_report_prioritizes_held_stock_before_other_gaps():
+    other_codes = [f"{n:06d}" for n in range(1, 12)]
+    all_codes = other_codes + ["001316"]
+    payload = {
+        "pillar_1_holdings_deep_analysis": {
+            "rows": [{"code": "001316", "name": "润贝航科", "formal_action": "HOLD_REVIEW"}]
+        },
+        "pillar_3_deep_opportunities": {
+            "terminal_research_snapshot": {"current_for_deep_runtime": True},
+            "research_gap": [{"code": code, "name": code} for code in all_codes],
+        },
+        "executive_summary": {},
+    }
+    runtime = normalize_runtime(_terminal_status())
+    runtime["unresolved_reasons"] = {
+        code: {"moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET"}
+        for code in all_codes
+    }
+    _attach_research_deadlocks(payload, runtime)
+    rows = payload["pillar_3_deep_opportunities"]["research_deadlocks"]
+    assert len(rows) == 12
+    assert rows[0]["code"] == "001316"
+    assert rows[0]["existing_formal_holding_action_unchanged"] == "HOLD_REVIEW"
+    assert payload["pillar_1_holdings_deep_analysis"]["rows"][0]["formal_action"] == "HOLD_REVIEW"

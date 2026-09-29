@@ -8,6 +8,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 > For user-friendly release highlights, see the [GitHub Releases](https://github.com/wanggenAi/daily_stock_analysis/releases) page.
 
 ## [Unreleased]
+- [修复] 官方跨年年报在目标年度总量指标缺失时，只接受明确年列和可信单位的后续年报比较数据；发现冲突仍拒绝，并保留原有多年波动门槛。
+- [改进] 当前 Deep 确证已耗尽的研究 GAP 新增只读逐项修复诊断及持仓展示，旧证据不冒充新进展，不改 Formal 动作、买入阈值或自动交易权限。
 - [新功能] V4 H3 在现有 FastAPI/Web 增加只读、按交易日明确标注的 H1 持仓优先研报页面，公开 GitHub 交接清单可选拉取并核验源 blob，失败时只显示有标记的本地历史快照；不新增 GPT API 或交易权限。
 - [改进] 三支柱持仓新增高置信度估值下沿折价观察与100股只读成本情景，解释市场RED/旧额度已用/深算缺证/券商数据缺失造成的零新增买入；不改Formal BUY/阈值，也不生成可执行委托。
 - [修复] 盘后独立恢复工作流在当日真实 Canonical/市场数据未证明新鲜且无活跃生产链时，限次恢复既有全A生产扫描；扫描或 Finalizer 仍旧时明确失败，不将定时执行/报告生成时间冒充行情新鲜度。

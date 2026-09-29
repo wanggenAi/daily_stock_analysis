@@ -948,6 +948,72 @@ def extract_report_metrics(text: str, fiscal_year: int) -> dict[str, Any]:
     }
 
 
+
+def recover_missing_annual_comparatives(
+    metrics: list[dict[str, Any]],
+    annual_sources: list[tuple[Mapping[str, Any], str]],
+) -> int:
+    """Repair missing fiscal-year cells only from year-bound later official annual tables.
+
+    This is *evidence recovery*, never a gate override. Never substitute a
+    later report's current-year value for an earlier fiscal year; accept only
+    EXPLICIT_FISCAL_YEAR_VALUE / HEADER_COLUMN_FISCAL_YEAR with trusted units,
+    and fail closed when independently parsed comparatives disagree.
+    """
+    recovered = 0
+    for target in metrics:
+        year = int(target["fiscal_year"])
+        for metric, labels in _METRIC_LABELS.items():
+            if _metric_is_trusted(target, metric):
+                continue
+            options: list[tuple[dict[str, Any], Mapping[str, Any]]] = []
+            for source, text in annual_sources:
+                source_year = int(source.get("fiscal_year") or 0)
+                if not (year < source_year <= year + 2):
+                    continue
+                measurement = _metric_measurement(text, labels, year)
+                if measurement.get("extraction_mode") not in {
+                    "EXPLICIT_FISCAL_YEAR_VALUE", "HEADER_COLUMN_FISCAL_YEAR"
+                }:
+                    continue
+                if not (
+                    measurement.get("verified") is True
+                    and measurement.get("unit") in _UNIT_MULTIPLIERS
+                    and measurement.get("unit_source") in {
+                        "INLINE", "METRIC_LABEL", "LOCAL_HEADER", "TABLE_HEADER"
+                    }
+                ):
+                    continue
+                options.append((measurement, source))
+            if not options:
+                continue
+            base = float(options[0][0]["value_yuan"])
+            if any(
+                abs(float(row["value_yuan"]) - base) > max(1.0, abs(base) * 1e-8)
+                for row, _ in options[1:]
+            ):
+                target["metric_provenance"][metric] = {
+                    **target["metric_provenance"][metric],
+                    "reason": "CONFLICTING_AUDITED_ANNUAL_COMPARATIVES",
+                    "verified": False,
+                }
+                continue
+            measurement, source = max(
+                options, key=lambda pair: str(pair[1].get("publish_date") or "")
+            )
+            target[metric] = float(measurement["value_yuan"])
+            target["metric_provenance"][metric] = {
+                **measurement,
+                "reason": "VERIFIED_LATER_OFFICIAL_ANNUAL_COMPARATIVE",
+                "comparative_for_fiscal_year": year,
+                "source_report_fiscal_year": int(source["fiscal_year"]),
+                "source_publish_date": str(source.get("publish_date") or ""),
+                "source_url": str(source.get("url") or ""),
+            }
+            recovered += 1
+    return recovered
+
+
 def _metric_is_trusted(row: Mapping[str, Any], metric: str) -> bool:
     if row.get(metric) is None:
         return False
@@ -1196,6 +1262,7 @@ def collect_multi_year_predictability_evidence(
         metrics: list[dict[str, Any]] = []
         moat_signals_by_year: list[dict[str, Any]] = []
         source_rows: list[dict[str, Any]] = []
+        annual_text_sources: list[tuple[Mapping[str, Any], str]] = []
         report_texts: list[str] = []
         for candidate in candidates:
             try:
@@ -1217,7 +1284,9 @@ def collect_multi_year_predictability_evidence(
             )
             report_texts.append(text)
             source_rows.append({**candidate, "extraction_method": extraction_method})
+            annual_text_sources.append((candidate, text))
 
+        recover_missing_annual_comparatives(metrics, annual_text_sources)
         cyclical = _is_cyclical_or_resource(industry, report_texts)
         classification, reason = classify_multi_year_metrics(
             metrics, cyclical_or_resource=cyclical

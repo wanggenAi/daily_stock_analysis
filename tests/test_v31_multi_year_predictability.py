@@ -11,6 +11,7 @@ from src.strategies.genge_opportunity_discovery.evidence_collectors.multi_year_p
     classify_multi_year_moat,
     extract_report_metrics,
     extract_report_moat_signals,
+    recover_missing_annual_comparatives,
 )
 from src.strategies.genge_opportunity_discovery.v31_deep_gap_closure import (
     close_profiles,
@@ -853,3 +854,71 @@ def test_cninfo_history_uses_browser_form_query_contract():
     assert captured["kwargs"]["data"]["stock"] == "000001,gssz0000001"
     assert captured["kwargs"]["data"]["category"] == "category_ndbg_szsh"
 
+
+
+def test_runbei_2023_revenue_recovers_only_from_explicit_later_official_year_column():
+    """2025 audited annual contains 2023 revenue; recovery does not waive volatility."""
+    records = [
+        _record(2023, 1.0, 92_363_904.30, 4_611_634.31),
+        _record(2024, 909_361_866.90, 88_524_568.70, 46_311_198.50),
+        _record(2025, 1_216_791_291.50, 183_879_018.41, 221_275_222.66),
+    ]
+    records[0]["revenue"] = None
+    records[0]["metric_provenance"]["revenue"] = {
+        "verified": False, "reason": "QUARTERLY_METRIC_NOT_ANNUAL",
+        "value_yuan": None,
+    }
+    newer_annual = """
+        主要会计数据和财务指标
+        单位：元
+        主要会计数据 2025年 2024年 本年度比上年同期增减(%) 2023年
+        营业收入 1,216,791,291.50 909,361,866.90 33.81% 825,676,599.82
+        归属于上市公司股东的净利润 183,879,018.41 88,524,568.70 107.72% 92,363,904.30
+        经营活动产生的现金流量净额 221,275,222.66 46,311,198.50 377.80% 4,611,634.31
+    """
+    recovered = recover_missing_annual_comparatives(
+        records,
+        [({
+            "fiscal_year": 2025,
+            "publish_date": "2026-04-14",
+            "url": "https://disc.static.szse.cn/runbei-2025.pdf",
+        }, newer_annual)],
+    )
+    assert recovered == 1
+    assert records[0]["revenue"] == 825_676_599.82
+    audit = records[0]["metric_provenance"]["revenue"]
+    assert audit["verified"] is True
+    assert audit["comparative_for_fiscal_year"] == 2023
+    assert audit["source_report_fiscal_year"] == 2025
+    assert audit["reason"] == "VERIFIED_LATER_OFFICIAL_ANNUAL_COMPARATIVE"
+    # Extracting the missing value must NOT quietly promote a volatile issuer.
+    assert classify_multi_year_metrics(records, cyclical_or_resource=False) == (
+        "UNKNOWN", "MULTI_YEAR_VOLATILITY_THRESHOLD_NOT_MET"
+    )
+
+
+def test_later_annual_comparative_never_uses_unbound_or_conflicting_values():
+    records = [_record(2023, 1.0, 10.0, 10.0)]
+    records[0]["revenue"] = None
+    records[0]["metric_provenance"]["revenue"]["verified"] = False
+    source_2024 = (
+        {"fiscal_year": 2024, "publish_date": "2025-04-17", "url": "https://disc.static.szse.cn/a.pdf"},
+        "主要会计数据和财务指标\\n单位：元\\n2024年 2023年\\n营业收入 900,000,000.00 825,000,000.00"
+    )
+    source_2025_conflict = (
+        {"fiscal_year": 2025, "publish_date": "2026-04-14", "url": "https://disc.static.szse.cn/b.pdf"},
+        "主要会计数据和财务指标\\n单位：元\\n2025年 2024年 2023年\\n营业收入 1,200,000,000.00 900,000,000.00 826,000,000.00"
+    )
+    assert recover_missing_annual_comparatives(
+        records, [source_2024, source_2025_conflict]
+    ) == 0
+    assert records[0]["revenue"] is None
+    assert records[0]["metric_provenance"]["revenue"]["reason"] == "CONFLICTING_AUDITED_ANNUAL_COMPARATIVES"
+
+    unbound = [{"fiscal_year": 2023, "revenue": None, "metric_provenance": {"revenue": {"verified": False}}}]
+    no_fiscal_year_column = (
+        {"fiscal_year": 2025, "publish_date": "2026-04-14", "url": "https://disc.static.szse.cn/b.pdf"},
+        "主要会计数据和财务指标\\n单位：元\\n营业收入 1,200,000,000.00 900,000,000.00 825,000,000.00"
+    )
+    assert recover_missing_annual_comparatives(unbound, [no_fiscal_year_column]) == 0
+    assert unbound[0]["revenue"] is None
