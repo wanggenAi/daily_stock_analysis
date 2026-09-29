@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36534310614",
+  "orchestrator_run_id": "36536096128",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,6 +54,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "000703",
+      "entity_name": "恒逸石化",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "000783",
       "entity_name": "长江证券",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -77,13 +84,6 @@
       "attention_priority": "MEDIUM",
       "entity_id": "000596",
       "entity_name": "古井贡酒",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "000703",
-      "entity_name": "恒逸石化",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -138,6 +138,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "000682",
       "entity_name": "东方电子",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -184,20 +191,13 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-29T07:01:54+00:00",
-  "source_workflow_head_sha": "87706c4db9aba2e9f5af03fcd5a99e576b351af3",
+  "source_generated_at": "2026-09-29T07:20:24+00:00",
+  "source_workflow_head_sha": "d771c3a14abfcc845e11121a2202bf9e2f0294a2",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36534096837",
+  "source_workflow_run_id": "36535866200",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,9 +210,9 @@
     "strategy_ledger_entry_count": 197,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36534096837",
+  "trigger_source": "JEV_ORCHESTRATOR_36535866200",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-29T07:04:47+00:00",
+  "updated_at": "2026-09-29T07:22:49+00:00",
   "valuation_closure": [
     {
       "attention_confidence": 0.72,
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36533252028",
+        "deep_lambda_run_id": "36534981275",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
