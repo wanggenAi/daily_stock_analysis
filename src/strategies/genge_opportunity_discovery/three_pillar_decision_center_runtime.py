@@ -634,6 +634,85 @@ def _attach_terminal_research(
     )
 
 
+
+def _attach_research_deadlocks(payload: dict[str, Any], runtime: Mapping[str, Any]) -> None:
+    """Close exhausted research attempts as actionable *diagnoses*, not fake PASS.
+
+    Retain the existing Formal holding action and research bucket. Terminal and
+    Deep lineage must match before presenting a diagnosis as current. New source
+    evidence or an actual collector repair, never an unchanged scheduled run,
+    is what warrants reopening a blocked research question.
+    """
+    opportunities = payload["pillar_3_deep_opportunities"]
+    terminal = opportunities.get("terminal_research_snapshot") or {}
+    deadlocks: list[dict[str, Any]] = []
+    current = (
+        terminal.get("current_for_deep_runtime") is True
+        and runtime.get("execution_succeeded") is True
+        and runtime.get("research_terminal_state") == "EVIDENCE_EXHAUSTED"
+        and _int(runtime.get("gap_closure_attempt_count")) >= 2
+    )
+    if current:
+        unresolved = runtime.get("unresolved_reasons") or {}
+        holdings = {
+            str(row.get("code") or ""): row
+            for row in (payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or []
+            if isinstance(row, Mapping)
+        }
+        for row in opportunities.get("research_gap") or []:
+            code = str(row.get("code") or "")
+            reasons = unresolved.get(code) if isinstance(unresolved, Mapping) else {}
+            if not isinstance(reasons, Mapping) or not reasons:
+                continue
+            tasks: list[dict[str, str]] = []
+            for gate, reason in sorted(reasons.items()):
+                reason = str(reason or "")
+                if reason == "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS":
+                    remediation = "AUDIT_ANNUAL_METRIC_EXTRACTION_THEN_RECHECK_UNCHANGED_STABILITY_RULES"
+                elif reason in {
+                    "MULTI_YEAR_VOLATILITY_THRESHOLD_NOT_MET",
+                    "REVENUE_STABILITY_THRESHOLD_NOT_MET",
+                    "EARNINGS_STABILITY_THRESHOLD_NOT_MET",
+                    "OPERATING_CASH_FLOW_STABILITY_THRESHOLD_NOT_MET",
+                    "MULTI_YEAR_POSITIVITY_NOT_PROVEN",
+                }:
+                    remediation = "DOCUMENT_GENUINE_FINANCIAL_VOLATILITY_NO_PASS_OVERRIDE"
+                elif reason in {
+                    "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
+                    "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
+                }:
+                    remediation = "COLLECT_INDEPENDENT_MULTI_YEAR_COMPETITIVE_BARRIER_PROOF"
+                elif reason == "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET":
+                    remediation = "VERIFY_PRIMARY_DEMAND_DOCUMENTS_AND_INDEPENDENT_CORROBORATION"
+                else:
+                    remediation = "AUDIT_PRIMARY_SOURCE_AND_EXACT_GATE_EVIDENCE"
+                tasks.append({"gate": str(gate), "reason": reason, "remediation": remediation})
+            existing = holdings.get(code)
+            diagnosis = {
+                "code": code,
+                "name": str(row.get("name") or ""),
+                "state": "EVIDENCE_EXHAUSTED_NEEDS_DISTINCT_EVIDENCE",
+                "source_deep_lambda_run_id": str(runtime.get("lambda_run_id") or ""),
+                "bounded_retries_finished": True,
+                "identical_evidence_auto_retry_allowed": False,
+                "reopen_condition": "NEW_VERIFIED_DOCUMENT_OR_COLLECTOR_FIX_WITH_CHANGED_EVIDENCE_EPOCH",
+                "unresolved_tasks": tasks,
+                "is_current_holding": existing is not None,
+                "existing_formal_holding_action_unchanged": (
+                    existing.get("formal_action") if existing is not None else None
+                ),
+                "new_formal_buy_authorized": False,
+                "no_auto_trade": True,
+            }
+            row["research_deadlock"] = diagnosis
+            if existing is not None:
+                existing["research_deadlock"] = diagnosis
+            deadlocks.append(diagnosis)
+    opportunities["research_deadlocks"] = deadlocks
+    opportunities["research_deadlock_count"] = len(deadlocks)
+    payload["executive_summary"]["research_deadlock_count"] = len(deadlocks)
+
+
 def _stock_code(value: Any) -> str:
     text = str(value or "").strip().upper()
     if "." in text:
@@ -1177,6 +1256,7 @@ def build_runtime_decision_center(
         }
     )
     _attach_terminal_research(payload, terminal, runtime)
+    _attach_research_deadlocks(payload, runtime)
     _attach_jev_entry_judgments(payload, jev_routing, runtime)
     terminal_research_codes: set[str] = set()
     if (
@@ -1357,6 +1437,18 @@ def render_runtime_markdown(payload: Mapping[str, Any]) -> str:
         f"- 上一次完整终态 run：`{runtime.get('last_terminal_run_id') or '—'}`；执行 **{runtime.get('last_terminal_execution_status') or 'NOT_AVAILABLE'}**；研究终态 **{runtime.get('last_terminal_research_terminal_state') or 'NOT_AVAILABLE'}**。",
         f"- 是否需要你手工开启下一轮：**{runtime.get('manual_next_round_required', True)}**。",
         "- **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。",
+        "",
+        "## 已耗尽补证的研究僵局（不再盲目重算）",
+        "",
+        f"- 当前同轮补证已耗尽且有独立修复事项的股票：**{opportunities.get('research_deadlock_count', 0)}**。",
+        *[
+            f"- {row.get('code')} {row.get('name')}: **{row.get('state')}**；"
+            f"待解决：{', '.join(str(task.get('gate')) + '=' + str(task.get('remediation')) for task in row.get('unresolved_tasks') or [])}；"
+            f"现有持仓正式动作保持：{row.get('existing_formal_holding_action_unchanged') or '非持仓'}；"
+            f"仅在新有效证据或真实采集修复后重新研究，禁止相同证据空转。"
+            for row in (opportunities.get('research_deadlocks') or [])[:8]
+        ],
+        "- 此节仅诊断研究停滞，不将 UNKNOWN 改为 PASS，不新增 Formal BUY，不允许自动交易。",
         "",
         "## 五类硬门槛已通过的研究线索",
         "",
