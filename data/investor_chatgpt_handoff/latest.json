@@ -1,14 +1,15 @@
 {
   "blocking_reasons": [
+    "CENTER_DIFFERENT_EPOCH_OR_MISSING",
     "FUND_POSITION_CONFIRMATION_MISSING",
     "NO_CURRENT_BROKER_CASH_OR_POSITION_PROOF",
     "NO_CURRENT_EXECUTABLE_QUOTE_PROOF",
     "NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION",
     "STALE_OR_UNVERIFIED_MARKET_SESSION"
   ],
-  "canonical_sha256": "33821a63a4e81988a740493dbcbad6c96938107e9dcbfc361eb43c2441df41af",
-  "canonical_snapshot_id": "72d11b234ae1d74fa052",
-  "canonical_source_run_id": "36480360818",
+  "canonical_sha256": "b82f08d8d55a824d2418aea3353804dbc9b1cc2aeb619c5bb6599a5db5f4d114",
+  "canonical_snapshot_id": "fbf416e01dbe90b6a0af",
+  "canonical_source_run_id": "36503739504",
   "contract_version": "GEN_GE_INVESTOR_CHATGPT_HANDOFF_V1",
   "event_audit": {
     "closure_status": "UNKNOWN",
@@ -80,7 +81,7 @@
   },
   "formal_buy_now": [],
   "formal_wait_price": [],
-  "generated_at": "2026-09-29T00:20:40+00:00",
+  "generated_at": "2026-09-29T01:01:53+00:00",
   "holdings": [
     {
       "code": "600406",
@@ -155,7 +156,7 @@
   "lineage": {
     "canonical_matches_dashboard": true,
     "canonical_trade_date_present": true,
-    "center_matches_dashboard": true,
+    "center_matches_dashboard": false,
     "exchange_calendar_independently_verified": false,
     "live_broker_positions_verified": false,
     "market_matches_dashboard": true
@@ -163,7 +164,7 @@
   "market_session_as_of": "2026-09-28",
   "no_auto_trade": true,
   "production_provenance": {
-    "finalizer_run_id": "36481707979",
+    "finalizer_run_id": "36504645745",
     "market_artifact_as_of_join": "UNVERIFIED",
     "market_artifact_id": "10990169398",
     "market_run_id": "36463680012"
@@ -175,7 +176,7 @@
     "upstream_formal_buy_now_count": 0,
     "upstream_formal_wait_count": 0
   },
-  "snapshot_id": "81f0606dcf116f77a6291539",
+  "snapshot_id": "cd444a9b6fdec29934626d7c",
   "source_files": {
     "broker_quotes": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b6be622af21f1bcddc0aee5c51ae9b038b753b2c",
@@ -184,16 +185,16 @@
       "sha256": "638ed83336571b338a48b88182a03dae36c3bf547f3d0d10610655fc5e787a65"
     },
     "dashboard": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/173ac05ac0516a6141137a8810dddd82b5e8a3d2",
-      "immutable_git_blob_sha": "173ac05ac0516a6141137a8810dddd82b5e8a3d2",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/dc585dab58e7769981ca1b39f8133375a132a335",
+      "immutable_git_blob_sha": "dc585dab58e7769981ca1b39f8133375a132a335",
       "path": "data/investor_decision_dashboard/latest.json",
-      "sha256": "12b21420a93dcb6679820fe7bf281bd495a9ab6397c5aea4e208c42e660df2f9"
+      "sha256": "4d4be332e9e70219938d8b82503ab48c8c330cc817ed28af5ef0a52cbb4d4961"
     },
     "decision_center": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/926a88e1cd4d073d1c4b16d0170717a9c2727054",
-      "immutable_git_blob_sha": "926a88e1cd4d073d1c4b16d0170717a9c2727054",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/e1735a6364d8af8fe6a3fd03defbc7b67ad72937",
+      "immutable_git_blob_sha": "e1735a6364d8af8fe6a3fd03defbc7b67ad72937",
       "path": "data/decision_center/latest.json",
-      "sha256": "0df430208008413deb3782fc78b9b72b90603699717ca28d5a6505fd23281fd7"
+      "sha256": "eb9780c38d3b27e440be8079207322445d7c3d85e516db1395ac7ff290644d63"
     },
     "era_radar": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/c6aea6be7d78b6e7a60761e54a1008bd3e51d365",
@@ -208,10 +209,10 @@
       "sha256": "34998c31e6c5ca7ff8c7698d272cf7ca5c58d3fc4ead50aa6465357cab34db20"
     },
     "outcomes": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/8a3a4ab71899f92b3ac1235596849ce7d9ac251b",
-      "immutable_git_blob_sha": "8a3a4ab71899f92b3ac1235596849ce7d9ac251b",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/483bfa3307310f3d2f94365622fef1499ab3d46f",
+      "immutable_git_blob_sha": "483bfa3307310f3d2f94365622fef1499ab3d46f",
       "path": "data/formal_decision_outcomes/latest.json",
-      "sha256": "25f801ea18ca8972c53bf57a50ae9728068a6729ba3f4f8d7b72234d1e6a2872"
+      "sha256": "e0810dea93e1d70d7b743802f2a1c0a1638cdabd6b84160f6e250fcea7615f53"
     },
     "planning_capital": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b31f3fec7f0731da559f4ccdbe87c08638a1397d",
