@@ -136,6 +136,7 @@ def test_even_fresh_upstream_cannot_establish_live_broker_or_exchange_calendar(t
     d, _, path, canonical = inputs(tmp_path)
     d["freshness_contract"]["fresh"] = True
     d["freshness_contract"]["status"] = "OK"
+    d["freshness_contract"]["expected_min_trade_date"] = "2026-09-24"
     d["freshness_contract"]["formal_new_exposure_allowed"] = True
     d["formal_new_exposure_allowed"] = True
     path.write_text(json.dumps(d), encoding="utf-8")
@@ -244,3 +245,18 @@ def test_market_date_conflict_stays_blocked_even_when_freshness_bits_are_ok(tmp_
     m = build_handoff(tmp_path, canonical_path)
     assert m["feeds"]["market_eod"]["status"] == "STALE_OR_UNVERIFIED"
     assert "CROSS_FEED_MARKET_LINEAGE_MISMATCH" in m["blocking_reasons"]
+
+
+@pytest.mark.parametrize("minimum", ["2026-09-25", "", "invalid"])
+def test_false_ok_cannot_bypass_expected_completed_session(tmp_path, minimum):
+    d, _, path, canonical = inputs(tmp_path)
+    d["freshness_contract"].update({
+        "status": "OK", "fresh": True,
+        "formal_new_exposure_allowed": True,
+        "expected_min_trade_date": minimum,
+    })
+    d["formal_new_exposure_allowed"] = True
+    path.write_text(json.dumps(d), encoding="utf-8")
+    m = build_handoff(tmp_path, canonical)
+    assert m["feeds"]["market_eod"]["status"] == "STALE_OR_UNVERIFIED"
+    assert "STALE_OR_UNVERIFIED_MARKET_SESSION" in m["blocking_reasons"]
