@@ -1,18 +1,16 @@
 # ⚠️ 数据代际陈旧：STALE_UPSTREAM
 
-> 新增仓位已 fail-closed；Formal 决策仅保留作审计/研究显示。原因：`CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION, MARKET_CONTEXT_BEHIND_COMPLETED_SESSION`
+> 新增仓位已 fail-closed；Formal 决策仅保留作审计/研究显示。原因：`CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION`
 
 # 投资决策驾驶舱
 
-> 市场=RED；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
+> 数据代际=STALE_UPSTREAM；禁止新增仓位；市场=GREEN；盘中价仅用于展示/审计；计划立即投入≈¥0
 
 ## 1. 最新市场结构（日线）
 
-- 数据日：**2026-09-28**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。
-- 市场状态：**RED**；是否允许新买：**False**；仓位倍率：**0.00**
-- 上涨家数比例：**16.50%**；数据质量：**OK**
-
-- 盘中执行价覆盖：**0/4只**；行情状态：**OFF_SESSION**；最新行情时间：**—**；正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。
+- 数据日：**2026-09-29**；这是日线/上一可用交易日结构，**不是盘中全A广度**。盘中价格只用于执行参考，另由 Live Execution Quote 刷新。
+- 市场状态：**GREEN**；是否允许新买：**False**；仓位倍率：**1.00**
+- 上涨家数比例：**61.91%**；数据质量：**OK**
 
 ## 2. 我的持仓怎么办
 
@@ -52,7 +50,7 @@
 
 ## 7. 当前强势方向（辅助，不代替BUY权限）
 
-A02林业(STRONG)、B07石油和天然气开采业(NEUTRAL)、A03畜牧业(NEUTRAL)、C27医药制造业(NEUTRAL)、M73研究和试验发展(NEUTRAL)、C13农副食品加工业(NEUTRAL)、G60邮政业(NEUTRAL)、D44电力、热力生产和供应业(NEUTRAL)
+O81机动车、电子产品和日用产品修理业(STRONG)、K70房地产业(STRONG)、R86新闻和出版业(STRONG)、R87广播、电视、电影和录音制作业(STRONG)、C21家具制造业(STRONG)、I64互联网和相关服务(STRONG)、G59装卸搬运和仓储业(STRONG)、I63电信、广播电视和卫星传输服务(STRONG)
 
 ## 8. 其他已确认资产
 
