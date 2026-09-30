@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36788989892",
+  "orchestrator_run_id": "36789199048",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -46,16 +53,23 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
+      "attention_priority": "MEDIUM",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "MEDIUM",
       "entity_id": "001309",
       "entity_name": "德明利",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "601965",
+      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -68,10 +82,10 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
+      "entity_id": "605116",
+      "entity_name": "奥锐特",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -84,13 +98,6 @@
       "attention_priority": "MEDIUM",
       "entity_id": "002811",
       "entity_name": "郑中设计",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "601965",
-      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -145,13 +152,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000768",
-      "entity_name": "中航西飞",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "000783",
       "entity_name": "长江证券",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -161,6 +161,13 @@
       "attention_priority": "LOW",
       "entity_id": "600309",
       "entity_name": "万华化学",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -180,24 +187,17 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "605116",
-      "entity_name": "奥锐特",
+      "entity_id": "000768",
+      "entity_name": "中航西飞",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-30T23:02:21+00:00",
-  "source_workflow_head_sha": "38534992377bdb3ed12664a78ed960f7ead722e5",
+  "source_generated_at": "2026-09-30T23:04:41+00:00",
+  "source_workflow_head_sha": "cb1dae851e0d78e92af5d21bcf0aad7bf4798cd8",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36788791202",
+  "source_workflow_run_id": "36788920167",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 218,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36788791202",
+  "trigger_source": "JEV_ORCHESTRATOR_36788920167",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-30T23:04:35+00:00",
+  "updated_at": "2026-09-30T23:06:52+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.73,
+      "attention_confidence": 0.67,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
