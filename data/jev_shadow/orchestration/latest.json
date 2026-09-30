@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36748874069",
+  "orchestrator_run_id": "36759230837",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,29 +54,8 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "001309",
       "entity_name": "德明利",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "601965",
-      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -89,6 +68,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "000682",
       "entity_name": "东方电子",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -98,6 +84,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "002811",
       "entity_name": "郑中设计",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "601965",
+      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -180,6 +173,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-30T17:04:35+00:00",
-  "source_workflow_head_sha": "cd497b3dc8e8722313d24ee5e8cf1c10908b0423",
+  "source_generated_at": "2026-09-30T18:31:14+00:00",
+  "source_workflow_head_sha": "737ce6ff7aeccdd979dc5e0fb3a31f6a2b9fa611",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36748626883",
+  "source_workflow_run_id": "36758948909",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 214,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36748626883",
+  "trigger_source": "JEV_ORCHESTRATOR_36758948909",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-30T17:06:51+00:00",
+  "updated_at": "2026-09-30T18:33:56+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.71,
+      "attention_confidence": 0.72,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.93,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
