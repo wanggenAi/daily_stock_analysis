@@ -3,25 +3,221 @@
   "automatic_formal_buy_allowed": false,
   "automatic_research_dispatch_allowed": true,
   "contract": "GEN_GE_JEV_RESEARCH_ORCHESTRATION_V1",
-  "deep_run_id": "",
   "dispatch_is_research_only": true,
   "dispatch_target": "genge-v31-deep-calculation-lambda.yml",
   "execution_status": "READY",
   "formal_trading_authority": false,
   "human_review": [],
   "jev_direct_dispatch_allowed": false,
-  "lifecycle_state": "VALUATION_CLOSURE_DISPATCHED",
+  "lifecycle_state": "ORCHESTRATION_PENDING",
   "max_dispatch": 12,
   "min_auto_route_confidence": 0.5,
   "mutates_authoritative_decision": false,
-  "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36675959759",
-  "pending_operation": null,
-  "requested_codes": [],
-  "requested_codes_csv": "",
-  "selected": [],
-  "should_dispatch": false,
+  "orchestrator_run_id": "36677674690",
+  "pending_operation": {
+    "operation": "DISPATCH_DEEP_CALCULATION",
+    "requested_codes": [
+      "002537"
+    ],
+    "source_workflow_run_id": "36677512037",
+    "target_workflow": "genge-v31-deep-calculation-lambda.yml"
+  },
+  "requested_codes": [
+    "002537"
+  ],
+  "requested_codes_csv": "002537",
+  "selected": [
+    {
+      "attention_confidence": 0.85,
+      "attention_priority": "HIGH",
+      "dispatch_mode": "JEV_AND_DETERMINISTIC_AGREEMENT",
+      "entity_id": "002537",
+      "entity_name": "海联金汇",
+      "evidence_state": "INSUFFICIENT",
+      "existing_engine_action": "RESEARCH:RESEARCH_GAP",
+      "formal_trading_authority": false,
+      "is_current_holding": false,
+      "needs_deep_research": true,
+      "needs_more_evidence": true,
+      "no_auto_trade": true,
+      "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
+      "research_context": {
+        "deep_execution_status": "SUCCESS",
+        "deep_lambda_run_id": "36676929303",
+        "deep_terminal_state": "EVIDENCE_EXHAUSTED",
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 0,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat",
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "profile_gate_statuses": {
+          "earnings_authenticity": {
+            "confidence": "MACHINE",
+            "evidence_fingerprint": "d88a5e38e259ac972f62",
+            "source": "AUTOMATIC_MACHINE",
+            "status": "UNKNOWN"
+          },
+          "financial_safety": {
+            "confidence": "MACHINE",
+            "evidence_fingerprint": "89604311134924349a7e",
+            "source": "AUTOMATIC_MACHINE",
+            "status": "UNKNOWN"
+          },
+          "long_term_demand": {
+            "confidence": "",
+            "evidence_fingerprint": "f4eb3bec71caa3e1aaf4",
+            "source": "AUTOMATIC_ATTEMPT",
+            "status": "UNKNOWN"
+          },
+          "moat": {
+            "confidence": "",
+            "evidence_fingerprint": "70c2f158c2d6b2066b60",
+            "source": "AUTOMATIC_ATTEMPT",
+            "status": "UNKNOWN"
+          },
+          "predictability": {
+            "confidence": "",
+            "evidence_fingerprint": "e8f5a94f23c4295f9eab",
+            "source": "AUTOMATIC_ATTEMPT",
+            "status": "UNKNOWN"
+          }
+        },
+        "research_decision": "RESEARCH_GAP",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "unresolved_gates": [
+          {
+            "gate": "earnings_authenticity",
+            "reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
+          },
+          {
+            "gate": "financial_safety",
+            "reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+          },
+          {
+            "gate": "long_term_demand",
+            "reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
+          },
+          {
+            "gate": "moat",
+            "reason": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET"
+          },
+          {
+            "gate": "predictability",
+            "reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+          }
+        ]
+      },
+      "research_evidence_fingerprint": "8893219a3a4fa3e0d179",
+      "route": "EVIDENCE_REFRESH",
+      "route_confidence": 0.53,
+      "strategy_attempts": [
+        {
+          "attempt_status": "DISPATCH_PLANNED",
+          "attempted_at": "2026-09-30T06:19:29+00:00",
+          "code": "002537",
+          "evidence_epoch": "c13eabd8027b0e1894aa",
+          "evidence_fingerprint": "c13eabd8027b0e1894aa",
+          "formal_trading_authority": false,
+          "gate_changed": null,
+          "hard_gate": "earnings_authenticity",
+          "new_evidence_acquired": null,
+          "no_auto_trade": true,
+          "query_family": "PIT_EARNINGS_AUTHENTICITY",
+          "remaining_strategy_families": [],
+          "source_family": "OFFICIAL_COMPANY_FINANCIAL_DISCLOSURE",
+          "source_workflow_run_id": "36677512037",
+          "stock_evidence_fingerprint": "8893219a3a4fa3e0d179",
+          "strategy_exhausted": false,
+          "strategy_family": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_REFRESH",
+          "unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
+        },
+        {
+          "attempt_status": "DISPATCH_PLANNED",
+          "attempted_at": "2026-09-30T06:19:29+00:00",
+          "code": "002537",
+          "evidence_epoch": "4ee436440e6dfefa2969",
+          "evidence_fingerprint": "4ee436440e6dfefa2969",
+          "formal_trading_authority": false,
+          "gate_changed": null,
+          "hard_gate": "financial_safety",
+          "new_evidence_acquired": null,
+          "no_auto_trade": true,
+          "query_family": "PIT_FINANCIAL_SAFETY",
+          "remaining_strategy_families": [],
+          "source_family": "OFFICIAL_COMPANY_FINANCIAL_DISCLOSURE",
+          "source_workflow_run_id": "36677512037",
+          "stock_evidence_fingerprint": "8893219a3a4fa3e0d179",
+          "strategy_exhausted": false,
+          "strategy_family": "SAME_RUN_PIT_FINANCIAL_SAFETY_REFRESH",
+          "unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
+        }
+      ],
+      "triage_context": {
+        "industry": "C36汽车制造业",
+        "mapping_gaps": [
+          "INDUSTRY"
+        ],
+        "near_buy_evidence_recovery_tier": null,
+        "near_buy_missing_evidence_items": [],
+        "quant_score": null,
+        "quant_status": "",
+        "research_priority": "P1",
+        "research_priority_score": 65,
+        "screening_attractiveness": "NORMAL",
+        "urgent_research": true,
+        "urgent_research_reasons": [
+          "RESEARCH_DORMANT_WAIT_NEW_EVIDENCE",
+          "DORMANT_NEW_EVIDENCE_REACTIVATION_SIGNAL",
+          "REUNDERWRITE_REQUIRED",
+          "HOURLY_PRIORITY_RAISE",
+          "MAPPING_GAP"
+        ],
+        "valuation": {
+          "current_pe": null,
+          "distance_to_research_buy_ceiling_pct": null,
+          "earnings_quality_confidence": "",
+          "earnings_quality_score": null,
+          "expectation_state": "",
+          "financial_gate_diagnostics": {
+            "blockers": [
+              "FINANCIAL_REVIEW_STATUS_NOT_OK",
+              "EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH",
+              "CASH_CONVERSION_RATIO_MISSING",
+              "EARNINGS_QUALITY_SCORE_MISSING",
+              "NORMALIZED_CORE_OPERATING_PROFIT_MISSING",
+              "OPERATING_CASH_FLOW_MISSING"
+            ],
+            "cash_conversion_pass_threshold": 0.8,
+            "cash_conversion_ratio": null,
+            "earnings_quality_confidence": "",
+            "earnings_quality_pass_threshold": 70.0,
+            "earnings_quality_score": null,
+            "financial_disclosure_date": "",
+            "financial_review_status": "",
+            "machine_financial_pass_ready": false,
+            "normalized_core_operating_profit": null,
+            "operating_cash_flow": null
+          },
+          "financial_review_status": "",
+          "historical_median_pe_reference": null,
+          "pe_to_history_ratio": null,
+          "price_mapping_status": "",
+          "reference_price": null,
+          "reference_price_basis": "",
+          "reference_trade_date": "",
+          "required_profit_growth_pct": null,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
+        }
+      }
+    }
+  ],
+  "should_dispatch": true,
   "should_dispatch_terminal_closure": true,
   "skipped": [
     {
@@ -53,16 +249,16 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "HIGH",
-      "entity_id": "002537",
-      "entity_name": "海联金汇",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
       "attention_priority": "MEDIUM",
       "entity_id": "001309",
       "entity_name": "德明利",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "601965",
+      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -91,13 +287,6 @@
       "attention_priority": "MEDIUM",
       "entity_id": "002811",
       "entity_name": "郑中设计",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "601965",
-      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -145,13 +334,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "000703",
       "entity_name": "恒逸石化",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -187,6 +369,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "600834",
       "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -194,25 +383,25 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-30T05:58:48+00:00",
-  "source_workflow_head_sha": "a26a1e3bd935ae58c5bb12cd1194ae76d2f052b2",
+  "source_generated_at": "2026-09-30T06:19:29+00:00",
+  "source_workflow_head_sha": "45bc658d72f11bd58fb2c2c205d931225723fce2",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36675625906",
+  "source_workflow_run_id": "36677512037",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
-    "evidence_refresh_count": 0,
+    "evidence_refresh_count": 1,
     "holding_selected_count": 0,
     "human_review_count": 0,
-    "selected_count": 0,
-    "skipped_count": 24,
-    "strategy_attempt_count": 0,
-    "strategy_ledger_entry_count": 212,
+    "selected_count": 1,
+    "skipped_count": 23,
+    "strategy_attempt_count": 2,
+    "strategy_ledger_entry_count": 214,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36675625906",
+  "trigger_source": "JEV_ORCHESTRATOR_36677512037",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-30T06:01:04+00:00",
+  "updated_at": "2026-09-30T06:21:52+00:00",
   "valuation_closure": [
     {
       "attention_confidence": 0.73,
@@ -231,7 +420,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36674880808",
+        "deep_lambda_run_id": "36676929303",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
