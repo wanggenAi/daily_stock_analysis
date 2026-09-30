@@ -9,6 +9,9 @@ import pytest
 from src.strategies.genge_opportunity_discovery.investor_chatgpt_handoff import (
     CONTRACT, build_handoff, render_markdown,
 )
+from src.strategies.genge_opportunity_discovery.generation_freshness import (
+    evaluate_generation_freshness,
+)
 
 
 def save(root: Path, relative: str, value: dict) -> Path:
@@ -132,7 +135,9 @@ def test_mismatched_center_manual_quote_and_unverified_event_remain_blocked(tmp_
 def test_even_fresh_upstream_cannot_establish_live_broker_or_exchange_calendar(tmp_path):
     d, _, path, canonical = inputs(tmp_path)
     d["freshness_contract"]["fresh"] = True
-    d["freshness_contract"]["status"] = "FRESH"
+    d["freshness_contract"]["status"] = "OK"
+    d["freshness_contract"]["expected_min_trade_date"] = "2026-09-24"
+    d["freshness_contract"]["formal_new_exposure_allowed"] = True
     d["formal_new_exposure_allowed"] = True
     path.write_text(json.dumps(d), encoding="utf-8")
     m = build_handoff(tmp_path, canonical)
@@ -170,3 +175,92 @@ def test_only_proven_radar_is_labeled_research_only(tmp_path):
     assert len(m["trend_research"]) == 5
     assert all(r["authority"] == "RESEARCH_ONLY" for r in m["trend_research"])
     assert m["feeds"]["era_cycle"]["as_of"] == "2026-09-20T00:00:00Z"
+
+
+def test_real_generation_freshness_ok_is_accepted_without_trade_authority(tmp_path):
+    d, canon, path, canonical_path = inputs(tmp_path)
+    d["generated_at"] = "2026-09-29T19:24:27Z"
+    d["latest_trade_date"] = "2026-09-29"
+    d["market"]["as_of_date"] = "2026-09-29"
+    canon["latest_trade_date"] = "2026-09-29"
+    save(tmp_path, "incoming/canonical.json", canon)
+    # Consume the REAL existing evaluator contract, not a made-up FRESH enum.
+    freshness = evaluate_generation_freshness(
+        {"generated_at": "2026-09-29T17:01:36Z",
+         "latest_trade_date": "2026-09-29", "source_run_id": "100"},
+        market_regime=d["market"],
+        evaluated_at="2026-09-29T19:24:27Z",
+        strict_missing_metadata=True,
+    )
+    assert freshness["status"] == "OK"
+    assert freshness["fresh"] is True
+    d["freshness_contract"] = freshness
+    d["formal_new_exposure_allowed"] = freshness["formal_new_exposure_allowed"]
+    path.write_text(json.dumps(d), encoding="utf-8")
+    m = build_handoff(tmp_path, canonical_path)
+    assert m["feeds"]["market_eod"]["status"] == "UPSTREAM_FRESH_CALENDAR_UNVERIFIED"
+    assert "Market state: UPSTREAM_FRESH_CALENDAR_UNVERIFIED" in render_markdown(m)
+    assert "STALE_OR_UNVERIFIED_MARKET_SESSION" not in m["blocking_reasons"]
+    assert m["lineage"]["exchange_calendar_independently_verified"] is False
+    assert m["lineage"]["live_broker_positions_verified"] is False
+    assert m["feeds"]["broker_cash"]["status"] == "UNKNOWN"
+    assert m["feeds"]["executable_quotes"]["status"] == "UNVERIFIED"
+    assert m["formal_buy_now"] == [] and m["formal_wait_price"] == []
+    assert m["no_auto_trade"] is True
+
+
+@pytest.mark.parametrize("status,fresh,contract_allowed,dashboard_allowed", [
+    ("FRESH", True, True, True),  # Not an emitted evaluator status.
+    ("STALE_UPSTREAM", True, True, True),
+    ("UNVERIFIABLE", True, True, True),
+    ("OK", False, True, True),
+    ("OK", True, False, True),
+    ("OK", True, True, False),
+])
+def test_mismatched_freshness_bits_cannot_claim_current_market(
+    tmp_path, status, fresh, contract_allowed, dashboard_allowed,
+):
+    d, _, path, canonical_path = inputs(tmp_path)
+    d["freshness_contract"].update({
+        "status": status, "fresh": fresh,
+        "formal_new_exposure_allowed": contract_allowed,
+        # Make the completed-session check PASS so these negative cases
+        # actually isolate the status and the two independent authority bits.
+        "expected_min_trade_date": "2026-09-24",
+    })
+    d["formal_new_exposure_allowed"] = dashboard_allowed
+    path.write_text(json.dumps(d), encoding="utf-8")
+    m = build_handoff(tmp_path, canonical_path)
+    assert m["feeds"]["market_eod"]["status"] == "STALE_OR_UNVERIFIED"
+    assert "STALE_OR_UNVERIFIED_MARKET_SESSION" in m["blocking_reasons"]
+    assert m["formal_buy_now"] == [] and m["no_auto_trade"] is True
+
+
+def test_market_date_conflict_stays_blocked_even_when_freshness_bits_are_ok(tmp_path):
+    d, _, path, canonical_path = inputs(tmp_path)
+    d["freshness_contract"].update({
+        "status": "OK", "fresh": True,
+        "formal_new_exposure_allowed": True,
+        "expected_min_trade_date": "2026-09-24",
+    })
+    d["formal_new_exposure_allowed"] = True
+    d["market"]["as_of_date"] = "2026-09-23"
+    path.write_text(json.dumps(d), encoding="utf-8")
+    m = build_handoff(tmp_path, canonical_path)
+    assert m["feeds"]["market_eod"]["status"] == "STALE_OR_UNVERIFIED"
+    assert "CROSS_FEED_MARKET_LINEAGE_MISMATCH" in m["blocking_reasons"]
+
+
+@pytest.mark.parametrize("minimum", ["2026-09-25", "", "invalid"])
+def test_false_ok_cannot_bypass_expected_completed_session(tmp_path, minimum):
+    d, _, path, canonical = inputs(tmp_path)
+    d["freshness_contract"].update({
+        "status": "OK", "fresh": True,
+        "formal_new_exposure_allowed": True,
+        "expected_min_trade_date": minimum,
+    })
+    d["formal_new_exposure_allowed"] = True
+    path.write_text(json.dumps(d), encoding="utf-8")
+    m = build_handoff(tmp_path, canonical)
+    assert m["feeds"]["market_eod"]["status"] == "STALE_OR_UNVERIFIED"
+    assert "STALE_OR_UNVERIFIED_MARKET_SESSION" in m["blocking_reasons"]

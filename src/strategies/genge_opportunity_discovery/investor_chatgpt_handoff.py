@@ -9,6 +9,7 @@ import argparse
 import hashlib
 import json
 import os
+from datetime import date
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -100,8 +101,20 @@ def build_handoff(root: Path, canonical_file: Path, *,
              or str(freshness["canonical_source_run_id"]) == run_id)
         and (not freshness.get("canonical_latest_trade_date")
              or freshness["canonical_latest_trade_date"] == market_date))
-    fresh = bool(market_matches and freshness.get("status") == "FRESH"
+    # Actual evaluator statuses are OK / STALE_UPSTREAM / UNVERIFIABLE,
+    # not FRESH. A forged OK must also NOT override its explicit minimum
+    # completed-session date. Missing/malformed metadata fails closed.
+    try:
+        date_window_ok = (
+            date.fromisoformat(market_date)
+            >= date.fromisoformat(str(freshness.get("expected_min_trade_date") or ""))
+        )
+    except ValueError:
+        date_window_ok = False
+    fresh = bool(market_matches and date_window_ok
+                 and freshness.get("status") == "OK"
                  and freshness.get("fresh") is True
+                 and freshness.get("formal_new_exposure_allowed") is True
                  and dashboard.get("formal_new_exposure_allowed") is True)
     verified_radar = bool(radar and radar.get("formal_trading_authority") is False
                           and radar.get("no_auto_trade") is True)
