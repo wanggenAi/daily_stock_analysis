@@ -2,8 +2,8 @@
 
 - execution: **SUCCESS**
 - terminal state: **EVIDENCE_EXHAUSTED**
-- requested: **12**
-- complete: **0**
+- requested: **13**
+- complete: **1**
 - evidence exhausted: **12**
 - evidence collection attempts: **2**
 - new evidence rows: **34**
