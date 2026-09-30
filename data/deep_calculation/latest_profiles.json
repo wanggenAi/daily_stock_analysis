@@ -2,17 +2,17 @@
   "authority": "RESEARCH_ONLY",
   "automatic_formal_buy_allowed": false,
   "contract": "GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1",
-  "deep_code_epoch_sha": "23c59406b5f17baf66247e47740f20f36e44d7b6",
+  "deep_code_epoch_sha": "a3fdf583e70e0d16a9fc958a679219ff1befa0b5",
   "execution_status": "SUCCESS",
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-30T19:07:25+00:00",
-  "generated_at": "2026-09-30T19:05:10+00:00",
+  "gap_closure_generated_at": "2026-09-30T21:37:43+00:00",
+  "generated_at": "2026-09-30T21:35:06+00:00",
   "historical_material_event_evidence_count": 0,
   "historical_material_event_failed_gate_count": 0,
   "immediate_retry_required": false,
-  "lambda_run_id": "36762907613",
+  "lambda_run_id": "36780114621",
   "material_event_failed_gate_count": 0,
   "material_event_pass_override_count": 0,
   "material_event_risk_ledger_complete": true,
@@ -27073,9 +27073,9 @@
               "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+          "rationale": "Same-run PIT evidence verifies positive normalized operating profit, positive operating cash flow, strong cash conversion and HIGH-confidence earnings quality.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "PASS"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -27085,9 +27085,9 @@
               "source_type": "SAME_RUN_PIT_MACHINE"
             }
           ],
-          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "rationale": "Same-run PIT financial review is OK with HIGH earnings-quality confidence, positive normalized operating profit and operating cash flow, cash conversion >= 0.80, and earnings-quality score >= 70.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "PASS"
         },
         "long_term_demand": {
           "confidence": "",
@@ -27266,6 +27266,57 @@
       },
       "industry": "C35专用设备制造业",
       "name": "联测科技"
+    },
+    "688120": {
+      "gates": {
+        "earnings_authenticity": {
+          "confidence": "MACHINE",
+          "evidence": [
+            {
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
+            }
+          ],
+          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN"
+        },
+        "financial_safety": {
+          "confidence": "MACHINE",
+          "evidence": [
+            {
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
+            }
+          ],
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN"
+        },
+        "long_term_demand": {
+          "confidence": "",
+          "evidence": [],
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN"
+        },
+        "moat": {
+          "confidence": "",
+          "evidence": [],
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN"
+        },
+        "predictability": {
+          "confidence": "",
+          "evidence": [],
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN"
+        }
+      },
+      "industry": "C35专用设备制造业",
+      "name": "华海清科"
     },
     "688122": {
       "gates": {
@@ -29161,10 +29212,10 @@
   "reverified_upstream_pass_count": 7,
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
-  "source_run_id": "36761753233",
+  "source_run_id": "36778994952",
   "trigger_source": "EVERY_INDUSTRY_READY",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
-  "verified_pass_gate_count": 213
+  "verified_pass_gate_count": 215
 }
