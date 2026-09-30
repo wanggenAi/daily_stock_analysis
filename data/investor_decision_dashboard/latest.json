@@ -1,9 +1,9 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-09-30T19:55:33+00:00",
-  "canonical_snapshot_id": "f47b1eada872c202035c",
-  "canonical_source_run_id": "36761753233",
+  "mode": "HOURLY",
+  "generated_at": "2026-09-30T23:01:49+00:00",
+  "canonical_snapshot_id": "aab2f75cbdb4da1b5a7e",
+  "canonical_source_run_id": "36778994952",
   "latest_trade_date": "2026-09-30",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
@@ -223,8 +223,8 @@
           "status": "CONSUMED",
           "source_canonical_snapshot_id": "4e025e2112441ae19e05",
           "source_canonical_source_run_id": "34879450038",
-          "applied_to_canonical_snapshot_id": "f47b1eada872c202035c",
-          "applied_to_canonical_source_run_id": "36761753233",
+          "applied_to_canonical_snapshot_id": "aab2f75cbdb4da1b5a7e",
+          "applied_to_canonical_source_run_id": "36778994952",
           "lineage_match": "CARRIED_FORWARD",
           "consumed_shares": 100,
           "allowance_shares": 100,
@@ -242,7 +242,7 @@
     "available": true,
     "buy_now": [],
     "wait_price": [],
-    "reject_count": 120,
+    "reject_count": 121,
     "invalid_unauthorized_buy_count": 0,
     "decision_authority": "RESEARCH_TERMINAL_VIEW",
     "formal_buy_is_mirror_only": true
@@ -286,7 +286,7 @@
     "new_risk_reduction_action_count": 0,
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
-    "terminal_reject_count": 120,
+    "terminal_reject_count": 121,
     "planned_immediate_cash_cny": 0,
     "research_terminal_requested_count": 13,
     "research_buy_count": 1,
@@ -358,7 +358,7 @@
   },
   "hourly_context": {
     "available": true,
-    "research_as_of": "2026-09-30T19:02:48Z"
+    "research_as_of": "2026-09-30T21:32:37Z"
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -401,10 +401,10 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-09-30T19:55:33+00:00",
-    "canonical_generated_at": "2026-09-30T19:02:48+00:00",
+    "evaluated_at": "2026-09-30T23:01:49+00:00",
+    "canonical_generated_at": "2026-09-30T21:32:37+00:00",
     "canonical_latest_trade_date": "2026-09-30",
-    "canonical_source_run_id": "36761753233",
+    "canonical_source_run_id": "36778994952",
     "expected_min_trade_date": "2026-09-30",
     "market_as_of": "2026-09-30",
     "holiday_calendar_mode": "WEEKDAY_FAIL_CLOSED"
@@ -444,8 +444,8 @@
   },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "f47b1eada872c202035c",
-    "canonical_source_run_id": "36761753233",
+    "canonical_snapshot_id": "aab2f75cbdb4da1b5a7e",
+    "canonical_source_run_id": "36778994952",
     "matching_consumption_count": 1,
     "exact_lineage_consumption_count": 0,
     "carried_forward_consumption_count": 1,
@@ -473,10 +473,10 @@
     "source_every_industry_run_id": "36778994952",
     "requested_count": 13,
     "decision_counts": {
-      "WAIT_PRICE": 0,
-      "BUY": 1,
+      "REJECT": 0,
       "RESEARCH_GAP": 12,
-      "REJECT": 0
+      "BUY": 1,
+      "WAIT_PRICE": 0
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
