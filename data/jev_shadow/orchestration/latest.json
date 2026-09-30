@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36786274523",
+  "orchestrator_run_id": "36788989892",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -95,13 +95,6 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "MEDIUM",
-      "entity_id": "605116",
-      "entity_name": "奥锐特",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
       "attention_priority": "LOW",
       "entity_id": "000096",
       "entity_name": "广聚能源",
@@ -126,6 +119,13 @@
       "attention_priority": "LOW",
       "entity_id": "000557",
       "entity_name": "西部创业",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000567",
+      "entity_name": "海德股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -166,13 +166,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -187,17 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000567",
-      "entity_name": "海德股份",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "605116",
+      "entity_name": "奥锐特",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-09-30T22:33:08+00:00",
-  "source_workflow_head_sha": "ffbd2f48f356f027c1d8e64c5449f0ea5c7608f6",
+  "source_generated_at": "2026-09-30T23:02:21+00:00",
+  "source_workflow_head_sha": "38534992377bdb3ed12664a78ed960f7ead722e5",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36786080858",
+  "source_workflow_run_id": "36788791202",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 218,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36786080858",
+  "trigger_source": "JEV_ORCHESTRATOR_36788791202",
   "unknown_is_pass": false,
-  "updated_at": "2026-09-30T22:35:21+00:00",
+  "updated_at": "2026-09-30T23:04:35+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
