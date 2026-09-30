@@ -101,8 +101,8 @@ O81机动车、电子产品和日用产品修理业(94.28)、K70房地产业(90.
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=117 / dormant=9 / archived-invalidated=0 / events=11009 / focus=4 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=12 / verified-pass=0 / unresolved=48 |
-| Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=12 / verified-pass=227 / unresolved=48 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=36715483519 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
@@ -154,7 +154,7 @@ O81机动车、电子产品和日用产品修理业(94.28)、K70房地产业(90.
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`36715055217`。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`36715156059`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
