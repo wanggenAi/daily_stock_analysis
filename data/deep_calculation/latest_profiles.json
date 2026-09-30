@@ -2,17 +2,17 @@
   "authority": "RESEARCH_ONLY",
   "automatic_formal_buy_allowed": false,
   "contract": "GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1",
-  "deep_code_epoch_sha": "c1afe1a532104591d8a77df5718d485efceae8a4",
+  "deep_code_epoch_sha": "adec162821541a63e0c13f455c8c9afbf766d510",
   "execution_status": "SUCCESS",
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-09-30T05:50:52+00:00",
-  "generated_at": "2026-09-30T05:47:52+00:00",
+  "gap_closure_generated_at": "2026-09-30T06:15:50+00:00",
+  "generated_at": "2026-09-30T06:13:04+00:00",
   "historical_material_event_evidence_count": 0,
   "historical_material_event_failed_gate_count": 0,
   "immediate_retry_required": false,
-  "lambda_run_id": "36674880808",
+  "lambda_run_id": "36676929303",
   "material_event_failed_gate_count": 0,
   "material_event_pass_override_count": 0,
   "material_event_risk_ledger_complete": true,
@@ -13252,6 +13252,57 @@
       },
       "industry": "K70房地产业",
       "name": "大名城"
+    },
+    "600097": {
+      "gates": {
+        "earnings_authenticity": {
+          "confidence": "MACHINE",
+          "evidence": [
+            {
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
+            }
+          ],
+          "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN"
+        },
+        "financial_safety": {
+          "confidence": "MACHINE",
+          "evidence": [
+            {
+              "reference": "valuation_research_queue.csv",
+              "source_type": "SAME_RUN_PIT_MACHINE"
+            }
+          ],
+          "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
+          "source": "AUTOMATIC_MACHINE",
+          "status": "UNKNOWN"
+        },
+        "long_term_demand": {
+          "confidence": "",
+          "evidence": [],
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN"
+        },
+        "moat": {
+          "confidence": "",
+          "evidence": [],
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN"
+        },
+        "predictability": {
+          "confidence": "",
+          "evidence": [],
+          "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
+          "source": "AUTOMATIC_ATTEMPT",
+          "status": "UNKNOWN"
+        }
+      },
+      "industry": "A04渔业",
+      "name": "开创国际"
     },
     "600108": {
       "gates": {
@@ -28828,7 +28879,7 @@
   "reverified_upstream_pass_count": 7,
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
-  "source_run_id": "36673686409",
+  "source_run_id": "36675740642",
   "trigger_source": "EVERY_INDUSTRY_READY",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
