@@ -1,8 +1,8 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-09-30T19:19:39+00:00",
+  "generated_at": "2026-09-30T19:59:09+00:00",
   "latest_trade_date": "2026-09-30",
-  "canonical_snapshot_id": "a4bed413e3a7d56924e0",
+  "canonical_snapshot_id": "f47b1eada872c202035c",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
   "no_auto_trade": true,
@@ -4740,8 +4740,8 @@
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
-    "market_session_state": "CLOSED",
-    "market_data_status": "OFF_SESSION",
+    "market_session_state": "UNKNOWN",
+    "market_data_status": "DEGRADED",
     "live_quote_applied_count": 0,
     "live_quote_expected_count": 4,
     "live_quote_coverage_complete": false,
@@ -5245,7 +5245,7 @@
     "authority": "READ_ONLY_RESEARCH_SCENARIO",
     "source_epoch_verified": true,
     "deep_profile_lineage_verified": true,
-    "canonical_snapshot_id": "a4bed413e3a7d56924e0",
+    "canonical_snapshot_id": "f47b1eada872c202035c",
     "market_as_of": "2026-09-30",
     "model_screen_rule": "HIGH_CONFIDENCE_PRICE_BELOW_MODEL_LOW_ONLY",
     "no_threshold_change": true,
@@ -5272,7 +5272,7 @@
           "predictability"
         ],
         "formal_action_unchanged": "HOLD",
-        "existing_add_allowance_consumed": false,
+        "existing_add_allowance_consumed": true,
         "market_state": "YELLOW",
         "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
         "reason": "PRICE_BELOW_MODELED_LOWER_VALUE_BOUND",
@@ -5294,6 +5294,7 @@
         },
         "blockers": [
           "NO_CURRENT_FORMAL_HOLDING_ADD",
+          "PRIOR_ADD_ALLOWANCE_CONSUMED",
           "DEEP_GATES_NOT_ALL_PASS",
           "BROKER_CASH_UNVERIFIED_LIVE",
           "EXECUTION_QUOTE_NOT_LIVE"
