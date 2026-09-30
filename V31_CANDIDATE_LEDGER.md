@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `d9b18f3d2441da96e2d7`
 - latest_research_as_of: `2026-09-30T05:45:24Z`
-- active_candidates: 118
-- dormant_research_candidates: 8
+- active_candidates: 117
+- dormant_research_candidates: 9
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 10958
+- lifecycle_event_count: 10959
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -52,7 +52,6 @@
 | 002468 | 申通快递 | PENDING | 138 |  |  | d9b18f3d2441da96e2d7 | RESEEN |
 | 002494 | 华斯股份 | PENDING | 99 |  |  | ee53846288f5dc5bf814 | RESEEN |
 | 002530 | 金财互联 | PENDING | 145 |  |  | d9b18f3d2441da96e2d7 | RESEEN |
-| 002537 | 海联金汇 | PENDING | 208 |  |  | d9b18f3d2441da96e2d7 | RESEEN |
 | 002582 | 好想你 | PENDING | 61 |  |  | 6bc0038077fc1b197230 | RESEEN |
 | 002607 | 中公教育 | PENDING | 9 |  |  | d177ad83826140cfe194 | RESEEN |
 | 002758 | 浙农股份 | PENDING | 77 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
@@ -771,29 +770,6 @@
 - **lifecycle_state:** ACTIVE
 - **current tier:** PENDING
 - **seen_count:** 145
-- **last_seen_snapshot_id:** d9b18f3d2441da96e2d7
-- **last_seen_source_run_id:** 36673686409
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-25T06:01:39Z — **RESEEN**; snapshot `66c3dfc6b56e166443a5`
-- 2026-09-28T19:15:03Z — **RESEEN**; snapshot `55aaafe2845b35315ee4`
-- 2026-09-28T20:47:22Z — **RESEEN**; snapshot `72d11b234ae1d74fa052`
-- 2026-09-29T00:45:12Z — **RESEEN**; snapshot `fbf416e01dbe90b6a0af`
-- 2026-09-29T01:14:53Z — **RESEEN**; snapshot `2562defb0ebc3dafbaef`
-- 2026-09-29T06:23:25Z — **RESEEN**; snapshot `72b0e27458197860715b`
-- 2026-09-29T07:09:21Z — **RESEEN**; snapshot `85a4dc5f14a203a33190`
-- 2026-09-29T15:21:01Z — **RESEEN**; snapshot `3d48fa791194b6997a92`
-- 2026-09-29T17:01:36Z — **RESEEN**; snapshot `d1081f09e9e6ad2aec26`
-- 2026-09-30T05:45:24Z — **RESEEN**; snapshot `d9b18f3d2441da96e2d7`
-
-### 002537 海联金汇
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 208
 - **last_seen_snapshot_id:** d9b18f3d2441da96e2d7
 - **last_seen_source_run_id:** 36673686409
 - **last Formal action:** 
@@ -2747,6 +2723,7 @@
 | --- | --- | --- | ---: | --- | --- | --- |
 | 000426 | 兴业银锡 | PENDING | 120 | ea204932693c962c5925 | e77ecb25848423a12bc1 | RESEEN |
 | 000504 | 南华生物 | PENDING | 129 | 600b8e4427b66d8bf266 | 66c3dfc6b56e166443a5 | RESEEN |
+| 002537 | 海联金汇 | PENDING | 208 | 8bdd66fadd738946076c | d9b18f3d2441da96e2d7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002612 | 朗姿股份 | PENDING | 201 | 5b191f468471095dbf8a | e77ecb25848423a12bc1 | RESEEN |
 | 600095 | 湘财股份 | PENDING | 113 | 8111ffdd789e7df76892 | 977a0f2c7ae860acb046 | RESEARCH_EXHAUSTED_DORMANT |
 | 600661 | 昂立教育 | PENDING | 120 | d870b223168ef71f8c7f | e77ecb25848423a12bc1 | RESEEN |
@@ -2799,6 +2776,29 @@
 - 2026-09-24T23:36:06Z — **RESEEN**; snapshot `c00e16d1b3e5352ba9ab`
 - 2026-09-25T01:41:31Z — **RESEEN**; snapshot `5fb8490256006347c830`
 - 2026-09-25T06:01:39Z — **RESEEN**; snapshot `66c3dfc6b56e166443a5`
+
+### 002537 海联金汇
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 208
+- **last_seen_snapshot_id:** d9b18f3d2441da96e2d7
+- **last_seen_source_run_id:** 36673686409
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-28T19:15:03Z — **RESEEN**; snapshot `55aaafe2845b35315ee4`
+- 2026-09-28T20:47:22Z — **RESEEN**; snapshot `72d11b234ae1d74fa052`
+- 2026-09-29T00:45:12Z — **RESEEN**; snapshot `fbf416e01dbe90b6a0af`
+- 2026-09-29T01:14:53Z — **RESEEN**; snapshot `2562defb0ebc3dafbaef`
+- 2026-09-29T06:23:25Z — **RESEEN**; snapshot `72b0e27458197860715b`
+- 2026-09-29T07:09:21Z — **RESEEN**; snapshot `85a4dc5f14a203a33190`
+- 2026-09-29T15:21:01Z — **RESEEN**; snapshot `3d48fa791194b6997a92`
+- 2026-09-29T17:01:36Z — **RESEEN**; snapshot `d1081f09e9e6ad2aec26`
+- 2026-09-30T05:45:24Z — **RESEEN**; snapshot `d9b18f3d2441da96e2d7`
+- 2026-09-30T05:45:52+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `d9b18f3d2441da96e2d7`
 
 ### 002612 朗姿股份
 

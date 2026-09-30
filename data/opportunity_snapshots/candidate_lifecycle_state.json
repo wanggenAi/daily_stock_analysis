@@ -108481,7 +108481,7 @@
     "002537": {
       "code": "002537",
       "stock_name": "海联金汇",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "49ee3ff5a6c2aba01bc4",
       "first_seen_source_run_id": "33169866113",
@@ -108490,22 +108490,10 @@
       "seen_count": 208,
       "last_formal_action": "",
       "last_valuation_confidence": "",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-09-30T05:45:24Z",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-09-30T05:45:52+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "002537",
-          "snapshot_id": "a25f97bb0fee9ab3d56b",
-          "source_run_id": "34098448947",
-          "observed_at": "2026-09-07T08:19:35Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "002537",
@@ -109693,6 +109681,22 @@
           "valuation_confidence": "",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "002537",
+          "snapshot_id": "d9b18f3d2441da96e2d7",
+          "source_run_id": "36674766428",
+          "observed_at": "2026-09-30T05:45:52+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "8893219a3a4fa3e0d179",
+          "research_epoch": "8bdd66fadd738946076c",
+          "supported_gate_count": 5,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-09-29T17:03:40Z",
@@ -109704,7 +109708,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-09-29T17:03:40Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -110336,7 +110340,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "36674766428",
+      "last_research_lifecycle_observed_at": "2026-09-30T05:45:52+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "8bdd66fadd738946076c"
     },
     "002582": {
       "code": "002582",
@@ -178940,7 +178948,7 @@
       ]
     }
   },
-  "event_count": 10958,
+  "event_count": 10959,
   "no_auto_trade": true,
   "discovery_is_filtered_by_lifecycle": false,
   "bootstrap_source": "LEGACY_MARKDOWN",
@@ -178998,7 +179006,7 @@
   "latest_terminal_memory_id": "terminal:36601978140:1",
   "latest_terminal_memory_observed_at": "2026-09-29T17:03:40Z",
   "terminal_memory_event_count": 5028,
-  "latest_research_lifecycle_source_run_id": "36047045995",
-  "latest_research_lifecycle_observed_at": "2026-09-24T19:19:55+00:00",
-  "research_lifecycle_event_count": 8
+  "latest_research_lifecycle_source_run_id": "36674766428",
+  "latest_research_lifecycle_observed_at": "2026-09-30T05:45:52+00:00",
+  "research_lifecycle_event_count": 9
 }
