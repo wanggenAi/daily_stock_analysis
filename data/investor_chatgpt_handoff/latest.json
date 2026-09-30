@@ -1,14 +1,14 @@
 {
   "blocking_reasons": [
+    "CENTER_DIFFERENT_EPOCH_OR_MISSING",
     "FUND_POSITION_CONFIRMATION_MISSING",
     "NO_CURRENT_BROKER_CASH_OR_POSITION_PROOF",
     "NO_CURRENT_EXECUTABLE_QUOTE_PROOF",
-    "NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION",
-    "STALE_OR_UNVERIFIED_MARKET_SESSION"
+    "NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION"
   ],
-  "canonical_sha256": "6fc26839976d9ac911589a39aa2c704eeda4809f2f1ed380c9fb759c7bf70535",
-  "canonical_snapshot_id": "92af31cce59ede71805f",
-  "canonical_source_run_id": "36675740642",
+  "canonical_sha256": "8147687e90c7889c2b38458c9ec3a0d72f5410bda025a772cbf4ad4063711a4d",
+  "canonical_snapshot_id": "a4bed413e3a7d56924e0",
+  "canonical_source_run_id": "36746556124",
   "contract_version": "GEN_GE_INVESTOR_CHATGPT_HANDOFF_V1",
   "event_audit": {
     "closure_status": "UNKNOWN",
@@ -31,7 +31,7 @@
       "status": "LINK_ONLY_NOT_REVALIDATED"
     },
     "equities": {
-      "as_of": "2026-09-29",
+      "as_of": "2026-09-30",
       "status": "REPO_RECONCILED_NOT_LIVE_BROKER"
     },
     "era_cycle": {
@@ -43,7 +43,7 @@
       "status": "UNVERIFIED"
     },
     "formal_opportunities": {
-      "as_of": "2026-09-29",
+      "as_of": "2026-09-30",
       "status": "NO_NEW_EXECUTION_VERIFIED_BY_HANDOFF"
     },
     "funds": {
@@ -51,10 +51,10 @@
       "status": "UNVERIFIED"
     },
     "market_eod": {
-      "as_of": "2026-09-29",
+      "as_of": "2026-09-30",
       "expected_min_trade_date": "2026-09-30",
-      "status": "STALE_OR_UNVERIFIED",
-      "upstream_status": "STALE_UPSTREAM"
+      "status": "UPSTREAM_FRESH_CALENDAR_UNVERIFIED",
+      "upstream_status": "OK"
     },
     "official_issuer": {
       "as_of": null,
@@ -70,28 +70,28 @@
       "status": "UNKNOWN_NO_VERIFIED_FILLS"
     },
     "reference_quotes": {
-      "as_of": "2026-09-29",
+      "as_of": "2026-09-30",
       "status": "FROZEN_CANONICAL_ONLY"
     },
     "research_only": {
-      "as_of": "2026-09-29",
+      "as_of": "2026-09-30",
       "status": "RESEARCH_ONLY"
     }
   },
   "formal_buy_now": [],
   "formal_wait_price": [],
-  "generated_at": "2026-09-30T16:00:16+00:00",
+  "generated_at": "2026-09-30T16:58:40+00:00",
   "holdings": [
     {
       "code": "600406",
       "executable_shares": 0,
-      "frozen_reference_price": 22.21,
+      "frozen_reference_price": 22.52,
       "last_reported_quantity": 200,
       "name": "国电南瑞",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
       "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
       "recorded_formal_action": "REDUCE_25",
-      "reference_as_of": "2026-09-29",
+      "reference_as_of": "2026-09-30",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "HIGH",
       "value_range": [
@@ -102,13 +102,13 @@
     {
       "code": "001316",
       "executable_shares": 0,
-      "frozen_reference_price": 27.54,
+      "frozen_reference_price": 27.46,
       "last_reported_quantity": 200,
       "name": "润贝航科",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
       "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
       "recorded_formal_action": "HOLD_REVIEW",
-      "reference_as_of": "2026-09-29",
+      "reference_as_of": "2026-09-30",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "LOW",
       "value_range": [
@@ -119,13 +119,13 @@
     {
       "code": "601318",
       "executable_shares": 0,
-      "frozen_reference_price": 52.5,
+      "frozen_reference_price": 53.29,
       "last_reported_quantity": 400,
       "name": "中国平安",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
-      "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.632<1.00",
+      "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00",
       "recorded_formal_action": "HOLD",
-      "reference_as_of": "2026-09-29",
+      "reference_as_of": "2026-09-30",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "MEDIUM",
       "value_range": [
@@ -136,13 +136,13 @@
     {
       "code": "603993",
       "executable_shares": 0,
-      "frozen_reference_price": 16.75,
+      "frozen_reference_price": 16.88,
       "last_reported_quantity": 1100,
       "name": "洛阳钼业",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
       "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
       "recorded_formal_action": "HOLD",
-      "reference_as_of": "2026-09-29",
+      "reference_as_of": "2026-09-30",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "HIGH",
       "value_range": [
@@ -155,18 +155,18 @@
   "lineage": {
     "canonical_matches_dashboard": true,
     "canonical_trade_date_present": true,
-    "center_matches_dashboard": true,
+    "center_matches_dashboard": false,
     "exchange_calendar_independently_verified": false,
     "live_broker_positions_verified": false,
     "market_matches_dashboard": true
   },
-  "market_session_as_of": "2026-09-29",
+  "market_session_as_of": "2026-09-30",
   "no_auto_trade": true,
   "production_provenance": {
-    "finalizer_run_id": "36676941599",
+    "finalizer_run_id": "36747767721",
     "market_artifact_as_of_join": "UNVERIFIED",
-    "market_artifact_id": "11048833345",
-    "market_run_id": "36598810901"
+    "market_artifact_id": "11112253881",
+    "market_run_id": "36744427041"
   },
   "research_audit": {
     "research_buy_count": 1,
@@ -175,7 +175,7 @@
     "upstream_formal_buy_now_count": 0,
     "upstream_formal_wait_count": 0
   },
-  "snapshot_id": "822a9a11f0de00ab9b1ed606",
+  "snapshot_id": "b0df5f634114880cae6202d0",
   "source_files": {
     "broker_quotes": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b6be622af21f1bcddc0aee5c51ae9b038b753b2c",
@@ -184,16 +184,16 @@
       "sha256": "638ed83336571b338a48b88182a03dae36c3bf547f3d0d10610655fc5e787a65"
     },
     "dashboard": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/d06cde530cb6b128be505b3b3c8ebf044f715331",
-      "immutable_git_blob_sha": "d06cde530cb6b128be505b3b3c8ebf044f715331",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/2843c1ebc50db1425c5f1981f73acf96352dce18",
+      "immutable_git_blob_sha": "2843c1ebc50db1425c5f1981f73acf96352dce18",
       "path": "data/investor_decision_dashboard/latest.json",
-      "sha256": "49c3a50caaa57778b7e93847b5cf32dbdb1e9935bfc24c2d17667ecb507b0046"
+      "sha256": "0e6e500948216bd63edd1ed9dc4a07a24d1a43bab39d8628517a19f54719f449"
     },
     "decision_center": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/d0ed35eb198b491b971ef46564a2a20b24b4088e",
-      "immutable_git_blob_sha": "d0ed35eb198b491b971ef46564a2a20b24b4088e",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/59e099dffb050e4e783bf415f4847a2002536324",
+      "immutable_git_blob_sha": "59e099dffb050e4e783bf415f4847a2002536324",
       "path": "data/decision_center/latest.json",
-      "sha256": "70a83daca14c5a47e3d6717c393f0ace3ba71ffe2ba6aa02d2c9d1f51cdc1e63"
+      "sha256": "f3bd45da8af1432309c9989dbb0ed5d2e8097e9ad57b41ddc4e7e0fcbfd52cf4"
     },
     "era_radar": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/60fa605cac03439236a2b8556496fd29615636ad",
