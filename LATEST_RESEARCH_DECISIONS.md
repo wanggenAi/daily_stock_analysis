@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **13**
-- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **12** / REJECT: **0**
+- requested: **14**
+- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **13** / REJECT: **0**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -14,7 +14,7 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **0** / WATCH: **3** / BLOCK: **9**
+- BUILD: **1** / PROBE: **0** / WATCH: **3** / BLOCK: **10**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8906 / max_portfolio=3.0%
 
@@ -23,6 +23,7 @@
 - 603596 伯特利: **BUY** / ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT
 - 000596 古井贡酒: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 002811 郑中设计: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 603739 蔚蓝生物: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 601965 中国汽研: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 605116 奥锐特: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 601318 中国平安: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
