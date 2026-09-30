@@ -63,10 +63,10 @@ O81机动车、电子产品和日用产品修理业(STRONG)、K70房地产业(ST
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**8** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **7** / REJECT **0**。
+- 本轮深算：**14** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **13** / REJECT **0**。
 - urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **0** / WATCH **2** / BLOCK **5**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **0** / WATCH **3** / BLOCK **10**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
