@@ -185802,7 +185802,7 @@
     "603739": {
       "code": "603739",
       "stock_name": "蔚蓝生物",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "530df3c8e1faddfa2ea9",
       "first_seen_source_run_id": "35752920899",
@@ -185811,8 +185811,8 @@
       "seen_count": 4,
       "last_formal_action": "",
       "last_valuation_confidence": "",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-09-30T16:55:37Z",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-09-30T18:56:49+00:00",
       "applied_evidence_ids": [],
       "history": [
         {
@@ -185862,6 +185862,22 @@
           "valuation_confidence": "",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "603739",
+          "snapshot_id": "a4bed413e3a7d56924e0",
+          "source_run_id": "36761987053",
+          "observed_at": "2026-09-30T18:56:49+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "59151f8112fc5c1f620a",
+          "research_epoch": "37186a7206fe6f514065",
+          "supported_gate_count": 3,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-09-30T16:57:53Z",
@@ -185873,7 +185889,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-09-30T16:57:53Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -186325,10 +186341,14 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "36761987053",
+      "last_research_lifecycle_observed_at": "2026-09-30T18:56:49+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "37186a7206fe6f514065"
     }
   },
-  "event_count": 11109,
+  "event_count": 11110,
   "no_auto_trade": true,
   "discovery_is_filtered_by_lifecycle": false,
   "bootstrap_source": "LEGACY_MARKDOWN",
@@ -186390,7 +186410,7 @@
   "latest_terminal_memory_id": "terminal:36747759384:1",
   "latest_terminal_memory_observed_at": "2026-09-30T16:57:53Z",
   "terminal_memory_event_count": 5496,
-  "latest_research_lifecycle_source_run_id": "36674766428",
-  "latest_research_lifecycle_observed_at": "2026-09-30T05:45:52+00:00",
-  "research_lifecycle_event_count": 9
+  "latest_research_lifecycle_source_run_id": "36761987053",
+  "latest_research_lifecycle_observed_at": "2026-09-30T18:56:49+00:00",
+  "research_lifecycle_event_count": 10
 }

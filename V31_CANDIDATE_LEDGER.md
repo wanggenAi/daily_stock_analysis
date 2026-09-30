@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `a4bed413e3a7d56924e0`
 - latest_research_as_of: `2026-09-30T16:55:37Z`
-- active_candidates: 117
-- dormant_research_candidates: 9
+- active_candidates: 116
+- dormant_research_candidates: 10
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 11109
+- lifecycle_event_count: 11110
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -128,7 +128,6 @@
 | 603596 | 伯特利 | PENDING | 106 |  |  | a4bed413e3a7d56924e0 | RESEEN |
 | 603605 | 珀莱雅 | PENDING | 222 |  |  | a4bed413e3a7d56924e0 | RESEEN |
 | 603658 | 安图生物 | PENDING | 67 |  |  | a4bed413e3a7d56924e0 | RESEEN |
-| 603739 | 蔚蓝生物 | PENDING | 4 |  |  | a4bed413e3a7d56924e0 | RESEEN |
 | 603871 | 嘉友国际 | PENDING | 9 |  |  | d177ad83826140cfe194 | RESEEN |
 | 603883 | 老百姓 | PENDING | 73 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
 | 603899 | 晨光股份 | PENDING | 83 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
@@ -2489,23 +2488,6 @@
 - 2026-09-30T16:18:48Z — **RESEEN**; snapshot `e6aaa296428505dc5f5e`
 - 2026-09-30T16:55:37Z — **RESEEN**; snapshot `a4bed413e3a7d56924e0`
 
-### 603739 蔚蓝生物
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 4
-- **last_seen_snapshot_id:** a4bed413e3a7d56924e0
-- **last_seen_source_run_id:** 36746556124
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-09-22T16:27:42Z — **NEW**; snapshot `530df3c8e1faddfa2ea9`
-- 2026-09-22T19:04:53Z — **RESEEN**; snapshot `451aae130d6597f1d225`
-- 2026-09-30T16:18:48Z — **RESEEN**; snapshot `e6aaa296428505dc5f5e`
-- 2026-09-30T16:55:37Z — **RESEEN**; snapshot `a4bed413e3a7d56924e0`
-
 ### 603871 嘉友国际
 
 - **lifecycle_state:** ACTIVE
@@ -2733,6 +2715,7 @@
 | 600816 | 建元信托 | PENDING | 138 | a8ae13563da5bf6420ca | 66c3dfc6b56e166443a5 | RESEEN |
 | 600827 | 百联股份 | PENDING | 80 | 49e99bbf78c8694a57c3 | 977a0f2c7ae860acb046 | RESEARCH_EXHAUSTED_DORMANT |
 | 601020 | 华钰矿业 | PENDING | 119 | bf4973ba54c1969c5d20 | 966b9961b76c7cdfc464 | RESEEN |
+| 603739 | 蔚蓝生物 | PENDING | 4 | 37186a7206fe6f514065 | a4bed413e3a7d56924e0 | RESEARCH_EXHAUSTED_DORMANT |
 
 ### 000426 兴业银锡
 
@@ -2940,6 +2923,24 @@
 - 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 - 2026-09-23T07:37:25+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `538269c3908f97c328d1`
 - 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
+
+### 603739 蔚蓝生物
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 4
+- **last_seen_snapshot_id:** a4bed413e3a7d56924e0
+- **last_seen_source_run_id:** 36746556124
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-09-22T16:27:42Z — **NEW**; snapshot `530df3c8e1faddfa2ea9`
+- 2026-09-22T19:04:53Z — **RESEEN**; snapshot `451aae130d6597f1d225`
+- 2026-09-30T16:18:48Z — **RESEEN**; snapshot `e6aaa296428505dc5f5e`
+- 2026-09-30T16:55:37Z — **RESEEN**; snapshot `a4bed413e3a7d56924e0`
+- 2026-09-30T18:56:49+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `a4bed413e3a7d56924e0`
 
 ## Archived / INVALIDATED candidate ledger
 
