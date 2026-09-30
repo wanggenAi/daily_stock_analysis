@@ -469,14 +469,14 @@
   "terminal_research_snapshot": {
     "available": true,
     "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-    "source_deep_lambda_run_id": "36674880808",
-    "source_every_industry_run_id": "36673686409",
+    "source_deep_lambda_run_id": "36676929303",
+    "source_every_industry_run_id": "36675740642",
     "requested_count": 12,
     "decision_counts": {
-      "WAIT_PRICE": 0,
       "RESEARCH_GAP": 11,
-      "BUY": 1,
-      "REJECT": 0
+      "REJECT": 0,
+      "WAIT_PRICE": 0,
+      "BUY": 1
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
@@ -663,101 +663,6 @@
           "required_profit_growth_pct": -67.23693143245079,
           "research_buy_pe_ratio_threshold": 0.8,
           "research_buy_price_ceiling": 40.09392457521758
-        }
-      },
-      {
-        "capital_allocation": {
-          "action": "BLOCK",
-          "authority": "ADVISORY_ONLY",
-          "automatic_execution_allowed": false,
-          "capital_conviction_score": 0.2648,
-          "critical_capital_gates": [
-            "financial_safety",
-            "earnings_authenticity"
-          ],
-          "critical_capital_gates_pass": false,
-          "earnings_quality_component": 0.46,
-          "evidence_score": 0.35,
-          "formal_buy_authorized": false,
-          "gate_weights": {
-            "earnings_authenticity": 0.22,
-            "financial_safety": 0.22,
-            "long_term_demand": 0.2,
-            "moat": 0.2,
-            "predictability": 0.16
-          },
-          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
-          "no_auto_trade": true,
-          "probe_rules": {
-            "max_pe_to_history_ratio": 0.9,
-            "max_unknown_gates": 2,
-            "min_capital_conviction_score": 0.52
-          },
-          "quant_score_component": 0.5288,
-          "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
-          "suggested_max_portfolio_pct": 0.0,
-          "uncertainty_penalty": 0.3,
-          "unknown_weight": 1.0,
-          "valuation_score": 1.0
-        },
-        "code": "002537",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 0,
-        "hard_gate_unknowns": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ],
-        "industry": "C36汽车制造业",
-        "name": "海联金汇",
-        "no_auto_trade": true,
-        "quant_score": 52.8773,
-        "quant_status": "SECONDARY_RESEARCH",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P1",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "NORMAL",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": false,
-        "urgent_research_reasons": [],
-        "valuation": {
-          "current_pe": 23.88,
-          "distance_to_research_buy_ceiling_pct": 159.79899497487438,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 46.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_gate_diagnostics": {
-            "blockers": [
-              "CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD",
-              "EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD"
-            ],
-            "cash_conversion_pass_threshold": 0.8,
-            "cash_conversion_ratio": 0.2036,
-            "earnings_quality_confidence": "HIGH",
-            "earnings_quality_pass_threshold": 70.0,
-            "earnings_quality_score": 46.0,
-            "financial_disclosure_date": "2026-08-25",
-            "financial_review_status": "OK",
-            "machine_financial_pass_ready": false,
-            "normalized_core_operating_profit": 100252622.35,
-            "operating_cash_flow": 26588371.32
-          },
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 77.55,
-          "pe_to_history_ratio": 0.3079303675048356,
-          "price_mapping_status": "OK",
-          "reference_price": 5.65,
-          "reference_price_basis": "RAW_LATEST_CLOSE",
-          "reference_trade_date": "2026-09-29",
-          "required_profit_growth_pct": -69.20696324951643,
-          "research_buy_pe_ratio_threshold": 0.8,
-          "research_buy_price_ceiling": 14.678643216080403
         }
       },
       {
@@ -1600,6 +1505,105 @@
           "required_profit_growth_pct": -33.265651438240276,
           "research_buy_pe_ratio_threshold": 0.8,
           "research_buy_price_ceiling": 33.014482758620694
+        }
+      },
+      {
+        "capital_allocation": {
+          "action": "BLOCK",
+          "authority": "ADVISORY_ONLY",
+          "automatic_execution_allowed": false,
+          "capital_conviction_score": 0.0,
+          "critical_capital_gates": [
+            "financial_safety",
+            "earnings_authenticity"
+          ],
+          "critical_capital_gates_pass": false,
+          "earnings_quality_component": 0.0,
+          "evidence_score": 0.35,
+          "formal_buy_authorized": false,
+          "gate_weights": {
+            "earnings_authenticity": 0.22,
+            "financial_safety": 0.22,
+            "long_term_demand": 0.2,
+            "moat": 0.2,
+            "predictability": 0.16
+          },
+          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+          "no_auto_trade": true,
+          "probe_rules": {
+            "max_pe_to_history_ratio": 0.9,
+            "max_unknown_gates": 2,
+            "min_capital_conviction_score": 0.52
+          },
+          "quant_score_component": 0.0,
+          "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
+          "suggested_max_portfolio_pct": 0.0,
+          "uncertainty_penalty": 0.3,
+          "unknown_weight": 1.0,
+          "valuation_score": 0.0
+        },
+        "code": "002537",
+        "formal_buy_authorized": false,
+        "hard_gate_failures": [],
+        "hard_gate_pass_count": 0,
+        "hard_gate_unknowns": [
+          "predictability",
+          "long_term_demand",
+          "moat",
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "industry": "C36汽车制造业",
+        "name": "海联金汇",
+        "no_auto_trade": true,
+        "quant_score": null,
+        "quant_status": "",
+        "reopen_on_new_evidence": true,
+        "research_authority": "RESEARCH_ONLY",
+        "research_decision": "RESEARCH_GAP",
+        "research_priority": "P1",
+        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+        "screening_attractiveness": "NORMAL",
+        "success_archetype_id": "",
+        "success_archetype_similarity_score": null,
+        "urgent_research": false,
+        "urgent_research_reasons": [],
+        "valuation": {
+          "current_pe": null,
+          "distance_to_research_buy_ceiling_pct": null,
+          "earnings_quality_confidence": "",
+          "earnings_quality_score": null,
+          "expectation_state": "",
+          "financial_gate_diagnostics": {
+            "blockers": [
+              "FINANCIAL_REVIEW_STATUS_NOT_OK",
+              "EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH",
+              "CASH_CONVERSION_RATIO_MISSING",
+              "EARNINGS_QUALITY_SCORE_MISSING",
+              "NORMALIZED_CORE_OPERATING_PROFIT_MISSING",
+              "OPERATING_CASH_FLOW_MISSING"
+            ],
+            "cash_conversion_pass_threshold": 0.8,
+            "cash_conversion_ratio": null,
+            "earnings_quality_confidence": "",
+            "earnings_quality_pass_threshold": 70.0,
+            "earnings_quality_score": null,
+            "financial_disclosure_date": "",
+            "financial_review_status": "",
+            "machine_financial_pass_ready": false,
+            "normalized_core_operating_profit": null,
+            "operating_cash_flow": null
+          },
+          "financial_review_status": "",
+          "historical_median_pe_reference": null,
+          "pe_to_history_ratio": null,
+          "price_mapping_status": "",
+          "reference_price": null,
+          "reference_price_basis": "",
+          "reference_trade_date": "",
+          "required_profit_growth_pct": null,
+          "research_buy_pe_ratio_threshold": 0.8,
+          "research_buy_price_ceiling": null
         }
       }
     ],
