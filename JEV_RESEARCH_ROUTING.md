@@ -24,7 +24,6 @@
 - 000596 古井贡酒 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 001309 德明利 | priority=MEDIUM | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 600309 万华化学 | priority=MEDIUM | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
-- 603416 信捷电气 | priority=MEDIUM | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603986 兆易创新 | priority=MEDIUM | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 605116 奥锐特 | priority=MEDIUM | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
 - 000682 东方电子 | priority=MEDIUM | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
@@ -40,6 +39,7 @@
 - 000768 中航西飞 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 000783 长江证券 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 600834 申通地铁 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 603416 信捷电气 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603658 安图生物 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
