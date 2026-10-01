@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "36892248380",
+  "orchestrator_run_id": "36892669582",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,6 +54,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "001309",
       "entity_name": "德明利",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -79,13 +86,6 @@
       "entity_name": "奥锐特",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-01T16:27:47+00:00",
-  "source_workflow_head_sha": "d8fa22ca7115b17ab64a549f20a2386640b66f98",
+  "source_generated_at": "2026-10-01T16:31:01+00:00",
+  "source_workflow_head_sha": "c114d7c45288cb032713078cd63cb8449fb8eaca",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "36891854856",
+  "source_workflow_run_id": "36892391083",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 218,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_36891854856",
+  "trigger_source": "JEV_ORCHESTRATOR_36892391083",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-01T16:30:10+00:00",
+  "updated_at": "2026-10-01T16:33:29+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.74,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "36885942188",
+        "deep_lambda_run_id": "36891520490",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.93,
+      "route_confidence": 0.96,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
