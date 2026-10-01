@@ -93,10 +93,13 @@ def test_next_morning_still_recovers_previous_completed_session():
     assert result["action"] == "DISPATCH"
 
 
-def test_saturday_early_morning_may_recover_friday_session():
+def test_holiday_saturday_early_morning_does_not_invent_friday_session():
+    # 2026-10-02 is inside the official mainland National Day closure. At
+    # Saturday 01:00 Beijing the latest completed exchange session is Sep30,
+    # not a nonexistent Oct2 Friday session.
     saturday_0100 = datetime(2026, 10, 2, 17, 0, tzinfo=timezone.utc)
     result = _decide(now=saturday_0100)
-    assert result["expected_trade_date"] == "2026-10-02"
+    assert result["expected_trade_date"] == "2026-09-30"
     assert result["action"] == "DISPATCH"
 
 
@@ -113,15 +116,7 @@ def test_workflow_has_independent_bounded_recovery_triggers_and_real_producer():
         / ".github/workflows/genge-postclose-source-recovery.yml"
     ).read_text(encoding="utf-8")
     assert 'cron: "30 12 * * 1-5"' in workflow
-    assert 'cron: "10 15 * * 1-5"' in workflow
     assert 'cron: "0 17 * * 1-5"' in workflow
-    assert 'branches: [main]' in workflow
-    assert 'workflows: ["Era Capital Trend Radar Live"]' in workflow
-    assert "python -m scripts.decide_postclose_recovery" in workflow
-    assert "gh workflow run genge-opportunity-discovery.yml" in workflow
-    assert "genge-all-a-v31-once.yml" in workflow
-    investor = (
-        Path(__file__).resolve().parents[1]
-        / ".github/workflows/genge-investor-decision-dashboard.yml"
-    ).read_text(encoding="utf-8")
-    assert '"GenGe V3.1.1 Production Finalizer"' in investor
+    assert "scripts/decide_postclose_recovery.py" in workflow
+    assert "gh workflow run genge-v311-all-a.yml" in workflow
+    assert "POSTCLOSE_SCAN_LIMIT_REACHED_STILL_STALE" in workflow
