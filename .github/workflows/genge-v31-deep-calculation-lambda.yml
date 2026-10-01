@@ -54,18 +54,18 @@ permissions:
   actions: write
 
 concurrency:
-  # Collapse duplicate triggers for the same code/evidence epoch. A push can
-  # dispatch an EVIDENCE_LAYER_CHANGE run for the same main SHA; allowing both
-  # to execute doubles exchange/CNINFO load and increases provider throttling.
-  # Distinct upstream head SHAs or explicit research runs remain independent.
+  # Collapse default-workset Deep runs by logical workset, not by runtime SHA.
+  # Deep always checks out current main, while runtime/persisted-data commits can
+  # change event head_sha without changing Deep/evidence code. Grouping by SHA
+  # therefore allowed duplicate official-evidence closures to run in parallel.
+  #
+  # Explicit research_run_id / requested_codes still isolate intentional work.
   # A workflow_run that will be skipped (failed upstream or non-main branch) gets
-  # its own run-id key so it cannot cancel a valid Deep run before job-level if.
-  # Successful periodic workflow_run triggers share the evidence epoch but must
-  # never preempt an active official-evidence closure. GitHub keeps at most one
-  # running + one pending run per group when cancellation is disabled, so bursts
-  # coalesce without creating an unbounded queue. Push/manual evidence-code
-  # changes may still supersede an older active run.
-  group: genge-v31-deep-calc-${{ github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion != 'success' || github.event.workflow_run.head_branch != 'main') && github.run_id || inputs.research_run_id || github.event.workflow_run.head_sha || github.sha }}-${{ inputs.requested_codes || 'default' }}
+  # its own run-id key so it cannot displace a valid pending default-workset run.
+  # Successful workflow_run triggers queue/coalesce behind the active default run;
+  # a push/manual trigger may still supersede that active run when code/evidence
+  # really changed.
+  group: genge-v31-deep-calc-${{ github.event_name == 'workflow_run' && (github.event.workflow_run.conclusion != 'success' || github.event.workflow_run.head_branch != 'main') && github.run_id || inputs.research_run_id || 'default' }}-${{ inputs.requested_codes || 'default' }}
   cancel-in-progress: ${{ github.event_name != 'workflow_run' }}
 
 env:

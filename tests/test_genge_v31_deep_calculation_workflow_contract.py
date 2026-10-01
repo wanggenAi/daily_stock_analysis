@@ -48,7 +48,8 @@ def test_completed_deep_dispatches_terminal_and_provenance_not_stale_decision_ce
 def test_duplicate_deep_triggers_collapse_by_evidence_epoch() -> None:
     workflow = WORKFLOW.read_text(encoding="utf-8")
 
-    assert "github.event.workflow_run.head_sha || github.sha" in workflow
+    assert "github.event.workflow_run.head_sha || github.sha" not in workflow
+    assert "inputs.research_run_id || 'default'" in workflow
     assert "github.event.workflow_run.conclusion != 'success'" in workflow
     assert "github.event.workflow_run.head_branch != 'main'" in workflow
     assert "&& github.run_id || inputs.research_run_id" in workflow
@@ -91,7 +92,18 @@ def test_successful_workflow_run_cannot_preempt_active_official_evidence_closure
 
     assert "cancel-in-progress: ${{ github.event_name != 'workflow_run' }}" in concurrency
     assert "cancel-in-progress: true" not in concurrency
-    assert "github.event.workflow_run.head_sha || github.sha" in concurrency
+    assert "github.event.workflow_run.head_sha || github.sha" not in concurrency
+    assert "inputs.research_run_id || 'default'" in concurrency
+
+
+def test_default_workset_deep_group_ignores_runtime_data_sha() -> None:
+    workflow = WORKFLOW.read_text(encoding="utf-8")
+    concurrency = workflow.split("concurrency:", 1)[1].split("env:", 1)[0]
+
+    assert "inputs.research_run_id || 'default'" in concurrency
+    assert "inputs.requested_codes || 'default'" in concurrency
+    assert "github.event.workflow_run.head_sha || github.sha" not in concurrency
+    assert "cancel-in-progress: ${{ github.event_name != 'workflow_run' }}" in concurrency
 
 
 def test_deep_epoch_fence_uses_actual_checked_out_code_sha() -> None:
