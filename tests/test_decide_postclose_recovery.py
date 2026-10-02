@@ -118,5 +118,5 @@ def test_workflow_has_independent_bounded_recovery_triggers_and_real_producer():
     assert 'cron: "30 12 * * 1-5"' in workflow
     assert 'cron: "0 17 * * 1-5"' in workflow
     assert "scripts/decide_postclose_recovery.py" in workflow
-    assert "gh workflow run genge-v311-all-a.yml" in workflow
+    assert "gh workflow run genge-opportunity-discovery.yml" in workflow
     assert "POSTCLOSE_SCAN_LIMIT_REACHED_STILL_STALE" in workflow
