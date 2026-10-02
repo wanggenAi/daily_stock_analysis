@@ -17,7 +17,7 @@
 
 100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
 
-- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
 
 ### 每只持仓的决策链
 
@@ -30,7 +30,7 @@
 
 ### 今日A股大盘脉搏
 
-- 2026-09-30：市场 **YELLOW**；数据质量 **OK**；市场分数 **49.87**；仓位倍率 **0.50**。
+- 2026-09-30：市场 **YELLOW**；数据质量 **OK**；市场分数 **41.87**；仓位倍率 **0.50**。
 - 上涨家数占比 **46.79%**；中位涨跌 **-0.08%**；MA20 上方 **33.14%**；MA60 上方 **49.22%**；涨停/跌停 **53/9**。
 - 市场读法：**当日涨跌广度中性；短中期趋势仍有分化；极端分化/派发代理暂不高**。这只是市场环境解释，不自行创造个股 BUY 权限。
 
@@ -64,12 +64,12 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 - **本轮没有已授权新股 BUY。**
 - **本轮没有合格 WAIT_PRICE。**
 
-- Formal/Production Candidate Terminal REJECT：**114**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
+- Formal/Production Candidate Terminal REJECT：**121**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
 
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥25000.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**CLOSED**；行情状态：**OFF_SESSION**。
+- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
@@ -97,7 +97,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 
 | 能力 | 状态 | 当前真正产出的结果 |
 |---|---|---|
-| 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=49.87 / 2026-09-30 |
+| 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=41.87 / 2026-09-30 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=116 / dormant=10 / archived-invalidated=0 / events=11560 / focus=8 |

@@ -1,8 +1,8 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-02T15:45:39+00:00",
+  "generated_at": "2026-10-02T15:47:40+00:00",
   "latest_trade_date": "2026-09-30",
-  "canonical_snapshot_id": "564ec4b645505ca798a4",
+  "canonical_snapshot_id": "201de2170b659cb801e8",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
   "no_auto_trade": true,
@@ -19,7 +19,7 @@
     "validated_macro_handoffs": 0,
     "new_buy_now_count": 0,
     "new_wait_price_count": 0,
-    "terminal_reject_count": 114,
+    "terminal_reject_count": 121,
     "available_cash_cny": 50000.0,
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
@@ -393,7 +393,7 @@
       "status": "YELLOW",
       "data_quality": "OK",
       "allow_new_buy": true,
-      "score": 49.87,
+      "score": 41.87,
       "position_multiplier": 0.5,
       "advance_ratio": 0.4679,
       "median_return_1d_pct": -0.0806,
@@ -402,7 +402,9 @@
       "distribution_ratio": 0.0274,
       "limit_up_count": 53,
       "limit_down_count": 9,
-      "risk_reasons": []
+      "risk_reasons": [
+        "external_market_risk_high"
+      ]
     },
     "structural_world_social_trends": [
       {
@@ -724,7 +726,7 @@
     "question": "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
     "buy_now": [],
     "wait_price": [],
-    "terminal_reject_count": 114,
+    "terminal_reject_count": 121,
     "invalid_unauthorized_buy_count": 0,
     "macro_research_handoffs": [],
     "actionable_count": 0,
@@ -735,7 +737,7 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-10-02T15:41:47+00:00",
+      "generated_at": "2026-10-02T15:47:31+00:00",
       "source_deep_lambda_run_id": "37027928013",
       "source_every_industry_run_id": "37026342187",
       "requested_count": 12,
@@ -4512,8 +4514,8 @@
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
-    "market_session_state": "CLOSED",
-    "market_data_status": "OFF_SESSION",
+    "market_session_state": "UNKNOWN",
+    "market_data_status": "DEGRADED",
     "live_quote_applied_count": 0,
     "live_quote_expected_count": 4,
     "live_quote_coverage_complete": false,
@@ -4961,7 +4963,7 @@
       {
         "capability": "市场大趋势 / 全A脉搏",
         "status": "ACTIVE",
-        "result": "YELLOW / score=49.87 / 2026-09-30"
+        "result": "YELLOW / score=41.87 / 2026-09-30"
       },
       {
         "capability": "持仓 + 估值 + Formal Action",
@@ -5012,7 +5014,7 @@
     "authority": "READ_ONLY_RESEARCH_SCENARIO",
     "source_epoch_verified": true,
     "deep_profile_lineage_verified": true,
-    "canonical_snapshot_id": "564ec4b645505ca798a4",
+    "canonical_snapshot_id": "201de2170b659cb801e8",
     "market_as_of": "2026-09-30",
     "model_screen_rule": "HIGH_CONFIDENCE_PRICE_BELOW_MODEL_LOW_ONLY",
     "no_threshold_change": true,
@@ -5039,7 +5041,7 @@
           "predictability"
         ],
         "formal_action_unchanged": "HOLD",
-        "existing_add_allowance_consumed": false,
+        "existing_add_allowance_consumed": true,
         "market_state": "YELLOW",
         "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
         "reason": "PRICE_BELOW_MODELED_LOWER_VALUE_BOUND",
@@ -5061,6 +5063,7 @@
         },
         "blockers": [
           "NO_CURRENT_FORMAL_HOLDING_ADD",
+          "PRIOR_ADD_ALLOWANCE_CONSUMED",
           "DEEP_GATES_NOT_ALL_PASS",
           "BROKER_CASH_UNVERIFIED_LIVE",
           "EXECUTION_QUOTE_NOT_LIVE"
