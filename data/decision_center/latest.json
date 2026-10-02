@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-02T01:24:19+00:00",
+  "generated_at": "2026-10-02T01:41:15+00:00",
   "latest_trade_date": "2026-09-30",
   "canonical_snapshot_id": "bc5bee67e31e60c629b4",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -392,7 +392,7 @@
       "as_of_date": "2026-09-30",
       "status": "YELLOW",
       "data_quality": "OK",
-      "allow_new_buy": false,
+      "allow_new_buy": true,
       "score": 49.87,
       "position_multiplier": 0.5,
       "advance_ratio": 0.4679,
@@ -4704,7 +4704,7 @@
   "today_account_plan": {
     "question": "今天账户里的钱具体怎么处理？",
     "available_cash_cny": 50000.0,
-    "deployment_budget_cny": 0.0,
+    "deployment_budget_cny": 25000.0,
     "planned_immediate_cash_cny": 0.0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
@@ -5211,7 +5211,7 @@
   "holding_valuation_watch": {
     "contract_version": "GEN_GE_HOLDING_VALUATION_WATCH_V1",
     "authority": "READ_ONLY_RESEARCH_SCENARIO",
-    "source_epoch_verified": false,
+    "source_epoch_verified": true,
     "deep_profile_lineage_verified": true,
     "canonical_snapshot_id": "bc5bee67e31e60c629b4",
     "market_as_of": "2026-09-30",
@@ -5261,8 +5261,6 @@
           "order_limit_price": null
         },
         "blockers": [
-          "MARKET_OR_CANONICAL_EPOCH_UNVERIFIED",
-          "MARKET_NEW_BUY_DISABLED",
           "NO_CURRENT_FORMAL_HOLDING_ADD",
           "PRIOR_ADD_ALLOWANCE_CONSUMED",
           "DEEP_GATES_NOT_ALL_PASS",
