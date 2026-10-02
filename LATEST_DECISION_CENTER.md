@@ -101,8 +101,8 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=116 / dormant=10 / archived-invalidated=0 / events=11510 / focus=5 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=1 / verified-pass=215 / unresolved=5 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=37010843840 / unverified-pass=0 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=2 / verified-pass=221 / unresolved=5 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=37024069293 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=2 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=1 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
@@ -120,20 +120,20 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`37010455503`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`37023630815`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`37010455503`
-- 触发来源：`JEV_ORCHESTRATOR_37010011428`
+- Lambda run：`37023630815`
+- 触发来源：`SLOW_LANE_TERMINAL_URGENT_REOPEN`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
-- 请求深算：**1**；已处理：**1**；完整：**0**；证据穷尽：**1**。
-- Workset profile：总数 **501**；请求代码已落 profile **1**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
-- 同轮补证据尝试：**2**；取得证据：**2**；推进硬门槛：**0**。
+- 请求深算：**2**；已处理：**2**；完整：**1**；证据穷尽：**1**。
+- Workset profile：总数 **501**；请求代码已落 profile **2**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
+- 同轮补证据尝试：**2**；取得证据：**4**；推进硬门槛：**0**。
 - 尚未解决硬门槛：**5**。
 - 未决原因摘要：涉及 1 只；门槛分布：earnings_authenticity×1、financial_safety×1、long_term_demand×1、moat×1、predictability×1；Top原因：SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×1、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×1、OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×1、DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET×1、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×1；样例：600406[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`37010455503`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`37023630815`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
@@ -145,18 +145,16 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`37010455503`；当前 Lambda：`37010455503`。
+- 终态来源 Lambda：`37023630815`；当前 Lambda：`37023630815`。
 - 请求：**2**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**1**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=31.8877；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)
+- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=37.3127；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)
 - 风险预算层 BUILD/PROBE 候选：**1**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
-  - 603596 伯特利: **BUILD**；conviction=0.8906；建议账户上限=3.0%
+  - 603596 伯特利: **BUILD**；conviction=0.9449；建议账户上限=3.0%
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**2**；其中 ENTRY_NOW **1**；Jev run：`37011061029`。
-- **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=42.2022；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_42.2022_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600406 国电南瑞**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=21.7965；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_21.7965_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`37023684049`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
