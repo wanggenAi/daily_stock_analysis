@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37062500674",
+  "orchestrator_run_id": "37062770575",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,22 +54,15 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "001309",
       "entity_name": "德明利",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "601965",
-      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -82,20 +75,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "605116",
-      "entity_name": "奥锐特",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "000682",
       "entity_name": "东方电子",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -105,6 +84,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "002811",
       "entity_name": "郑中设计",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "601965",
+      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -173,6 +159,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "600834",
       "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -191,13 +184,20 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "605116",
+      "entity_name": "奥锐特",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-02T20:43:45+00:00",
-  "source_workflow_head_sha": "1f6971e99ea119f5fc73d876b9d7a052c16c7579",
+  "source_generated_at": "2026-10-02T20:46:18+00:00",
+  "source_workflow_head_sha": "a4640980becb4b3c5446eb79d49af6f1aa06b6a0",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37062257318",
+  "source_workflow_run_id": "37062346743",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 219,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37062257318",
+  "trigger_source": "JEV_ORCHESTRATOR_37062346743",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-02T20:46:12+00:00",
+  "updated_at": "2026-10-02T20:48:33+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.68,
+      "attention_confidence": 0.69,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.97,
+      "route_confidence": 0.96,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
