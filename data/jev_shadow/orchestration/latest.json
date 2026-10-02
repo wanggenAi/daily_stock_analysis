@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37024509786",
+  "orchestrator_run_id": "37025373528",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -33,13 +33,6 @@
     },
     {
       "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "HIGH",
       "entity_id": "603993",
       "entity_name": "洛阳钼业",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
@@ -51,6 +44,20 @@
       "entity_name": "国电南瑞",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
@@ -84,6 +91,13 @@
       "attention_priority": "LOW",
       "entity_id": "000567",
       "entity_name": "海德股份",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -124,22 +138,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "001309",
-      "entity_name": "德明利",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "002811",
       "entity_name": "郑中设计",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -187,17 +187,17 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
+      "entity_id": "001309",
+      "entity_name": "德明利",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-02T15:04:58+00:00",
-  "source_workflow_head_sha": "4d66552ab5be47b8275615f2a96404a3d9911b4f",
+  "source_generated_at": "2026-10-02T15:12:15+00:00",
+  "source_workflow_head_sha": "0bb14ad31df3dd54256913e77fa2eafe73e2e5fd",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37024259944",
+  "source_workflow_run_id": "37025119782",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 219,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37024259944",
+  "trigger_source": "JEV_ORCHESTRATOR_37025119782",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-02T15:07:31+00:00",
+  "updated_at": "2026-10-02T15:14:36+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.78,
+      "attention_confidence": 0.77,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
