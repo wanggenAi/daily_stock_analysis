@@ -7,13 +7,13 @@
 
 ## Urgent evidence queue
 
-- 600406 国电南瑞: quant=31.8877, PE/history=0.8265532544378699, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD,EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
+- 600406 国电南瑞: quant=37.3127, PE/history=0.8265532544378699, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD,EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
 
 ## Risk-budget capital advisory
 
 - BUILD: **1** / PROBE: **0** / WATCH: **0** / BLOCK: **1**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
-- 603596 伯特利: **BUILD** / conviction=0.8906 / max_portfolio=3.0%
+- 603596 伯特利: **BUILD** / conviction=0.9449 / max_portfolio=3.0%
 
 ## Terminal rows
 
