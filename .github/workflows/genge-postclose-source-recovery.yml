@@ -94,7 +94,10 @@ jobs:
             # Success here means ENQUEUED only, not fresh-source acceptance.
             gh workflow run genge-opportunity-discovery.yml --repo "$GITHUB_REPOSITORY" --ref main
             echo "- Recovery producer dispatched; fresh market, Finalizer and report still require independent verification."               >> "$GITHUB_STEP_SUMMARY"
+          elif [ "$action" = "EXHAUSTED" ]; then
+            echo "::error::POSTCLOSE_SCAN_LIMIT_REACHED_STILL_STALE: Expected completed-session source remains unproven after bounded scans. Inspect upstream price-date evidence and Finalizer."
+            exit 1
           else
-            echo "::error::Expected completed-session source still unproven after bounded scans. Inspect upstream price-date evidence and Finalizer."
+            echo "::error::Unexpected postclose recovery action: $action"
             exit 1
           fi
