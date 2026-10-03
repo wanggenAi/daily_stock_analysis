@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37124675359",
+  "orchestrator_run_id": "37127048737",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -46,23 +53,16 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
       "attention_priority": "MEDIUM",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
+      "entity_id": "001309",
+      "entity_name": "德明利",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "001309",
-      "entity_name": "德明利",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -75,10 +75,10 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "605116",
-      "entity_name": "奥锐特",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -166,20 +166,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -191,13 +177,27 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "605116",
+      "entity_name": "奥锐特",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-03T12:59:08+00:00",
-  "source_workflow_head_sha": "ba06ae562ff0450111b33dd5660fc0228d5f567a",
+  "source_generated_at": "2026-10-03T13:41:15+00:00",
+  "source_workflow_head_sha": "a8f9894378f60330461464d8e6fdacb892f758fe",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37124554047",
+  "source_workflow_run_id": "37126940243",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 219,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37124554047",
+  "trigger_source": "JEV_ORCHESTRATOR_37126940243",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-03T13:01:18+00:00",
+  "updated_at": "2026-10-03T13:43:30+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.65,
+      "attention_confidence": 0.72,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
