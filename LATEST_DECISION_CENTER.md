@@ -154,7 +154,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`37239653587`。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`37239722783`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
