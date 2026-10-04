@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37185099346",
+  "orchestrator_run_id": "37203002225",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -61,13 +61,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "601965",
       "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -77,13 +70,6 @@
       "attention_priority": "MEDIUM",
       "entity_id": "603986",
       "entity_name": "兆易创新",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "605116",
-      "entity_name": "奥锐特",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -105,6 +91,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "002811",
       "entity_name": "郑中设计",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "605116",
+      "entity_name": "奥锐特",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -173,8 +166,22 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "600834",
       "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "603416",
+      "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -184,20 +191,13 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "603416",
-      "entity_name": "信捷电气",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-04T07:12:20+00:00",
-  "source_workflow_head_sha": "16b72d0d9884c9cd65426bb8ce0029c6faaadaa5",
+  "source_generated_at": "2026-10-04T12:41:29+00:00",
+  "source_workflow_head_sha": "88c5b4f5a324b095f6e53a599bdaf98c74962308",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37184963803",
+  "source_workflow_run_id": "37202844764",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 219,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37184963803",
+  "trigger_source": "JEV_ORCHESTRATOR_37202844764",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-04T07:14:33+00:00",
+  "updated_at": "2026-10-04T12:43:39+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.7,
+      "attention_confidence": 0.72,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "37184620576",
+        "deep_lambda_run_id": "37202481848",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
