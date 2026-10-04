@@ -1,11 +1,11 @@
 # GenGe V3.1.1 Production Status
 
 - Health: **HEALTHY**
-- Main SHA: `7d29b972abf192e031f44eccb11b768417604f77`
-- Canonical source SHA: `a339f187cc240cbcc7d52b29aaf4bba323d023b0`
+- Main SHA: `d0d0df728ba17cf00ab19115b5c8ddd9d68f81ce`
+- Canonical source SHA: `06a4c830eb16f01cfd00e29be30f72ba7e0a89c2`
 - Drift: `CODE_DRIFT_MAIN_ADVANCED`
-- Canonical snapshot: `59bfb3d1cfbd2d8e9a74`
-- Source run: `37239832280`
+- Canonical snapshot: `5a9b95d64f0c657a4319`
+- Source run: `37244251204`
 - Source workflow: `GenGe V3.1.1 Every-Industry Research`
 - Latest trade date: `2026-09-30`
 - Holdings: `HOLDINGS_IN_SYNC`
@@ -24,9 +24,9 @@
 - P1 deep-review priorities: **1**
 - Visible mapping gaps: **16**
 - Price/Value tracked securities: **121**
-- Formal outcome records: **837**
+- Formal outcome records: **841**
 - Observed 5/20/60 horizons: **719**
-- Pending 5/20/60 horizons: **1792**
+- Pending 5/20/60 horizons: **1804**
 - Automatic V3.1.1 parameter tuning: **DISABLED**
 
 > Formal actions come only from the finalized canonical. Research priority may reorder Deep Review only; it cannot filter Broad Discovery, change frozen gates, or overwrite Formal actions.
