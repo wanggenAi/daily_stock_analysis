@@ -442,14 +442,14 @@
   "terminal_research_snapshot": {
     "available": true,
     "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-    "source_deep_lambda_run_id": "37209790879",
+    "source_deep_lambda_run_id": "37223186096",
     "source_every_industry_run_id": "37209027564",
     "requested_count": 12,
     "decision_counts": {
-      "REJECT": 0,
-      "RESEARCH_GAP": 11,
       "WAIT_PRICE": 0,
-      "BUY": 1
+      "BUY": 1,
+      "REJECT": 0,
+      "RESEARCH_GAP": 11
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
@@ -1205,14 +1205,14 @@
           "action": "BLOCK",
           "authority": "ADVISORY_ONLY",
           "automatic_execution_allowed": false,
-          "capital_conviction_score": 0.471,
+          "capital_conviction_score": 0.359,
           "critical_capital_gates": [
             "financial_safety",
             "earnings_authenticity"
           ],
           "critical_capital_gates_pass": false,
           "earnings_quality_component": 0.69,
-          "evidence_score": 0.61,
+          "evidence_score": 0.48,
           "formal_buy_authorized": false,
           "gate_weights": {
             "earnings_authenticity": 0.22,
@@ -1231,16 +1231,17 @@
           "quant_score_component": 0.2676,
           "reason": "CRITICAL_CAPITAL_GATES_NOT_PROVEN",
           "suggested_max_portfolio_pct": 0.0,
-          "uncertainty_penalty": 0.18,
-          "unknown_weight": 0.6,
+          "uncertainty_penalty": 0.24,
+          "unknown_weight": 0.8,
           "valuation_score": 1.0
         },
         "code": "603986",
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
-        "hard_gate_pass_count": 2,
+        "hard_gate_pass_count": 1,
         "hard_gate_unknowns": [
           "predictability",
+          "moat",
           "financial_safety",
           "earnings_authenticity"
         ],
