@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37348426619",
+  "orchestrator_run_id": "37350765125",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -166,6 +166,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -180,24 +187,17 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "605116",
       "entity_name": "奥锐特",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-05T17:25:49+00:00",
-  "source_workflow_head_sha": "569e4ef76e325c37d94e91381bb34f85a1297015",
+  "source_generated_at": "2026-10-05T17:44:38+00:00",
+  "source_workflow_head_sha": "e1d553056faf14cf240607d982fc53f00852533f",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37347961013",
+  "source_workflow_run_id": "37350488645",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 224,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37347961013",
+  "trigger_source": "JEV_ORCHESTRATOR_37350488645",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-05T17:28:16+00:00",
+  "updated_at": "2026-10-05T17:46:43+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.71,
+      "attention_confidence": 0.63,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "37328761305",
+        "deep_lambda_run_id": "37349590977",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
