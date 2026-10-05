@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37348146515",
+  "orchestrator_run_id": "37348426619",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,6 +54,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "001309",
       "entity_name": "德明利",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -65,20 +72,6 @@
       "entity_name": "兆易创新",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "605116",
-      "entity_name": "奥锐特",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -100,6 +93,13 @@
       "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000096",
+      "entity_name": "广聚能源",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
@@ -166,13 +166,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -187,17 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000096",
-      "entity_name": "广聚能源",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "605116",
+      "entity_name": "奥锐特",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-05T17:23:37+00:00",
-  "source_workflow_head_sha": "809e18f1e22fa097cba2ba13843fbb5e9740f470",
+  "source_generated_at": "2026-10-05T17:25:49+00:00",
+  "source_workflow_head_sha": "569e4ef76e325c37d94e91381bb34f85a1297015",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37347845503",
+  "source_workflow_run_id": "37347961013",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 224,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37347845503",
+  "trigger_source": "JEV_ORCHESTRATOR_37347961013",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-05T17:25:57+00:00",
+  "updated_at": "2026-10-05T17:28:16+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.69,
+      "attention_confidence": 0.71,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
