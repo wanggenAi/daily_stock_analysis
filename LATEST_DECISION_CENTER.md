@@ -8,23 +8,23 @@
 
 | 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |
 |---|---:|---:|---:|---|---|---|---|---|
-| 国电南瑞 600406 | 22.52 | 17.46 | -2.62 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=251 | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 27.46 | 49.37 | 6.66 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=253 | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | 53.29 | 83.07 | -4.78 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=178 | DEEP_REVIEW_PARTIAL |
-| 洛阳钼业 603993 | 16.88 | 28.13 | -9.37 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=220 | DEEP_REVIEW_PARTIAL |
+| 国电南瑞 600406 | 22.52 | 17.46 | -2.62 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=252 | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 27.46 | 49.37 | 6.66 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=254 | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | 53.29 | 83.07 | -4.78 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=179 | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | 16.88 | 28.13 | -9.37 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=221 | DEEP_REVIEW_PARTIAL |
 
 ### 估值折价观察（非买单）
 
 100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
 
-- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
 
 ### 每只持仓的决策链
 
-- **国电南瑞 600406**：现价 22.52 / 价值中枢 17.46（价/值 1.29；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=251**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
-- **润贝航科 001316**：现价 27.46 / 价值中枢 49.37（价/值 0.56；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=253**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
-- **中国平安 601318**：现价 53.29 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=178**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00`。
-- **洛阳钼业 603993**：现价 16.88 / 价值中枢 28.13（价/值 0.60；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=220**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
+- **国电南瑞 600406**：现价 22.52 / 价值中枢 17.46（价/值 1.29；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=252**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
+- **润贝航科 001316**：现价 27.46 / 价值中枢 49.37（价/值 0.56；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=254**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
+- **中国平安 601318**：现价 53.29 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=179**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.642<1.00`。
+- **洛阳钼业 603993**：现价 16.88 / 价值中枢 28.13（价/值 0.60；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=221**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -64,12 +64,12 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 - **本轮没有已授权新股 BUY。**
 - **本轮没有合格 WAIT_PRICE。**
 
-- Formal/Production Candidate Terminal REJECT：**121**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
+- Formal/Production Candidate Terminal REJECT：**120**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
 
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥25000.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**CLOSED**；行情状态：**OFF_SESSION**。
+- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
@@ -100,29 +100,29 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=49.87 / 2026-09-30 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=116 / dormant=10 / archived-invalidated=0 / events=13160 / focus=8 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=116 / dormant=10 / archived-invalidated=0 / events=13210 / focus=8 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=11 / verified-pass=219 / unresolved=43 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=37494646323 / unverified-pass=0 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=37504065654 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=2 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=11 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
-- Candidate Lifecycle：当前 ACTIVE **116**；DORMANT **10**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13160**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
+- Candidate Lifecycle：当前 ACTIVE **116**；DORMANT **10**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13210**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
 - 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。
 
 ### 当前持仓的持续研究记忆
 
-- 国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 251 次。
-- 润贝航科 001316：ACTIVE / tier=PENDING / 历史被系统重新看见 253 次。
-- 中国平安 601318：ACTIVE / tier=PENDING / 历史被系统重新看见 178 次。
-- 洛阳钼业 603993：ACTIVE / tier=PENDING / 历史被系统重新看见 220 次。
+- 国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 252 次。
+- 润贝航科 001316：ACTIVE / tier=PENDING / 历史被系统重新看见 254 次。
+- 中国平安 601318：ACTIVE / tier=PENDING / 历史被系统重新看见 179 次。
+- 洛阳钼业 603993：ACTIVE / tier=PENDING / 历史被系统重新看见 221 次。
 
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`37493908253`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`37503486714`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`37493908253`
+- Lambda run：`37503486714`
 - 触发来源：`EVERY_INDUSTRY_READY`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
@@ -133,7 +133,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 - 尚未解决硬门槛：**43**。
 - 未决原因摘要：涉及 11 只；门槛分布：predictability×10、moat×9、earnings_authenticity×8、financial_safety×8、long_term_demand×8；Top原因：SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×8、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×8、OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×8、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×8、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×5；样例：000596[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000682[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；001309[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、moat:INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE]；001316[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]；002811[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`37493908253`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`37503486714`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
@@ -145,7 +145,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`37493908253`；当前 Lambda：`37493908253`。
+- 终态来源 Lambda：`37503486714`；当前 Lambda：`37503486714`。
 - 请求：**12**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**11**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：601318 中国平安(quant=32.5312；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；600406 国电南瑞(quant=31.8877；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603993 洛阳钼业(quant=30.5444；暂不投入新增资金；等待补齐：predictability)；001316 润贝航科(quant=23.9734；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)
 - 风险预算层 BUILD/PROBE 候选：**1**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
@@ -154,19 +154,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**12**；其中 ENTRY_NOW **1**；Jev run：`37495017078`。
-- **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=42.2022；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_42.2022_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000596 古井贡酒**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=117.6057；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_117.6057_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **001316 润贝航科**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=32.9186；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_32.9186_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **601318 中国平安**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **601965 中国汽研**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=17.389；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_17.3890_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **603986 兆易创新**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=656.0699；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_656.0699_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **605116 奥锐特**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=27.598；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_27.5980_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **002811 郑中设计**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=41.4369；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_41.4369_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000682 东方电子**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=13.5457；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_13.5457_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **001309 德明利**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=656.2349；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_656.2349_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600406 国电南瑞**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=21.7965；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_21.7965_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **603993 洛阳钼业**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=18.0546；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_18.0546_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`37495017078`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
