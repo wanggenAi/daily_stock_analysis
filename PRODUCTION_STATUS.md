@@ -1,7 +1,7 @@
 # GenGe V3.1.1 Production Status
 
 - Health: **HEALTHY**
-- Main SHA: `de0b284552ca1116415368db4f377557cb9e67eb`
+- Main SHA: `3ed31966c8552ce4f1031bc4d077fc3dcc0b7839`
 - Canonical source SHA: `603f59f9f623182ea61e4be93967aca7300a0328`
 - Drift: `CODE_DRIFT_MAIN_ADVANCED`
 - Canonical snapshot: `64d8f9e56ff8db34d4cf`
@@ -24,9 +24,9 @@
 - P1 deep-review priorities: **1**
 - Visible mapping gaps: **16**
 - Price/Value tracked securities: **121**
-- Formal outcome records: **885**
+- Formal outcome records: **893**
 - Observed 5/20/60 horizons: **719**
-- Pending 5/20/60 horizons: **1936**
+- Pending 5/20/60 horizons: **1960**
 - Automatic V3.1.1 parameter tuning: **DISABLED**
 
 > Formal actions come only from the finalized canonical. Research priority may reorder Deep Review only; it cannot filter Broad Discovery, change frozen gates, or overwrite Formal actions.
