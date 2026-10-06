@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37513762548",
+  "orchestrator_run_id": "37514196240",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -68,6 +68,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "002811",
+      "entity_name": "郑中设计",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "603986",
       "entity_name": "兆易创新",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -82,22 +89,8 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "002811",
-      "entity_name": "郑中设计",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "601965",
       "entity_name": "中国汽研",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "605116",
-      "entity_name": "奥锐特",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -133,6 +126,13 @@
       "attention_priority": "LOW",
       "entity_id": "000567",
       "entity_name": "海德股份",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -187,17 +187,17 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
+      "entity_id": "605116",
+      "entity_name": "奥锐特",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-06T18:44:59+00:00",
-  "source_workflow_head_sha": "3ed54759335cdf0c9adcf41f646eb17995074c71",
+  "source_generated_at": "2026-10-06T18:48:21+00:00",
+  "source_workflow_head_sha": "0182677d451b130b48166fe432a2f49c2b725eff",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37513300406",
+  "source_workflow_run_id": "37513486768",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 224,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37513300406",
+  "trigger_source": "JEV_ORCHESTRATOR_37513486768",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-06T18:47:28+00:00",
+  "updated_at": "2026-10-06T18:50:45+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.71,
+      "attention_confidence": 0.69,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
