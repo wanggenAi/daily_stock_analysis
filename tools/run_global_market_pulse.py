@@ -22,14 +22,22 @@ def _load_json(path: Path) -> dict:
 
 
 def _security_names(payload: dict) -> dict[str, str]:
+    """Keep report names for holdings and current research candidates when available."""
     result: dict[str, str] = {}
-    rows = (payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
-        code = str(row.get("code") or "").zfill(6)
-        if code.strip("0"):
-            result[code] = str(row.get("name") or "")
+    buckets = [
+        (payload.get("pillar_1_holdings_deep_analysis") or {}).get("rows") or [],
+        (payload.get("pillar_3_deep_opportunities") or {}).get("research_buy") or [],
+        (payload.get("pillar_3_deep_opportunities") or {}).get("research_wait_price") or [],
+        (payload.get("pillar_3_deep_opportunities") or {}).get("research_gap") or [],
+        (payload.get("candidate_lifecycle") or {}).get("active_candidates") or [],
+    ]
+    for rows in buckets:
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            code = str(row.get("code") or "").zfill(6)
+            if code.strip("0"):
+                result[code] = str(row.get("name") or result.get(code) or "")
     return result
 
 
@@ -44,6 +52,7 @@ def main() -> int:
     pulse = build_global_market_pulse(
         commodity_config=_load_json(args.commodity_config),
         security_names=_security_names(decision_center),
+        a_share_last_trade_date=decision_center.get("latest_trade_date"),
     )
     persistence = persist_if_changed(pulse, args.output_dir)
     print(json.dumps({"pulse": pulse, "persistence": persistence}, ensure_ascii=False, sort_keys=True))

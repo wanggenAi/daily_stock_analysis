@@ -8,14 +8,17 @@ on:
     branches: [main]
     paths:
       - 'src/era_radar/global_market_pulse.py'
+      - 'src/strategies/genge_opportunity_discovery/commodity_price_evidence_collector.py'
       - 'tools/run_global_market_pulse.py'
       - 'config/commodity_research_benchmarks.json'
       - '.github/workflows/genge-global-market-pulse.yml'
   pull_request:
     paths:
       - 'src/era_radar/global_market_pulse.py'
+      - 'src/strategies/genge_opportunity_discovery/commodity_price_evidence_collector.py'
       - 'tools/run_global_market_pulse.py'
       - 'tests/test_global_market_pulse.py'
+      - 'tests/test_commodity_price_evidence_collector_fallback.py'
       - 'config/commodity_research_benchmarks.json'
       - '.github/workflows/genge-global-market-pulse.yml'
 
@@ -38,15 +41,18 @@ jobs:
         run: |
           python -m pip install --upgrade pip --disable-pip-version-check
           python -m pip install -r .github/requirements-ci.txt
-      - name: Validate global pulse contracts without network
+      - name: Validate global pulse and shared commodity contracts without network
         run: |
-          python -m pytest -q tests/test_global_market_pulse.py
+          python -m pytest -q \
+            tests/test_global_market_pulse.py \
+            tests/test_commodity_price_evidence_collector_fallback.py
       - name: Verify global clock safety contract
         run: |
           python - <<'PY'
           from src.era_radar.global_market_pulse import DEFAULT_INSTRUMENTS
           ids={row['id'] for row in DEFAULT_INSTRUMENTS}
-          assert {'SP500','NASDAQ','VIX','US10Y','DXY','COPPER','WTI'} <= ids
+          assert {'SP500','NASDAQ','SOX','VIX','US10Y','DXY','BTC','ETH'} <= ids
+          assert 'COPPER' not in ids, 'commodities must reuse the shared commodity collector rather than a second instrument mapping'
           PY
 
   live-production:
@@ -95,14 +101,29 @@ jobs:
           import json
           from pathlib import Path
           p=json.loads(Path('data/global_market_pulse/latest.json').read_text(encoding='utf-8'))
-          assert p['contract_version'] == 'GEN_GE_GLOBAL_MARKET_PULSE_V1'
+          assert p['contract_version'] == 'GEN_GE_GLOBAL_MARKET_PULSE_V2'
           assert p['clock'] == 'GLOBAL_MARKET_INDEPENDENT_OF_A_SHARE_CALENDAR'
           assert p['a_share_market_open_required'] is False
+          assert p['global_research_clock']['continues_during_a_share_holidays'] is True
           assert p['coverage']['status'] in {'OK','PARTIAL'}
+          assert p['authority'] == 'RESEARCH_ONLY'
           assert p['formal_trading_authority'] is False
+          assert p['formal_action_eligible'] is False
           assert p['formal_action_mutation_allowed'] is False
           assert p['automatic_promotion_allowed'] is False
+          assert p['unknown_is_pass'] is False
           assert p['no_auto_trade'] is True
+          assert 'pre_open_intelligence' in p
+          assert p['pre_open_intelligence']['formal_action_eligible'] is False
+          assert p['pre_open_intelligence']['no_auto_trade'] is True
+          assert p['series']['US2Y']['status'] == 'UNAVAILABLE'
+          assert p['series']['CURVE_2S10S']['status'] == 'UNAVAILABLE'
+          assert {'COPPER','GOLD','SILVER','CRUDE_OIL','NATURAL_GAS'} <= set(p['series'])
+          for row in p['security_transmission']:
+              assert row['authority'] == 'RESEARCH_ONLY'
+              assert row['formal_action_eligible'] is False
+              assert row['automatic_promotion_allowed'] is False
+              assert row['no_auto_trade'] is True
           PY
 
             git add -f data/global_market_pulse
@@ -137,6 +158,8 @@ jobs:
         run: |
           echo '# GenGe Global Market Pulse' >> "$GITHUB_STEP_SUMMARY"
           echo '- schedule: hourly, every day; independent of A-share exchange holidays' >> "$GITHUB_STEP_SUMMARY"
-          echo '- factors: US/global equities, volatility, US rates, USD/CNH, commodities, Asia/Europe, crypto risk appetite' >> "$GITHUB_STEP_SUMMARY"
+          echo '- global factors: US/global equities, SOX, volatility, US rates, USD/CNH, Asia/Europe, crypto risk appetite' >> "$GITHUB_STEP_SUMMARY"
+          echo '- commodities: reused shared Stooq-primary commodity collector with explicit yfinance fallback; no duplicate exposure mapping' >> "$GITHUB_STEP_SUMMARY"
+          echo '- pre-open: accumulated move since the last valid A-share close + holiday gap/positive accumulation flags' >> "$GITHUB_STEP_SUMMARY"
           echo '- company transmission: only explicit evidence-backed commodity mappings are allowed' >> "$GITHUB_STEP_SUMMARY"
-          echo '- authority: RESEARCH_ONLY; Formal action unchanged; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
+          echo '- authority: RESEARCH_ONLY; Formal action unchanged; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"

@@ -1,9 +1,10 @@
 """Collect public commodity benchmark prices for GenGe research observability.
 
-The collector deliberately separates benchmark connectivity from company exposure.
-It may emit security-level Evidence Events only when an explicit, evidence-backed
-security_exposures mapping exists in config. Commodity moves never create or
-mutate Formal actions and never rewrite canonical value anchors.
+This is the single commodity benchmark acquisition layer used by both opportunity
+research and the global-market pulse. Stooq remains the primary free daily source;
+yfinance is an explicit public fallback when Stooq returns an empty/insufficient
+series. Security exposure is only emitted from the evidence-backed config map.
+Commodity moves never create Formal actions or mutate canonical value anchors.
 """
 from __future__ import annotations
 
@@ -19,6 +20,14 @@ from typing import Any, Callable, Mapping
 from .evidence_event_store import append_events
 
 PROVIDER = "stooq_public_daily"
+FALLBACK_PROVIDER = "yfinance_public_daily_fallback"
+YAHOO_FALLBACK_SYMBOLS = {
+    "COPPER": "HG=F",
+    "GOLD": "GC=F",
+    "SILVER": "SI=F",
+    "CRUDE_OIL": "CL=F",
+    "NATURAL_GAS": "NG=F",
+}
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -28,9 +37,9 @@ def _load_json(path: Path) -> dict[str, Any]:
     return value
 
 
-def fetch_stooq_series(symbol: str, *, days: int = 14, timeout: int = 12) -> list[dict[str, Any]]:
+def fetch_stooq_series(symbol: str, *, days: int = 20, timeout: int = 12) -> list[dict[str, Any]]:
     end = date.today()
-    start = end - timedelta(days=max(7, days * 2))
+    start = end - timedelta(days=max(14, days * 2))
     url = (
         "https://stooq.com/q/d/l/?s=" + symbol.lower()
         + f"&d1={start:%Y%m%d}&d2={end:%Y%m%d}&i=d"
@@ -45,8 +54,32 @@ def fetch_stooq_series(symbol: str, *, days: int = 14, timeout: int = 12) -> lis
         except (TypeError, ValueError):
             continue
         day = str(raw.get("Date") or "").strip()
-        if not day:
+        if day:
+            rows.append({"date": day, "close": close})
+    rows.sort(key=lambda r: r["date"])
+    return rows[-days:]
+
+
+def fetch_yfinance_daily_series(symbol: str, *, days: int = 20) -> list[dict[str, Any]]:
+    """Public fallback for the same commodity collector; not a second mapping layer."""
+    import yfinance as yf
+
+    frame = yf.Ticker(symbol).history(
+        period="1mo",
+        interval="1d",
+        auto_adjust=False,
+        actions=False,
+        timeout=12,
+    )
+    if frame is None or frame.empty or "Close" not in frame.columns:
+        return []
+    rows: list[dict[str, Any]] = []
+    for index, value in frame["Close"].dropna().items():
+        try:
+            close = float(value)
+        except (TypeError, ValueError):
             continue
+        day = index.date().isoformat() if hasattr(index, "date") else str(index)[:10]
         rows.append({"date": day, "close": close})
     rows.sort(key=lambda r: r["date"])
     return rows[-days:]
@@ -54,7 +87,13 @@ def fetch_stooq_series(symbol: str, *, days: int = 14, timeout: int = 12) -> lis
 
 def summarize_series(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
     if len(rows) < 2:
-        return {"status": "INSUFFICIENT_SERIES", "latest_date": None, "latest_close": None, "change_1d_pct": None, "change_5d_pct": None}
+        return {
+            "status": "INSUFFICIENT_SERIES",
+            "latest_date": None,
+            "latest_close": None,
+            "change_1d_pct": None,
+            "change_5d_pct": None,
+        }
     latest = float(rows[-1]["close"])
     previous = float(rows[-2]["close"])
     change_1d = None if previous == 0 else (latest / previous - 1.0) * 100.0
@@ -67,6 +106,84 @@ def summarize_series(rows: list[Mapping[str, Any]]) -> dict[str, Any]:
         "change_1d_pct": round(change_1d, 4) if change_1d is not None else None,
         "change_5d_pct": round(change_5d, 4) if change_5d is not None else None,
     }
+
+
+def fetch_benchmark_series(
+    benchmark_id: str,
+    stooq_symbol: str,
+    *,
+    stooq_fetcher: Callable[[str], list[dict[str, Any]]] = fetch_stooq_series,
+    fallback_fetcher: Callable[[str], list[dict[str, Any]]] = fetch_yfinance_daily_series,
+) -> tuple[list[dict[str, Any]], str, list[str]]:
+    """Return one benchmark series with explicit primary/fallback lineage."""
+    errors: list[str] = []
+    try:
+        primary = stooq_fetcher(stooq_symbol)
+        if summarize_series(primary).get("status") == "OK":
+            return primary, PROVIDER, errors
+        errors.append("STOOQ_INSUFFICIENT_SERIES")
+    except Exception as exc:  # fail over, but preserve lineage
+        errors.append(f"STOOQ_{type(exc).__name__}")
+
+    yahoo_symbol = YAHOO_FALLBACK_SYMBOLS.get(str(benchmark_id).upper())
+    if not yahoo_symbol:
+        return [], PROVIDER, errors + ["NO_CONFIGURED_FALLBACK"]
+    try:
+        fallback = fallback_fetcher(yahoo_symbol)
+        if summarize_series(fallback).get("status") == "OK":
+            return fallback, FALLBACK_PROVIDER, errors
+        errors.append("YFINANCE_INSUFFICIENT_SERIES")
+    except Exception as exc:
+        errors.append(f"YFINANCE_{type(exc).__name__}")
+    return [], FALLBACK_PROVIDER, errors
+
+
+def collect_benchmark_market_status(
+    config: Mapping[str, Any],
+    *,
+    series_fetcher: Callable[[str], list[dict[str, Any]]] | None = None,
+    stooq_fetcher: Callable[[str], list[dict[str, Any]]] = fetch_stooq_series,
+    fallback_fetcher: Callable[[str], list[dict[str, Any]]] = fetch_yfinance_daily_series,
+    now: datetime | None = None,
+) -> dict[str, Any]:
+    """Collect benchmark status once; consumers reuse this rather than re-map commodities."""
+    generated = (now or datetime.now(timezone.utc)).isoformat()
+    series_status: dict[str, Any] = {}
+    for benchmark_id, spec in (config.get("benchmarks") or {}).items():
+        if not isinstance(spec, Mapping):
+            continue
+        symbol = str(spec.get("symbol") or "").strip()
+        if not symbol:
+            continue
+        errors: list[str] = []
+        provider = PROVIDER
+        try:
+            if series_fetcher is not None:
+                rows = series_fetcher(symbol)
+            else:
+                rows, provider, errors = fetch_benchmark_series(
+                    str(benchmark_id),
+                    symbol,
+                    stooq_fetcher=stooq_fetcher,
+                    fallback_fetcher=fallback_fetcher,
+                )
+            summary = summarize_series(rows)
+        except Exception as exc:
+            rows = []
+            summary = summarize_series(rows)
+            errors.append(type(exc).__name__)
+        summary.update(
+            {
+                "symbol": symbol,
+                "label": spec.get("label") or benchmark_id,
+                "provider": provider,
+                "source_errors": errors,
+                "observed_at": generated,
+                "raw_series": rows,
+            }
+        )
+        series_status[str(benchmark_id)] = summary
+    return series_status
 
 
 def _direction(summary: Mapping[str, Any], exposure_direction: str) -> tuple[str, str]:
@@ -87,38 +204,20 @@ def collect(
     overlay: Mapping[str, Any],
     config: Mapping[str, Any],
     *,
-    series_fetcher: Callable[[str], list[dict[str, Any]]] = fetch_stooq_series,
+    series_fetcher: Callable[[str], list[dict[str, Any]]] | None = None,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
-    workset = {str(row.get("code") or "").zfill(6): row for row in overlay.get("rows") or [] if isinstance(row, Mapping)}
-    benchmarks = config.get("benchmarks") or {}
+    workset = {
+        str(row.get("code") or "").zfill(6): row
+        for row in overlay.get("rows") or []
+        if isinstance(row, Mapping)
+    }
     exposures = config.get("security_exposures") or {}
-    series_status: dict[str, Any] = {}
-    now = datetime.now(timezone.utc).isoformat()
-
-    for benchmark_id, spec in benchmarks.items():
-        if not isinstance(spec, Mapping):
-            continue
-        symbol = str(spec.get("symbol") or "").strip()
-        if not symbol:
-            continue
-        try:
-            rows = series_fetcher(symbol)
-            summary = summarize_series(rows)
-            summary["symbol"] = symbol
-            summary["label"] = spec.get("label") or benchmark_id
-            summary["provider"] = PROVIDER
-        except Exception as exc:
-            summary = {
-                "status": f"FETCH_ERROR:{type(exc).__name__}",
-                "symbol": symbol,
-                "label": spec.get("label") or benchmark_id,
-                "provider": PROVIDER,
-                "latest_date": None,
-                "latest_close": None,
-                "change_1d_pct": None,
-                "change_5d_pct": None,
-            }
-        series_status[str(benchmark_id)] = summary
+    now = datetime.now(timezone.utc)
+    series_status = collect_benchmark_market_status(
+        config,
+        series_fetcher=series_fetcher,
+        now=now,
+    )
 
     events: list[dict[str, Any]] = []
     mapped = 0
@@ -134,38 +233,51 @@ def collect(
             summary = series_status.get(benchmark_id) or {}
             if summary.get("status") != "OK":
                 continue
-            direction, materiality = _direction(summary, str(exposure.get("exposure_direction") or "PRODUCER_POSITIVE"))
+            direction, materiality = _direction(
+                summary,
+                str(exposure.get("exposure_direction") or "PRODUCER_POSITIVE"),
+            )
             latest_date = str(summary.get("latest_date") or "")
             row = workset[normalized]
-            events.append({
-                "code": normalized,
-                "name": row.get("name") or "",
-                "observed_at": now,
-                "published_at": latest_date + "T00:00:00+00:00" if latest_date else now,
-                "source": PROVIDER,
-                "source_ref": "https://stooq.com/",
-                "evidence_type": "COMMODITY_PRICE",
-                "title": f"{summary.get('label') or benchmark_id} benchmark move",
-                "summary": (
-                    f"latest={summary.get('latest_close')}; 1d={summary.get('change_1d_pct')}%; "
-                    f"5d={summary.get('change_5d_pct')}%. Exposure mapping is research-only."
-                ),
-                "materiality": materiality,
-                "direction": direction,
-                "thesis_link": f"commodity:{benchmark_id}",
-                "value_anchor_impact": "REVIEW_IF_PERSISTENT",
-                "sell_relevance": "RESEARCH_ONLY",
-                "confidence": "PUBLIC_MARKET_DATA",
-            })
+            events.append(
+                {
+                    "code": normalized,
+                    "name": row.get("name") or "",
+                    "observed_at": now.isoformat(),
+                    "published_at": latest_date + "T00:00:00+00:00" if latest_date else now.isoformat(),
+                    "source": summary.get("provider") or PROVIDER,
+                    "source_ref": "https://stooq.com/" if summary.get("provider") == PROVIDER else "yfinance_public_market",
+                    "evidence_type": "COMMODITY_PRICE",
+                    "title": f"{summary.get('label') or benchmark_id} benchmark move",
+                    "summary": (
+                        f"latest={summary.get('latest_close')}; 1d={summary.get('change_1d_pct')}%; "
+                        f"5d={summary.get('change_5d_pct')}%. Exposure mapping is research-only."
+                    ),
+                    "materiality": materiality,
+                    "direction": direction,
+                    "thesis_link": f"commodity:{benchmark_id}",
+                    "value_anchor_impact": "REVIEW_IF_PERSISTENT",
+                    "sell_relevance": "RESEARCH_ONLY",
+                    "confidence": "PUBLIC_MARKET_DATA",
+                }
+            )
 
     ok_count = sum(item.get("status") == "OK" for item in series_status.values())
-    failed_count = sum(str(item.get("status") or "").startswith("FETCH_ERROR") for item in series_status.values())
-    latest_dates = [str(item.get("latest_date") or "") for item in series_status.values() if item.get("latest_date")]
+    failed_count = sum(item.get("status") != "OK" for item in series_status.values())
+    latest_dates = [
+        str(item.get("latest_date") or "")
+        for item in series_status.values()
+        if item.get("latest_date")
+    ]
+    public_series = {
+        key: {k: v for k, v in value.items() if k != "raw_series"}
+        for key, value in series_status.items()
+    }
     status = {
-        "contract_version": "GEN_GE_COMMODITY_PRICE_EVIDENCE_V1",
-        "generated_at": now,
-        "status": "CONNECTED" if ok_count else ("UNAVAILABLE" if failed_count else "NO_SERIES"),
-        "provider": PROVIDER,
+        "contract_version": "GEN_GE_COMMODITY_PRICE_EVIDENCE_V2",
+        "generated_at": now.isoformat(),
+        "status": "CONNECTED" if ok_count else "UNAVAILABLE",
+        "provider": "stooq_primary_with_yfinance_fallback",
         "benchmark_count": len(series_status),
         "benchmark_ok_count": ok_count,
         "benchmark_failed_count": failed_count,
@@ -174,7 +286,7 @@ def collect(
         "mapped_workset_security_count": mapped,
         "emitted_security_event_count": len(events),
         "mapping_status": "MAPPED" if mapped else "CONNECTED_NO_EVIDENCE_BACKED_SECURITY_EXPOSURES",
-        "series": series_status,
+        "series": public_series,
         "formal_action_eligible": False,
         "automatic_promotion_allowed": False,
         "no_auto_trade": True,
