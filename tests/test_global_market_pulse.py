@@ -1,4 +1,7 @@
 from datetime import datetime, timezone
+from pathlib import Path
+import subprocess
+import sys
 
 import pandas as pd
 
@@ -10,9 +13,24 @@ from src.era_radar.global_market_pulse import (
 )
 
 
+ROOT = Path(__file__).resolve().parents[1]
+
+
 def _frame(values):
     index = pd.date_range("2026-10-06T00:00:00Z", periods=len(values), freq="h")
     return pd.DataFrame({"Close": values}, index=index)
+
+
+def test_global_pulse_runner_imports_from_tools_entrypoint():
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "tools" / "run_global_market_pulse.py"), "--help"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert "global market pulse" in result.stdout.lower()
 
 
 def test_global_pulse_does_not_require_a_share_market_open():
