@@ -4,9 +4,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-from src.era_radar.global_market_pulse import build_global_market_pulse, persist_if_changed
+ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from src.era_radar.global_market_pulse import build_global_market_pulse, persist_if_changed  # noqa: E402
 
 
 def _load_json(path: Path) -> dict:
