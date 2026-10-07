@@ -86,4 +86,23 @@ def test_unsafe_global_pulse_is_rejected_fail_closed():
     pillar2 = result["pillar_2_world_social_market_capital_map"]
     assert pillar2["global_market_pulse"]["status"] == "REJECTED_FAIL_CLOSED"
     assert pillar2["global_transmission"] == []
+    assert pillar2["pre_open_intelligence"]["formal_action_eligible"] is False
     assert result["decision_readiness"]["global_market_pulse_available"] is False
+
+
+def test_legacy_v1_pulse_is_normalized_fail_closed_during_merge_race():
+    pulse = _pulse()
+    pulse["contract_version"] = "GEN_GE_GLOBAL_MARKET_PULSE_V1"
+    pulse.pop("pre_open_intelligence")
+    pulse.pop("a_share_market_clock")
+    pulse.pop("global_research_clock")
+    for row in pulse["security_transmission"]:
+        row.pop("formal_action_eligible")
+        row.pop("automatic_promotion_allowed")
+    result = apply_global_pulse(_decision(), pulse)
+    pillar2 = result["pillar_2_world_social_market_capital_map"]
+    assert pillar2["global_market_pulse"]["status"] == "OK"
+    assert pillar2["pre_open_intelligence"]["status"] == "UNAVAILABLE"
+    assert pillar2["pre_open_intelligence"]["formal_action_eligible"] is False
+    assert pillar2["global_transmission"][0]["formal_action_eligible"] is False
+    assert result["decision_readiness"]["pre_open_intelligence_available"] is False
