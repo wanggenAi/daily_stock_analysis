@@ -170,3 +170,36 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
+
+## 全球市场脉搏 / 复市前情报
+
+- Global Pulse：**OK**；全球风险状态：**NEUTRAL**；A股最近有效交易日：**—**。
+- 休市累计外部缺口风险：**UNKNOWN**；正向累积：**UNKNOWN**。
+- 以下均为研究上下文，不产生 Formal BUY/SELL，不自动交易。
+
+### A股休市以来关键外部变化
+
+- **SP500**：休市以来 —；最近1日 +0.59%；5日 +1.97%；market_date=—；freshness=—。
+- **NASDAQ**：休市以来 —；最近1日 +0.47%；5日 +2.69%；market_date=—；freshness=—。
+- **VIX**：休市以来 —；最近1日 +2.94%；5日 +1.42%；market_date=—；freshness=—。
+- **US10Y**：休市以来 —；最近1日 +0.96%；5日 +2.77%；market_date=—；freshness=—。
+- **DXY**：休市以来 —；最近1日 +0.59%；5日 +0.66%；market_date=—；freshness=—。
+- **USDCNH**：休市以来 —；最近1日 +0.10%；5日 +0.08%；market_date=—；freshness=—。
+- **HANGSENG**：休市以来 —；最近1日 -0.62%；5日 +0.66%；market_date=—；freshness=—。
+- **COPPER**：休市以来 —；最近1日 +0.16%；5日 +0.60%；market_date=—；freshness=—。
+- **GOLD**：休市以来 —；最近1日 -2.40%；5日 -3.55%；market_date=—；freshness=—。
+- **WTI**：休市以来 —；最近1日 +3.48%；5日 +0.96%；market_date=—；freshness=—。
+- **BTC**：休市以来 —；最近1日 -3.21%；5日 -3.90%；market_date=—；freshness=—。
+
+### 对持仓 / 研究对象的明确传导
+
+- **603993 洛阳钼业**：**ADVERSE / UNKNOWN**；COPPER休市以来—(FAVORABLE)、GOLD休市以来—(ADVERSE)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601899 **：**ADVERSE / UNKNOWN**；COPPER休市以来—(FAVORABLE)、GOLD休市以来—(ADVERSE)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601168 **：**NEUTRAL / UNKNOWN**；COPPER休市以来—(FAVORABLE)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601020 **：**ADVERSE / UNKNOWN**；GOLD休市以来—(ADVERSE)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+
+### 下一次A股开盘最该盯什么
+
+- Pre-open V2 累计信息尚未可用；等待下一次 Global Pulse 刷新，不用旧数据冒充复市判断。
+
+> 全球市场层只能强化/弱化研究和触发重算；Canonical/Formal authority 保持原样，no_auto_trade=true。

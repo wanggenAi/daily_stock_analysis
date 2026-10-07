@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-07T13:20:57+00:00",
+  "generated_at": "2026-10-07T13:29:57+00:00",
   "latest_trade_date": "2026-09-30",
   "canonical_snapshot_id": "64d8f9e56ff8db34d4cf",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -44,7 +44,14 @@
     "lifecycle_event_count": 13210,
     "discounted_holding_watch_count": 1,
     "investor_action_report_complete": true,
-    "investor_evidence_complete": false
+    "investor_evidence_complete": false,
+    "global_market_pulse_status": "OK",
+    "global_risk_regime": "NEUTRAL",
+    "holiday_gap_risk": "UNKNOWN",
+    "holiday_positive_accumulation": "UNKNOWN",
+    "global_impacted_holding_count": 1,
+    "global_impacted_research_security_count": 1,
+    "global_security_transmission_count": 4
   },
   "pillar_1_holdings_deep_analysis": {
     "question": "我手里的股票，现在该怎么办？",
@@ -134,6 +141,12 @@
           "last_event_at": "2026-10-06T17:25:48Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
+        },
+        "global_market_impact": {
+          "status": "NO_EXPLICIT_SECURITY_TRANSMISSION",
+          "authority": "RESEARCH_ONLY",
+          "formal_action_eligible": false,
+          "no_auto_trade": true
         }
       },
       {
@@ -216,6 +229,12 @@
           "last_event_at": "2026-10-06T17:25:48Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
+        },
+        "global_market_impact": {
+          "status": "NO_EXPLICIT_SECURITY_TRANSMISSION",
+          "authority": "RESEARCH_ONLY",
+          "formal_action_eligible": false,
+          "no_auto_trade": true
         }
       },
       {
@@ -298,6 +317,12 @@
           "last_event_at": "2026-10-06T17:25:48Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
+        },
+        "global_market_impact": {
+          "status": "NO_EXPLICIT_SECURITY_TRANSMISSION",
+          "authority": "RESEARCH_ONLY",
+          "formal_action_eligible": false,
+          "no_auto_trade": true
         }
       },
       {
@@ -380,6 +405,32 @@
           "last_event_at": "2026-10-06T17:25:48Z",
           "last_formal_action": "",
           "last_valuation_confidence": ""
+        },
+        "global_market_impact": {
+          "authority": "RESEARCH_ONLY",
+          "code": "603993",
+          "factors": [
+            {
+              "change_24h_pct": 0.1586,
+              "direction": "FAVORABLE",
+              "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+              "factor_id": "COPPER",
+              "material": false
+            },
+            {
+              "change_24h_pct": -2.3964,
+              "direction": "ADVERSE",
+              "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+              "factor_id": "GOLD",
+              "material": true
+            }
+          ],
+          "formal_action_mutation_allowed": false,
+          "name": "洛阳钼业",
+          "no_auto_trade": true,
+          "signal": "ADVERSE",
+          "formal_action_eligible": false,
+          "automatic_promotion_allowed": false
         }
       }
     ]
@@ -718,7 +769,310 @@
       "direct_stock_fund_flow_claimed": false,
       "interpretation": "Policy/industrial/financial capital and real-demand evidence are separate layers. Missing FINANCIAL_CAPITAL must remain explicit; market-strength proxies never become direct fund-flow evidence."
     },
-    "direct_financial_capital_evidence_available": true
+    "direct_financial_capital_evidence_available": true,
+    "global_market_pulse": {
+      "status": "OK",
+      "contract_version": "GEN_GE_GLOBAL_MARKET_PULSE_V1",
+      "generated_at": "2026-10-07T12:55:16.791872+00:00",
+      "clock": "GLOBAL_MARKET_INDEPENDENT_OF_A_SHARE_CALENDAR",
+      "a_share_market_clock": {},
+      "global_research_clock": {},
+      "coverage": {
+        "critical_count": 7,
+        "critical_coverage_ratio": 1.0,
+        "critical_ok_count": 7,
+        "failures": [],
+        "instrument_count": 13,
+        "latest_observation_at": "2026-10-07T12:20:00+00:00",
+        "ok_count": 13,
+        "status": "OK"
+      },
+      "risk_regime": {
+        "component_count": 8,
+        "score": 43.5,
+        "status": "NEUTRAL"
+      },
+      "key_market_factors": {
+        "SP500": {
+          "change_1h_pct": -0.0642,
+          "change_24h_pct": 0.5867,
+          "change_5d_pct": 1.9691,
+          "critical": true,
+          "family": "RISK_EQUITY",
+          "label": "S&P 500",
+          "latest": 7819.830078125,
+          "latest_at": "2026-10-06T19:30:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "^GSPC"
+        },
+        "NASDAQ": {
+          "change_1h_pct": -0.1632,
+          "change_24h_pct": 0.475,
+          "change_5d_pct": 2.6903,
+          "critical": true,
+          "family": "RISK_EQUITY",
+          "label": "Nasdaq Composite",
+          "latest": 27601.91015625,
+          "latest_at": "2026-10-06T19:30:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "^IXIC"
+        },
+        "VIX": {
+          "change_1h_pct": -0.6936,
+          "change_24h_pct": 2.9412,
+          "change_5d_pct": 1.4166,
+          "critical": true,
+          "family": "VOLATILITY",
+          "label": "VIX",
+          "latest": 15.75,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "^VIX"
+        },
+        "US10Y": {
+          "change_1h_pct": 1.3665,
+          "change_24h_pct": 0.9641,
+          "change_5d_pct": 2.7708,
+          "critical": true,
+          "family": "RATES",
+          "label": "US 10Y Treasury Yield",
+          "latest": 5.341000080108643,
+          "latest_at": "2026-10-07T12:20:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "^TNX"
+        },
+        "DXY": {
+          "change_1h_pct": 0.0987,
+          "change_24h_pct": 0.5861,
+          "change_5d_pct": 0.6631,
+          "critical": true,
+          "family": "FX",
+          "label": "US Dollar Index",
+          "latest": 102.46299743652344,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "DX-Y.NYB"
+        },
+        "USDCNH": {
+          "change_1h_pct": 0.0021,
+          "change_24h_pct": 0.0976,
+          "change_5d_pct": 0.0831,
+          "critical": false,
+          "family": "FX",
+          "label": "USD/CNH",
+          "latest": 6.708139896392822,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "CNH=X"
+        },
+        "HANGSENG": {
+          "change_1h_pct": -0.062,
+          "change_24h_pct": -0.618,
+          "change_5d_pct": 0.66,
+          "critical": false,
+          "family": "CHINA_OFFSHORE",
+          "label": "Hang Seng",
+          "latest": 24130.5,
+          "latest_at": "2026-10-07T07:30:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "^HSI"
+        },
+        "NIKKEI225": {
+          "change_1h_pct": -0.2084,
+          "change_24h_pct": -0.8626,
+          "change_5d_pct": 2.8936,
+          "critical": false,
+          "family": "GLOBAL_EQUITY",
+          "label": "Nikkei 225",
+          "latest": 70163.2734375,
+          "latest_at": "2026-10-07T06:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "^N225"
+        },
+        "EUROSTOXX50": {
+          "change_1h_pct": 0.1366,
+          "change_24h_pct": -1.5486,
+          "change_5d_pct": -0.9281,
+          "critical": false,
+          "family": "GLOBAL_EQUITY",
+          "label": "Euro Stoxx 50",
+          "latest": 6174.3701171875,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "^STOXX50E"
+        },
+        "COPPER": {
+          "change_1h_pct": -0.4429,
+          "change_24h_pct": 0.1586,
+          "change_5d_pct": 0.5992,
+          "critical": true,
+          "family": "COMMODITY",
+          "label": "Copper",
+          "latest": 6.631499767303467,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "HG=F"
+        },
+        "GOLD": {
+          "change_1h_pct": -1.2128,
+          "change_24h_pct": -2.3964,
+          "change_5d_pct": -3.5521,
+          "critical": false,
+          "family": "COMMODITY",
+          "label": "Gold",
+          "latest": 4097.2998046875,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "GC=F"
+        },
+        "WTI": {
+          "change_1h_pct": 0.3785,
+          "change_24h_pct": 3.4776,
+          "change_5d_pct": 0.963,
+          "critical": true,
+          "family": "COMMODITY",
+          "label": "WTI Crude Oil",
+          "latest": 90.16000366210938,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "CL=F"
+        },
+        "BTC": {
+          "change_1h_pct": -0.3351,
+          "change_24h_pct": -3.2076,
+          "change_5d_pct": -3.8961,
+          "critical": false,
+          "family": "CRYPTO_RISK",
+          "label": "Bitcoin",
+          "latest": 83429.046875,
+          "latest_at": "2026-10-07T12:00:00+00:00",
+          "provider": "yfinance_public_market",
+          "status": "OK",
+          "symbol": "BTC-USD"
+        }
+      },
+      "global_context": [],
+      "authority": "RESEARCH_ONLY",
+      "formal_action_eligible": false,
+      "formal_action_mutation_allowed": false,
+      "automatic_promotion_allowed": false,
+      "no_auto_trade": true
+    },
+    "global_transmission": [
+      {
+        "authority": "RESEARCH_ONLY",
+        "code": "603993",
+        "factors": [
+          {
+            "change_24h_pct": 0.1586,
+            "direction": "FAVORABLE",
+            "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+            "factor_id": "COPPER",
+            "material": false
+          },
+          {
+            "change_24h_pct": -2.3964,
+            "direction": "ADVERSE",
+            "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+            "factor_id": "GOLD",
+            "material": true
+          }
+        ],
+        "formal_action_mutation_allowed": false,
+        "name": "洛阳钼业",
+        "no_auto_trade": true,
+        "signal": "ADVERSE",
+        "formal_action_eligible": false,
+        "automatic_promotion_allowed": false
+      },
+      {
+        "authority": "RESEARCH_ONLY",
+        "code": "601899",
+        "factors": [
+          {
+            "change_24h_pct": 0.1586,
+            "direction": "FAVORABLE",
+            "evidence_ref": "https://www.zijinmining.com/about/about_us.htm",
+            "factor_id": "COPPER",
+            "material": false
+          },
+          {
+            "change_24h_pct": -2.3964,
+            "direction": "ADVERSE",
+            "evidence_ref": "https://www.zijinmining.com/about/about_us.htm",
+            "factor_id": "GOLD",
+            "material": true
+          }
+        ],
+        "formal_action_mutation_allowed": false,
+        "name": "",
+        "no_auto_trade": true,
+        "signal": "ADVERSE",
+        "formal_action_eligible": false,
+        "automatic_promotion_allowed": false
+      },
+      {
+        "authority": "RESEARCH_ONLY",
+        "code": "601168",
+        "factors": [
+          {
+            "change_24h_pct": 0.1586,
+            "direction": "FAVORABLE",
+            "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf",
+            "factor_id": "COPPER",
+            "material": false
+          }
+        ],
+        "formal_action_mutation_allowed": false,
+        "name": "",
+        "no_auto_trade": true,
+        "signal": "NEUTRAL",
+        "formal_action_eligible": false,
+        "automatic_promotion_allowed": false
+      },
+      {
+        "authority": "RESEARCH_ONLY",
+        "code": "601020",
+        "factors": [
+          {
+            "change_24h_pct": -2.3964,
+            "direction": "ADVERSE",
+            "evidence_ref": "https://www.huayumining.com/",
+            "factor_id": "GOLD",
+            "material": true
+          }
+        ],
+        "formal_action_mutation_allowed": false,
+        "name": "",
+        "no_auto_trade": true,
+        "signal": "ADVERSE",
+        "formal_action_eligible": false,
+        "automatic_promotion_allowed": false
+      }
+    ],
+    "pre_open_intelligence": {
+      "status": "UNAVAILABLE",
+      "reason": "PRE_OPEN_NOT_AVAILABLE_IN_SOURCE_CONTRACT",
+      "holiday_gap_risk": "UNKNOWN",
+      "holiday_positive_accumulation": "UNKNOWN",
+      "next_a_share_open_watch": [],
+      "authority": "RESEARCH_ONLY",
+      "formal_action_eligible": false,
+      "automatic_promotion_allowed": false,
+      "no_auto_trade": true
+    }
   },
   "pillar_3_deep_opportunities": {
     "question": "除了持仓，还有哪些润贝型或其他机会已经深算到能指导行动？",
@@ -3113,7 +3467,33 @@
           "research_buy_price_ceiling": 18.05457163020466
         },
         "investor_action": "暂不投入新增资金；等待补齐：predictability",
-        "account_action": "WATCH_OR_BLOCK"
+        "account_action": "WATCH_OR_BLOCK",
+        "global_market_impact": {
+          "authority": "RESEARCH_ONLY",
+          "code": "603993",
+          "factors": [
+            {
+              "change_24h_pct": 0.1586,
+              "direction": "FAVORABLE",
+              "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+              "factor_id": "COPPER",
+              "material": false
+            },
+            {
+              "change_24h_pct": -2.3964,
+              "direction": "ADVERSE",
+              "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+              "factor_id": "GOLD",
+              "material": true
+            }
+          ],
+          "formal_action_mutation_allowed": false,
+          "name": "洛阳钼业",
+          "no_auto_trade": true,
+          "signal": "ADVERSE",
+          "formal_action_eligible": false,
+          "automatic_promotion_allowed": false
+        }
       },
       {
         "capital_allocation": {
@@ -3788,7 +4168,33 @@
           "research_buy_price_ceiling": 18.05457163020466
         },
         "investor_action": "暂不投入新增资金；等待补齐：predictability",
-        "account_action": "WATCH_OR_BLOCK"
+        "account_action": "WATCH_OR_BLOCK",
+        "global_market_impact": {
+          "authority": "RESEARCH_ONLY",
+          "code": "603993",
+          "factors": [
+            {
+              "change_24h_pct": 0.1586,
+              "direction": "FAVORABLE",
+              "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+              "factor_id": "COPPER",
+              "material": false
+            },
+            {
+              "change_24h_pct": -2.3964,
+              "direction": "ADVERSE",
+              "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
+              "factor_id": "GOLD",
+              "material": true
+            }
+          ],
+          "formal_action_mutation_allowed": false,
+          "name": "洛阳钼业",
+          "no_auto_trade": true,
+          "signal": "ADVERSE",
+          "formal_action_eligible": false,
+          "automatic_promotion_allowed": false
+        }
       },
       {
         "capital_allocation": {
@@ -4541,7 +4947,10 @@
     "terminal_research_snapshot_available": true,
     "terminal_research_current_for_deep_runtime": true,
     "terminal_research_all_requested_terminal": true,
-    "deep_qualified_research_leads_current": false
+    "deep_qualified_research_leads_current": false,
+    "global_market_pulse_available": true,
+    "pre_open_intelligence_available": false,
+    "global_market_pulse_formal_authority_granted": false
   },
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
