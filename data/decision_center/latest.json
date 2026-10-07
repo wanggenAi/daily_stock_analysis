@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-07T15:37:15+00:00",
+  "generated_at": "2026-10-07T15:39:56+00:00",
   "latest_trade_date": "2026-09-30",
   "canonical_snapshot_id": "64d8f9e56ff8db34d4cf",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -3450,7 +3450,7 @@
     "jev_entry_judgments": [],
     "jev_entry_judgment_count": 0,
     "jev_entry_now_count": 0,
-    "jev_entry_judgment_source_run_id": "37631761866",
+    "jev_entry_judgment_source_run_id": "37645015257",
     "jev_entry_judgment_stale_row_count": 25,
     "jev_entry_judgment_invalid_row_count": 0,
     "jev_entry_judgment_status": "EMPTY_CURRENT",
@@ -3626,13 +3626,13 @@
     "gap_closure_attempt_count": 2,
     "new_evidence_count": 30,
     "progressed_gate_count": 4,
-    "hard_gate_count": 0,
-    "pass_gate_count": 0,
-    "fail_gate_count": 0,
-    "verified_pass_gate_count": 0,
+    "hard_gate_count": 2500,
+    "pass_gate_count": 219,
+    "fail_gate_count": 2,
+    "verified_pass_gate_count": 219,
     "unverified_pass_gate_count": 0,
-    "provenance_audit_complete": false,
-    "provenance_audit_run_id": "",
+    "provenance_audit_complete": true,
+    "provenance_audit_run_id": "37645294432",
     "material_event_failed_gate_count": 0,
     "historical_material_event_evidence_count": 0,
     "historical_material_event_failed_gate_count": 0,
@@ -3916,12 +3916,12 @@
       {
         "capability": "Deep 五类硬门槛 + 官方证据",
         "status": "ACTIVE",
-        "result": "requested=11 / verified-pass=0 / unresolved=43"
+        "result": "requested=11 / verified-pass=219 / unresolved=43"
       },
       {
         "capability": "Deep Provenance 证据审计",
-        "status": "PARTIAL",
-        "result": "audit=False / run=— / unverified-pass=0"
+        "status": "ACTIVE",
+        "result": "audit=True / run=37645294432 / unverified-pass=0"
       },
       {
         "capability": "世界 / 社会 / 资本趋势雷达",
@@ -3974,7 +3974,7 @@
           "predictability"
         ],
         "formal_action_unchanged": "HOLD",
-        "existing_add_allowance_consumed": true,
+        "existing_add_allowance_consumed": false,
         "market_state": "YELLOW",
         "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
         "reason": "PRICE_BELOW_MODELED_LOWER_VALUE_BOUND",
@@ -3996,7 +3996,6 @@
         },
         "blockers": [
           "NO_CURRENT_FORMAL_HOLDING_ADD",
-          "PRIOR_ADD_ALLOWANCE_CONSUMED",
           "DEEP_GATES_NOT_ALL_PASS",
           "BROKER_CASH_UNVERIFIED_LIVE",
           "EXECUTION_QUOTE_NOT_LIVE"
