@@ -1,18 +1,18 @@
 {
   "automatic_promotion_allowed": false,
   "benchmark_count": 5,
-  "benchmark_failed_count": 0,
+  "benchmark_failed_count": 5,
   "benchmark_ok_count": 0,
   "configured_security_exposure_count": 5,
-  "contract_version": "GEN_GE_COMMODITY_PRICE_EVIDENCE_V1",
+  "contract_version": "GEN_GE_COMMODITY_PRICE_EVIDENCE_V2",
   "emitted_security_event_count": 0,
   "formal_action_eligible": false,
-  "generated_at": "2026-10-07T07:11:42.021010+00:00",
+  "generated_at": "2026-10-07T13:41:22.267443+00:00",
   "latest_market_date": null,
   "mapped_workset_security_count": 1,
   "mapping_status": "MAPPED",
   "no_auto_trade": true,
-  "provider": "stooq_public_daily",
+  "provider": "stooq_primary_with_yfinance_fallback",
   "series": {
     "COPPER": {
       "change_1d_pct": null,
@@ -20,7 +20,12 @@
       "label": "Copper",
       "latest_close": null,
       "latest_date": null,
-      "provider": "stooq_public_daily",
+      "observed_at": "2026-10-07T13:41:22.267443+00:00",
+      "provider": "yfinance_public_daily_fallback",
+      "source_errors": [
+        "STOOQ_URLError",
+        "YFINANCE_ModuleNotFoundError"
+      ],
       "status": "INSUFFICIENT_SERIES",
       "symbol": "hg.f"
     },
@@ -30,7 +35,12 @@
       "label": "Crude Oil",
       "latest_close": null,
       "latest_date": null,
-      "provider": "stooq_public_daily",
+      "observed_at": "2026-10-07T13:41:22.267443+00:00",
+      "provider": "yfinance_public_daily_fallback",
+      "source_errors": [
+        "STOOQ_URLError",
+        "YFINANCE_ModuleNotFoundError"
+      ],
       "status": "INSUFFICIENT_SERIES",
       "symbol": "cl.f"
     },
@@ -40,7 +50,12 @@
       "label": "Gold",
       "latest_close": null,
       "latest_date": null,
-      "provider": "stooq_public_daily",
+      "observed_at": "2026-10-07T13:41:22.267443+00:00",
+      "provider": "yfinance_public_daily_fallback",
+      "source_errors": [
+        "STOOQ_URLError",
+        "YFINANCE_ModuleNotFoundError"
+      ],
       "status": "INSUFFICIENT_SERIES",
       "symbol": "gc.f"
     },
@@ -50,7 +65,12 @@
       "label": "Natural Gas",
       "latest_close": null,
       "latest_date": null,
-      "provider": "stooq_public_daily",
+      "observed_at": "2026-10-07T13:41:22.267443+00:00",
+      "provider": "yfinance_public_daily_fallback",
+      "source_errors": [
+        "STOOQ_URLError",
+        "YFINANCE_ModuleNotFoundError"
+      ],
       "status": "INSUFFICIENT_SERIES",
       "symbol": "ng.f"
     },
@@ -60,10 +80,15 @@
       "label": "Silver",
       "latest_close": null,
       "latest_date": null,
-      "provider": "stooq_public_daily",
+      "observed_at": "2026-10-07T13:41:22.267443+00:00",
+      "provider": "yfinance_public_daily_fallback",
+      "source_errors": [
+        "STOOQ_URLError",
+        "YFINANCE_ModuleNotFoundError"
+      ],
       "status": "INSUFFICIENT_SERIES",
       "symbol": "si.f"
     }
   },
-  "status": "NO_SERIES"
+  "status": "UNAVAILABLE"
 }
