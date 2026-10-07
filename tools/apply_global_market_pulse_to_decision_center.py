@@ -3,7 +3,9 @@
 
 This is deliberately a post-composition enrichment step. It cannot recompute or
 mutate Canonical/Formal actions, valuation anchors, quantities, or orders.
-Malformed/unsafe global pulse input is rejected rather than promoted.
+Malformed/unsafe global pulse input is rejected rather than promoted. Legacy V1
+artifacts are accepted only through a fail-closed normalization path so a merge
+race cannot break production while V2 is being published.
 """
 from __future__ import annotations
 
@@ -57,12 +59,69 @@ def _pulse_is_safe(pulse: Mapping[str, Any]) -> tuple[bool, str]:
     return True, "SAFE"
 
 
+def _fail_closed_pre_open(reason: str) -> dict[str, Any]:
+    return {
+        "status": "UNAVAILABLE",
+        "reason": reason,
+        "holiday_gap_risk": "UNKNOWN",
+        "holiday_positive_accumulation": "UNKNOWN",
+        "next_a_share_open_watch": [],
+        "authority": "RESEARCH_ONLY",
+        "formal_action_eligible": False,
+        "automatic_promotion_allowed": False,
+        "no_auto_trade": True,
+    }
+
+
+def _normalize_pre_open(raw: Any) -> dict[str, Any]:
+    if not isinstance(raw, Mapping) or not raw:
+        return _fail_closed_pre_open("PRE_OPEN_NOT_AVAILABLE_IN_SOURCE_CONTRACT")
+    if raw.get("authority") not in (None, "RESEARCH_ONLY"):
+        return _fail_closed_pre_open("PRE_OPEN_AUTHORITY_REJECTED")
+    if raw.get("formal_action_eligible") not in (None, False):
+        return _fail_closed_pre_open("PRE_OPEN_FORMAL_AUTHORITY_REJECTED")
+    if raw.get("automatic_promotion_allowed") not in (None, False):
+        return _fail_closed_pre_open("PRE_OPEN_AUTOMATIC_PROMOTION_REJECTED")
+    if raw.get("no_auto_trade") not in (None, True):
+        return _fail_closed_pre_open("PRE_OPEN_AUTO_TRADE_GUARD_REJECTED")
+    result = deepcopy(dict(raw))
+    result["authority"] = "RESEARCH_ONLY"
+    result["formal_action_eligible"] = False
+    result["automatic_promotion_allowed"] = False
+    result["no_auto_trade"] = True
+    return result
+
+
+def _normalize_transmission(raw_rows: Any) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for raw in raw_rows or []:
+        if not isinstance(raw, Mapping):
+            continue
+        if raw.get("authority") != "RESEARCH_ONLY":
+            continue
+        if raw.get("formal_action_mutation_allowed") is not False:
+            continue
+        if raw.get("formal_action_eligible") not in (None, False):
+            continue
+        if raw.get("automatic_promotion_allowed") not in (None, False):
+            continue
+        if raw.get("no_auto_trade") is not True:
+            continue
+        row = deepcopy(dict(raw))
+        row["formal_action_eligible"] = False
+        row["formal_action_mutation_allowed"] = False
+        row["automatic_promotion_allowed"] = False
+        row["no_auto_trade"] = True
+        rows.append(row)
+    return rows
+
+
 def _key_factor_view(series: Mapping[str, Any]) -> dict[str, Any]:
     keys = (
         "SP500", "NASDAQ", "NASDAQ100", "SOX", "VIX", "US10Y", "US2Y",
         "CURVE_2S10S", "DXY", "USDCNH", "HANGSENG", "HANGSENGTECH",
         "NIKKEI225", "DAX", "EUROSTOXX50", "COPPER", "GOLD", "SILVER",
-        "CRUDE_OIL", "NATURAL_GAS", "BTC", "ETH",
+        "CRUDE_OIL", "WTI", "NATURAL_GAS", "BTC", "ETH",
     )
     return {key: deepcopy(series[key]) for key in keys if key in series}
 
@@ -85,19 +144,22 @@ def apply_global_pulse(
             "reason": reason,
             "authority": "RESEARCH_ONLY",
             "formal_action_eligible": False,
+            "formal_action_mutation_allowed": False,
+            "automatic_promotion_allowed": False,
             "no_auto_trade": True,
         }
         pillar2["global_transmission"] = []
-        pillar2["pre_open_intelligence"] = {"status": "UNAVAILABLE", "reason": reason}
+        pillar2["pre_open_intelligence"] = _fail_closed_pre_open(reason)
         readiness["global_market_pulse_available"] = False
         readiness["pre_open_intelligence_available"] = False
+        readiness["global_market_pulse_formal_authority_granted"] = False
         summary["global_market_pulse_status"] = "REJECTED_FAIL_CLOSED"
         return payload
 
     coverage = deepcopy(dict(pulse.get("coverage") or {}))
     risk_regime = deepcopy(dict(pulse.get("risk_regime") or {}))
-    pre_open = deepcopy(dict(pulse.get("pre_open_intelligence") or {}))
-    transmission = [deepcopy(dict(row)) for row in (pulse.get("security_transmission") or []) if isinstance(row, Mapping)]
+    pre_open = _normalize_pre_open(pulse.get("pre_open_intelligence"))
+    transmission = _normalize_transmission(pulse.get("security_transmission"))
     pillar2["global_market_pulse"] = {
         "status": coverage.get("status") or "UNAVAILABLE",
         "contract_version": pulse.get("contract_version"),
@@ -184,7 +246,7 @@ def render_global_section(payload: Mapping[str, Any]) -> str:
         "### A股休市以来关键外部变化",
         "",
     ]
-    for key in ("SP500", "NASDAQ", "SOX", "VIX", "US10Y", "DXY", "USDCNH", "HANGSENG", "COPPER", "GOLD", "CRUDE_OIL", "BTC"):
+    for key in ("SP500", "NASDAQ", "SOX", "VIX", "US10Y", "DXY", "USDCNH", "HANGSENG", "COPPER", "GOLD", "CRUDE_OIL", "WTI", "BTC"):
         row = factors.get(key)
         if not isinstance(row, Mapping):
             continue
@@ -201,8 +263,8 @@ def render_global_section(payload: Mapping[str, Any]) -> str:
                 for factor in row.get("factors") or []
             ) or "无可用因子"
             lines.append(
-                f"- **{row.get('code')} {row.get('name') or ''}**：**{row.get('direction')} / {row.get('magnitude')}**；"
-                f"{factors_text}；研究动作：**{row.get('research_implication')}**。"
+                f"- **{row.get('code')} {row.get('name') or ''}**：**{row.get('direction') or row.get('signal') or 'UNKNOWN'} / {row.get('magnitude') or 'UNKNOWN'}**；"
+                f"{factors_text}；研究动作：**{row.get('research_implication') or 'MONITOR_EXTERNAL_CONTEXT'}**。"
             )
     else:
         lines.append("- 当前没有证据支持的逐股全球传导；禁止凭行业名称自行套用商品影响。")
@@ -213,6 +275,8 @@ def render_global_section(payload: Mapping[str, Any]) -> str:
         lines.append(f"- Gap risk flags：{', '.join(pre.get('holiday_gap_risk_flags') or [])}。")
     if pre.get("holiday_positive_flags"):
         lines.append(f"- Positive accumulation flags：{', '.join(pre.get('holiday_positive_flags') or [])}。")
+    if not (pre.get("next_a_share_open_watch") or []):
+        lines.append("- Pre-open V2 累计信息尚未可用；等待下一次 Global Pulse 刷新，不用旧数据冒充复市判断。")
     lines.extend(["", "> 全球市场层只能强化/弱化研究和触发重算；Canonical/Formal authority 保持原样，no_auto_trade=true。", ""])
     return "\n".join(lines)
 
@@ -220,8 +284,8 @@ def render_global_section(payload: Mapping[str, Any]) -> str:
 def replace_or_append_section(markdown: str, section: str) -> str:
     if SECTION_MARKER not in markdown:
         return markdown.rstrip() + "\n\n" + section.rstrip() + "\n"
-    before, remainder = markdown.split(SECTION_MARKER, 1)
-    # This section is always appended by this tool, so replacing from marker to EOF is deterministic.
+    before, _remainder = markdown.split(SECTION_MARKER, 1)
+    # This section is always appended by this tool, so replacing marker->EOF is deterministic.
     return before.rstrip() + "\n\n" + section.rstrip() + "\n"
 
 
