@@ -17,7 +17,7 @@
 
 100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
 
-- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：MARKET_OR_CANONICAL_EPOCH_UNVERIFIED, MARKET_NEW_BUY_DISABLED, NO_CURRENT_FORMAL_HOLDING_ADD, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：MARKET_OR_CANONICAL_EPOCH_UNVERIFIED, MARKET_NEW_BUY_DISABLED, NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
 
 ### 每只持仓的决策链
 
@@ -69,7 +69,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥0.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**CLOSED**；行情状态：**OFF_SESSION**。
+- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
