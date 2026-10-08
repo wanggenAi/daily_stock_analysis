@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-08T14:12:56+00:00",
+  "generated_at": "2026-10-08T15:44:24+00:00",
   "latest_trade_date": "2026-09-30",
   "canonical_snapshot_id": "faedd7f5d18a59adaaec",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -469,20 +469,22 @@
     "research_as_of": "2026-10-08T13:45:51Z",
     "direct_fund_flow_claimed": false,
     "a_share_market_snapshot": {
-      "as_of_date": "2026-09-30",
-      "status": "YELLOW",
+      "as_of_date": "2026-10-08",
+      "status": "RED",
       "data_quality": "OK",
       "allow_new_buy": false,
-      "score": 49.87,
-      "position_multiplier": 0.5,
-      "advance_ratio": 0.4679,
-      "median_return_1d_pct": -0.0806,
-      "above_ma20_ratio": 0.3314,
-      "above_ma60_ratio": 0.4922,
-      "distribution_ratio": 0.0274,
-      "limit_up_count": 53,
-      "limit_down_count": 9,
-      "risk_reasons": []
+      "score": 29.22,
+      "position_multiplier": 0.0,
+      "advance_ratio": 0.3097,
+      "median_return_1d_pct": -1.0466,
+      "above_ma20_ratio": 0.3039,
+      "above_ma60_ratio": 0.445,
+      "distribution_ratio": 0.0741,
+      "limit_up_count": 42,
+      "limit_down_count": 16,
+      "risk_reasons": [
+        "external_market_risk_medium"
+      ]
     },
     "structural_world_social_trends": [
       {
@@ -729,44 +731,44 @@
     ],
     "tactical_market_behavior_proxy": [
       {
-        "industry": "M73研究和试验发展",
+        "industry": "O81机动车、电子产品和日用产品修理业",
         "status": "STRONG",
-        "score": 95.46
+        "score": 100.0
       },
       {
-        "industry": "M75科技推广和应用服务业",
+        "industry": "B07石油和天然气开采业",
         "status": "STRONG",
-        "score": 87.5
+        "score": 89.34
+      },
+      {
+        "industry": "D45燃气生产和供应业",
+        "status": "STRONG",
+        "score": 82.95
       },
       {
         "industry": "J66货币金融服务",
         "status": "STRONG",
-        "score": 82.77
+        "score": 79.99
       },
       {
-        "industry": "C27医药制造业",
+        "industry": "G55水上运输业",
         "status": "STRONG",
-        "score": 79.66
+        "score": 78.28
       },
       {
-        "industry": "A02林业",
+        "industry": "B06煤炭开采和洗选业",
         "status": "STRONG",
-        "score": 76.79
+        "score": 76.78
       },
       {
-        "industry": "G56航空运输业",
+        "industry": "G58多式联运和运输代理业",
         "status": "STRONG",
         "score": 75.67
       },
       {
-        "industry": "Q84卫生",
+        "industry": "D44电力、热力生产和供应业",
         "status": "STRONG",
-        "score": 74.41
-      },
-      {
-        "industry": "A05农、林、牧、渔专业及辅助性活动",
-        "status": "STRONG",
-        "score": 73.88
+        "score": 71.41
       }
     ],
     "validated_a_share_research_handoffs": [],
@@ -6495,7 +6497,7 @@
       {
         "capability": "市场大趋势 / 全A脉搏",
         "status": "ACTIVE",
-        "result": "YELLOW / score=49.87 / 2026-09-30"
+        "result": "RED / score=29.22 / 2026-10-08"
       },
       {
         "capability": "持仓 + 估值 + Formal Action",
@@ -6573,8 +6575,8 @@
           "predictability"
         ],
         "formal_action_unchanged": "HOLD",
-        "existing_add_allowance_consumed": true,
-        "market_state": "YELLOW",
+        "existing_add_allowance_consumed": false,
+        "market_state": "RED",
         "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
         "reason": "PRICE_BELOW_MODELED_LOWER_VALUE_BOUND",
         "non_authorized_scenario": {
@@ -6597,7 +6599,6 @@
           "MARKET_OR_CANONICAL_EPOCH_UNVERIFIED",
           "MARKET_NEW_BUY_DISABLED",
           "NO_CURRENT_FORMAL_HOLDING_ADD",
-          "PRIOR_ADD_ALLOWANCE_CONSUMED",
           "DEEP_GATES_NOT_ALL_PASS",
           "BROKER_CASH_UNVERIFIED_LIVE",
           "EXECUTION_QUOTE_NOT_LIVE"
