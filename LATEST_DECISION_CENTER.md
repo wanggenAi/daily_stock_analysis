@@ -173,24 +173,24 @@ O81机动车、电子产品和日用产品修理业(100.00)、B07石油和天然
 
 ## 全球市场脉搏 / 复市前情报
 
-- Global Pulse：**OK**；全球风险状态：**RISK_OFF**；A股最近有效交易日：**2026-10-08**。
+- Global Pulse：**OK**；全球风险状态：**NEUTRAL**；A股最近有效交易日：**2026-10-08**。
 - 休市累计外部缺口风险：**NORMAL**；正向累积：**NONE_IDENTIFIED**。
 - 以下均为研究上下文，不产生 Formal BUY/SELL，不自动交易。
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 -0.73%；最近1日 -0.76%；5日 +0.26%；market_date=2026-10-08；freshness=FRESH。
-- **NASDAQ**：休市以来 -1.52%；最近1日 -1.47%；5日 -0.26%；market_date=2026-10-08；freshness=FRESH。
-- **SOX**：休市以来 -3.59%；最近1日 -3.31%；5日 -4.12%；market_date=2026-10-08；freshness=FRESH。
-- **VIX**：休市以来 +1.47%；最近1日 +4.88%；5日 +3.79%；market_date=2026-10-08；freshness=FRESH。
-- **US10Y**：休市以来 -0.83%；最近1日 -1.00%；5日 -0.83%；market_date=2026-10-08；freshness=FRESH。
-- **DXY**：休市以来 -0.21%；最近1日 -0.16%；5日 +0.15%；market_date=2026-10-08；freshness=FRESH。
-- **USDCNH**：休市以来 +0.01%；最近1日 +0.03%；5日 -0.01%；market_date=2026-10-08；freshness=FRESH。
+- **SP500**：休市以来 -0.44%；最近1日 -0.44%；5日 +0.55%；market_date=2026-10-08；freshness=FRESH。
+- **NASDAQ**：休市以来 -1.23%；最近1日 -1.23%；5日 +0.03%；market_date=2026-10-08；freshness=FRESH。
+- **SOX**：休市以来 -3.36%；最近1日 -3.36%；5日 -3.89%；market_date=2026-10-08；freshness=FRESH。
+- **VIX**：休市以来 -1.53%；最近1日 +2.25%；5日 +0.72%；market_date=2026-10-08；freshness=FRESH。
+- **US10Y**：休市以来 -0.87%；最近1日 -0.87%；5日 -0.87%；market_date=2026-10-08；freshness=FRESH。
+- **DXY**：休市以来 -0.18%；最近1日 -0.13%；5日 +0.19%；market_date=2026-10-08；freshness=FRESH。
+- **USDCNH**：休市以来 +0.00%；最近1日 +0.02%；5日 -0.02%；market_date=2026-10-08；freshness=FRESH。
 - **HANGSENG**：休市以来 -0.10%；最近1日 -1.43%；5日 -0.78%；market_date=2026-10-08；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +0.00%；最近1日 -0.44%；5日 +1.32%；market_date=2026-10-08；freshness=FRESH。
-- **GOLD**：休市以来 +0.00%；最近1日 +0.35%；5日 -1.12%；market_date=2026-10-08；freshness=FRESH。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +3.78%；5日 -1.35%；market_date=2026-10-08；freshness=FRESH。
-- **BTC**：休市以来 -2.82%；最近1日 -3.02%；5日 -5.16%；market_date=2026-10-08；freshness=FRESH。
+- **COPPER**：休市以来 +0.00%；最近1日 -0.49%；5日 +1.27%；market_date=2026-10-08；freshness=FRESH。
+- **GOLD**：休市以来 +0.00%；最近1日 +0.62%；5日 -0.85%；market_date=2026-10-08；freshness=FRESH。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +3.15%；5日 -1.95%；market_date=2026-10-08；freshness=FRESH。
+- **BTC**：休市以来 -1.39%；最近1日 -1.79%；5日 -3.49%；market_date=2026-10-08；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
