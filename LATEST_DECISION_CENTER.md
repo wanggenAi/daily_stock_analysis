@@ -173,36 +173,35 @@ O81机动车、电子产品和日用产品修理业(100.00)、B07石油和天然
 
 ## 全球市场脉搏 / 复市前情报
 
-- Global Pulse：**OK**；全球风险状态：**NEUTRAL**；A股最近有效交易日：**2026-09-30**。
-- 休市累计外部缺口风险：**NORMAL**；正向累积：**MATERIAL**。
+- Global Pulse：**OK**；全球风险状态：**RISK_OFF**；A股最近有效交易日：**2026-10-08**。
+- 休市累计外部缺口风险：**NORMAL**；正向累积：**NONE_IDENTIFIED**。
 - 以下均为研究上下文，不产生 Formal BUY/SELL，不自动交易。
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 +1.67%；最近1日 -0.25%；5日 +0.99%；market_date=2026-10-07；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **NASDAQ**：休市以来 +2.73%；最近1日 -0.25%；5日 +1.28%；market_date=2026-10-07；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **SOX**：休市以来 +3.45%；最近1日 -1.17%；5日 -0.54%；market_date=2026-10-07；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **VIX**：休市以来 -0.88%；最近1日 +0.19%；5日 +2.68%；market_date=2026-10-08；freshness=FRESH。
-- **US10Y**：休市以来 +0.42%；最近1日 +0.15%；5日 +0.00%；market_date=2026-10-07；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **DXY**：休市以来 +1.11%；最近1日 +0.09%；5日 +0.48%；market_date=2026-10-08；freshness=FRESH。
-- **USDCNH**：休市以来 -0.04%；最近1日 -0.05%；5日 -0.00%；market_date=2026-10-08；freshness=FRESH。
-- **HANGSENG**：休市以来 -3.33%；最近1日 -1.43%；5日 -0.78%；market_date=2026-10-08；freshness=FRESH。
-- **COPPER**：休市以来 +1.46%；最近1日 +0.89%；5日 +2.67%；market_date=2026-10-08；freshness=FRESH。
-- **GOLD**：休市以来 -0.97%；最近1日 +0.13%；5日 -1.34%；market_date=2026-10-08；freshness=FRESH。
-- **CRUDE_OIL**：休市以来 +1.71%；最近1日 +4.18%；5日 -0.97%；market_date=2026-10-08；freshness=FRESH。
-- **BTC**：休市以来 -0.64%；最近1日 -1.18%；5日 -2.23%；market_date=2026-10-08；freshness=FRESH。
+- **SP500**：休市以来 -0.73%；最近1日 -0.76%；5日 +0.26%；market_date=2026-10-08；freshness=FRESH。
+- **NASDAQ**：休市以来 -1.52%；最近1日 -1.47%；5日 -0.26%；market_date=2026-10-08；freshness=FRESH。
+- **SOX**：休市以来 -3.59%；最近1日 -3.31%；5日 -4.12%；market_date=2026-10-08；freshness=FRESH。
+- **VIX**：休市以来 +1.47%；最近1日 +4.88%；5日 +3.79%；market_date=2026-10-08；freshness=FRESH。
+- **US10Y**：休市以来 -0.83%；最近1日 -1.00%；5日 -0.83%；market_date=2026-10-08；freshness=FRESH。
+- **DXY**：休市以来 -0.21%；最近1日 -0.16%；5日 +0.15%；market_date=2026-10-08；freshness=FRESH。
+- **USDCNH**：休市以来 +0.01%；最近1日 +0.03%；5日 -0.01%；market_date=2026-10-08；freshness=FRESH。
+- **HANGSENG**：休市以来 -0.10%；最近1日 -1.43%；5日 -0.78%；market_date=2026-10-08；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **COPPER**：休市以来 +0.00%；最近1日 -0.44%；5日 +1.32%；market_date=2026-10-08；freshness=FRESH。
+- **GOLD**：休市以来 +0.00%；最近1日 +0.35%；5日 -1.12%；market_date=2026-10-08；freshness=FRESH。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +3.78%；5日 -1.35%；market_date=2026-10-08；freshness=FRESH。
+- **BTC**：休市以来 -2.82%；最近1日 -3.02%；5日 -5.16%；market_date=2026-10-08；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
-- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+1.46%(NEUTRAL)、GOLD休市以来-0.97%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+1.46%(NEUTRAL)、GOLD休市以来-0.97%(NEUTRAL)、SILVER休市以来-1.72%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+1.46%(NEUTRAL)、SILVER休市以来-1.72%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601020 **：**NEUTRAL / LOW**；GOLD休市以来-0.97%(NEUTRAL)、SILVER休市以来-1.72%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **000426 **：**NEUTRAL / LOW**；SILVER休市以来-1.72%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、GOLD休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、GOLD休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601020 **：**NEUTRAL / LOW**；GOLD休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **000426 **：**NEUTRAL / LOW**；SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
 
 ### 下一次A股开盘最该盯什么
 
-- Prioritize semiconductor/AI candidates for research refresh; do not substitute index strength for company evidence.
-- Positive accumulation flags：GLOBAL_SEMICONDUCTOR_RISK_ON。
+- No material holiday gap signal; use global pulse as context and keep company-level gates authoritative.
 
 > 全球市场层只能强化/弱化研究和触发重算；Canonical/Formal authority 保持原样，no_auto_trade=true。
