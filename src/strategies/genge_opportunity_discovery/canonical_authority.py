@@ -8,6 +8,7 @@ from typing import Any, Mapping
 
 from . import canonical_authority_core as _core
 from .canonical_authority_core import *  # noqa: F401,F403
+from .canonical_promotion_window import assert_canonical_promotion_window_open
 from .generation_freshness import evaluate_generation_freshness
 
 _ORIGINAL_VALIDATE = _core.validate_authority
@@ -86,6 +87,12 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--finalizer-run-id", required=True)
     parser.add_argument("--finalizer-code-sha", required=True)
     args = parser.parse_args(argv)
+
+    # Production CLI is the formal promotion boundary. Research workflows may
+    # finish before/during an A-share session, but they must not overwrite the
+    # formal canonical until that session has crossed the settlement boundary.
+    promotion_window = assert_canonical_promotion_window_open()
+
     outputs = finalize_canonical(
         args.snapshot,
         args.output_dir,
@@ -95,6 +102,11 @@ def main(argv: list[str] | None = None) -> int:
         source_head_sha=args.source_head_sha,
         finalizer_run_id=args.finalizer_run_id,
         finalizer_code_sha=args.finalizer_code_sha,
+    )
+    authority = json.loads(outputs["authority"].read_text(encoding="utf-8"))
+    authority["promotion_window_contract"] = promotion_window
+    outputs["authority"].write_text(
+        json.dumps(authority, ensure_ascii=False, indent=2), encoding="utf-8"
     )
     print(";".join(f"{name}={path}" for name, path in outputs.items()))
     return 0
