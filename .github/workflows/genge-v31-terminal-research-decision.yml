@@ -7,7 +7,9 @@ on:
     paths:
       - ".github/workflows/genge-v31-terminal-research-decision.yml"
       - "src/strategies/genge_opportunity_discovery/v31_terminal_research_decision.py"
+      - "src/strategies/genge_opportunity_discovery/v31_decision_closure.py"
       - "tests/test_v31_terminal_research_decision.py"
+      - "tests/test_v31_decision_closure.py"
   workflow_run:
     workflows:
       - "GenGe V3.1 Deep Calculation Lambda"
@@ -38,8 +40,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip --disable-pip-version-check
           python -m pip install -r .github/requirements-ci.txt
-      - name: Validate terminal research decision contract
-        run: python -m pytest -q tests/test_v31_terminal_research_decision.py
+      - name: Validate terminal research and reachable closure contracts
+        run: |
+          python -m pytest -q \
+            tests/test_v31_terminal_research_decision.py \
+            tests/test_v31_decision_closure.py
 
   production:
     if: >-
@@ -95,7 +100,7 @@ jobs:
           [ "${#files[@]}" -ge 1 ] || { echo 'valuation_research_queue.csv missing' >&2; exit 1; }
           printf 'VALUATION_CSV=%s\n' "${files[0]}" >> "$GITHUB_ENV"
 
-      - name: Converge every requested code to research BUY WAIT_PRICE RESEARCH_GAP or REJECT
+      - name: Converge every requested code to research terminal state and reachable closure
         run: |
           set -euo pipefail
           python -m src.strategies.genge_opportunity_discovery.v31_terminal_research_decision \
@@ -109,7 +114,18 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          p=json.loads(Path('reports/terminal_research/latest.json').read_text(encoding='utf-8'))
+          from src.strategies.genge_opportunity_discovery.v31_decision_closure import (
+              enrich_terminal_payload,
+              render_closure_markdown,
+          )
+
+          json_path = Path('reports/terminal_research/latest.json')
+          md_path = Path('reports/terminal_research/latest.md')
+          p = json.loads(json_path.read_text(encoding='utf-8'))
+          p = enrich_terminal_payload(p)
+          json_path.write_text(json.dumps(p, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          md_path.write_text(md_path.read_text(encoding='utf-8').rstrip() + '\n\n' + render_closure_markdown(p), encoding='utf-8')
+
           assert p['all_requested_terminal'] is True
           assert p['requested_count'] == sum(p['decision_counts'].values())
           assert set(p['decision_counts']) == {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}
@@ -121,9 +137,17 @@ jobs:
           assert p['capital_advisory_authority'] == 'ADVISORY_ONLY'
           assert p['capital_advisory_automatic_execution_allowed'] is False
           assert sum(p['capital_action_counts'].values()) == p['requested_count']
+          assert p['decision_ready_count'] + p['research_required_count'] == p['requested_count']
+          assert p['closure_policy']['formal_buy_requires_full_evidence'] is True
+          assert p['closure_policy']['unknown_is_pass'] is False
           for row in p['terminal_rows']:
               assert row['research_decision'] in {'BUY','WAIT_PRICE','RESEARCH_GAP','REJECT'}
               assert row['formal_buy_authorized'] is False
+              closure=row['deep_closure']
+              assert closure['closure_state'] in {'FULL_EVIDENCE','DECISION_READY_WITH_UNCERTAINTY','RESEARCH_REQUIRED','DECISIVE_REJECT'}
+              assert closure['unknown_is_pass'] is False
+              assert closure['formal_buy_authorized'] is False
+              assert closure['automatic_execution_allowed'] is False
               cap=row['capital_allocation']
               assert cap['action'] in {'BUILD','PROBE','WATCH','BLOCK'}
               assert cap['authority'] == 'ADVISORY_ONLY'
@@ -228,5 +252,5 @@ jobs:
         run: |
           echo '# GenGe V3.1 Terminal Research Decision' >> "$GITHUB_STEP_SUMMARY"
           if [ -f reports/terminal_research/latest.json ]; then
-            jq '{requested_count,decision_counts,urgent_research_count:(.urgent_research_queue|length),research_authority,unknown_is_pass,no_auto_trade}' reports/terminal_research/latest.json >> "$GITHUB_STEP_SUMMARY"
+            jq '{requested_count,decision_counts,decision_closure_counts,decision_ready_count,evidence_complete_count,bounded_uncertainty_ready_count,research_required_count,urgent_research_count:(.urgent_research_queue|length),research_authority,unknown_is_pass,no_auto_trade}' reports/terminal_research/latest.json >> "$GITHUB_STEP_SUMMARY"
           fi
