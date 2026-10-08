@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-08T09:08:21+00:00",
+  "generated_at": "2026-10-08T09:10:46+00:00",
   "latest_trade_date": "2026-09-30",
   "canonical_snapshot_id": "faedd7f5d18a59adaaec",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -1815,8 +1815,8 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-10-08T09:03:55+00:00",
-      "source_deep_lambda_run_id": "37753415143",
+      "generated_at": "2026-10-08T09:10:08+00:00",
+      "source_deep_lambda_run_id": "37754061603",
       "source_every_industry_run_id": "37738621800",
       "requested_count": 3,
       "decision_counts": {
@@ -2393,11 +2393,11 @@
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "37754061603",
+    "lambda_run_id": "37754364454",
     "lambda_run_attempt": "1",
-    "source_run_id": "37738621800",
-    "trigger_source": "JEV_ORCHESTRATOR_37753556263",
-    "generated_at": "2026-10-08T09:08:14+00:00",
+    "source_run_id": "37753210381",
+    "trigger_source": "JEV_ORCHESTRATOR_37753824418",
+    "generated_at": "2026-10-08T09:09:47+00:00",
     "run_state": "COMPLETED",
     "execution_status": "SUCCESS",
     "research_outcome": "EVIDENCE_EXHAUSTED",
@@ -2428,19 +2428,19 @@
       "000415": {
         "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
         "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "long_term_demand": "OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET",
         "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
         "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
       },
       "603416": {
         "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
         "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "long_term_demand": "OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET",
         "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
         "predictability": "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
       }
     },
-    "gap_closure_attempt_count": 2,
+    "gap_closure_attempt_count": 1,
     "new_evidence_count": 4,
     "progressed_gate_count": 0,
     "hard_gate_count": 0,
@@ -2466,12 +2466,12 @@
     "no_auto_trade": true,
     "interpretation": "execution_succeeded means compute finished; COMPLETE means all requested hard gates resolved; EVIDENCE_EXHAUSTED means bounded same-run recovery finished for materialized profiles while unresolved UNKNOWN gates remain; HANDOFF_INCOMPLETE means the run finished but one or more requested codes never entered the Deep profile workset.",
     "status_source": "TERMINAL_STATUS",
-    "last_terminal_run_id": "37754061603",
+    "last_terminal_run_id": "37754364454",
     "last_terminal_execution_status": "SUCCESS",
     "last_terminal_research_terminal_state": "EVIDENCE_EXHAUSTED"
   },
   "deep_review_profile_source": "AUTOMATIC_DEEP_CALCULATION",
-  "deep_review_profile_lambda_run_id": "37754061603",
+  "deep_review_profile_lambda_run_id": "37754364454",
   "deep_review_profile_current_for_runtime": true,
   "deep_review_profile_lineage_state": "CURRENT",
   "holding_valuation_continuity": {
