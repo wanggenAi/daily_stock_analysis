@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-08T02:21:54+00:00",
+  "generated_at": "2026-10-08T02:24:55+00:00",
   "latest_trade_date": "2026-09-30",
   "canonical_snapshot_id": "a95ea1a177fbee3f427e",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -36,12 +36,12 @@
     "research_reject_count": 0,
     "urgent_evidence_queue_count": 1,
     "research_capital_probe_count": 1,
-    "jev_entry_judgment_count": 0,
-    "jev_entry_now_count": 0,
+    "jev_entry_judgment_count": 2,
+    "jev_entry_now_count": 1,
     "deep_qualified_research_lead_count": 0,
     "holding_valuation_continuity_match_count": 4,
-    "active_candidate_lifecycle_count": 116,
-    "lifecycle_event_count": 13310,
+    "active_candidate_lifecycle_count": 115,
+    "lifecycle_event_count": 13311,
     "discounted_holding_watch_count": 1,
     "investor_action_report_complete": true,
     "investor_evidence_complete": false,
@@ -1813,7 +1813,7 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-10-08T02:20:49+00:00",
+      "generated_at": "2026-10-08T02:22:55+00:00",
       "source_deep_lambda_run_id": "37717040855",
       "source_every_industry_run_id": "37715355501",
       "requested_count": 2,
@@ -2727,13 +2727,98 @@
     "capital_advisory_automatic_execution_allowed": false,
     "research_actionable_count": 1,
     "research_terminal_current": true,
-    "jev_entry_judgments": [],
-    "jev_entry_judgment_count": 0,
-    "jev_entry_now_count": 0,
-    "jev_entry_judgment_source_run_id": "37716942379",
-    "jev_entry_judgment_stale_row_count": 25,
-    "jev_entry_judgment_invalid_row_count": 0,
-    "jev_entry_judgment_status": "EMPTY_CURRENT",
+    "jev_entry_judgments": [
+      {
+        "code": "603596",
+        "name": "伯特利",
+        "add_condition": "REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "deterministically_supported": true,
+        "do_not_chase_condition": "PRICE_ABOVE_42.2022_REQUIRES_REVALUATION",
+        "entry_price_zone_high": 42.2022,
+        "entry_price_zone_low": null,
+        "entry_reason": "JEV_ENTRY_NOW_PASSES_DETERMINISTIC_GUARDS",
+        "entry_trigger": "CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 1.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "ENTRY_NOW",
+        "judgment_confidence": 0.76,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.01,
+          "ENTRY_NOW": 0.8,
+          "INVALIDATED": 0.0,
+          "NO_JUDGMENT": 0.01,
+          "WAIT_EVIDENCE": 0.13,
+          "WAIT_PRICE": 0.05
+        },
+        "max_manual_position_pct": 3.0,
+        "no_auto_trade": true,
+        "reference_price": 28.14,
+        "reference_trade_date": "2026-09-30",
+        "source_lineage": {
+          "dashboard_snapshot_id": "a95ea1a177fbee3f427e",
+          "dashboard_source_run_id": "37663026246",
+          "deep_code_epoch_sha": "91d22369a7acb322fc6014b96de68f8a53d860d6",
+          "deep_lambda_run_id": "37717040855"
+        },
+        "validated_judgment": "ENTRY_NOW",
+        "validation_reason": "JEV_ENTRY_NOW_PASSES_DETERMINISTIC_GUARDS",
+        "terminal_research_bucket": "BUY",
+        "jev_route": "VALUATION_CLOSURE",
+        "jev_route_confidence": 0.94,
+        "source_jev_run_id": "37717422967"
+      },
+      {
+        "code": "600812",
+        "name": "华北制药",
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "deterministically_supported": true,
+        "do_not_chase_condition": "PRICE_ABOVE_9.0114_REQUIRES_REVALUATION",
+        "entry_price_zone_high": 9.0114,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "judgment_confidence": 1.0,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.0,
+          "INVALIDATED": 0.0,
+          "NO_JUDGMENT": 0.0,
+          "WAIT_EVIDENCE": 1.0,
+          "WAIT_PRICE": 0.0
+        },
+        "max_manual_position_pct": 0.0,
+        "no_auto_trade": true,
+        "reference_price": 4.98,
+        "reference_trade_date": "2026-09-30",
+        "source_lineage": {
+          "dashboard_snapshot_id": "a95ea1a177fbee3f427e",
+          "dashboard_source_run_id": "37663026246",
+          "deep_code_epoch_sha": "91d22369a7acb322fc6014b96de68f8a53d860d6",
+          "deep_lambda_run_id": "37717040855"
+        },
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.37,
+        "source_jev_run_id": "37717422967"
+      }
+    ],
+    "jev_entry_judgment_count": 2,
+    "jev_entry_now_count": 1,
+    "jev_entry_judgment_source_run_id": "37717422967",
+    "jev_entry_judgment_stale_row_count": 0,
+    "jev_entry_judgment_invalid_row_count": 23,
+    "jev_entry_judgment_status": "CURRENT",
     "jev_entry_authority_rule": "Jev entry judgments are ADVISORY_ONLY. Numeric price/sizing fields are deterministically validated; they never create Canonical Formal BUY or orders.",
     "deep_qualified_research_leads": [],
     "deep_qualified_research_lead_count": 0,
@@ -2874,13 +2959,13 @@
     "contract_version": "GEN_GE_V31_CANDIDATE_LIFECYCLE_V1",
     "latest_applied_snapshot_id": "139fdb772feb2755d984",
     "latest_research_as_of": "2026-10-08T02:07:35Z",
-    "active_candidate_count": 116,
-    "dormant_research_candidate_count": 10,
+    "active_candidate_count": 115,
+    "dormant_research_candidate_count": 11,
     "archived_or_invalidated_count": 0,
-    "lifecycle_event_count": 13310,
+    "lifecycle_event_count": 13311,
     "retained_history_event_count": 8563,
     "tier_counts": {
-      "PENDING": 116
+      "PENDING": 115
     },
     "focus_candidates": [
       {
@@ -2930,11 +3015,11 @@
       {
         "code": "600812",
         "name": "华北制药",
-        "lifecycle_state": "ACTIVE",
+        "lifecycle_state": "DORMANT",
         "research_tier": "PENDING",
         "seen_count": 185,
-        "last_event": "RESEEN",
-        "last_event_at": "2026-10-08T02:07:35Z",
+        "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+        "last_event_at": "2026-10-08T02:22:24+00:00",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       }
@@ -2987,11 +3072,11 @@
       "600812": {
         "code": "600812",
         "name": "华北制药",
-        "lifecycle_state": "ACTIVE",
+        "lifecycle_state": "DORMANT",
         "research_tier": "PENDING",
         "seen_count": 185,
-        "last_event": "RESEEN",
-        "last_event_at": "2026-10-08T02:07:35Z",
+        "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+        "last_event_at": "2026-10-08T02:22:24+00:00",
         "last_formal_action": "",
         "last_valuation_confidence": ""
       }
@@ -3134,7 +3219,7 @@
       {
         "capability": "Candidate Lifecycle 持续研究记忆",
         "status": "ACTIVE",
-        "result": "active=116 / dormant=10 / archived-invalidated=0 / events=13310 / focus=5"
+        "result": "active=115 / dormant=11 / archived-invalidated=0 / events=13311 / focus=5"
       },
       {
         "capability": "Deep 五类硬门槛 + 官方证据",

@@ -100,14 +100,14 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=49.87 / 2026-09-30 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=116 / dormant=10 / archived-invalidated=0 / events=13310 / focus=5 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=115 / dormant=11 / archived-invalidated=0 / events=13311 / focus=5 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=1 / verified-pass=215 / unresolved=5 |
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=37717291665 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=2 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=1 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
 
-- Candidate Lifecycle：当前 ACTIVE **116**；DORMANT **10**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13310**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
+- Candidate Lifecycle：当前 ACTIVE **115**；DORMANT **11**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13311**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
 - 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。
 
 ### 当前持仓的持续研究记忆
@@ -154,7 +154,9 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`37716942379`。
+- 当前可用判断：**2**；其中 ENTRY_NOW **1**；Jev run：`37717422967`。
+- **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=42.2022；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_42.2022_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
+- **600812 华北制药**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=9.0114；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_9.0114_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
