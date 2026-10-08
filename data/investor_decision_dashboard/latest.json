@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-10-08T13:34:32+00:00",
+  "mode": "DAILY",
+  "generated_at": "2026-10-08T15:41:12+00:00",
   "canonical_snapshot_id": "faedd7f5d18a59adaaec",
   "canonical_source_run_id": "37738621800",
   "latest_trade_date": "2026-09-30",
@@ -20,23 +20,25 @@
   "repeated_report_does_not_compound_action": true,
   "research_overlay_may_mutate_formal_action": false,
   "no_auto_trade": true,
-  "headline": "市场=YELLOW；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4",
+  "headline": "数据代际=STALE_UPSTREAM；禁止新增仓位；市场=RED；盘中价仅用于展示/审计；计划立即投入≈¥0",
   "market": {
-    "as_of_date": "2026-09-30",
-    "status": "YELLOW",
+    "as_of_date": "2026-10-08",
+    "status": "RED",
     "allow_new_buy": false,
-    "external_risk_level": "LOW",
+    "external_risk_level": "MEDIUM",
     "data_quality": "OK",
-    "limit_up_count": 53,
-    "limit_down_count": 9,
-    "score": 49.87,
-    "position_multiplier": 0.5,
-    "advance_ratio": 0.4679,
-    "median_return_1d_pct": -0.0806,
-    "above_ma20_ratio": 0.3314,
-    "above_ma60_ratio": 0.4922,
-    "distribution_ratio": 0.0274,
-    "risk_reasons": [],
+    "limit_up_count": 42,
+    "limit_down_count": 16,
+    "score": 29.22,
+    "position_multiplier": 0.0,
+    "advance_ratio": 0.3097,
+    "median_return_1d_pct": -1.0466,
+    "above_ma20_ratio": 0.3039,
+    "above_ma60_ratio": 0.445,
+    "distribution_ratio": 0.0741,
+    "risk_reasons": [
+      "external_market_risk_medium"
+    ],
     "context_scope": "EOD_DAILY_STRUCTURE",
     "freshness_override": "STALE_UPSTREAM_FAIL_CLOSED"
   },
@@ -312,44 +314,44 @@
     "method": "MARKET_BEHAVIOR_PROXY",
     "strongest_industries": [
       {
-        "industry": "M73研究和试验发展",
+        "industry": "O81机动车、电子产品和日用产品修理业",
         "status": "STRONG",
-        "score": 95.46
+        "score": 100.0
       },
       {
-        "industry": "M75科技推广和应用服务业",
+        "industry": "B07石油和天然气开采业",
         "status": "STRONG",
-        "score": 87.5
+        "score": 89.34
+      },
+      {
+        "industry": "D45燃气生产和供应业",
+        "status": "STRONG",
+        "score": 82.95
       },
       {
         "industry": "J66货币金融服务",
         "status": "STRONG",
-        "score": 82.77
+        "score": 79.99
       },
       {
-        "industry": "C27医药制造业",
+        "industry": "G55水上运输业",
         "status": "STRONG",
-        "score": 79.66
+        "score": 78.28
       },
       {
-        "industry": "A02林业",
+        "industry": "B06煤炭开采和洗选业",
         "status": "STRONG",
-        "score": 76.79
+        "score": 76.78
       },
       {
-        "industry": "G56航空运输业",
+        "industry": "G58多式联运和运输代理业",
         "status": "STRONG",
         "score": 75.67
       },
       {
-        "industry": "Q84卫生",
+        "industry": "D44电力、热力生产和供应业",
         "status": "STRONG",
-        "score": 74.41
-      },
-      {
-        "industry": "A05农、林、牧、渔专业及辅助性活动",
-        "status": "STRONG",
-        "score": 73.88
+        "score": 71.41
       }
     ]
   },
@@ -375,8 +377,7 @@
     "engineering_details_are_secondary": true,
     "freshness_status": "STALE_UPSTREAM",
     "freshness_reasons": [
-      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
-      "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
+      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION"
     ],
     "formal_new_exposure_allowed": false,
     "terminal_research_available": true,
@@ -409,20 +410,52 @@
     "formal_new_exposure_allowed": false,
     "fail_closed_applied": true,
     "reasons": [
-      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION",
-      "MARKET_CONTEXT_BEHIND_COMPLETED_SESSION"
+      "CANONICAL_TRADE_DATE_BEHIND_COMPLETED_SESSION"
     ],
-    "evaluated_at": "2026-10-08T13:34:32+00:00",
+    "evaluated_at": "2026-10-08T15:41:12+00:00",
     "canonical_generated_at": "2026-10-08T06:50:03+00:00",
     "canonical_latest_trade_date": "2026-09-30",
     "canonical_source_run_id": "37738621800",
     "expected_min_trade_date": "2026-10-08",
-    "market_as_of": "2026-09-30",
+    "market_as_of": "2026-10-08",
     "holiday_calendar_mode": "OFFICIAL_SSE_2026",
     "holiday_calendar_source": "SSE_2026_NOTICE_2025_45",
     "holiday_calendar_url": "https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml"
   },
   "formal_new_exposure_allowed": false,
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "available": false,
+    "market_data_status": "DEGRADED",
+    "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": true,
+    "formal_new_exposure_allowed": false,
+    "freshness_fail_closed_reasserted": true
+  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
     "canonical_snapshot_id": "faedd7f5d18a59adaaec",
@@ -455,8 +488,8 @@
     "requested_count": 12,
     "decision_counts": {
       "WAIT_PRICE": 0,
-      "BUY": 1,
       "REJECT": 0,
+      "BUY": 1,
       "RESEARCH_GAP": 11
     },
     "research_authority": "RESEARCH_ONLY",
@@ -2263,45 +2296,5 @@
     "capital_probe_count": 1,
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
-    "available": false,
-    "market_data_status": "OFF_SESSION",
-    "eligible_quote_count": 0,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "missing_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "coverage_ratio": 0.0,
-    "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": true,
-    "formal_new_exposure_allowed": false,
-    "freshness_fail_closed_reasserted": true,
-    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
-    "market_session_state": "CLOSED",
-    "market_session_active": false,
-    "retry_attempts": 3,
-    "refreshed_at": "2026-10-08T14:11:25.972548+00:00",
-    "refreshed_at_beijing": "2026-10-08T22:11:25.972548+08:00"
   }
 }
