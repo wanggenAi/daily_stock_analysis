@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "37811947646",
+  "orchestrator_run_id": "37822155690",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -46,23 +53,9 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
       "attention_priority": "MEDIUM",
       "entity_id": "001309",
       "entity_name": "德明利",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "601965",
-      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -91,6 +84,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "000833",
       "entity_name": "粤桂股份",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "601965",
+      "entity_name": "中国汽研",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -190,14 +190,14 @@
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-08T16:50:07+00:00",
-  "source_workflow_head_sha": "25e5df00f5d2542386879a498ff645a5e5cc332d",
+  "source_generated_at": "2026-10-08T18:09:20+00:00",
+  "source_workflow_head_sha": "e41599b8ca65b35444f6b42b7f7388cb1e919a6f",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "37811648553",
+  "source_workflow_run_id": "37821838508",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 252,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_37811648553",
+  "trigger_source": "JEV_ORCHESTRATOR_37821838508",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-08T16:52:31+00:00",
+  "updated_at": "2026-10-08T18:11:46+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.71,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "37810927359",
+        "deep_lambda_run_id": "37820824937",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
