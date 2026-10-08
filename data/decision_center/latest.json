@@ -1,6 +1,6 @@
 {
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
-  "generated_at": "2026-10-08T09:10:46+00:00",
+  "generated_at": "2026-10-08T09:13:51+00:00",
   "latest_trade_date": "2026-09-30",
   "canonical_snapshot_id": "faedd7f5d18a59adaaec",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
@@ -27,8 +27,8 @@
     "deep_calculation_execution_status": "SUCCESS",
     "deep_calculation_research_outcome": "EVIDENCE_EXHAUSTED",
     "deep_calculation_terminal_state": "EVIDENCE_EXHAUSTED",
-    "deep_calculation_unresolved_gate_count": 10,
-    "deep_calculation_progressed_gate_count": 0,
+    "deep_calculation_unresolved_gate_count": 46,
+    "deep_calculation_progressed_gate_count": 3,
     "research_terminal_requested_count": 0,
     "research_buy_count": 0,
     "research_wait_price_count": 0,
@@ -1815,9 +1815,9 @@
     "terminal_research_snapshot": {
       "available": true,
       "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
-      "generated_at": "2026-10-08T09:10:08+00:00",
-      "source_deep_lambda_run_id": "37754061603",
-      "source_every_industry_run_id": "37738621800",
+      "generated_at": "2026-10-08T09:12:04+00:00",
+      "source_deep_lambda_run_id": "37754364454",
+      "source_every_industry_run_id": "37753210381",
       "requested_count": 3,
       "decision_counts": {
         "BUY": 1,
@@ -2318,7 +2318,7 @@
     "jev_entry_judgments": [],
     "jev_entry_judgment_count": 0,
     "jev_entry_now_count": 0,
-    "jev_entry_judgment_source_run_id": "37753824418",
+    "jev_entry_judgment_source_run_id": "37754789209",
     "jev_entry_judgment_stale_row_count": 25,
     "jev_entry_judgment_invalid_row_count": 0,
     "jev_entry_judgment_status": "EMPTY_CURRENT",
@@ -2393,34 +2393,34 @@
   "deep_calculation_runtime": {
     "contract": "GEN_GE_THREE_PILLAR_DEEP_CALC_RUNTIME_V2",
     "lambda_workflow": "GenGe V3.1 Deep Calculation Lambda",
-    "lambda_run_id": "37754364454",
+    "lambda_run_id": "37754424834",
     "lambda_run_attempt": "1",
     "source_run_id": "37753210381",
-    "trigger_source": "JEV_ORCHESTRATOR_37753824418",
-    "generated_at": "2026-10-08T09:09:47+00:00",
+    "trigger_source": "EVERY_INDUSTRY_READY",
+    "generated_at": "2026-10-08T09:12:20+00:00",
     "run_state": "COMPLETED",
     "execution_status": "SUCCESS",
     "research_outcome": "EVIDENCE_EXHAUSTED",
     "research_terminal_state": "EVIDENCE_EXHAUSTED",
-    "requested_count": 2,
+    "requested_count": 11,
     "requested_count_available": true,
-    "processed_requested_count": 2,
+    "processed_requested_count": 11,
     "processed_requested_count_available": true,
     "complete_requested_count": 0,
     "complete_requested_count_available": true,
-    "partial_requested_count": 2,
+    "partial_requested_count": 11,
     "partial_requested_count_available": true,
-    "evidence_exhausted_requested_count": 2,
+    "evidence_exhausted_requested_count": 11,
     "evidence_exhausted_requested_count_available": true,
     "handoff_incomplete_requested_count": 0,
     "handoff_incomplete_requested_count_available": true,
     "profile_count": 500,
     "profile_count_available": true,
-    "requested_profile_count": 2,
+    "requested_profile_count": 11,
     "requested_profile_count_available": true,
     "workset_coverage_known": true,
     "workset_coverage_complete": true,
-    "unresolved_requested_gate_count": 10,
+    "unresolved_requested_gate_count": 46,
     "unresolved_requested_gate_count_available": true,
     "missing_requested_codes": [],
     "missing_requested_codes_available": true,
@@ -2428,28 +2428,82 @@
       "000415": {
         "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
         "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
         "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
         "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+      },
+      "000703": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
+        "predictability": "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
+      },
+      "000833": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
+        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+      },
+      "001309": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
+        "predictability": "MULTI_YEAR_POSITIVITY_NOT_PROVEN"
+      },
+      "001316": {
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
+        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+      },
+      "600406": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
+        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+      },
+      "601318": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
+        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+      },
+      "601965": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
+        "moat": "INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE",
+        "predictability": "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
       },
       "603416": {
         "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
         "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
-        "long_term_demand": "OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET",
+        "long_term_demand": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET",
         "moat": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
         "predictability": "CYCLICAL_RESOURCE_REQUIRES_EXPLICIT_CYCLE_RESILIENCE_EVIDENCE"
+      },
+      "603986": {
+        "earnings_authenticity": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT",
+        "financial_safety": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT",
+        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
+      },
+      "603993": {
+        "predictability": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
       }
     },
-    "gap_closure_attempt_count": 1,
-    "new_evidence_count": 4,
-    "progressed_gate_count": 0,
-    "hard_gate_count": 0,
-    "pass_gate_count": 0,
-    "fail_gate_count": 0,
-    "verified_pass_gate_count": 0,
+    "gap_closure_attempt_count": 2,
+    "new_evidence_count": 29,
+    "progressed_gate_count": 3,
+    "hard_gate_count": 2500,
+    "pass_gate_count": 218,
+    "fail_gate_count": 2,
+    "verified_pass_gate_count": 218,
     "unverified_pass_gate_count": 0,
-    "provenance_audit_complete": false,
-    "provenance_audit_run_id": "",
+    "provenance_audit_complete": true,
+    "provenance_audit_run_id": "37755037981",
     "material_event_failed_gate_count": 0,
     "historical_material_event_evidence_count": 0,
     "historical_material_event_failed_gate_count": 0,
@@ -2466,12 +2520,12 @@
     "no_auto_trade": true,
     "interpretation": "execution_succeeded means compute finished; COMPLETE means all requested hard gates resolved; EVIDENCE_EXHAUSTED means bounded same-run recovery finished for materialized profiles while unresolved UNKNOWN gates remain; HANDOFF_INCOMPLETE means the run finished but one or more requested codes never entered the Deep profile workset.",
     "status_source": "TERMINAL_STATUS",
-    "last_terminal_run_id": "37754364454",
+    "last_terminal_run_id": "37754424834",
     "last_terminal_execution_status": "SUCCESS",
     "last_terminal_research_terminal_state": "EVIDENCE_EXHAUSTED"
   },
   "deep_review_profile_source": "AUTOMATIC_DEEP_CALCULATION",
-  "deep_review_profile_lambda_run_id": "37754364454",
+  "deep_review_profile_lambda_run_id": "37754424834",
   "deep_review_profile_current_for_runtime": true,
   "deep_review_profile_lineage_state": "CURRENT",
   "holding_valuation_continuity": {
@@ -2733,12 +2787,12 @@
       {
         "capability": "Deep 五类硬门槛 + 官方证据",
         "status": "ACTIVE",
-        "result": "requested=2 / verified-pass=0 / unresolved=10"
+        "result": "requested=11 / verified-pass=218 / unresolved=46"
       },
       {
         "capability": "Deep Provenance 证据审计",
-        "status": "PARTIAL",
-        "result": "audit=False / run=— / unverified-pass=0"
+        "status": "ACTIVE",
+        "result": "audit=True / run=37755037981 / unverified-pass=0"
       },
       {
         "capability": "世界 / 社会 / 资本趋势雷达",
