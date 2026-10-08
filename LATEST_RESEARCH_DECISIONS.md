@@ -32,3 +32,26 @@
 - 001309 德明利: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 001316 润贝航科: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000682 东方电子: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+
+# GenGe V3.1 Deep Decision Closure V2
+
+- decision ready: **2/12** (16.7%)
+- evidence complete: **1/12** (8.3%)
+- FULL_EVIDENCE: **1**
+- DECISION_READY_WITH_UNCERTAINTY: **1**
+- DECISIVE_REJECT: **0**
+- RESEARCH_REQUIRED: **10**
+- UNKNOWN remains UNKNOWN. Bounded uncertainty never grants Formal BUY or auto-trade.
+
+- 603596 伯特利: **FULL_EVIDENCE**; decision_ready=True; unknown=NONE
+- 000596 古井贡酒: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 002811 郑中设计: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 601965 中国汽研: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 605116 奥锐特: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat
+- 601318 中国平安: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 600406 国电南瑞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 603993 洛阳钼业: **DECISION_READY_WITH_UNCERTAINTY**; decision_ready=True; unknown=predictability
+- 603986 兆易创新: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,financial_safety,earnings_authenticity
+- 001309 德明利: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,moat,financial_safety,earnings_authenticity
+- 001316 润贝航科: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat
+- 000682 东方电子: **RESEARCH_REQUIRED**; decision_ready=False; unknown=long_term_demand,moat,financial_safety,earnings_authenticity
