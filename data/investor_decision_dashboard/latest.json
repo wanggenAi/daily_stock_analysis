@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "HOURLY",
-  "generated_at": "2026-10-07T21:18:07+00:00",
+  "mode": "FOLLOWUP",
+  "generated_at": "2026-10-08T01:15:23+00:00",
   "canonical_snapshot_id": "a95ea1a177fbee3f427e",
   "canonical_source_run_id": "37663026246",
   "latest_trade_date": "2026-09-30",
@@ -253,7 +253,7 @@
     "capital_as_of": "2026-09-20",
     "deployment_budget_cny": 25000.0,
     "effective_max_deployment_ratio": 0.5,
-    "planned_immediate_cash_cny": 0.0,
+    "planned_immediate_cash_cny": 0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
     "wait_price_reservations": [],
@@ -287,13 +287,13 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 120,
-    "planned_immediate_cash_cny": 0.0,
+    "planned_immediate_cash_cny": 0,
     "research_terminal_requested_count": 12,
     "research_buy_count": 1,
     "research_wait_price_count": 0,
     "research_gap_count": 11,
     "research_reject_count": 0,
-    "urgent_research_count": 4,
+    "urgent_research_count": 3,
     "research_capital_probe_count": 1,
     "research_capital_action_counts": {
       "BUILD": 1,
@@ -353,16 +353,8 @@
     "rows": []
   },
   "event_review": {
-    "triggered": true,
-    "trigger_codes": [
-      "001316",
-      "601318",
-      "603993"
-    ],
-    "signal_digest": "231ee86325e148e6064006ab69c7334b34eb6c2cac7c804bd49884bc6abe7ce1",
-    "closure_status": "EVENT_TRIGGERED_FINALIZED",
-    "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-    "formal_action_recomputed": false
+    "triggered": false,
+    "trigger_codes": []
   },
   "hourly_context": {
     "available": true,
@@ -409,7 +401,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-10-07T21:18:07+00:00",
+    "evaluated_at": "2026-10-08T01:15:23+00:00",
     "canonical_generated_at": "2026-10-07T18:04:43+00:00",
     "canonical_latest_trade_date": "2026-09-30",
     "canonical_source_run_id": "37663026246",
@@ -420,6 +412,38 @@
     "holiday_calendar_url": "https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml"
   },
   "formal_new_exposure_allowed": true,
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "available": false,
+    "market_data_status": "DEGRADED",
+    "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": false,
+    "formal_new_exposure_allowed": true
+  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
     "canonical_snapshot_id": "a95ea1a177fbee3f427e",
@@ -429,8 +453,15 @@
     "carried_forward_consumption_count": 1,
     "explicit_rearm_skipped_count": 0,
     "explicit_rearm_skipped_codes": [],
-    "applied_consumption_count": 0,
-    "applied": [],
+    "applied_consumption_count": 1,
+    "applied": [
+      {
+        "code": "603993",
+        "consumed_shares": 100,
+        "allowance_shares": 100,
+        "lineage_match": "CARRIED_FORWARD"
+      }
+    ],
     "routine_canonical_refresh_rearms_consumed_add": false,
     "explicit_rearm_required": true,
     "formal_action_mutation_allowed": false,
@@ -444,9 +475,9 @@
     "source_every_industry_run_id": "37663026246",
     "requested_count": 12,
     "decision_counts": {
-      "WAIT_PRICE": 0,
       "BUY": 1,
       "REJECT": 0,
+      "WAIT_PRICE": 0,
       "RESEARCH_GAP": 11
     },
     "research_authority": "RESEARCH_ONLY",
@@ -491,6 +522,23 @@
           "valuation_score": 1.0
         },
         "code": "603596",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "FULL_EVIDENCE",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [],
+          "decision_ready": true,
+          "evidence_complete": true,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": true,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "ALL_DEEP_GATES_RESOLVED",
+          "soft_unknown_gates": [],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -577,6 +625,30 @@
           "valuation_score": 0.9192
         },
         "code": "000596",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 0,
@@ -671,6 +743,30 @@
           "valuation_score": 1.0
         },
         "code": "002811",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 0,
@@ -766,6 +862,30 @@
           "valuation_score": 0.946
         },
         "code": "601965",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 0,
@@ -861,6 +981,27 @@
           "valuation_score": 1.0
         },
         "code": "605116",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "TOO_MANY_NONCRITICAL_UNKNOWNS",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 2,
@@ -951,6 +1092,30 @@
           "valuation_score": 0.666
         },
         "code": "601318",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 0,
@@ -1047,6 +1212,30 @@
           "valuation_score": 0.4965
         },
         "code": "600406",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 0,
@@ -1144,6 +1333,25 @@
           "valuation_score": 0.6712
         },
         "code": "603993",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "DECISION_READY_WITH_UNCERTAINTY",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [],
+          "decision_ready": true,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "BOUNDED_NONCRITICAL_UNCERTAINTY_AFTER_RETRY",
+          "soft_unknown_gates": [
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 4,
@@ -1234,6 +1442,28 @@
           "valuation_score": 1.0
         },
         "code": "603986",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 2,
@@ -1326,6 +1556,29 @@
           "valuation_score": 1.0
         },
         "code": "001309",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 1,
@@ -1421,6 +1674,27 @@
           "valuation_score": 0.8503
         },
         "code": "001316",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "TOO_MANY_NONCRITICAL_UNKNOWNS",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat",
+            "predictability"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 2,
@@ -1513,6 +1787,29 @@
           "valuation_score": 0.9395
         },
         "code": "000682",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "RESEARCH_REQUIRED",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [
+            "earnings_authenticity",
+            "financial_safety"
+          ],
+          "decision_ready": false,
+          "evidence_complete": false,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": false,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "CRITICAL_CAPITAL_GATE_UNKNOWN",
+          "soft_unknown_gates": [
+            "long_term_demand",
+            "moat"
+          ],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 1,
@@ -1772,96 +2069,6 @@
           "action": "WATCH",
           "authority": "ADVISORY_ONLY",
           "automatic_execution_allowed": false,
-          "capital_conviction_score": 0.6548,
-          "critical_capital_gates": [
-            "financial_safety",
-            "earnings_authenticity"
-          ],
-          "critical_capital_gates_pass": true,
-          "earnings_quality_component": 0.77,
-          "evidence_score": 0.896,
-          "formal_buy_authorized": false,
-          "gate_weights": {
-            "earnings_authenticity": 0.22,
-            "financial_safety": 0.22,
-            "long_term_demand": 0.2,
-            "moat": 0.2,
-            "predictability": 0.16
-          },
-          "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
-          "no_auto_trade": true,
-          "probe_rules": {
-            "max_pe_to_history_ratio": 0.9,
-            "max_unknown_gates": 2,
-            "min_capital_conviction_score": 0.52
-          },
-          "quant_score_component": 0.3054,
-          "reason": "SPECIALIZED_VALUATION_REQUIRED",
-          "suggested_max_portfolio_pct": 0.0,
-          "uncertainty_penalty": 0.048,
-          "unknown_weight": 0.16,
-          "valuation_score": 0.6712
-        },
-        "code": "603993",
-        "formal_buy_authorized": false,
-        "hard_gate_failures": [],
-        "hard_gate_pass_count": 4,
-        "hard_gate_unknowns": [
-          "predictability"
-        ],
-        "industry": "B09有色金属矿采选业",
-        "name": "洛阳钼业",
-        "no_auto_trade": true,
-        "quant_score": 30.5444,
-        "quant_status": "HARD_REJECT",
-        "reopen_on_new_evidence": true,
-        "research_authority": "RESEARCH_ONLY",
-        "research_decision": "RESEARCH_GAP",
-        "research_priority": "P0",
-        "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
-        "screening_attractiveness": "NORMAL",
-        "success_archetype_id": "",
-        "success_archetype_similarity_score": null,
-        "urgent_research": true,
-        "urgent_research_reasons": [
-          "P0_EVIDENCE_BLOCKED"
-        ],
-        "valuation": {
-          "current_pe": 14.17,
-          "distance_to_research_buy_ceiling_pct": 6.958362738179269,
-          "earnings_quality_confidence": "HIGH",
-          "earnings_quality_score": 77.0,
-          "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
-          "financial_gate_diagnostics": {
-            "blockers": [],
-            "cash_conversion_pass_threshold": 0.8,
-            "cash_conversion_ratio": 0.8853,
-            "earnings_quality_confidence": "HIGH",
-            "earnings_quality_pass_threshold": 70.0,
-            "earnings_quality_score": 77.0,
-            "financial_disclosure_date": "2026-08-20",
-            "financial_review_status": "OK",
-            "machine_financial_pass_ready": true,
-            "normalized_core_operating_profit": 15605833000.0,
-            "operating_cash_flow": 16333690735.41
-          },
-          "financial_review_status": "OK",
-          "historical_median_pe_reference": 18.945,
-          "pe_to_history_ratio": 0.7479546054367907,
-          "price_mapping_status": "OK",
-          "reference_price": 16.88,
-          "reference_price_basis": "RAW_LATEST_CLOSE",
-          "reference_trade_date": "2026-09-30",
-          "required_profit_growth_pct": -25.20453945632093,
-          "research_buy_pe_ratio_threshold": 0.8,
-          "research_buy_price_ceiling": 18.05457163020466
-        }
-      },
-      {
-        "capital_allocation": {
-          "action": "WATCH",
-          "authority": "ADVISORY_ONLY",
-          "automatic_execution_allowed": false,
           "capital_conviction_score": 0.4819,
           "critical_capital_gates": [
             "financial_safety",
@@ -1950,7 +2157,7 @@
         }
       }
     ],
-    "urgent_research_count": 4,
+    "urgent_research_count": 3,
     "capital_model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
     "capital_action_counts": {
       "BUILD": 1,
@@ -1995,6 +2202,23 @@
           "valuation_score": 1.0
         },
         "code": "603596",
+        "deep_closure": {
+          "automatic_execution_allowed": false,
+          "closure_state": "FULL_EVIDENCE",
+          "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+          "critical_unknown_gates": [],
+          "decision_ready": true,
+          "evidence_complete": true,
+          "failure_gates": [],
+          "formal_buy_authorized": false,
+          "formal_buy_evidence_ready": true,
+          "max_soft_unknown_for_decision": 1,
+          "no_auto_trade": true,
+          "other_unknown_gates": [],
+          "rationale": "ALL_DEEP_GATES_RESOLVED",
+          "soft_unknown_gates": [],
+          "unknown_is_pass": false
+        },
         "formal_buy_authorized": false,
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -2049,230 +2273,5 @@
     "capital_probe_count": 1,
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false
-  },
-  "event_deep_review_closure": {
-    "contract_version": "GEN_GE_INVESTOR_EVENT_CLOSURE_V1",
-    "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-    "formal_action_recomputed": false,
-    "no_auto_trade": true,
-    "signal_digest": "231ee86325e148e6064006ab69c7334b34eb6c2cac7c804bd49884bc6abe7ce1",
-    "event_source_snapshot_id": "64d8f9e56ff8db34d4cf",
-    "event_source_run_id": "37502250180",
-    "closure_status": "EVENT_TRIGGERED_FINALIZED",
-    "event_research_source_run_id": "37491961743",
-    "event_finalizer_run_id": "37493935436",
-    "event_finalized_snapshot_id": "6a21c9b8183a869591dd",
-    "rows": [
-      {
-        "code": "001316",
-        "name": "润贝航科",
-        "event_result_state": "EVENT_TRIGGERED_NO_CHANGE",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD_REVIEW",
-        "formal_action_after": "HOLD_REVIEW",
-        "formal_action_changed": false,
-        "result": "事件深算已 Finalize；重新计算后正式动作仍为 HOLD_REVIEW，不是‘还没算’。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 27.46,
-        "latest_price_observed_at": "2026-09-30T16:14:45+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "601318",
-        "name": "中国平安",
-        "event_result_state": "EVENT_TRIGGERED_NO_CHANGE",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD",
-        "formal_action_after": "HOLD",
-        "formal_action_changed": false,
-        "result": "事件深算已 Finalize；重新计算后正式动作仍为 HOLD，不是‘还没算’。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 53.29,
-        "latest_price_observed_at": "2026-09-30T16:14:54+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "603993",
-        "name": "洛阳钼业",
-        "event_result_state": "EVENT_TRIGGERED_NO_CHANGE",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [
-          "PRICE_ATTRACTIVE_RESEARCH_LEAD"
-        ],
-        "formal_action_before": "HOLD",
-        "formal_action_after": "HOLD",
-        "formal_action_changed": false,
-        "result": "事件深算已 Finalize；重新计算后正式动作仍为 HOLD，不是‘还没算’。",
-        "why_no_buy_or_add": "价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。",
-        "latest_price": 16.88,
-        "latest_price_observed_at": "2026-09-30T16:14:37+08:00",
-        "price_evidence_status": "PRICE_GATE_PASS_RESEARCH_ONLY"
-      },
-      {
-        "code": "000596",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 93.55,
-        "latest_price_observed_at": "2026-09-30T16:14:51+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "000682",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 10.62,
-        "latest_price_observed_at": "2026-09-30T16:14:45+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "001309",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 358.46,
-        "latest_price_observed_at": "2026-09-30T16:14:42+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "002811",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 16.97,
-        "latest_price_observed_at": "2026-09-30T16:14:51+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "600406",
-        "name": "国电南瑞",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "REDUCE_25",
-        "formal_action_after": "REDUCE_25",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。",
-        "latest_price": 22.52,
-        "latest_price_observed_at": "2026-09-30T16:15:00+08:00",
-        "price_evidence_status": "PRICE_GATE_NOT_MET"
-      },
-      {
-        "code": "601965",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 13.57,
-        "latest_price_observed_at": "2026-09-30T16:14:51+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "603986",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 353.9,
-        "latest_price_observed_at": "2026-09-30T16:15:00+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      },
-      {
-        "code": "605116",
-        "name": "",
-        "event_result_state": "RAISE_ONLY",
-        "deep_review_priority": "RAISE",
-        "trigger_reasons": [],
-        "formal_action_before": "",
-        "formal_action_after": "",
-        "formal_action_changed": null,
-        "result": "研究优先级已提高，但当前信号未达到事件型完整生产重算触发条件。",
-        "why_no_buy_or_add": "价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。",
-        "latest_price": 20.07,
-        "latest_price_observed_at": "2026-09-30T16:15:00+08:00",
-        "price_evidence_status": "VALUE_ANCHOR_UNAVAILABLE"
-      }
-    ]
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_DIRECT_EXECUTION_QUOTE_OVERLAY_V1",
-    "available": false,
-    "market_data_status": "OFF_SESSION",
-    "eligible_quote_count": 0,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "missing_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "coverage_ratio": 0.0,
-    "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true,
-    "source": "DIRECT_PUBLIC_INTRADAY_EXECUTION_QUOTE",
-    "quote_refresh_mode": "DIRECT_DASHBOARD_EXECUTION_UNIVERSE",
-    "market_session_state": "CLOSED",
-    "market_session_active": false,
-    "retry_attempts": 3,
-    "refreshed_at": "2026-10-07T21:21:04.395765+00:00",
-    "refreshed_at_beijing": "2026-10-08T05:21:04.395765+08:00"
   }
 }

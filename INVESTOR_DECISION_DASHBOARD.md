@@ -8,8 +8,6 @@
 - 市场状态：**YELLOW**；是否允许新买：**True**；仓位倍率：**0.50**
 - 上涨家数比例：**46.79%**；数据质量：**OK**
 
-- 盘中执行价覆盖：**0/4只**；行情状态：**OFF_SESSION**；最新行情时间：**—**；正式动作仍来自冻结 Canonical；缺失/过期盘中价会阻断立即执行，不会把冻结价冒充实时价。
-
 ## 2. 我的持仓怎么办
 
 - 正式动作是 Canonical 持久状态；同一动作重复出现在后续报表中，不代表再次执行或累计执行。
@@ -66,7 +64,7 @@ M73研究和试验发展(STRONG)、M75科技推广和应用服务业(STRONG)、J
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
 - 本轮深算：**12** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **11** / REJECT **0**。
-- urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
+- urgent research：**3** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
 - 风险预算：BUILD **1** / PROBE **0** / WATCH **3** / BLOCK **8**；仅人工建议，不自动执行。
 
@@ -81,11 +79,10 @@ M73研究和试验发展(STRONG)、M75科技推广和应用服务业(STRONG)、J
 | 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
 | 润贝航科 001316 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat | 是 |
 | 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 是 |
+| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 否 |
 
 ### Urgent evidence queue
 
 - 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 洛阳钼业 603993: RESEARCH_GAP；gaps=predictability；urgent=P0_EVIDENCE_BLOCKED
 - 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
