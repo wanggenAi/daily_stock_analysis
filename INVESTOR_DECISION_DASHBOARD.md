@@ -76,7 +76,7 @@ O81机动车、电子产品和日用产品修理业(STRONG)、B07石油和天然
 
 ### 风险预算 BUILD / PROBE
 
-- 伯特利 603596: **BUILD**；conviction=0.8906；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 伯特利 603596: **BUILD**；conviction=0.889；建议账户仓位上限=3.0%；研究结论仍为 BUY。
 
 ### 我的持仓深算
 
@@ -89,6 +89,6 @@ O81机动车、电子产品和日用产品修理业(STRONG)、B07石油和天然
 
 ### Urgent evidence queue
 
-- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
+- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
