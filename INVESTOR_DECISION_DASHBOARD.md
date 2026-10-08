@@ -69,10 +69,10 @@ M73研究和试验发展(STRONG)、M75科技推广和应用服务业(STRONG)、J
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**7** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **6** / REJECT **0**。
+- 本轮深算：**13** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **12** / REJECT **0**。
 - urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **0** / WATCH **2** / BLOCK **4**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **0** / WATCH **2** / BLOCK **10**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
