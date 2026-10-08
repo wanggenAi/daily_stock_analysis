@@ -17,7 +17,7 @@
 
 100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
 
-- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+- **洛阳钼业 603993**：2026-09-30收盘参考价¥16.88，低于模型估值下沿¥18.03约6.38%；现有1100股；假设额外100股约¥1688，平均成本约¥18.4790（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
 
 ### 每只持仓的决策链
 
@@ -69,7 +69,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥25000.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**CLOSED**；行情状态：**OFF_SESSION**。
+- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
@@ -100,7 +100,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=49.87 / 2026-09-30 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=116 / dormant=10 / archived-invalidated=0 / events=13260 / focus=8 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=116 / dormant=10 / archived-invalidated=0 / events=13260 / focus=7 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=11 / verified-pass=219 / unresolved=43 |
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=37701522668 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=2 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
@@ -147,7 +147,7 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
 - 终态来源 Lambda：`37700970460`；当前 Lambda：`37700970460`。
 - 请求：**12**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**11**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：601318 中国平安(quant=32.5312；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；600406 国电南瑞(quant=31.8877；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；603993 洛阳钼业(quant=30.5444；暂不投入新增资金；等待补齐：predictability)；001316 润贝航科(quant=23.9734；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)
+- 高吸引力但证据不足、优先补证：601318 中国平安(quant=32.5312；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；600406 国电南瑞(quant=31.8877；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=23.9734；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)
 - 风险预算层 BUILD/PROBE 候选：**1**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
   - 603596 伯特利: **BUILD**；conviction=0.8906；建议账户上限=3.0%
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
