@@ -81053,7 +81053,7 @@
     "600812": {
       "code": "600812",
       "stock_name": "华北制药",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -81062,22 +81062,10 @@
       "seen_count": 185,
       "last_formal_action": "",
       "last_valuation_confidence": "",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-08T02:07:35Z",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-08T02:22:24+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "600812",
-          "snapshot_id": "ef24a4927d6f8e5f9a61",
-          "source_run_id": "33479334289",
-          "observed_at": "2026-09-01T06:54:46Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "600812",
@@ -82265,6 +82253,22 @@
           "valuation_confidence": "",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "600812",
+          "snapshot_id": "139fdb772feb2755d984",
+          "source_run_id": "37717422967",
+          "observed_at": "2026-10-08T02:22:24+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "6e4329aa94ec1994fcb5",
+          "research_epoch": "b49771168f732770b61c",
+          "supported_gate_count": 5,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T02:11:37Z",
@@ -82276,7 +82280,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T02:11:37Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -83645,7 +83649,11 @@
         }
       ],
       "last_price": 4.88,
-      "last_terminal_price": 4.88
+      "last_terminal_price": 4.88,
+      "last_research_lifecycle_source_run_id": "37717422967",
+      "last_research_lifecycle_observed_at": "2026-10-08T02:22:24+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "b49771168f732770b61c"
     },
     "600816": {
       "code": "600816",
@@ -267612,7 +267620,7 @@
       "research_dormant_epoch": "37186a7206fe6f514065"
     }
   },
-  "event_count": 13310,
+  "event_count": 13311,
   "no_auto_trade": true,
   "discovery_is_filtered_by_lifecycle": false,
   "bootstrap_source": "LEGACY_MARKDOWN",
@@ -267719,7 +267727,7 @@
   "latest_terminal_memory_id": "terminal:37716481722:1",
   "latest_terminal_memory_observed_at": "2026-10-08T02:11:37Z",
   "terminal_memory_event_count": 10716,
-  "latest_research_lifecycle_source_run_id": "36761987053",
-  "latest_research_lifecycle_observed_at": "2026-09-30T18:56:49+00:00",
-  "research_lifecycle_event_count": 10
+  "latest_research_lifecycle_source_run_id": "37717422967",
+  "latest_research_lifecycle_observed_at": "2026-10-08T02:22:24+00:00",
+  "research_lifecycle_event_count": 11
 }

@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `139fdb772feb2755d984`
 - latest_research_as_of: `2026-10-08T02:07:35Z`
-- active_candidates: 116
-- dormant_research_candidates: 10
+- active_candidates: 115
+- dormant_research_candidates: 11
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 13310
+- lifecycle_event_count: 13311
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -86,7 +86,6 @@
 | 600690 | 海尔智家 | PENDING | 71 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
 | 600739 | 辽宁成大 | PENDING | 8 |  |  | dbe2947123155cda76e7 | RESEEN |
 | 600754 | 锦江酒店 | PENDING | 263 |  |  | 139fdb772feb2755d984 | RESEEN |
-| 600812 | 华北制药 | PENDING | 185 |  |  | 139fdb772feb2755d984 | RESEEN |
 | 600834 | 申通地铁 | PENDING | 48 |  |  | 139fdb772feb2755d984 | RESEEN |
 | 600916 | 中国黄金 | PENDING | 73 |  |  | ea3c4b0384d9f6efec18 | RESEEN |
 | 600918 | 中泰证券 | PENDING | 1 |  |  | 292c453ed9def63dc763 | NEW |
@@ -1554,29 +1553,6 @@
 - 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
 - 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
 
-### 600812 华北制药
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 185
-- **last_seen_snapshot_id:** 139fdb772feb2755d984
-- **last_seen_source_run_id:** 37715355501
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-10-05T18:35:15Z — **RESEEN**; snapshot `0a18bb3e6752c79d14fd`
-- 2026-10-06T00:59:35Z — **RESEEN**; snapshot `61e576ee07334890abab`
-- 2026-10-06T01:39:19Z — **RESEEN**; snapshot `8054acff4a0e323e1483`
-- 2026-10-06T07:48:16Z — **RESEEN**; snapshot `0dd04af657544c5bebb0`
-- 2026-10-06T11:47:00Z — **RESEEN**; snapshot `1ed58aaf1d11a738d555`
-- 2026-10-06T15:27:46Z — **RESEEN**; snapshot `4f11d491de8d90114f2f`
-- 2026-10-06T16:12:45Z — **RESEEN**; snapshot `6a21c9b8183a869591dd`
-- 2026-10-06T17:25:48Z — **RESEEN**; snapshot `64d8f9e56ff8db34d4cf`
-- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
-- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
-
 ### 600834 申通地铁
 
 - **lifecycle_state:** ACTIVE
@@ -2717,6 +2693,7 @@
 | 002612 | 朗姿股份 | PENDING | 201 | 5b191f468471095dbf8a | e77ecb25848423a12bc1 | RESEEN |
 | 600095 | 湘财股份 | PENDING | 113 | 8111ffdd789e7df76892 | 977a0f2c7ae860acb046 | RESEARCH_EXHAUSTED_DORMANT |
 | 600661 | 昂立教育 | PENDING | 120 | d870b223168ef71f8c7f | e77ecb25848423a12bc1 | RESEEN |
+| 600812 | 华北制药 | PENDING | 185 | b49771168f732770b61c | 139fdb772feb2755d984 | RESEARCH_EXHAUSTED_DORMANT |
 | 600816 | 建元信托 | PENDING | 138 | a8ae13563da5bf6420ca | 66c3dfc6b56e166443a5 | RESEEN |
 | 600827 | 百联股份 | PENDING | 80 | 49e99bbf78c8694a57c3 | 977a0f2c7ae860acb046 | RESEARCH_EXHAUSTED_DORMANT |
 | 601020 | 华钰矿业 | PENDING | 119 | bf4973ba54c1969c5d20 | 966b9961b76c7cdfc464 | RESEEN |
@@ -2859,6 +2836,29 @@
 - 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
 - 2026-09-24T04:58:22+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `966b9961b76c7cdfc464`
 - 2026-09-24T04:59:54Z — **RESEEN**; snapshot `e77ecb25848423a12bc1`
+
+### 600812 华北制药
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 185
+- **last_seen_snapshot_id:** 139fdb772feb2755d984
+- **last_seen_source_run_id:** 37715355501
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-10-06T00:59:35Z — **RESEEN**; snapshot `61e576ee07334890abab`
+- 2026-10-06T01:39:19Z — **RESEEN**; snapshot `8054acff4a0e323e1483`
+- 2026-10-06T07:48:16Z — **RESEEN**; snapshot `0dd04af657544c5bebb0`
+- 2026-10-06T11:47:00Z — **RESEEN**; snapshot `1ed58aaf1d11a738d555`
+- 2026-10-06T15:27:46Z — **RESEEN**; snapshot `4f11d491de8d90114f2f`
+- 2026-10-06T16:12:45Z — **RESEEN**; snapshot `6a21c9b8183a869591dd`
+- 2026-10-06T17:25:48Z — **RESEEN**; snapshot `64d8f9e56ff8db34d4cf`
+- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
+- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
+- 2026-10-08T02:22:24+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `139fdb772feb2755d984`
 
 ### 600816 建元信托
 
