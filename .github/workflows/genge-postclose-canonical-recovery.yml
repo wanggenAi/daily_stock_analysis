@@ -1,0 +1,110 @@
+name: GenGe Post-Close Canonical Recovery
+
+on:
+  schedule:
+    # Recovery windows after the normal 18:30 producer has had time to finish.
+    # 21:00/22:00/23:00 Beijing = 13:00/14:00/15:00 UTC.
+    - cron: "0 13,14,15 * * 1-5"
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/genge-postclose-canonical-recovery.yml'
+      - 'src/strategies/genge_opportunity_discovery/postclose_recovery_watchdog.py'
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-postclose-canonical-recovery
+  cancel-in-progress: false
+
+env:
+  TZ: Asia/Shanghai
+  PYTHONUNBUFFERED: "1"
+
+jobs:
+  recover-stale-canonical:
+    name: Recover stale post-close canonical
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Evaluate completed-session freshness
+        id: freshness
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.postclose_recovery_watchdog \
+            --dashboard data/investor_decision_dashboard/latest.json \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Report healthy canonical
+        if: steps.freshness.outputs.needs_recovery != 'true'
+        run: |
+          echo "Canonical does not require post-close recovery."
+          echo "reason=${{ steps.freshness.outputs.reason }}"
+          echo "expected_trade_date=${{ steps.freshness.outputs.expected_trade_date }}"
+          echo "canonical_trade_date=${{ steps.freshness.outputs.canonical_trade_date }}"
+
+      - name: Check for an active canonical producer or finalizer
+        if: steps.freshness.outputs.needs_recovery == 'true'
+        id: active
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          active=0
+          for workflow in \
+            genge-opportunity-discovery.yml \
+            genge-v31-industry-research.yml \
+            genge-all-a-v31-once.yml \
+            genge-v311-production-finalizer.yml
+          do
+            count=$(gh run list \
+              --repo "$GITHUB_REPOSITORY" \
+              --workflow "$workflow" \
+              --limit 20 \
+              --json status \
+              --jq '[.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "requested" or .status == "pending")] | length')
+            echo "$workflow active=$count"
+            active=$((active + count))
+          done
+          if [ "$active" -gt 0 ]; then
+            echo "producer_active=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "producer_active=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Dispatch full canonical recovery producer
+        if: >-
+          steps.freshness.outputs.needs_recovery == 'true' &&
+          steps.active.outputs.producer_active == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          echo "Formal canonical is stale after a completed A-share session; dispatching full one-shot producer."
+          echo "reason=${{ steps.freshness.outputs.reason }}"
+          echo "expected_trade_date=${{ steps.freshness.outputs.expected_trade_date }}"
+          echo "canonical_trade_date=${{ steps.freshness.outputs.canonical_trade_date }}"
+          gh workflow run genge-all-a-v31-once.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+
+      - name: Defer while canonical production is active
+        if: >-
+          steps.freshness.outputs.needs_recovery == 'true' &&
+          steps.active.outputs.producer_active == 'true'
+        run: |
+          echo "Canonical is stale, but a producer/finalizer is already active."
+          echo "This watchdog will re-evaluate at the next recovery window."
