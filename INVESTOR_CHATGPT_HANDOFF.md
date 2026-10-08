@@ -2,18 +2,18 @@
 
 This is a dated source index, not a live order sheet. ChatGPT Web is on demand only.
 
-Snapshot: adda4af1dd581a1a5d03148a
-Market as-of: 2026-09-30
-Generated at (not market freshness): 2026-10-08T15:41:12+00:00
-Canonical/source run: faedd7f5d18a59adaaec / 37738621800
-Market state: STALE_OR_UNVERIFIED
+Snapshot: fd94a1cca67ec970257a9e81
+Market as-of: 2026-10-08
+Generated at (not market freshness): 2026-10-08T16:30:22+00:00
+Canonical/source run: eab56a93ae2eda864e86 / 37804458207
+Market state: UPSTREAM_FRESH_CALENDAR_UNVERIFIED
 Current brokerage funds, executable prices and trade quantities: UNKNOWN / 0.
 
 ## Existing holdings (historical reference, not an executable order)
-- 600406: prior action REDUCE_25; frozen price 22.52; executable shares 0.
-- 001316: prior action HOLD_REVIEW; frozen price 27.46; executable shares 0.
-- 601318: prior action HOLD; frozen price 53.29; executable shares 0.
-- 603993: prior action HOLD; frozen price 16.88; executable shares 0.
+- 600406: prior action REDUCE_25; frozen price 22.86; executable shares 0.
+- 001316: prior action HOLD_REVIEW; frozen price 26.61; executable shares 0.
+- 601318: prior action HOLD; frozen price 52.67; executable shares 0.
+- 603993: prior action HOLD; frozen price 16.61; executable shares 0.
 
 ## Research boundaries
 - New immediately executable Formal BUY: none verified in this handoff.
@@ -22,16 +22,16 @@ Current brokerage funds, executable prices and trade quantities: UNKNOWN / 0.
 - Unverified issuer signal does not prove an approved resolution.
 - Era/cycle trend records are research-only.
 
-Blockers: CROSS_FEED_MARKET_LINEAGE_MISMATCH, FUND_POSITION_CONFIRMATION_MISSING, NO_CURRENT_BROKER_CASH_OR_POSITION_PROOF, NO_CURRENT_EXECUTABLE_QUOTE_PROOF, NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION, STALE_OR_UNVERIFIED_MARKET_SESSION
+Blockers: CENTER_DIFFERENT_EPOCH_OR_MISSING, FUND_POSITION_CONFIRMATION_MISSING, NO_CURRENT_BROKER_CASH_OR_POSITION_PROOF, NO_CURRENT_EXECUTABLE_QUOTE_PROOF, NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION
 
 ## Exact repository source references
-- [data/investor_decision_dashboard/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/investor_decision_dashboard/latest.json) (at publication: sha256 508b01774fd5abb6ef2c0fb2b4ab814b1d83d45a42ef3b1d6262d3620d6ce331; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/aa313dc116b6874799b6c55563192a954aa14498))
-- [data/decision_center/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/decision_center/latest.json) (at publication: sha256 ca11fa0843a8f36520beca5241afbad4cba5e317b98c15df4c49c9ba7e2339fd; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/38bd9baa5fd01788342650e5dacff781fc024284))
+- [data/investor_decision_dashboard/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/investor_decision_dashboard/latest.json) (at publication: sha256 9bcc8235a33c6f5c00e7cea77577d3e1dce4b662fe7204fb31fd666940e822c3; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/8c1fe8dc6c201b7a58408bf3185d2014c57de1bc))
+- [data/decision_center/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/decision_center/latest.json) (at publication: sha256 bc522cf4fd30fac2f0f84c7a4ea76efd05cf4c914dc382707ba778caaaa00f6b; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/766a128a577b5e628b6eabce39b47c198f161d5e))
 - [data/era_radar/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/era_radar/latest.json) (at publication: sha256 efa28799cadfcaa10a8110d88e9f691b603977ba077e0aaaad285066a4ff168c; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/38bf257c25e502b61a2937e85c835911e0115c17))
 - [CURRENT_CAPITAL.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/CURRENT_CAPITAL.json) (at publication: sha256 b31ca1e1e03a6709d305ff39b0eaf70f9248c4f58d122c0f8aa8d839360133e5; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b31f3fec7f0731da559f4ccdbe87c08638a1397d))
 - [CURRENT_FUNDS.md](https://github.com/wanggenAi/daily_stock_analysis/blob/main/CURRENT_FUNDS.md) (at publication: sha256 34998c31e6c5ca7ff8c7698d272cf7ca5c58d3fc4ead50aa6465357cab34db20; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/6923d96f3e133462f8070117d5c6ce1491afac0b))
 - [data/manual_execution_quotes/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/manual_execution_quotes/latest.json) (at publication: sha256 638ed83336571b338a48b88182a03dae36c3bf547f3d0d10610655fc5e787a65; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b6be622af21f1bcddc0aee5c51ae9b038b753b2c))
-- [data/formal_decision_outcomes/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/formal_decision_outcomes/latest.json) (at publication: sha256 599be75a5f69254ec6d7c935548ff72227b4efe68fa9eb2c21881801af545ced; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/88bc1ab6870aa80517aabe39bc3c3053a8e59d78))
+- [data/formal_decision_outcomes/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/formal_decision_outcomes/latest.json) (at publication: sha256 ec5c43075d64f9ad606f496e9c84d24d61b27328ad788cb54faca0bdc71745a3; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b74939671f5486527b9bb474818be8e0c09271a5))
 
 WARNING: downstream overlay or three-pillar jobs may change mutable main
 after this H1 snapshot. Recompute source SHA-256 before trusting a main
