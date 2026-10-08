@@ -100,11 +100,11 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | YELLOW / score=49.87 / 2026-09-30 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=115 / dormant=11 / archived-invalidated=0 / events=13361 / focus=8 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=12 / verified-pass=218 / unresolved=51 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=37753341649 / unverified-pass=0 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=115 / dormant=11 / archived-invalidated=0 / events=13361 / focus=4 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=2 / verified-pass=0 / unresolved=10 |
+| Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=2 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=12 / REJECT=0 |
+| Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=2 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **115**；DORMANT **11**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13361**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
@@ -120,20 +120,20 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`37752799162`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`37753415143`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`37752799162`
-- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
+- Lambda run：`37753415143`
+- 触发来源：`JEV_ORCHESTRATOR_37752919245`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
-- 请求深算：**12**；已处理：**12**；完整：**0**；证据穷尽：**12**。
-- Workset profile：总数 **500**；请求代码已落 profile **12**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
-- 同轮补证据尝试：**2**；取得证据：**31**；推进硬门槛：**3**。
-- 尚未解决硬门槛：**51**。
-- 未决原因摘要：涉及 12 只；门槛分布：predictability×12、earnings_authenticity×10、financial_safety×10、moat×10、long_term_demand×9；Top原因：SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×10、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×10、OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×9、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×8、DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET×5；样例：000415[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000703[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000833[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；001309[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、moat:INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE]；001316[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]
+- 请求深算：**2**；已处理：**2**；完整：**0**；证据穷尽：**2**。
+- Workset profile：总数 **500**；请求代码已落 profile **2**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
+- 同轮补证据尝试：**1**；取得证据：**4**；推进硬门槛：**0**。
+- 尚未解决硬门槛：**10**。
+- 未决原因摘要：涉及 2 只；门槛分布：earnings_authenticity×2、financial_safety×2、long_term_demand×2、moat×2、predictability×2；Top原因：SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×2、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×2、OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET×2、DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET×2、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×1；样例：000415[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET]；603416[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_INDEPENDENT_CORROBORATION_THRESHOLD_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`37752799162`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`37753415143`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
@@ -145,16 +145,16 @@ M73研究和试验发展(95.46)、M75科技推广和应用服务业(87.50)、J66
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`37752799162`；当前 Lambda：`37752799162`。
-- 请求：**13**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**12**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：601318 中国平安(quant=32.5312；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；600406 国电南瑞(quant=31.8877；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=23.9734；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)；600812 华北制药(quant=79.0296；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)
+- 终态来源 Lambda：`37753415143`；当前 Lambda：`37753415143`。
+- 请求：**3**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**2**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：无
 - 风险预算层 BUILD/PROBE 候选：**1**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
   - 603596 伯特利: **BUILD**；conviction=0.8906；建议账户上限=3.0%
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`37753003534`。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`37753556263`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
