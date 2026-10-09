@@ -212,18 +212,18 @@ class TestAskCommandMultiStock(unittest.TestCase):
             ctx.data["portfolio_assessment"] = {"summary": "late summary"}
             return SimpleNamespace(success=True)
 
-        started_at = time.monotonic()
         with patch("src.agent.factory.get_tool_registry", return_value=MagicMock()):
             with patch("src.agent.llm_adapter.LLMToolAdapter", return_value=MagicMock()):
                 with patch("src.agent.agents.portfolio_agent.PortfolioAgent.run", new=slow_run):
+                    started_at = time.monotonic()
                     text = command._build_portfolio_section(
                         SimpleNamespace(),
                         ["600519", "000858"],
                         results,
                         timeout_s=0.01,
                     )
+                    elapsed_s = time.monotonic() - started_at
 
-        elapsed_s = time.monotonic() - started_at
         self.assertEqual(text, "")
         self.assertLess(elapsed_s, 0.08)
 
