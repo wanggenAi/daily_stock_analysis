@@ -23,6 +23,9 @@ concurrency:
 env:
   TZ: Asia/Shanghai
   PYTHONUNBUFFERED: "1"
+  # A GitHub-hosted run that is queued for this long with zero jobs is not a
+  # healthy producer. Keeping it as "active" forever deadlocks recovery.
+  STALE_QUEUED_MINUTES: "60"
 
 jobs:
   recover-stale-canonical:
@@ -64,21 +67,52 @@ jobs:
         run: |
           set -euo pipefail
           active=0
+          stale_cancelled=0
+          now_epoch="$(date -u +%s)"
+          stale_after_seconds=$((STALE_QUEUED_MINUTES * 60))
+
           for workflow in \
             genge-opportunity-discovery.yml \
             genge-v31-industry-research.yml \
             genge-all-a-v31-once.yml \
             genge-v311-production-finalizer.yml
           do
-            count=$(gh run list \
+            workflow_active=0
+            while IFS=$'\t' read -r run_id status created_at; do
+              [ -n "${run_id:-}" ] || continue
+
+              if [ "$status" = "queued" ]; then
+                created_epoch="$(date -u -d "$created_at" +%s)"
+                age_seconds=$((now_epoch - created_epoch))
+                if [ "$age_seconds" -ge "$stale_after_seconds" ]; then
+                  jobs_total="$(gh api -X GET \
+                    "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/jobs?per_page=1" \
+                    --jq '.total_count')"
+                  if [ "$jobs_total" -eq 0 ]; then
+                    echo "::warning::STALE_QUEUED_PRODUCTION_RUN run_id=${run_id} workflow=${workflow} age_seconds=${age_seconds} jobs=0; requesting cancellation"
+                    if gh run cancel "$run_id" --repo "$GITHUB_REPOSITORY"; then
+                      stale_cancelled=$((stale_cancelled + 1))
+                      # Cancellation was accepted. This zombie run must no
+                      # longer suppress a fresh full-production dispatch.
+                      continue
+                    fi
+                    echo "::warning::Unable to cancel stale queued run ${run_id}; keeping it active fail-closed."
+                  fi
+                fi
+              fi
+
+              workflow_active=$((workflow_active + 1))
+              active=$((active + 1))
+            done < <(gh run list \
               --repo "$GITHUB_REPOSITORY" \
               --workflow "$workflow" \
               --limit 20 \
-              --json status \
-              --jq '[.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "requested" or .status == "pending")] | length')
-            echo "$workflow active=$count"
-            active=$((active + count))
+              --json databaseId,status,createdAt \
+              --jq '.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting" or .status == "requested" or .status == "pending") | [.databaseId, .status, .createdAt] | @tsv')
+            echo "$workflow active=$workflow_active"
           done
+
+          echo "stale_queued_cancelled=$stale_cancelled" >> "$GITHUB_OUTPUT"
           if [ "$active" -gt 0 ]; then
             echo "producer_active=true" >> "$GITHUB_OUTPUT"
           else
@@ -97,6 +131,7 @@ jobs:
           echo "reason=${{ steps.freshness.outputs.reason }}"
           echo "expected_trade_date=${{ steps.freshness.outputs.expected_trade_date }}"
           echo "canonical_trade_date=${{ steps.freshness.outputs.canonical_trade_date }}"
+          echo "stale_queued_cancelled=${{ steps.active.outputs.stale_queued_cancelled }}"
           gh workflow run genge-all-a-v31-once.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main
