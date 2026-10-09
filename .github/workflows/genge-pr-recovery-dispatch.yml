@@ -1,0 +1,30 @@
+name: GenGe PR Recovery Dispatch
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: genge-pr-recovery-dispatch
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    if: >-
+      github.actor == 'wanggenAi' &&
+      (github.event_name == 'workflow_dispatch' || github.event.pull_request.title == 'ACTION_RECOVERY_PROBE')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch authoritative All-A production on current main
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-all-a-v31-once.yml --repo "$GITHUB_REPOSITORY" --ref main
+          echo 'Dispatched authoritative All-A recovery from independent pull_request_target event.'
