@@ -4,6 +4,8 @@ on:
   push:
     branches: [main]
     paths: [".github/workflows/genge-start-all-a-v31-now.yml"]
+  schedule:
+    - cron: "*/5 * * * *"
 
 permissions:
   contents: read
