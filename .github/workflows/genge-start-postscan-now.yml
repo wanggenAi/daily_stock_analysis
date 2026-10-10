@@ -6,38 +6,24 @@ on:
     paths: [".github/workflows/genge-start-postscan-now.yml"]
 
 permissions:
-  contents: write
+  contents: read
   actions: write
 
 jobs:
   dispatch:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Dispatch correct V3.1 postscan research
+      - name: Dispatch Postscan Market Data Publish recovery
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh workflow run genge-postscan-research.yml \
+          set -euo pipefail
+          SOURCE_RUN_ID="38014346209"
+          gh workflow run genge-postscan-market-data-publish.yml \
             --repo "$GITHUB_REPOSITORY" \
             --ref main \
-            -f upstream_run_id=32865436950
-          sleep 8
-          RUN_ID="$(gh run list \
-            --repo "$GITHUB_REPOSITORY" \
-            --workflow genge-postscan-research.yml \
-            --event workflow_dispatch \
-            --branch main \
-            --limit 1 \
-            --json databaseId \
-            --jq '.[0].databaseId')"
-          test -n "$RUN_ID"
-          printf '%s\n' "$RUN_ID" > .github/last_postscan_run.txt
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add .github/last_postscan_run.txt
-          git commit -m "chore: record latest postscan run $RUN_ID" || true
-          git push
-          echo "POSTSCAN_RUN_ID=$RUN_ID"
+            -f run_id="$SOURCE_RUN_ID"
+          echo "Dispatched GenGe Postscan Market Data Publish recovery from successful All-A run ${SOURCE_RUN_ID}."
+          echo "Downstream workflow_run chain remains authoritative: Postscan Market Data Publish -> GenGe Realtime Data Package -> GenGe Three-Pillar Decision Center." >> "$GITHUB_STEP_SUMMARY"
+          echo "No Formal BUY/SELL threshold changes; no auto-trade." >> "$GITHUB_STEP_SUMMARY"
