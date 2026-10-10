@@ -178,10 +178,10 @@ O81机动车、电子产品和日用产品修理业(100.00)、B07石油和天然
 - **DXY**：休市以来 -0.06%；最近1日 +0.10%；5日 +0.30%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **USDCNH**：休市以来 -0.16%；最近1日 -0.16%；5日 -0.18%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **HANGSENG**：休市以来 +1.69%；最近1日 +1.79%；5日 +1.00%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +1.89%；最近1日 +1.89%；5日 +2.32%；market_date=2026-10-09；freshness=FRESH。
-- **GOLD**：休市以来 +1.43%；最近1日 +1.43%；5日 +1.30%；market_date=2026-10-09；freshness=FRESH。
-- **CRUDE_OIL**：休市以来 +0.39%；最近1日 +0.39%；5日 +0.81%；market_date=2026-10-09；freshness=FRESH。
-- **BTC**：休市以来 -0.40%；最近1日 +0.53%；5日 -3.39%；market_date=2026-10-10；freshness=FRESH。
+- **COPPER**：休市以来 +1.89%；最近1日 +1.89%；5日 +2.32%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +1.43%；最近1日 +1.43%；5日 +1.30%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.39%；最近1日 +0.39%；5日 +0.81%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 -0.23%；最近1日 +0.32%；5日 -3.89%；market_date=2026-10-10；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
