@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Run the validated live Era Radar collector set and persist research-only truth."""
+# Manual recovery touch: force the existing validated producer to refresh stale execution-critical Era Radar state.
 
 from __future__ import annotations
 
