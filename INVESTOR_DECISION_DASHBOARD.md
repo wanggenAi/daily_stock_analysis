@@ -61,30 +61,6 @@ O81机动车、电子产品和日用产品修理业(STRONG)、B07石油和天然
 
 - **no-auto-trade：true；所有订单必须人工确认。**
 
-## 深算研究终态（Research-only，不等于正式交易授权）
-
-- 本轮深算：**3** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **2** / REJECT **0**。
-- urgent research：**0** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
-- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **0** / WATCH **0** / BLOCK **2**；仅人工建议，不自动执行。
-
-### 风险预算 BUILD / PROBE
-
-- 伯特利 603596: **BUILD**；conviction=0.889；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-
-### 我的持仓深算
-
-| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
-|---|---|---|---|---|
-| 600406 | — | 本轮 workset 未包含 | — | — |
-| 001316 | — | 本轮 workset 未包含 | — | — |
-| 601318 | — | 本轮 workset 未包含 | — | — |
-| 603993 | — | 本轮 workset 未包含 | — | — |
-
-### Urgent evidence queue
-
-- 暂无。
-
 ## 7. 事件深算闭环：到底算完没有
 
 - 总状态：**EVENT_TRIGGER_FAILED**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
@@ -112,3 +88,27 @@ O81机动车、电子产品和日用产品修理业(STRONG)、B07石油和天然
 | 603596 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
 | 603605 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
 | 605116 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
+
+## 深算研究终态（Research-only，不等于正式交易授权）
+
+- 本轮深算：**3** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **2** / REJECT **0**。
+- urgent research：**0** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
+- 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
+- 风险预算：BUILD **1** / PROBE **0** / WATCH **0** / BLOCK **2**；仅人工建议，不自动执行。
+
+### 风险预算 BUILD / PROBE
+
+- 伯特利 603596: **BUILD**；conviction=0.889；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+
+### 我的持仓深算
+
+| 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
+|---|---|---|---|---|
+| 600406 | — | 本轮 workset 未包含 | — | — |
+| 001316 | — | 本轮 workset 未包含 | — | — |
+| 601318 | — | 本轮 workset 未包含 | — | — |
+| 603993 | — | 本轮 workset 未包含 | — | — |
+
+### Urgent evidence queue
+
+- 暂无。
