@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 """Collect and persist the global market pulse."""
-# Manual recovery touch: force the existing validated producer to refresh stale execution-critical global pulse state.
 from __future__ import annotations
 
 import argparse
@@ -42,6 +41,33 @@ def _security_names(payload: dict) -> dict[str, str]:
     return result
 
 
+def _persist_validation_heartbeat(output_dir: Path, pulse: dict, persistence: dict) -> None:
+    """Persist successful collection validation even when market semantics are unchanged."""
+    coverage = pulse.get("coverage") or {}
+    coverage_status = str(coverage.get("status") or "")
+    if coverage_status == "UNAVAILABLE":
+        return
+    refreshed_at = str(pulse.get("generated_at") or "").strip()
+    if not refreshed_at:
+        return
+    target = output_dir / "validation" / "latest.json"
+    target.parent.mkdir(parents=True, exist_ok=True)
+    payload = {
+        "contract": "GEN_GE_GLOBAL_MARKET_PULSE_VALIDATION_V1",
+        "refreshed_at": refreshed_at,
+        "validation_status": "SUCCESS" if coverage_status == "OK" else "PARTIAL",
+        "coverage_status": coverage_status,
+        "semantic_state": persistence.get("status"),
+        "semantic_fingerprint": persistence.get("fingerprint"),
+        "latest_observation_at": coverage.get("latest_observation_at"),
+        "authority": "RESEARCH_ONLY",
+        "formal_trading_authority": False,
+        "formal_action_eligible": False,
+        "no_auto_trade": True,
+    }
+    target.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output-dir", type=Path, default=Path("data/global_market_pulse"))
@@ -56,6 +82,7 @@ def main() -> int:
         a_share_last_trade_date=decision_center.get("latest_trade_date"),
     )
     persistence = persist_if_changed(pulse, args.output_dir)
+    _persist_validation_heartbeat(args.output_dir, pulse, persistence)
     print(json.dumps({"pulse": pulse, "persistence": persistence}, ensure_ascii=False, sort_keys=True))
     # Partial coverage remains visible and useful. Complete source loss fails closed.
     return 2 if pulse["coverage"]["status"] == "UNAVAILABLE" else 0
