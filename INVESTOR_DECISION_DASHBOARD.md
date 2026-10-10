@@ -65,14 +65,16 @@ O81机动车、电子产品和日用产品修理业(STRONG)、B07石油和天然
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**12** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **11** / REJECT **0**。
-- urgent research：**3** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
+- 本轮深算：**26** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **25** / REJECT **0**。
+- urgent research：**4** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **0** / WATCH **2** / BLOCK **9**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **2** / WATCH **8** / BLOCK **15**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
 - 伯特利 603596: **BUILD**；conviction=0.889；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 顺丰控股 002352: **PROBE**；conviction=0.6588；建议账户仓位上限=0.84%；研究结论仍为 RESEARCH_GAP。
+- 申通快递 002468: **PROBE**；conviction=0.6394；建议账户仓位上限=0.77%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
@@ -88,3 +90,4 @@ O81机动车、电子产品和日用产品修理业(STRONG)、B07石油和天然
 - 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
+- 郑中设计 002811: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
