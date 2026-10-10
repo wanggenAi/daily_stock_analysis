@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `5674438e7a8332af9cb7`
 - latest_research_as_of: `2026-10-10T03:19:31+00:00`
-- active_candidates: 103
-- dormant_research_candidates: 23
+- active_candidates: 102
+- dormant_research_candidates: 24
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 13743
+- lifecycle_event_count: 13744
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -50,7 +50,6 @@
 | 002582 | 好想你 | PENDING | 62 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 002607 | 中公教育 | PENDING | 10 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 002758 | 浙农股份 | PENDING | 78 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
-| 002811 | 郑中设计 | PENDING | 190 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
 | 002916 | 深南电路 | PENDING | 17 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 002941 | 新疆交建 | PENDING | 78 | HOLD_REVIEW | LOW | 5674438e7a8332af9cb7 | RESEEN |
 | 002996 | 顺博合金 | PENDING | 186 | HOLD_REVIEW | LOW | 5674438e7a8332af9cb7 | RESEEN |
@@ -733,29 +732,6 @@
 - 2026-09-22T16:27:42Z — **RESEEN**; snapshot `530df3c8e1faddfa2ea9`
 - 2026-09-22T19:04:53Z — **RESEEN**; snapshot `451aae130d6597f1d225`
 - 2026-09-22T20:04:52Z — **RESEEN**; snapshot `ea3c4b0384d9f6efec18`
-- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-
-### 002811 郑中设计
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 190
-- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
-- **last_seen_source_run_id:** 38014346209
-- **last Formal action:** WAIT
-- **valuation confidence:** HIGH
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-10-06T17:25:48Z — **RESEEN**; snapshot `64d8f9e56ff8db34d4cf`
-- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
-- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
-- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
-- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
-- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
-- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
-- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
-- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 
 ### 002916 深南电路
@@ -2431,6 +2407,7 @@
 | 002468 | 申通快递 | PENDING | 192 | 5b5a11db581a823cdd75 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002537 | 海联金汇 | PENDING | 208 | 8bdd66fadd738946076c | d9b18f3d2441da96e2d7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002612 | 朗姿股份 | PENDING | 202 | 5b191f468471095dbf8a | 5674438e7a8332af9cb7 | RESEEN |
+| 002811 | 郑中设计 | PENDING | 190 | 86675daf225475f4099c | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002842 | 翔鹭钨业 | PENDING | 192 | 4f8f5471d83f7b27cf94 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 600095 | 湘财股份 | PENDING | 113 | 8111ffdd789e7df76892 | 977a0f2c7ae860acb046 | RESEARCH_EXHAUSTED_DORMANT |
 | 600661 | 昂立教育 | PENDING | 121 | d870b223168ef71f8c7f | 5674438e7a8332af9cb7 | RESEEN |
@@ -2652,6 +2629,29 @@
 - 2026-09-24T04:58:22+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `966b9961b76c7cdfc464`
 - 2026-09-24T04:59:54Z — **RESEEN**; snapshot `e77ecb25848423a12bc1`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+
+### 002811 郑中设计
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 190
+- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
+- **last_seen_source_run_id:** 38014346209
+- **last Formal action:** WAIT
+- **valuation confidence:** HIGH
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
+- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
+- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
+- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
+- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
+- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
+- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
+- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
+- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+- 2026-10-10T12:54:22+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `5674438e7a8332af9cb7`
 
 ### 002842 翔鹭钨业
 
