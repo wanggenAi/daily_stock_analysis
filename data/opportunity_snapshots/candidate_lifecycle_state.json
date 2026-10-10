@@ -24050,7 +24050,7 @@
     "000682": {
       "code": "000682",
       "stock_name": "东方电子",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -24059,22 +24059,10 @@
       "seen_count": 142,
       "last_formal_action": "WAIT",
       "last_valuation_confidence": "MEDIUM",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "000682",
-          "snapshot_id": "1852d96dd0e174f2cc7a",
-          "source_run_id": "33478185613",
-          "observed_at": "2026-09-01T06:39:40Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "000682",
@@ -25262,6 +25250,22 @@
           "valuation_confidence": "MEDIUM",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "000682",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "d49c292f96d5ebaadfa2",
+          "research_epoch": "56116cf634f905a2a4b0",
+          "supported_gate_count": 4,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -25273,7 +25277,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -26730,7 +26734,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "56116cf634f905a2a4b0"
     },
     "000703": {
       "code": "000703",
@@ -50634,7 +50642,7 @@
     "002468": {
       "code": "002468",
       "stock_name": "申通快递",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -50643,22 +50651,10 @@
       "seen_count": 192,
       "last_formal_action": "HOLD_REVIEW",
       "last_valuation_confidence": "INVALID",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "002468",
-          "snapshot_id": "16123c4ee4383d7a8ec8",
-          "source_run_id": "33528830585",
-          "observed_at": "2026-09-01T16:02:05Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "002468",
@@ -51846,6 +51842,22 @@
           "valuation_confidence": "INVALID",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "002468",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "68001a7491b566fef74a",
+          "research_epoch": "5b5a11db581a823cdd75",
+          "supported_gate_count": 2,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -51857,7 +51869,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -53314,7 +53326,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "5b5a11db581a823cdd75"
     },
     "002494": {
       "code": "002494",
@@ -62633,7 +62649,7 @@
     "002842": {
       "code": "002842",
       "stock_name": "翔鹭钨业",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -62642,22 +62658,10 @@
       "seen_count": 192,
       "last_formal_action": "HOLD_REVIEW",
       "last_valuation_confidence": "LOW",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "002842",
-          "snapshot_id": "16123c4ee4383d7a8ec8",
-          "source_run_id": "33528830585",
-          "observed_at": "2026-09-01T16:02:05Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "002842",
@@ -63845,6 +63849,22 @@
           "valuation_confidence": "LOW",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "002842",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "5ab0ffe073359c96747b",
+          "research_epoch": "4f8f5471d83f7b27cf94",
+          "supported_gate_count": 4,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -63856,7 +63876,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -65313,7 +65333,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "4f8f5471d83f7b27cf94"
     },
     "600009": {
       "code": "600009",
@@ -91111,7 +91135,7 @@
     "600961": {
       "code": "600961",
       "stock_name": "株冶集团",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -91120,22 +91144,10 @@
       "seen_count": 189,
       "last_formal_action": "WAIT",
       "last_valuation_confidence": "HIGH",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "600961",
-          "snapshot_id": "09e5a892f6da053a6f64",
-          "source_run_id": "33517759724",
-          "observed_at": "2026-09-01T14:14:56Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "600961",
@@ -92323,6 +92335,22 @@
           "valuation_confidence": "HIGH",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "600961",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "6b809571cabfa73e0bda",
+          "research_epoch": "52b99684233ec8b9a721",
+          "supported_gate_count": 2,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -92334,7 +92362,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -93791,7 +93819,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "52b99684233ec8b9a721"
     },
     "601007": {
       "code": "601007",
@@ -110346,7 +110378,7 @@
     "601808": {
       "code": "601808",
       "stock_name": "中海油服",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -110355,22 +110387,10 @@
       "seen_count": 273,
       "last_formal_action": "HOLD_REVIEW",
       "last_valuation_confidence": "INVALID",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "601808",
-          "snapshot_id": "292c453ed9def63dc763",
-          "source_run_id": "35142287384",
-          "observed_at": "2026-09-16T19:54:15Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "601808",
@@ -111558,6 +111578,22 @@
           "valuation_confidence": "INVALID",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "601808",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "6b51f81d0a2d7f4ea4c0",
+          "research_epoch": "c64b24b64b3da8ed7ca3",
+          "supported_gate_count": 5,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -111569,7 +111605,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -113026,12 +113062,16 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "c64b24b64b3da8ed7ca3"
     },
     "601816": {
       "code": "601816",
       "stock_name": "京沪高铁",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -113040,22 +113080,10 @@
       "seen_count": 189,
       "last_formal_action": "HOLD_REVIEW",
       "last_valuation_confidence": "INVALID",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "601816",
-          "snapshot_id": "09e5a892f6da053a6f64",
-          "source_run_id": "33517759724",
-          "observed_at": "2026-09-01T14:14:56Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "601816",
@@ -114243,6 +114271,22 @@
           "valuation_confidence": "INVALID",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "601816",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "22bce6cabaab0c941e24",
+          "research_epoch": "ba8d4c983db17a2e4f76",
+          "supported_gate_count": 3,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -114254,7 +114298,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -115651,7 +115695,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "ba8d4c983db17a2e4f76"
     },
     "603038": {
       "code": "603038",
@@ -132903,7 +132951,7 @@
     "605116": {
       "code": "605116",
       "stock_name": "奥锐特",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -132912,22 +132960,10 @@
       "seen_count": 192,
       "last_formal_action": "WAIT",
       "last_valuation_confidence": "HIGH",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "605116",
-          "snapshot_id": "16123c4ee4383d7a8ec8",
-          "source_run_id": "33528830585",
-          "observed_at": "2026-09-01T16:02:05Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "605116",
@@ -134115,6 +134151,22 @@
           "valuation_confidence": "HIGH",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "605116",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "5ab5bcffeacc38496c3b",
+          "research_epoch": "bd5113787913abe44b4f",
+          "supported_gate_count": 3,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -134126,7 +134178,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -135523,12 +135575,16 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "bd5113787913abe44b4f"
     },
     "000526": {
       "code": "000526",
       "stock_name": "学大教育",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "ef544d678e8b0e608587",
       "first_seen_source_run_id": "33134227778",
@@ -135537,22 +135593,10 @@
       "seen_count": 271,
       "last_formal_action": "HOLD_REVIEW",
       "last_valuation_confidence": "LOW",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:48:40+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "000526",
-          "snapshot_id": "292c453ed9def63dc763",
-          "source_run_id": "35142287384",
-          "observed_at": "2026-09-16T19:54:15Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "000526",
@@ -136740,6 +136784,22 @@
           "valuation_confidence": "LOW",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "000526",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021770704",
+          "observed_at": "2026-10-10T03:48:40+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "43c076792a867358f6e3",
+          "research_epoch": "2b28963c34a784f1ae88",
+          "supported_gate_count": 3,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -136751,7 +136811,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -138208,7 +138268,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021770704",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "2b28963c34a784f1ae88"
     },
     "000596": {
       "code": "000596",
@@ -279114,7 +279178,7 @@
       "research_dormant_epoch": "37186a7206fe6f514065"
     }
   },
-  "event_count": 13733,
+  "event_count": 13741,
   "no_auto_trade": true,
   "discovery_is_filtered_by_lifecycle": false,
   "bootstrap_source": "LEGACY_MARKDOWN",
@@ -279227,7 +279291,7 @@
   "latest_terminal_memory_id": "terminal:37852914449:1",
   "latest_terminal_memory_observed_at": "2026-10-08T22:23:18Z",
   "terminal_memory_event_count": 11406,
-  "latest_research_lifecycle_source_run_id": "38021311992",
-  "latest_research_lifecycle_observed_at": "2026-10-10T03:41:02+00:00",
-  "research_lifecycle_event_count": 13
+  "latest_research_lifecycle_source_run_id": "38021770704",
+  "latest_research_lifecycle_observed_at": "2026-10-10T03:48:40+00:00",
+  "research_lifecycle_event_count": 21
 }
