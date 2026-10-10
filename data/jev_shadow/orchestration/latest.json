@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38056773458",
+  "orchestrator_run_id": "38056933137",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -124,6 +124,20 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "000703",
       "entity_name": "恒逸石化",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -173,20 +187,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "600834",
       "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-10T13:42:15+00:00",
-  "source_workflow_head_sha": "e8611c8687c0f898221fc2c08ea8bf7cd7dd50ed",
+  "source_generated_at": "2026-10-10T13:44:36+00:00",
+  "source_workflow_head_sha": "df8b41a2af9c75630b8f4e72603d4eaf07d2f539",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38056635661",
+  "source_workflow_run_id": "38056755699",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 351,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38056635661",
+  "trigger_source": "JEV_ORCHESTRATOR_38056755699",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-10T13:44:41+00:00",
+  "updated_at": "2026-10-10T13:46:57+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.85,
+      "attention_confidence": 0.86,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "38056025748",
+        "deep_lambda_run_id": "38056228998",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.96,
+      "route_confidence": 0.94,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
