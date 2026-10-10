@@ -190,7 +190,7 @@ O81机动车、电子产品和日用产品修理业(100.00)、B07石油和天然
 - **COPPER**：休市以来 +1.89%；最近1日 +1.89%；5日 +2.32%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **GOLD**：休市以来 +1.43%；最近1日 +1.43%；5日 +1.30%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **CRUDE_OIL**：休市以来 +0.39%；最近1日 +0.39%；5日 +0.81%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 +0.02%；最近1日 +0.34%；5日 -2.74%；market_date=2026-10-10；freshness=FRESH。
+- **BTC**：休市以来 +0.02%；最近1日 +0.64%；5日 -3.28%；market_date=2026-10-10；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
