@@ -37393,7 +37393,7 @@
     "001309": {
       "code": "001309",
       "stock_name": "德明利",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "b6320a3f8595210c1c65",
       "first_seen_source_run_id": "33125766536",
@@ -37402,22 +37402,10 @@
       "seen_count": 192,
       "last_formal_action": "HOLD_REVIEW",
       "last_valuation_confidence": "LOW",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:41:02+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "001309",
-          "snapshot_id": "16123c4ee4383d7a8ec8",
-          "source_run_id": "33528830585",
-          "observed_at": "2026-09-01T16:02:05Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "001309",
@@ -38605,6 +38593,22 @@
           "valuation_confidence": "LOW",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "001309",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021311992",
+          "observed_at": "2026-10-10T03:41:02+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "15a5876552e6a2a65a3d",
+          "research_epoch": "4e1ecbabd70ac2d854e3",
+          "supported_gate_count": 4,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -38616,7 +38620,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -40073,7 +40077,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021311992",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:41:02+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "4e1ecbabd70ac2d854e3"
     },
     "001316": {
       "code": "001316",
@@ -153249,7 +153257,7 @@
     "601965": {
       "code": "601965",
       "stock_name": "中国汽研",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "ef544d678e8b0e608587",
       "first_seen_source_run_id": "33134227778",
@@ -153258,22 +153266,10 @@
       "seen_count": 186,
       "last_formal_action": "WAIT",
       "last_valuation_confidence": "HIGH",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-10T03:19:31+00:00",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-10T03:41:02+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "601965",
-          "snapshot_id": "54113ebd32846adffd51",
-          "source_run_id": "33515082628",
-          "observed_at": "2026-09-01T13:47:58Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "601965",
@@ -154461,6 +154457,22 @@
           "valuation_confidence": "HIGH",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "601965",
+          "snapshot_id": "5674438e7a8332af9cb7",
+          "source_run_id": "38021311992",
+          "observed_at": "2026-10-10T03:41:02+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "0701fa98f4fb2d1a3afb",
+          "research_epoch": "29ae0d8e56d1962cb43b",
+          "supported_gate_count": 5,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-08T22:23:18Z",
@@ -154472,7 +154484,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-08T22:23:18Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -155929,7 +155941,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38021311992",
+      "last_research_lifecycle_observed_at": "2026-10-10T03:41:02+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "29ae0d8e56d1962cb43b"
     },
     "603939": {
       "code": "603939",
@@ -279098,7 +279114,7 @@
       "research_dormant_epoch": "37186a7206fe6f514065"
     }
   },
-  "event_count": 13731,
+  "event_count": 13733,
   "no_auto_trade": true,
   "discovery_is_filtered_by_lifecycle": false,
   "bootstrap_source": "LEGACY_MARKDOWN",
@@ -279211,7 +279227,7 @@
   "latest_terminal_memory_id": "terminal:37852914449:1",
   "latest_terminal_memory_observed_at": "2026-10-08T22:23:18Z",
   "terminal_memory_event_count": 11406,
-  "latest_research_lifecycle_source_run_id": "37717422967",
-  "latest_research_lifecycle_observed_at": "2026-10-08T02:22:24+00:00",
-  "research_lifecycle_event_count": 11
+  "latest_research_lifecycle_source_run_id": "38021311992",
+  "latest_research_lifecycle_observed_at": "2026-10-10T03:41:02+00:00",
+  "research_lifecycle_event_count": 13
 }

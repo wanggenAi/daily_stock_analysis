@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `5674438e7a8332af9cb7`
 - latest_research_as_of: `2026-10-10T03:19:31+00:00`
-- active_candidates: 115
-- dormant_research_candidates: 11
+- active_candidates: 113
+- dormant_research_candidates: 13
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 13731
+- lifecycle_event_count: 13733
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -36,7 +36,6 @@
 | 000833 | 粤桂股份 | PENDING | 189 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 001205 | 盛航股份 | PENDING | 10 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 001236 | 弘业期货 | PENDING | 4 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
-| 001309 | 德明利 | PENDING | 192 | HOLD_REVIEW | LOW | 5674438e7a8332af9cb7 | RESEEN |
 | 001316 | 润贝航科 | PENDING | 263 |  |  | 5674438e7a8332af9cb7 | RESEEN |
 | 002016 | 世荣兆业 | PENDING | 4 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 002041 | 登海种业 | PENDING | 2 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
@@ -108,7 +107,6 @@
 | 601808 | 中海油服 | PENDING | 273 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 601816 | 京沪高铁 | PENDING | 189 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 601899 | 紫金矿业 | PENDING | 43 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
-| 601965 | 中国汽研 | PENDING | 186 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
 | 601990 | 南京证券 | PENDING | 73 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 603038 | 华立股份 | PENDING | 192 | HOLD_REVIEW | LOW | 5674438e7a8332af9cb7 | RESEEN |
 | 603055 | 台华新材 | PENDING | 69 | HOLD_REVIEW | LOW | 5674438e7a8332af9cb7 | RESEEN |
@@ -445,29 +443,6 @@
 - 2026-09-21T15:34:44Z — **NEW**; snapshot `2a0d0bbb19b752f42598`
 - 2026-09-21T16:07:35Z — **RESEEN**; snapshot `2db77491e8b9e27f7dbf`
 - 2026-09-21T17:02:51Z — **RESEEN**; snapshot `c21394d85e4bf0b09d9d`
-- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-
-### 001309 德明利
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 192
-- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
-- **last_seen_source_run_id:** 38014346209
-- **last Formal action:** HOLD_REVIEW
-- **valuation confidence:** LOW
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-10-06T17:25:48Z — **RESEEN**; snapshot `64d8f9e56ff8db34d4cf`
-- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
-- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
-- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
-- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
-- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
-- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
-- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
-- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 
 ### 001316 润贝航科
@@ -2068,29 +2043,6 @@
 - 2026-08-30T12:23:32Z — **RESEEN**; snapshot `de3613a4e1d7fb666c32`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 
-### 601965 中国汽研
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 186
-- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
-- **last_seen_source_run_id:** 38014346209
-- **last Formal action:** WAIT
-- **valuation confidence:** HIGH
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-10-06T17:25:48Z — **RESEEN**; snapshot `64d8f9e56ff8db34d4cf`
-- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
-- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
-- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
-- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
-- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
-- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
-- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
-- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
-- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-
 ### 601990 南京证券
 
 - **lifecycle_state:** ACTIVE
@@ -2712,6 +2664,7 @@
 | --- | --- | --- | ---: | --- | --- | --- |
 | 000426 | 兴业银锡 | PENDING | 120 | ea204932693c962c5925 | e77ecb25848423a12bc1 | RESEEN |
 | 000504 | 南华生物 | PENDING | 130 | 600b8e4427b66d8bf266 | 5674438e7a8332af9cb7 | RESEEN |
+| 001309 | 德明利 | PENDING | 192 | 4e1ecbabd70ac2d854e3 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002537 | 海联金汇 | PENDING | 208 | 8bdd66fadd738946076c | d9b18f3d2441da96e2d7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002612 | 朗姿股份 | PENDING | 202 | 5b191f468471095dbf8a | 5674438e7a8332af9cb7 | RESEEN |
 | 600095 | 湘财股份 | PENDING | 113 | 8111ffdd789e7df76892 | 977a0f2c7ae860acb046 | RESEARCH_EXHAUSTED_DORMANT |
@@ -2720,6 +2673,7 @@
 | 600816 | 建元信托 | PENDING | 138 | a8ae13563da5bf6420ca | 66c3dfc6b56e166443a5 | RESEEN |
 | 600827 | 百联股份 | PENDING | 81 | 49e99bbf78c8694a57c3 | 5674438e7a8332af9cb7 | RESEEN |
 | 601020 | 华钰矿业 | PENDING | 119 | bf4973ba54c1969c5d20 | 966b9961b76c7cdfc464 | RESEEN |
+| 601965 | 中国汽研 | PENDING | 186 | 29ae0d8e56d1962cb43b | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 603739 | 蔚蓝生物 | PENDING | 5 | 37186a7206fe6f514065 | f47b1eada872c202035c | RESEEN |
 
 ### 000426 兴业银锡
@@ -2767,6 +2721,29 @@
 - 2026-09-25T01:41:31Z — **RESEEN**; snapshot `5fb8490256006347c830`
 - 2026-09-25T06:01:39Z — **RESEEN**; snapshot `66c3dfc6b56e166443a5`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+
+### 001309 德明利
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 192
+- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
+- **last_seen_source_run_id:** 38014346209
+- **last Formal action:** HOLD_REVIEW
+- **valuation confidence:** LOW
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
+- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
+- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
+- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
+- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
+- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
+- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
+- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
+- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+- 2026-10-10T03:41:02+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `5674438e7a8332af9cb7`
 
 ### 002537 海联金汇
 
@@ -2951,6 +2928,29 @@
 - 2026-09-23T07:12:19Z — **RESEEN**; snapshot `538269c3908f97c328d1`
 - 2026-09-23T07:37:25+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `538269c3908f97c328d1`
 - 2026-09-23T16:15:09Z — **RESEEN**; snapshot `966b9961b76c7cdfc464`
+
+### 601965 中国汽研
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 186
+- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
+- **last_seen_source_run_id:** 38014346209
+- **last Formal action:** WAIT
+- **valuation confidence:** HIGH
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
+- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
+- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
+- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
+- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
+- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
+- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
+- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
+- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+- 2026-10-10T03:41:02+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `5674438e7a8332af9cb7`
 
 ### 603739 蔚蓝生物
 
