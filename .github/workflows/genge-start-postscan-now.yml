@@ -14,18 +14,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Dispatch Postscan Market Data Publish recovery
+      - name: Refresh execution-critical market producers
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          SOURCE_RUN_ID="38014346209"
-          gh workflow run genge-postscan-market-data-publish.yml \
-            --repo "$GITHUB_REPOSITORY" \
-            --ref main \
-            -f run_id="$SOURCE_RUN_ID"
-          echo "Dispatched GenGe Postscan Market Data Publish recovery from successful All-A run ${SOURCE_RUN_ID}."
-          echo "Downstream workflow_run chain remains authoritative: Postscan Market Data Publish -> GenGe Realtime Data Package -> GenGe Three-Pillar Decision Center." >> "$GITHUB_STEP_SUMMARY"
-          echo "No Formal BUY/SELL threshold changes; no auto-trade." >> "$GITHUB_STEP_SUMMARY"
+          gh workflow run era-capital-trend-radar-live.yml --repo "$GITHUB_REPOSITORY" --ref main
+          gh workflow run genge-global-market-pulse.yml --repo "$GITHUB_REPOSITORY" --ref main
+          echo "Dispatched fresh Era Capital Trend Radar Live and GenGe Global Market Pulse runs."
+          echo "Their successful producer outputs are authoritative inputs to the realtime package; no Formal BUY/SELL threshold changes and no auto-trade." >> "$GITHUB_STEP_SUMMARY"
 
-# Recovery trigger: rebuild canonical data package after immutable snapshot identity repair.
+# Recovery trigger: refresh both execution-critical wall-clock producers before final package/decision validation.
