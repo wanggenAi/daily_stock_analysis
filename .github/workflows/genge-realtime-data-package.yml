@@ -1,0 +1,75 @@
+name: GenGe Realtime Data Package
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '12 * * * *'
+  workflow_run:
+    workflows:
+      - "Era Capital Trend Radar Live"
+      - "GenGe Global Market Pulse"
+      - "GenGe V3.1.1 Evidence Slow Lane"
+      - "GenGe Postscan Market Data Publish"
+    types: [completed]
+
+concurrency:
+  group: genge-realtime-data-package
+  cancel-in-progress: true
+
+jobs:
+  package:
+    if: >-
+      github.event_name != 'workflow_run' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install minimal runtime dependencies
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install -r .github/requirements-ci.txt
+      - name: Produce live quote data only
+        run: |
+          set -euo pipefail
+          python scripts/genge_live_quote_snapshot.py \
+            --dashboard data/investor_decision_dashboard/latest.json \
+            --output data/live_execution_quotes/latest.json \
+            --retry-attempts 3
+      - name: Build immutable package manifest
+        run: |
+          set -euo pipefail
+          set +e
+          python scripts/genge_data_package.py build
+          rc=$?
+          set -e
+          test "$rc" -eq 0 -o "$rc" -eq 2
+          python scripts/genge_data_package.py validate
+      - name: Persist producer outputs only
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'genge-data-package-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+          git add -f data/live_execution_quotes data/data_package
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m 'Persist realtime data package [skip ci]'
+          git pull --rebase origin main
+          # Main may have received newer producer data while this job ran. Rebuild the
+          # manifest against the rebased truth before publishing it.
+          set +e
+          python scripts/genge_data_package.py build
+          rc=$?
+          set -e
+          test "$rc" -eq 0 -o "$rc" -eq 2
+          git add -f data/live_execution_quotes data/data_package
+          git commit --amend --no-edit
+          git push origin HEAD:main
