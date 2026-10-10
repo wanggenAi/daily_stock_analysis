@@ -1,15 +1,15 @@
 # Era & Capital Trend Radar
 
-Snapshot: `622fd316dc3f64cda5e6`
-Research as of: `2026-10-08T13:45:51Z`
+Snapshot: `03251bd4b1025e7a8643`
+Research as of: `2026-10-10T12:33:43Z`
 
 > Research intelligence only. No Formal trading authority. No auto-trade.
 
 | Trend | State | Structural | Industrial | Cyclical | Confidence | Evidence families |
 |---|---:|---:|---:|---:|---:|---:|
 | digital_infrastructure | EMERGING | 57.06 | 72.44 | 77.44 | 53.10 | 3 |
-| software_digital_economy | EMERGING | 50.00 | 62.44 | 62.34 | 31.92 | 2 |
 | automotive_industry | EMERGING | 50.00 | 62.50 | 67.50 | 16.09 | 1 |
+| software_digital_economy | EMERGING | 50.00 | 58.81 | 62.34 | 15.03 | 1 |
 | equipment_investment | EMERGING | 50.00 | 56.89 | 56.89 | 14.65 | 1 |
 | demographic_longevity | EMERGING | 60.32 | 50.00 | 50.00 | 14.64 | 1 |
 | urbanization_services | EMERGING | 58.08 | 50.00 | 50.00 | 14.18 | 1 |
