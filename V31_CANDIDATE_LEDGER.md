@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `5674438e7a8332af9cb7`
 - latest_research_as_of: `2026-10-10T03:19:31+00:00`
-- active_candidates: 105
-- dormant_research_candidates: 21
+- active_candidates: 103
+- dormant_research_candidates: 23
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 13741
+- lifecycle_event_count: 13743
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -43,7 +43,6 @@
 | 002215 | 诺 普 信 | PENDING | 11 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
 | 002239 | 奥特佳 | PENDING | 155 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
 | 002270 | 华明装备 | PENDING | 10 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
-| 002352 | 顺丰控股 | PENDING | 123 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 002375 | 亚厦股份 | PENDING | 85 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
 | 002420 | 毅昌科技 | PENDING | 273 | HOLD_REVIEW | LOW | 5674438e7a8332af9cb7 | RESEEN |
 | 002494 | 华斯股份 | PENDING | 100 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
@@ -116,7 +115,6 @@
 | 603416 | 信捷电气 | PENDING | 76 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603529 | 爱玛科技 | PENDING | 15 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603596 | 伯特利 | PENDING | 157 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
-| 603605 | 珀莱雅 | PENDING | 273 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603658 | 安图生物 | PENDING | 118 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603871 | 嘉友国际 | PENDING | 10 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603883 | 老百姓 | PENDING | 74 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
@@ -574,29 +572,6 @@
 - 2026-09-07T12:41:42Z — **RESEEN**; snapshot `6706d4163a93951ec6bf`
 - 2026-09-07T14:12:11Z — **RESEEN**; snapshot `a308c746899cc7c88e90`
 - 2026-09-07T14:35:18Z — **RESEEN**; snapshot `d177ad83826140cfe194`
-- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-
-### 002352 顺丰控股
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 123
-- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
-- **last_seen_source_run_id:** 38014346209
-- **last Formal action:** HOLD_REVIEW
-- **valuation confidence:** INVALID
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-10-06T17:25:48Z — **RESEEN**; snapshot `64d8f9e56ff8db34d4cf`
-- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
-- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
-- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
-- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
-- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
-- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
-- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
-- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 
 ### 002375 亚厦股份
@@ -2223,29 +2198,6 @@
 - 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 
-### 603605 珀莱雅
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 273
-- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
-- **last_seen_source_run_id:** 38014346209
-- **last Formal action:** WAIT
-- **valuation confidence:** MEDIUM
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-10-06T17:25:48Z — **RESEEN**; snapshot `64d8f9e56ff8db34d4cf`
-- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
-- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
-- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
-- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
-- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
-- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
-- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
-- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
-- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-
 ### 603658 安图生物
 
 - **lifecycle_state:** ACTIVE
@@ -2475,6 +2427,7 @@
 | 000526 | 学大教育 | PENDING | 271 | 2b28963c34a784f1ae88 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 000682 | 东方电子 | PENDING | 142 | 56116cf634f905a2a4b0 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 001309 | 德明利 | PENDING | 192 | 4e1ecbabd70ac2d854e3 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
+| 002352 | 顺丰控股 | PENDING | 123 | a734fd51f320d01cb9bf | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002468 | 申通快递 | PENDING | 192 | 5b5a11db581a823cdd75 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002537 | 海联金汇 | PENDING | 208 | 8bdd66fadd738946076c | d9b18f3d2441da96e2d7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002612 | 朗姿股份 | PENDING | 202 | 5b191f468471095dbf8a | 5674438e7a8332af9cb7 | RESEEN |
@@ -2489,6 +2442,7 @@
 | 601808 | 中海油服 | PENDING | 273 | c64b24b64b3da8ed7ca3 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 601816 | 京沪高铁 | PENDING | 189 | ba8d4c983db17a2e4f76 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 601965 | 中国汽研 | PENDING | 186 | 29ae0d8e56d1962cb43b | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
+| 603605 | 珀莱雅 | PENDING | 273 | c6b0409af80bc1ab444f | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 603739 | 蔚蓝生物 | PENDING | 5 | 37186a7206fe6f514065 | f47b1eada872c202035c | RESEEN |
 | 605116 | 奥锐特 | PENDING | 192 | bd5113787913abe44b4f | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 
@@ -2606,6 +2560,29 @@
 - 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 - 2026-10-10T03:41:02+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `5674438e7a8332af9cb7`
+
+### 002352 顺丰控股
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 123
+- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
+- **last_seen_source_run_id:** 38014346209
+- **last Formal action:** HOLD_REVIEW
+- **valuation confidence:** INVALID
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
+- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
+- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
+- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
+- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
+- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
+- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
+- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
+- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+- 2026-10-10T03:51:35+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `5674438e7a8332af9cb7`
 
 ### 002468 申通快递
 
@@ -2928,6 +2905,29 @@
 - 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 - 2026-10-10T03:41:02+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `5674438e7a8332af9cb7`
+
+### 603605 珀莱雅
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 273
+- **last_seen_snapshot_id:** 5674438e7a8332af9cb7
+- **last_seen_source_run_id:** 38014346209
+- **last Formal action:** WAIT
+- **valuation confidence:** MEDIUM
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-10-07T18:04:43Z — **RESEEN**; snapshot `a95ea1a177fbee3f427e`
+- 2026-10-08T02:07:35Z — **RESEEN**; snapshot `139fdb772feb2755d984`
+- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
+- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
+- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
+- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
+- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
+- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
+- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+- 2026-10-10T03:51:35+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `5674438e7a8332af9cb7`
 
 ### 603739 蔚蓝生物
 
