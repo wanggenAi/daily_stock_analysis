@@ -65,27 +65,25 @@ O81机动车、电子产品和日用产品修理业(STRONG)、B07石油和天然
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**13** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **12** / REJECT **0**。
-- urgent research：**2** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
+- 本轮深算：**3** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **2** / REJECT **0**。
+- urgent research：**0** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **2** / WATCH **5** / BLOCK **5**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **1** / WATCH **0** / BLOCK **1**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
 - 伯特利 603596: **BUILD**；conviction=0.889；建议账户仓位上限=3.0%；研究结论仍为 BUY。
 - 顺丰控股 002352: **PROBE**；conviction=0.6588；建议账户仓位上限=0.84%；研究结论仍为 RESEARCH_GAP。
-- 申通快递 002468: **PROBE**；conviction=0.6394；建议账户仓位上限=0.77%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
 | 股票 | 研究结论 | 原因 | 剩余证据缺口 | Urgent |
 |---|---|---|---|---|
-| 国电南瑞 600406 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
+| 600406 | — | 本轮 workset 未包含 | — | — |
 | 001316 | — | 本轮 workset 未包含 | — | — |
-| 中国平安 601318 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability, long_term_demand, moat, financial_safety, earnings_authenticity | 是 |
-| 洛阳钼业 603993 | **RESEARCH_GAP** | EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY | predictability | 否 |
+| 601318 | — | 本轮 workset 未包含 | — | — |
+| 603993 | — | 本轮 workset 未包含 | — | — |
 
 ### Urgent evidence queue
 
-- 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
+- 暂无。
