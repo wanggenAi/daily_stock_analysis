@@ -2,37 +2,22 @@ name: GenGe Three-Pillar Decision Center
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center.py'
-      - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center_runtime.py'
-      - 'src/strategies/genge_opportunity_discovery/holding_valuation_watch.py'
-      - 'tools/apply_global_market_pulse_to_decision_center.py'
-      - 'data/global_market_pulse/latest.json'
-      - 'data/jev_shadow/latest_routing.json'
-      - '.github/workflows/genge-three-pillar-decision-center.yml'
-      - 'config/v31_explicit_deep_reviews.json'
-      - 'config/era_radar_industry_links.json'
   schedule:
     - cron: '32 */3 * * *'
   workflow_run:
     workflows:
+      - "GenGe Realtime Data Package"
       - "Era Capital Trend Radar Live"
       - "GenGe Global Market Pulse"
     types: [completed]
   pull_request:
     paths:
-      - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center.py'
-      - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center_runtime.py'
-      - 'tools/apply_global_market_pulse_to_decision_center.py'
-      - 'tests/test_three_pillar_decision_center.py'
-      - 'tests/test_three_pillar_decision_center_runtime.py'
-      - 'tests/test_holding_valuation_watch.py'
-      - 'tests/test_global_market_pulse_decision_integration.py'
+      - 'src/strategies/genge_opportunity_discovery/three_pillar_decision_center*.py'
+      - 'scripts/genge_data_package.py'
+      - 'scripts/genge_research_input.py'
+      - 'scripts/genge_bind_decision_center_snapshot.py'
+      - 'tests/test_genge_data_research_boundary.py'
       - '.github/workflows/genge-three-pillar-decision-center.yml'
-      - 'config/v31_explicit_deep_reviews.json'
-      - 'config/era_radar_industry_links.json'
 
 concurrency:
   group: genge-three-pillar-decision-center-${{ github.event_name == 'pull_request' && github.event.pull_request.number || 'production' }}
@@ -42,12 +27,10 @@ jobs:
   contracts:
     if: >-
       github.event_name == 'pull_request' ||
-      github.event_name == 'push' ||
       github.event_name == 'workflow_dispatch' ||
       github.event_name == 'schedule' ||
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -59,13 +42,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip --disable-pip-version-check
           python -m pip install -r .github/requirements-ci.txt
-      - name: Validate three-pillar investor contract, deep runtime and global pulse integration
-        run: >-
-          python -m pytest -q
-          tests/test_three_pillar_decision_center.py
-          tests/test_three_pillar_decision_center_runtime.py
-          tests/test_holding_valuation_watch.py
-          tests/test_global_market_pulse_decision_integration.py
+      - name: Validate decision and data/research boundary contracts
+        run: |
+          python -m pytest -q \
+            tests/test_three_pillar_decision_center.py \
+            tests/test_three_pillar_decision_center_runtime.py \
+            tests/test_holding_valuation_watch.py \
+            tests/test_global_market_pulse_decision_integration.py \
+            tests/test_genge_data_research_boundary.py
 
   production:
     if: >-
@@ -85,7 +69,7 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Build and persist runtime-aware decision center with optimistic replay
+      - name: Build package-locked Decision Center with optimistic replay
         shell: bash
         run: |
           set -euo pipefail
@@ -93,13 +77,18 @@ jobs:
           git config user.email '31836791+wanggenAi@users.noreply.github.com'
 
           for attempt in 1 2 3 4; do
-            echo "Three-pillar replay ${attempt}/4"
+            echo "Package-locked Decision Center replay ${attempt}/4"
             git fetch origin main
             git reset --hard origin/main
 
-            test -f data/investor_decision_dashboard/latest.json
-            test -f data/era_radar/latest.json
-            test -f data/deep_calculation/latest_research_decisions.json
+            test -s data/data_package/latest.json
+            test -s data/investor_decision_dashboard/latest.json
+            test -s data/era_radar/latest.json
+            test -s data/deep_calculation/latest_research_decisions.json
+
+            # Research consumes one immutable package. It does not perform acquisition.
+            python scripts/genge_data_package.py validate
+            python scripts/genge_research_input.py --mode hourly --allow-stale-research-only
 
             python -m src.strategies.genge_opportunity_discovery.three_pillar_decision_center_runtime \
               --output-json data/decision_center/latest.json \
@@ -110,127 +99,52 @@ jobs:
                 --decision-json data/decision_center/latest.json \
                 --decision-md LATEST_DECISION_CENTER.md \
                 --global-pulse data/global_market_pulse/latest.json
-            else
-              echo 'Global pulse artifact absent; base decision center remains valid and fail-closed.' >&2
             fi
+
+            python scripts/genge_bind_decision_center_snapshot.py \
+              --decision data/decision_center/latest.json \
+              --package data/data_package/latest.json \
+              --receipt data/research_input/latest.json \
+              --handoff data/investor_chatgpt_handoff/latest.json
 
             python - <<'PY'
           import json
           from pathlib import Path
           p=json.loads(Path('data/decision_center/latest.json').read_text(encoding='utf-8'))
-          assert p['contract_version'] == 'GEN_GE_THREE_PILLAR_DECISION_CENTER_V1'
-          assert p['formal_action_source'] == 'FINALIZED_CANONICAL_ONLY'
+          r=json.loads(Path('data/research_input/latest.json').read_text(encoding='utf-8'))
+          prov=p['data_package_provenance']
+          guard=p['data_freshness_execution_guard']
+          assert p['contract_version']=='GEN_GE_THREE_PILLAR_DECISION_CENTER_V1'
+          assert p['formal_action_source']=='FINALIZED_CANONICAL_ONLY'
           assert p['formal_action_recomputed'] is False
           assert p['no_auto_trade'] is True
+          assert prov['snapshot_id']==r['input_snapshot_id']
+          assert prov['network_policy']=='CANONICAL_PACKAGE_ONLY'
+          assert guard['formal_actions_preserved'] is True
+          assert guard['stale_or_partial_data_cannot_authorize_execution'] is True
+          if not guard['execution_allowed']:
+              assert p['today_account_plan']['planned_immediate_cash_cny']==0
           assert 'pillar_1_holdings_deep_analysis' in p
           assert 'pillar_2_world_social_market_capital_map' in p
           assert 'pillar_3_deep_opportunities' in p
-          assert 'today_account_plan' in p
-          assert 'deep_calculation_runtime' in p
-          assert 'candidate_lifecycle' in p
-          assert 'holding_valuation_continuity' in p
-          assert 'system_capability_visibility' in p
-          assert p['holding_valuation_continuity']['formal_action_recomputed'] is False
-          assert p['holding_valuation_continuity']['no_auto_trade'] is True
-          lifecycle=p['candidate_lifecycle']
-          assert lifecycle['formal_authority_granted'] is False
-          assert lifecycle['no_auto_trade'] is True
-          capabilities=p['system_capability_visibility']['capabilities']
-          assert any(row['capability'] == 'Candidate Lifecycle 持续研究记忆' for row in capabilities)
-          assert any(row['capability'] == 'Deep Provenance 证据审计' for row in capabilities)
-          account=p['today_account_plan']
-          assert account['no_auto_trade'] is True
-          assert account['planned_immediate_cash_cny'] <= account['available_cash_cny']
-          capital_map=p['pillar_2_world_social_market_capital_map']
-          coverage=capital_map['capital_evidence_coverage']
-          assert coverage['direct_stock_fund_flow_claimed'] is False
-          assert set(coverage['family_counts']) == {
-              'POLICY_CAPITAL','INDUSTRIAL_CAPITAL','FINANCIAL_CAPITAL',
-              'REAL_DEMAND','TECHNOLOGY','GLOBAL_STRUCTURE'
-          }
-          runtime=p['deep_calculation_runtime']
-          assert runtime['unknown_is_pass'] is False
-          assert runtime['automatic_formal_buy_allowed'] is False
-          assert runtime['no_auto_trade'] is True
-          assert p['deep_review_profile_source'] in {'AUTOMATIC_DEEP_CALCULATION','STATIC_BOOTSTRAP_FALLBACK'}
-          assert p['pillar_2_world_social_market_capital_map']['direct_fund_flow_claimed'] is False
-          assert capital_map['direct_financial_capital_evidence_available'] == coverage['financial_capital_evidence_available']
-
-          opp=p['pillar_3_deep_opportunities']
-          terminal=opp['terminal_research_snapshot']
-          assert terminal['research_authority'] == 'RESEARCH_ONLY'
-          assert terminal['formal_trading_authority'] is False
-          assert terminal['automatic_formal_buy_allowed'] is False
-          assert terminal['unknown_is_pass'] is False
-          assert terminal['no_auto_trade'] is True
-          assert opp['canonical_formal_buy_now'] == opp['buy_now']
-          assert opp['canonical_formal_wait_price'] == opp['wait_price']
-          if terminal['current_for_deep_runtime']:
-              assert terminal['source_deep_lambda_run_id'] == runtime['lambda_run_id']
-              assert terminal['all_requested_terminal'] is True
-          else:
-              assert opp['research_buy'] == []
-              assert opp['research_wait_price'] == []
-              assert opp['research_reject_count'] == 0
-              assert opp['urgent_evidence_queue'] == []
-          for row in opp['research_buy'] + opp['research_wait_price']:
-              assert row['research_authority'] == 'RESEARCH_ONLY'
-              assert row['formal_buy_authorized'] is False
-              assert row['no_auto_trade'] is True
-          assert opp['capital_advisory_authority'] == 'ADVISORY_ONLY'
-          assert opp['capital_advisory_automatic_execution_allowed'] is False
-          for row in opp['research_capital_probe']:
-              cap=row['capital_allocation']
-              assert cap['action'] in {'BUILD','PROBE'}
-              assert cap['authority'] == 'ADVISORY_ONLY'
-              assert cap['automatic_execution_allowed'] is False
-              assert cap['formal_buy_authorized'] is False
-              assert cap['no_auto_trade'] is True
-          for row in opp.get('jev_entry_judgments', []):
-              assert row['authority'] == 'ADVISORY_ONLY'
-              assert row['formal_buy_authorized'] is False
-              assert row['automatic_execution_allowed'] is False
-              assert row['no_auto_trade'] is True
-              assert row['source_lineage']['deep_lambda_run_id'] == runtime['lambda_run_id']
-              assert row['validated_judgment'] in {
-                  'ENTRY_NOW','WAIT_PRICE','WAIT_EVIDENCE','DO_NOT_CHASE','INVALIDATED','NO_JUDGMENT'
-              }
-              if row['validated_judgment'] == 'ENTRY_NOW':
-                  assert row['entry_price_zone_high'] is not None
-                  assert row['initial_manual_position_pct'] > 0
-                  assert row['initial_manual_position_pct'] <= row['max_manual_position_pct']
-
-          if 'global_market_pulse' in capital_map:
-              gp=capital_map['global_market_pulse']
-              assert gp['formal_action_eligible'] is False
-              assert gp['no_auto_trade'] is True
-              assert p['decision_readiness']['global_market_pulse_formal_authority_granted'] is False
-              assert capital_map['pre_open_intelligence']['formal_action_eligible'] is False
-              for row in capital_map['global_transmission']:
-                  assert row['formal_action_eligible'] is False
-                  assert row['no_auto_trade'] is True
           PY
 
-            git add -f data/decision_center/latest.json LATEST_DECISION_CENTER.md
-            if git diff --cached --quiet; then
-              echo 'No semantic decision-center change to persist.'
-              exit 0
-            fi
-            git commit -m 'Persist runtime-aware three-pillar investor decision center [skip ci]'
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            echo 'main moved while persisting decision center; replaying.' >&2
+            git add -f \
+              data/research_input \
+              data/decision_center/latest.json \
+              data/investor_chatgpt_handoff/latest.json \
+              LATEST_DECISION_CENTER.md
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'Persist package-locked investor decision center [skip ci]'
+            if git push origin HEAD:main; then exit 0; fi
+            echo 'main moved; replaying against newest immutable package.' >&2
           done
-
-          echo 'Three-pillar persistence failed after 4 optimistic replay attempts.' >&2
           exit 1
 
-      - name: Refresh Jev orchestration cursor after decision-center convergence
+      - name: Refresh Jev orchestration cursor after convergence
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          set -euo pipefail
           marker="data/jev_shadow/orchestration/latest.json"
           if [ -s "$marker" ] && [ "$(jq -r '.production_verification_complete // false' "$marker")" != "true" ]; then
             gh workflow run genge-jev-orchestration-reconciler.yml --repo "$GITHUB_REPOSITORY" --ref main
@@ -239,11 +153,8 @@ jobs:
       - name: Publish summary
         if: always()
         run: |
-          echo '# GenGe Three-Pillar Decision Center' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Pillar 1: current holdings + automatic/explicit deep-review completeness' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Pillar 2: world/social/capital evidence + Global Market Pulse + accumulated pre-open intelligence' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Global pulse success triggers a fresh Decision Center even during A-share holidays; fallback schedule runs every 3 hours, 7 days/week' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Pillar 3: Canonical Formal actions, terminal research, and validated Jev entry judgments are separate' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Global/security transmission is RESEARCH_ONLY and cannot mutate Canonical/Formal actions' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Terminal research is exposed only when its Deep Lambda lineage matches the current runtime; stale research is fail-closed' >> "$GITHUB_STEP_SUMMARY"
-          echo '- Authority: Canonical Formal actions only; research authority cannot escalate; UNKNOWN != PASS; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
+          echo '# GenGe Package-Locked Decision Center' >> "$GITHUB_STEP_SUMMARY"
+          echo '- acquisition is outside this workflow' >> "$GITHUB_STEP_SUMMARY"
+          echo '- research input is one immutable data-package snapshot' >> "$GITHUB_STEP_SUMMARY"
+          echo '- stale data may support research but cannot authorize immediate execution' >> "$GITHUB_STEP_SUMMARY"
+          echo '- Formal actions remain finalized-canonical only; no auto-trade' >> "$GITHUB_STEP_SUMMARY"
