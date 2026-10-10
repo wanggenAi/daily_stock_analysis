@@ -12,7 +12,7 @@
 
 ## Route counts
 
-- {"DEEP_RESEARCH": 21, "EVIDENCE_REFRESH": 3, "VALUATION_CLOSURE": 1}
+- {"DEEP_RESEARCH": 20, "EVIDENCE_REFRESH": 4, "VALUATION_CLOSURE": 1}
 
 ## Advisory queue
 
@@ -21,25 +21,25 @@
 - 600406 国电南瑞 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:REDUCE_25
 - 601318 中国平安 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=FORMAL:HOLD
 - 603596 伯特利 | priority=HIGH | route=VALUATION_CLOSURE | evidence=ADEQUATE_FOR_CURRENT_RESEARCH_STATE | entry=ENTRY_NOW | engine=RESEARCH:BUY
-- 000526 学大教育 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 000682 东方电子 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 001309 德明利 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
-- 002352 顺丰控股 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 002468 申通快递 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 002842 翔鹭钨业 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 600961 株冶集团 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 601808 中海油服 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 601816 京沪高铁 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 603605 珀莱雅 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 605116 奥锐特 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P1
-- 601965 中国汽研 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH:RESEARCH_GAP
+- 002468 申通快递 | priority=HIGH | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P0
+- 603605 珀莱雅 | priority=HIGH | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P0
+- 000096 广聚能源 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 000415 渤海租赁 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 000557 西部创业 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 000567 海德股份 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 000576 甘化科工 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 000703 恒逸石化 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 000768 中航西飞 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 000783 长江证券 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 000833 粤桂股份 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 001205 盛航股份 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 002811 郑中设计 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 600309 万华化学 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 600318 新力金融 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 600834 申通地铁 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 601069 西部黄金 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603416 信捷电气 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 603658 安图生物 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 000596 古井贡酒 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
