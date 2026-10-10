@@ -51,9 +51,20 @@ jobs:
       - name: Extract durable market facts and rebuild package
         run: |
           set -euo pipefail
-          test -d reports/all_a_full_scan
+          report_root=""
+          for candidate in reports/all_a_full_scan all_a_full_scan; do
+            if [ -d "$candidate" ]; then report_root="$candidate"; break; fi
+          done
+          if [ -z "$report_root" ]; then
+            report_root=$(find . -maxdepth 6 -type d -name all_a_full_scan -print -quit)
+          fi
+          if [ -z "$report_root" ]; then
+            echo "::error::All-A artifact missing all_a_full_scan directory"
+            find . -maxdepth 3 -type d | head -80
+            exit 1
+          fi
           python scripts/genge_all_a_market_snapshot.py \
-            --report-root reports/all_a_full_scan \
+            --report-root "$report_root" \
             --output-dir data/market_snapshots
           set +e
           python scripts/genge_data_package.py build
