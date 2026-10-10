@@ -27,3 +27,5 @@ jobs:
           echo "Dispatched GenGe Postscan Market Data Publish recovery from successful All-A run ${SOURCE_RUN_ID}."
           echo "Downstream workflow_run chain remains authoritative: Postscan Market Data Publish -> GenGe Realtime Data Package -> GenGe Three-Pillar Decision Center." >> "$GITHUB_STEP_SUMMARY"
           echo "No Formal BUY/SELL threshold changes; no auto-trade." >> "$GITHUB_STEP_SUMMARY"
+
+# Recovery trigger: rebuild canonical data package after immutable snapshot identity repair.
