@@ -133,6 +133,9 @@ def build_package(*,now=None,write=True):
    except Exception:continue
    if e.get("tag")=="EXTERNAL_FRESH_EVIDENCE" and e.get("backfill_status")!="CANONICAL_INGESTED":pending+=1
  payload={"contract":CONTRACT,"generated_at":_iso(epoch),"freshness_epoch":_iso(epoch),"snapshot_id":sid,"package_status":status,"completeness_state":completeness,"latest_trade_date":latest_trade_date,"expected_latest_a_share_trade_date":expected_market_date,"market_trade_date_alignment_ok":bool(market and expected_market_date and market.latest_trade_date and market.latest_trade_date>=expected_market_date),"incremental_update_contract":{"mode":"CONTENT_WATERMARK_INCREMENTAL","full_history_redownload_required_for_research":False,"research_may_fetch_network_by_default":False,"collector_layer_owns_acquisition":True,"filesystem_mtime_may_establish_freshness":False,"immutable_snapshot_overwrite_allowed":False},"missing_required_datasets":missing,"stale_required_datasets":stale,"unknown_required_datasets":unknown,"optional_degraded_datasets":optional_degraded,"pending_external_fresh_evidence_count":pending,"datasets":[asdict(d) for d in datasets]}
+ # Bind immutable identity to the complete serialized payload, not only a subset of dataset fields.
+ # This prevents distinct metadata/freshness manifests sharing an immutable snapshot id.
+ payload["snapshot_id"]=hashlib.sha256(json.dumps({k:v for k,v in payload.items() if k!="snapshot_id"},sort_keys=True,separators=(",",":")).encode()).hexdigest()[:20]
  if write:
   PACKAGE_DIR.mkdir(parents=True,exist_ok=True); SNAPSHOT_DIR.mkdir(parents=True,exist_ok=True)
   text=json.dumps(payload,ensure_ascii=False,indent=2,sort_keys=True)+"\n"; snap=SNAPSHOT_DIR/f"{sid}.json"
