@@ -1,0 +1,90 @@
+name: GenGe Postscan Market Data Publish
+
+on:
+  workflow_run:
+    workflows: ["GenGe All-A V3.1.1 One Shot"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      run_id:
+        description: Successful GenGe All-A V3.1.1 One Shot run id
+        required: true
+        type: string
+
+concurrency:
+  group: genge-postscan-market-data-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+          fetch-depth: 0
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Resolve source run
+        id: source
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "run_id=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "run_id=${{ inputs.run_id }}" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Download completed full research artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: genge-all-a-v31-one-shot
+          run-id: ${{ steps.source.outputs.run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: .
+      - name: Extract durable market facts and rebuild package
+        run: |
+          set -euo pipefail
+          test -d reports/all_a_full_scan
+          python scripts/genge_all_a_market_snapshot.py \
+            --report-root reports/all_a_full_scan \
+            --output-dir data/market_snapshots
+          set +e
+          python scripts/genge_data_package.py build
+          rc=$?
+          set -e
+          test "$rc" -eq 0 -o "$rc" -eq 2
+          python scripts/genge_data_package.py validate
+      - name: Persist market snapshot and immutable package with optimistic replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'genge-data-package-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            if [ "$attempt" -gt 1 ]; then
+              saved=$(mktemp -d)
+              cp -a data/market_snapshots "$saved/"
+              git reset --hard origin/main
+              rm -rf data/market_snapshots
+              cp -a "$saved/market_snapshots" data/
+              set +e
+              python scripts/genge_data_package.py build
+              rc=$?
+              set -e
+              test "$rc" -eq 0 -o "$rc" -eq 2
+            fi
+            git add -f data/market_snapshots data/data_package
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m 'Persist All-A market snapshot and data package [skip ci]'
+            if git push origin HEAD:main; then exit 0; fi
+            git reset --soft HEAD~1
+          done
+          exit 1
