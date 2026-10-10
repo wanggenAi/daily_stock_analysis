@@ -2,16 +2,15 @@
 """Build and validate the canonical GenGe realtime data-package manifest.
 
 This module is deliberately network-free. Collectors own acquisition; this module
-owns the boundary between data production and research. It fingerprints durable
-producer outputs, records their lineage/watermarks/freshness, and emits an
-immutable snapshot plus data/data_package/latest.json.
+owns the boundary between data production and research. Freshness is derived only
+from business timestamps embedded in producer data -- never checkout mtimes.
 """
 from __future__ import annotations
 
 import argparse
 import hashlib
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,6 +20,7 @@ PACKAGE_DIR = Path("data/data_package")
 LATEST_PATH = PACKAGE_DIR / "latest.json"
 SNAPSHOT_DIR = PACKAGE_DIR / "snapshots"
 STATE_PATH = PACKAGE_DIR / "watermarks.json"
+MAX_LINEAGE_FILES = 50
 
 EXCLUDED_ROOTS = {
     "data/data_package",
@@ -49,11 +49,15 @@ PRODUCER_ROOTS: tuple[tuple[str, str, bool, int | None], ...] = (
     ("live_execution_quotes", "data/live_execution_quotes", False, 30),
 )
 
-TIMESTAMP_KEYS = (
+TIMESTAMP_KEYS = {
     "collected_at", "generated_at", "updated_at", "observed_at", "as_of",
-    "snapshot_at", "latest_quote_observed_at",
-)
-DATE_KEYS = ("latest_trade_date", "trade_date", "market_date", "effective_date")
+    "snapshot_at", "research_as_of", "latest_quote_observed_at",
+    "latest_observation_at", "refreshed_at", "ingested_at",
+}
+DATE_KEYS = {
+    "latest_trade_date", "last_valid_trade_date", "trade_date", "market_date",
+    "effective_date", "as_of_date",
+}
 
 
 def _utc_now() -> datetime:
@@ -107,18 +111,19 @@ def _candidate_files(root: Path) -> list[Path]:
 
 
 def _extract_times(path: Path) -> tuple[datetime | None, str | None]:
+    """Extract business time only. Filesystem mtimes are intentionally ignored."""
     if path.suffix.lower() != ".json":
-        return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc), None
+        return None, None
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except Exception:
-        return datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc), None
+        return None, None
     latest_dt: datetime | None = None
     latest_date: str | None = None
 
     def visit(obj: Any, depth: int = 0) -> None:
         nonlocal latest_dt, latest_date
-        if depth > 4:
+        if depth > 5:
             return
         if isinstance(obj, dict):
             for key, value in obj.items():
@@ -133,13 +138,11 @@ def _extract_times(path: Path) -> tuple[datetime | None, str | None]:
                 if isinstance(value, (dict, list)):
                     visit(value, depth + 1)
         elif isinstance(obj, list):
-            for value in obj[:500]:
+            for value in obj[:1000]:
                 if isinstance(value, (dict, list)):
                     visit(value, depth + 1)
 
     visit(payload)
-    if latest_dt is None:
-        latest_dt = datetime.fromtimestamp(path.stat().st_mtime, tz=timezone.utc)
     return latest_dt, latest_date
 
 
@@ -157,23 +160,39 @@ class DatasetManifest:
     freshness_state: str
     changed_since_previous: bool | None
     watermark: str | None
-    files: list[dict[str, Any]]
+    lineage_file_sample: list[dict[str, Any]]
+    lineage_file_sample_truncated: bool
 
 
-def _dataset_manifest(name: str, root_text: str, required: bool, sla_minutes: int | None, *, now: datetime, previous: dict[str, Any] | None) -> DatasetManifest:
+def _dataset_manifest(
+    name: str,
+    root_text: str,
+    required: bool,
+    sla_minutes: int | None,
+    *,
+    now: datetime,
+    previous: dict[str, Any] | None,
+) -> DatasetManifest:
     root = Path(root_text)
     files = _candidate_files(root)
-    rows: list[dict[str, Any]] = []
+    lineage_rows: list[dict[str, Any]] = []
     latest_dt: datetime | None = None
     latest_trade_date: str | None = None
     aggregate = hashlib.sha256()
-    for path in files:
+    for index, path in enumerate(files):
         sha = _sha256_file(path)
         observed_at, trade_date = _extract_times(path)
         rel = path.as_posix()
         aggregate.update(rel.encode())
         aggregate.update(sha.encode())
-        rows.append({"path": rel, "sha256": sha, "size": path.stat().st_size, "observed_at": _iso(observed_at) if observed_at else None, "trade_date": trade_date})
+        if index < MAX_LINEAGE_FILES:
+            lineage_rows.append({
+                "path": rel,
+                "sha256": sha,
+                "size": path.stat().st_size,
+                "observed_at": _iso(observed_at) if observed_at else None,
+                "trade_date": trade_date,
+            })
         if observed_at and (latest_dt is None or observed_at > latest_dt):
             latest_dt = observed_at
         if trade_date and (latest_trade_date is None or trade_date > latest_trade_date):
@@ -182,15 +201,38 @@ def _dataset_manifest(name: str, root_text: str, required: bool, sla_minutes: in
     digest = aggregate.hexdigest() if exists else None
     if not exists:
         freshness = "MISSING"
-    elif sla_minutes is None or latest_dt is None:
+    elif sla_minutes is None:
+        freshness = "NOT_APPLICABLE"
+    elif latest_dt is None:
         freshness = "UNKNOWN"
     else:
         age_minutes = max(0.0, (now - latest_dt).total_seconds() / 60.0)
         freshness = "FRESH" if age_minutes <= sla_minutes else "STALE"
     previous_sha = previous.get("content_sha256") if previous else None
     changed = None if previous_sha is None else previous_sha != digest
-    watermark = hashlib.sha256(f"{digest or 'MISSING'}|{latest_trade_date or ''}|{_iso(latest_dt) if latest_dt else ''}".encode()).hexdigest()[:24] if exists else None
-    return DatasetManifest(name, root_text, required, exists, len(files), digest, _iso(latest_dt) if latest_dt else None, latest_trade_date, sla_minutes, freshness, changed, watermark, rows)
+    watermark = (
+        hashlib.sha256(
+            f"{digest or 'MISSING'}|{latest_trade_date or ''}|{_iso(latest_dt) if latest_dt else ''}".encode()
+        ).hexdigest()[:24]
+        if exists
+        else None
+    )
+    return DatasetManifest(
+        name=name,
+        root=root_text,
+        required=required,
+        exists=exists,
+        file_count=len(files),
+        content_sha256=digest,
+        latest_observed_at=_iso(latest_dt) if latest_dt else None,
+        latest_trade_date=latest_trade_date,
+        freshness_sla_minutes=sla_minutes,
+        freshness_state=freshness,
+        changed_since_previous=changed,
+        watermark=watermark,
+        lineage_file_sample=lineage_rows,
+        lineage_file_sample_truncated=len(files) > MAX_LINEAGE_FILES,
+    )
 
 
 def _load_previous() -> dict[str, dict[str, Any]]:
@@ -200,27 +242,49 @@ def _load_previous() -> dict[str, dict[str, Any]]:
         payload = json.loads(LATEST_PATH.read_text(encoding="utf-8"))
     except Exception:
         return {}
-    return {str(x.get("name")): x for x in payload.get("datasets") or [] if isinstance(x, dict)}
+    return {
+        str(x.get("name")): x
+        for x in payload.get("datasets") or []
+        if isinstance(x, dict)
+    }
 
 
 def build_package(*, now: datetime | None = None, write: bool = True) -> dict[str, Any]:
     now = now or _utc_now()
     previous = _load_previous()
-    datasets = [_dataset_manifest(name, root, required, sla, now=now, previous=previous.get(name)) for name, root, required, sla in PRODUCER_ROOTS]
+    datasets = [
+        _dataset_manifest(name, root, required, sla, now=now, previous=previous.get(name))
+        for name, root, required, sla in PRODUCER_ROOTS
+    ]
     missing_required = [d.name for d in datasets if d.required and not d.exists]
     stale_required = [d.name for d in datasets if d.required and d.freshness_state == "STALE"]
+    unknown_required = [d.name for d in datasets if d.required and d.freshness_state == "UNKNOWN"]
     dates = sorted({d.latest_trade_date for d in datasets if d.latest_trade_date})
     latest_trade_date = dates[-1] if dates else None
-    if missing_required:
+    if missing_required or unknown_required:
         status = "INVALID"
     elif stale_required:
         status = "STALE"
-    elif any(d.freshness_state in {"MISSING", "STALE"} for d in datasets if not d.required):
+    elif any(d.freshness_state in {"MISSING", "STALE", "UNKNOWN"} for d in datasets if not d.required):
         status = "PARTIAL"
     else:
         status = "READY"
-    snapshot_basis = {"contract": CONTRACT, "latest_trade_date": latest_trade_date, "datasets": [{"name": d.name, "root": d.root, "content_sha256": d.content_sha256, "watermark": d.watermark} for d in datasets]}
-    snapshot_id = hashlib.sha256(json.dumps(snapshot_basis, sort_keys=True, separators=(",", ":")).encode()).hexdigest()[:20]
+    snapshot_basis = {
+        "contract": CONTRACT,
+        "latest_trade_date": latest_trade_date,
+        "datasets": [
+            {
+                "name": d.name,
+                "root": d.root,
+                "content_sha256": d.content_sha256,
+                "watermark": d.watermark,
+            }
+            for d in datasets
+        ],
+    }
+    snapshot_id = hashlib.sha256(
+        json.dumps(snapshot_basis, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()[:20]
     external_dir = PACKAGE_DIR / "external_fresh_evidence" / "events"
     pending_external = 0
     if external_dir.is_dir():
@@ -242,9 +306,11 @@ def build_package(*, now: datetime | None = None, write: bool = True) -> dict[st
             "full_history_redownload_required_for_research": False,
             "research_may_fetch_network_by_default": False,
             "collector_layer_owns_acquisition": True,
+            "filesystem_mtime_may_establish_freshness": False,
         },
         "missing_required_datasets": missing_required,
         "stale_required_datasets": stale_required,
+        "unknown_required_datasets": unknown_required,
         "pending_external_fresh_evidence_count": pending_external,
         "datasets": [asdict(d) for d in datasets],
     }
@@ -254,7 +320,20 @@ def build_package(*, now: datetime | None = None, write: bool = True) -> dict[st
         text = json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n"
         (SNAPSHOT_DIR / f"{snapshot_id}.json").write_text(text, encoding="utf-8")
         LATEST_PATH.write_text(text, encoding="utf-8")
-        STATE_PATH.write_text(json.dumps({"contract": "GEN_GE_DATA_PACKAGE_WATERMARKS_V1", "updated_at": _iso(now), "snapshot_id": snapshot_id, "watermarks": {d.name: d.watermark for d in datasets}}, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        STATE_PATH.write_text(
+            json.dumps(
+                {
+                    "contract": "GEN_GE_DATA_PACKAGE_WATERMARKS_V1",
+                    "updated_at": _iso(now),
+                    "snapshot_id": snapshot_id,
+                    "watermarks": {d.name: d.watermark for d in datasets},
+                },
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ) + "\n",
+            encoding="utf-8",
+        )
     return payload
 
 
@@ -271,7 +350,11 @@ def validate_package(*, require_fresh: bool = False) -> tuple[bool, dict[str, An
     if not snapshot_id or not (SNAPSHOT_DIR / f"{snapshot_id}.json").is_file():
         return False, {"error": "IMMUTABLE_SNAPSHOT_MISSING", "snapshot_id": snapshot_id}
     if require_fresh and payload.get("package_status") != "READY":
-        return False, {"error": "DATA_PACKAGE_NOT_FRESH_READY", "package_status": payload.get("package_status"), "snapshot_id": snapshot_id}
+        return False, {
+            "error": "DATA_PACKAGE_NOT_FRESH_READY",
+            "package_status": payload.get("package_status"),
+            "snapshot_id": snapshot_id,
+        }
     return True, payload
 
 
