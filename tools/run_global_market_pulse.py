@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """Collect and persist the global market pulse."""
+# Manual recovery touch: force the existing validated producer to refresh stale execution-critical global pulse state.
 from __future__ import annotations
 
 import argparse
