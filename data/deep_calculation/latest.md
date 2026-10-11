@@ -6,7 +6,7 @@
 - complete: **1**
 - evidence exhausted: **20**
 - evidence collection attempts: **2**
-- new evidence rows: **53**
+- new evidence rows: **43**
 - progressed gates: **7**
 - predictability resolved gates: **2**
 - moat resolved gates: **1**
@@ -15,6 +15,6 @@
 - historical material-event failed gates: **0**
 - cumulative material-event risk ledger rows: **0**
 - material-event PASS overrides: **0**
-- unresolved gates: **71**
+- unresolved gates: **77**
 - immediate retry required: **False**
 - UNKNOWN != PASS; no automatic Formal BUY; no auto trade.
