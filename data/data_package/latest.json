@@ -3,14 +3,14 @@
   "contract": "GEN_GE_REALTIME_DATA_PACKAGE_V1",
   "datasets": [
     {
-      "changed_since_previous": null,
+      "changed_since_previous": false,
       "content_sha256": "3fdf78dc64da684b94f903eb5dcd7d0c3987557e4647db8185423c51a56bbaa7",
       "execution_critical": true,
       "exists": true,
       "file_count": 2,
       "freshness_basis": "TRADE_DATE",
       "freshness_sla_minutes": null,
-      "freshness_state": "FRESH",
+      "freshness_state": "STALE",
       "latest_observed_at": "2026-10-10T04:18:23.313926+00:00",
       "latest_trade_date": "2026-10-09",
       "lineage_file_sample": [
@@ -35,22 +35,29 @@
       "watermark": "32af4cc8cce5af4c030797ff"
     },
     {
-      "changed_since_previous": null,
-      "content_sha256": "7d8fb75cf30d41912196fc3834846414f539e8f3137183d37965dea9e6890527",
+      "changed_since_previous": true,
+      "content_sha256": "2f30e110c1b5820643f0f770d48e2fb867ce1dc7251088401313d7e11ff2719a",
       "execution_critical": true,
       "exists": true,
-      "file_count": 60,
+      "file_count": 65,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 480,
-      "freshness_state": "STALE",
-      "latest_observed_at": "2026-10-08T13:45:51+00:00",
+      "freshness_state": "FRESH",
+      "latest_observed_at": "2026-10-11T05:50:40+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
           "observed_at": null,
           "path": "data/era_radar/ERA_CAPITAL_TREND_RADAR.md",
-          "sha256": "0fa324ba15f86c1af37d21ae3b1a8965900f0c01a88c23fa5b9be42b3fc2f3c0",
+          "sha256": "212ffb14c17e5a189c319dfe87713c70d0a9e0a2349a295fa788b5ccc3f9a792",
           "size": 1642,
+          "trade_date": null
+        },
+        {
+          "observed_at": "2026-10-10T12:33:43+00:00",
+          "path": "data/era_radar/evidence/03251bd4b1025e7a8643.json",
+          "sha256": "31abf29688090c6b89dc348abfc216bddbd351b4746aa2b9d60e4a43e831bca0",
+          "size": 17471,
           "trade_date": null
         },
         {
@@ -114,6 +121,13 @@
           "path": "data/era_radar/evidence/3f8d5e5c587d2506ff3a.json",
           "sha256": "c82a634774fcd22e4c11d988dab71bdbfc27174854bcc381114829046da0de4c",
           "size": 17462,
+          "trade_date": null
+        },
+        {
+          "observed_at": "2026-10-11T05:50:40+00:00",
+          "path": "data/era_radar/evidence/44f0db61c2458620d9dd.json",
+          "sha256": "53cf8f0b37579cfa208a47eb717020bd7f286d4930f14d20562c0195d06ad88b",
+          "size": 17471,
           "trade_date": null
         },
         {
@@ -250,6 +264,13 @@
           "trade_date": null
         },
         {
+          "observed_at": "2026-10-10T12:33:43+00:00",
+          "path": "data/era_radar/history/03251bd4b1025e7a8643.json",
+          "sha256": "39428315be453709944591bb07c273da27a50ec141535afee10632ee6266081d",
+          "size": 12512,
+          "trade_date": null
+        },
+        {
           "observed_at": "2026-09-20T11:36:00+00:00",
           "path": "data/era_radar/history/0da3e0eae4a1525a58af.json",
           "sha256": "8e7b8737bd4470001e33d043c7108e1ae56a701d0b69127c2dd2b7c8bb052774",
@@ -313,6 +334,13 @@
           "trade_date": null
         },
         {
+          "observed_at": "2026-10-11T05:50:40+00:00",
+          "path": "data/era_radar/history/44f0db61c2458620d9dd.json",
+          "sha256": "64237b56514940afcaaea8687a1295dae5227a90e85b93818c0ca2a4256414f5",
+          "size": 12512,
+          "trade_date": null
+        },
+        {
           "observed_at": "2026-09-30T05:44:23+00:00",
           "path": "data/era_radar/history/48ea01cac26a291089db.json",
           "sha256": "cffbfe96076751a865dbe0e981b4de27635e631b7d847f8b1aaffc1a30b58603",
@@ -367,52 +395,24 @@
           "sha256": "29becdda491bf2bfb35296d5d5d3ad41674e71340eb011c646cabd0a331b1303",
           "size": 6343,
           "trade_date": null
-        },
-        {
-          "observed_at": "2026-09-10T11:30:42+00:00",
-          "path": "data/era_radar/history/8b22ae054b84da3c2c2a.json",
-          "sha256": "c534ea73668195e641d8ce31752b04d8b20bb909a0c8059bef2c801f6103d075",
-          "size": 5663,
-          "trade_date": null
-        },
-        {
-          "observed_at": "2026-10-07T06:11:56+00:00",
-          "path": "data/era_radar/history/9565527dce25767e75a9.json",
-          "sha256": "f2c1349ae66b8f860fa27c1a550632710e9f98e22ed2a30709eea0978149561a",
-          "size": 12513,
-          "trade_date": null
-        },
-        {
-          "observed_at": "2026-09-30T22:24:49+00:00",
-          "path": "data/era_radar/history/9d69811597140db8face.json",
-          "sha256": "56ef5fc6c5746eb9274a6b48e9850b471e092b6efecef57a81ea984b383b6560",
-          "size": 12513,
-          "trade_date": null
-        },
-        {
-          "observed_at": "2026-10-04T06:04:02+00:00",
-          "path": "data/era_radar/history/a26020e14c44e4fdd4a1.json",
-          "sha256": "5774d1ec0c22a7215c507ac61cb5abd43baf3331bd42316bc3d202fba5788e5d",
-          "size": 12513,
-          "trade_date": null
         }
       ],
       "lineage_file_sample_truncated": true,
       "name": "era_radar",
       "root": "data/era_radar",
-      "watermark": "463728a00d63c01036bad60e"
+      "watermark": "4579f713187d46bc0fb623a4"
     },
     {
-      "changed_since_previous": null,
-      "content_sha256": "e05ec6fe7eea5e2774e41b4279e3187e3a1595ba889f86a157e31094e2cc32d6",
+      "changed_since_previous": true,
+      "content_sha256": "42885ac1bc45da6ae7edac056219f43661733fd2f4a35972341f42e370a638eb",
       "execution_critical": true,
       "exists": true,
-      "file_count": 9,
+      "file_count": 18,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 480,
-      "freshness_state": "STALE",
-      "latest_observed_at": "2026-10-08T23:59:00+00:00",
-      "latest_trade_date": "2026-10-08",
+      "freshness_state": "FRESH",
+      "latest_observed_at": "2026-10-11T07:06:57.557667+00:00",
+      "latest_trade_date": "2026-10-11",
       "lineage_file_sample": [
         {
           "observed_at": "2026-10-07T12:55:16.791872+00:00",
@@ -471,28 +471,91 @@
           "trade_date": "2026-10-08"
         },
         {
-          "observed_at": "2026-10-08T23:59:00+00:00",
+          "observed_at": "2026-10-10T04:26:12.126527+00:00",
+          "path": "data/global_market_pulse/history/20261010T042612.126527+0000.json",
+          "sha256": "0b1653f4a9a68216a37bb56b568c2e1a619478976590bc0f32fd6fb381e75089",
+          "size": 33951,
+          "trade_date": "2026-10-10"
+        },
+        {
+          "observed_at": "2026-10-10T10:35:26.841649+00:00",
+          "path": "data/global_market_pulse/history/20261010T103526.841649+0000.json",
+          "sha256": "de9be96f4c2df5c994ddc5c54cb0885dc70aadedd7b93db8a2c5b8c12b884ad6",
+          "size": 34506,
+          "trade_date": "2026-10-10"
+        },
+        {
+          "observed_at": "2026-10-10T13:30:20.069541+00:00",
+          "path": "data/global_market_pulse/history/20261010T133020.069541+0000.json",
+          "sha256": "8a3c1fa4635d4d6b87a3a4a571cbd45614c06a6bd7ac99bf9840493696637300",
+          "size": 34502,
+          "trade_date": "2026-10-10"
+        },
+        {
+          "observed_at": "2026-10-10T13:36:21.117921+00:00",
+          "path": "data/global_market_pulse/history/20261010T133621.117921+0000.json",
+          "sha256": "034ab71109d53d7ccf7aeffc6aaa80ce2fb19574fa2f54457b1fbc78982b6cc5",
+          "size": 34447,
+          "trade_date": "2026-10-10"
+        },
+        {
+          "observed_at": "2026-10-10T16:15:26.035161+00:00",
+          "path": "data/global_market_pulse/history/20261010T161526.035161+0000.json",
+          "sha256": "f5dc44c6c130d217169596a1ca32653b56db7fc4e2cd8f69d5a319a2a0947809",
+          "size": 34503,
+          "trade_date": "2026-10-10"
+        },
+        {
+          "observed_at": "2026-10-10T20:35:29.422761+00:00",
+          "path": "data/global_market_pulse/history/20261010T203529.422761+0000.json",
+          "sha256": "c0e164737ccb6f6914956d0aea4c5f1c538058e47d6a9cea041e9af1c8fa592c",
+          "size": 34504,
+          "trade_date": "2026-10-10"
+        },
+        {
+          "observed_at": "2026-10-11T00:14:35.223960+00:00",
+          "path": "data/global_market_pulse/history/20261011T001435.223960+0000.json",
+          "sha256": "4c2dfdaecac36061e0ef8b0e917c3fc3ba3b503cc7dbcd260371b6a13f2d632e",
+          "size": 34502,
+          "trade_date": "2026-10-11"
+        },
+        {
+          "observed_at": "2026-10-11T07:06:57.557667+00:00",
+          "path": "data/global_market_pulse/history/20261011T070657.557667+0000.json",
+          "sha256": "a9e66da0beaa795cbe95f9f05ec5031e79cd20f0da7a846b77dce0efb858f687",
+          "size": 34572,
+          "trade_date": "2026-10-11"
+        },
+        {
+          "observed_at": "2026-10-11T07:06:57.557667+00:00",
           "path": "data/global_market_pulse/latest.json",
-          "sha256": "e241847e48c9b9fb9642338112775b9b438982b8217997c2f9283124d459b111",
-          "size": 33153,
-          "trade_date": "2026-10-08"
+          "sha256": "a9e66da0beaa795cbe95f9f05ec5031e79cd20f0da7a846b77dce0efb858f687",
+          "size": 34572,
+          "trade_date": "2026-10-11"
+        },
+        {
+          "observed_at": "2026-10-11T07:06:57.557667+00:00",
+          "path": "data/global_market_pulse/validation/latest.json",
+          "sha256": "32e81841a1520532bd11a92f03d771b9b54fd26e21d956e54f969369e348c298",
+          "size": 486,
+          "trade_date": null
         }
       ],
       "lineage_file_sample_truncated": false,
       "name": "global_market_pulse",
       "root": "data/global_market_pulse",
-      "watermark": "f267b1e99ae4a9ad64007cb0"
+      "watermark": "a2fa73bdd295ef3f3979c7c6"
     },
     {
-      "changed_since_previous": null,
-      "content_sha256": "5380bfd6b04d50d89846ee4df04ec9027a9901e299dc4820eb8ce28fd371fd36",
+      "changed_since_previous": true,
+      "content_sha256": "bbd73c57ad2132cce9d4fc01d40447db34ae6767a188c7d6f2f0f0bd9c078a20",
       "execution_critical": false,
       "exists": true,
       "file_count": 108,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-10T03:27:39.413889+00:00",
+      "latest_observed_at": "2026-10-11T06:15:57.380356+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
@@ -849,25 +912,25 @@
       "lineage_file_sample_truncated": true,
       "name": "evidence_events",
       "root": "data/evidence_events",
-      "watermark": "16f55b5c03076ddcd2a3bbcf"
+      "watermark": "846462d9855d70eb7561cd3b"
     },
     {
-      "changed_since_previous": null,
-      "content_sha256": "1c364f3ac0011b51ded3ae0cde009ce70822c2e81c9d9a1a30e1b6da4e179f96",
+      "changed_since_previous": true,
+      "content_sha256": "22897d99fc405732f6c5d19eebe12a450eb1392b56d84376af0a1d211e3f69ed",
       "execution_critical": false,
       "exists": true,
       "file_count": 3,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-10T03:51:35+00:00",
+      "latest_observed_at": "2026-10-10T12:54:22+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-10T03:51:35+00:00",
+          "observed_at": "2026-10-10T12:54:22+00:00",
           "path": "data/opportunity_snapshots/candidate_lifecycle_state.json",
-          "sha256": "8f3aaa994dfe70464105bfc56ab25adf1285e19c3929775195501ee3f0e94453",
-          "size": 12396779,
+          "sha256": "8fa74ac8b33c2071c6b7f5ee5825a2214b677cac160a62a7c49b9a9a07c4d7be",
+          "size": 12397386,
           "trade_date": null
         },
         {
@@ -888,17 +951,17 @@
       "lineage_file_sample_truncated": false,
       "name": "opportunity_snapshots",
       "root": "data/opportunity_snapshots",
-      "watermark": "56d7f6fef3687be91b41f3b9"
+      "watermark": "31250746274fee6a1c284c0c"
     },
     {
-      "changed_since_previous": null,
+      "changed_since_previous": false,
       "content_sha256": "ef16c35bfd5e1eab3d1a8f66c1f945d6436b65bd1206e3a2da5320ef9942a239",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
-      "freshness_state": "FRESH",
+      "freshness_state": "STALE",
       "latest_observed_at": "2026-10-10T03:28:31.520789+00:00",
       "latest_trade_date": "2026-10-09",
       "lineage_file_sample": [
@@ -916,21 +979,21 @@
       "watermark": "24049558db1a4d9efbd99b33"
     },
     {
-      "changed_since_previous": null,
-      "content_sha256": "ac777431eaae71a77ef1ef78473732fe4aa973b1c41131721dfbcae87bacccfd",
+      "changed_since_previous": true,
+      "content_sha256": "8f153bfb8dbc439c849e4a8b73a96f88d493760860a568e124fcc6705d913c71",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-10T03:28:31.561994+00:00",
+      "latest_observed_at": "2026-10-11T06:16:56.632552+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-10T03:28:31.561994+00:00",
+          "observed_at": "2026-10-11T06:16:56.632552+00:00",
           "path": "data/production_observability/latest.json",
-          "sha256": "905af51cc5fcd944fa025f18f9421b95df059e76d51f28bbc9b4c05a5fd2c31d",
+          "sha256": "f143b2e7ba6e6a846630ff5219efecc380692a49dd95711bd16b2023d93ea4ff",
           "size": 2885,
           "trade_date": null
         }
@@ -938,10 +1001,10 @@
       "lineage_file_sample_truncated": false,
       "name": "production_observability",
       "root": "data/production_observability",
-      "watermark": "32f7bf3899619d89aec7d8a7"
+      "watermark": "351ed9302263cf6e72255cdb"
     },
     {
-      "changed_since_previous": null,
+      "changed_since_previous": false,
       "content_sha256": "9e9c567a35dc98097e5bcf336f33cad2405df3d0e7745ad79b5a5a880015f0f6",
       "execution_critical": false,
       "exists": true,
@@ -966,7 +1029,7 @@
       "watermark": "f7a3b13eaf8b8d8767e40dd6"
     },
     {
-      "changed_since_previous": null,
+      "changed_since_previous": false,
       "content_sha256": "d7987b0e62260983e6e0223f6105ab8c56d34561052398ac71853e217479580c",
       "execution_critical": false,
       "exists": true,
@@ -991,39 +1054,39 @@
       "watermark": "3c363ae72b909f0fbf77bf7b"
     },
     {
-      "changed_since_previous": null,
-      "content_sha256": "5e2cc5f3294ac4d265e6504b1f78f05e5c5d9e476f8b049a39513d5b7fb35a13",
+      "changed_since_previous": true,
+      "content_sha256": "fd9fc04cf727b723000d549c955ddd8149a26d6e8a5c523e3aa2ef4cf85d179d",
       "execution_critical": false,
       "exists": true,
       "file_count": 2,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-10T03:28:31.444165+00:00",
+      "latest_observed_at": "2026-10-11T06:15:49.656991+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
           "observed_at": null,
           "path": "data/research_mapping/company_industry_map.csv",
-          "sha256": "e63b4d0ce431c09775bea376da02088e31e83cea30bb52ca7a8c655981d12b14",
-          "size": 34307,
+          "sha256": "9baa0dc099182b05106927b190ee6dc876a08901fbceff711317a79fbe3a5d32",
+          "size": 31291,
           "trade_date": null
         },
         {
-          "observed_at": "2026-10-10T03:28:31.444165+00:00",
+          "observed_at": "2026-10-11T06:15:49.656991+00:00",
           "path": "data/research_mapping/coverage.json",
-          "sha256": "f5698b48d3d6a2c80cd1bcf796bc7adb9cf27d2cea3ce997be6661485653eecc",
-          "size": 78060,
+          "sha256": "b79d1a2ee3a134c443ea70c4fcd5de720016a0d452a476977a1a3783b09e5d90",
+          "size": 70349,
           "trade_date": null
         }
       ],
       "lineage_file_sample_truncated": false,
       "name": "research_mapping",
       "root": "data/research_mapping",
-      "watermark": "3e4d47f4478073e005d13d61"
+      "watermark": "611fc660cf55b5e0fdbe3dbf"
     },
     {
-      "changed_since_previous": null,
+      "changed_since_previous": false,
       "content_sha256": "701265f95c5ca7e1f6918872a630c3a817be1d0aa711fa5d6c254cbed3687d59",
       "execution_critical": false,
       "exists": true,
@@ -1077,25 +1140,33 @@
     },
     {
       "changed_since_previous": null,
-      "content_sha256": null,
+      "content_sha256": "039165706982b45d33ce437f6b2a9c9339bed6020946d4b4ef0eb021a92467be",
       "execution_critical": false,
-      "exists": false,
-      "file_count": 0,
+      "exists": true,
+      "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
-      "freshness_state": "MISSING",
-      "latest_observed_at": null,
+      "freshness_state": "FRESH",
+      "latest_observed_at": "2026-10-11T12:12:14.768042+00:00",
       "latest_trade_date": null,
-      "lineage_file_sample": [],
+      "lineage_file_sample": [
+        {
+          "observed_at": "2026-10-11T12:12:14.768042+00:00",
+          "path": "data/live_execution_quotes/latest.json",
+          "sha256": "45ba5daec516bb58ac2d273876507eea20c6ed859f1050e442f412fcaeffab1d",
+          "size": 1204,
+          "trade_date": null
+        }
+      ],
       "lineage_file_sample_truncated": false,
       "name": "live_execution_quotes",
       "root": "data/live_execution_quotes",
-      "watermark": null
+      "watermark": "1beb71d6d66109ce1df8c928"
     }
   ],
-  "expected_latest_a_share_trade_date": "2026-10-08",
-  "freshness_epoch": "2026-10-10T04:00:00+00:00",
-  "generated_at": "2026-10-10T04:00:00+00:00",
+  "expected_latest_a_share_trade_date": "2026-10-11",
+  "freshness_epoch": "2026-10-11T12:00:00+00:00",
+  "generated_at": "2026-10-11T12:00:00+00:00",
   "incremental_update_contract": {
     "collector_layer_owns_acquisition": true,
     "filesystem_mtime_may_establish_freshness": false,
@@ -1104,20 +1175,19 @@
     "mode": "CONTENT_WATERMARK_INCREMENTAL",
     "research_may_fetch_network_by_default": false
   },
-  "latest_trade_date": "2026-10-09",
-  "market_trade_date_alignment_ok": true,
+  "latest_trade_date": "2026-10-11",
+  "market_trade_date_alignment_ok": false,
   "missing_required_datasets": [],
   "optional_degraded_datasets": [
+    "production_status",
     "manual_execution_quotes",
-    "price_value_history",
-    "live_execution_quotes"
+    "price_value_history"
   ],
   "package_status": "STALE",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "171b1142ac23027ed898",
+  "snapshot_id": "4d9bf6f6e04d4f1cc258",
   "stale_required_datasets": [
-    "era_radar",
-    "global_market_pulse"
+    "all_a_market_snapshot"
   ],
   "unknown_required_datasets": []
 }
