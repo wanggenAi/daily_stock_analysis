@@ -1,6 +1,6 @@
 # 投资决策驾驶舱
 
-> 市场日线=GREEN（2026-10-09）；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0
+> 市场=GREEN；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
 
 ## 1. 最新市场结构（日线）
 
@@ -60,34 +60,6 @@ R86新闻和出版业(STRONG)、A02林业(STRONG)、R87广播、电视、电影�
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 7. 事件深算闭环：到底算完没有
-
-- 总状态：**EVENT_TRIGGERED_RUNNING**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
-
-| 股票 | 闭环状态 | 正式结果 | 为什么没有BUY/ADD / 结果解释 |
-|---|---|---|---|
-| 润贝航科 001316 | **EVENT_TRIGGERED_RUNNING** | **HOLD_REVIEW** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 中国平安 601318 | **EVENT_TRIGGERED_RUNNING** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 洛阳钼业 603993 | **EVENT_TRIGGERED_RUNNING** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 000526 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 000682 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 000783 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 001309 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 002352 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 002468 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 002811 | **RAISE_ONLY** | **—** | 当前正式动作仍为 NO_ACTION；没有足够证据跨过 BUY/ADD 的全部生产门槛。 |
-| 002842 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 600318 | **RAISE_ONLY** | **—** | 当前正式动作仍为 NO_ACTION；没有足够证据跨过 BUY/ADD 的全部生产门槛。 |
-| 国电南瑞 600406 | **RAISE_ONLY** | **REDUCE_25** | 当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。 |
-| 600961 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 601069 | **RAISE_ONLY** | **—** | 当前正式动作仍为 NO_ACTION；没有足够证据跨过 BUY/ADD 的全部生产门槛。 |
-| 601808 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 601816 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 601965 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 603596 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 603605 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 605116 | **RAISE_ONLY** | **—** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
