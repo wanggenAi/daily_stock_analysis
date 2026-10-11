@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38172757456",
+  "orchestrator_run_id": "38172926624",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -46,17 +53,17 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
       "attention_priority": "MEDIUM",
       "entity_id": "000783",
       "entity_name": "长江证券",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "002468",
+      "entity_name": "申通快递",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "DEEP_RESEARCH"
     },
     {
@@ -72,13 +79,6 @@
       "entity_name": "西部黄金",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "002468",
-      "entity_name": "申通快递",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -180,24 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "603658",
-      "entity_name": "安图生物",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
+      "entity_id": "603658",
+      "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-11T20:33:34+00:00",
-  "source_workflow_head_sha": "730ce7f153f5bf9008fbe26da9c209942f25d2e2",
+  "source_generated_at": "2026-10-11T20:36:01+00:00",
+  "source_workflow_head_sha": "6b6f7a9eba9c304dc52db446ebdb007ae49235c3",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38172575279",
+  "source_workflow_run_id": "38172647556",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 353,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38172575279",
+  "trigger_source": "JEV_ORCHESTRATOR_38172647556",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-11T20:35:45+00:00",
+  "updated_at": "2026-10-11T20:38:07+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.7,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.94,
+      "route_confidence": 0.96,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
