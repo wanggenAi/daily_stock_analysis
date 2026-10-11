@@ -4,14 +4,15 @@ This module deliberately reuses the canonical gap-closing rules from
 ``v31_deep_gap_closure`` and changes only collection scheduling:
 
 1. the first automatic evidence pass still sees the complete requested workset;
-2. the second bounded retry is restricted to targets implicated by FAILED audit
-   rows (falling back to the complete workset when failure scope is ambiguous);
+2. the second bounded retry is restricted to targets implicated by FAILED or
+   MISSING audit rows (falling back to the complete workset when retry scope is
+   ambiguous);
 3. expensive multi-year official-report predictability collection is sharded
-   across a bounded thread pool.  Each shard executes the original collector,
+   across a bounded thread pool. Each shard executes the original collector,
    with the same sources, timeouts, report-depth rules and classification logic.
 
 No threshold, authority rule, evidence requirement or UNKNOWN/PASS semantics are
-changed.  Any worker exception fails the run instead of manufacturing evidence.
+changed. Any worker exception fails the run instead of manufacturing evidence.
 """
 from __future__ import annotations
 
@@ -29,6 +30,7 @@ from .evidence_collectors.multi_year_predictability import (
 
 DEFAULT_WORKERS = 4
 MAX_WORKERS = 6
+_RETRYABLE_AUDIT_STATUSES = frozenset({"FAILED", "MISSING"})
 
 
 def _worker_count(requested: int) -> int:
@@ -42,44 +44,56 @@ def _worker_count(requested: int) -> int:
     return max(1, min(MAX_WORKERS, requested, configured))
 
 
-def _failure_scope(
+def _retry_scope(
     audit_rows: Iterable[Mapping[str, Any]],
     selected: Iterable[Mapping[str, Any]],
 ) -> list[dict[str, Any]]:
-    """Return only targets implicated by FAILED audit rows.
+    """Return targets implicated by retryable FAILED or MISSING audit rows.
 
-    A failure that cannot be mapped safely to a stock/industry returns the whole
-    workset.  That fallback is intentional: optimization must never reduce
-    evidence coverage.
+    A retryable audit row that cannot be mapped safely to a stock/industry
+    returns the whole workset. That fallback is intentional: scheduling
+    optimization must never reduce evidence coverage.
     """
     rows = [dict(row) for row in selected]
-    failed = [
+    retryable = [
         dict(row)
         for row in audit_rows
-        if str(row.get("status") or "").upper() == "FAILED"
+        if str(row.get("status") or "").upper() in _RETRYABLE_AUDIT_STATUSES
     ]
-    if not failed:
+    if not retryable:
         return []
 
-    failed_codes = {core._code(row.get("code")) for row in failed if core._code(row.get("code"))}
-    failed_industries = {
+    retry_codes = {
+        core._code(row.get("code"))
+        for row in retryable
+        if core._code(row.get("code"))
+    }
+    retry_industries = {
         str(row.get("industry") or "").strip()
-        for row in failed
+        for row in retryable
         if str(row.get("industry") or "").strip()
     }
-    if not failed_codes and not failed_industries:
+    if not retry_codes and not retry_industries:
         return rows
 
     scoped: list[dict[str, Any]] = []
     for row in rows:
         code = core._code(row.get("code"))
         industry = str(row.get("normalized_industry") or row.get("industry") or "").strip()
-        if code in failed_codes or industry in failed_industries:
+        if code in retry_codes or industry in retry_industries:
             scoped.append(row)
 
     # If audit identifiers do not map back to the workset, preserve the old
     # all-target retry rather than risk losing evidence.
     return scoped or rows
+
+
+def _failure_scope(
+    audit_rows: Iterable[Mapping[str, Any]],
+    selected: Iterable[Mapping[str, Any]],
+) -> list[dict[str, Any]]:
+    """Backward-compatible alias for callers/tests using the previous name."""
+    return _retry_scope(audit_rows, selected)
 
 
 def collect_with_selective_retry(
@@ -88,7 +102,7 @@ def collect_with_selective_retry(
     as_of: date,
     cache_dir: Path,
 ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
-    """Same two-attempt contract as core, but retry only failed target scope."""
+    """Same bounded contract as core, retrying failed or missing target scope."""
     all_industry: list[dict[str, Any]] = []
     all_company: list[dict[str, Any]] = []
     all_audit: list[dict[str, Any]] = []
@@ -110,13 +124,24 @@ def collect_with_selective_retry(
         enriched = dict(summary)
         enriched["requested_target_count"] = len(attempt_rows)
         summaries.append(enriched)
-        if int(summary.get("failed_count") or 0) == 0:
+
+        failed_count = int(summary.get("failed_count") or 0)
+        missing_count = int(summary.get("missing_count") or 0)
+        if failed_count == 0 and missing_count == 0:
             break
-        attempt_rows = _failure_scope(audit, selected)
+
+        attempt_rows = _retry_scope(audit, selected)
+        # Summary counts are authoritative. If they say retryable evidence is
+        # unresolved but the audit rows cannot identify a scope, retry the
+        # complete workset rather than silently stop and leave UNKNOWNs stale.
+        if not attempt_rows and (failed_count > 0 or missing_count > 0):
+            attempt_rows = [dict(row) for row in selected]
 
     industry_unique = core._dedupe(all_industry)
     company_unique = core._dedupe(all_company)
     last = summaries[-1] if summaries else {}
+    final_failed_count = int(last.get("failed_count") or 0)
+    final_missing_count = int(last.get("missing_count") or 0)
     final_summary = {
         "collection_attempt_count": len(summaries),
         "max_collection_attempts": core.MAX_COLLECTION_ATTEMPTS,
@@ -124,13 +149,14 @@ def collect_with_selective_retry(
         "unique_industry_evidence_count": len(industry_unique),
         "unique_company_evidence_count": len(company_unique),
         "unique_evidence_count": len(industry_unique) + len(company_unique),
-        "final_failed_count": int(last.get("failed_count") or 0),
-        "final_missing_count": int(last.get("missing_count") or 0),
+        "final_failed_count": final_failed_count,
+        "final_missing_count": final_missing_count,
         "bounded_retry_exhausted": bool(
             len(summaries) == core.MAX_COLLECTION_ATTEMPTS
-            and int(last.get("failed_count") or 0) > 0
+            and (final_failed_count > 0 or final_missing_count > 0)
         ),
         "retry_scope_optimized": True,
+        "retry_missing_evidence": True,
         "quality_contract_unchanged": True,
     }
     return industry_unique, company_unique, all_audit, final_summary
@@ -168,7 +194,7 @@ def collect_predictability_parallel(
             for chunk in chunks
         }
         for future in as_completed(futures):
-            # Deliberately let exceptions propagate.  Fail-closed is safer than
+            # Deliberately let exceptions propagate. Fail-closed is safer than
             # silently converting a collector failure into fabricated context.
             outputs.extend(future.result())
 

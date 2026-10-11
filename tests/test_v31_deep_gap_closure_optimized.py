@@ -45,7 +45,99 @@ def test_selective_retry_retries_only_failed_scope(monkeypatch, tmp_path):
     assert len(audit) == 3
     assert summary["collection_attempt_count"] == 2
     assert summary["final_failed_count"] == 0
+    assert summary["final_missing_count"] == 0
+    assert summary["bounded_retry_exhausted"] is False
     assert summary["retry_scope_optimized"] is True
+    assert summary["retry_missing_evidence"] is True
+    assert summary["quality_contract_unchanged"] is True
+
+
+def test_selective_retry_retries_only_missing_scope(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_collect(*, priority_rows, as_of, cache_dir, max_companies):
+        codes = [row["code"] for row in priority_rows]
+        calls.append(codes)
+        if len(calls) == 1:
+            return (
+                [],
+                [{"code": "000001", "content_hash": "c1"}],
+                [
+                    {"status": "OK", "code": "000001"},
+                    {"status": "MISSING", "code": "000002"},
+                ],
+                {"failed_count": 0, "missing_count": 1},
+            )
+        return (
+            [],
+            [{"code": "000002", "content_hash": "c2"}],
+            [{"status": "OK", "code": "000002"}],
+            {"failed_count": 0, "missing_count": 0},
+        )
+
+    monkeypatch.setattr(opt, "_original_auto_evidence", fake_collect)
+    _, company, _, summary = opt.collect_with_selective_retry(
+        selected=[_row("000001"), _row("000002")],
+        as_of=date(2026, 9, 11),
+        cache_dir=tmp_path,
+    )
+
+    assert calls == [["000001", "000002"], ["000002"]]
+    assert {row.get("code") for row in company} == {"000001", "000002"}
+    assert summary["collection_attempt_count"] == 2
+    assert summary["final_missing_count"] == 0
+    assert summary["bounded_retry_exhausted"] is False
+
+
+def test_missing_summary_without_mappable_audit_falls_back_to_full_retry(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_collect(*, priority_rows, as_of, cache_dir, max_companies):
+        codes = [row["code"] for row in priority_rows]
+        calls.append(codes)
+        if len(calls) == 1:
+            return [], [], [{"status": "OK", "source": "unscoped"}], {
+                "failed_count": 0,
+                "missing_count": 1,
+            }
+        return [], [], [], {"failed_count": 0, "missing_count": 0}
+
+    monkeypatch.setattr(opt, "_original_auto_evidence", fake_collect)
+    _, _, _, summary = opt.collect_with_selective_retry(
+        selected=[_row("000001"), _row("000002")],
+        as_of=date(2026, 9, 11),
+        cache_dir=tmp_path,
+    )
+
+    assert calls == [["000001", "000002"], ["000001", "000002"]]
+    assert summary["collection_attempt_count"] == 2
+    assert summary["bounded_retry_exhausted"] is False
+
+
+def test_missing_after_bounded_retry_remains_unresolved_and_exhausted(monkeypatch, tmp_path):
+    calls = []
+
+    def fake_collect(*, priority_rows, as_of, cache_dir, max_companies):
+        calls.append([row["code"] for row in priority_rows])
+        return (
+            [],
+            [],
+            [{"status": "MISSING", "code": "000002"}],
+            {"failed_count": 0, "missing_count": 1},
+        )
+
+    monkeypatch.setattr(opt, "_original_auto_evidence", fake_collect)
+    _, _, _, summary = opt.collect_with_selective_retry(
+        selected=[_row("000001"), _row("000002")],
+        as_of=date(2026, 9, 11),
+        cache_dir=tmp_path,
+    )
+
+    assert calls == [["000001", "000002"], ["000002"]]
+    assert summary["collection_attempt_count"] == opt.core.MAX_COLLECTION_ATTEMPTS
+    assert summary["final_failed_count"] == 0
+    assert summary["final_missing_count"] == 1
+    assert summary["bounded_retry_exhausted"] is True
     assert summary["quality_contract_unchanged"] is True
 
 
@@ -56,8 +148,11 @@ def test_ambiguous_failure_scope_falls_back_to_full_retry(monkeypatch, tmp_path)
         codes = [row["code"] for row in priority_rows]
         calls.append(codes)
         if len(calls) == 1:
-            return [], [], [{"status": "FAILED", "source": "unscoped"}], {"failed_count": 1}
-        return [], [], [], {"failed_count": 0}
+            return [], [], [{"status": "FAILED", "source": "unscoped"}], {
+                "failed_count": 1,
+                "missing_count": 0,
+            }
+        return [], [], [], {"failed_count": 0, "missing_count": 0}
 
     monkeypatch.setattr(opt, "_original_auto_evidence", fake_collect)
     opt.collect_with_selective_retry(
@@ -118,6 +213,7 @@ def test_install_runtime_optimizations_changes_scheduling_not_contract(monkeypat
         monkeypatch.setattr(opt.core, "_collect_with_bounded_retry", original_retry)
         monkeypatch.setattr(opt.core, "collect_multi_year_predictability_evidence", original_predictability)
 
+
 def test_gap_closure_frontloads_predictability_before_general_evidence(monkeypatch, tmp_path):
     order = []
 
@@ -169,4 +265,3 @@ def test_gap_closure_frontloads_predictability_before_general_evidence(monkeypat
     )
 
     assert order == ["predictability", "general"]
-
