@@ -254,6 +254,31 @@ def _previous():
     return payload if isinstance(payload, dict) else {}
 
 
+def _expected_a_share_trade_date_from_global_pulse():
+    """Read the A-share clock explicitly; never infer it from other global markets."""
+    path = Path("data/global_market_pulse/latest.json")
+    if not path.is_file():
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    candidates = [
+        (payload.get("a_share_market_clock") or {}).get("last_valid_trade_date"),
+        (payload.get("pre_open_intelligence") or {}).get("a_share_last_trade_date"),
+    ]
+    for value in candidates:
+        if not isinstance(value, str) or len(value) < 10:
+            continue
+        date_text = value[:10]
+        try:
+            datetime.strptime(date_text, "%Y-%m-%d")
+        except ValueError:
+            continue
+        return date_text
+    return None
+
+
 def build_package(*, now=None, write=True):
     now = now or _utc_now()
     epoch = _hour_epoch(now)
@@ -284,9 +309,8 @@ def build_package(*, now=None, write=True):
                 dataset.changed_since_previous = prior.get("changed_since_previous")
 
     by = {d.name: d for d in datasets}
-    pulse = by.get("global_market_pulse")
     market = by.get("all_a_market_snapshot")
-    expected_market_date = pulse.latest_trade_date if pulse else None
+    expected_market_date = _expected_a_share_trade_date_from_global_pulse()
 
     if market and market.exists:
         if not expected_market_date:
@@ -319,8 +343,9 @@ def build_package(*, now=None, write=True):
         status = "READY"
 
     completeness = "DEGRADED" if optional_degraded else "COMPLETE"
-    latest_dates = sorted({d.latest_trade_date for d in datasets if d.latest_trade_date})
-    latest_trade_date = latest_dates[-1] if latest_dates else None
+    # The package trade date is the A-share execution date. Global markets may have
+    # later observations and must not advance or stale the A-share execution clock.
+    latest_trade_date = market.latest_trade_date if market else None
 
     ext = PACKAGE_DIR / "external_fresh_evidence" / "events"
     pending = 0
