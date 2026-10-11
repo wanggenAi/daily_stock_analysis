@@ -421,15 +421,15 @@
       "watermark": "25b932e16ce0328fcc6349f5"
     },
     {
-      "changed_since_previous": false,
-      "content_sha256": "1e4cc071c3821ae7ad8e58012da4dcd68f6da1fe18130ceffe102d1022728925",
+      "changed_since_previous": true,
+      "content_sha256": "f14c9d53cb0eeb6fae03e08d569a0b4cabdc3ea65822dc6252ea17af9ec0e659",
       "execution_critical": true,
       "exists": true,
-      "file_count": 20,
+      "file_count": 21,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 480,
-      "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-11T18:50:29.812165+00:00",
+      "freshness_state": "STALE",
+      "latest_observed_at": "2026-10-11T23:59:00+00:00",
       "latest_trade_date": "2026-10-11",
       "lineage_file_sample": [
         {
@@ -566,10 +566,17 @@
           "trade_date": "2026-10-11"
         },
         {
-          "observed_at": "2026-10-11T18:50:29.812165+00:00",
+          "observed_at": "2026-10-11T23:59:00+00:00",
+          "path": "data/global_market_pulse/history/20261011T225051.722813+0000.json",
+          "sha256": "53ce398f42ae96573ec1a10cb406bddb1348644fc3e1d746c3b279627d9ccf6d",
+          "size": 33756,
+          "trade_date": "2026-10-11"
+        },
+        {
+          "observed_at": "2026-10-11T23:59:00+00:00",
           "path": "data/global_market_pulse/latest.json",
-          "sha256": "d8d8228485213488f3e5149373dd3ff9c74a4de3ff755ff8d6ef4727638f3176",
-          "size": 34280,
+          "sha256": "53ce398f42ae96573ec1a10cb406bddb1348644fc3e1d746c3b279627d9ccf6d",
+          "size": 33756,
           "trade_date": "2026-10-11"
         }
       ],
@@ -577,23 +584,23 @@
       "name": "global_market_pulse",
       "root": "data/global_market_pulse",
       "validation_evidence": {
-        "accepted": true,
+        "accepted": false,
         "authority": "RESEARCH_ONLY",
         "contract": "GEN_GE_GLOBAL_MARKET_PULSE_VALIDATION_V1",
         "coverage_status": "OK",
         "evidence_fingerprint": null,
         "formal_action_eligible": false,
         "formal_trading_authority": false,
-        "latest_observation_at": "2026-10-11T18:00:00+00:00",
+        "latest_observation_at": "2026-10-11T23:59:00+00:00",
         "no_auto_trade": true,
         "path": "data/global_market_pulse/validation/latest.json",
-        "reason": "SUCCESSFUL_LIVE_VALIDATION",
-        "refreshed_at": "2026-10-11T18:50:29.812165+00:00",
-        "semantic_fingerprint": "7fdac513236efe14348b76aa4bdbae802ba69ac93c82d368e2e8bf9a207ec55e",
+        "reason": "GLOBAL_LATEST_OBSERVATION_IN_FUTURE",
+        "refreshed_at": "2026-10-11T22:50:51.722813+00:00",
+        "semantic_fingerprint": "d61d5e8d820879ce995ab7486bc18f3a3e9b391e605001cef1d2ccd2e3e4e827",
         "semantic_state": "UPDATED",
         "validation_status": "SUCCESS"
       },
-      "watermark": "629d7fe0cff6647607bdeb8b"
+      "watermark": "8ff8001e7fb266dcb016a0bc"
     },
     {
       "changed_since_previous": false,
@@ -1197,20 +1204,20 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "8ff97261f6328d4d1631dcd83b3e690746587a37d59fcdeed90d415958d4c721",
+      "content_sha256": "9fd0fd5dc01abcbb5f82a168a20c5fcce01b2649a33925d94a618811b9d7b4a1",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-11T22:01:38.257708+00:00",
+      "latest_observed_at": "2026-10-11T22:51:04.407436+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-11T22:01:38.257708+00:00",
+          "observed_at": "2026-10-11T22:51:04.407436+00:00",
           "path": "data/live_execution_quotes/latest.json",
-          "sha256": "04cd7fbe862c392f3dfaf5f388fab88f878d512e20c1dbac649c1fab7379d464",
+          "sha256": "7aeb0b6bf58dae33466f4c7d6f8f5eddf07b1e08e2ad9307d56c8ee5bd39fdca",
           "size": 1204,
           "trade_date": null
         }
@@ -1219,7 +1226,7 @@
       "name": "live_execution_quotes",
       "root": "data/live_execution_quotes",
       "validation_evidence": null,
-      "watermark": "4cd80f480519991191ea01c5"
+      "watermark": "510df60a99b71ea0ad949c3f"
     }
   ],
   "expected_latest_a_share_trade_date": "2026-10-09",
@@ -1242,9 +1249,11 @@
     "manual_execution_quotes",
     "price_value_history"
   ],
-  "package_status": "READY",
+  "package_status": "STALE",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "d6090182e6760a2bf33c",
-  "stale_required_datasets": [],
+  "snapshot_id": "db3ba3d4f483bd918e55",
+  "stale_required_datasets": [
+    "global_market_pulse"
+  ],
   "unknown_required_datasets": []
 }
