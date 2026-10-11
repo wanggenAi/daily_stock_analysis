@@ -44,10 +44,11 @@ jobs:
       - name: Produce live quote data only
         run: |
           set -euo pipefail
-          python scripts/genge_live_quote_snapshot.py \
-            --dashboard data/investor_decision_dashboard/latest.json \
-            --output data/live_execution_quotes/latest.json \
-            --retry-attempts 3
+          PYTHONPATH="$GITHUB_WORKSPACE${PYTHONPATH:+:$PYTHONPATH}" \
+            python scripts/genge_live_quote_snapshot.py \
+              --dashboard data/investor_decision_dashboard/latest.json \
+              --output data/live_execution_quotes/latest.json \
+              --retry-attempts 3
       - name: Build immutable package manifest
         run: |
           set -euo pipefail
