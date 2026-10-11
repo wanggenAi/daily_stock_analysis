@@ -29,6 +29,20 @@ EXCLUDED_ROOTS = {
     "data/hourly_research_state",
 }
 
+# These producers intentionally separate semantic/observation time from collection
+# validation time. Their validation heartbeats are evidence that live collectors
+# were re-run successfully; they are never semantic market facts or trading authority.
+VALIDATED_SOURCE_POLICIES = {
+    "era_radar": {
+        "path": "validation/latest.json",
+        "contract": "ERA_RADAR_SOURCE_VALIDATION_V1",
+    },
+    "global_market_pulse": {
+        "path": "validation/latest.json",
+        "contract": "GEN_GE_GLOBAL_MARKET_PULSE_VALIDATION_V1",
+    },
+}
+
 # name, root, execution-critical, wall-clock SLA minutes, freshness basis
 PRODUCER_ROOTS = (
     ("all_a_market_snapshot", "data/market_snapshots", True, None, "TRADE_DATE"),
@@ -103,14 +117,17 @@ def _sha(path):
     return h.hexdigest()
 
 
-def _files(root):
+def _files(root, *, exclude_validation=False):
     if not root.exists():
         return []
     if root.is_file():
         return [root]
     out = []
+    validation_root = root / "validation" if exclude_validation else None
     for p in root.rglob("*"):
         if not p.is_file():
+            continue
+        if validation_root is not None and (p == validation_root or validation_root in p.parents):
             continue
         rel = p.as_posix()
         if any(rel == x or rel.startswith(x + "/") for x in EXCLUDED_ROOTS):
@@ -156,6 +173,133 @@ def _extract_times(path):
     return latest_dt, latest_date
 
 
+def _validation_evidence(name, root, *, now, sla):
+    """Return explicit validation provenance without mutating semantic source truth."""
+    policy = VALIDATED_SOURCE_POLICIES.get(name)
+    if not policy:
+        return None
+
+    path = root / policy["path"]
+    evidence = {
+        "path": path.as_posix(),
+        "contract": None,
+        "validation_status": None,
+        "accepted": False,
+        "reason": "VALIDATION_HEARTBEAT_MISSING",
+        "refreshed_at": None,
+        "latest_observation_at": None,
+        "semantic_state": None,
+        "evidence_fingerprint": None,
+        "semantic_fingerprint": None,
+        "coverage_status": None,
+        "authority": None,
+        "formal_trading_authority": None,
+        "formal_action_eligible": None,
+        "no_auto_trade": None,
+    }
+    if not path.is_file():
+        return evidence
+
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        evidence["reason"] = "VALIDATION_HEARTBEAT_INVALID_JSON"
+        return evidence
+    if not isinstance(payload, dict):
+        evidence["reason"] = "VALIDATION_HEARTBEAT_INVALID_SHAPE"
+        return evidence
+
+    for key in (
+        "contract",
+        "validation_status",
+        "refreshed_at",
+        "latest_observation_at",
+        "semantic_state",
+        "evidence_fingerprint",
+        "semantic_fingerprint",
+        "coverage_status",
+        "authority",
+        "formal_trading_authority",
+        "formal_action_eligible",
+        "no_auto_trade",
+    ):
+        evidence[key] = payload.get(key)
+
+    if payload.get("contract") != policy["contract"]:
+        evidence["reason"] = "VALIDATION_CONTRACT_MISMATCH"
+        return evidence
+    if payload.get("validation_status") != "SUCCESS":
+        evidence["reason"] = "VALIDATION_NOT_SUCCESS"
+        return evidence
+
+    refreshed_at = _parse_dt(payload.get("refreshed_at"))
+    if refreshed_at is None:
+        evidence["reason"] = "VALIDATION_REFRESH_TIME_MISSING"
+        return evidence
+    if refreshed_at > now:
+        evidence["reason"] = "VALIDATION_REFRESH_TIME_IN_FUTURE"
+        return evidence
+    if sla is not None and (now - refreshed_at).total_seconds() / 60 > sla:
+        evidence["reason"] = "VALIDATION_HEARTBEAT_STALE"
+        return evidence
+
+    # Heartbeats are validation evidence only. Any authority escalation makes the
+    # evidence unusable for this contract rather than silently promoting it.
+    if payload.get("formal_trading_authority") is not False or payload.get("no_auto_trade") is not True:
+        evidence["reason"] = "VALIDATION_AUTHORITY_INVARIANT_FAILED"
+        return evidence
+
+    semantic_state = str(payload.get("semantic_state") or "").strip()
+    if not semantic_state or semantic_state.startswith("NO_PUBLISH"):
+        evidence["reason"] = "VALIDATION_SEMANTIC_STATE_INVALID"
+        return evidence
+
+    if name == "era_radar":
+        if int(payload.get("successful_collectors") or 0) <= 0:
+            evidence["reason"] = "ERA_NO_SUCCESSFUL_COLLECTORS"
+            return evidence
+        if int(payload.get("failed_collectors") or 0) != 0:
+            evidence["reason"] = "ERA_COLLECTOR_FAILURE"
+            return evidence
+        if not str(payload.get("evidence_fingerprint") or "").strip():
+            evidence["reason"] = "ERA_EVIDENCE_FINGERPRINT_MISSING"
+            return evidence
+
+    if name == "global_market_pulse":
+        if payload.get("coverage_status") != "OK":
+            evidence["reason"] = "GLOBAL_COVERAGE_NOT_OK"
+            return evidence
+        if payload.get("authority") != "RESEARCH_ONLY":
+            evidence["reason"] = "GLOBAL_AUTHORITY_INVARIANT_FAILED"
+            return evidence
+        if payload.get("formal_action_eligible") is not False:
+            evidence["reason"] = "GLOBAL_FORMAL_ELIGIBILITY_INVARIANT_FAILED"
+            return evidence
+        if not str(payload.get("semantic_fingerprint") or "").strip():
+            evidence["reason"] = "GLOBAL_SEMANTIC_FINGERPRINT_MISSING"
+            return evidence
+        observation_at = _parse_dt(payload.get("latest_observation_at"))
+        if observation_at is None:
+            evidence["reason"] = "GLOBAL_LATEST_OBSERVATION_MISSING"
+            return evidence
+        if observation_at > now:
+            evidence["reason"] = "GLOBAL_LATEST_OBSERVATION_IN_FUTURE"
+            return evidence
+        # A fresh collection timestamp must not launder an actually stale market
+        # observation/session into FRESH.
+        if sla is not None and (now - observation_at).total_seconds() / 60 > sla:
+            evidence["reason"] = "GLOBAL_LATEST_OBSERVATION_STALE"
+            return evidence
+
+    evidence["accepted"] = True
+    evidence["reason"] = "SUCCESSFUL_LIVE_VALIDATION"
+    evidence["refreshed_at"] = _iso(refreshed_at)
+    observation_at = _parse_dt(payload.get("latest_observation_at"))
+    if observation_at:
+        evidence["latest_observation_at"] = _iso(observation_at)
+    return evidence
+
+
 @dataclass
 class DatasetManifest:
     name: str
@@ -173,10 +317,15 @@ class DatasetManifest:
     watermark: str | None
     lineage_file_sample: list[dict[str, Any]]
     lineage_file_sample_truncated: bool
+    validation_evidence: dict[str, Any] | None
 
 
 def _manifest(name, root_text, critical, sla, basis, *, now, previous):
-    files = _files(Path(root_text))
+    root = Path(root_text)
+    # Validation heartbeat files are deliberately excluded from semantic scanning.
+    # They can affect freshness only through _validation_evidence after contract
+    # validation, never because a generic recursive timestamp happens to be recent.
+    files = _files(root, exclude_validation=name in VALIDATED_SOURCE_POLICIES)
     rows = []
     latest_dt = None
     latest_date = None
@@ -205,12 +354,16 @@ def _manifest(name, root_text, critical, sla, basis, *, now, previous):
 
     exists = bool(files)
     digest = agg.hexdigest() if exists else None
+    validation = _validation_evidence(name, root, now=now, sla=sla)
+
     if not exists:
         freshness = "MISSING"
     elif basis == "TRADE_DATE":
         freshness = "PENDING_TRADE_DATE_ALIGNMENT" if latest_date else "UNKNOWN"
     elif basis == "NOT_APPLICABLE" or sla is None:
         freshness = "NOT_APPLICABLE"
+    elif validation is not None:
+        freshness = "FRESH" if validation.get("accepted") is True else "STALE"
     elif latest_dt is None:
         freshness = "UNKNOWN"
     else:
@@ -218,9 +371,24 @@ def _manifest(name, root_text, critical, sla, basis, *, now, previous):
 
     prev = (previous or {}).get("content_sha256")
     changed = None if prev is None else prev != digest
+    validation_token = ""
+    if validation is not None:
+        validation_token = "|".join(
+            str(validation.get(k) or "")
+            for k in (
+                "contract",
+                "validation_status",
+                "accepted",
+                "reason",
+                "refreshed_at",
+                "latest_observation_at",
+                "evidence_fingerprint",
+                "semantic_fingerprint",
+            )
+        )
     wm = (
         hashlib.sha256(
-            f"{digest or 'MISSING'}|{latest_date or ''}|{_iso(latest_dt) if latest_dt else ''}".encode()
+            f"{digest or 'MISSING'}|{latest_date or ''}|{_iso(latest_dt) if latest_dt else ''}|{validation_token}".encode()
         ).hexdigest()[:24]
         if exists
         else None
@@ -241,6 +409,7 @@ def _manifest(name, root_text, critical, sla, basis, *, now, previous):
         wm,
         rows,
         len(files) > MAX_LINEAGE_FILES,
+        validation,
     )
 
 
@@ -380,6 +549,8 @@ def build_package(*, now=None, write=True):
             "collector_layer_owns_acquisition": True,
             "filesystem_mtime_may_establish_freshness": False,
             "immutable_snapshot_overwrite_allowed": False,
+            "validation_heartbeat_may_mutate_semantic_content": False,
+            "validation_heartbeat_may_grant_formal_trading_authority": False,
         },
         "missing_required_datasets": missing,
         "stale_required_datasets": stale,
