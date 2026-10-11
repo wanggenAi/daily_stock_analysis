@@ -8,11 +8,9 @@
 ## Urgent evidence queue
 
 - 600406 国电南瑞: quant=45.1566, PE/history=0.8265532544378699, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD,EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
-- 002468 申通快递: quant=39.8581, PE/history=0.5492842535787321, unknown=long_term_demand,moat, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
 - 601318 中国平安: quant=32.6541, PE/history=0.7503001200480192, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
 - 603993 洛阳钼业: quant=31.8886, PE/history=0.7479546054367907, unknown=predictability, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
 - 001316 润贝航科: quant=23.4933, PE/history=0.6673434856175973, unknown=predictability,long_term_demand,moat, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
-- 603605 珀莱雅: quant=None, PE/history=None, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=FINANCIAL_REVIEW_STATUS_NOT_OK,EARNINGS_QUALITY_CONFIDENCE_NOT_HIGH,CASH_CONVERSION_RATIO_MISSING,EARNINGS_QUALITY_SCORE_MISSING,NORMALIZED_CORE_OPERATING_PROFIT_MISSING,OPERATING_CASH_FLOW_MISSING, urgent=P0_EVIDENCE_BLOCKED
 - 002811 郑中设计: quant=65.4744, PE/history=0.32763068567549214, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD,EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 
 ## Risk-budget capital advisory
