@@ -3,9 +3,14 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import sys
 from pathlib import Path
+from zoneinfo import ZoneInfo
+
+import exchange_calendars as xcals
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 if str(ROOT) not in sys.path:
@@ -39,6 +44,47 @@ def _security_names(payload: dict) -> dict[str, str]:
             if code.strip("0"):
                 result[code] = str(row.get("name") or result.get(code) or "")
     return result
+
+
+def _latest_completed_a_share_trade_date(now: datetime | None = None) -> str | None:
+    """Return the latest completed XSHG session, independent of downstream decisions.
+
+    The Global Pulse used to inherit ``decision_center.latest_trade_date``. That
+    creates a circular stale clock: a stale formal decision can make a fresh
+    upstream collector believe the last A-share close is stale as well. The
+    exchange calendar is the authority for which session *should* be complete;
+    market snapshots remain the authority for the actual A-share market facts.
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    now = now.astimezone(timezone.utc)
+
+    calendar = xcals.get_calendar("XSHG")
+    shanghai_date = now.astimezone(ZoneInfo("Asia/Shanghai")).date()
+    end = pd.Timestamp(shanghai_date.isoformat())
+    start = end - pd.Timedelta(days=60)
+    sessions = calendar.sessions_in_range(start, end)
+    completed: list[pd.Timestamp] = []
+    for session in sessions:
+        close = calendar.session_close(session).to_pydatetime().astimezone(timezone.utc)
+        if close <= now:
+            completed.append(session)
+    if not completed:
+        return None
+    return completed[-1].date().isoformat()
+
+
+def _resolve_a_share_last_trade_date(decision_center: dict, now: datetime | None = None) -> str | None:
+    """Resolve the A-share close anchor without allowing downstream state to lead it."""
+    official = _latest_completed_a_share_trade_date(now=now)
+    if official:
+        return official
+    # Fail-soft only when the exchange calendar itself is unavailable/out of range.
+    # This preserves prior behavior without letting Decision Center override a
+    # successfully resolved official calendar session.
+    fallback = str(decision_center.get("latest_trade_date") or "").strip()
+    return fallback[:10] if len(fallback) >= 10 else None
 
 
 def _persist_validation_heartbeat(output_dir: Path, pulse: dict, persistence: dict) -> None:
@@ -79,7 +125,7 @@ def main() -> int:
     pulse = build_global_market_pulse(
         commodity_config=_load_json(args.commodity_config),
         security_names=_security_names(decision_center),
-        a_share_last_trade_date=decision_center.get("latest_trade_date"),
+        a_share_last_trade_date=_resolve_a_share_last_trade_date(decision_center),
     )
     persistence = persist_if_changed(pulse, args.output_dir)
     _persist_validation_heartbeat(args.output_dir, pulse, persistence)
