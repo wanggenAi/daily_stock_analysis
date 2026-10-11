@@ -66,13 +66,13 @@ R86新闻和出版业(STRONG)、A02林业(STRONG)、R87广播、电视、电影�
 - 本轮深算：**21** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **20** / REJECT **0**。
 - urgent research：**6** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **2** / WATCH **8** / BLOCK **10**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **2** / WATCH **5** / BLOCK **13**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
-- 伯特利 603596: **BUILD**；conviction=0.889；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 顺丰控股 002352: **PROBE**；conviction=0.6588；建议账户仓位上限=0.84%；研究结论仍为 RESEARCH_GAP。
-- 申通快递 002468: **PROBE**；conviction=0.6394；建议账户仓位上限=0.77%；研究结论仍为 RESEARCH_GAP。
+- 伯特利 603596: **BUILD**；conviction=0.899；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 顺丰控股 002352: **PROBE**；conviction=0.66；建议账户仓位上限=0.84%；研究结论仍为 RESEARCH_GAP。
+- 申通快递 002468: **PROBE**；conviction=0.6407；建议账户仓位上限=0.77%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
@@ -85,9 +85,9 @@ R86新闻和出版业(STRONG)、A02林业(STRONG)、R87广播、电视、电影�
 
 ### Urgent evidence queue
 
-- 珀莱雅 603605: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
-- 申通快递 002468: RESEARCH_GAP；gaps=long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
 - 国电南瑞 600406: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
+- 申通快递 002468: RESEARCH_GAP；gaps=long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
 - 中国平安 601318: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 润贝航科 001316: RESEARCH_GAP；gaps=predictability, long_term_demand, moat；urgent=P0_EVIDENCE_BLOCKED
+- 珀莱雅 603605: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=P0_EVIDENCE_BLOCKED
 - 郑中设计 002811: RESEARCH_GAP；gaps=predictability, long_term_demand, moat, financial_safety, earnings_authenticity；urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
