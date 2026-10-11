@@ -8,6 +8,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/genge-realtime-data-package.yml'
+      - 'scripts/genge_data_package.py'
+      - 'scripts/genge_live_quote_snapshot.py'
   workflow_run:
     workflows:
       - "Era Capital Trend Radar Live"
