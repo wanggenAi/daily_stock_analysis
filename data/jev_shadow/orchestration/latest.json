@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38117675278",
+  "orchestrator_run_id": "38139733101",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -47,13 +54,6 @@
     },
     {
       "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "HIGH",
       "entity_id": "002468",
       "entity_name": "申通快递",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
@@ -70,6 +70,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "000783",
       "entity_name": "长江证券",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -159,20 +166,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "001236",
-      "entity_name": "弘业期货",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "600834",
       "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -191,13 +184,20 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "001236",
+      "entity_name": "弘业期货",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-11T06:18:45+00:00",
-  "source_workflow_head_sha": "c1a02ab20b9b1db76c07ad8d9ffa67fcbb96d289",
+  "source_generated_at": "2026-10-11T12:33:17+00:00",
+  "source_workflow_head_sha": "7a1e49e8c527e0cf1795a1eab1daed5ec2b2487f",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38117552413",
+  "source_workflow_run_id": "38139589615",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 351,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38117552413",
+  "trigger_source": "JEV_ORCHESTRATOR_38139589615",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-11T06:21:05+00:00",
+  "updated_at": "2026-10-11T12:35:23+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.86,
+      "attention_confidence": 0.83,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.96,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
