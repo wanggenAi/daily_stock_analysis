@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '12 * * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/genge-realtime-data-package.yml'
   workflow_run:
     workflows:
       - "Era Capital Trend Radar Live"
