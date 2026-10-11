@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38148748434",
+  "orchestrator_run_id": "38149864387",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -56,13 +56,6 @@
       "attention_priority": "HIGH",
       "entity_id": "002468",
       "entity_name": "申通快递",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "603605",
-      "entity_name": "珀莱雅",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -166,8 +159,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "001236",
-      "entity_name": "弘业期货",
+      "entity_id": "600351",
+      "entity_name": "亚宝药业",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -175,6 +168,13 @@
       "attention_priority": "LOW",
       "entity_id": "600834",
       "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "603268",
+      "entity_name": "松发股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-11T14:49:01+00:00",
-  "source_workflow_head_sha": "9b1577b73a8455a6757bfc3f4b64e9e522d2b5fe",
+  "source_generated_at": "2026-10-11T15:05:24+00:00",
+  "source_workflow_head_sha": "6e5a5847bb9c6087d74c40b75681d931b36eaaff",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38148603825",
+  "source_workflow_run_id": "38149708082",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 353,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38148603825",
+  "trigger_source": "JEV_ORCHESTRATOR_38149708082",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-11T14:51:30+00:00",
+  "updated_at": "2026-10-11T15:07:36+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.88,
+      "attention_confidence": 0.83,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.91,
+      "route_confidence": 0.89,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
@@ -283,12 +283,10 @@
         "quant_score": 57.0031,
         "quant_status": "SECONDARY_RESEARCH",
         "research_priority": "P0",
-        "research_priority_score": 100,
+        "research_priority_score": 50,
         "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
-          "PRICE_ATTRACTIVE_AND_THESIS_STRENGTHENING_LEAD",
-          "HOURLY_PRIORITY_RAISE",
           "DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP"
         ],
         "valuation": {
