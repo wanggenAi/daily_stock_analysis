@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import argparse
-from datetime import datetime, timezone
+from datetime import date, datetime, time, timezone
 import json
 import sys
 from pathlib import Path
@@ -80,11 +80,75 @@ def _resolve_a_share_last_trade_date(decision_center: dict, now: datetime | None
     official = _latest_completed_a_share_trade_date(now=now)
     if official:
         return official
-    # Fail-soft only when the exchange calendar itself is unavailable/out of range.
-    # This preserves prior behavior without letting Decision Center override a
-    # successfully resolved official calendar session.
     fallback = str(decision_center.get("latest_trade_date") or "").strip()
     return fallback[:10] if len(fallback) >= 10 else None
+
+
+def _parse_utc(value: object) -> datetime | None:
+    text = str(value or "").strip().replace("Z", "+00:00")
+    if not text:
+        return None
+    try:
+        parsed = datetime.fromisoformat(text)
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    return parsed.astimezone(timezone.utc)
+
+
+def _normalize_daily_commodity_observation_times(pulse: dict, *, now: datetime | None = None) -> dict:
+    """Remove fabricated future clocks from date-only commodity bars.
+
+    The shared commodity collector provides a trading *date*, not an intraday
+    observation timestamp. Core pulse construction historically represented that
+    date as 23:59 UTC. Before 23:59 this made a valid same-day daily bar look like
+    a future observation and could also dominate coverage.latest_observation_at.
+
+    Use 00:00 UTC as a stable conservative timestamp for date-only bars. It never
+    claims knowledge later than the supplied date and never advances merely
+    because the hourly collector reruns. Intraday/global series retain their real
+    timestamps and therefore remain the normal freshness clock for the pulse.
+    """
+    now = now or datetime.now(timezone.utc)
+    if now.tzinfo is None:
+        now = now.replace(tzinfo=timezone.utc)
+    now = now.astimezone(timezone.utc)
+
+    series = pulse.get("series") or {}
+    if not isinstance(series, dict):
+        return pulse
+
+    for row in series.values():
+        if not isinstance(row, dict) or row.get("status") != "OK" or row.get("family") != "COMMODITY":
+            continue
+        try:
+            market_day = date.fromisoformat(str(row.get("market_date") or "")[:10])
+        except ValueError:
+            continue
+        safe_at = datetime.combine(market_day, time.min, tzinfo=timezone.utc)
+        row["latest_at"] = safe_at.isoformat()
+        age_hours = max(0.0, (now - safe_at).total_seconds() / 3600.0)
+        row["age_hours"] = round(age_hours, 2)
+        row["freshness"] = (
+            "FRESH" if age_hours <= 8 else
+            "LAST_VALID_MARKET_OBSERVATION" if age_hours <= 72 else
+            "STALE"
+        )
+        row["timestamp_precision"] = "DATE_ONLY_CONSERVATIVE_UTC_START"
+
+    latest_times = []
+    for row in series.values():
+        if not isinstance(row, dict) or row.get("status") != "OK":
+            continue
+        observed = _parse_utc(row.get("latest_at"))
+        if observed is not None and observed <= now:
+            latest_times.append(observed)
+    coverage = pulse.get("coverage")
+    if isinstance(coverage, dict):
+        coverage["latest_observation_at"] = max(latest_times).isoformat() if latest_times else None
+        coverage["observation_clock_invariant"] = "NO_FUTURE_OBSERVATION"
+    return pulse
 
 
 def _persist_validation_heartbeat(output_dir: Path, pulse: dict, persistence: dict) -> None:
@@ -121,16 +185,18 @@ def main() -> int:
     parser.add_argument("--decision-center", type=Path, default=Path("data/decision_center/latest.json"))
     args = parser.parse_args()
 
+    now = datetime.now(timezone.utc)
     decision_center = _load_json(args.decision_center)
     pulse = build_global_market_pulse(
         commodity_config=_load_json(args.commodity_config),
         security_names=_security_names(decision_center),
-        a_share_last_trade_date=_resolve_a_share_last_trade_date(decision_center),
+        a_share_last_trade_date=_resolve_a_share_last_trade_date(decision_center, now=now),
+        now=now,
     )
+    pulse = _normalize_daily_commodity_observation_times(pulse, now=now)
     persistence = persist_if_changed(pulse, args.output_dir)
     _persist_validation_heartbeat(args.output_dir, pulse, persistence)
     print(json.dumps({"pulse": pulse, "persistence": persistence}, ensure_ascii=False, sort_keys=True))
-    # Partial coverage remains visible and useful. Complete source loss fails closed.
     return 2 if pulse["coverage"]["status"] == "UNAVAILABLE" else 0
 
 
