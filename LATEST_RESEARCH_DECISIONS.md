@@ -7,28 +7,27 @@
 
 ## Urgent evidence queue
 
-- 600406 国电南瑞: quant=45.1566, PE/history=0.8265532544378699, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD,EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
-- 601318 中国平安: quant=32.6541, PE/history=0.7503001200480192, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
-- 603993 洛阳钼业: quant=31.8886, PE/history=0.7479546054367907, unknown=predictability, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
-- 001316 润贝航科: quant=23.4933, PE/history=0.6673434856175973, unknown=predictability,long_term_demand,moat, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
-- 603939 益丰药房: quant=78.4114, PE/history=0.6314800901577761, unknown=long_term_demand,moat, financial_blockers=NONE, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
+- 600406 国电南瑞: quant=45.4126, PE/history=0.8265532544378699, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=CASH_CONVERSION_RATIO_BELOW_PASS_THRESHOLD,EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
+- 601318 中国平安: quant=32.8935, PE/history=0.7503001200480192, unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity, financial_blockers=EARNINGS_QUALITY_SCORE_BELOW_PASS_THRESHOLD, urgent=P0_EVIDENCE_BLOCKED
+- 603993 洛阳钼业: quant=31.6939, PE/history=0.7479546054367907, unknown=predictability, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
+- 001316 润贝航科: quant=21.7112, PE/history=0.6673434856175973, unknown=predictability,long_term_demand,moat, financial_blockers=NONE, urgent=P0_EVIDENCE_BLOCKED
+- 603939 益丰药房: quant=78.7888, PE/history=0.6314800901577761, unknown=long_term_demand,moat, financial_blockers=NONE, urgent=QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED
 
 ## Risk-budget capital advisory
 
 - BUILD: **1** / PROBE: **2** / WATCH: **5** / BLOCK: **9**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
-- 603596 伯特利: **BUILD** / conviction=0.899 / max_portfolio=3.0%
-- 603939 益丰药房: **PROBE** / conviction=0.6808 / max_portfolio=0.82%
-- 002468 申通快递: **PROBE** / conviction=0.6407 / max_portfolio=0.77%
+- 603596 伯特利: **BUILD** / conviction=0.8976 / max_portfolio=3.0%
+- 603939 益丰药房: **PROBE** / conviction=0.6816 / max_portfolio=0.82%
+- 002468 申通快递: **PROBE** / conviction=0.6149 / max_portfolio=0.74%
 
 ## Terminal rows
 
 - 603596 伯特利: **BUY** / ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT
 - 603939 益丰药房: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600338 西藏珠峰: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
-- 600318 新力金融: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600406 国电南瑞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
-- 002468 申通快递: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 600318 新力金融: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600257 大湖股份: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 603268 松发股份: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000703 恒逸石化: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
@@ -36,8 +35,9 @@
 - 603993 洛阳钼业: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000833 粤桂股份: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 601069 西部黄金: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
-- 002215 诺 普 信: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000415 渤海租赁: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 002215 诺 普 信: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 002468 申通快递: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 603986 兆易创新: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 001316 润贝航科: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 
@@ -54,9 +54,8 @@
 - 603596 伯特利: **FULL_EVIDENCE**; decision_ready=True; unknown=NONE
 - 603939 益丰药房: **RESEARCH_REQUIRED**; decision_ready=False; unknown=long_term_demand,moat
 - 600338 西藏珠峰: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,moat
-- 600318 新力金融: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600406 国电南瑞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
-- 002468 申通快递: **RESEARCH_REQUIRED**; decision_ready=False; unknown=long_term_demand,moat
+- 600318 新力金融: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600257 大湖股份: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 603268 松发股份: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat
 - 000703 恒逸石化: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
@@ -64,7 +63,8 @@
 - 603993 洛阳钼业: **DECISION_READY_WITH_UNCERTAINTY**; decision_ready=True; unknown=predictability
 - 000833 粤桂股份: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 601069 西部黄金: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,moat
-- 002215 诺 普 信: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 000415 渤海租赁: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 002215 诺 普 信: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 002468 申通快递: **RESEARCH_REQUIRED**; decision_ready=False; unknown=long_term_demand,moat
 - 603986 兆易创新: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,financial_safety,earnings_authenticity
 - 001316 润贝航科: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat
