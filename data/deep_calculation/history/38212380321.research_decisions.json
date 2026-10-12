@@ -1,0 +1,556 @@
+{
+  "all_requested_terminal": true,
+  "automatic_formal_buy_allowed": false,
+  "bounded_uncertainty_ready_codes": [],
+  "bounded_uncertainty_ready_count": 0,
+  "capital_action_counts": {
+    "BLOCK": 0,
+    "BUILD": 1,
+    "PROBE": 1,
+    "WATCH": 0
+  },
+  "capital_advisory_authority": "ADVISORY_ONLY",
+  "capital_advisory_automatic_execution_allowed": false,
+  "capital_model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+  "capital_probe_queue": [
+    {
+      "capital_allocation": {
+        "action": "BUILD",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.899,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.9,
+        "evidence_score": 1.0,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.57,
+        "reason": "ALL_GATES_PASS_AND_RESEARCH_BUY",
+        "suggested_max_portfolio_pct": 3.0,
+        "uncertainty_penalty": 0.0,
+        "unknown_weight": 0.0,
+        "valuation_score": 1.0
+      },
+      "code": "603596",
+      "formal_buy_authorized": false,
+      "hard_gate_failures": [],
+      "hard_gate_pass_count": 5,
+      "hard_gate_unknowns": [],
+      "industry": "C36汽车制造业",
+      "name": "伯特利",
+      "no_auto_trade": true,
+      "quant_score": 57.0031,
+      "quant_status": "SECONDARY_RESEARCH",
+      "reopen_on_new_evidence": false,
+      "research_authority": "RESEARCH_ONLY",
+      "research_decision": "BUY",
+      "research_priority": "P1",
+      "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
+      "screening_attractiveness": "NORMAL",
+      "success_archetype_id": "",
+      "success_archetype_similarity_score": null,
+      "urgent_research": false,
+      "urgent_research_reasons": [],
+      "valuation": {
+        "current_pe": 17.95,
+        "distance_to_research_buy_ceiling_pct": 49.97214484679666,
+        "earnings_quality_confidence": "HIGH",
+        "earnings_quality_score": 90.0,
+        "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        "financial_gate_diagnostics": {
+          "blockers": [],
+          "cash_conversion_pass_threshold": 0.8,
+          "cash_conversion_ratio": 1.1844,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_pass_threshold": 70.0,
+          "earnings_quality_score": 90.0,
+          "financial_disclosure_date": "2026-08-28",
+          "financial_review_status": "OK",
+          "machine_financial_pass_ready": true,
+          "normalized_core_operating_profit": 580089687.17,
+          "operating_cash_flow": 751623839.23
+        },
+        "financial_review_status": "OK",
+        "historical_median_pe_reference": 33.65,
+        "pe_to_history_ratio": 0.5334323922734027,
+        "price_mapping_status": "OK",
+        "reference_price": 27.29,
+        "reference_price_basis": "RAW_LATEST_CLOSE",
+        "reference_trade_date": "2026-10-09",
+        "required_profit_growth_pct": -46.65676077265973,
+        "research_buy_pe_ratio_threshold": 0.8,
+        "research_buy_price_ceiling": 40.927398328690806
+      }
+    },
+    {
+      "capital_allocation": {
+        "action": "PROBE",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.6808,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.77,
+        "evidence_score": 0.74,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.7841,
+        "reason": "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN",
+        "suggested_max_portfolio_pct": 0.82,
+        "uncertainty_penalty": 0.12,
+        "unknown_weight": 0.4,
+        "valuation_score": 0.93
+      },
+      "code": "603939",
+      "formal_buy_authorized": false,
+      "hard_gate_failures": [],
+      "hard_gate_pass_count": 3,
+      "hard_gate_unknowns": [
+        "long_term_demand",
+        "moat"
+      ],
+      "industry": "F52零售业",
+      "name": "益丰药房",
+      "no_auto_trade": true,
+      "quant_score": 78.4114,
+      "quant_status": "PRIORITY_RESEARCH",
+      "reopen_on_new_evidence": true,
+      "research_authority": "RESEARCH_ONLY",
+      "research_decision": "RESEARCH_GAP",
+      "research_priority": "P1",
+      "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+      "screening_attractiveness": "HIGH",
+      "success_archetype_id": "",
+      "success_archetype_similarity_score": null,
+      "urgent_research": true,
+      "urgent_research_reasons": [
+        "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+      ],
+      "valuation": {
+        "current_pe": 16.81,
+        "distance_to_research_buy_ceiling_pct": 26.686496133254025,
+        "earnings_quality_confidence": "HIGH",
+        "earnings_quality_score": 77.0,
+        "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        "financial_gate_diagnostics": {
+          "blockers": [],
+          "cash_conversion_pass_threshold": 0.8,
+          "cash_conversion_ratio": 1.3597,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_pass_threshold": 70.0,
+          "earnings_quality_score": 77.0,
+          "financial_disclosure_date": "2026-08-28",
+          "financial_review_status": "OK",
+          "machine_financial_pass_ready": true,
+          "normalized_core_operating_profit": 951919761.46,
+          "operating_cash_flow": 1453559634.67
+        },
+        "financial_review_status": "OK",
+        "historical_median_pe_reference": 26.62,
+        "pe_to_history_ratio": 0.6314800901577761,
+        "price_mapping_status": "OK",
+        "reference_price": 24.05,
+        "reference_price_basis": "RAW_LATEST_CLOSE",
+        "reference_trade_date": "2026-10-09",
+        "required_profit_growth_pct": -36.8519909842224,
+        "research_buy_pe_ratio_threshold": 0.8,
+        "research_buy_price_ceiling": 30.468102320047592
+      }
+    }
+  ],
+  "closure_policy": {
+    "automatic_execution_allowed": false,
+    "critical_gates": [
+      "financial_safety",
+      "earnings_authenticity"
+    ],
+    "formal_buy_requires_full_evidence": true,
+    "max_soft_unknown_for_decision": 1,
+    "no_auto_trade": true,
+    "soft_gates": [
+      "predictability",
+      "long_term_demand",
+      "moat"
+    ],
+    "unknown_is_pass": false
+  },
+  "contract": "GEN_GE_V31_TERMINAL_RESEARCH_DECISION_V1",
+  "decision_closure_contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+  "decision_closure_counts": {
+    "DECISION_READY_WITH_UNCERTAINTY": 0,
+    "DECISIVE_REJECT": 0,
+    "FULL_EVIDENCE": 1,
+    "RESEARCH_REQUIRED": 1
+  },
+  "decision_counts": {
+    "BUY": 1,
+    "REJECT": 0,
+    "RESEARCH_GAP": 1,
+    "WAIT_PRICE": 0
+  },
+  "decision_ready_count": 1,
+  "decision_ready_rate": 0.5,
+  "decisive_reject_count": 0,
+  "deep_requested_count": 2,
+  "evidence_complete_count": 1,
+  "evidence_complete_rate": 0.5,
+  "formal_trading_authority": false,
+  "generated_at": "2026-10-12T06:30:20+00:00",
+  "interpretation": "Research truth and capital sizing are separate: UNKNOWN never becomes PASS or Formal BUY, but bounded manual PROBE sizing may be suggested when critical financial gates are explicitly PASS and valuation/quant evidence compensates for limited noncritical uncertainty.",
+  "no_auto_trade": true,
+  "requested_count": 2,
+  "research_authority": "RESEARCH_ONLY",
+  "research_required_codes": [
+    "603939"
+  ],
+  "research_required_count": 1,
+  "source_deep_lambda_run_id": "38212380321",
+  "source_every_industry_run_id": "38195503084",
+  "terminal_rows": [
+    {
+      "capital_allocation": {
+        "action": "BUILD",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.899,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.9,
+        "evidence_score": 1.0,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.57,
+        "reason": "ALL_GATES_PASS_AND_RESEARCH_BUY",
+        "suggested_max_portfolio_pct": 3.0,
+        "uncertainty_penalty": 0.0,
+        "unknown_weight": 0.0,
+        "valuation_score": 1.0
+      },
+      "code": "603596",
+      "deep_closure": {
+        "automatic_execution_allowed": false,
+        "closure_state": "FULL_EVIDENCE",
+        "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+        "critical_unknown_gates": [],
+        "decision_ready": true,
+        "evidence_complete": true,
+        "failure_gates": [],
+        "formal_buy_authorized": false,
+        "formal_buy_evidence_ready": true,
+        "max_soft_unknown_for_decision": 1,
+        "no_auto_trade": true,
+        "other_unknown_gates": [],
+        "rationale": "ALL_DEEP_GATES_RESOLVED",
+        "soft_unknown_gates": [],
+        "unknown_is_pass": false
+      },
+      "formal_buy_authorized": false,
+      "hard_gate_failures": [],
+      "hard_gate_pass_count": 5,
+      "hard_gate_unknowns": [],
+      "industry": "C36汽车制造业",
+      "name": "伯特利",
+      "no_auto_trade": true,
+      "quant_score": 57.0031,
+      "quant_status": "SECONDARY_RESEARCH",
+      "reopen_on_new_evidence": false,
+      "research_authority": "RESEARCH_ONLY",
+      "research_decision": "BUY",
+      "research_priority": "P1",
+      "research_reason": "ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT",
+      "screening_attractiveness": "NORMAL",
+      "success_archetype_id": "",
+      "success_archetype_similarity_score": null,
+      "urgent_research": false,
+      "urgent_research_reasons": [],
+      "valuation": {
+        "current_pe": 17.95,
+        "distance_to_research_buy_ceiling_pct": 49.97214484679666,
+        "earnings_quality_confidence": "HIGH",
+        "earnings_quality_score": 90.0,
+        "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        "financial_gate_diagnostics": {
+          "blockers": [],
+          "cash_conversion_pass_threshold": 0.8,
+          "cash_conversion_ratio": 1.1844,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_pass_threshold": 70.0,
+          "earnings_quality_score": 90.0,
+          "financial_disclosure_date": "2026-08-28",
+          "financial_review_status": "OK",
+          "machine_financial_pass_ready": true,
+          "normalized_core_operating_profit": 580089687.17,
+          "operating_cash_flow": 751623839.23
+        },
+        "financial_review_status": "OK",
+        "historical_median_pe_reference": 33.65,
+        "pe_to_history_ratio": 0.5334323922734027,
+        "price_mapping_status": "OK",
+        "reference_price": 27.29,
+        "reference_price_basis": "RAW_LATEST_CLOSE",
+        "reference_trade_date": "2026-10-09",
+        "required_profit_growth_pct": -46.65676077265973,
+        "research_buy_pe_ratio_threshold": 0.8,
+        "research_buy_price_ceiling": 40.927398328690806
+      }
+    },
+    {
+      "capital_allocation": {
+        "action": "PROBE",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.6808,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.77,
+        "evidence_score": 0.74,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.7841,
+        "reason": "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN",
+        "suggested_max_portfolio_pct": 0.82,
+        "uncertainty_penalty": 0.12,
+        "unknown_weight": 0.4,
+        "valuation_score": 0.93
+      },
+      "code": "603939",
+      "deep_closure": {
+        "automatic_execution_allowed": false,
+        "closure_state": "RESEARCH_REQUIRED",
+        "contract": "GEN_GE_V31_DECISION_CLOSURE_V2",
+        "critical_unknown_gates": [],
+        "decision_ready": false,
+        "evidence_complete": false,
+        "failure_gates": [],
+        "formal_buy_authorized": false,
+        "formal_buy_evidence_ready": false,
+        "max_soft_unknown_for_decision": 1,
+        "no_auto_trade": true,
+        "other_unknown_gates": [],
+        "rationale": "TOO_MANY_NONCRITICAL_UNKNOWNS",
+        "soft_unknown_gates": [
+          "long_term_demand",
+          "moat"
+        ],
+        "unknown_is_pass": false
+      },
+      "formal_buy_authorized": false,
+      "hard_gate_failures": [],
+      "hard_gate_pass_count": 3,
+      "hard_gate_unknowns": [
+        "long_term_demand",
+        "moat"
+      ],
+      "industry": "F52零售业",
+      "name": "益丰药房",
+      "no_auto_trade": true,
+      "quant_score": 78.4114,
+      "quant_status": "PRIORITY_RESEARCH",
+      "reopen_on_new_evidence": true,
+      "research_authority": "RESEARCH_ONLY",
+      "research_decision": "RESEARCH_GAP",
+      "research_priority": "P1",
+      "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+      "screening_attractiveness": "HIGH",
+      "success_archetype_id": "",
+      "success_archetype_similarity_score": null,
+      "urgent_research": true,
+      "urgent_research_reasons": [
+        "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+      ],
+      "valuation": {
+        "current_pe": 16.81,
+        "distance_to_research_buy_ceiling_pct": 26.686496133254025,
+        "earnings_quality_confidence": "HIGH",
+        "earnings_quality_score": 77.0,
+        "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        "financial_gate_diagnostics": {
+          "blockers": [],
+          "cash_conversion_pass_threshold": 0.8,
+          "cash_conversion_ratio": 1.3597,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_pass_threshold": 70.0,
+          "earnings_quality_score": 77.0,
+          "financial_disclosure_date": "2026-08-28",
+          "financial_review_status": "OK",
+          "machine_financial_pass_ready": true,
+          "normalized_core_operating_profit": 951919761.46,
+          "operating_cash_flow": 1453559634.67
+        },
+        "financial_review_status": "OK",
+        "historical_median_pe_reference": 26.62,
+        "pe_to_history_ratio": 0.6314800901577761,
+        "price_mapping_status": "OK",
+        "reference_price": 24.05,
+        "reference_price_basis": "RAW_LATEST_CLOSE",
+        "reference_trade_date": "2026-10-09",
+        "required_profit_growth_pct": -36.8519909842224,
+        "research_buy_pe_ratio_threshold": 0.8,
+        "research_buy_price_ceiling": 30.468102320047592
+      }
+    }
+  ],
+  "unknown_is_pass": false,
+  "urgent_research_queue": [
+    {
+      "capital_allocation": {
+        "action": "PROBE",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "capital_conviction_score": 0.6808,
+        "critical_capital_gates": [
+          "financial_safety",
+          "earnings_authenticity"
+        ],
+        "critical_capital_gates_pass": true,
+        "earnings_quality_component": 0.77,
+        "evidence_score": 0.74,
+        "formal_buy_authorized": false,
+        "gate_weights": {
+          "earnings_authenticity": 0.22,
+          "financial_safety": 0.22,
+          "long_term_demand": 0.2,
+          "moat": 0.2,
+          "predictability": 0.16
+        },
+        "model_version": "GEN_GE_RISK_BUDGET_CAPITAL_V1",
+        "no_auto_trade": true,
+        "probe_rules": {
+          "max_pe_to_history_ratio": 0.9,
+          "max_unknown_gates": 2,
+          "min_capital_conviction_score": 0.52
+        },
+        "quant_score_component": 0.7841,
+        "reason": "BOUNDED_UNCERTAINTY_WITH_VALUATION_MARGIN",
+        "suggested_max_portfolio_pct": 0.82,
+        "uncertainty_penalty": 0.12,
+        "unknown_weight": 0.4,
+        "valuation_score": 0.93
+      },
+      "code": "603939",
+      "formal_buy_authorized": false,
+      "hard_gate_failures": [],
+      "hard_gate_pass_count": 3,
+      "hard_gate_unknowns": [
+        "long_term_demand",
+        "moat"
+      ],
+      "industry": "F52零售业",
+      "name": "益丰药房",
+      "no_auto_trade": true,
+      "quant_score": 78.4114,
+      "quant_status": "PRIORITY_RESEARCH",
+      "reopen_on_new_evidence": true,
+      "research_authority": "RESEARCH_ONLY",
+      "research_decision": "RESEARCH_GAP",
+      "research_priority": "P1",
+      "research_reason": "EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY",
+      "screening_attractiveness": "HIGH",
+      "success_archetype_id": "",
+      "success_archetype_similarity_score": null,
+      "urgent_research": true,
+      "urgent_research_reasons": [
+        "QUANTITATIVELY_ATTRACTIVE_EVIDENCE_BLOCKED"
+      ],
+      "valuation": {
+        "current_pe": 16.81,
+        "distance_to_research_buy_ceiling_pct": 26.686496133254025,
+        "earnings_quality_confidence": "HIGH",
+        "earnings_quality_score": 77.0,
+        "expectation_state": "EXPECTATION_NOT_ABOVE_HISTORICAL_REFERENCE",
+        "financial_gate_diagnostics": {
+          "blockers": [],
+          "cash_conversion_pass_threshold": 0.8,
+          "cash_conversion_ratio": 1.3597,
+          "earnings_quality_confidence": "HIGH",
+          "earnings_quality_pass_threshold": 70.0,
+          "earnings_quality_score": 77.0,
+          "financial_disclosure_date": "2026-08-28",
+          "financial_review_status": "OK",
+          "machine_financial_pass_ready": true,
+          "normalized_core_operating_profit": 951919761.46,
+          "operating_cash_flow": 1453559634.67
+        },
+        "financial_review_status": "OK",
+        "historical_median_pe_reference": 26.62,
+        "pe_to_history_ratio": 0.6314800901577761,
+        "price_mapping_status": "OK",
+        "reference_price": 24.05,
+        "reference_price_basis": "RAW_LATEST_CLOSE",
+        "reference_trade_date": "2026-10-09",
+        "required_profit_growth_pct": -36.8519909842224,
+        "research_buy_pe_ratio_threshold": 0.8,
+        "research_buy_price_ceiling": 30.468102320047592
+      }
+    }
+  ],
+  "valuation_closure_carry_forward_codes": [
+    "603596"
+  ],
+  "valuation_closure_carry_forward_count": 1
+}
