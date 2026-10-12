@@ -3,16 +3,16 @@
   "contract": "GEN_GE_REALTIME_DATA_PACKAGE_V1",
   "datasets": [
     {
-      "changed_since_previous": false,
-      "content_sha256": "3fdf78dc64da684b94f903eb5dcd7d0c3987557e4647db8185423c51a56bbaa7",
+      "changed_since_previous": true,
+      "content_sha256": "d2c8b90402d61be39f825606b953b4e58ab445c58ce0b5f961008d9911b689b0",
       "execution_critical": true,
       "exists": true,
-      "file_count": 2,
+      "file_count": 3,
       "freshness_basis": "TRADE_DATE",
       "freshness_sla_minutes": null,
-      "freshness_state": "STALE",
-      "latest_observed_at": "2026-10-10T04:18:23.313926+00:00",
-      "latest_trade_date": "2026-10-09",
+      "freshness_state": "FRESH",
+      "latest_observed_at": "2026-10-12T22:14:56.923317+00:00",
+      "latest_trade_date": "2026-10-12",
       "lineage_file_sample": [
         {
           "observed_at": "2026-10-10T04:18:23.313926+00:00",
@@ -22,18 +22,25 @@
           "trade_date": "2026-10-09"
         },
         {
-          "observed_at": "2026-10-10T04:18:23.313926+00:00",
+          "observed_at": "2026-10-12T22:14:56.923317+00:00",
+          "path": "data/market_snapshots/2026-10-12.json",
+          "sha256": "f55baff8e1df78b9168484fc0ce48604b3b3e9b7e94476e4f4fad96a6afb7855",
+          "size": 2960871,
+          "trade_date": "2026-10-12"
+        },
+        {
+          "observed_at": "2026-10-12T22:14:56.923317+00:00",
           "path": "data/market_snapshots/latest.json",
-          "sha256": "b67a87f3ce0ab2ce5c03916074e6f463f248e7b667d70d8dc7da22e54b380f1e",
-          "size": 3022431,
-          "trade_date": "2026-10-09"
+          "sha256": "f55baff8e1df78b9168484fc0ce48604b3b3e9b7e94476e4f4fad96a6afb7855",
+          "size": 2960871,
+          "trade_date": "2026-10-12"
         }
       ],
       "lineage_file_sample_truncated": false,
       "name": "all_a_market_snapshot",
       "root": "data/market_snapshots",
       "validation_evidence": null,
-      "watermark": "47ad8268813e1a46bd065f98"
+      "watermark": "65316a41286982b6950ed035"
     },
     {
       "changed_since_previous": false,
@@ -421,7 +428,7 @@
       "watermark": "02483c7d279db67d573b9df8"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "3ae724c4a8f98ffb4077b496b92031046583709f7491cf346c3f3ffc1feaedd3",
       "execution_critical": true,
       "exists": true,
@@ -638,7 +645,7 @@
       "watermark": "64c0f17147a35589b338cf2f"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "378ec1f4992e6163a5a83970ac26642766baed8f86040cf3a2823829b13df138",
       "execution_critical": false,
       "exists": true,
@@ -1007,7 +1014,7 @@
       "watermark": "88c0aa8d09a5eba342331878"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "223cffe60cbd54de4f81531c9c0bb183aa1118f9415c1e63551a753c802527af",
       "execution_critical": false,
       "exists": true,
@@ -1047,7 +1054,7 @@
       "watermark": "d1c3d439fef18c5b334a423a"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "f12bbdb38ca62ed468355518ec5cdcccf9870b8a34313c54c402c878be9c732e",
       "execution_critical": false,
       "exists": true,
@@ -1073,7 +1080,7 @@
       "watermark": "9f793f8499e5582950cb935b"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "fd2f022f7f8258222f195eccf2b28f5d436d64cadd8424ddeb8f23aecf66a494",
       "execution_critical": false,
       "exists": true,
@@ -1125,7 +1132,7 @@
       "watermark": "7403d9a1e5ff0441904bf31e"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "cf27f3ab05d9c526f1cf2f213dae300e105c40528002edcc70b38a016198dfdd",
       "execution_critical": false,
       "exists": true,
@@ -1151,7 +1158,7 @@
       "watermark": "d5ec21f3e27c38c041d63b22"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "43976df1d975b75497a263b3529db7089ce0fb9b4ed6724e3cc8d4a7d6950fd6",
       "execution_critical": false,
       "exists": true,
@@ -1238,14 +1245,14 @@
       "watermark": "cd9bf223a6290dde12eeb60d"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "2dff3c5fc8c4ea7997b213f5e59b4cad52220052134c8c55d34c95d9976b799f",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
-      "freshness_state": "FRESH",
+      "freshness_state": "STALE",
       "latest_observed_at": "2026-10-12T20:38:22.599902+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
@@ -1265,8 +1272,8 @@
     }
   ],
   "expected_latest_a_share_trade_date": "2026-10-12",
-  "freshness_epoch": "2026-10-12T20:00:00+00:00",
-  "generated_at": "2026-10-12T20:00:00+00:00",
+  "freshness_epoch": "2026-10-12T22:00:00+00:00",
+  "generated_at": "2026-10-12T22:00:00+00:00",
   "incremental_update_contract": {
     "collector_layer_owns_acquisition": true,
     "filesystem_mtime_may_establish_freshness": false,
@@ -1277,18 +1284,17 @@
     "validation_heartbeat_may_grant_formal_trading_authority": false,
     "validation_heartbeat_may_mutate_semantic_content": false
   },
-  "latest_trade_date": "2026-10-09",
-  "market_trade_date_alignment_ok": false,
+  "latest_trade_date": "2026-10-12",
+  "market_trade_date_alignment_ok": true,
   "missing_required_datasets": [],
   "optional_degraded_datasets": [
     "manual_execution_quotes",
-    "price_value_history"
+    "price_value_history",
+    "live_execution_quotes"
   ],
-  "package_status": "STALE",
+  "package_status": "READY",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "28bb4759e4f778c41575",
-  "stale_required_datasets": [
-    "all_a_market_snapshot"
-  ],
+  "snapshot_id": "5ac0ba0b087548f51c63",
+  "stale_required_datasets": [],
   "unknown_required_datasets": []
 }
