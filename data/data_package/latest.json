@@ -608,24 +608,24 @@
         "latest_observation_at": "2026-10-12T23:59:00+00:00",
         "no_auto_trade": true,
         "path": "data/global_market_pulse/validation/latest.json",
-        "reason": "GLOBAL_LATEST_OBSERVATION_IN_FUTURE",
+        "reason": "VALIDATION_HEARTBEAT_STALE",
         "refreshed_at": "2026-10-12T10:40:23.092725+00:00",
         "semantic_fingerprint": "d32c96313ff9e1a439cf8223a44e083e6379b098bc140cea841d3962fc8b7f38",
         "semantic_state": "UPDATED",
         "validation_status": "SUCCESS"
       },
-      "watermark": "230928027b591b7dc7d91eff"
+      "watermark": "ba1e4fe9a14eed4622f7268a"
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "f4a42836dee9c6c8a0d2a40c3e0ef5c5af38f0959fcc8446679e37402568f079",
+      "content_sha256": "378ec1f4992e6163a5a83970ac26642766baed8f86040cf3a2823829b13df138",
       "execution_critical": false,
       "exists": true,
       "file_count": 110,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-12T18:09:04.220923+00:00",
+      "latest_observed_at": "2026-10-12T20:15:34.909624+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
@@ -983,7 +983,7 @@
       "name": "evidence_events",
       "root": "data/evidence_events",
       "validation_evidence": null,
-      "watermark": "c5aa99453d3fa7b7a96f6a49"
+      "watermark": "88c0aa8d09a5eba342331878"
     },
     {
       "changed_since_previous": false,
@@ -1027,20 +1027,20 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "cd53a9554d461cd7e1d847991950b2bfcb68c334ca4a63f71a4748960ffc46de",
+      "content_sha256": "f12bbdb38ca62ed468355518ec5cdcccf9870b8a34313c54c402c878be9c732e",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-12T18:09:55.127737+00:00",
+      "latest_observed_at": "2026-10-12T20:16:29.035173+00:00",
       "latest_trade_date": "2026-10-09",
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-12T18:09:55.127737+00:00",
+          "observed_at": "2026-10-12T20:16:29.035173+00:00",
           "path": "data/production_status/latest.json",
-          "sha256": "ae94402bfed8a2f806bb80f39f0244dcf4d163528b790d7c0d65e733b0ef0472",
+          "sha256": "c9793c750e33c114ac120bdd0c92e32a724392a11b19728b2493d7be63b6d4a8",
           "size": 1184,
           "trade_date": "2026-10-09"
         }
@@ -1049,24 +1049,24 @@
       "name": "production_status",
       "root": "data/production_status",
       "validation_evidence": null,
-      "watermark": "d1d334096e649f96461b5848"
+      "watermark": "9f793f8499e5582950cb935b"
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "52b8facdceaf5733ece86a7f652543e9009702fb5f975d863f2d04b4039b7b24",
+      "content_sha256": "745f2ccc06e3e5f6528b8fedcbe66df4cc12f18967e8d1edba967c09d630467f",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-12T18:10:06.922403+00:00",
+      "latest_observed_at": "2026-10-12T20:16:37.435504+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-12T18:10:06.922403+00:00",
+          "observed_at": "2026-10-12T20:16:37.435504+00:00",
           "path": "data/production_observability/latest.json",
-          "sha256": "e7959167a36d762f535874c61031e2747666d72edca3883459c5d1d0ea6a0caf",
+          "sha256": "a85cc370f551c0dbbafe9e0a143a39ff598694b5592ebdf8da839ae4a4fcdfca",
           "size": 2880,
           "trade_date": null
         }
@@ -1075,7 +1075,7 @@
       "name": "production_observability",
       "root": "data/production_observability",
       "validation_evidence": null,
-      "watermark": "9c24ecf852acf5be8604b5d4"
+      "watermark": "fa2d0ffcaa205d0cc72ffd90"
     },
     {
       "changed_since_previous": false,
@@ -1104,8 +1104,8 @@
       "watermark": "7403d9a1e5ff0441904bf31e"
     },
     {
-      "changed_since_previous": false,
-      "content_sha256": "606178683a1a9414c4cb6a9a31e97d45406eba8a5224c5d53086163696f78dfd",
+      "changed_since_previous": true,
+      "content_sha256": "cf27f3ab05d9c526f1cf2f213dae300e105c40528002edcc70b38a016198dfdd",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
@@ -1118,8 +1118,8 @@
         {
           "observed_at": null,
           "path": "data/price_value_history/summary.json",
-          "sha256": "7645a1f01a8b3ad5a5b153f466a147e4245252891984c5c18b54d76e581f0597",
-          "size": 144745,
+          "sha256": "d4e8b6de99fd02970c95ad922537dc7a7cdfc3234131b2bd68c1a604942dae53",
+          "size": 144740,
           "trade_date": null
         }
       ],
@@ -1127,18 +1127,18 @@
       "name": "price_value_history",
       "root": "data/price_value_history",
       "validation_evidence": null,
-      "watermark": "ad771a934373d8b3ad7a424b"
+      "watermark": "d5ec21f3e27c38c041d63b22"
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "fbe80a327f6bde12d049114be0b15070f38d4661df062d7335bf343fa5c3c118",
+      "content_sha256": "43976df1d975b75497a263b3529db7089ce0fb9b4ed6724e3cc8d4a7d6950fd6",
       "execution_critical": false,
       "exists": true,
       "file_count": 2,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-12T18:09:55.071227+00:00",
+      "latest_observed_at": "2026-10-12T20:16:28.969103+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
@@ -1149,9 +1149,9 @@
           "trade_date": null
         },
         {
-          "observed_at": "2026-10-12T18:09:55.071227+00:00",
+          "observed_at": "2026-10-12T20:16:28.969103+00:00",
           "path": "data/research_mapping/coverage.json",
-          "sha256": "e50705ffdb114f8f25c5e038e094d8e0947b78701e5bf814e439a474241b47df",
+          "sha256": "f9040556689c0a115ce13a0a07edb1c492afe65fc5753be4867ee87b6357ed61",
           "size": 68655,
           "trade_date": null
         }
@@ -1160,7 +1160,7 @@
       "name": "research_mapping",
       "root": "data/research_mapping",
       "validation_evidence": null,
-      "watermark": "8fb072decafe8a509157d1c9"
+      "watermark": "8f06d2a3f8db865060c43814"
     },
     {
       "changed_since_previous": false,
@@ -1218,20 +1218,20 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "574ea39259a44a0fedad8f57e04c2eb47c906eda4e00a051fbfa3fe3c3bfd2a8",
+      "content_sha256": "9f034732b891d3ff5254ad822477c98ad3e38d213f3238cd9e27768cdfd64bc2",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-12T18:10:34.410456+00:00",
+      "latest_observed_at": "2026-10-12T20:16:55.026887+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-12T18:10:34.410456+00:00",
+          "observed_at": "2026-10-12T20:16:55.026887+00:00",
           "path": "data/live_execution_quotes/latest.json",
-          "sha256": "df4ba6883781aa107483e7671fb6022f3694606755dd2fc99f11fa4e18bd78b9",
+          "sha256": "7e52decb4e1fe7e5bf665b7103125a4418f8eab60ac8fbabb93e5221be5f7c38",
           "size": 1204,
           "trade_date": null
         }
@@ -1240,12 +1240,12 @@
       "name": "live_execution_quotes",
       "root": "data/live_execution_quotes",
       "validation_evidence": null,
-      "watermark": "268297176d73a3df8ca98d71"
+      "watermark": "937467d47ce09cc644669587"
     }
   ],
   "expected_latest_a_share_trade_date": "2026-10-12",
-  "freshness_epoch": "2026-10-12T18:00:00+00:00",
-  "generated_at": "2026-10-12T18:00:00+00:00",
+  "freshness_epoch": "2026-10-12T20:00:00+00:00",
+  "generated_at": "2026-10-12T20:00:00+00:00",
   "incremental_update_contract": {
     "collector_layer_owns_acquisition": true,
     "filesystem_mtime_may_establish_freshness": false,
@@ -1265,7 +1265,7 @@
   ],
   "package_status": "STALE",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "45fb4e97c5ec07d76cc4",
+  "snapshot_id": "6a1d832fc83366ae71e5",
   "stale_required_datasets": [
     "all_a_market_snapshot",
     "global_market_pulse"
