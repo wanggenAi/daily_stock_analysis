@@ -90,7 +90,7 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -100,11 +100,11 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | GREEN / score=59.93 / 2026-10-09 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=101 / dormant=25 / archived-invalidated=0 / events=13895 / focus=8 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=8 / verified-pass=222 / unresolved=31 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38214210368 / unverified-pass=0 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=101 / dormant=25 / archived-invalidated=0 / events=13895 / focus=4 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=16 / verified-pass=0 / unresolved=58 |
+| Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=8 / REJECT=0 |
+| Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **101**；DORMANT **25**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13895**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
@@ -120,83 +120,73 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`38213800673`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`38303052020`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`38213800673`
-- 触发来源：`EVERY_INDUSTRY_READY`
+- Lambda run：`38303052020`
+- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
-- 请求深算：**8**；已处理：**8**；完整：**0**；证据穷尽：**8**。
-- Workset profile：总数 **500**；请求代码已落 profile **8**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
-- 同轮补证据尝试：**2**；取得证据：**22**；推进硬门槛：**1**。
-- 尚未解决硬门槛：**31**。
-- 未决原因摘要：涉及 8 只；门槛分布：long_term_demand×7、moat×7、predictability×7、earnings_authenticity×5、financial_safety×5；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×7、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×6、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×5、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×5、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×5；样例：000703[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；001316[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]；002215[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；600257[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；600406[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
+- 请求深算：**16**；已处理：**16**；完整：**0**；证据穷尽：**16**。
+- Workset profile：总数 **500**；请求代码已落 profile **16**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
+- 同轮补证据尝试：**2**；取得证据：**40**；推进硬门槛：**6**。
+- 尚未解决硬门槛：**58**。
+- 未决原因摘要：涉及 16 只；门槛分布：moat×14、predictability×14、long_term_demand×12、earnings_authenticity×9、financial_safety×9；Top原因：INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×13、OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×12、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×10、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×9、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×9；样例：000415[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000703[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000833[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；001316[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]；002215[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`38213800673`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`38303052020`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
 ## 五类硬门槛已通过的研究线索
 
-- 当前 runtime 中非持仓、非 Formal BUY/WAIT_PRICE、五类硬门槛全部明确 PASS：**0**。
+- 当前 runtime 中非持仓、非 Formal BUY/WAIT_PRICE、五类硬门槛全部明确 PASS：**1**。
+- **603596 伯特利**（C36汽车制造业）：硬门槛 **5/5 PASS**；下一步 **继续估值、价格与 Formal authority 闭环**；当前账户动作 **暂不买**。
 - 这是一层研究资格可见性，不是 BUY/WAIT_PRICE；不会改变阈值、不会把 UNKNOWN 当 PASS，也不会创建 Formal 交易权限。
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`38213800673`；当前 Lambda：`38213800673`。
-- 请求：**9**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**8**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=45.1566；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；601318 中国平安(quant=32.6541；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=23.4933；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)；603939 益丰药房(quant=78.4114；研究结论仍为RESEARCH_GAP，但风险预算层允许人工小仓试探；建议账户仓位上限约0.82%，继续补齐：long_term_demand、moat)
-- 风险预算层 BUILD/PROBE 候选：**2**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
-  - 603596 伯特利: **BUILD**；conviction=0.899；建议账户上限=3.0%
-  - 603939 益丰药房: **PROBE**；conviction=0.6808；建议账户上限=0.82%
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
+- 终态来源 Lambda：`38296429391`；当前 Lambda：`38303052020`。
+- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：无
+- 风险预算层 BUILD/PROBE 候选：**0**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**9**；其中 ENTRY_NOW **1**；Jev run：`38214369241`。
-- **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=40.9274；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_40.9274_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **001316 润贝航科**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=32.0914；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_32.0914_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **601318 中国平安**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **002215 诺 普 信**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=11.6935；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_11.6935_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600257 大湖股份**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000703 恒逸石化**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=28.1716；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_28.1716_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600406 国电南瑞**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=21.6804；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_21.6804_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **603939 益丰药房**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=30.4681；首仓=0.0%；最大研究仓位=0.82%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_30.4681_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **603993 洛阳钼业**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=18.4182；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_18.4182_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`38303242999`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
 
 ## 全球市场脉搏 / 复市前情报
 
-- Global Pulse：**OK**；全球风险状态：**NEUTRAL**；A股最近有效交易日：**2026-10-09**。
+- Global Pulse：**OK**；全球风险状态：**NEUTRAL**；A股最近有效交易日：**2026-10-12**。
 - 休市累计外部缺口风险：**NORMAL**；正向累积：**NONE_IDENTIFIED**。
 - 以下均为研究上下文，不产生 Formal BUY/SELL，不自动交易。
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 +0.58%；最近1日 +0.58%；5日 +1.13%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **NASDAQ**：休市以来 +0.62%；最近1日 +0.62%；5日 +0.65%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **SOX**：休市以来 -0.42%；最近1日 -0.42%；5日 -4.29%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **VIX**：休市以来 -2.69%；最近1日 -3.76%；5日 -3.07%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **US10Y**：休市以来 +0.25%；最近1日 +0.25%；5日 -0.63%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **DXY**：休市以来 +0.11%；最近1日 -0.10%；5日 +0.08%；market_date=2026-10-12；freshness=FRESH。
-- **USDCNH**：休市以来 -0.01%；最近1日 +0.03%；5日 -0.16%；market_date=2026-10-12；freshness=FRESH。
-- **HANGSENG**：休市以来 +0.83%；最近1日 +0.55%；5日 +0.99%；market_date=2026-10-12；freshness=FRESH。
-- **COPPER**：休市以来 +1.43%；最近1日 +1.43%；5日 +2.31%；market_date=2026-10-11；freshness=FRESH。
-- **GOLD**：休市以来 +0.44%；最近1日 +0.44%；5日 +1.88%；market_date=2026-10-11；freshness=FRESH。
-- **CRUDE_OIL**：休市以来 -1.81%；最近1日 -1.81%；5日 +0.85%；market_date=2026-10-11；freshness=FRESH。
-- **BTC**：休市以来 +1.54%；最近1日 +1.02%；5日 +0.01%；market_date=2026-10-12；freshness=FRESH。
+- **SP500**：休市以来 -0.04%；最近1日 -0.04%；5日 +0.10%；market_date=2026-10-12；freshness=FRESH。
+- **NASDAQ**：休市以来 -0.42%；最近1日 -0.42%；5日 -1.03%；market_date=2026-10-12；freshness=FRESH。
+- **SOX**：休市以来 -2.66%；最近1日 -2.66%；5日 -6.33%；market_date=2026-10-12；freshness=FRESH。
+- **VIX**：休市以来 -0.98%；最近1日 +2.56%；5日 +0.93%；market_date=2026-10-12；freshness=FRESH。
+- **US10Y**：休市以来 -0.08%；最近1日 -0.08%；5日 -0.70%；market_date=2026-10-12；freshness=FRESH。
+- **DXY**：休市以来 +0.36%；最近1日 +0.36%；5日 +0.32%；market_date=2026-10-12；freshness=FRESH。
+- **USDCNH**：休市以来 +0.03%；最近1日 +0.05%；5日 -0.10%；market_date=2026-10-12；freshness=FRESH。
+- **HANGSENG**：休市以来 +0.09%；最近1日 +0.25%；5日 +0.58%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **COPPER**：休市以来 +0.00%；最近1日 +1.78%；5日 +2.66%；market_date=2026-10-12；freshness=FRESH。
+- **GOLD**：休市以来 +0.00%；最近1日 -0.57%；5日 +0.85%；market_date=2026-10-12；freshness=FRESH。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.50%；5日 +4.25%；market_date=2026-10-12；freshness=FRESH。
+- **BTC**：休市以来 -1.11%；最近1日 -0.74%；5日 -0.48%；market_date=2026-10-12；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
-- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+1.43%(NEUTRAL)、GOLD休市以来+0.44%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+1.43%(NEUTRAL)、GOLD休市以来+0.44%(NEUTRAL)、SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+1.43%(NEUTRAL)、SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601020 **：**NEUTRAL / LOW**；GOLD休市以来+0.44%(NEUTRAL)、SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **000426 **：**NEUTRAL / LOW**；SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、GOLD休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、GOLD休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601020 **：**NEUTRAL / LOW**；GOLD休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **000426 **：**NEUTRAL / LOW**；SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
 
 ### 下一次A股开盘最该盯什么
 
