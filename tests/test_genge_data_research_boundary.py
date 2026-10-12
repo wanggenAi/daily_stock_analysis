@@ -15,7 +15,11 @@ def cfg(monkeypatch,tmp):
  return era,gp,m,opt
 
 def seed(era,gp,m,now,date='2026-10-09'):
- w(era/'latest.json',{'research_as_of':now.isoformat()}); w(gp/'latest.json',{'generated_at':now.isoformat(),'last_valid_trade_date':date}); w(m/'latest.json',{'contract':'GEN_GE_ALL_A_MARKET_SNAPSHOT_V1','generated_at':now.isoformat(),'latest_trade_date':date,'rows':[{'code':'600000','latest_trade_date':date,'research_reference_price':'10'}]})
+ w(era/'latest.json',{'research_as_of':now.isoformat()})
+ w(era/'validation/latest.json',{'contract':'ERA_RADAR_SOURCE_VALIDATION_V1','validation_status':'SUCCESS','refreshed_at':now.isoformat(),'semantic_state':'UNCHANGED_CONFIRMED','successful_collectors':1,'failed_collectors':0,'evidence_fingerprint':'fixture-era-fingerprint','formal_trading_authority':False,'no_auto_trade':True})
+ w(gp/'latest.json',{'generated_at':now.isoformat(),'last_valid_trade_date':date})
+ w(gp/'validation/latest.json',{'contract':'GEN_GE_GLOBAL_MARKET_PULSE_VALIDATION_V1','validation_status':'SUCCESS','refreshed_at':now.isoformat(),'latest_observation_at':now.isoformat(),'semantic_state':'UNCHANGED_CONFIRMED','semantic_fingerprint':'fixture-global-fingerprint','coverage_status':'OK','authority':'RESEARCH_ONLY','formal_trading_authority':False,'formal_action_eligible':False,'no_auto_trade':True})
+ w(m/'latest.json',{'contract':'GEN_GE_ALL_A_MARKET_SNAPSHOT_V1','generated_at':now.isoformat(),'latest_trade_date':date,'rows':[{'code':'600000','latest_trade_date':date,'research_reference_price':'10'}]})
 
 def test_same_hour_same_snapshot_next_hour_new_snapshot(monkeypatch,tmp_path):
  era,gp,m,_=cfg(monkeypatch,tmp_path); now=datetime(2026,10,9,12,5,tzinfo=timezone.utc); seed(era,gp,m,now)
@@ -32,6 +36,9 @@ def test_market_snapshot_lag_fails_closed(monkeypatch,tmp_path):
 
 def test_missing_business_clock_is_invalid(monkeypatch,tmp_path):
  era,gp,m,_=cfg(monkeypatch,tmp_path); now=datetime(2026,10,9,12,tzinfo=timezone.utc); seed(era,gp,m,now); w(era/'latest.json',{'x':1}); p=dp.build_package(now=now,write=True)
+ era_manifest=next(x for x in p['datasets'] if x['name']=='era_radar')
+ assert era_manifest['validation_evidence']['accepted'] is True
+ assert era_manifest['latest_observed_at'] is None
  assert p['package_status']=='INVALID'; assert 'era_radar' in p['unknown_required_datasets']
 
 def test_stale_research_allowed_but_execution_blocked(monkeypatch,tmp_path):

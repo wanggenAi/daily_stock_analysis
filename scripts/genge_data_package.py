@@ -362,7 +362,7 @@ def _manifest(name, root_text, critical, sla, basis, *, now, previous):
         freshness = "PENDING_TRADE_DATE_ALIGNMENT" if latest_date else "UNKNOWN"
     elif basis == "NOT_APPLICABLE" or sla is None:
         freshness = "NOT_APPLICABLE"
-    elif validation is not None:
+    elif validation is not None and latest_dt is not None:
         freshness = "FRESH" if validation.get("accepted") is True else "STALE"
     elif latest_dt is None:
         freshness = "UNKNOWN"
