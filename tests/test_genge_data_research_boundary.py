@@ -12,12 +12,18 @@ def cfg(monkeypatch,tmp):
  pkg=tmp/'data/data_package'; era=tmp/'data/era_radar'; gp=tmp/'data/global_market_pulse'; m=tmp/'data/market_snapshots'; opt=tmp/'data/optional'
  for k,v in [('PACKAGE_DIR',pkg),('LATEST_PATH',pkg/'latest.json'),('SNAPSHOT_DIR',pkg/'snapshots'),('STATE_PATH',pkg/'watermarks.json')]: monkeypatch.setattr(dp,k,v)
  monkeypatch.setattr(dp,'PRODUCER_ROOTS',(("all_a_market_snapshot",str(m),True,None,"TRADE_DATE"),("era_radar",str(era),True,480,"WALL_CLOCK"),("global_market_pulse",str(gp),True,480,"WALL_CLOCK"),("optional",str(opt),False,60,"WALL_CLOCK")))
+ def expected_a_share_trade_date():
+  path=gp/'latest.json'
+  if not path.is_file(): return None
+  payload=json.loads(path.read_text(encoding='utf-8'))
+  return (payload.get('a_share_market_clock') or {}).get('last_valid_trade_date')
+ monkeypatch.setattr(dp,'_expected_a_share_trade_date_from_global_pulse',expected_a_share_trade_date)
  return era,gp,m,opt
 
 def seed(era,gp,m,now,date='2026-10-09'):
  w(era/'latest.json',{'research_as_of':now.isoformat()})
  w(era/'validation/latest.json',{'contract':'ERA_RADAR_SOURCE_VALIDATION_V1','validation_status':'SUCCESS','refreshed_at':now.isoformat(),'semantic_state':'UNCHANGED_CONFIRMED','successful_collectors':1,'failed_collectors':0,'evidence_fingerprint':'fixture-era-fingerprint','formal_trading_authority':False,'no_auto_trade':True})
- w(gp/'latest.json',{'generated_at':now.isoformat(),'last_valid_trade_date':date})
+ w(gp/'latest.json',{'generated_at':now.isoformat(),'a_share_market_clock':{'last_valid_trade_date':date}})
  w(gp/'validation/latest.json',{'contract':'GEN_GE_GLOBAL_MARKET_PULSE_VALIDATION_V1','validation_status':'SUCCESS','refreshed_at':now.isoformat(),'latest_observation_at':now.isoformat(),'semantic_state':'UNCHANGED_CONFIRMED','semantic_fingerprint':'fixture-global-fingerprint','coverage_status':'OK','authority':'RESEARCH_ONLY','formal_trading_authority':False,'formal_action_eligible':False,'no_auto_trade':True})
  w(m/'latest.json',{'contract':'GEN_GE_ALL_A_MARKET_SNAPSHOT_V1','generated_at':now.isoformat(),'latest_trade_date':date,'rows':[{'code':'600000','latest_trade_date':date,'research_reference_price':'10'}]})
 
@@ -31,7 +37,7 @@ def test_optional_degradation_does_not_destroy_execution_readiness(monkeypatch,t
  assert p['package_status']=='READY'; assert p['completeness_state']=='DEGRADED'; assert 'optional' in p['optional_degraded_datasets']
 
 def test_market_snapshot_lag_fails_closed(monkeypatch,tmp_path):
- era,gp,m,_=cfg(monkeypatch,tmp_path); now=datetime(2026,10,9,12,tzinfo=timezone.utc); seed(era,gp,m,now,date='2026-10-08'); w(gp/'latest.json',{'generated_at':now.isoformat(),'last_valid_trade_date':'2026-10-09'}); p=dp.build_package(now=now,write=True)
+ era,gp,m,_=cfg(monkeypatch,tmp_path); now=datetime(2026,10,9,12,tzinfo=timezone.utc); seed(era,gp,m,now,date='2026-10-08'); w(gp/'latest.json',{'generated_at':now.isoformat(),'a_share_market_clock':{'last_valid_trade_date':'2026-10-09'}}); p=dp.build_package(now=now,write=True)
  assert p['package_status']=='STALE'; assert 'all_a_market_snapshot' in p['stale_required_datasets']
 
 def test_missing_business_clock_is_invalid(monkeypatch,tmp_path):
