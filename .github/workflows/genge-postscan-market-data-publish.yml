@@ -2,7 +2,9 @@ name: GenGe Postscan Market Data Publish
 
 on:
   workflow_run:
-    workflows: ["GenGe All-A V3.1.1 One Shot"]
+    workflows:
+      - "GenGe All-A V3.1.1 One Shot"
+      - "GenGe Opportunity Discovery"
     types: [completed]
   workflow_dispatch:
     inputs:
@@ -19,10 +21,19 @@ jobs:
   publish:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      github.event.workflow_run.conclusion == 'success'
+      (
+        github.event.workflow_run.conclusion == 'success' &&
+        (
+          github.event.workflow_run.name == 'GenGe All-A V3.1.1 One Shot' ||
+          (
+            github.event.workflow_run.name == 'GenGe Opportunity Discovery' &&
+            (github.event.workflow_run.event == 'schedule' || github.event.workflow_run.event == 'workflow_dispatch')
+          )
+        )
+      )
     runs-on: ubuntu-latest
     permissions:
-      actions: read
+      actions: write
       contents: write
     steps:
       - uses: actions/checkout@v5
@@ -32,19 +43,30 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: '3.11'
-      - name: Resolve source run
+      - name: Resolve source run and artifact
         id: source
         shell: bash
         run: |
+          set -euo pipefail
           if [ "${{ github.event_name }}" = "workflow_run" ]; then
-            echo "run_id=${{ github.event.workflow_run.id }}" >> "$GITHUB_OUTPUT"
+            run_id="${{ github.event.workflow_run.id }}"
+            workflow="${{ github.event.workflow_run.name }}"
           else
-            echo "run_id=${{ inputs.run_id }}" >> "$GITHUB_OUTPUT"
+            run_id="${{ inputs.run_id }}"
+            workflow="GenGe All-A V3.1.1 One Shot"
           fi
+          case "$workflow" in
+            "GenGe All-A V3.1.1 One Shot") artifact="genge-all-a-v31-one-shot" ;;
+            "GenGe Opportunity Discovery") artifact="genge-all-a-production-report" ;;
+            *) echo "unsupported market-data producer: $workflow" >&2; exit 1 ;;
+          esac
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
+          echo "workflow=$workflow" >> "$GITHUB_OUTPUT"
+          echo "artifact=$artifact" >> "$GITHUB_OUTPUT"
       - name: Download completed full research artifact
         uses: actions/download-artifact@v4
         with:
-          name: genge-all-a-v31-one-shot
+          name: ${{ steps.source.outputs.artifact }}
           run-id: ${{ steps.source.outputs.run_id }}
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: .
@@ -99,3 +121,12 @@ jobs:
             git reset --soft HEAD~1
           done
           exit 1
+      - name: Continue canonical data-decision chain
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run genge-realtime-data-package.yml --repo "$GITHUB_REPOSITORY" --ref main
+          echo "source-workflow=${{ steps.source.outputs.workflow }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "source-run=${{ steps.source.outputs.run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "published market snapshot and dispatched Realtime Data Package" >> "$GITHUB_STEP_SUMMARY"
