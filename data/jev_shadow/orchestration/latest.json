@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38289379233",
+  "orchestrator_run_id": "38289627956",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,17 +54,17 @@
     },
     {
       "attention_priority": "HIGH",
-      "entity_id": "603939",
-      "entity_name": "益丰药房",
+      "entity_id": "002468",
+      "entity_name": "申通快递",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "HIGH",
-      "entity_id": "002468",
-      "entity_name": "申通快递",
+      "entity_id": "603939",
+      "entity_name": "益丰药房",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -159,6 +159,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "600309",
       "entity_name": "万华化学",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -184,20 +191,13 @@
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-12T18:12:06+00:00",
-  "source_workflow_head_sha": "de221bfdcb8873ad694c7ca855757ba3135b1bb9",
+  "source_generated_at": "2026-10-12T18:14:25+00:00",
+  "source_workflow_head_sha": "c29d663efca83e4f0628e1eb9cdc0ba9188f3acb",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38289089367",
+  "source_workflow_run_id": "38289194293",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 356,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38289089367",
+  "trigger_source": "JEV_ORCHESTRATOR_38289194293",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-12T18:14:25+00:00",
+  "updated_at": "2026-10-12T18:16:48+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.7,
+      "attention_confidence": 0.76,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.94,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
