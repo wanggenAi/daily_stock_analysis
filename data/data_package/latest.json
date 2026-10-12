@@ -428,7 +428,7 @@
       "file_count": 21,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 480,
-      "freshness_state": "STALE",
+      "freshness_state": "FRESH",
       "latest_observed_at": "2026-10-11T23:59:00+00:00",
       "latest_trade_date": "2026-10-11",
       "lineage_file_sample": [
@@ -584,7 +584,7 @@
       "name": "global_market_pulse",
       "root": "data/global_market_pulse",
       "validation_evidence": {
-        "accepted": false,
+        "accepted": true,
         "authority": "RESEARCH_ONLY",
         "contract": "GEN_GE_GLOBAL_MARKET_PULSE_VALIDATION_V1",
         "coverage_status": "OK",
@@ -594,16 +594,16 @@
         "latest_observation_at": "2026-10-11T23:59:00+00:00",
         "no_auto_trade": true,
         "path": "data/global_market_pulse/validation/latest.json",
-        "reason": "GLOBAL_LATEST_OBSERVATION_IN_FUTURE",
+        "reason": "SUCCESSFUL_LIVE_VALIDATION",
         "refreshed_at": "2026-10-11T22:50:51.722813+00:00",
         "semantic_fingerprint": "d61d5e8d820879ce995ab7486bc18f3a3e9b391e605001cef1d2ccd2e3e4e827",
         "semantic_state": "UPDATED",
         "validation_status": "SUCCESS"
       },
-      "watermark": "8ff8001e7fb266dcb016a0bc"
+      "watermark": "ca6ab2af5991eb8fc67747e5"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "af80a784bb293659f94b794377dac5712c184aed3aa8559786f56defe3dd2911",
       "execution_critical": false,
       "exists": true,
@@ -1012,7 +1012,7 @@
       "watermark": "84aea22219e61c3d2fa1a21a"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "13e2106a020650f7f52bea73c2dc5c1ead8f6411730a5d8262b8eb802b3ec34d",
       "execution_critical": false,
       "exists": true,
@@ -1039,21 +1039,21 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "436848ed7145d0df790c41371f98ceab9868e4f54f03b33170761a94ae6e2337",
+      "content_sha256": "25ae5525d5c42aa1f4ad4d6b7861690d533cd6388876a87867e65591515dec0c",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-11T23:53:37.505392+00:00",
+      "latest_observed_at": "2026-10-11T23:54:25.141507+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-11T23:53:37.505392+00:00",
+          "observed_at": "2026-10-11T23:54:25.141507+00:00",
           "path": "data/production_observability/latest.json",
-          "sha256": "5eeeabec891f20e60d83363f2c0d6f1c64962518f77e21671ea459decc3895f9",
-          "size": 2880,
+          "sha256": "5a60a35a3bf9c8fa82010c4bd7bd2bcfcb215a251cacd39b8d62b7504e618876",
+          "size": 2881,
           "trade_date": null
         }
       ],
@@ -1061,7 +1061,7 @@
       "name": "production_observability",
       "root": "data/production_observability",
       "validation_evidence": null,
-      "watermark": "1ee9dc9e26ad6312bd5bbf27"
+      "watermark": "9103ca4c5e42267c48c59cc3"
     },
     {
       "changed_since_previous": false,
@@ -1116,7 +1116,7 @@
       "watermark": "b06d24ff8bf16970b7b21711"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "07fb0cac7e1e67f18ee17903f144da4632627e52a34574868ecff8f2819164b2",
       "execution_critical": false,
       "exists": true,
@@ -1204,20 +1204,20 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "94c64a5d19f18fabcb2f9582ff1141ed34e7b62ba062a1e63708ade20c88cb06",
+      "content_sha256": "6cf393ef58592ca79a7a8b6d86c3f8d5f3d8157d3f9aa4568c66709044a2ffc7",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-11T23:54:06.429433+00:00",
+      "latest_observed_at": "2026-10-12T00:45:52.863451+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-11T23:54:06.429433+00:00",
+          "observed_at": "2026-10-12T00:45:52.863451+00:00",
           "path": "data/live_execution_quotes/latest.json",
-          "sha256": "27312a876cc338dd1a4a1108a8dfdc4b6d38dd6094923bb1d59dd80c2b54b3f3",
+          "sha256": "edcc55e215e27ca9086b7a040751eb5f84e9d1c77203175fbe97fa2c572a673a",
           "size": 1204,
           "trade_date": null
         }
@@ -1226,12 +1226,12 @@
       "name": "live_execution_quotes",
       "root": "data/live_execution_quotes",
       "validation_evidence": null,
-      "watermark": "1d7917577912507a626618c4"
+      "watermark": "9291bd10070bc80c8e44ad3b"
     }
   ],
   "expected_latest_a_share_trade_date": "2026-10-09",
-  "freshness_epoch": "2026-10-11T23:00:00+00:00",
-  "generated_at": "2026-10-11T23:00:00+00:00",
+  "freshness_epoch": "2026-10-12T00:00:00+00:00",
+  "generated_at": "2026-10-12T00:00:00+00:00",
   "incremental_update_contract": {
     "collector_layer_owns_acquisition": true,
     "filesystem_mtime_may_establish_freshness": false,
@@ -1249,11 +1249,9 @@
     "manual_execution_quotes",
     "price_value_history"
   ],
-  "package_status": "STALE",
+  "package_status": "READY",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "15faf852848d2339cf7c",
-  "stale_required_datasets": [
-    "global_market_pulse"
-  ],
+  "snapshot_id": "d9a5a8647fcc944f38ea",
+  "stale_required_datasets": [],
   "unknown_required_datasets": []
 }
