@@ -9,9 +9,17 @@ on:
   workflow_dispatch:
     inputs:
       run_id:
-        description: Successful GenGe All-A V3.1.1 One Shot run id
+        description: Successful source workflow run id
         required: true
         type: string
+      source_workflow:
+        description: Market-data producer workflow
+        required: false
+        default: "GenGe All-A V3.1.1 One Shot"
+        type: choice
+        options:
+          - "GenGe All-A V3.1.1 One Shot"
+          - "GenGe Opportunity Discovery"
 
 concurrency:
   group: genge-postscan-market-data-publish
@@ -53,7 +61,7 @@ jobs:
             workflow="${{ github.event.workflow_run.name }}"
           else
             run_id="${{ inputs.run_id }}"
-            workflow="GenGe All-A V3.1.1 One Shot"
+            workflow="${{ inputs.source_workflow }}"
           fi
           case "$workflow" in
             "GenGe All-A V3.1.1 One Shot") artifact="genge-all-a-v31-one-shot" ;;
@@ -127,6 +135,13 @@ jobs:
         run: |
           set -euo pipefail
           gh workflow run genge-realtime-data-package.yml --repo "$GITHUB_REPOSITORY" --ref main
+          if [ "${{ steps.source.outputs.workflow }}" = "GenGe All-A V3.1.1 One Shot" ]; then
+            gh workflow run genge-v311-production-finalizer.yml \
+              --repo "$GITHUB_REPOSITORY" \
+              --ref main \
+              -f source_run_id="${{ steps.source.outputs.run_id }}" \
+              -f source_workflow='GenGe All-A V3.1.1 One Shot'
+          fi
           echo "source-workflow=${{ steps.source.outputs.workflow }}" >> "$GITHUB_STEP_SUMMARY"
           echo "source-run=${{ steps.source.outputs.run_id }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "published market snapshot and dispatched Realtime Data Package" >> "$GITHUB_STEP_SUMMARY"
+          echo "published market snapshot and dispatched downstream canonical chain" >> "$GITHUB_STEP_SUMMARY"
