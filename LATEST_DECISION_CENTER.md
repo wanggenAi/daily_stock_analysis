@@ -8,23 +8,23 @@
 
 | 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |
 |---|---:|---:|---:|---|---|---|---|---|
-| 国电南瑞 600406 | 22.40 | 17.46 | -3.14 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=264 | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 26.77 | 49.37 | 3.98 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=266 | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | 52.83 | 83.07 | -5.60 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=191 | DEEP_REVIEW_PARTIAL |
-| 洛阳钼业 603993 | 17.22 | 28.13 | -7.54 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=233 | DEEP_REVIEW_PARTIAL |
+| 国电南瑞 600406 | 22.64 | 17.46 | -2.10 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=264 | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 26.10 | 49.37 | 1.38 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=266 | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | 53.13 | 83.07 | -5.07 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=191 | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | 17.10 | 28.13 | -8.18 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=233 | DEEP_REVIEW_PARTIAL |
 
 ### 估值折价观察（非买单）
 
 100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
 
-- **洛阳钼业 603993**：2026-10-09收盘参考价¥17.22，低于模型估值下沿¥18.03约4.49%；现有1100股；假设额外100股约¥1722，平均成本约¥18.5074（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+- **洛阳钼业 603993**：2026-10-09收盘参考价¥17.10，低于模型估值下沿¥18.03约5.16%；现有1100股；假设额外100股约¥1710，平均成本约¥18.4974（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：NO_CURRENT_FORMAL_HOLDING_ADD, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
 
 ### 每只持仓的决策链
 
-- **国电南瑞 600406**：现价 22.40 / 价值中枢 17.46（价/值 1.28；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=264**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
-- **润贝航科 001316**：现价 26.77 / 价值中枢 49.37（价/值 0.54；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=266**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
-- **中国平安 601318**：现价 52.83 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=191**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.636<1.00`。
-- **洛阳钼业 603993**：现价 17.22 / 价值中枢 28.13（价/值 0.61；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=233**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
+- **国电南瑞 600406**：现价 22.64 / 价值中枢 17.46（价/值 1.30；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=264**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
+- **润贝航科 001316**：现价 26.10 / 价值中枢 49.37（价/值 0.53；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=266**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
+- **中国平安 601318**：现价 53.13 / 价值中枢 83.07（价/值 0.64；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=191**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.636<1.00`。
+- **洛阳钼业 603993**：现价 17.10 / 价值中枢 28.13（价/值 0.61；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=233**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -69,7 +69,7 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥35000.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
+- 盘中价覆盖：**4/4**；交易时段：**UNKNOWN**；行情状态：**OK**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
@@ -90,7 +90,7 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -105,7 +105,7 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38187396265 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=22 / REJECT=0 |
-| 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
+| 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **102**；DORMANT **24**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13894**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
 - 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。
@@ -157,16 +157,12 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**11**；其中 ENTRY_NOW **1**；Jev run：`38187522037`。
+- 当前可用判断：**7**；其中 ENTRY_NOW **1**；Jev run：`38195328427`。
 - **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=40.9274；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_40.9274_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - **000783 长江证券**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=11.3655；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_11.3655_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - **001316 润贝航科**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=32.0914；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_32.0914_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **601069 西部黄金**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=50.4682；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_50.4682_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - **601318 中国平安**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **603268 松发股份**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=245.3032；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_245.3032_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - **002468 申通快递**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.77%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600318 新力金融**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600351 亚宝药业**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=8.7161；首仓=0.0%；最大研究仓位=0.79%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_8.7161_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - **600406 国电南瑞**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=21.6804；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_21.6804_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - **603993 洛阳钼业**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=18.4182；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_18.4182_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
@@ -186,21 +182,21 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 - **SOX**：休市以来 -0.42%；最近1日 -0.42%；5日 -4.29%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **VIX**：休市以来 -2.69%；最近1日 -3.76%；5日 -3.07%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **US10Y**：休市以来 +0.25%；最近1日 +0.25%；5日 -0.63%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **DXY**：休市以来 +0.25%；最近1日 +0.05%；5日 +0.43%；market_date=2026-10-11；freshness=FRESH。
-- **USDCNH**：休市以来 -0.03%；最近1日 -0.16%；5日 -0.18%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **HANGSENG**：休市以来 +0.28%；最近1日 +1.79%；5日 +1.00%；market_date=2026-10-09；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +0.90%；最近1日 +0.90%；5日 +1.77%；market_date=2026-10-11；freshness=FRESH。
-- **GOLD**：休市以来 -0.10%；最近1日 -0.10%；5日 +1.33%；market_date=2026-10-11；freshness=FRESH。
-- **CRUDE_OIL**：休市以来 +0.70%；最近1日 +0.70%；5日 +3.42%；market_date=2026-10-11；freshness=FRESH。
-- **BTC**：休市以来 +1.19%；最近1日 +0.68%；5日 -2.28%；market_date=2026-10-11；freshness=FRESH。
+- **DXY**：休市以来 +0.11%；最近1日 -0.10%；5日 +0.08%；market_date=2026-10-12；freshness=FRESH。
+- **USDCNH**：休市以来 -0.01%；最近1日 +0.03%；5日 -0.16%；market_date=2026-10-12；freshness=FRESH。
+- **HANGSENG**：休市以来 +0.83%；最近1日 +0.55%；5日 +0.99%；market_date=2026-10-12；freshness=FRESH。
+- **COPPER**：休市以来 +1.43%；最近1日 +1.43%；5日 +2.31%；market_date=2026-10-11；freshness=FRESH。
+- **GOLD**：休市以来 +0.44%；最近1日 +0.44%；5日 +1.88%；market_date=2026-10-11；freshness=FRESH。
+- **CRUDE_OIL**：休市以来 -1.81%；最近1日 -1.81%；5日 +0.85%；market_date=2026-10-11；freshness=FRESH。
+- **BTC**：休市以来 +1.54%；最近1日 +1.02%；5日 +0.01%；market_date=2026-10-12；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
-- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+0.90%(NEUTRAL)、GOLD休市以来-0.10%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+0.90%(NEUTRAL)、GOLD休市以来-0.10%(NEUTRAL)、SILVER休市以来+0.83%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+0.90%(NEUTRAL)、SILVER休市以来+0.83%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601020 **：**NEUTRAL / LOW**；GOLD休市以来-0.10%(NEUTRAL)、SILVER休市以来+0.83%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **000426 **：**NEUTRAL / LOW**；SILVER休市以来+0.83%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+1.43%(NEUTRAL)、GOLD休市以来+0.44%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+1.43%(NEUTRAL)、GOLD休市以来+0.44%(NEUTRAL)、SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+1.43%(NEUTRAL)、SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601020 **：**NEUTRAL / LOW**；GOLD休市以来+0.44%(NEUTRAL)、SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **000426 **：**NEUTRAL / LOW**；SILVER休市以来+1.29%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
 
 ### 下一次A股开盘最该盯什么
 
