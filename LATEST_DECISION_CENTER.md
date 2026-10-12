@@ -102,7 +102,7 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=102 / dormant=24 / archived-invalidated=0 / events=13894 / focus=9 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=26 / verified-pass=230 / unresolved=99 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38195814651 / unverified-pass=0 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38195821788 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=26 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
