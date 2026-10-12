@@ -85,9 +85,9 @@ R86新闻和出版业(STRONG)、A02林业(STRONG)、R87广播、电视、电影�
 
 ### 风险预算 BUILD / PROBE
 
-- 伯特利 603596: **BUILD**；conviction=0.899；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 益丰药房 603939: **PROBE**；conviction=0.6808；建议账户仓位上限=0.82%；研究结论仍为 RESEARCH_GAP。
-- 申通快递 002468: **PROBE**；conviction=0.6407；建议账户仓位上限=0.77%；研究结论仍为 RESEARCH_GAP。
+- 伯特利 603596: **BUILD**；conviction=0.8976；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 益丰药房 603939: **PROBE**；conviction=0.6816；建议账户仓位上限=0.82%；研究结论仍为 RESEARCH_GAP。
+- 申通快递 002468: **PROBE**；conviction=0.6149；建议账户仓位上限=0.74%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
