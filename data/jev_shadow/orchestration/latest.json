@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38213027412",
+  "orchestrator_run_id": "38214568840",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -26,22 +26,8 @@
   "skipped": [
     {
       "attention_priority": "HIGH",
-      "entity_id": "001316",
-      "entity_name": "润贝航科",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "HIGH",
       "entity_id": "600406",
       "entity_name": "国电南瑞",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "DEEP_RESEARCH"
     },
@@ -51,6 +37,20 @@
       "entity_name": "洛阳钼业",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "001316",
+      "entity_name": "润贝航科",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "HIGH",
@@ -65,6 +65,27 @@
       "entity_name": "申通快递",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000703",
+      "entity_name": "恒逸石化",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "002215",
+      "entity_name": "诺 普 信",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600257",
+      "entity_name": "大湖股份",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "LOW",
@@ -91,27 +112,6 @@
       "attention_priority": "LOW",
       "entity_id": "000567",
       "entity_name": "海德股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "000703",
-      "entity_name": "恒逸石化",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -152,20 +152,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "002215",
-      "entity_name": "诺 普 信",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600257",
-      "entity_name": "大湖股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "600309",
       "entity_name": "万华化学",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -190,14 +176,28 @@
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-12T06:32:01+00:00",
-  "source_workflow_head_sha": "6c82b586715e865ef86198fe600e2b77b5977bb2",
+  "source_generated_at": "2026-10-12T06:50:23+00:00",
+  "source_workflow_head_sha": "1c8bae445e2657d74677672cb173c191d8a652a8",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38212852499",
+  "source_workflow_run_id": "38214369241",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 356,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38212852499",
+  "trigger_source": "JEV_ORCHESTRATOR_38214369241",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-12T06:34:21+00:00",
+  "updated_at": "2026-10-12T06:52:31+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.74,
+      "attention_confidence": 0.76,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "38212380321",
+        "deep_lambda_run_id": "38213800673",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.94,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
