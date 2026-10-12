@@ -43,7 +43,7 @@
       "file_count": 64,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 480,
-      "freshness_state": "STALE",
+      "freshness_state": "FRESH",
       "latest_observed_at": "2026-10-11T05:50:40+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
@@ -402,7 +402,7 @@
       "name": "era_radar",
       "root": "data/era_radar",
       "validation_evidence": {
-        "accepted": false,
+        "accepted": true,
         "authority": null,
         "contract": "ERA_RADAR_SOURCE_VALIDATION_V1",
         "coverage_status": null,
@@ -412,16 +412,16 @@
         "latest_observation_at": null,
         "no_auto_trade": true,
         "path": "data/era_radar/validation/latest.json",
-        "reason": "VALIDATION_HEARTBEAT_STALE",
-        "refreshed_at": "2026-10-11T22:00:10Z",
+        "reason": "SUCCESSFUL_LIVE_VALIDATION",
+        "refreshed_at": "2026-10-12T15:26:19+00:00",
         "semantic_fingerprint": null,
         "semantic_state": "NO_CHANGE",
         "validation_status": "SUCCESS"
       },
-      "watermark": "d3533677dc868e1414fc5872"
+      "watermark": "02483c7d279db67d573b9df8"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "0d0d4c2ebc91e648e2a35edda845f56e23090adbc09c3f422f9b6180c2affa7a",
       "execution_critical": true,
       "exists": true,
@@ -617,7 +617,7 @@
       "watermark": "230928027b591b7dc7d91eff"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "c92b0acd2e519f97d9e53646309ca02f092cee213612892a3690dff5e6729161",
       "execution_critical": false,
       "exists": true,
@@ -1026,7 +1026,7 @@
       "watermark": "1a592b88fbad78198470c0aa"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "27345b9ff21b82616ac83e66450e58d2e39b22e9ff7f43386382a7ecde704ccb",
       "execution_critical": false,
       "exists": true,
@@ -1052,7 +1052,7 @@
       "watermark": "3ef6ca54113093df1ba31366"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "2b4b76fd91aadbb22440d3e9f6a1041edce8ec7f4bf3b0f8181d7a45de7aa38b",
       "execution_critical": false,
       "exists": true,
@@ -1104,7 +1104,7 @@
       "watermark": "7403d9a1e5ff0441904bf31e"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "606178683a1a9414c4cb6a9a31e97d45406eba8a5224c5d53086163696f78dfd",
       "execution_critical": false,
       "exists": true,
@@ -1130,7 +1130,7 @@
       "watermark": "ad771a934373d8b3ad7a424b"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "13e1713dcf428d5bc73c6125df209e007d3f73b9841333895a5b51f0e431f21b",
       "execution_critical": false,
       "exists": true,
@@ -1218,20 +1218,20 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "3a09a1695a55b0fdfb9ad1b6d3d972b18bf08b98617723a99bde14813b29bec4",
+      "content_sha256": "e78e37222f1a67d9980a751891b3350b2e0a06130f7110252dfe70a313058f23",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-12T10:42:50.150426+00:00",
+      "latest_observed_at": "2026-10-12T15:27:50.670354+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-12T10:42:50.150426+00:00",
+          "observed_at": "2026-10-12T15:27:50.670354+00:00",
           "path": "data/live_execution_quotes/latest.json",
-          "sha256": "cf1831b7a3e887ab4521b0b13bf71c4cfbde1163f402966184c506886c8019af",
+          "sha256": "c1ba80333e5fdb2cb0f02627880e8f326a90b0741850050ca81bc990b27f8b07",
           "size": 1204,
           "trade_date": null
         }
@@ -1240,12 +1240,12 @@
       "name": "live_execution_quotes",
       "root": "data/live_execution_quotes",
       "validation_evidence": null,
-      "watermark": "569ad0b5aaf495474e127ba0"
+      "watermark": "fb9ebca3e7b2b87b117b62f7"
     }
   ],
   "expected_latest_a_share_trade_date": "2026-10-12",
-  "freshness_epoch": "2026-10-12T10:00:00+00:00",
-  "generated_at": "2026-10-12T10:00:00+00:00",
+  "freshness_epoch": "2026-10-12T15:00:00+00:00",
+  "generated_at": "2026-10-12T15:00:00+00:00",
   "incremental_update_contract": {
     "collector_layer_owns_acquisition": true,
     "filesystem_mtime_may_establish_freshness": false,
@@ -1265,10 +1265,9 @@
   ],
   "package_status": "STALE",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "54b158833a9b87f763d1",
+  "snapshot_id": "47286ab78f98b4cfdf35",
   "stale_required_datasets": [
     "all_a_market_snapshot",
-    "era_radar",
     "global_market_pulse"
   ],
   "unknown_required_datasets": []
