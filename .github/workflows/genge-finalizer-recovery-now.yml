@@ -1,0 +1,41 @@
+name: GenGe Finalizer Recovery Now
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/genge-finalizer-recovery-now.yml'
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: Successful GenGe All-A V3.1.1 One Shot run id
+        required: false
+        default: '38303771170'
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch Production Finalizer
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          INPUT_RUN_ID: ${{ inputs.source_run_id }}
+          RECOVERY_RUN_ID: '38303771170'
+        run: |
+          set -euo pipefail
+          run_id="$RECOVERY_RUN_ID"
+          if [ "$EVENT_NAME" = "workflow_dispatch" ] && [ -n "$INPUT_RUN_ID" ]; then
+            run_id="$INPUT_RUN_ID"
+          fi
+          gh workflow run genge-v311-production-finalizer.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main \
+            -f source_run_id="$run_id" \
+            -f source_workflow='GenGe All-A V3.1.1 One Shot'
+          echo "Dispatched Production Finalizer for source run $run_id" >> "$GITHUB_STEP_SUMMARY"
