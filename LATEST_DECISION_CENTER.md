@@ -100,11 +100,11 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | GREEN / score=59.93 / 2026-10-09 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=102 / dormant=24 / archived-invalidated=0 / events=13894 / focus=8 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=22 / verified-pass=229 / unresolved=82 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38187396265 / unverified-pass=0 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=102 / dormant=24 / archived-invalidated=0 / events=13894 / focus=9 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=26 / verified-pass=230 / unresolved=99 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38195814651 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=22 / REJECT=0 |
+| Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=26 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **102**；DORMANT **24**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13894**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
@@ -120,20 +120,20 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`38186964786`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`38195270859`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`38186964786`
-- 触发来源：`EVERY_INDUSTRY_READY`
+- Lambda run：`38195270859`
+- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
-- 请求深算：**22**；已处理：**22**；完整：**0**；证据穷尽：**22**。
-- Workset profile：总数 **506**；请求代码已落 profile **22**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
-- 同轮补证据尝试：**2**；取得证据：**47**；推进硬门槛：**8**。
-- 尚未解决硬门槛：**82**。
-- 未决原因摘要：涉及 22 只；门槛分布：moat×20、predictability×19、long_term_demand×17、earnings_authenticity×13、financial_safety×13；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×17、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×16、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×13、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×13、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×13；样例：000526[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000682[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000783[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]；001309[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、moat:INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE]；001316[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]
+- 请求深算：**26**；已处理：**26**；完整：**0**；证据穷尽：**26**。
+- Workset profile：总数 **506**；请求代码已落 profile **26**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
+- 同轮补证据尝试：**2**；取得证据：**47**；推进硬门槛：**9**。
+- 尚未解决硬门槛：**99**。
+- 未决原因摘要：涉及 26 只；门槛分布：moat×24、predictability×22、long_term_demand×21、earnings_authenticity×16、financial_safety×16；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×21、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×18、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×17、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×16、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×16；样例：000526[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000682[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000703[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000783[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE、predictability:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS]；001309[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、moat:INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`38186964786`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`38195270859`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
@@ -145,11 +145,12 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 ## 深算终态研究决策
 
 - 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`38186964786`；当前 Lambda：`38186964786`。
-- 请求：**23**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**22**；研究 REJECT：**0**。
-- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=45.1566；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；601318 中国平安(quant=32.6541；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=23.4933；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)；002811 郑中设计(quant=65.4744；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)
-- 风险预算层 BUILD/PROBE 候选：**4**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
+- 终态来源 Lambda：`38195270859`；当前 Lambda：`38195270859`。
+- 请求：**27**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**26**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=45.1566；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；601318 中国平安(quant=32.6541；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=23.4933；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)；603939 益丰药房(quant=78.4114；研究结论仍为RESEARCH_GAP，但风险预算层允许人工小仓试探；建议账户仓位上限约0.82%，继续补齐：long_term_demand、moat)；002811 郑中设计(quant=65.4744；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)
+- 风险预算层 BUILD/PROBE 候选：**5**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
   - 603596 伯特利: **BUILD**；conviction=0.899；建议账户上限=3.0%
+  - 603939 益丰药房: **PROBE**；conviction=0.6808；建议账户上限=0.82%
   - 002352 顺丰控股: **PROBE**；conviction=0.66；建议账户上限=0.84%
   - 600351 亚宝药业: **PROBE**；conviction=0.6585；建议账户上限=0.79%
   - 002468 申通快递: **PROBE**；conviction=0.6407；建议账户上限=0.77%
@@ -157,14 +158,7 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**7**；其中 ENTRY_NOW **1**；Jev run：`38195395645`。
-- **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=40.9274；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_40.9274_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000783 长江证券**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=11.3655；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_11.3655_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **001316 润贝航科**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=32.0914；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_32.0914_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **601318 中国平安**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **002468 申通快递**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.77%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600406 国电南瑞**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=21.6804；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_21.6804_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **603993 洛阳钼业**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=18.4182；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_18.4182_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`38195395645`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
