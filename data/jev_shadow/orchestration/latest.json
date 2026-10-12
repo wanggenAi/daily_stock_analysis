@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38212538778",
+  "orchestrator_run_id": "38212712204",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -28,6 +28,13 @@
       "attention_priority": "HIGH",
       "entity_id": "001316",
       "entity_name": "润贝航科",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "600406",
+      "entity_name": "国电南瑞",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "DEEP_RESEARCH"
     },
@@ -47,13 +54,6 @@
     },
     {
       "attention_priority": "HIGH",
-      "entity_id": "600406",
-      "entity_name": "国电南瑞",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "HIGH",
       "entity_id": "603939",
       "entity_name": "益丰药房",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
@@ -64,13 +64,6 @@
       "entity_id": "002468",
       "entity_name": "申通快递",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "600309",
-      "entity_name": "万华化学",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
     {
@@ -145,6 +138,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "001236",
+      "entity_name": "弘业期货",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "002215",
       "entity_name": "诺 普 信",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -152,15 +152,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600257",
-      "entity_name": "大湖股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
+      "entity_id": "600309",
+      "entity_name": "万华化学",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -187,17 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "001236",
-      "entity_name": "弘业期货",
+      "entity_id": "600257",
+      "entity_name": "大湖股份",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-12T06:26:03+00:00",
-  "source_workflow_head_sha": "cfdb8e812ea165fad0dba2276a8fa4f19b652e24",
+  "source_generated_at": "2026-10-12T06:28:21+00:00",
+  "source_workflow_head_sha": "8d3671b56b1fcb27299407b1472505d9f2b91e79",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38212349883",
+  "source_workflow_run_id": "38212422595",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 356,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38212349883",
+  "trigger_source": "JEV_ORCHESTRATOR_38212422595",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-12T06:28:29+00:00",
+  "updated_at": "2026-10-12T06:30:39+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.74,
+      "attention_confidence": 0.69,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
