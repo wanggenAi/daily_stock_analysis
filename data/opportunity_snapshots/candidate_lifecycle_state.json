@@ -158546,7 +158546,7 @@
     "603939": {
       "code": "603939",
       "stock_name": "益丰药房",
-      "lifecycle_state": "ACTIVE",
+      "lifecycle_state": "DORMANT",
       "research_tier": "PENDING",
       "first_seen_snapshot_id": "ef544d678e8b0e608587",
       "first_seen_source_run_id": "33134227778",
@@ -158555,22 +158555,10 @@
       "seen_count": 133,
       "last_formal_action": "",
       "last_valuation_confidence": "",
-      "last_event": "RESEEN",
-      "last_event_at": "2026-10-11T15:18:11Z",
+      "last_event": "RESEARCH_EXHAUSTED_DORMANT",
+      "last_event_at": "2026-10-12T02:49:28+00:00",
       "applied_evidence_ids": [],
       "history": [
-        {
-          "event": "RESEEN",
-          "code": "603939",
-          "snapshot_id": "4044a6fe7de9c9c22c87",
-          "source_run_id": "33442400758",
-          "observed_at": "2026-08-31T21:42:26Z",
-          "observed_scope": "DEEP_REVIEW",
-          "formal_action": "",
-          "valuation_confidence": "",
-          "lifecycle_state_after": "ACTIVE",
-          "automatic_reactivation": false
-        },
         {
           "event": "RESEEN",
           "code": "603939",
@@ -159758,6 +159746,22 @@
           "valuation_confidence": "",
           "lifecycle_state_after": "ACTIVE",
           "automatic_reactivation": false
+        },
+        {
+          "event": "RESEARCH_EXHAUSTED_DORMANT",
+          "code": "603939",
+          "snapshot_id": "a98cda1fc5ddecf16707",
+          "source_run_id": "38197187465",
+          "observed_at": "2026-10-12T02:49:28+00:00",
+          "reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+          "prior_lifecycle_state": "ACTIVE",
+          "lifecycle_state_after": "DORMANT",
+          "research_evidence_fingerprint": "89f3ef008b2e8c403d6d",
+          "research_epoch": "1239dd43f6ffc4f33c6e",
+          "supported_gate_count": 2,
+          "automatic_reactivation": false,
+          "formal_trading_authority": false,
+          "no_auto_trade": true
         }
       ],
       "last_researched_time": "2026-10-11T15:22:02Z",
@@ -159769,7 +159773,7 @@
       "last_terminal_source_valuation_confidence": "",
       "last_terminal_observed_at": "2026-10-11T15:22:02Z",
       "price_zone": "RESEARCH_GAP",
-      "next_action": "CONTINUE_RESEARCH",
+      "next_action": "WAIT_FOR_NEW_RESEARCH_EVIDENCE",
       "terminal_history": [
         {
           "event": "TERMINAL_MEMORY",
@@ -161271,7 +161275,11 @@
           "prior_wait_price_max": null,
           "no_auto_trade": true
         }
-      ]
+      ],
+      "last_research_lifecycle_source_run_id": "38197187465",
+      "last_research_lifecycle_observed_at": "2026-10-12T02:49:28+00:00",
+      "last_research_lifecycle_reason": "ALL_SUPPORTED_STRATEGIES_EXHAUSTED_IN_CURRENT_EVIDENCE_EPOCH",
+      "research_dormant_epoch": "1239dd43f6ffc4f33c6e"
     },
     "000096": {
       "code": "000096",
@@ -284533,7 +284541,7 @@
       "research_dormant_epoch": "37186a7206fe6f514065"
     }
   },
-  "event_count": 13894,
+  "event_count": 13895,
   "no_auto_trade": true,
   "discovery_is_filtered_by_lifecycle": false,
   "bootstrap_source": "LEGACY_MARKDOWN",
@@ -284650,7 +284658,7 @@
   "latest_terminal_memory_id": "terminal:38150807066:1",
   "latest_terminal_memory_observed_at": "2026-10-11T15:22:02Z",
   "terminal_memory_event_count": 11814,
-  "latest_research_lifecycle_source_run_id": "38053576881",
-  "latest_research_lifecycle_observed_at": "2026-10-10T12:54:22+00:00",
-  "research_lifecycle_event_count": 24
+  "latest_research_lifecycle_source_run_id": "38197187465",
+  "latest_research_lifecycle_observed_at": "2026-10-12T02:49:28+00:00",
+  "research_lifecycle_event_count": 25
 }

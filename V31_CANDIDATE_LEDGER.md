@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `a98cda1fc5ddecf16707`
 - latest_research_as_of: `2026-10-11T15:18:11Z`
-- active_candidates: 102
-- dormant_research_candidates: 24
+- active_candidates: 101
+- dormant_research_candidates: 25
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 13894
+- lifecycle_event_count: 13895
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -118,7 +118,6 @@
 | 603871 | 嘉友国际 | PENDING | 10 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603883 | 老百姓 | PENDING | 74 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603899 | 晨光股份 | PENDING | 84 | HOLD_REVIEW | INVALID | 5674438e7a8332af9cb7 | RESEEN |
-| 603939 | 益丰药房 | PENDING | 133 |  |  | a98cda1fc5ddecf16707 | RESEEN |
 | 603970 | 中农立华 | PENDING | 4 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603979 | 金诚信 | PENDING | 10 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 603986 | 兆易创新 | PENDING | 195 |  |  | a98cda1fc5ddecf16707 | RESEEN |
@@ -2274,29 +2273,6 @@
 - 2026-09-22T20:04:52Z — **RESEEN**; snapshot `ea3c4b0384d9f6efec18`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
 
-### 603939 益丰药房
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 133
-- **last_seen_snapshot_id:** a98cda1fc5ddecf16707
-- **last_seen_source_run_id:** 38149891502
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-
-#### Delta history
-- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
-- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
-- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
-- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
-- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
-- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
-- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-- 2026-10-11T13:47:24Z — **RESEEN**; snapshot `818319f40a3f524817a4`
-- 2026-10-11T14:38:52Z — **RESEEN**; snapshot `9a09073c1d706649ee05`
-- 2026-10-11T15:18:11Z — **RESEEN**; snapshot `a98cda1fc5ddecf16707`
-
 ### 603970 中农立华
 
 - **lifecycle_state:** ACTIVE
@@ -2427,6 +2403,7 @@
 | 601965 | 中国汽研 | PENDING | 186 | 29ae0d8e56d1962cb43b | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 603605 | 珀莱雅 | PENDING | 273 | c6b0409af80bc1ab444f | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 603739 | 蔚蓝生物 | PENDING | 5 | 37186a7206fe6f514065 | f47b1eada872c202035c | RESEEN |
+| 603939 | 益丰药房 | PENDING | 133 | 1239dd43f6ffc4f33c6e | a98cda1fc5ddecf16707 | RESEARCH_EXHAUSTED_DORMANT |
 | 605116 | 奥锐特 | PENDING | 192 | bd5113787913abe44b4f | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 
 ### 000426 兴业银锡
@@ -2953,6 +2930,29 @@
 - 2026-09-30T16:55:37Z — **RESEEN**; snapshot `a4bed413e3a7d56924e0`
 - 2026-09-30T18:56:49+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `a4bed413e3a7d56924e0`
 - 2026-09-30T19:02:48Z — **RESEEN**; snapshot `f47b1eada872c202035c`
+
+### 603939 益丰药房
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 133
+- **last_seen_snapshot_id:** a98cda1fc5ddecf16707
+- **last_seen_source_run_id:** 38149891502
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+
+#### Delta history
+- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
+- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
+- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
+- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
+- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
+- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+- 2026-10-11T13:47:24Z — **RESEEN**; snapshot `818319f40a3f524817a4`
+- 2026-10-11T14:38:52Z — **RESEEN**; snapshot `9a09073c1d706649ee05`
+- 2026-10-11T15:18:11Z — **RESEEN**; snapshot `a98cda1fc5ddecf16707`
+- 2026-10-12T02:49:28+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `a98cda1fc5ddecf16707`
 
 ### 605116 奥锐特
 
