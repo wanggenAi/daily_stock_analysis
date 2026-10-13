@@ -189,14 +189,14 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 - **NASDAQ**：休市以来 -0.42%；最近1日 -0.42%；5日 -1.03%；market_date=2026-10-12；freshness=FRESH。
 - **SOX**：休市以来 -2.66%；最近1日 -2.66%；5日 -6.33%；market_date=2026-10-12；freshness=FRESH。
 - **VIX**：休市以来 -1.04%；最近1日 +2.49%；5日 +0.86%；market_date=2026-10-12；freshness=FRESH。
-- **US10Y**：休市以来 -0.08%；最近1日 -0.08%；5日 -0.70%；market_date=2026-10-12；freshness=FRESH。
-- **DXY**：休市以来 +0.35%；最近1日 +0.35%；5日 +0.31%；market_date=2026-10-12；freshness=FRESH。
-- **USDCNH**：休市以来 +0.02%；最近1日 +0.03%；5日 -0.11%；market_date=2026-10-12；freshness=FRESH。
-- **HANGSENG**：休市以来 +0.09%；最近1日 +0.25%；5日 +0.58%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +0.00%；最近1日 +1.79%；5日 +2.67%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **GOLD**：休市以来 +0.00%；最近1日 -0.51%；5日 +0.91%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.49%；5日 +4.24%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 -1.11%；最近1日 -0.74%；5日 -0.49%；market_date=2026-10-12；freshness=FRESH。
+- **US10Y**：休市以来 -0.08%；最近1日 -0.08%；5日 -0.70%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **DXY**：休市以来 +0.17%；最近1日 +0.21%；5日 +0.16%；market_date=2026-10-13；freshness=FRESH。
+- **USDCNH**：休市以来 +0.05%；最近1日 +0.05%；5日 -0.09%；market_date=2026-10-13；freshness=FRESH。
+- **HANGSENG**：休市以来 -0.85%；最近1日 -1.16%；5日 -0.18%；market_date=2026-10-13；freshness=FRESH。
+- **COPPER**：休市以来 +0.00%；最近1日 +1.10%；5日 +1.97%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +0.00%；最近1日 -0.47%；5日 +0.96%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +0.78%；5日 +3.51%；market_date=2026-10-12；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 -1.51%；最近1日 -1.32%；5日 -0.58%；market_date=2026-10-13；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
