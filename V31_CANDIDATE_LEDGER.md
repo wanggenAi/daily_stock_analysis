@@ -10,10 +10,10 @@
 - lifecycle_contract: `GEN_GE_V31_CANDIDATE_LIFECYCLE_V1`
 - latest_applied_snapshot_id: `a98cda1fc5ddecf16707`
 - latest_research_as_of: `2026-10-11T15:18:11Z`
-- active_candidates: 101
-- dormant_research_candidates: 25
+- active_candidates: 100
+- dormant_research_candidates: 26
 - archived_or_invalidated_candidates: 0
-- lifecycle_event_count: 13895
+- lifecycle_event_count: 13896
 - seen_count_semantics: distinct machine-observed canonical snapshots since lifecycle migration
 - no_auto_trade: `true`
 - discovery_is_filtered_by_lifecycle: `false`
@@ -62,7 +62,6 @@
 | 600233 | 圆通速递 | PENDING | 10 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
 | 600257 | 大湖股份 | PENDING | 93 |  |  | a98cda1fc5ddecf16707 | RESEEN |
 | 600276 | 恒瑞医药 | PENDING | 79 | WAIT | HIGH | 5674438e7a8332af9cb7 | RESEEN |
-| 600309 | 万华化学 | PENDING | 264 |  |  | a98cda1fc5ddecf16707 | RESEEN |
 | 600312 | 平高电气 | PENDING | 43 | WAIT | MEDIUM | 5674438e7a8332af9cb7 | RESEEN |
 | 600315 | 上海家化 | PENDING | 65 | HOLD_REVIEW | LOW | 5674438e7a8332af9cb7 | RESEEN |
 | 600318 | 新力金融 | PENDING | 147 |  |  | a98cda1fc5ddecf16707 | RESEEN |
@@ -999,31 +998,6 @@
 - 2026-09-01T13:47:58Z — **RESEEN**; snapshot `54113ebd32846adffd51`
 - 2026-09-01T14:14:56Z — **RESEEN**; snapshot `09e5a892f6da053a6f64`
 - 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-
-### 600309 万华化学
-
-- **lifecycle_state:** ACTIVE
-- **current tier:** PENDING
-- **seen_count:** 264
-- **last_seen_snapshot_id:** a98cda1fc5ddecf16707
-- **last_seen_source_run_id:** 38149891502
-- **last Formal action:** 
-- **valuation confidence:** 
-- **last lifecycle event:** RESEEN
-- **legacy migration:** imported once from the pre-state-machine Markdown ledger
-- legacy seen_count (audit only): 1
-
-#### Delta history
-- 2026-10-08T06:50:03Z — **RESEEN**; snapshot `faedd7f5d18a59adaaec`
-- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
-- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
-- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
-- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
-- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
-- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
-- 2026-10-11T13:47:24Z — **RESEEN**; snapshot `818319f40a3f524817a4`
-- 2026-10-11T14:38:52Z — **RESEEN**; snapshot `9a09073c1d706649ee05`
-- 2026-10-11T15:18:11Z — **RESEEN**; snapshot `a98cda1fc5ddecf16707`
 
 ### 600312 平高电气
 
@@ -2392,6 +2366,7 @@
 | 002811 | 郑中设计 | PENDING | 190 | 86675daf225475f4099c | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 002842 | 翔鹭钨业 | PENDING | 192 | 4f8f5471d83f7b27cf94 | 5674438e7a8332af9cb7 | RESEARCH_EXHAUSTED_DORMANT |
 | 600095 | 湘财股份 | PENDING | 113 | 8111ffdd789e7df76892 | 977a0f2c7ae860acb046 | RESEARCH_EXHAUSTED_DORMANT |
+| 600309 | 万华化学 | PENDING | 264 | 18e91e8dd9a3cf97aef5 | a98cda1fc5ddecf16707 | RESEARCH_EXHAUSTED_DORMANT |
 | 600661 | 昂立教育 | PENDING | 121 | d870b223168ef71f8c7f | 5674438e7a8332af9cb7 | RESEEN |
 | 600812 | 华北制药 | PENDING | 186 | b49771168f732770b61c | 5674438e7a8332af9cb7 | RESEEN |
 | 600816 | 建元信托 | PENDING | 138 | a8ae13563da5bf6420ca | 66c3dfc6b56e166443a5 | RESEEN |
@@ -2681,6 +2656,31 @@
 - 2026-09-24T16:03:00Z — **RESEEN**; snapshot `10971df61c9e0878e2ea`
 - 2026-09-24T19:20:43Z — **RESEEN**; snapshot `977a0f2c7ae860acb046`
 - 2026-09-24T19:19:55+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `977a0f2c7ae860acb046`
+
+### 600309 万华化学
+
+- **lifecycle_state:** DORMANT
+- **current tier:** PENDING
+- **seen_count:** 264
+- **last_seen_snapshot_id:** a98cda1fc5ddecf16707
+- **last_seen_source_run_id:** 38149891502
+- **last Formal action:** 
+- **valuation confidence:** 
+- **last lifecycle event:** RESEARCH_EXHAUSTED_DORMANT
+- **legacy migration:** imported once from the pre-state-machine Markdown ledger
+- legacy seen_count (audit only): 1
+
+#### Delta history
+- 2026-10-08T16:08:23Z — **RESEEN**; snapshot `eab56a93ae2eda864e86`
+- 2026-10-08T16:42:40Z — **RESEEN**; snapshot `fd56a6e1e593345430c9`
+- 2026-10-08T17:59:29Z — **RESEEN**; snapshot `0ecd4e50653968338e77`
+- 2026-10-08T21:42:29Z — **RESEEN**; snapshot `a5b3b3ce9139015c6947`
+- 2026-10-08T22:19:10Z — **RESEEN**; snapshot `9ac7b2491f62f3eb7f9e`
+- 2026-10-10T03:19:31+00:00 — **RESEEN**; snapshot `5674438e7a8332af9cb7`
+- 2026-10-11T13:47:24Z — **RESEEN**; snapshot `818319f40a3f524817a4`
+- 2026-10-11T14:38:52Z — **RESEEN**; snapshot `9a09073c1d706649ee05`
+- 2026-10-11T15:18:11Z — **RESEEN**; snapshot `a98cda1fc5ddecf16707`
+- 2026-10-13T02:52:01+00:00 — **RESEARCH_EXHAUSTED_DORMANT**; snapshot `a98cda1fc5ddecf16707`
 
 ### 600661 昂立教育
 
