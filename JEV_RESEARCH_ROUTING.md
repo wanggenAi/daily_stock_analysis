@@ -12,7 +12,7 @@
 
 ## Route counts
 
-- {"DEEP_RESEARCH": 14, "EVIDENCE_REFRESH": 10, "VALUATION_CLOSURE": 1}
+- {"DEEP_RESEARCH": 13, "EVIDENCE_REFRESH": 11, "VALUATION_CLOSURE": 1}
 
 ## Advisory queue
 
@@ -38,8 +38,8 @@
 - 001236 弘业期货 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 002016 世荣兆业 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 002041 登海种业 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
-- 600834 申通地铁 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603416 信捷电气 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 - 603658 安图生物 | priority=LOW | route=DEEP_RESEARCH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
+- 600834 申通地铁 | priority=LOW | route=EVIDENCE_REFRESH | evidence=INSUFFICIENT | entry=WAIT_EVIDENCE | engine=RESEARCH_PRIORITY:P3
 
 > Jev is advisory here. Existing deterministic research obligations remain in force, and this file cannot create, suppress, or mutate Formal actions or orders.
