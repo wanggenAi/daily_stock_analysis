@@ -13,6 +13,12 @@ on:
         description: "Optional successful Every-Industry Research run id; blank uses latest successful run"
         required: false
         type: string
+  pull_request:
+    paths:
+      - 'src/strategies/genge_opportunity_discovery/unknown_safe_research_radar.py'
+      - 'tests/test_genge_unknown_safe_research_radar.py'
+      - '.github/workflows/genge-v31-unknown-safe-research-radar.yml'
+      - 'docs/UNKNOWN_SAFE_RESEARCH_RADAR.md'
   push:
     branches: [main]
     paths:
@@ -155,6 +161,7 @@ jobs:
           retention-days: 90
 
       - name: Persist latest advisory radar with optimistic replay
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
