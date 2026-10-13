@@ -43,21 +43,21 @@
       "watermark": "65316a41286982b6950ed035"
     },
     {
-      "changed_since_previous": false,
-      "content_sha256": "6e61958c0a2502bc81f8809545c51f7515c56b58efd6cf7ed90ed2c5c708a4c7",
+      "changed_since_previous": true,
+      "content_sha256": "fa3208564f225ea3de4f3bfec1ceaf3d6448e1a1b23efcdaf36626ff0bb84457",
       "execution_critical": true,
       "exists": true,
-      "file_count": 64,
+      "file_count": 66,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 480,
-      "freshness_state": "STALE",
-      "latest_observed_at": "2026-10-11T05:50:40+00:00",
+      "freshness_state": "FRESH",
+      "latest_observed_at": "2026-10-13T14:13:19+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
           "observed_at": null,
           "path": "data/era_radar/ERA_CAPITAL_TREND_RADAR.md",
-          "sha256": "212ffb14c17e5a189c319dfe87713c70d0a9e0a2349a295fa788b5ccc3f9a792",
+          "sha256": "02b734c5e3b9daa7e99781d7845e0790c257d78324acb694d7035890b1d6cbff",
           "size": 1642,
           "trade_date": null
         },
@@ -143,6 +143,13 @@
           "path": "data/era_radar/evidence/48ea01cac26a291089db.json",
           "sha256": "8937d032db73d7cce5aff31a97c9d9642f7f9c127d304726009722fdf7d48a4e",
           "size": 17471,
+          "trade_date": null
+        },
+        {
+          "observed_at": "2026-10-13T14:13:19+00:00",
+          "path": "data/era_radar/evidence/50bce81f35f4a854346f.json",
+          "sha256": "fdfec7fa7931cf1a676a5968cd59ce53973555b673d7abe50f32b11e0f8f0261",
+          "size": 17468,
           "trade_date": null
         },
         {
@@ -356,6 +363,13 @@
           "trade_date": null
         },
         {
+          "observed_at": "2026-10-13T14:13:19+00:00",
+          "path": "data/era_radar/history/50bce81f35f4a854346f.json",
+          "sha256": "6e5906ec6a9756e1813baf74c31587841661f45ea490026fc12a4feb3f5c58dc",
+          "size": 12513,
+          "trade_date": null
+        },
+        {
           "observed_at": "2026-09-11T11:32:50+00:00",
           "path": "data/era_radar/history/51d033307db701311d8d.json",
           "sha256": "60cde6054095018357c0999cb30b591b2086ed35639c60e35867cdb5af9164f8",
@@ -389,43 +403,29 @@
           "sha256": "49d4f649a72ca07f7c39b94b2b11f02efc4eda4a5cb3a2153477fb211b0ac08e",
           "size": 5665,
           "trade_date": null
-        },
-        {
-          "observed_at": "2026-09-15T11:54:41+00:00",
-          "path": "data/era_radar/history/7cb718f20b7513c7cbb7.json",
-          "sha256": "65277aec75f6030eb18476627da0cc7eead678c1d1c9b527e9068e29da57884e",
-          "size": 6354,
-          "trade_date": null
-        },
-        {
-          "observed_at": "2026-09-10T04:54:06+00:00",
-          "path": "data/era_radar/history/7facbd14fd4e2a21c671.json",
-          "sha256": "29becdda491bf2bfb35296d5d5d3ad41674e71340eb011c646cabd0a331b1303",
-          "size": 6343,
-          "trade_date": null
         }
       ],
       "lineage_file_sample_truncated": true,
       "name": "era_radar",
       "root": "data/era_radar",
       "validation_evidence": {
-        "accepted": false,
+        "accepted": true,
         "authority": null,
         "contract": "ERA_RADAR_SOURCE_VALIDATION_V1",
         "coverage_status": null,
-        "evidence_fingerprint": "7d4cbdc8b41b4942c41993c5069f74287a39f1c581071dc79ce778492674efd0",
+        "evidence_fingerprint": "7655891c936f97c8a8820a9aa42403e83fb0d8c76976c5c1069f34fb3caaa11f",
         "formal_action_eligible": null,
         "formal_trading_authority": false,
         "latest_observation_at": null,
         "no_auto_trade": true,
         "path": "data/era_radar/validation/latest.json",
-        "reason": "VALIDATION_HEARTBEAT_STALE",
-        "refreshed_at": "2026-10-13T00:42:24Z",
+        "reason": "SUCCESSFUL_LIVE_VALIDATION",
+        "refreshed_at": "2026-10-13T14:13:19+00:00",
         "semantic_fingerprint": null,
-        "semantic_state": "NO_CHANGE",
+        "semantic_state": "PERSISTED",
         "validation_status": "SUCCESS"
       },
-      "watermark": "d57725a8a44fb73eb37a34e0"
+      "watermark": "a1e1601b67f6836f78e73716"
     },
     {
       "changed_since_previous": false,
@@ -659,7 +659,7 @@
       "watermark": "9c0001ca6e861286562dc0b1"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "e14fb2e53da22739d85ab603ba586f62d8c15d04028d5959f8e8c4a04e494aa1",
       "execution_critical": false,
       "exists": true,
@@ -1068,7 +1068,7 @@
       "watermark": "795ca9ef3a60f42f20255772"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "6ae660c029fba6a37e51b84056352a5b95d4f8c7eda5c509bdb1c4af3c3e20db",
       "execution_critical": false,
       "exists": true,
@@ -1095,21 +1095,21 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "0b1e113218bab703b0a10de24796bdeb3b13fdaef3b8e7209f9e3030e2d8ccf1",
+      "content_sha256": "26f2d2078f72b40ae714ed276ae6a83e0412aead6d087d61eaf408c3bf431eab",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-13T12:06:03.259172+00:00",
+      "latest_observed_at": "2026-10-13T12:06:53.266165+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-13T12:06:03.259172+00:00",
+          "observed_at": "2026-10-13T12:06:53.266165+00:00",
           "path": "data/production_observability/latest.json",
-          "sha256": "5f0079aaf3e5f5747bce4c964fbabcd2431d292731998874aca52088885168c4",
-          "size": 2840,
+          "sha256": "f6d2f6807fe35eb0e6c126ce38aaf98c0a231e7d274042bd8a4e2b6f8220eb49",
+          "size": 2841,
           "trade_date": null
         }
       ],
@@ -1117,7 +1117,7 @@
       "name": "production_observability",
       "root": "data/production_observability",
       "validation_evidence": null,
-      "watermark": "256c90a00057adf58085844e"
+      "watermark": "3efee509f51480bd7a6cbb67"
     },
     {
       "changed_since_previous": false,
@@ -1172,7 +1172,7 @@
       "watermark": "582b8ab67b4cd9d8a8cfa765"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "761699921aceea930cba1f007b0ac6d19668a16f6b8117505ff6b3ce635f1ee0",
       "execution_critical": false,
       "exists": true,
@@ -1260,20 +1260,20 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "9afc49a8030f4c85c65ffb4436c965938db4e9b70311207f077102c24d68db2b",
+      "content_sha256": "a52e4f2628209395791bc1ed7497144e4b074decdbd575777b46ab1f39f44515",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-13T12:06:28.505270+00:00",
+      "latest_observed_at": "2026-10-13T14:14:56.134333+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-13T12:06:28.505270+00:00",
+          "observed_at": "2026-10-13T14:14:56.134333+00:00",
           "path": "data/live_execution_quotes/latest.json",
-          "sha256": "538f5d2d1a554603bfbb0a0a4c2a596a059aef68815a92bd684c32c7f5280650",
+          "sha256": "6be960cbb0f1d12c1ad2104f2b3b7d99fe242ebb4d0e152179413350d2c1982f",
           "size": 1204,
           "trade_date": null
         }
@@ -1282,12 +1282,12 @@
       "name": "live_execution_quotes",
       "root": "data/live_execution_quotes",
       "validation_evidence": null,
-      "watermark": "9658f5498026ec029d4ae621"
+      "watermark": "ab8f9ecc4a0fc7e6069479f2"
     }
   ],
   "expected_latest_a_share_trade_date": "2026-10-13",
-  "freshness_epoch": "2026-10-13T12:00:00+00:00",
-  "generated_at": "2026-10-13T12:00:00+00:00",
+  "freshness_epoch": "2026-10-13T14:00:00+00:00",
+  "generated_at": "2026-10-13T14:00:00+00:00",
   "incremental_update_contract": {
     "collector_layer_owns_acquisition": true,
     "filesystem_mtime_may_establish_freshness": false,
@@ -1307,10 +1307,9 @@
   ],
   "package_status": "STALE",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "97fd4b3b01e51906fdf3",
+  "snapshot_id": "ec061dbc368ab6cd06d9",
   "stale_required_datasets": [
-    "all_a_market_snapshot",
-    "era_radar"
+    "all_a_market_snapshot"
   ],
   "unknown_required_datasets": []
 }
