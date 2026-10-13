@@ -257,8 +257,8 @@
   "canonical_snapshot_id": "a98cda1fc5ddecf16707",
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
   "data_freshness_execution_guard": {
-    "block_reason": null,
-    "execution_allowed": true,
+    "block_reason": "DATA_PACKAGE_STALE_NOT_EXECUTABLE",
+    "execution_allowed": false,
     "formal_action_recomputed": false,
     "formal_actions_preserved": true,
     "no_auto_trade": true,
@@ -267,17 +267,17 @@
   "data_package_provenance": {
     "contract": "GEN_GE_DECISION_DATA_PROVENANCE_V1",
     "data_package_contract": "GEN_GE_REALTIME_DATA_PACKAGE_V1",
-    "execution_allowed": true,
+    "execution_allowed": false,
     "external_fresh_evidence_policy": "TAGGED_EXCEPTION_ONLY",
     "latest_trade_date": "2026-10-13",
     "network_policy": "CANONICAL_PACKAGE_ONLY",
-    "package_generated_at": "2026-10-13T19:00:00+00:00",
-    "package_status": "READY",
+    "package_generated_at": "2026-10-13T22:00:00+00:00",
+    "package_status": "STALE",
     "pending_external_fresh_evidence_count": 0,
     "research_input_contract": "GEN_GE_RESEARCH_INPUT_LOCK_V1",
-    "research_input_locked_at": "2026-10-13T19:42:33.693709+00:00",
+    "research_input_locked_at": "2026-10-13T22:44:29.948165+00:00",
     "research_mode": "hourly",
-    "snapshot_id": "0c5f9c4c14e09d8ff1ae"
+    "snapshot_id": "2a2aff604ef70812a0fa"
   },
   "decision_questions": [
     "我手里的股票，现在该怎么办？",
@@ -522,7 +522,7 @@
   },
   "formal_action_recomputed": false,
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-  "generated_at": "2026-10-13T19:42:33+00:00",
+  "generated_at": "2026-10-13T22:44:30+00:00",
   "holding_valuation_continuity": {
     "available": true,
     "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
@@ -957,8 +957,8 @@
           ],
           "factors": [
             {
-              "change_24h_pct": 0.209,
-              "change_5d_pct": 1.7894,
+              "change_24h_pct": 0.4852,
+              "change_5d_pct": 2.0699,
               "direction": "NEUTRAL",
               "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
               "exposure_direction": "PRODUCER_POSITIVE",
@@ -972,8 +972,8 @@
               "since_last_a_share_close_pct": 0.0
             },
             {
-              "change_24h_pct": -0.4248,
-              "change_5d_pct": -0.3415,
+              "change_24h_pct": -0.167,
+              "change_5d_pct": -0.0836,
               "direction": "NEUTRAL",
               "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
               "exposure_direction": "PRODUCER_POSITIVE",
@@ -1089,36 +1089,36 @@
           }
         ],
         "instrument_count": 24,
-        "latest_observation_at": "2026-10-13T18:00:00+00:00",
+        "latest_observation_at": "2026-10-13T22:00:00+00:00",
         "observation_clock_invariant": "NO_FUTURE_OBSERVATION",
         "ok_count": 21,
         "status": "OK"
       },
       "formal_action_eligible": false,
       "formal_action_mutation_allowed": false,
-      "generated_at": "2026-10-13T18:12:00.839313+00:00",
+      "generated_at": "2026-10-13T22:42:29.889207+00:00",
       "global_context": [
         {
           "authority": "GLOBAL_MACRO_CONTEXT",
           "context": "AI_SEMICONDUCTOR_RISK_APPETITE",
           "factors": [
             {
-              "change_24h_pct": -0.9422,
+              "change_24h_pct": -0.2462,
               "factor_id": "SOX",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.8857
+              "since_last_a_share_close_pct": -0.2462
             },
             {
-              "change_24h_pct": -0.3239,
+              "change_24h_pct": -0.328,
               "factor_id": "NASDAQ100",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.3837
+              "since_last_a_share_close_pct": -0.328
             },
             {
-              "change_24h_pct": -0.0833,
+              "change_24h_pct": -0.1671,
               "factor_id": "NASDAQ",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.1155
+              "since_last_a_share_close_pct": -0.1671
             }
           ],
           "formal_action_eligible": false
@@ -1128,22 +1128,22 @@
           "context": "GROWTH_DURATION_FINANCIAL_CONDITIONS",
           "factors": [
             {
-              "change_24h_pct": -0.3626,
+              "change_24h_pct": -0.4389,
               "factor_id": "US10Y",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.3626
+              "since_last_a_share_close_pct": -0.4389
             },
             {
-              "change_24h_pct": -0.347,
+              "change_24h_pct": -0.3481,
               "factor_id": "DXY",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.0762
+              "since_last_a_share_close_pct": -0.0938
             },
             {
-              "change_24h_pct": 2.4374,
+              "change_24h_pct": 0.3945,
               "factor_id": "VIX",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": 0.3226
+              "since_last_a_share_close_pct": -1.4839
             }
           ],
           "formal_action_eligible": false
@@ -1159,10 +1159,10 @@
               "since_last_a_share_close_pct": 0.1441
             },
             {
-              "change_24h_pct": -0.0382,
+              "change_24h_pct": -0.029,
               "factor_id": "USDCNH",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.0342
+              "since_last_a_share_close_pct": -0.029
             }
           ],
           "formal_action_eligible": false
@@ -1172,25 +1172,25 @@
           "context": "GLOBAL_RESOURCE_COMPLEX",
           "factors": [
             {
-              "change_24h_pct": 0.209,
+              "change_24h_pct": 0.4852,
               "factor_id": "COPPER",
               "freshness": "FRESH",
               "since_last_a_share_close_pct": 0.0
             },
             {
-              "change_24h_pct": -0.4248,
+              "change_24h_pct": -0.167,
               "factor_id": "GOLD",
               "freshness": "FRESH",
               "since_last_a_share_close_pct": 0.0
             },
             {
-              "change_24h_pct": -1.4566,
+              "change_24h_pct": -1.282,
               "factor_id": "SILVER",
               "freshness": "FRESH",
               "since_last_a_share_close_pct": 0.0
             },
             {
-              "change_24h_pct": 0.5441,
+              "change_24h_pct": 1.0028,
               "factor_id": "CRUDE_OIL",
               "freshness": "FRESH",
               "since_last_a_share_close_pct": 0.0
@@ -1203,16 +1203,16 @@
           "context": "LIQUIDITY_RISK_APPETITE_PROXY",
           "factors": [
             {
-              "change_24h_pct": 1.041,
+              "change_24h_pct": 1.6739,
               "factor_id": "BTC",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.6887
+              "since_last_a_share_close_pct": -0.4057
             },
             {
-              "change_24h_pct": -0.151,
+              "change_24h_pct": 1.7958,
               "factor_id": "ETH",
               "freshness": "FRESH",
-              "since_last_a_share_close_pct": -0.7801
+              "since_last_a_share_close_pct": -0.6601
             }
           ],
           "formal_action_eligible": false
@@ -1220,43 +1220,43 @@
       ],
       "global_research_clock": {
         "continues_during_a_share_holidays": true,
-        "observed_at": "2026-10-13T18:12:00.839313+00:00"
+        "observed_at": "2026-10-13T22:42:29.889207+00:00"
       },
       "key_market_factors": {
         "BTC": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.2,
-          "change_1h_pct": 0.2262,
-          "change_24h_pct": 1.041,
-          "change_5d_pct": 2.1523,
+          "age_hours": 0.71,
+          "change_1h_pct": -0.0433,
+          "change_24h_pct": 1.6739,
+          "change_5d_pct": 1.9461,
           "critical": false,
           "family": "RISK_APPETITE_PROXY",
           "freshness": "FRESH",
           "label": "Bitcoin",
-          "latest": 83188.7890625,
-          "latest_at": "2026-10-13T18:00:00+00:00",
+          "latest": 83425.859375,
+          "latest_at": "2026-10-13T22:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.6887,
+          "since_last_a_share_close_pct": -0.4057,
           "status": "OK",
           "symbol": "BTC-USD"
         },
         "COPPER": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 18.2,
-          "change_1d_pct": 0.209,
+          "age_hours": 22.71,
+          "change_1d_pct": 0.4852,
           "change_1h_pct": null,
-          "change_24h_pct": 0.209,
-          "change_5d_pct": 1.7894,
+          "change_24h_pct": 0.4852,
+          "change_5d_pct": 2.0699,
           "critical": true,
           "family": "COMMODITY",
           "freshness": "LAST_VALID_MARKET_OBSERVATION",
           "label": "Copper",
-          "latest": 6.712500095367432,
+          "latest": 6.730999946594238,
           "latest_at": "2026-10-13T00:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_daily_fallback",
           "since_last_a_share_close_pct": 0.0,
           "source_errors": [
@@ -1268,19 +1268,19 @@
         },
         "CRUDE_OIL": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 18.2,
-          "change_1d_pct": 0.5441,
+          "age_hours": 22.71,
+          "change_1d_pct": 1.0028,
           "change_1h_pct": null,
-          "change_24h_pct": 0.5441,
-          "change_5d_pct": 5.3779,
+          "change_24h_pct": 1.0028,
+          "change_5d_pct": 5.8587,
           "critical": true,
           "family": "COMMODITY",
           "freshness": "LAST_VALID_MARKET_OBSERVATION",
           "label": "Crude Oil",
-          "latest": 94.25,
+          "latest": 94.68000030517578,
           "latest_at": "2026-10-13T00:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_daily_fallback",
           "since_last_a_share_close_pct": 0.0,
           "source_errors": [
@@ -1302,7 +1302,7 @@
           "latest": null,
           "latest_at": null,
           "market_date": null,
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": null,
           "since_last_a_share_close_pct": null,
           "status": "UNAVAILABLE",
@@ -1310,7 +1310,7 @@
         },
         "DAX": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 3.2,
+          "age_hours": 7.71,
           "change_1h_pct": 0.0452,
           "change_24h_pct": -0.073,
           "change_5d_pct": 1.7144,
@@ -1321,7 +1321,7 @@
           "latest": 25249.2109375,
           "latest_at": "2026-10-13T15:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
           "since_last_a_share_close_pct": -0.6419,
           "status": "OK",
@@ -1329,45 +1329,45 @@
         },
         "DXY": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.2,
-          "change_1h_pct": -0.0039,
-          "change_24h_pct": -0.347,
-          "change_5d_pct": 0.093,
+          "age_hours": 0.71,
+          "change_1h_pct": 0.0029,
+          "change_24h_pct": -0.3481,
+          "change_5d_pct": 0.0979,
           "critical": true,
           "family": "FX",
           "freshness": "FRESH",
           "label": "US Dollar Index",
-          "latest": 102.23300170898438,
-          "latest_at": "2026-10-13T18:00:00+00:00",
+          "latest": 102.21499633789062,
+          "latest_at": "2026-10-13T22:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.0762,
+          "since_last_a_share_close_pct": -0.0938,
           "status": "OK",
           "symbol": "DX-Y.NYB"
         },
         "ETH": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.2,
-          "change_1h_pct": 0.347,
-          "change_24h_pct": -0.151,
-          "change_5d_pct": 2.501,
+          "age_hours": 0.71,
+          "change_1h_pct": -0.0032,
+          "change_24h_pct": 1.7958,
+          "change_5d_pct": 1.4396,
           "critical": false,
           "family": "RISK_APPETITE_PROXY",
           "freshness": "FRESH",
           "label": "Ethereum",
-          "latest": 2506.97998046875,
-          "latest_at": "2026-10-13T18:00:00+00:00",
+          "latest": 2510.010009765625,
+          "latest_at": "2026-10-13T22:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.7801,
+          "since_last_a_share_close_pct": -0.6601,
           "status": "OK",
           "symbol": "ETH-USD"
         },
         "EUROSTOXX50": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 3.2,
+          "age_hours": 7.71,
           "change_1h_pct": -0.0423,
           "change_24h_pct": -0.5006,
           "change_5d_pct": 0.5145,
@@ -1378,7 +1378,7 @@
           "latest": 6165.4501953125,
           "latest_at": "2026-10-13T15:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
           "since_last_a_share_close_pct": -0.8036,
           "status": "OK",
@@ -1386,19 +1386,19 @@
         },
         "GOLD": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 18.2,
-          "change_1d_pct": -0.4248,
+          "age_hours": 22.71,
+          "change_1d_pct": -0.167,
           "change_1h_pct": null,
-          "change_24h_pct": -0.4248,
-          "change_5d_pct": -0.3415,
+          "change_24h_pct": -0.167,
+          "change_5d_pct": -0.0836,
           "critical": false,
           "family": "COMMODITY",
           "freshness": "LAST_VALID_MARKET_OBSERVATION",
           "label": "Gold",
-          "latest": 4172.7998046875,
+          "latest": 4183.60009765625,
           "latest_at": "2026-10-13T00:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_daily_fallback",
           "since_last_a_share_close_pct": 0.0,
           "source_errors": [
@@ -1410,7 +1410,7 @@
         },
         "HANGSENG": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 10.7,
+          "age_hours": 15.21,
           "change_1h_pct": 0.1441,
           "change_24h_pct": 0.305,
           "change_5d_pct": 2.352,
@@ -1421,7 +1421,7 @@
           "latest": 24345.220703125,
           "latest_at": "2026-10-13T07:30:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
           "since_last_a_share_close_pct": 0.1441,
           "status": "OK",
@@ -1439,7 +1439,7 @@
           "latest": null,
           "latest_at": null,
           "market_date": null,
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
           "since_last_a_share_close_pct": null,
           "status": "INSUFFICIENT_SERIES",
@@ -1447,57 +1447,57 @@
         },
         "NASDAQ": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.7,
-          "change_1h_pct": 0.1617,
-          "change_24h_pct": -0.0833,
-          "change_5d_pct": 0.0279,
+          "age_hours": 3.21,
+          "change_1h_pct": -0.0318,
+          "change_24h_pct": -0.1671,
+          "change_5d_pct": 0.0331,
           "critical": true,
           "family": "RISK_EQUITY",
           "freshness": "FRESH",
           "label": "Nasdaq Composite",
-          "latest": 27218.541015625,
-          "latest_at": "2026-10-13T17:30:00+00:00",
+          "latest": 27204.50390625,
+          "latest_at": "2026-10-13T19:30:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.1155,
+          "since_last_a_share_close_pct": -0.1671,
           "status": "OK",
           "symbol": "^IXIC"
         },
         "NASDAQ100": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.7,
-          "change_1h_pct": 0.2276,
-          "change_24h_pct": -0.3239,
-          "change_5d_pct": -0.6664,
+          "age_hours": 3.21,
+          "change_1h_pct": 0.063,
+          "change_24h_pct": -0.328,
+          "change_5d_pct": -0.5216,
           "critical": false,
           "family": "RISK_EQUITY",
           "freshness": "FRESH",
           "label": "Nasdaq 100",
-          "latest": 30551.580078125,
-          "latest_at": "2026-10-13T17:30:00+00:00",
+          "latest": 30568.685546875,
+          "latest_at": "2026-10-13T19:30:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.3837,
+          "since_last_a_share_close_pct": -0.328,
           "status": "OK",
           "symbol": "^NDX"
         },
         "NATURAL_GAS": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 18.2,
-          "change_1d_pct": 3.8207,
+          "age_hours": 22.71,
+          "change_1d_pct": 4.7048,
           "change_1h_pct": null,
-          "change_24h_pct": 3.8207,
-          "change_5d_pct": 5.5877,
+          "change_24h_pct": 4.7048,
+          "change_5d_pct": 6.4868,
           "critical": false,
           "family": "COMMODITY",
           "freshness": "LAST_VALID_MARKET_OBSERVATION",
           "label": "Natural Gas",
-          "latest": 3.2880001068115234,
+          "latest": 3.315999984741211,
           "latest_at": "2026-10-13T00:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_daily_fallback",
           "since_last_a_share_close_pct": 0.0,
           "source_errors": [
@@ -1509,7 +1509,7 @@
         },
         "NIKKEI225": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 12.2,
+          "age_hours": 16.71,
           "change_1h_pct": 0.1516,
           "change_24h_pct": -1.7632,
           "change_5d_pct": -2.0213,
@@ -1520,7 +1520,7 @@
           "latest": 67821.8984375,
           "latest_at": "2026-10-13T06:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
           "since_last_a_share_close_pct": 0.0,
           "status": "OK",
@@ -1528,19 +1528,19 @@
         },
         "SILVER": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 18.2,
-          "change_1d_pct": -1.4566,
+          "age_hours": 22.71,
+          "change_1d_pct": -1.282,
           "change_1h_pct": null,
-          "change_24h_pct": -1.4566,
-          "change_5d_pct": -3.1111,
+          "change_24h_pct": -1.282,
+          "change_5d_pct": -2.9394,
           "critical": false,
           "family": "COMMODITY",
           "freshness": "LAST_VALID_MARKET_OBSERVATION",
           "label": "Silver",
-          "latest": 59.26499938964844,
+          "latest": 59.369998931884766,
           "latest_at": "2026-10-13T00:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_daily_fallback",
           "since_last_a_share_close_pct": 0.0,
           "source_errors": [
@@ -1552,58 +1552,58 @@
         },
         "SOX": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.7,
-          "change_1h_pct": 0.6111,
-          "change_24h_pct": -0.9422,
-          "change_5d_pct": -4.4286,
+          "age_hours": 3.21,
+          "change_1h_pct": 0.4825,
+          "change_24h_pct": -0.2462,
+          "change_5d_pct": -3.3099,
           "critical": false,
           "family": "TECH_SEMICONDUCTOR",
           "freshness": "FRESH",
           "label": "PHLX Semiconductor",
-          "latest": 12129.6044921875,
-          "latest_at": "2026-10-13T17:30:00+00:00",
+          "latest": 12207.8671875,
+          "latest_at": "2026-10-13T19:30:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.8857,
+          "since_last_a_share_close_pct": -0.2462,
           "status": "OK",
           "symbol": "^SOX"
         },
         "SP500": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.7,
-          "change_1h_pct": 0.1383,
-          "change_24h_pct": 0.0872,
-          "change_5d_pct": 0.5923,
+          "age_hours": 3.21,
+          "change_1h_pct": -0.0482,
+          "change_24h_pct": -0.0282,
+          "change_5d_pct": 0.5137,
           "critical": true,
           "family": "RISK_EQUITY",
           "freshness": "FRESH",
           "label": "S&P 500",
-          "latest": 7807.25,
-          "latest_at": "2026-10-13T17:30:00+00:00",
+          "latest": 7805.58984375,
+          "latest_at": "2026-10-13T19:30:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.0069,
+          "since_last_a_share_close_pct": -0.0282,
           "status": "OK",
           "symbol": "^GSPC"
         },
         "US10Y": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.87,
+          "age_hours": 4.37,
           "change_1h_pct": 0.0,
-          "change_24h_pct": -0.3626,
-          "change_5d_pct": -0.2674,
+          "change_24h_pct": -0.4389,
+          "change_5d_pct": -0.2676,
           "critical": true,
           "family": "RATES",
           "freshness": "FRESH",
           "label": "US 10Y Treasury Yield",
-          "latest": 5.220999717712402,
-          "latest_at": "2026-10-13T17:20:00+00:00",
+          "latest": 5.2170000076293945,
+          "latest_at": "2026-10-13T18:20:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.3626,
+          "since_last_a_share_close_pct": -0.4389,
           "status": "OK",
           "symbol": "^TNX"
         },
@@ -1619,7 +1619,7 @@
           "latest": null,
           "latest_at": null,
           "market_date": null,
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": null,
           "since_last_a_share_close_pct": null,
           "status": "UNAVAILABLE",
@@ -1627,39 +1627,39 @@
         },
         "USDCNH": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 0.2,
-          "change_1h_pct": -0.0137,
-          "change_24h_pct": -0.0382,
-          "change_5d_pct": -0.1736,
+          "age_hours": 0.71,
+          "change_1h_pct": 0.0202,
+          "change_24h_pct": -0.029,
+          "change_5d_pct": -0.144,
           "critical": false,
           "family": "FX",
           "freshness": "FRESH",
           "label": "USD/CNH",
-          "latest": 6.692299842834473,
-          "latest_at": "2026-10-13T18:00:00+00:00",
+          "latest": 6.692649841308594,
+          "latest_at": "2026-10-13T22:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": -0.0342,
+          "since_last_a_share_close_pct": -0.029,
           "status": "OK",
           "symbol": "CNH=X"
         },
         "VIX": {
           "a_share_anchor_trade_date": "2026-10-13",
-          "age_hours": 1.2,
-          "change_1h_pct": 0.6473,
-          "change_24h_pct": 2.4374,
-          "change_5d_pct": -2.5078,
+          "age_hours": 2.71,
+          "change_1h_pct": 0.1312,
+          "change_24h_pct": 0.3945,
+          "change_5d_pct": -0.9728,
           "critical": true,
           "family": "VOLATILITY",
           "freshness": "FRESH",
           "label": "VIX",
-          "latest": 15.550000190734863,
-          "latest_at": "2026-10-13T17:00:00+00:00",
+          "latest": 15.270000457763672,
+          "latest_at": "2026-10-13T20:00:00+00:00",
           "market_date": "2026-10-13",
-          "observed_at": "2026-10-13T18:12:00.839313+00:00",
+          "observed_at": "2026-10-13T22:42:29.889207+00:00",
           "provider": "yfinance_public_market",
-          "since_last_a_share_close_pct": 0.3226,
+          "since_last_a_share_close_pct": -1.4839,
           "status": "OK",
           "symbol": "^VIX"
         }
@@ -1667,7 +1667,7 @@
       "no_auto_trade": true,
       "risk_regime": {
         "component_count": 10,
-        "score": 50.78,
+        "score": 53.86,
         "status": "NEUTRAL"
       },
       "status": "OK"
@@ -1684,8 +1684,8 @@
         ],
         "factors": [
           {
-            "change_24h_pct": 0.209,
-            "change_5d_pct": 1.7894,
+            "change_24h_pct": 0.4852,
+            "change_5d_pct": 2.0699,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1699,8 +1699,8 @@
             "since_last_a_share_close_pct": 0.0
           },
           {
-            "change_24h_pct": -0.4248,
-            "change_5d_pct": -0.3415,
+            "change_24h_pct": -0.167,
+            "change_5d_pct": -0.0836,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1739,8 +1739,8 @@
         ],
         "factors": [
           {
-            "change_24h_pct": 0.209,
-            "change_5d_pct": 1.7894,
+            "change_24h_pct": 0.4852,
+            "change_5d_pct": 2.0699,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.zijinmining.com/about/about_us.htm",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1754,8 +1754,8 @@
             "since_last_a_share_close_pct": 0.0
           },
           {
-            "change_24h_pct": -0.4248,
-            "change_5d_pct": -0.3415,
+            "change_24h_pct": -0.167,
+            "change_5d_pct": -0.0836,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.zijinmining.com/about/about_us.htm",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1769,8 +1769,8 @@
             "since_last_a_share_close_pct": 0.0
           },
           {
-            "change_24h_pct": -1.4566,
-            "change_5d_pct": -3.1111,
+            "change_24h_pct": -1.282,
+            "change_5d_pct": -2.9394,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.zijinmining.com/about/about_us.htm",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1810,8 +1810,8 @@
         ],
         "factors": [
           {
-            "change_24h_pct": 0.209,
-            "change_5d_pct": 1.7894,
+            "change_24h_pct": 0.4852,
+            "change_5d_pct": 2.0699,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1825,8 +1825,8 @@
             "since_last_a_share_close_pct": 0.0
           },
           {
-            "change_24h_pct": -1.4566,
-            "change_5d_pct": -3.1111,
+            "change_24h_pct": -1.282,
+            "change_5d_pct": -2.9394,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.westmining.com/tzzgx/yjgg/202504/P020250417637884818589.pdf",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1866,8 +1866,8 @@
         ],
         "factors": [
           {
-            "change_24h_pct": -0.4248,
-            "change_5d_pct": -0.3415,
+            "change_24h_pct": -0.167,
+            "change_5d_pct": -0.0836,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.huayumining.com/",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1881,8 +1881,8 @@
             "since_last_a_share_close_pct": 0.0
           },
           {
-            "change_24h_pct": -1.4566,
-            "change_5d_pct": -3.1111,
+            "change_24h_pct": -1.282,
+            "change_5d_pct": -2.9394,
             "direction": "NEUTRAL",
             "evidence_ref": "https://www.huayumining.com/About.aspx?ClassID=50",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1921,8 +1921,8 @@
         ],
         "factors": [
           {
-            "change_24h_pct": -1.4566,
-            "change_5d_pct": -3.1111,
+            "change_24h_pct": -1.282,
+            "change_5d_pct": -2.9394,
             "direction": "NEUTRAL",
             "evidence_ref": "data/opportunity_snapshots/candidate_lifecycle_state.json",
             "exposure_direction": "PRODUCER_POSITIVE",
@@ -1956,60 +1956,60 @@
       "a_share_last_trade_date": "2026-10-13",
       "accumulated_holiday_moves": [
         {
-          "5d_pct": 0.5923,
+          "5d_pct": 0.5137,
           "factor_id": "SP500",
           "freshness": "FRESH",
-          "latest_1d_pct": 0.0872,
+          "latest_1d_pct": -0.0282,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.0069
+          "since_last_a_share_close_pct": -0.0282
         },
         {
-          "5d_pct": 0.0279,
+          "5d_pct": 0.0331,
           "factor_id": "NASDAQ",
           "freshness": "FRESH",
-          "latest_1d_pct": -0.0833,
+          "latest_1d_pct": -0.1671,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.1155
+          "since_last_a_share_close_pct": -0.1671
         },
         {
-          "5d_pct": -4.4286,
+          "5d_pct": -3.3099,
           "factor_id": "SOX",
           "freshness": "FRESH",
-          "latest_1d_pct": -0.9422,
+          "latest_1d_pct": -0.2462,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.8857
+          "since_last_a_share_close_pct": -0.2462
         },
         {
-          "5d_pct": -2.5078,
+          "5d_pct": -0.9728,
           "factor_id": "VIX",
           "freshness": "FRESH",
-          "latest_1d_pct": 2.4374,
+          "latest_1d_pct": 0.3945,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": 0.3226
+          "since_last_a_share_close_pct": -1.4839
         },
         {
-          "5d_pct": -0.2674,
+          "5d_pct": -0.2676,
           "factor_id": "US10Y",
           "freshness": "FRESH",
-          "latest_1d_pct": -0.3626,
+          "latest_1d_pct": -0.4389,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.3626
+          "since_last_a_share_close_pct": -0.4389
         },
         {
-          "5d_pct": 0.093,
+          "5d_pct": 0.0979,
           "factor_id": "DXY",
           "freshness": "FRESH",
-          "latest_1d_pct": -0.347,
+          "latest_1d_pct": -0.3481,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.0762
+          "since_last_a_share_close_pct": -0.0938
         },
         {
-          "5d_pct": -0.1736,
+          "5d_pct": -0.144,
           "factor_id": "USDCNH",
           "freshness": "FRESH",
-          "latest_1d_pct": -0.0382,
+          "latest_1d_pct": -0.029,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.0342
+          "since_last_a_share_close_pct": -0.029
         },
         {
           "5d_pct": 2.352,
@@ -2020,44 +2020,44 @@
           "since_last_a_share_close_pct": 0.1441
         },
         {
-          "5d_pct": 1.7894,
+          "5d_pct": 2.0699,
           "factor_id": "COPPER",
           "freshness": "FRESH",
-          "latest_1d_pct": 0.209,
+          "latest_1d_pct": 0.4852,
           "market_date": "2026-10-13",
           "since_last_a_share_close_pct": 0.0
         },
         {
-          "5d_pct": -0.3415,
+          "5d_pct": -0.0836,
           "factor_id": "GOLD",
           "freshness": "FRESH",
-          "latest_1d_pct": -0.4248,
+          "latest_1d_pct": -0.167,
           "market_date": "2026-10-13",
           "since_last_a_share_close_pct": 0.0
         },
         {
-          "5d_pct": 5.3779,
+          "5d_pct": 5.8587,
           "factor_id": "CRUDE_OIL",
           "freshness": "FRESH",
-          "latest_1d_pct": 0.5441,
+          "latest_1d_pct": 1.0028,
           "market_date": "2026-10-13",
           "since_last_a_share_close_pct": 0.0
         },
         {
-          "5d_pct": 2.1523,
+          "5d_pct": 1.9461,
           "factor_id": "BTC",
           "freshness": "FRESH",
-          "latest_1d_pct": 1.041,
+          "latest_1d_pct": 1.6739,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.6887
+          "since_last_a_share_close_pct": -0.4057
         },
         {
-          "5d_pct": 2.501,
+          "5d_pct": 1.4396,
           "factor_id": "ETH",
           "freshness": "FRESH",
-          "latest_1d_pct": -0.151,
+          "latest_1d_pct": 1.7958,
           "market_date": "2026-10-13",
-          "since_last_a_share_close_pct": -0.7801
+          "since_last_a_share_close_pct": -0.6601
         }
       ],
       "authority": "RESEARCH_ONLY",
@@ -4509,8 +4509,8 @@
           ],
           "factors": [
             {
-              "change_24h_pct": 0.209,
-              "change_5d_pct": 1.7894,
+              "change_24h_pct": 0.4852,
+              "change_5d_pct": 2.0699,
               "direction": "NEUTRAL",
               "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
               "exposure_direction": "PRODUCER_POSITIVE",
@@ -4524,8 +4524,8 @@
               "since_last_a_share_close_pct": 0.0
             },
             {
-              "change_24h_pct": -0.4248,
-              "change_5d_pct": -0.3415,
+              "change_24h_pct": -0.167,
+              "change_5d_pct": -0.0836,
               "direction": "NEUTRAL",
               "evidence_ref": "https://www.cmoc.com/html/AboutUs/Introduce/",
               "exposure_direction": "PRODUCER_POSITIVE",
