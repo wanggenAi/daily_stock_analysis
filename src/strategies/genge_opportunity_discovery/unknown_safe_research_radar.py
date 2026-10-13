@@ -4,6 +4,11 @@ The radar exists to preserve research visibility when a candidate still has UNKN
 hard gates. It does not relax hard gates, promote UNKNOWN to PASS, or create Formal
 trading authority. A candidate with any verified FAIL is excluded. Candidates need
 a minimum amount of verified PASS progress before they can enter the radar.
+
+The investor-facing Top list is additionally diversified by official industry: the
+highest-ranked eligible candidate represents each industry, while same-industry
+alternatives remain in the full research radar as backups. This changes visibility,
+not Formal trading authority.
 """
 from __future__ import annotations
 
@@ -187,6 +192,51 @@ def _ranking_key(row: Mapping[str, Any]) -> tuple[Any, ...]:
     )
 
 
+def _industry_key(row: Mapping[str, Any]) -> str:
+    industry = _text(row.get("industry"))
+    if industry:
+        return industry
+    return f"UNCLASSIFIED:{_text(row.get('code'))}"
+
+
+def _select_diversified_top(
+    eligible: list[dict[str, Any]],
+    *,
+    top_n: int,
+) -> tuple[list[dict[str, Any]], int, int]:
+    """Select one best-ranked representative per official industry.
+
+    The global radar ranking remains untouched. Same-industry alternatives stay in
+    ``eligible_rows`` and are annotated as backups, so diversification never hides
+    research evidence or upgrades a weaker candidate over a stronger one inside the
+    same industry.
+    """
+    selected: list[dict[str, Any]] = []
+    first_by_industry: dict[str, str] = {}
+    same_industry_backup_count = 0
+
+    for row in eligible:
+        industry_key = _industry_key(row)
+        row["industry_key"] = industry_key
+        row["selected_as_industry_representative"] = False
+        row["same_industry_representative_code"] = ""
+        row["diversified_rank"] = 0
+
+        representative_code = first_by_industry.get(industry_key)
+        if representative_code:
+            same_industry_backup_count += 1
+            row["same_industry_representative_code"] = representative_code
+            continue
+
+        first_by_industry[industry_key] = str(row.get("code") or "")
+        if len(selected) < top_n:
+            row["selected_as_industry_representative"] = True
+            row["diversified_rank"] = len(selected) + 1
+            selected.append(row)
+
+    return selected, len(first_by_industry), same_industry_backup_count
+
+
 def build_radar(
     candidate_rows: list[dict[str, Any]],
     profile_payload: Mapping[str, Any],
@@ -258,7 +308,10 @@ def build_radar(
     eligible.sort(key=_ranking_key)
     for rank, row in enumerate(eligible, start=1):
         row["radar_rank"] = rank
-    top = eligible[:top_n]
+    top, distinct_industry_count, same_industry_backup_count = _select_diversified_top(
+        eligible,
+        top_n=top_n,
+    )
 
     now = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
     summary = {
@@ -275,10 +328,14 @@ def build_radar(
         "unverified_pass_downgraded_count": unverified_pass_downgraded_count,
         "unknown_eligible_count": sum(row["radar_tier"] == "UNKNOWN_RESEARCH" for row in eligible),
         "full_evidence_count": sum(row["radar_tier"] == "FULL_EVIDENCE" for row in eligible),
+        "distinct_industry_count": distinct_industry_count,
+        "same_industry_backup_count": same_industry_backup_count,
+        "top_distinct_industry_count": len({_industry_key(row) for row in top}),
         "top_count": len(top),
         "requested_top_n": top_n,
         "min_verified_pass_gates": min_verified_pass_gates,
         "ranking_policy": "VERIFIED_PASS_COUNT_DESC_THEN_QUANT_DESC_THEN_V31_REVIEW_RANK_ASC_THEN_CODE_ASC",
+        "top_selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
         "formal_trading_authority": False,
         "automatic_formal_buy_allowed": False,
         "mutates_authoritative_decision": False,
@@ -299,29 +356,40 @@ def _render_markdown(payload: Mapping[str, Any]) -> str:
         f"- source run: `{summary.get('source_run_id')}`",
         f"- candidates inspected: **{summary.get('candidate_count')}**",
         f"- radar eligible: **{summary.get('radar_eligible_count')}**",
+        f"- distinct official industries in eligible radar: **{summary.get('distinct_industry_count')}**",
+        f"- same-industry backups retained outside the investor Top list: **{summary.get('same_industry_backup_count')}**",
         f"- hard-gate FAIL excluded: **{summary.get('hard_fail_excluded_count')}**",
         f"- insufficient verified progress: **{summary.get('insufficient_verified_progress_count')}**",
         f"- UNKNOWN-eligible research candidates: **{summary.get('unknown_eligible_count')}**",
         f"- full-evidence candidates: **{summary.get('full_evidence_count')}**",
-        f"- Top rows emitted: **{summary.get('top_count')}** / requested {summary.get('requested_top_n')}",
+        f"- diversified Top rows emitted: **{summary.get('top_count')}** / requested {summary.get('requested_top_n')}",
+        f"- Top industry rule: **{summary.get('top_selection_policy')}**.",
         f"- admission floor: at least **{summary.get('min_verified_pass_gates')} verified PASS** gates and **zero FAIL** gates.",
         "- Formal authority: **none**; automatic Formal BUY: **false**; UNKNOWN != PASS; no_auto_trade=true.",
         "",
-        "## Research Top",
+        "## Diversified Research Top",
         "",
-        "| Rank | Code | Name | Tier | PASS | UNKNOWN | Quant | V3.1 rank | Follow-up |",
-        "|---:|---|---|---|---:|---:|---:|---:|---|",
+        "| Top | Global | Code | Name | Industry | Tier | PASS | UNKNOWN | Quant | Follow-up |",
+        "|---:|---:|---|---|---|---|---:|---:|---:|---|",
     ]
     for row in top_rows:
         quant = _text(row.get("quant_score")) or "—"
-        review_rank = _text(row.get("v31_review_rank")) or "—"
         lines.append(
-            f"| {row['radar_rank']} | {row['code']} | {row['stock_name']} | {row['radar_tier']} | "
-            f"{row['verified_pass_gate_count']} | {row['unknown_gate_count']} | {quant} | {review_rank} | {row['followup']} |"
+            f"| {row['diversified_rank']} | {row['radar_rank']} | {row['code']} | {row['stock_name']} | "
+            f"{row['industry'] or '—'} | {row['radar_tier']} | {row['verified_pass_gate_count']} | "
+            f"{row['unknown_gate_count']} | {quant} | {row['followup']} |"
         )
     if not top_rows:
-        lines.append("| — | — | No eligible research candidate | — | — | — | — | — | — |")
-    lines.extend(["", "This is a research queue, not a buy list or execution instruction.", ""])
+        lines.append("| — | — | — | No eligible research candidate | — | — | — | — | — | — |")
+    lines.extend(
+        [
+            "",
+            "Same-industry alternatives remain in research_radar.csv as backups; they do not consume another investor Top slot.",
+            "",
+            "This is a research queue, not a buy list or execution instruction.",
+            "",
+        ]
+    )
     return "\n".join(lines)
 
 
