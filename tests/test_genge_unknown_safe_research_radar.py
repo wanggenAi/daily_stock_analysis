@@ -28,11 +28,11 @@ def _payload(profiles):
     }
 
 
-def _row(code, quant, rank, industry=""):
+def _row(code, quant, rank, industry=None):
     return {
         "code": code,
         "stock_name": code,
-        "industry": industry,
+        "industry": industry if industry is not None else f"行业-{code}",
         "quant_score": str(quant),
         "v31_review_rank": str(rank),
     }
