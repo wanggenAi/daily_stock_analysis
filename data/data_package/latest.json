@@ -3,16 +3,16 @@
   "contract": "GEN_GE_REALTIME_DATA_PACKAGE_V1",
   "datasets": [
     {
-      "changed_since_previous": false,
-      "content_sha256": "d2c8b90402d61be39f825606b953b4e58ab445c58ce0b5f961008d9911b689b0",
+      "changed_since_previous": true,
+      "content_sha256": "bc5a1bb672ff36dc54e6dac2945363f1bcb4a7a6ca6d1f774e066fbe8d0a0d5c",
       "execution_critical": true,
       "exists": true,
-      "file_count": 3,
+      "file_count": 4,
       "freshness_basis": "TRADE_DATE",
       "freshness_sla_minutes": null,
-      "freshness_state": "STALE",
-      "latest_observed_at": "2026-10-12T22:14:56.923317+00:00",
-      "latest_trade_date": "2026-10-12",
+      "freshness_state": "FRESH",
+      "latest_observed_at": "2026-10-13T18:05:15.456697+00:00",
+      "latest_trade_date": "2026-10-13",
       "lineage_file_sample": [
         {
           "observed_at": "2026-10-10T04:18:23.313926+00:00",
@@ -29,21 +29,28 @@
           "trade_date": "2026-10-12"
         },
         {
-          "observed_at": "2026-10-12T22:14:56.923317+00:00",
+          "observed_at": "2026-10-13T18:05:15.456697+00:00",
+          "path": "data/market_snapshots/2026-10-13.json",
+          "sha256": "70c62d9d4146f74eaaca9893e79143aae258bec790f58bf5fd92caae98d0e7f1",
+          "size": 2963045,
+          "trade_date": "2026-10-13"
+        },
+        {
+          "observed_at": "2026-10-13T18:05:15.456697+00:00",
           "path": "data/market_snapshots/latest.json",
-          "sha256": "f55baff8e1df78b9168484fc0ce48604b3b3e9b7e94476e4f4fad96a6afb7855",
-          "size": 2960871,
-          "trade_date": "2026-10-12"
+          "sha256": "70c62d9d4146f74eaaca9893e79143aae258bec790f58bf5fd92caae98d0e7f1",
+          "size": 2963045,
+          "trade_date": "2026-10-13"
         }
       ],
       "lineage_file_sample_truncated": false,
       "name": "all_a_market_snapshot",
       "root": "data/market_snapshots",
       "validation_evidence": null,
-      "watermark": "65316a41286982b6950ed035"
+      "watermark": "d02ed986072e87bc0c37beb5"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "fa3208564f225ea3de4f3bfec1ceaf3d6448e1a1b23efcdaf36626ff0bb84457",
       "execution_critical": true,
       "exists": true,
@@ -435,7 +442,7 @@
       "file_count": 28,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 480,
-      "freshness_state": "FRESH",
+      "freshness_state": "STALE",
       "latest_observed_at": "2026-10-13T10:28:33.694377+00:00",
       "latest_trade_date": "2026-10-13",
       "lineage_file_sample": [
@@ -640,7 +647,7 @@
       "name": "global_market_pulse",
       "root": "data/global_market_pulse",
       "validation_evidence": {
-        "accepted": true,
+        "accepted": false,
         "authority": "RESEARCH_ONLY",
         "contract": "GEN_GE_GLOBAL_MARKET_PULSE_VALIDATION_V1",
         "coverage_status": "OK",
@@ -650,13 +657,13 @@
         "latest_observation_at": "2026-10-13T10:00:00+00:00",
         "no_auto_trade": true,
         "path": "data/global_market_pulse/validation/latest.json",
-        "reason": "SUCCESSFUL_LIVE_VALIDATION",
+        "reason": "GLOBAL_LATEST_OBSERVATION_STALE",
         "refreshed_at": "2026-10-13T10:28:33.694377+00:00",
         "semantic_fingerprint": "cf9030b87ed985b15ede6351463fb6d46e8bfdbba69d34dbc1099ffdfda1aab2",
         "semantic_state": "UPDATED",
         "validation_status": "SUCCESS"
       },
-      "watermark": "9c0001ca6e861286562dc0b1"
+      "watermark": "3849d87e728ca02bb8543c19"
     },
     {
       "changed_since_previous": false,
@@ -1095,21 +1102,21 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "26f2d2078f72b40ae714ed276ae6a83e0412aead6d087d61eaf408c3bf431eab",
+      "content_sha256": "92d71321e1f9504aeed1309d074dcbe3c60af866a3a81ac73050c8acfbcb5c13",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-13T12:06:53.266165+00:00",
+      "latest_observed_at": "2026-10-13T16:57:04.233795+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-13T12:06:53.266165+00:00",
+          "observed_at": "2026-10-13T16:57:04.233795+00:00",
           "path": "data/production_observability/latest.json",
-          "sha256": "f6d2f6807fe35eb0e6c126ce38aaf98c0a231e7d274042bd8a4e2b6f8220eb49",
-          "size": 2841,
+          "sha256": "f05ff865229de69b50f41ef64eff177e92f1e7307b5308170ad8e883d9517e26",
+          "size": 2840,
           "trade_date": null
         }
       ],
@@ -1117,7 +1124,7 @@
       "name": "production_observability",
       "root": "data/production_observability",
       "validation_evidence": null,
-      "watermark": "3efee509f51480bd7a6cbb67"
+      "watermark": "6625a4827d2289740b98ee80"
     },
     {
       "changed_since_previous": false,
@@ -1259,14 +1266,14 @@
       "watermark": "cd9bf223a6290dde12eeb60d"
     },
     {
-      "changed_since_previous": true,
+      "changed_since_previous": false,
       "content_sha256": "a52e4f2628209395791bc1ed7497144e4b074decdbd575777b46ab1f39f44515",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
-      "freshness_state": "FRESH",
+      "freshness_state": "STALE",
       "latest_observed_at": "2026-10-13T14:14:56.134333+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
@@ -1286,8 +1293,8 @@
     }
   ],
   "expected_latest_a_share_trade_date": "2026-10-13",
-  "freshness_epoch": "2026-10-13T14:00:00+00:00",
-  "generated_at": "2026-10-13T14:00:00+00:00",
+  "freshness_epoch": "2026-10-13T18:00:00+00:00",
+  "generated_at": "2026-10-13T18:00:00+00:00",
   "incremental_update_contract": {
     "collector_layer_owns_acquisition": true,
     "filesystem_mtime_may_establish_freshness": false,
@@ -1298,18 +1305,19 @@
     "validation_heartbeat_may_grant_formal_trading_authority": false,
     "validation_heartbeat_may_mutate_semantic_content": false
   },
-  "latest_trade_date": "2026-10-12",
-  "market_trade_date_alignment_ok": false,
+  "latest_trade_date": "2026-10-13",
+  "market_trade_date_alignment_ok": true,
   "missing_required_datasets": [],
   "optional_degraded_datasets": [
     "manual_execution_quotes",
-    "price_value_history"
+    "price_value_history",
+    "live_execution_quotes"
   ],
   "package_status": "STALE",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "ec061dbc368ab6cd06d9",
+  "snapshot_id": "220283521a32d9e159e5",
   "stale_required_datasets": [
-    "all_a_market_snapshot"
+    "global_market_pulse"
   ],
   "unknown_required_datasets": []
 }
