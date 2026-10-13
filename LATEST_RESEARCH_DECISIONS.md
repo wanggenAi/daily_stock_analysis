@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **17**
-- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **16** / REJECT: **0**
+- requested: **20**
+- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **19** / REJECT: **0**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -15,7 +15,7 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **2** / WATCH: **5** / BLOCK: **9**
+- BUILD: **1** / PROBE: **2** / WATCH: **6** / BLOCK: **11**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8976 / max_portfolio=3.0%
 - 603939 益丰药房: **PROBE** / conviction=0.6816 / max_portfolio=0.82%
@@ -25,7 +25,10 @@
 
 - 603596 伯特利: **BUY** / ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT
 - 603939 益丰药房: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 000768 中航西飞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 600309 万华化学: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600338 西藏珠峰: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 003039 顺控发展: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600406 国电南瑞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600318 新力金融: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600257 大湖股份: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
@@ -43,17 +46,20 @@
 
 # GenGe V3.1 Deep Decision Closure V2
 
-- decision ready: **2/17** (11.8%)
-- evidence complete: **1/17** (5.9%)
+- decision ready: **2/20** (10.0%)
+- evidence complete: **1/20** (5.0%)
 - FULL_EVIDENCE: **1**
 - DECISION_READY_WITH_UNCERTAINTY: **1**
 - DECISIVE_REJECT: **0**
-- RESEARCH_REQUIRED: **15**
+- RESEARCH_REQUIRED: **18**
 - UNKNOWN remains UNKNOWN. Bounded uncertainty never grants Formal BUY or auto-trade.
 
 - 603596 伯特利: **FULL_EVIDENCE**; decision_ready=True; unknown=NONE
 - 603939 益丰药房: **RESEARCH_REQUIRED**; decision_ready=False; unknown=long_term_demand,moat
+- 000768 中航西飞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 600309 万华化学: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand
 - 600338 西藏珠峰: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,moat
+- 003039 顺控发展: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600406 国电南瑞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600318 新力金融: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600257 大湖股份: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
