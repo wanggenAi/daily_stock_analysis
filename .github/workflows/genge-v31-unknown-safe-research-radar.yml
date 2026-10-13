@@ -1,0 +1,194 @@
+name: GenGe V3.1 UNKNOWN-Safe Research Radar
+
+run-name: >-
+  GenGe V3.1 UNKNOWN-Safe Research Radar / ${{ github.event.workflow_run.id || inputs.source_run_id || github.run_id }}
+
+on:
+  workflow_run:
+    workflows: ["GenGe V3.1.1 Every-Industry Research"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      source_run_id:
+        description: "Optional successful Every-Industry Research run id; blank uses latest successful run"
+        required: false
+        type: string
+  push:
+    branches: [main]
+    paths:
+      - 'src/strategies/genge_opportunity_discovery/unknown_safe_research_radar.py'
+      - 'tests/test_genge_unknown_safe_research_radar.py'
+      - '.github/workflows/genge-v31-unknown-safe-research-radar.yml'
+      - 'docs/UNKNOWN_SAFE_RESEARCH_RADAR.md'
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: genge-v31-unknown-safe-research-radar
+  cancel-in-progress: false
+
+jobs:
+  radar:
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout current code
+        uses: actions/checkout@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Run radar contract tests
+        run: |
+          python -m pip install --upgrade pip --disable-pip-version-check
+          python -m pip install pytest
+          python -m pytest -q tests/test_genge_unknown_safe_research_radar.py
+          python -m py_compile src/strategies/genge_opportunity_discovery/unknown_safe_research_radar.py
+
+      - name: Resolve successful Every-Industry source run
+        id: source
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_ID: ${{ github.event.workflow_run.id }}
+          INPUT_SOURCE_RUN_ID: ${{ inputs.source_run_id }}
+        run: |
+          set -euo pipefail
+          source_run_id=""
+          if [[ "$EVENT_NAME" == "workflow_run" ]]; then
+            source_run_id="$WORKFLOW_RUN_ID"
+          elif [[ -n "${INPUT_SOURCE_RUN_ID:-}" ]]; then
+            source_run_id="$INPUT_SOURCE_RUN_ID"
+          else
+            source_run_id="$(
+              gh run list \
+                --repo "$GITHUB_REPOSITORY" \
+                --workflow genge-v31-industry-research.yml \
+                --branch main \
+                --status success \
+                --limit 20 \
+                --json databaseId \
+                --jq '.[0].databaseId'
+            )"
+          fi
+          [[ "$source_run_id" =~ ^[0-9]+$ ]] || { echo "No valid successful source run id resolved" >&2; exit 1; }
+          echo "source_run_id=$source_run_id" >> "$GITHUB_OUTPUT"
+          echo "SOURCE_RUN_ID=$source_run_id" >> "$GITHUB_ENV"
+
+      - name: Download exact Every-Industry artifact
+        shell: bash
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          rm -rf source
+          mkdir -p source
+          gh run download "$SOURCE_RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name genge-v31-every-industry-research \
+            --dir source
+          test -s source/v31_deep_calculation/v31_review_queue_deep_calculated.csv
+          test -s source/v31_deep_calculation/deep_review_profiles.json
+
+      - name: Build UNKNOWN-safe research radar
+        run: |
+          python -m src.strategies.genge_opportunity_discovery.unknown_safe_research_radar \
+            --candidate-csv source/v31_deep_calculation/v31_review_queue_deep_calculated.csv \
+            --deep-profiles-json source/v31_deep_calculation/deep_review_profiles.json \
+            --output-dir reports/unknown_safe_research_radar \
+            --min-verified-pass-gates 2 \
+            --top-n 10 \
+            --source-run-id "$SOURCE_RUN_ID"
+
+      - name: Validate fail-closed radar artifact
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          from pathlib import Path
+
+          root = Path('reports/unknown_safe_research_radar')
+          payload = json.loads((root / 'research_radar.json').read_text(encoding='utf-8'))
+          summary = payload['summary']
+          top = payload['top_rows']
+          eligible = list(csv.DictReader((root / 'research_radar.csv').open(encoding='utf-8', newline='')))
+
+          assert summary['contract'] == 'GEN_GE_V31_UNKNOWN_SAFE_RESEARCH_RADAR_V1'
+          assert summary['authority'] == 'RESEARCH_ONLY'
+          assert summary['formal_trading_authority'] is False
+          assert summary['automatic_formal_buy_allowed'] is False
+          assert summary['mutates_authoritative_decision'] is False
+          assert summary['unknown_is_pass'] is False
+          assert summary['no_auto_trade'] is True
+          assert summary['min_verified_pass_gates'] == 2
+          assert summary['top_count'] == len(top)
+          assert summary['top_count'] <= 10
+          assert summary['radar_eligible_count'] == len(eligible)
+          for row in top:
+              assert row['fail_gate_count'] == 0
+              assert row['verified_pass_gate_count'] >= 2
+              assert row['authority'] == 'RESEARCH_ONLY'
+              assert row['formal_trading_authority'] is False
+              assert row['automatic_formal_buy_allowed'] is False
+              assert row['mutates_authoritative_decision'] is False
+              assert row['unknown_is_pass'] is False
+              assert row['no_auto_trade'] is True
+              if row['radar_tier'] == 'FULL_EVIDENCE':
+                  assert row['unknown_gate_count'] == 0
+              else:
+                  assert row['radar_tier'] == 'UNKNOWN_RESEARCH'
+                  assert row['unknown_gate_count'] > 0
+          PY
+
+      - name: Upload research-only radar artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: genge-v31-unknown-safe-research-radar-${{ env.SOURCE_RUN_ID }}
+          path: reports/unknown_safe_research_radar/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Persist latest advisory radar with optimistic replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          cp reports/unknown_safe_research_radar/research_radar.json /tmp/latest-research-radar.json
+          cp reports/unknown_safe_research_radar/research_radar.md /tmp/latest-research-radar.md
+          git config user.name 'genge-research-radar-bot'
+          git config user.email '31836791+wanggenAi@users.noreply.github.com'
+
+          for attempt in 1 2 3 4; do
+            git fetch origin main
+            git reset --hard origin/main
+            mkdir -p data/research_radar
+            cp /tmp/latest-research-radar.json data/research_radar/latest.json
+            cp /tmp/latest-research-radar.md LATEST_RESEARCH_RADAR.md
+            git add -f data/research_radar/latest.json
+            git add LATEST_RESEARCH_RADAR.md
+            if git diff --cached --quiet; then
+              echo 'Latest UNKNOWN-safe research radar is already persisted.'
+              exit 0
+            fi
+            git commit -m 'Persist unknown-safe research radar [skip ci]'
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            echo 'main moved while persisting radar; replaying.' >&2
+          done
+          echo 'Radar persistence failed after 4 optimistic replay attempts.' >&2
+          exit 1
+
+      - name: Publish summary
+        if: always()
+        run: |
+          echo '# UNKNOWN-Safe Research Radar' >> "$GITHUB_STEP_SUMMARY"
+          echo "- source Every-Industry run: \`$SOURCE_RUN_ID\`" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -f reports/unknown_safe_research_radar/research_radar.md ]]; then
+            cat reports/unknown_safe_research_radar/research_radar.md >> "$GITHUB_STEP_SUMMARY"
+          fi
