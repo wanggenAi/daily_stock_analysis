@@ -1,62 +1,65 @@
 # Current Mission
 
 ## Goal
-Deliver one **useful, continuously evidence-backed holdings-first stock report** through the existing deterministic Web and user-initiated ChatGPT Web; never use GPT API in new automation, never infer live broker holdings/cash/fills or create automatic trades. This file is an **index**, NOT either of the two independently owned CAS state machines on `state/chatgpt-recovery`. On EVERY restart re-read actual main, AGENTS.md, both LIVE sidecars, current PRs/reviews/exact-head CI, current persisted JSON **and real run artifacts**; current live evidence wins over these dated facts.
+Deliver one **useful, continuously evidence-backed holdings-first stock report** through the existing deterministic Web and user-initiated ChatGPT Web; never use GPT API in new automation, never infer live broker holdings/cash/fills or create automatic trades. This file is an **index**, NOT either independently owned CAS state machine on `state/chatgpt-recovery`. On every restart re-read live main, AGENTS.md, both sidecars, current PRs/Actions and persisted artifacts; live GitHub wins over dated text here.
 
 ## Current Phase
-- V4 only: `recovery/tasks/investor-decision-report-v4.json` on `state/chatgpt-recovery`, independently CAS verified **generation 24** at commit `1d6714f443ef325dbf11b554691da4482908e154` (2026-09-30 ~08:06 +08). **H3 code is MERGED**, postmerge full CI is SUCCESS; actual deployed Web/API/screenshot remain OPTIONAL unverified, NOT required for the primary ChatGPT Web task. H1 original source-validated read-only manifest was previously independently production proven.
-- Research only: `recovery/tasks/stock-system-convergence.json` on the same state branch, separately read **generation 83**, status `GEN83_TRUE_SEP29_POSTCLOSE_ALL_A_AUDITED_ALL_COMPANY_COLLECTION_CACHE_ONLY_ZERO_ORIGINALS`. Read exact live blob again before any research write. Do not cross-update cursors, nor recreate old Scan/Deep source epochs.
+- V4 only: `recovery/tasks/investor-decision-report-v4.json` is independently CAS verified **generation 25**, state commit `48fa2fffe6abe7fd4db98a66dc43a15990d60e45`. #326 holiday-freshness code is merged and real postmerge H1/Dashboard production is proven for the Sep30 market epoch.
+- Research only: `recovery/tasks/stock-system-convergence.json` remains separately read **generation 83**, status `GEN83_TRUE_SEP29_POSTCLOSE_ALL_A_AUDITED_ALL_COMPANY_COLLECTION_CACHE_ONLY_ZERO_ORIGINALS`. Do not write that cursor from this root-index task.
+- H3 website deployment remains optional and is not required for the primary connected-GitHub ChatGPT Web report.
 
 ## Last Verified Main
-- Main `3f898eda0e4d00a2f8e7f77505c0f477c88519ac`, verified 2026-09-30 ~08:06 Beijing, postmerge H1 publisher persisted real accepted H1 after #325 merged. Runtime-generated main moves rapidly; inspect live each operation, do not insist current main always equals the original Canonical producer SHA.
+- Main `0e8bd80c03b7f5f700bef955467bc778ff2e84a8`, generated 2026-10-02 09:38 Beijing by the real Investor Decision Brief publisher after #326. Runtime writers can advance main again; always re-read live refs before action.
 
 ## Active Branch
-- This one-file docs-only root index refresh: `chore/fresh-dual-task-stock-index-20260930`, based on independently checked main `ddd81b35`, superseding conflicting old index #318 after its own safe review and merge.
-- Active independent research PR #323 remains separate; no reruns, merges or cursor mutation by this root index.
+- Root index only: `docs/task-state-pr326-holiday-freshness-20261002`, based exactly on main `0e8bd80c...`.
+- Independent research PR #323 remains a separate owner/lane; no merge, rerun or research-cursor mutation is authorized by this docs refresh.
 
 ## Active PR
-- #322 V4 H3 replacement **MERGED** in main `ddd81b35`, exact head `ae2149ae`. Original H3 #315 now **CLOSED unmerged** after comparing identical code files (only CHANGELOG differed for current main).
-- #325 V4 H1 actual `OK` freshness contract fix **MERGED** on main `233d599702b9d6be6bd58db2504f0c4339fbd1e1` after exact-head complete SUCCESS CI 36647301888 and genuine Investor Brief contract36647301740 SUCCESS. Postmerge real publisher36648464329 SUCCESS with JSON+Markdown validated and artifact11068998726. No change to broker/exchange/calendar proof or trading rights.
-- #323 research exhausted-gap/2023 annual comparative repair still OPEN at last check head `b2e04fd`, latest main mergeability fluctuates with runtime drift. Its separate owner must reverify exact head, all tests and original evidence postmerge; do not infer that old CI equals production.
-- Old root index #318 is OPEN but `mergeable=false` and contains outdated cross-lane data; do NOT force it into main. Replace only with fully checked up-to-date one-file index from recent main.
+- #326 **MERGED** as `46e2b334c94c147cc253f96ea7d1515e5e90e4a6`: official 2026 SSE closure calendar now drives generation freshness; Oct1-7 keeps Sep30 as latest completed session and Oct8 is required only after the existing 16:00 settlement cutoff.
+- #324 prior root-index replacement **MERGED**; this one-file refresh supersedes only its dated status.
+- #323 research repair remains separate/open at last inspection. Old #318 must not be reintroduced.
 
 ## CI
-- H3 #322 exact-head global CI `36502191593` and separate Web contract `36502191557`: SUCCESS. Postmerge main H3 Web contract `36645259946`: SUCCESS. Postmerge full main global CI `36645259874`: independently verified **completed/SUCCESS** including backend/docker/governance/web; merged code validation only, NOT deployed website evidence.
-- Any new root-index PR must satisfy required `TASK_STATE.md` exact headings / at most 120 lines, AI governance check, latest main scope and review. No green CI claims before actual run inspection.
+- #326 exact head `f2fa0bd68e1f6233fb4c7a9409721740b07de557`: full CI run `36950137328` **SUCCESS** (ai-governance/backend/docker; Web correctly skipped), Postclose Source Recovery `36950137361` **SUCCESS**, Opportunity Discovery and Legacy Risk-Capped PR checks **SUCCESS**.
+- Postmerge main CI run `36951821948` on merge commit `46e2b334...` is still in progress at this checkpoint; do not convert that into a green claim.
+- Any new root-index PR must preserve the exact required headings, stay <=120 lines, and pass governance/review before merge.
 
 ## Production / Artifact
-- Genuine 2026-09-29 EOD is in Canonical `d1081f09e9e6ad2aec26` / source run `36600662837`; latest persisted `data/investor_decision_dashboard/latest.json` and H1 `data/investor_chatgpt_handoff/latest.json` as-of **Sep29**. The source day is real, not a Sep30 report-generation timestamp. Previously proven source-date guard PR319 and postclose recovery PR320 are MERGED; PR321 holding valuation watch MERGED.
-- **H1 true postmerge production accepted (as of this dated checkpoint only):** main Investor Brief push run36648464329 SUCCESS and artifact11068998726; real latest H1 JSON blob `ff3f4c60...` and Markdown blob `38420b34...` generated `2026-09-30T00:06:06Z`, genuine market-as-of Sep29, Canonical `d1081f09...` / upstream run36600662837. H1 pins exact then-current Dashboard blob `46cadada...` and Center blob `d53cecfa...`, both independently matched mutable main in one verification read. H1 now shows `UPSTREAM_FRESH_CALENDAR_UNVERIFIED` with `upstream_status=OK` in BOTH JSON/Markdown. Do not claim pinned live equality after next Center refresh; always reread live Git blobs.
-- Last independently audited genuine Sep28 postclose full All-A run `36463680012`, artifact `10990169398`: bounded Deep queue80, annual official source16 noncached attempts (15 missing,1 failed), event30 attempted OK at collector-level but 0 verifiable original_url; unique touched30/80, untouched50, **zero independently proven new official issuer originals**, strict-ready0. Do not confuse collectors' OK with a genuine published filing, or repeat consumed runs.
-- Last verified center run on Sep29 market has 4 holdings, deep-complete0, new Formal BUY0/WAIT_PRICE0 and no immediate invested planning cash. Research BUY=1 among8 current-terminal research objects, remaining 7 gaps, unresolved Deep gate count29 **at that specific runtime**; this workset can change and counts are not proof of stable market opportunities.
+- Real postmerge Investor Decision Brief rerun `36945357562` attempt 2 **SUCCESS** and persisted main `0e8bd80c...`.
+- Current Dashboard blob `453bae4a8c148c7a861730b774d48c111532e174`: generated `2026-10-02T01:38:11Z`, genuine market/CANONICAL as-of **2026-09-30**, freshness `OK`, `expected_min_trade_date=2026-09-30`, `holiday_calendar_mode=OFFICIAL_SSE_2026`; no stale fail-closed overlay.
+- Current H1 blob `8fa3986a9c1ac06ebfe022ca9e918fb2dfc6aa21`: market EOD `UPSTREAM_FRESH_CALENDAR_UNVERIFIED` with upstream `OK`; stale-session blocker is gone. Remaining blockers are fund-position confirmation, live broker cash/positions, executable quotes and independent exchange-calendar verification.
+- Formal BUY=0, Formal WAIT_PRICE=0, immediate operations=0. Research terminal has BUY=1 and RESEARCH_GAP=12; research authority remains advisory-only.
 
 ## Completed
-- #319 monotonic market-date publication guard merged; #320 calendar-aware postclose recovery merged; actual Sep28 and then Sep29 EOD successfully reached Canonical; #321 read-only holding-value-watch merged.
-- New research gen83 completed a genuine Sep29 postclose All-A read-only artifact audit: scheduled run `36598810901` / original artifact `11048833345`, real trade date Sep29, universe5,223/effective scan4,500/Deep80/strict-ready0. Raw audit CSV has annual16 CACHE-ONLY (15 SSE MISSING,1 SZSE FAILED), event30 CACHE-ONLY OK but zero original URLs; only30/80 company codes touched,50/80 untouched, ZERO new uncached original issuer material in this run. Negative-cache TTL is max24h MISSING/max6h FAILED, event key asof-dated. Do not rerun this consumed source epoch.
-- #325 TRUE H1 real postmerge contract/publication accepted (push run36648464329, artifact11068998726, Sep29 same Canonical and exact JSON+Markdown source pins, 0 H1 actionable orders, no auto trade). V4 CAS Gen24 separately advanced; sibling research CAS Gen83 unchanged.
-- #322 V4 H3 code merged with independent exact-head safety audit: all 16 changed paths matched old base-to-premerge main content (or were absent in both), preserving 420 newer runtime commits; required exact-head backend/docker/web/governance+H3 checks succeeded; postmerge H3 Web contract succeeded. #315 duplicate closed with audit comment. V4 CAS generation19 saved for this verified milestone.
+- #319 monotonic market-date publication guard, #320 postclose recovery, #321 holding-value-watch, #322 V4 H3 and #325 H1 real-status contract are merged and previously verified.
+- #326 fixed the verified Oct1 holiday false-stale defect without changing valuation, BUY/WAIT_PRICE/REJECT thresholds, broker assumptions, GPT API policy or trading authority.
+- V4 cursor generation 25 records #326 exact-head CI, merge, real production publisher and current H1/Dashboard blobs. Independent research cursor remains generation 83 untouched.
 
 ## Current Findings
-- Verified H1 false-stale defect is FIXED on main by #325: actual Sep29 dashboard fresh status `OK`, H1 JSON/Markdown both `UPSTREAM_FRESH_CALENDAR_UNVERIFIED` on successful postmerge real run36648464329; invalid/future expected_min_trade_date and contradictory upstream flags remain fail-closed. This is NOT independent exchange calendar, original issuer, live broker, or trade execution proof.
-- Financial behavior: research BUY is advisory-only. Formal new BUY/WAIT_PRICE both0, immediate new cash deployment0, no auto trade. All 4 recorded holding actions remain from frozen Canonical, no inferred newest lot/fill/cash. Sep20 planned 50,000 CNY **not current brokerage cash**; funds/actual fills/current broker positions UNKNOWN.
-- Actual postmerge deployment is not yet proven. Repo homepage metadata suggests `https://dsa.zhulinsen.tech`, but public access to `/investor-v4` and `/api/v1/investor-v4/latest` could not be verified from current browsing tool. This is NOT a confirmed live deployment or screenshot.
+- Sep30 is correctly treated as the latest completed mainland session during Oct1-7 under the pinned official 2026 SSE calendar. On Oct8 before 16:00 Shanghai, Sep30 remains sufficient; after 16:00 Oct8 is required.
+- Dashboard may now allow new exposure at the **freshness** layer, but that is not a trade recommendation or proof of executable buying: Canonical Formal BUY/WAIT remain zero, H1 has no formal buy rows, broker cash and executable quotes remain unverified.
+- The current research-only BUY is still one candidate among 13 requested research objects; it must never be promoted to Formal authority merely because freshness is now OK.
+- Planning cash 50,000 CNY dated Sep20 is not current brokerage cash. Existing holding actions and reference prices remain frozen Canonical evidence unless newer verified broker/execution inputs exist.
 
 ## Blockers
-- **Primary ChatGPT Web task does NOT require any website deployment**: connected GitHub H1/Dashboard/Center live hash + asof verification is its acceptance path. Existing optional V4 stock-site deployment and screenshot remain unverified, but merged H3 code's postmerge full CI passed. No new hosting, browser automation or GPT API.
-- H1 same-Canonical newer Decision Center publication races dashboard/handoff source pin; recorded lineage booleans are point-in-time, not current-live proof. Do not add cyclical expensive publisher dispatch blindly.
-- Issuer collector bounded routing 30 touched/50 untouched and 0 verified new original company docs remain research lane. Broker/fund/fill and independent exchange-calendar/quote provenance remain unknown; historical adjusted 5/20/60 trading outcomes not fully accepted.
+- Live broker cash/positions/fills, fund shares and executable quotes are unverified; independent exchange-calendar verification remains distinct from the pinned deterministic 2026 SSE calendar used by the freshness evaluator.
+- Official issuer-original coverage remains incomplete in the independent research lane; gen83 proved zero new independently verified uncached issuer originals in its consumed Sep29 source epoch.
+- H1 publication-time source pins can diverge from a later mutable Decision Center write; every owner report must re-read live Git blobs and lineage instead of trusting an old boolean.
+- Historical corporate-action-adjusted, benchmarked 5/20/60 recommendation outcomes are not fully accepted; do not label historical correlations as verified personal P&L.
 
 ## Next Action
-0. V4 H1 DONE for Sep29 epoch: #325 accurate-head CI, safe merge and real postmerge publisher36648464329 source-consistent JSON+Markdown verified. ON NEXT OWNER REPORT use newest LIVE main immutable hash/date audit; H1's publication-time pin may no longer equal newer Center after subsequent overlays. Do not rerun consumed publisher merely to make a timestamp look fresh.
-1. MAIN ChatGPT Web task: on every owner report request directly re-read newest live H1/Dashboard/Decision Center/Canonical and compare current main file Git-blob hashes against H1 pinned immutable versions; independently validate same asof Canonical and distinguish newer research overlay from prior pinned publication if center changed. Correct upstream H1 false stale only through tested PR325; do NOT require stock-site deployment to analyze connected GitHub.
-2. V4: real consumer-time audit: compare current GitHub H1 pinned immutable center/dashboard blobs against live current main, flag newest center epoch mismatch if it occurs; trace Three-Pillar scheduled/overlay persistence and H1 producer cadence. Implement only minimal independently tested non-cyclic source co-publication or fail-closed consumer change on a fresh scoped PR after checking other active branches. Preserve source timing and immutable references.
-3. Research: current gen83 ALREADY independently audited Sep29 full All-A `36598810901`/artifact`11048833345`; read only *later* genuine naturally eligible official issuer artifacts (not consumed `36362003421`, `36463680012`, `36598810901`) and current real Deep provenance; determine why 16 annual failed/missing and 30 event lacked original_url, why 50 untouched given budget/routing. Fix only proven cause with original publication URL/date/hash and true postmerge production proof. No UNKNOWN->PASS or BUY threshold changes.
-4. H4 only after current source-consistent H1: independently prove corporate-action adjusted, benchmarked, date-valid 5/20/60 market recommendation outcomes. Do not label historical correlation as verified personal actual P&L without original broker fills.
-5. Only each lane owner may CAS-advance its own live-generation task cursor after real proof. Root index should be refreshed after verified milestones, not used to overwrite separate sidecars. Old #318 must not reintroduce obsolete PR #313/H1 or Sep24-as-current states.
+0. Owner report path: re-read newest live H1/Dashboard/Decision Center/Canonical and compare immutable lineage. Do not rerun a full-A scan merely because Oct1-7 has no new A-share session.
+1. On Oct8, keep fail-closed time semantics: before 16:00 Shanghai the completed-session minimum remains Sep30; after 16:00 require genuine Oct8 market/CANONICAL evidence before treating freshness as current.
+2. Research lane only: consume only later naturally eligible genuine issuer/Deep artifacts after gen83; explain/fix proven original-source gaps without reconsuming `36598810901` or weakening UNKNOWN!=PASS.
+3. Continue user-value work from the current result layer: holdings-first evidence, research gaps, event evidence and executable constraints; do not create a second scoring/valuation system or change BUY thresholds.
+4. H4 remains separate: prove date-valid, corporate-action-adjusted, benchmarked 5/20/60 market recommendation outcomes before any performance claim.
+5. Only each lane owner may CAS-advance its own sidecar. Root TASK_STATE is an index and must not overwrite either task cursor.
 
 ## Do Not Repeat
-- Do not rerun consumed premarket full All-A `36362003421`, audited postclose `36463680012`, already consumed Deep/Terminal/Jev, or closed/superseded #315. Do not merge old #318 over this index.
-- Do not claim last generated_at as price-source date, cached issuer URLs as new evidence, live cash from planning snapshot or old center snapshot as the current live center.
+- Do not rerun consumed premarket/postclose All-A epochs solely to refresh timestamps; do not reconsume Sep29 gen83 source run `36598810901`.
+- Do not claim generated_at as price-source date, cached issuer URLs as new originals, planning cash as live broker cash, research BUY as Formal BUY, or an old center pin as the newest live center.
+- Do not reopen/merge superseded #315 or old root #318.
 
 ## Guardrails
-- Formal authority is FINALIZED_CANONICAL_ONLY and verified hold reconciliation. `UNKNOWN != PASS`. Research/Jev advisory may never create Formal action; existing BUY/WAIT_PRICE/REJECT thresholds and valuation untouched; `no_auto_trade=true`; no newly added GPT API. User makes investment choices.
+- Formal authority is FINALIZED_CANONICAL_ONLY with verified holdings reconciliation. `UNKNOWN != PASS`. Research/Jev is advisory and may never create Formal action; existing BUY/WAIT_PRICE/REJECT thresholds and valuation remain untouched; `no_auto_trade=true`; no newly added GPT API. User makes investment choices.
