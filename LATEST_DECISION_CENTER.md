@@ -90,7 +90,7 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -101,10 +101,10 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=101 / dormant=25 / archived-invalidated=0 / events=13895 / focus=4 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=1 / verified-pass=0 / unresolved=2 |
-| Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=1 / verified-pass=234 / unresolved=2 |
+| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38338641762 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
+| Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=1 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=4/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **101**；DORMANT **25**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **13895**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
@@ -139,22 +139,24 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 
 ## 五类硬门槛已通过的研究线索
 
-- 当前 runtime 中非持仓、非 Formal BUY/WAIT_PRICE、五类硬门槛全部明确 PASS：**1**。
-- **603596 伯特利**（C36汽车制造业）：硬门槛 **5/5 PASS**；下一步 **继续估值、价格与 Formal authority 闭环**；当前账户动作 **暂不买**。
+- 当前 runtime 中非持仓、非 Formal BUY/WAIT_PRICE、五类硬门槛全部明确 PASS：**0**。
 - 这是一层研究资格可见性，不是 BUY/WAIT_PRICE；不会改变阈值、不会把 UNKNOWN 当 PASS，也不会创建 Formal 交易权限。
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
-- 终态来源 Lambda：`38337457990`；当前 Lambda：`38338408269`。
-- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
+- 终态来源 Lambda：`38338408269`；当前 Lambda：`38338408269`。
+- 请求：**2**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**1**；研究 REJECT：**0**。
 - 高吸引力但证据不足、优先补证：无
-- 风险预算层 BUILD/PROBE 候选：**0**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
+- 风险预算层 BUILD/PROBE 候选：**1**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
+  - 603596 伯特利: **BUILD**；conviction=0.8976；建议账户上限=3.0%
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`38338044902`。
+- 当前可用判断：**2**；其中 ENTRY_NOW **1**；Jev run：`38338790350`。
+- **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=40.1625；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_40.1625_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
+- **600309 万华化学**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=60.3858；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_60.3858_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
