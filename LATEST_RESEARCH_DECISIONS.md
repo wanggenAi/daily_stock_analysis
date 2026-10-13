@@ -14,7 +14,7 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **0** / WATCH: **4** / BLOCK: **12**
+- BUILD: **1** / PROBE: **0** / WATCH: **3** / BLOCK: **13**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8976 / max_portfolio=3.0%
 
@@ -23,7 +23,6 @@
 - 603596 伯特利: **BUY** / ALL_HARD_GATES_PASS_AND_PE_DISCOUNT_AT_LEAST_20PCT
 - 000768 中航西飞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000596 古井贡酒: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
-- 600309 万华化学: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600338 西藏珠峰: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 003039 顺控发展: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600406 国电南瑞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
@@ -37,6 +36,7 @@
 - 002215 诺 普 信: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 603986 兆易创新: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 001316 润贝航科: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 600309 万华化学: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 
 # GenGe V3.1 Deep Decision Closure V2
 
@@ -51,7 +51,6 @@
 - 603596 伯特利: **FULL_EVIDENCE**; decision_ready=True; unknown=NONE
 - 000768 中航西飞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 000596 古井贡酒: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
-- 600309 万华化学: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand
 - 600338 西藏珠峰: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,moat
 - 003039 顺控发展: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600406 国电南瑞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
@@ -65,3 +64,4 @@
 - 002215 诺 普 信: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 603986 兆易创新: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,financial_safety,earnings_authenticity
 - 001316 润贝航科: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat
+- 600309 万华化学: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,financial_safety,earnings_authenticity
