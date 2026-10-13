@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38434995572",
+  "orchestrator_run_id": "38437951493",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -95,13 +95,6 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "MEDIUM",
-      "entity_id": "601628",
-      "entity_name": "中国人寿",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
       "attention_priority": "LOW",
       "entity_id": "000096",
       "entity_name": "广聚能源",
@@ -173,6 +166,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -187,17 +187,17 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
+      "entity_id": "601628",
+      "entity_name": "中国人寿",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-13T16:58:48+00:00",
-  "source_workflow_head_sha": "97ff41b46ff50285d6f43b9bc854712ec15814f9",
+  "source_generated_at": "2026-10-13T17:20:40+00:00",
+  "source_workflow_head_sha": "34d0e936c683e623526b0398a863d63e1cda51fc",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38434682551",
+  "source_workflow_run_id": "38437647755",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 358,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38434682551",
+  "trigger_source": "JEV_ORCHESTRATOR_38437647755",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-13T17:01:18+00:00",
+  "updated_at": "2026-10-13T17:22:52+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.62,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "38411569349",
+        "deep_lambda_run_id": "38436601359",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,13 +274,13 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.96,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
         "near_buy_evidence_recovery_tier": null,
         "near_buy_missing_evidence_items": [],
-        "quant_score": 56.3074,
+        "quant_score": 56.7109,
         "quant_status": "SECONDARY_RESEARCH",
         "research_priority": "P1",
         "research_priority_score": 50,
@@ -312,12 +312,12 @@
           "historical_median_pe_reference": 33.65,
           "pe_to_history_ratio": 0.5334323922734027,
           "price_mapping_status": "OK",
-          "reference_price": 26.78,
+          "reference_price": 26.63,
           "reference_price_basis": "RAW_LATEST_CLOSE",
-          "reference_trade_date": "2026-10-12",
+          "reference_trade_date": "2026-10-13",
           "required_profit_growth_pct": -46.65676077265973,
           "research_buy_pe_ratio_threshold": 0.8,
-          "research_buy_price_ceiling": 40.16254038997215
+          "research_buy_price_ceiling": 39.93758217270195
         }
       }
     }
