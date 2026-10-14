@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38623792553",
+  "orchestrator_run_id": "38624710883",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -51,13 +51,6 @@
       "entity_name": "中国平安",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "000768",
-      "entity_name": "中航西飞",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -103,6 +96,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "000768",
+      "entity_name": "中航西飞",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "000833",
       "entity_name": "粤桂股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -138,8 +138,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000567",
-      "entity_name": "海德股份",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -166,13 +166,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -187,17 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
+      "entity_id": "000567",
+      "entity_name": "海德股份",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-14T19:26:35+00:00",
-  "source_workflow_head_sha": "c090413ed6bdbd27d70ecf0fb939aa9f94316328",
+  "source_generated_at": "2026-10-14T19:33:07+00:00",
+  "source_workflow_head_sha": "77de10f2dd436cf3b2fe72d595fb97073f2cecf2",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38623219109",
+  "source_workflow_run_id": "38624368589",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 358,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38623219109",
+  "trigger_source": "JEV_ORCHESTRATOR_38624368589",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-14T19:29:18+00:00",
+  "updated_at": "2026-10-14T19:35:40+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "38604750848",
+        "deep_lambda_run_id": "38622954722",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.95,
+      "route_confidence": 0.94,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
