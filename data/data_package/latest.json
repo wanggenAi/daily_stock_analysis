@@ -3,16 +3,16 @@
   "contract": "GEN_GE_REALTIME_DATA_PACKAGE_V1",
   "datasets": [
     {
-      "changed_since_previous": false,
-      "content_sha256": "bc5a1bb672ff36dc54e6dac2945363f1bcb4a7a6ca6d1f774e066fbe8d0a0d5c",
+      "changed_since_previous": true,
+      "content_sha256": "b8cbd007df23e5c25a79a33683f1d8aac4a5ec5919fad6aa6f0ae487799d3773",
       "execution_critical": true,
       "exists": true,
-      "file_count": 4,
+      "file_count": 5,
       "freshness_basis": "TRADE_DATE",
       "freshness_sla_minutes": null,
-      "freshness_state": "STALE",
-      "latest_observed_at": "2026-10-13T18:05:15.456697+00:00",
-      "latest_trade_date": "2026-10-13",
+      "freshness_state": "FRESH",
+      "latest_observed_at": "2026-10-14T15:47:26.369602+00:00",
+      "latest_trade_date": "2026-10-14",
       "lineage_file_sample": [
         {
           "observed_at": "2026-10-10T04:18:23.313926+00:00",
@@ -36,18 +36,25 @@
           "trade_date": "2026-10-13"
         },
         {
-          "observed_at": "2026-10-13T18:05:15.456697+00:00",
+          "observed_at": "2026-10-14T15:47:26.369602+00:00",
+          "path": "data/market_snapshots/2026-10-14.json",
+          "sha256": "1177ece2ab931d2c9426991e37e4b5fa860f7629172837882e164a064b5d9d8b",
+          "size": 2965330,
+          "trade_date": "2026-10-14"
+        },
+        {
+          "observed_at": "2026-10-14T15:47:26.369602+00:00",
           "path": "data/market_snapshots/latest.json",
-          "sha256": "70c62d9d4146f74eaaca9893e79143aae258bec790f58bf5fd92caae98d0e7f1",
-          "size": 2963045,
-          "trade_date": "2026-10-13"
+          "sha256": "1177ece2ab931d2c9426991e37e4b5fa860f7629172837882e164a064b5d9d8b",
+          "size": 2965330,
+          "trade_date": "2026-10-14"
         }
       ],
       "lineage_file_sample_truncated": false,
       "name": "all_a_market_snapshot",
       "root": "data/market_snapshots",
       "validation_evidence": null,
-      "watermark": "d02ed986072e87bc0c37beb5"
+      "watermark": "a258ecee74d292e6a747e2a3"
     },
     {
       "changed_since_previous": false,
@@ -702,14 +709,14 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "39753e595529a0ffe16b0979472b55698eeac8dfbd37925a45be6c767ef9aea4",
+      "content_sha256": "0be745334375f89150ea07d5e01ebcdef68f08da9584ca5d137c75a180fa0b00",
       "execution_critical": false,
       "exists": true,
       "file_count": 110,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-14T15:05:46.619376+00:00",
+      "latest_observed_at": "2026-10-14T15:33:34.313928+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
@@ -1067,25 +1074,25 @@
       "name": "evidence_events",
       "root": "data/evidence_events",
       "validation_evidence": null,
-      "watermark": "ac3966231959a13c20239368"
+      "watermark": "69a1987c3cb97015cbcbd5de"
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "44b96349c310c5e93abeb490280774921e6aa3c500028ef935841a64fa11a7d8",
+      "content_sha256": "8e5d7bbb8b1c22b4d204235295d5be3d23799382d5bb08e67a83fe4a001f289d",
       "execution_critical": false,
       "exists": true,
       "file_count": 3,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-14T14:52:10+00:00",
+      "latest_observed_at": "2026-10-14T15:29:29+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-14T14:52:10+00:00",
+          "observed_at": "2026-10-14T15:29:29+00:00",
           "path": "data/opportunity_snapshots/candidate_lifecycle_state.json",
-          "sha256": "d085e129ff3226bec0293924bf4dedc54e59fb20dc7eabe82d986b0eed3e38d9",
-          "size": 12737802,
+          "sha256": "7862e55a7416424eb0453a3f713df14b3d18b6e487fc9792571d6812c5f92312",
+          "size": 12750622,
           "trade_date": null
         },
         {
@@ -1098,7 +1105,7 @@
         {
           "observed_at": null,
           "path": "data/opportunity_snapshots/holding_valuation_continuity_state.json",
-          "sha256": "5dc1e79936eeb189aaca21a082aa376cbbbc301870b46f54cdc1a5ceff979d70",
+          "sha256": "0633d2030ce4188b6dd654c0f4b38ebf64e9a0f33301e4c9300df6f339a02c8c",
           "size": 3640,
           "trade_date": null
         }
@@ -1107,24 +1114,24 @@
       "name": "opportunity_snapshots",
       "root": "data/opportunity_snapshots",
       "validation_evidence": null,
-      "watermark": "b40ef40fc8d053df93c4c072"
+      "watermark": "9c103f0757f75db1ba53e57c"
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "56f2e841d5219b009ff7f8c351bc3c9a0971d6876de992fe153e8f69e0a268b9",
+      "content_sha256": "36eda07bca60e4066f0529ec26a3d8cbb2d0ab42eb53eb21c91818cefa9b476c",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-14T14:56:28.240089+00:00",
+      "latest_observed_at": "2026-10-14T15:34:41.014046+00:00",
       "latest_trade_date": "2026-10-14",
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-14T14:56:28.240089+00:00",
+          "observed_at": "2026-10-14T15:34:41.014046+00:00",
           "path": "data/production_status/latest.json",
-          "sha256": "2a6ffda0e542729cba1abe5fa2c9aa2127c826eca9ba468ebefda7e81668ae42",
+          "sha256": "bb6b5337a8f7c6be2accba7e9fca0396fa5015d09d657ed73ad07a3de764ca80",
           "size": 1184,
           "trade_date": "2026-10-14"
         }
@@ -1133,24 +1140,24 @@
       "name": "production_status",
       "root": "data/production_status",
       "validation_evidence": null,
-      "watermark": "22bd2a4acae7283054401e14"
+      "watermark": "9a35131df158e96566eea7b7"
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "dc1f4506e59079ca656ff8b892827d9348bc5530ff545afb83aded69cc47e43c",
+      "content_sha256": "aee8c1e377e4769adc6cb0c5b7d61889a464b9d21ed90d6bf5b5f2b560bb89ac",
       "execution_critical": false,
       "exists": true,
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 360,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-14T14:56:28.276363+00:00",
+      "latest_observed_at": "2026-10-14T15:34:41.046961+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
-          "observed_at": "2026-10-14T14:56:28.276363+00:00",
+          "observed_at": "2026-10-14T15:34:41.046961+00:00",
           "path": "data/production_observability/latest.json",
-          "sha256": "b98d1256ae989c4e43f910ebc1e0cdee94cad66fa20f886944f5e229c4d5d334",
+          "sha256": "84e74fe2743e2b5c3421e594bdf6a5025b8bea2c71f66c08e607c1137ed0619b",
           "size": 2842,
           "trade_date": null
         }
@@ -1159,7 +1166,7 @@
       "name": "production_observability",
       "root": "data/production_observability",
       "validation_evidence": null,
-      "watermark": "2b87c20cf5ff48021c5c1466"
+      "watermark": "3e6dd83abce83f6121dcf5f3"
     },
     {
       "changed_since_previous": false,
@@ -1215,28 +1222,28 @@
     },
     {
       "changed_since_previous": true,
-      "content_sha256": "213f48d0a3f8fed5e90093bb2b7d938078de449306bcd0e9776259923eda7218",
+      "content_sha256": "a437d0e55a14939617672ed24055581f2b01347e514c8822023df31dfbd0401d",
       "execution_critical": false,
       "exists": true,
       "file_count": 2,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 1440,
       "freshness_state": "FRESH",
-      "latest_observed_at": "2026-10-14T15:04:31.676170+00:00",
+      "latest_observed_at": "2026-10-14T15:34:40.958682+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
         {
           "observed_at": null,
           "path": "data/research_mapping/company_industry_map.csv",
-          "sha256": "2be61aaee1d4a813f536965379eda767af1c1f51b0d2d9544f4a58d345abad86",
-          "size": 29536,
+          "sha256": "d91cec2042125863287236a3cba7940a712b2b2f0aa23db8e3e43396c81f09de",
+          "size": 29712,
           "trade_date": null
         },
         {
-          "observed_at": "2026-10-14T15:04:31.676170+00:00",
+          "observed_at": "2026-10-14T15:34:40.958682+00:00",
           "path": "data/research_mapping/coverage.json",
-          "sha256": "aef66b8a0fb858dd66920eeaf85fed70063793909061b95fff06dda70ccb7535",
-          "size": 67798,
+          "sha256": "d4aa09a638a0ce098febb538af68aa7bc14a63fd65ede64a110245149f304f29",
+          "size": 67974,
           "trade_date": null
         }
       ],
@@ -1244,7 +1251,7 @@
       "name": "research_mapping",
       "root": "data/research_mapping",
       "validation_evidence": null,
-      "watermark": "6e8a116df98a03c74bb7354a"
+      "watermark": "e6ad8cf200d634c600281f2f"
     },
     {
       "changed_since_previous": false,
@@ -1308,7 +1315,7 @@
       "file_count": 1,
       "freshness_basis": "WALL_CLOCK",
       "freshness_sla_minutes": 30,
-      "freshness_state": "FRESH",
+      "freshness_state": "STALE",
       "latest_observed_at": "2026-10-14T15:06:01.370020+00:00",
       "latest_trade_date": null,
       "lineage_file_sample": [
@@ -1340,18 +1347,17 @@
     "validation_heartbeat_may_grant_formal_trading_authority": false,
     "validation_heartbeat_may_mutate_semantic_content": false
   },
-  "latest_trade_date": "2026-10-13",
-  "market_trade_date_alignment_ok": false,
+  "latest_trade_date": "2026-10-14",
+  "market_trade_date_alignment_ok": true,
   "missing_required_datasets": [],
   "optional_degraded_datasets": [
     "manual_execution_quotes",
-    "price_value_history"
+    "price_value_history",
+    "live_execution_quotes"
   ],
-  "package_status": "STALE",
+  "package_status": "READY",
   "pending_external_fresh_evidence_count": 0,
-  "snapshot_id": "a42b9d8d751cdb546cc4",
-  "stale_required_datasets": [
-    "all_a_market_snapshot"
-  ],
+  "snapshot_id": "bcf4d0a6b6d4fd37c70b",
+  "stale_required_datasets": [],
   "unknown_required_datasets": []
 }
