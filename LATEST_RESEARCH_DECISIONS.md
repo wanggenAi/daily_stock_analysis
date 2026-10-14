@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **17**
-- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **16** / REJECT: **0**
+- requested: **18**
+- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **17** / REJECT: **0**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -14,9 +14,10 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **0** / WATCH: **3** / BLOCK: **13**
+- BUILD: **1** / PROBE: **1** / WATCH: **3** / BLOCK: **13**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8984 / max_portfolio=3.0%
+- 603198 迎驾贡酒: **PROBE** / conviction=0.6207 / max_portfolio=0.74%
 
 ## Terminal rows
 
@@ -24,6 +25,7 @@
 - 000768 中航西飞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000596 古井贡酒: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 003039 顺控发展: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 603198 迎驾贡酒: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600338 西藏珠峰: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600406 国电南瑞: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600318 新力金融: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
@@ -40,18 +42,19 @@
 
 # GenGe V3.1 Deep Decision Closure V2
 
-- decision ready: **2/17** (11.8%)
-- evidence complete: **1/17** (5.9%)
+- decision ready: **2/18** (11.1%)
+- evidence complete: **1/18** (5.6%)
 - FULL_EVIDENCE: **1**
 - DECISION_READY_WITH_UNCERTAINTY: **1**
 - DECISIVE_REJECT: **0**
-- RESEARCH_REQUIRED: **15**
+- RESEARCH_REQUIRED: **16**
 - UNKNOWN remains UNKNOWN. Bounded uncertainty never grants Formal BUY or auto-trade.
 
 - 603596 伯特利: **FULL_EVIDENCE**; decision_ready=True; unknown=NONE
 - 000768 中航西飞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 000596 古井贡酒: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 003039 顺控发展: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 603198 迎驾贡酒: **RESEARCH_REQUIRED**; decision_ready=False; unknown=long_term_demand,moat
 - 600338 西藏珠峰: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,moat
 - 600406 国电南瑞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600318 新力金融: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
