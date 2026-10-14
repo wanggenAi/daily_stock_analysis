@@ -70,6 +70,7 @@ def test_production_cli_calls_promotion_gate_before_finalization(monkeypatch, tm
         raise ValueError("PRE_SETTLEMENT_CANONICAL_PROMOTION_REFUSED")
 
     monkeypatch.setattr(canonical_authority, "assert_canonical_promotion_window_open", refuse)
+    (tmp_path / "does-not-need-to-exist.json").write_text('{"latest_trade_date":"2026-10-13"}', encoding="utf-8")
 
     with pytest.raises(ValueError, match="PRE_SETTLEMENT_CANONICAL_PROMOTION_REFUSED"):
         canonical_authority.main(
