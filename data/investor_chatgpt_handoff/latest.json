@@ -1,373 +1,15 @@
 {
   "blocking_reasons": [
+    "CENTER_DIFFERENT_EPOCH_OR_MISSING",
     "FUND_POSITION_CONFIRMATION_MISSING",
     "NO_CURRENT_BROKER_CASH_OR_POSITION_PROOF",
     "NO_CURRENT_EXECUTABLE_QUOTE_PROOF",
     "NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION"
   ],
-  "canonical_sha256": "1c73cfd233cf90c3c752e2dd9072f1eaa8cdb65014a456baac74944179cdabbd",
-  "canonical_snapshot_id": "a98cda1fc5ddecf16707",
-  "canonical_source_run_id": "38149891502",
+  "canonical_sha256": "bf4d5a681cf854be49233fd26a58357c388c6d0df6ef5d44dc5ad3c248fe32ca",
+  "canonical_snapshot_id": "291b470d231dd8921281",
+  "canonical_source_run_id": "38434900767",
   "contract_version": "GEN_GE_INVESTOR_CHATGPT_HANDOFF_V1",
-  "data_freshness_execution_guard": {
-    "block_reason": null,
-    "execution_allowed": true,
-    "formal_action_recomputed": false,
-    "formal_actions_preserved": true,
-    "no_auto_trade": true,
-    "stale_or_partial_data_cannot_authorize_execution": true
-  },
-  "data_package_provenance": {
-    "contract": "GEN_GE_DECISION_DATA_PROVENANCE_V1",
-    "data_package_contract": "GEN_GE_REALTIME_DATA_PACKAGE_V1",
-    "execution_allowed": true,
-    "external_fresh_evidence_policy": "TAGGED_EXCEPTION_ONLY",
-    "latest_trade_date": "2026-10-13",
-    "network_policy": "CANONICAL_PACKAGE_ONLY",
-    "package_generated_at": "2026-10-14T01:00:00+00:00",
-    "package_status": "READY",
-    "pending_external_fresh_evidence_count": 0,
-    "research_input_contract": "GEN_GE_RESEARCH_INPUT_LOCK_V1",
-    "research_input_locked_at": "2026-10-14T01:55:22.995515+00:00",
-    "research_mode": "hourly",
-    "snapshot_id": "d6a2690eecef217442eb"
-  },
-  "diversified_research_radar": {
-    "authority": "RESEARCH_ONLY",
-    "automatic_formal_buy_allowed": false,
-    "available": true,
-    "candidate_count": 501,
-    "contract": "GEN_GE_V31_UNKNOWN_SAFE_RESEARCH_RADAR_V1",
-    "current_holding_count": 1,
-    "distinct_industry_count": 42,
-    "formal_trading_authority": false,
-    "full_evidence_count": 1,
-    "generated_at": "2026-10-14T00:40:29+00:00",
-    "hard_fail_excluded_count": 1,
-    "interpretation": "This list explains which industry-diversified names survived the current research radar. It is not a BUY list and cannot create Formal authority.",
-    "new_research_candidate_count": 9,
-    "no_auto_trade": true,
-    "radar_eligible_count": 109,
-    "ranking_policy": "VERIFIED_PASS_COUNT_DESC_THEN_QUANT_DESC_THEN_V31_REVIEW_RANK_ASC_THEN_CODE_ASC",
-    "rows": [
-      {
-        "automatic_execution_allowed": false,
-        "code": "603596",
-        "diversified_rank": 1,
-        "followup": "VALUATION_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 1,
-        "industry": "C36汽车制造业",
-        "name": "伯特利",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "56.7109",
-        "radar_tier": "FULL_EVIDENCE",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "P1",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_1 -> INDUSTRY_REPRESENTATIVE[C36汽车制造业] -> DIVERSIFIED_TOP_1",
-        "unknown_gate_count": 0,
-        "unknown_gates": [],
-        "unknown_is_pass": false,
-        "v31_review_rank": "5",
-        "verified_pass_gate_count": 5,
-        "verified_pass_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "603993",
-        "diversified_rank": 2,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 2,
-        "industry": "B09有色金属矿采选业",
-        "name": "洛阳钼业",
-        "no_auto_trade": true,
-        "portfolio_relation": "CURRENT_HOLDING",
-        "quant_score": "31.8896",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "P0",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_2 -> INDUSTRY_REPRESENTATIVE[B09有色金属矿采选业] -> DIVERSIFIED_TOP_2",
-        "unknown_gate_count": 1,
-        "unknown_gates": [
-          "predictability"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "2",
-        "verified_pass_gate_count": 4,
-        "verified_pass_gates": [
-          "long_term_demand",
-          "moat",
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "603883",
-        "diversified_rank": 3,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 3,
-        "industry": "F52零售业",
-        "name": "老百姓",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "89.9436",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "P3",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_3 -> INDUSTRY_REPRESENTATIVE[F52零售业] -> DIVERSIFIED_TOP_3",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "88",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "688639",
-        "diversified_rank": 4,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 4,
-        "industry": "C26化学原料和化学制品制造业",
-        "name": "华恒生物",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "84.743",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_4 -> INDUSTRY_REPRESENTATIVE[C26化学原料和化学制品制造业] -> DIVERSIFIED_TOP_4",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "183",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "688161",
-        "diversified_rank": 5,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 5,
-        "industry": "C35专用设备制造业",
-        "name": "XD威高骨",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "83.3058",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_5 -> INDUSTRY_REPRESENTATIVE[C35专用设备制造业] -> DIVERSIFIED_TOP_5",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "177",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "300142",
-        "diversified_rank": 6,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 6,
-        "industry": "C27医药制造业",
-        "name": "沃森生物",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "82.5954",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_6 -> INDUSTRY_REPRESENTATIVE[C27医药制造业] -> DIVERSIFIED_TOP_6",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "199",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "002568",
-        "diversified_rank": 7,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 7,
-        "industry": "C15酒、饮料和精制茶制造业",
-        "name": "百润股份",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "79.6925",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_7 -> INDUSTRY_REPRESENTATIVE[C15酒、饮料和精制茶制造业] -> DIVERSIFIED_TOP_7",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "158",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "002612",
-        "diversified_rank": 8,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 9,
-        "industry": "C18纺织服装、服饰业",
-        "name": "朗姿股份",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "76.7853",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "P3",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_9 -> INDUSTRY_REPRESENTATIVE[C18纺织服装、服饰业] -> DIVERSIFIED_TOP_8",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "107",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "002959",
-        "diversified_rank": 9,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 10,
-        "industry": "C38电气机械和器材制造业",
-        "name": "小熊电器",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "75.8786",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_10 -> INDUSTRY_REPRESENTATIVE[C38电气机械和器材制造业] -> DIVERSIFIED_TOP_9",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "176",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      },
-      {
-        "automatic_execution_allowed": false,
-        "code": "600019",
-        "diversified_rank": 10,
-        "followup": "EVIDENCE_CLOSURE",
-        "formal_buy_authorized": false,
-        "global_radar_rank": 12,
-        "industry": "C31黑色金属冶炼和压延加工业",
-        "name": "宝钢股份",
-        "no_auto_trade": true,
-        "portfolio_relation": "NEW_RESEARCH_CANDIDATE",
-        "quant_score": "75.6695",
-        "radar_tier": "UNKNOWN_RESEARCH",
-        "research_authority": "RESEARCH_ONLY",
-        "research_priority": "",
-        "selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-        "selection_trace": "ALL_A_RESEARCH -> GLOBAL_RANK_12 -> INDUSTRY_REPRESENTATIVE[C31黑色金属冶炼和压延加工业] -> DIVERSIFIED_TOP_10",
-        "unknown_gate_count": 3,
-        "unknown_gates": [
-          "predictability",
-          "long_term_demand",
-          "moat"
-        ],
-        "unknown_is_pass": false,
-        "v31_review_rank": "271",
-        "verified_pass_gate_count": 2,
-        "verified_pass_gates": [
-          "financial_safety",
-          "earnings_authenticity"
-        ]
-      }
-    ],
-    "same_industry_backup_count": 67,
-    "source_run_id": "38443849235",
-    "top_count": 10,
-    "top_distinct_industry_count": 10,
-    "top_selection_policy": "ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY",
-    "unknown_eligible_count": 108,
-    "unknown_is_pass": false
-  },
   "event_audit": {
     "closure_status": "UNKNOWN",
     "signal_digest": null,
@@ -389,11 +31,11 @@
       "status": "LINK_ONLY_NOT_REVALIDATED"
     },
     "equities": {
-      "as_of": "2026-10-09",
+      "as_of": "2026-10-13",
       "status": "REPO_RECONCILED_NOT_LIVE_BROKER"
     },
     "era_cycle": {
-      "as_of": "2026-10-11T05:50:40Z",
+      "as_of": "2026-10-13T22:47:12Z",
       "status": "DATED_RESEARCH_ONLY"
     },
     "executable_quotes": {
@@ -401,7 +43,7 @@
       "status": "UNVERIFIED"
     },
     "formal_opportunities": {
-      "as_of": "2026-10-09",
+      "as_of": "2026-10-13",
       "status": "NO_NEW_EXECUTION_VERIFIED_BY_HANDOFF"
     },
     "funds": {
@@ -409,8 +51,8 @@
       "status": "UNVERIFIED"
     },
     "market_eod": {
-      "as_of": "2026-10-09",
-      "expected_min_trade_date": "2026-10-09",
+      "as_of": "2026-10-13",
+      "expected_min_trade_date": "2026-10-13",
       "status": "UPSTREAM_FRESH_CALENDAR_UNVERIFIED",
       "upstream_status": "OK"
     },
@@ -428,28 +70,28 @@
       "status": "UNKNOWN_NO_VERIFIED_FILLS"
     },
     "reference_quotes": {
-      "as_of": "2026-10-09",
+      "as_of": "2026-10-13",
       "status": "FROZEN_CANONICAL_ONLY"
     },
     "research_only": {
-      "as_of": "2026-10-09",
+      "as_of": "2026-10-13",
       "status": "RESEARCH_ONLY"
     }
   },
   "formal_buy_now": [],
   "formal_wait_price": [],
-  "generated_at": "2026-10-12T02:20:16+00:00",
+  "generated_at": "2026-10-14T02:14:12+00:00",
   "holdings": [
     {
       "code": "600406",
       "executable_shares": 0,
-      "frozen_reference_price": 22.64,
+      "frozen_reference_price": 22.46,
       "last_reported_quantity": 200,
       "name": "国电南瑞",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
       "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
       "recorded_formal_action": "REDUCE_25",
-      "reference_as_of": "2026-10-09",
+      "reference_as_of": "2026-10-13",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "HIGH",
       "value_range": [
@@ -460,13 +102,13 @@
     {
       "code": "001316",
       "executable_shares": 0,
-      "frozen_reference_price": 26.1,
+      "frozen_reference_price": 26.7,
       "last_reported_quantity": 200,
       "name": "润贝航科",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
       "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
       "recorded_formal_action": "HOLD_REVIEW",
-      "reference_as_of": "2026-10-09",
+      "reference_as_of": "2026-10-13",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "LOW",
       "value_range": [
@@ -477,13 +119,13 @@
     {
       "code": "601318",
       "executable_shares": 0,
-      "frozen_reference_price": 53.13,
+      "frozen_reference_price": 51.69,
       "last_reported_quantity": 400,
       "name": "中国平安",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
-      "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.636<1.00",
+      "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.622<1.00",
       "recorded_formal_action": "HOLD",
-      "reference_as_of": "2026-10-09",
+      "reference_as_of": "2026-10-13",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "MEDIUM",
       "value_range": [
@@ -494,13 +136,13 @@
     {
       "code": "603993",
       "executable_shares": 0,
-      "frozen_reference_price": 17.1,
+      "frozen_reference_price": 17.04,
       "last_reported_quantity": 1100,
       "name": "洛阳钼业",
       "presentation": "HISTORICAL_ONLY_NOT_AN_ORDER",
       "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
       "recorded_formal_action": "HOLD",
-      "reference_as_of": "2026-10-09",
+      "reference_as_of": "2026-10-13",
       "source_path": "data/investor_decision_dashboard/latest.json",
       "valuation_confidence": "HIGH",
       "value_range": [
@@ -513,27 +155,27 @@
   "lineage": {
     "canonical_matches_dashboard": true,
     "canonical_trade_date_present": true,
-    "center_matches_dashboard": true,
+    "center_matches_dashboard": false,
     "exchange_calendar_independently_verified": false,
     "live_broker_positions_verified": false,
     "market_matches_dashboard": true
   },
-  "market_session_as_of": "2026-10-09",
+  "market_session_as_of": "2026-10-13",
   "no_auto_trade": true,
   "production_provenance": {
-    "finalizer_run_id": "38150720574",
+    "finalizer_run_id": "38486974494",
     "market_artifact_as_of_join": "UNVERIFIED",
-    "market_artifact_id": "11704848820",
-    "market_run_id": "38145249665"
+    "market_artifact_id": "11858055764",
+    "market_run_id": "38480157341"
   },
   "research_audit": {
     "research_buy_count": 1,
-    "research_gap_count": 22,
+    "research_gap_count": 16,
     "research_is_not_formal": true,
     "upstream_formal_buy_now_count": 0,
     "upstream_formal_wait_count": 0
   },
-  "snapshot_id": "a76a4ced9e14b1b382f30b3e",
+  "snapshot_id": "7550813b10a8107733bb661d",
   "source_files": {
     "broker_quotes": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b6be622af21f1bcddc0aee5c51ae9b038b753b2c",
@@ -542,22 +184,22 @@
       "sha256": "638ed83336571b338a48b88182a03dae36c3bf547f3d0d10610655fc5e787a65"
     },
     "dashboard": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/ae2a845db392b990cde635bb293cface063208e4",
-      "immutable_git_blob_sha": "ae2a845db392b990cde635bb293cface063208e4",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/14ccf000e0a655b425b46f922d2b3b512a300c79",
+      "immutable_git_blob_sha": "14ccf000e0a655b425b46f922d2b3b512a300c79",
       "path": "data/investor_decision_dashboard/latest.json",
-      "sha256": "a51c03d61a47aec1ebce38524d4586608fdcd3204f046b3835a52eb829f6def5"
+      "sha256": "40f2da1bc54e0120d453943fc182742148e02c1893686bc6c64cf264928e0646"
     },
     "decision_center": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/e2b63de89f6f9561c35ecb6244f02afb70265357",
-      "immutable_git_blob_sha": "e2b63de89f6f9561c35ecb6244f02afb70265357",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/7f242ad82ba6b60fff3efff3dbbbe0525ee9bf8a",
+      "immutable_git_blob_sha": "7f242ad82ba6b60fff3efff3dbbbe0525ee9bf8a",
       "path": "data/decision_center/latest.json",
-      "sha256": "34fc3bd30935537215e1cb584c5decd87b83ea7e70cb9fed5c614ee6059125a8"
+      "sha256": "3dabd49575d9b9b01d6144a19b9df349efa35e1cce00361e609ac124d27527d1"
     },
     "era_radar": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/8397b67151ab9d1cba71f5f7a9ded7e015ae8af6",
-      "immutable_git_blob_sha": "8397b67151ab9d1cba71f5f7a9ded7e015ae8af6",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/4f234e61c1156650d7fe705d1117f8ff854680d0",
+      "immutable_git_blob_sha": "4f234e61c1156650d7fe705d1117f8ff854680d0",
       "path": "data/era_radar/latest.json",
-      "sha256": "64237b56514940afcaaea8687a1295dae5227a90e85b93818c0ca2a4256414f5"
+      "sha256": "85e37cb6c031e0eff2e20e9a948d187bdd3e8d44c59b8bf381db9266478df798"
     },
     "fund_register": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/6923d96f3e133462f8070117d5c6ce1491afac0b",
@@ -566,10 +208,10 @@
       "sha256": "34998c31e6c5ca7ff8c7698d272cf7ca5c58d3fc4ead50aa6465357cab34db20"
     },
     "outcomes": {
-      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/eef9068a82e6cc86d3732bc79bcf1545b9295af8",
-      "immutable_git_blob_sha": "eef9068a82e6cc86d3732bc79bcf1545b9295af8",
+      "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/9c8e54c4676dc0cd646da26011a1ed4801cf7a26",
+      "immutable_git_blob_sha": "9c8e54c4676dc0cd646da26011a1ed4801cf7a26",
       "path": "data/formal_decision_outcomes/latest.json",
-      "sha256": "3872b04c3f21ed46e56294139d1133525779e48dddb8e3679ed7e00e23414e95"
+      "sha256": "eaa829754242925dd1f8d83e9505109b66ac45ca6834edf578771beed482e61b"
     },
     "planning_capital": {
       "immutable_blob_url": "https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b31f3fec7f0731da559f4ccdbe87c08638a1397d",
@@ -580,35 +222,35 @@
   },
   "trend_research": [
     {
-      "as_of": "2026-10-11T05:50:40Z",
+      "as_of": "2026-10-13T22:47:12Z",
       "authority": "RESEARCH_ONLY",
       "lifecycle": "EMERGING",
       "source_path": "data/era_radar/latest.json",
       "trend_id": "advanced_manufacturing"
     },
     {
-      "as_of": "2026-10-11T05:50:40Z",
+      "as_of": "2026-10-13T22:47:12Z",
       "authority": "RESEARCH_ONLY",
       "lifecycle": "EMERGING",
       "source_path": "data/era_radar/latest.json",
       "trend_id": "automotive_industry"
     },
     {
-      "as_of": "2026-10-11T05:50:40Z",
+      "as_of": "2026-10-13T22:47:12Z",
       "authority": "RESEARCH_ONLY",
       "lifecycle": "EMERGING",
       "source_path": "data/era_radar/latest.json",
       "trend_id": "corporate_market_financing"
     },
     {
-      "as_of": "2026-10-11T05:50:40Z",
+      "as_of": "2026-10-13T22:47:12Z",
       "authority": "RESEARCH_ONLY",
       "lifecycle": "EMERGING",
       "source_path": "data/era_radar/latest.json",
       "trend_id": "demographic_longevity"
     },
     {
-      "as_of": "2026-10-11T05:50:40Z",
+      "as_of": "2026-10-13T22:47:12Z",
       "authority": "RESEARCH_ONLY",
       "lifecycle": "EMERGING",
       "source_path": "data/era_radar/latest.json",
