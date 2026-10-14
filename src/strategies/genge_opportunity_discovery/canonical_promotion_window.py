@@ -89,7 +89,7 @@ def evaluate_canonical_promotion_window(
 
 
 def assert_canonical_promotion_window_open(
-    *, evaluated_at: str | datetime | None = None
+    *, evaluated_at: str | datetime | None = None, candidate_trade_date: str | None = None
 ) -> dict[str, Any]:
     result = evaluate_canonical_promotion_window(evaluated_at=evaluated_at, candidate_trade_date=candidate_trade_date)
     if result["canonical_promotion_allowed"] is not True:
