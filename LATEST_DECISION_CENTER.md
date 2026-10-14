@@ -66,6 +66,30 @@ R86新闻和出版业(97.32)、A02林业(94.95)、R87广播、电视、电影和
 
 - Formal/Production Candidate Terminal REJECT：**102**（只做汇总；与下方 Deep Research Terminal 的 RESEARCH_GAP/REJECT 是不同层级）。
 
+<!-- GEN_GE_DIVERSIFIED_RESEARCH_RADAR_START -->
+### 行业去重研究雷达（研究候选，不是买单）
+
+- 全量候选 **501** → 雷达合格 **109**；覆盖 **42** 个行业；同业备选保留 **67** 只。
+- 投资者 Top **10** 只 / **10** 个不同行业；其中新研究候选 **9** 只、当前持仓 **1** 只。
+- 选择规则：`ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY`；source run：`38443849235`。
+- **这只是 RESEARCH_ONLY 研究入口，不是 BUY/WAIT_PRICE，更不会因为进 Top 就获得 Formal BUY。UNKNOWN 仍然不是 PASS。**
+
+| Top | 全局雷达排名 | 股票 | 行业 | 与账户关系 | 研究层级 | PASS | UNKNOWN | Quant | 下一步 |
+|---:|---:|---|---|---|---|---:|---:|---:|---|
+| 1 | 1 | 伯特利 603596 | C36汽车制造业 | 新研究候选 | FULL_EVIDENCE | 5 | 0 | 56.7109 | VALUATION_CLOSURE |
+| 2 | 2 | 洛阳钼业 603993 | B09有色金属矿采选业 | 当前持仓 | UNKNOWN_RESEARCH | 4 | 1 | 31.8896 | EVIDENCE_CLOSURE；待补：predictability |
+| 3 | 3 | 老百姓 603883 | F52零售业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 89.9436 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 4 | 4 | 华恒生物 688639 | C26化学原料和化学制品制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 84.743 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 5 | 5 | XD威高骨 688161 | C35专用设备制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 83.3058 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 6 | 6 | 沃森生物 300142 | C27医药制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 82.5954 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 7 | 7 | 百润股份 002568 | C15酒、饮料和精制茶制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 79.6925 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 8 | 9 | 朗姿股份 002612 | C18纺织服装、服饰业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 76.7853 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 9 | 10 | 小熊电器 002959 | C38电气机械和器材制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 75.8786 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 10 | 12 | 宝钢股份 600019 | C31黑色金属冶炼和压延加工业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 75.6695 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+
+- 每只股票的 `global_radar_rank + industry + diversified_rank + PASS/UNKNOWN` 都保留在机器数据里，用来回答“它为什么进榜、为什么不是同业另一只”。
+<!-- GEN_GE_DIVERSIFIED_RESEARCH_RADAR_END -->
+
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥35000.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
