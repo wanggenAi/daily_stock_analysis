@@ -86,13 +86,14 @@ def test_downstream_convergence_explicitly_wakes_jev_reconciler() -> None:
     assert dispatch in center
     assert terminal.index("Persist terminal research decisions with optimistic replay") < terminal.index(dispatch)
     assert investor.index("Overlay latest terminal research onto investor brief with optimistic replay") < investor.index(dispatch)
-    assert center.index("Build and persist runtime-aware decision center with optimistic replay") < center.index(dispatch)
+    assert center.index("git commit -m 'Persist package-locked investor decision center [skip ci]'") < center.index(dispatch)
     assert ".production_verification_complete // false" in terminal
     assert ".production_verification_complete // false" in investor
     assert ".production_verification_complete // false" in center
 
     production = center.split("  production:", 1)[1]
     assert "actions: write" in production.split("    steps:", 1)[0]
+
 
 def test_full_downstream_convergence_schedules_one_lineage_keyed_jev_reevaluation() -> None:
     workflow = RECONCILER.read_text(encoding="utf-8")
