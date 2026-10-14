@@ -75,10 +75,10 @@ A02林业(STRONG)、R89体育(STRONG)、G60邮政业(STRONG)、R88文化艺术�
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
-- 本轮深算：**18** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **17** / REJECT **0**。
+- 本轮深算：**22** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **21** / REJECT **0**。
 - urgent research：**3** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **1** / WATCH **3** / BLOCK **13**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **1** / WATCH **5** / BLOCK **15**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
