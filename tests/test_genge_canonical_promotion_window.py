@@ -65,11 +65,12 @@ def test_production_cli_calls_promotion_gate_before_finalization(monkeypatch, tm
 
     called = {"gate": False}
 
-    def refuse() -> dict:
+    def refuse(**kwargs) -> dict:
         called["gate"] = True
         raise ValueError("PRE_SETTLEMENT_CANONICAL_PROMOTION_REFUSED")
 
     monkeypatch.setattr(canonical_authority, "assert_canonical_promotion_window_open", refuse)
+    (tmp_path / "does-not-need-to-exist.json").write_text('{"latest_trade_date":"2026-10-13"}', encoding="utf-8")
 
     with pytest.raises(ValueError, match="PRE_SETTLEMENT_CANONICAL_PROMOTION_REFUSED"):
         canonical_authority.main(
@@ -91,3 +92,16 @@ def test_production_cli_calls_promotion_gate_before_finalization(monkeypatch, tm
             ]
         )
     assert called["gate"] is True
+
+
+def test_premarket_accepts_only_latest_completed_trade_date() -> None:
+    before_open = datetime(2026, 10, 14, 1, 30, tzinfo=timezone.utc)
+    accepted = evaluate_canonical_promotion_window(
+        evaluated_at=before_open, candidate_trade_date="2026-10-13"
+    )
+    assert accepted["canonical_promotion_allowed"] is True
+    for rejected in ("2026-10-12", "2026-10-14", "invalid"):
+        result = evaluate_canonical_promotion_window(
+            evaluated_at=before_open, candidate_trade_date=rejected
+        )
+        assert result["canonical_promotion_allowed"] is False
