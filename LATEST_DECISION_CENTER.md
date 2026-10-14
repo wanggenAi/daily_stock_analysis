@@ -8,10 +8,10 @@
 
 | 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |
 |---|---:|---:|---:|---|---|---|---|---|
-| 国电南瑞 600406 | 22.18 | 17.46 | -4.09 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=271 | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 27.46 | 49.37 | 6.66 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=273 | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | 51.23 | 83.07 | -8.46 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=198 | DEEP_REVIEW_PARTIAL |
-| 洛阳钼业 603993 | 16.64 | 28.13 | -10.65 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=240 | DEEP_REVIEW_PARTIAL |
+| 国电南瑞 600406 | 22.18 | 17.46 | -4.09 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=272 | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 27.46 | 49.37 | 6.66 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=274 | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | 51.23 | 83.07 | -8.46 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=199 | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | 16.64 | 28.13 | -10.65 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=241 | DEEP_REVIEW_PARTIAL |
 
 ### 估值折价观察（非买单）
 
@@ -21,10 +21,10 @@
 
 ### 每只持仓的决策链
 
-- **国电南瑞 600406**：现价 22.18 / 价值中枢 17.46（价/值 1.27；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=271**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
-- **润贝航科 001316**：现价 27.46 / 价值中枢 49.37（价/值 0.56；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=273**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
-- **中国平安 601318**：现价 51.23 / 价值中枢 83.07（价/值 0.62；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=198**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.617<1.00`。
-- **洛阳钼业 603993**：现价 16.64 / 价值中枢 28.13（价/值 0.59；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=240**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
+- **国电南瑞 600406**：现价 22.18 / 价值中枢 17.46（价/值 1.27；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=272**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
+- **润贝航科 001316**：现价 27.46 / 价值中枢 49.37（价/值 0.56；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=274**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
+- **中国平安 601318**：现价 51.23 / 价值中枢 83.07（价/值 0.62；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=199**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.617<1.00`。
+- **洛阳钼业 603993**：现价 16.64 / 价值中枢 28.13（价/值 0.59；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=241**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -124,22 +124,22 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | RED / score=30.31 / 2026-10-14 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=100 / dormant=26 / archived-invalidated=0 / events=14246 / focus=7 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=100 / dormant=26 / archived-invalidated=0 / events=14296 / focus=7 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=21 / verified-pass=224 / unresolved=84 |
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38624179037 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=0 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=21 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
-- Candidate Lifecycle：当前 ACTIVE **100**；DORMANT **26**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **14246**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
+- Candidate Lifecycle：当前 ACTIVE **100**；DORMANT **26**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **14296**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
 - 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。
 
 ### 当前持仓的持续研究记忆
 
-- 国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 271 次。
-- 润贝航科 001316：ACTIVE / tier=PENDING / 历史被系统重新看见 273 次。
-- 中国平安 601318：ACTIVE / tier=PENDING / 历史被系统重新看见 198 次。
-- 洛阳钼业 603993：ACTIVE / tier=PENDING / 历史被系统重新看见 240 次。
+- 国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 272 次。
+- 润贝航科 001316：ACTIVE / tier=PENDING / 历史被系统重新看见 274 次。
+- 中国平安 601318：ACTIVE / tier=PENDING / 历史被系统重新看见 199 次。
+- 洛阳钼业 603993：ACTIVE / tier=PENDING / 历史被系统重新看见 241 次。
 
 ## 自动深算运行状态
 
