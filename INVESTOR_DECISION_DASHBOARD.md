@@ -1,6 +1,6 @@
 # 投资决策驾驶舱
 
-> 市场=RED；持仓减仓/退出=1；新股正式BUY=0；等价格=0；计划立即投入≈¥0；盘中价覆盖=0/4
+> 市场日线=RED（2026-10-14）；持仓Formal可用=True；持仓减仓/退出目标=1；本轮新增减仓/退出=0；新股正式BUY=0；等价格=0；计划立即投入≈¥0
 
 ## 1. 最新市场结构（日线）
 
@@ -60,22 +60,6 @@ A02林业(STRONG)、G53铁路运输业(STRONG)、B07石油和天然气开采业(
 - 工程 SHA / artifact / CI 不放首页；只有影响数据可信度时才升级提示。
 
 - **no-auto-trade：true；所有订单必须人工确认。**
-
-## 7. 事件深算闭环：到底算完没有
-
-- 总状态：**EVENT_TRIGGER_FAILED**。正式动作只来自 finalized Canonical，事件层不会偷改买卖结论。
-
-| 股票 | 闭环状态 | 正式结果 | 为什么没有BUY/ADD / 结果解释 |
-|---|---|---|---|
-| 润贝航科 001316 | **EVENT_TRIGGER_FAILED** | **HOLD_REVIEW** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 中国平安 601318 | **EVENT_TRIGGER_FAILED** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 洛阳钼业 603993 | **EVENT_TRIGGER_FAILED** | **HOLD** | 价格已进入研究价值区，但这只代表研究触发；仍需完整 Hard/Confidence Gate 与正式估值通过后才可 BUY/ADD。 |
-| 002420 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 国电南瑞 600406 | **RAISE_ONLY** | **REDUCE_25** | 当前 Canonical 正式动作是 REDUCE_25，本轮没有形成反向 BUY/ADD。 |
-| 600547 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601069 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 601336 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
-| 603986 | **RAISE_ONLY** | **—** | 价格可以继续研究，但正式价值锚不可用；在估值与 Confidence Gate 补齐前不能升级 BUY/ADD。 |
 
 ## 深算研究终态（Research-only，不等于正式交易授权）
 
