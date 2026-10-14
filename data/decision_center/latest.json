@@ -275,7 +275,7 @@
     "package_status": "READY",
     "pending_external_fresh_evidence_count": 0,
     "research_input_contract": "GEN_GE_RESEARCH_INPUT_LOCK_V1",
-    "research_input_locked_at": "2026-10-14T04:55:35.213534+00:00",
+    "research_input_locked_at": "2026-10-14T04:57:26.865946+00:00",
     "research_mode": "hourly",
     "snapshot_id": "0c47f66c324bb2895afa"
   },
@@ -287,7 +287,7 @@
   ],
   "decision_readiness": {
     "all_holdings_explicit_deep_review_complete": false,
-    "capital_flow_multi_layer_covered": true,
+    "capital_flow_multi_layer_covered": false,
     "deep_calculation_last_run_completed": true,
     "deep_calculation_last_run_successful": true,
     "deep_calculation_manual_next_round_required": false,
@@ -485,7 +485,7 @@
   "executive_summary": {
     "active_candidate_lifecycle_count": 100,
     "available_cash_cny": 50000.0,
-    "capital_flow_evidence_status": "MULTI_LAYER_COVERED",
+    "capital_flow_evidence_status": "PARTIAL",
     "cash_after_immediate_plan_cny": 50000.0,
     "deep_calculation_execution_status": "SUCCESS",
     "deep_calculation_progressed_gate_count": 4,
@@ -528,7 +528,7 @@
   },
   "formal_action_recomputed": false,
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-  "generated_at": "2026-10-14T04:55:35+00:00",
+  "generated_at": "2026-10-14T04:57:27+00:00",
   "holding_valuation_continuity": {
     "available": true,
     "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
@@ -1052,28 +1052,29 @@
     },
     "capital_evidence_coverage": {
       "covered_capital_layers": [
-        "POLICY_CAPITAL",
         "INDUSTRIAL_CAPITAL",
         "FINANCIAL_CAPITAL",
         "REAL_DEMAND"
       ],
       "direct_stock_fund_flow_claimed": false,
-      "evidence_count": 22,
+      "evidence_count": 21,
       "family_counts": {
         "FINANCIAL_CAPITAL": 4,
         "GLOBAL_STRUCTURE": 6,
         "INDUSTRIAL_CAPITAL": 6,
-        "POLICY_CAPITAL": 1,
+        "POLICY_CAPITAL": 0,
         "REAL_DEMAND": 5,
         "TECHNOLOGY": 0
       },
       "financial_capital_evidence_available": true,
       "industrial_capital_evidence_available": true,
       "interpretation": "Policy/industrial/financial capital and real-demand evidence are separate layers. Missing FINANCIAL_CAPITAL must remain explicit; market-strength proxies never become direct fund-flow evidence.",
-      "missing_capital_layers": [],
-      "policy_capital_evidence_available": true,
+      "missing_capital_layers": [
+        "POLICY_CAPITAL"
+      ],
+      "policy_capital_evidence_available": false,
       "real_demand_evidence_available": true,
-      "status": "MULTI_LAYER_COVERED"
+      "status": "PARTIAL"
     },
     "direct_financial_capital_evidence_available": true,
     "direct_fund_flow_claimed": false,
@@ -2082,7 +2083,7 @@
       "status": "AVAILABLE"
     },
     "question": "世界和社会正在往哪里走，钱可能流向哪里，A股该研究什么？",
-    "research_as_of": "2026-10-13T22:47:12Z",
+    "research_as_of": "2026-10-14T04:56:38Z",
     "structural_world_social_trends": [
       {
         "a_share_research_industries": [],
@@ -2251,32 +2252,6 @@
       },
       {
         "a_share_research_industries": [
-          "汽车",
-          "锂电"
-        ],
-        "components": {
-          "evidence_quality": 68.14,
-          "financial_crowding": 50.0,
-          "global_confirmation": 50.0,
-          "industrial_capex": 50.0,
-          "investable_bottleneck_strength": 50.0,
-          "policy_commitment": 74.18,
-          "profit_pool_quality": 50.0,
-          "real_demand_confirmation": 50.0,
-          "structural_demand": 50.0,
-          "technology_enablement": 50.0
-        },
-        "confidence_score": 13.91,
-        "cyclical_score": 50.0,
-        "evidence_count": 1,
-        "independent_families": 1,
-        "industrial_score": 53.63,
-        "lifecycle": "EMERGING",
-        "structural_score": 50.0,
-        "trend_id": "intelligent_ev_supply_chain"
-      },
-      {
-        "a_share_research_industries": [
           "专用设备",
           "电气机械",
           "工程机械"
@@ -2324,6 +2299,29 @@
         "lifecycle": "EMERGING",
         "structural_score": 50.0,
         "trend_id": "manufacturing_capex"
+      },
+      {
+        "a_share_research_industries": [],
+        "components": {
+          "evidence_quality": 27.72,
+          "financial_crowding": 50.0,
+          "global_confirmation": 50.0,
+          "industrial_capex": 26.54,
+          "investable_bottleneck_strength": 50.0,
+          "policy_commitment": 50.0,
+          "profit_pool_quality": 50.0,
+          "real_demand_confirmation": 50.0,
+          "structural_demand": 50.0,
+          "technology_enablement": 50.0
+        },
+        "confidence_score": 10.67,
+        "cyclical_score": 44.13,
+        "evidence_count": 1,
+        "independent_families": 1,
+        "industrial_score": 44.13,
+        "lifecycle": "EMERGING",
+        "structural_score": 50.0,
+        "trend_id": "industrial_capex_cycle"
       }
     ],
     "tactical_market_behavior_proxy": [
@@ -8045,8 +8043,8 @@
       },
       {
         "capability": "世界 / 社会 / 资本趋势雷达",
-        "result": "POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6",
-        "status": "MULTI_LAYER_COVERED"
+        "result": "POLICY_CAPITAL=0 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6",
+        "status": "PARTIAL"
       },
       {
         "capability": "Deep Research Terminal",
@@ -8061,7 +8059,7 @@
     ],
     "interpretation": "Only production-wired capabilities are shown here. A design doc or isolated module does not count as active.",
     "no_auto_trade": true,
-    "status": "ACTIVE"
+    "status": "ACTIVE_WITH_LIMITATIONS"
   },
   "today_account_plan": {
     "available_cash_cny": 50000.0,
