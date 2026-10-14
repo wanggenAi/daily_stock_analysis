@@ -28,10 +28,11 @@ def _payload(profiles):
     }
 
 
-def _row(code, quant, rank):
+def _row(code, quant, rank, industry=None):
     return {
         "code": code,
         "stock_name": code,
+        "industry": industry if industry is not None else f"行业-{code}",
         "quant_score": str(quant),
         "v31_review_rank": str(rank),
     }
@@ -123,3 +124,31 @@ def test_top_n_never_pads_and_tie_break_is_deterministic():
     assert [row["code"] for row in result["top_rows"]] == ["000001", "000002"]
     assert result["summary"]["top_count"] == 2
     assert result["summary"]["requested_top_n"] == 10
+
+
+def test_top_list_uses_one_representative_per_official_industry():
+    result = build_radar(
+        [
+            _row("000001", 99, 1, "行业A"),
+            _row("000002", 98, 2, "行业A"),
+            _row("000003", 97, 3, "行业B"),
+            _row("000004", 96, 4, "行业C"),
+        ],
+        _payload(
+            {
+                "000001": _profile("PASS", "PASS", "UNKNOWN", "UNKNOWN", "UNKNOWN"),
+                "000002": _profile("PASS", "PASS", "UNKNOWN", "UNKNOWN", "UNKNOWN"),
+                "000003": _profile("PASS", "PASS", "UNKNOWN", "UNKNOWN", "UNKNOWN"),
+                "000004": _profile("PASS", "PASS", "UNKNOWN", "UNKNOWN", "UNKNOWN"),
+            }
+        ),
+        top_n=3,
+    )
+    assert [row["code"] for row in result["top_rows"]] == ["000001", "000003", "000004"]
+    assert [row["diversified_rank"] for row in result["top_rows"]] == [1, 2, 3]
+    assert result["summary"]["top_distinct_industry_count"] == 3
+    assert result["summary"]["distinct_industry_count"] == 3
+    assert result["summary"]["same_industry_backup_count"] == 1
+    backup = next(row for row in result["eligible_rows"] if row["code"] == "000002")
+    assert backup["selected_as_industry_representative"] is False
+    assert backup["same_industry_representative_code"] == "000001"
