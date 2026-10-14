@@ -91,7 +91,8 @@ def main(argv: list[str] | None = None) -> int:
     # Production CLI is the formal promotion boundary. Research workflows may
     # finish before/during an A-share session, but they must not overwrite the
     # formal canonical until that session has crossed the settlement boundary.
-    promotion_window = assert_canonical_promotion_window_open()
+    candidate = json.loads(args.snapshot.read_text(encoding="utf-8"))
+    promotion_window = assert_canonical_promotion_window_open(candidate_trade_date=candidate.get("latest_trade_date"))
 
     outputs = finalize_canonical(
         args.snapshot,
