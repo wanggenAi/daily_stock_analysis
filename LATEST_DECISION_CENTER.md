@@ -200,24 +200,24 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 
 ## 全球市场脉搏 / 复市前情报
 
-- Global Pulse：**OK**；全球风险状态：**NEUTRAL**；A股最近有效交易日：**2026-10-14**。
-- 休市累计外部缺口风险：**NORMAL**；正向累积：**NONE_IDENTIFIED**。
+- Global Pulse：**OK**；全球风险状态：**RISK_OFF**；A股最近有效交易日：**2026-10-14**。
+- 休市累计外部缺口风险：**ELEVATED**；正向累积：**NONE_IDENTIFIED**。
 - 以下均为研究上下文，不产生 Formal BUY/SELL，不自动交易。
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 -0.32%；最近1日 -0.27%；5日 -0.16%；market_date=2026-10-14；freshness=FRESH。
-- **NASDAQ**：休市以来 -0.50%；最近1日 -0.53%；5日 -0.89%；market_date=2026-10-14；freshness=FRESH。
-- **SOX**：休市以来 -1.81%；最近1日 -0.39%；5日 -4.71%；market_date=2026-10-14；freshness=FRESH。
-- **VIX**：休市以来 +4.14%；最近1日 +3.74%；5日 +5.11%；market_date=2026-10-14；freshness=FRESH。
-- **US10Y**：休市以来 +1.71%；最近1日 +1.59%；5日 +0.70%；market_date=2026-10-14；freshness=FRESH。
-- **DXY**：休市以来 +0.56%；最近1日 +0.45%；5日 +0.44%；market_date=2026-10-14；freshness=FRESH。
-- **USDCNH**：休市以来 +0.08%；最近1日 +0.07%；5日 +0.09%；market_date=2026-10-14；freshness=FRESH。
-- **HANGSENG**：休市以来 -0.05%；最近1日 -0.13%；5日 +0.42%；market_date=2026-10-14；freshness=FRESH。
-- **COPPER**：休市以来 +0.00%；最近1日 +0.28%；5日 +1.52%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **GOLD**：休市以来 +0.00%；最近1日 -1.50%；5日 -0.63%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.31%；5日 +8.03%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 -0.80%；最近1日 -0.43%；5日 +0.32%；market_date=2026-10-14；freshness=FRESH。
+- **SP500**：休市以来 -1.30%；最近1日 -1.35%；5日 -1.43%；market_date=2026-10-14；freshness=FRESH。
+- **NASDAQ**：休市以来 -2.02%；最近1日 -2.05%；5日 -2.63%；market_date=2026-10-14；freshness=FRESH。
+- **SOX**：休市以来 -4.13%；最近1日 -3.67%；5日 -6.94%；market_date=2026-10-14；freshness=FRESH。
+- **VIX**：休市以来 +12.04%；最近1日 +10.16%；5日 +14.91%；market_date=2026-10-14；freshness=FRESH。
+- **US10Y**：休市以来 -0.61%；最近1日 -0.61%；5日 -1.24%；market_date=2026-10-14；freshness=FRESH。
+- **DXY**：休市以来 +0.39%；最近1日 +0.40%；5日 +0.37%；market_date=2026-10-14；freshness=FRESH。
+- **USDCNH**：休市以来 +0.03%；最近1日 +0.04%；5日 +0.04%；market_date=2026-10-14；freshness=FRESH。
+- **HANGSENG**：休市以来 -0.05%；最近1日 -0.13%；5日 +0.42%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **COPPER**：休市以来 +0.00%；最近1日 -0.76%；5日 +0.47%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +0.00%；最近1日 -1.56%；5日 -0.69%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.23%；5日 +7.95%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 -2.31%；最近1日 -1.81%；5日 -0.98%；market_date=2026-10-14；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
@@ -229,6 +229,7 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 
 ### 下一次A股开盘最该盯什么
 
-- No material holiday gap signal; use global pulse as context and keep company-level gates authoritative.
+- Open with reduced risk appetite until A-share price discovery confirms external gap absorption.
+- Gap risk flags：US_EQUITY_DRAWDOWN。
 
 > 全球市场层只能强化/弱化研究和触发重算；Canonical/Formal authority 保持原样，no_auto_trade=true。
