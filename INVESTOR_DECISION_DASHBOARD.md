@@ -82,8 +82,8 @@ A02林业(STRONG)、R89体育(STRONG)、G60邮政业(STRONG)、R88文化艺术�
 
 ### 风险预算 BUILD / PROBE
 
-- 伯特利 603596: **BUILD**；conviction=0.8984；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 迎驾贡酒 603198: **PROBE**；conviction=0.6207；建议账户仓位上限=0.74%；研究结论仍为 RESEARCH_GAP。
+- 伯特利 603596: **BUILD**；conviction=0.8986；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 迎驾贡酒 603198: **PROBE**；conviction=0.6231；建议账户仓位上限=0.75%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
