@@ -7,7 +7,7 @@ keeps those two concepts separate.
 """
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from typing import Any
 
 from .generation_freshness import (
@@ -17,6 +17,7 @@ from .generation_freshness import (
     SHANGHAI,
     _calendar_mode,
     _is_completed_session_day,
+    expected_latest_trade_date,
 )
 
 PROMOTION_CONTRACT_VERSION = "GEN_GE_CANONICAL_PROMOTION_WINDOW_V1"
@@ -41,7 +42,7 @@ def _parse_now(value: str | datetime | None) -> datetime:
 
 
 def evaluate_canonical_promotion_window(
-    *, evaluated_at: str | datetime | None = None
+    *, evaluated_at: str | datetime | None = None, candidate_trade_date: str | None = None
 ) -> dict[str, Any]:
     """Return whether a new formal canonical may be promoted at this instant.
 
@@ -56,11 +57,21 @@ def evaluate_canonical_promotion_window(
     session_day = _is_completed_session_day(local.date())
     pending_session = session_day and local.time() < SESSION_SETTLED_AFTER
     calendar_mode = _calendar_mode(local.date())
-    reasons = ["CURRENT_ASHARE_SESSION_NOT_SETTLED"] if pending_session else []
+    expected = expected_latest_trade_date(now)
+    candidate = None
+    if candidate_trade_date is not None:
+        try:
+            candidate = date.fromisoformat(str(candidate_trade_date))
+        except ValueError:
+            pass
+    allowed = not pending_session or candidate == expected
+    if candidate_trade_date is not None and candidate != expected:
+        allowed = False
+    reasons = [] if allowed else ["CURRENT_ASHARE_SESSION_NOT_SETTLED"]
     return {
         "contract_version": PROMOTION_CONTRACT_VERSION,
-        "status": "BLOCKED_PENDING_SESSION" if pending_session else "OPEN",
-        "canonical_promotion_allowed": not pending_session,
+        "status": "OPEN" if allowed else "BLOCKED_PENDING_SESSION",
+        "canonical_promotion_allowed": allowed,
         "reasons": reasons,
         "evaluated_at": now.astimezone(timezone.utc).replace(microsecond=0).isoformat(),
         "shanghai_date": local.date().isoformat(),
@@ -80,7 +91,7 @@ def evaluate_canonical_promotion_window(
 def assert_canonical_promotion_window_open(
     *, evaluated_at: str | datetime | None = None
 ) -> dict[str, Any]:
-    result = evaluate_canonical_promotion_window(evaluated_at=evaluated_at)
+    result = evaluate_canonical_promotion_window(evaluated_at=evaluated_at, candidate_trade_date=candidate_trade_date)
     if result["canonical_promotion_allowed"] is not True:
         raise ValueError(
             "PRE_SETTLEMENT_CANONICAL_PROMOTION_REFUSED: "
