@@ -64,9 +64,7 @@ def evaluate_canonical_promotion_window(
             candidate = date.fromisoformat(str(candidate_trade_date))
         except ValueError:
             pass
-    allowed = not pending_session or candidate == expected
-    if candidate_trade_date is not None and candidate != expected:
-        allowed = False
+    allowed = (not pending_session and candidate_trade_date is None) or candidate == expected
     reasons = [] if allowed else ["CURRENT_ASHARE_SESSION_NOT_SETTLED"]
     return {
         "contract_version": PROMOTION_CONTRACT_VERSION,
