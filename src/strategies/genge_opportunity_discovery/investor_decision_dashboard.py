@@ -56,6 +56,13 @@ def _fail_closed_new_exposure(payload: dict[str, Any], freshness: Mapping[str, A
     payload["formal_new_exposure_allowed"] = False
     payload["formal_holding_actions_currently_usable"] = False
 
+    # holdings_reconciliation is copied into the investor-facing dashboard and its
+    # usability flag is part of the same public contract as the top-level flag.
+    # Freshness fail-closed must therefore update both views atomically; otherwise
+    # one payload can claim that Formal holding actions are both usable and unusable.
+    reconciliation = payload.setdefault("holdings_reconciliation", {})
+    reconciliation["formal_holding_actions_currently_usable"] = False
+
     market = payload.setdefault("market", {})
     market["allow_new_buy"] = False
     market["freshness_override"] = "STALE_UPSTREAM_FAIL_CLOSED"
