@@ -206,24 +206,24 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 
 ## 全球市场脉搏 / 复市前情报
 
-- Global Pulse：**OK**；全球风险状态：**RISK_OFF**；A股最近有效交易日：**2026-10-15**。
+- Global Pulse：**OK**；全球风险状态：**NEUTRAL**；A股最近有效交易日：**2026-10-15**。
 - 休市累计外部缺口风险：**NORMAL**；正向累积：**NONE_IDENTIFIED**。
 - 以下均为研究上下文，不产生 Formal BUY/SELL，不自动交易。
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 +0.00%；最近1日 -1.08%；5日 -1.15%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **NASDAQ**：休市以来 +0.00%；最近1日 -1.85%；5日 -2.42%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **SOX**：休市以来 +0.00%；最近1日 -4.27%；5日 -7.04%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **VIX**：休市以来 +0.17%；最近1日 +10.45%；5日 +17.52%；market_date=2026-10-15；freshness=FRESH。
-- **US10Y**：休市以来 -2.39%；最近1日 -4.63%；5日 -3.39%；market_date=2026-10-15；freshness=FRESH。
-- **DXY**：休市以来 +0.00%；最近1日 -0.78%；5日 -0.13%；market_date=2026-10-15；freshness=FRESH。
-- **USDCNH**：休市以来 -0.02%；最近1日 -0.14%；5日 -0.03%；market_date=2026-10-15；freshness=FRESH。
-- **HANGSENG**：休市以来 +0.19%；最近1日 -1.03%；5日 -0.61%；market_date=2026-10-15；freshness=FRESH。
-- **COPPER**：休市以来 +0.00%；最近1日 -1.07%；5日 +0.34%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **GOLD**：休市以来 +0.00%；最近1日 +1.62%；5日 +0.42%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 -0.67%；5日 +3.24%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 -1.39%；最近1日 -2.37%；5日 -2.97%；market_date=2026-10-15；freshness=FRESH。
+- **SP500**：休市以来 +0.02%；最近1日 +0.20%；5日 -1.13%；market_date=2026-10-15；freshness=FRESH。
+- **NASDAQ**：休市以来 -0.43%；最近1日 -0.33%；5日 -2.84%；market_date=2026-10-15；freshness=FRESH。
+- **SOX**：休市以来 -2.56%；最近1日 -2.77%；5日 -9.42%；market_date=2026-10-15；freshness=FRESH。
+- **VIX**：休市以来 -4.31%；最近1日 -2.74%；5日 +12.26%；market_date=2026-10-15；freshness=FRESH。
+- **US10Y**：休市以来 -1.91%；最近1日 -1.81%；5日 -2.92%；market_date=2026-10-15；freshness=FRESH。
+- **DXY**：休市以来 -0.09%；最近1日 -0.54%；5日 -0.22%；market_date=2026-10-15；freshness=FRESH。
+- **USDCNH**：休市以来 -0.03%；最近1日 -0.08%；5日 -0.03%；market_date=2026-10-15；freshness=FRESH。
+- **HANGSENG**：休市以来 +0.19%；最近1日 -1.03%；5日 -0.61%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **COPPER**：休市以来 +0.00%；最近1日 -0.80%；5日 +0.61%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +0.00%；最近1日 +1.67%；5日 +0.47%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.60%；5日 +5.60%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 +0.79%；最近1日 +0.56%；5日 -1.05%；market_date=2026-10-15；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
