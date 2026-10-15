@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38811231521",
+  "orchestrator_run_id": "38816087498",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,6 +24,13 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "601318",
+      "entity_name": "中国平安",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "DEEP_RESEARCH"
+    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -46,27 +53,6 @@
       "route": "EVIDENCE_REFRESH"
     },
     {
-      "attention_priority": "HIGH",
-      "entity_id": "601318",
-      "entity_name": "中国平安",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "000096",
-      "entity_name": "广聚能源",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "002215",
-      "entity_name": "诺 普 信",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
       "attention_priority": "MEDIUM",
       "entity_id": "600338",
       "entity_name": "西藏珠峰",
@@ -82,10 +68,24 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "603268",
+      "entity_name": "松发股份",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "603986",
       "entity_name": "兆易创新",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000096",
+      "entity_name": "广聚能源",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "MEDIUM",
@@ -98,6 +98,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "000703",
       "entity_name": "恒逸石化",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "002215",
+      "entity_name": "诺 普 信",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -117,13 +124,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "600523",
-      "entity_name": "贵航股份",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "601136",
       "entity_name": "首创证券",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -131,8 +131,8 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "603268",
-      "entity_name": "松发股份",
+      "entity_id": "603098",
+      "entity_name": "森特股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -173,6 +173,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600523",
+      "entity_name": "贵航股份",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "600834",
       "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -184,20 +191,13 @@
       "entity_name": "华立股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "603098",
-      "entity_name": "森特股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-15T21:36:24+00:00",
-  "source_workflow_head_sha": "4f62686d4c184ee86217029bde041d92e1ac0641",
+  "source_generated_at": "2026-10-15T22:16:55+00:00",
+  "source_workflow_head_sha": "9f824b0b54105df8f058ce8ae419ebff6ed0335e",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38810954055",
+  "source_workflow_run_id": "38815796081",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 358,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38810954055",
+  "trigger_source": "JEV_ORCHESTRATOR_38815796081",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-15T21:38:52+00:00",
+  "updated_at": "2026-10-15T22:19:35+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.79,
+      "attention_confidence": 0.82,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
