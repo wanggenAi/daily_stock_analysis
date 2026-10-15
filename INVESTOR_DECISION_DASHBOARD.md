@@ -72,8 +72,8 @@ A02林业(STRONG)、G53铁路运输业(STRONG)、B07石油和天然气开采业(
 
 ### 风险预算 BUILD / PROBE
 
-- 伯特利 603596: **BUILD**；conviction=0.8986；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 迎驾贡酒 603198: **PROBE**；conviction=0.6231；建议账户仓位上限=0.75%；研究结论仍为 RESEARCH_GAP。
+- 伯特利 603596: **BUILD**；conviction=0.8974；建议账户仓位上限=3.0%；研究结论仍为 BUY。
+- 迎驾贡酒 603198: **PROBE**；conviction=0.6236；建议账户仓位上限=0.75%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
