@@ -11,7 +11,7 @@
 - predictability resolved gates: **1**
 - moat resolved gates: **3**
 - material-event failed gates: **2**
-- historical material-event evidence rows: **0**
+- historical material-event evidence rows: **1**
 - historical material-event failed gates: **0**
 - cumulative material-event risk ledger rows: **1**
 - material-event PASS overrides: **1**
