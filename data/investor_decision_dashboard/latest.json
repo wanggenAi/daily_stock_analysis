@@ -1,7 +1,7 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "MANUAL",
-  "generated_at": "2026-10-15T15:56:29+00:00",
+  "mode": "HOURLY",
+  "generated_at": "2026-10-15T19:06:46+00:00",
   "canonical_snapshot_id": "acbe3aa2808249373b74",
   "canonical_source_run_id": "38762286190",
   "latest_trade_date": "2026-10-15",
@@ -257,7 +257,7 @@
     "capital_as_of": "2026-09-20",
     "deployment_budget_cny": 0.0,
     "effective_max_deployment_ratio": 0.0,
-    "planned_immediate_cash_cny": 0.0,
+    "planned_immediate_cash_cny": 0,
     "cash_after_immediate_plan_cny": 50000.0,
     "operations": [],
     "wait_price_reservations": [],
@@ -291,7 +291,7 @@
     "terminal_buy_count": 0,
     "terminal_wait_price_count": 0,
     "terminal_reject_count": 93,
-    "planned_immediate_cash_cny": 0.0,
+    "planned_immediate_cash_cny": 0,
     "research_terminal_requested_count": 31,
     "research_buy_count": 1,
     "research_wait_price_count": 0,
@@ -405,7 +405,7 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-10-15T15:56:29+00:00",
+    "evaluated_at": "2026-10-15T19:06:46+00:00",
     "canonical_generated_at": "2026-10-15T15:50:34+00:00",
     "canonical_latest_trade_date": "2026-10-15",
     "canonical_source_run_id": "38762286190",
@@ -416,6 +416,38 @@
     "holiday_calendar_url": "https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml"
   },
   "formal_new_exposure_allowed": true,
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "available": false,
+    "market_data_status": "DEGRADED",
+    "eligible_quote_count": 0,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 0,
+    "applied_codes": [],
+    "missing_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "coverage_ratio": 0.0,
+    "latest_quote_observed_at": "",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": false,
+    "formal_new_exposure_allowed": true
+  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
     "canonical_snapshot_id": "acbe3aa2808249373b74",
@@ -447,10 +479,10 @@
     "source_every_industry_run_id": "38762286190",
     "requested_count": 31,
     "decision_counts": {
-      "WAIT_PRICE": 0,
+      "BUY": 1,
       "REJECT": 1,
       "RESEARCH_GAP": 29,
-      "BUY": 1
+      "WAIT_PRICE": 0
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
@@ -4576,41 +4608,5 @@
     "capital_probe_count": 2,
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
-    "available": false,
-    "market_data_status": "DEGRADED",
-    "eligible_quote_count": 0,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 0,
-    "applied_codes": [],
-    "missing_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "coverage_ratio": 0.0,
-    "latest_quote_observed_at": "",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true,
-    "consumer_contract": "GEN_GE_LIVE_EXECUTION_QUOTE_CONSUMER_V1",
-    "source": "PERSISTED_LIVE_EXECUTION_QUOTE_SNAPSHOT",
-    "snapshot_contract": "GEN_GE_LIVE_EXECUTION_QUOTE_SNAPSHOT_V1",
-    "quote_snapshot_generated_at": "2026-10-15T18:17:55.507694+00:00"
   }
 }
