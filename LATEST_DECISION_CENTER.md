@@ -211,13 +211,13 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 - **SOX**：休市以来 -4.27%；最近1日 -4.27%；5日 -7.04%；market_date=2026-10-14；freshness=FRESH。
 - **VIX**：休市以来 +10.86%；最近1日 +10.35%；5日 +13.54%；market_date=2026-10-14；freshness=FRESH。
 - **US10Y**：休市以来 -0.52%；最近1日 -0.52%；5日 -1.03%；market_date=2026-10-14；freshness=FRESH。
-- **DXY**：休市以来 +0.33%；最近1日 +0.31%；5日 +0.29%；market_date=2026-10-14；freshness=FRESH。
-- **USDCNH**：休市以来 +0.03%；最近1日 +0.03%；5日 +0.04%；market_date=2026-10-14；freshness=FRESH。
+- **DXY**：休市以来 -0.12%；最近1日 -0.07%；5日 -0.16%；market_date=2026-10-15；freshness=FRESH。
+- **USDCNH**：休市以来 -0.00%；最近1日 -0.00%；5日 +0.01%；market_date=2026-10-15；freshness=FRESH。
 - **HANGSENG**：休市以来 -0.05%；最近1日 -0.13%；5日 +0.42%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +0.00%；最近1日 -0.85%；5日 +0.37%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **GOLD**：休市以来 +0.00%；最近1日 -1.29%；5日 -0.42%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +0.90%；5日 +7.60%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 -2.31%；最近1日 -2.28%；5日 -1.22%；market_date=2026-10-14；freshness=FRESH。
+- **COPPER**：休市以来 +0.00%；最近1日 -0.71%；5日 +0.52%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +0.00%；最近1日 -0.18%；5日 +0.71%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 -0.15%；5日 +6.48%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 -2.32%；最近1日 -2.04%；5日 -1.30%；market_date=2026-10-15；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
