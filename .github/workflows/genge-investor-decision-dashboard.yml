@@ -127,24 +127,38 @@ jobs:
       - name: Locate latest successful authorized Canonical
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          EVENT_NAME: ${{ github.event_name }}
+          TRIGGER_WORKFLOW: ${{ github.event.workflow_run.name }}
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
         run: |
           set -euo pipefail
           rm -rf incoming-authority; mkdir incoming-authority
-          runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=40")
           selected=""
-          for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id'); do
-            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
-            if [ "$(printf '%s' "$artifacts" | jq '[.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))] | length')" -gt 0 ]; then
-              selected="$run_id"; break
-            fi
-          done
+          if [ "$EVENT_NAME" = "workflow_run" ] && [ "$TRIGGER_WORKFLOW" = "GenGe V3.1.1 Production Finalizer" ]; then
+            selected="$TRIGGER_RUN_ID"
+            test -n "$selected"
+            run_json=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${selected}")
+            test "$(printf '%s' "$run_json" | jq -r '.conclusion // empty')" = "success"
+            test "$(printf '%s' "$run_json" | jq -r '.name // empty')" = "GenGe V3.1.1 Production Finalizer"
+            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${selected}/artifacts?per_page=100")
+            test "$(printf '%s' "$artifacts" | jq '[.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))] | length')" -gt 0
+            echo "Pinning Canonical authority to triggering Finalizer run ${selected}"
+          else
+            runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=40")
+            for run_id in $(printf '%s' "$runs" | jq -r '.workflow_runs[] | select(.conclusion == "success") | .id'); do
+              artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")
+              if [ "$(printf '%s' "$artifacts" | jq '[.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))] | length')" -gt 0 ]; then
+                selected="$run_id"; break
+              fi
+            done
+          fi
           test -n "$selected"
           gh run download "$selected" --repo "$GITHUB_REPOSITORY" --dir incoming-authority
           canonical=$(find incoming-authority -path '*/canonical_snapshot/latest.json' -print -quit)
           authority=$(find incoming-authority -name production_authority.json -print -quit)
           reconciliation=$(find incoming-authority -name holdings_reconciliation.json -print -quit)
           test -n "$canonical"; test -n "$authority"; test -n "$reconciliation"
-          CANONICAL="$canonical" AUTHORITY="$authority" RECONCILIATION="$reconciliation" python - <<'PY'
+          FINALIZER_RUN_ID="$selected" CANONICAL="$canonical" AUTHORITY="$authority" RECONCILIATION="$reconciliation" python - <<'PY'
           import hashlib, json, os
           from pathlib import Path
           cpath=Path(os.environ['CANONICAL'])
@@ -152,6 +166,8 @@ jobs:
           c=json.loads(cpath.read_text(encoding='utf-8'))
           r=json.loads(Path(os.environ['RECONCILIATION']).read_text(encoding='utf-8'))
           assert a['authorized'] is True
+          assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])
+          assert len(str(a['source_head_sha'])) == 40
           assert a['canonical_snapshot_id'] == c['snapshot_id']
           assert str(a['canonical_source_run_id']) == str(c['source_run_id'])
           assert a['canonical_sha256'] == hashlib.sha256(cpath.read_bytes()).hexdigest()
