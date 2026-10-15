@@ -257,8 +257,8 @@
   "canonical_snapshot_id": "77a11ad784fdd1b6e2ca",
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
   "data_freshness_execution_guard": {
-    "block_reason": null,
-    "execution_allowed": true,
+    "block_reason": "DATA_PACKAGE_STALE_NOT_EXECUTABLE",
+    "execution_allowed": false,
     "formal_action_recomputed": false,
     "formal_actions_preserved": true,
     "no_auto_trade": true,
@@ -267,17 +267,17 @@
   "data_package_provenance": {
     "contract": "GEN_GE_DECISION_DATA_PROVENANCE_V1",
     "data_package_contract": "GEN_GE_REALTIME_DATA_PACKAGE_V1",
-    "execution_allowed": true,
+    "execution_allowed": false,
     "external_fresh_evidence_policy": "TAGGED_EXCEPTION_ONLY",
     "latest_trade_date": "2026-10-14",
     "network_policy": "CANONICAL_PACKAGE_ONLY",
-    "package_generated_at": "2026-10-15T05:00:00+00:00",
-    "package_status": "READY",
+    "package_generated_at": "2026-10-15T07:00:00+00:00",
+    "package_status": "STALE",
     "pending_external_fresh_evidence_count": 0,
     "research_input_contract": "GEN_GE_RESEARCH_INPUT_LOCK_V1",
-    "research_input_locked_at": "2026-10-15T07:23:55.751494+00:00",
+    "research_input_locked_at": "2026-10-15T07:25:58.453190+00:00",
     "research_mode": "hourly",
-    "snapshot_id": "8b396e1d1a7254ebaa19"
+    "snapshot_id": "d756c96ff7b20e5a26bd"
   },
   "decision_questions": [
     "我手里的股票，现在该怎么办？",
@@ -301,7 +301,7 @@
     "financial_capital_evidence_available": true,
     "global_market_pulse_available": true,
     "global_market_pulse_formal_authority_granted": false,
-    "live_execution_quote_coverage_complete": true,
+    "live_execution_quote_coverage_complete": false,
     "portfolio_actions_available": true,
     "pre_open_intelligence_available": true,
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
@@ -583,7 +583,7 @@
   },
   "formal_action_recomputed": false,
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-  "generated_at": "2026-10-15T07:23:55+00:00",
+  "generated_at": "2026-10-15T07:25:58+00:00",
   "holding_valuation_continuity": {
     "available": true,
     "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
@@ -621,10 +621,10 @@
         "deep_gate_unverified": [
           "predictability"
         ],
-        "discount_to_model_low_pct": 12.42,
+        "discount_to_model_low_pct": 7.71,
         "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
         "existing_add_allowance_consumed": false,
-        "existing_registered_stock_concentration_pct": 36.65,
+        "existing_registered_stock_concentration_pct": 37.57,
         "existing_shares_from_confirmed_snapshot": 1100,
         "formal_action_unchanged": "HOLD",
         "manual_recheck": [
@@ -639,17 +639,17 @@
         "model_value_low": 18.02971886915772,
         "name": "洛阳钼业",
         "non_authorized_scenario": {
-          "assumed_price": 15.79,
+          "assumed_price": 16.64,
           "authorized": false,
-          "estimated_cash_cny_ex_fees": 1579.0,
-          "estimated_new_average_cost_ex_fees": 18.3882,
+          "estimated_cash_cny_ex_fees": 1664.0,
+          "estimated_new_average_cost_ex_fees": 18.459,
           "estimated_new_total_shares": 1200,
           "executable_shares": 0,
           "is_order": false,
           "kind": "ILLUSTRATIVE_100_SHARES_ONLY",
-          "loss_if_scenario_price_falls_another_10pct_cny": 157.9,
+          "loss_if_scenario_price_falls_another_10pct_cny": 166.4,
           "order_limit_price": null,
-          "planning_cash_after_cny_ex_fees": 48421.0,
+          "planning_cash_after_cny_ex_fees": 48336.0,
           "planning_cash_cny": 50000.0,
           "planning_cash_cny_as_of": "2026-09-20",
           "shares": 100
@@ -657,8 +657,8 @@
         "price_as_of": "2026-10-14",
         "price_evidence": "CANONICAL_EOD_NOT_LIVE",
         "reason": "PRICE_BELOW_MODELED_LOWER_VALUE_BOUND",
-        "reference_price": 15.79,
-        "registered_stock_value_cny": 47395.0,
+        "reference_price": 16.64,
+        "registered_stock_value_cny": 48724.0,
         "valuation_confidence": "HIGH"
       }
     ],
@@ -670,7 +670,8 @@
     "interpretation": "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action without promoting missing evidence. EVIDENCE completeness is tracked separately.",
     "limitations": [
       "DEEP_RESEARCH_EVIDENCE_PARTIAL",
-      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED"
+      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED",
+      "LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION"
     ],
     "no_auto_trade": true,
     "status": "ACTION_COMPLETE"
@@ -698,7 +699,7 @@
           "seen_count": 276
         },
         "code": "600406",
-        "current_price": 22.3,
+        "current_price": 22.18,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -754,7 +755,7 @@
         "investor_action": "维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）",
         "name": "国电南瑞",
         "neutral_value": 17.457807170543802,
-        "pnl_pct": -3.57,
+        "pnl_pct": -4.09,
         "quantity": 200,
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
         "valuation_confidence": "HIGH",
@@ -786,7 +787,7 @@
           "seen_count": 278
         },
         "code": "001316",
-        "current_price": 25.67,
+        "current_price": 27.46,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -842,7 +843,7 @@
         "investor_action": "持有观察",
         "name": "润贝航科",
         "neutral_value": 49.36957125214809,
-        "pnl_pct": -0.29,
+        "pnl_pct": 6.66,
         "quantity": 200,
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
         "valuation_confidence": "LOW",
@@ -874,7 +875,7 @@
           "seen_count": 203
         },
         "code": "601318",
-        "current_price": 51.08,
+        "current_price": 51.23,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -930,7 +931,7 @@
         "investor_action": "继续持有",
         "name": "中国平安",
         "neutral_value": 83.07,
-        "pnl_pct": -8.73,
+        "pnl_pct": -8.46,
         "quantity": 400,
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.617<1.00",
         "valuation_confidence": "MEDIUM",
@@ -962,7 +963,7 @@
           "seen_count": 245
         },
         "code": "603993",
-        "current_price": 15.79,
+        "current_price": 16.64,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -1067,7 +1068,7 @@
         "investor_action": "继续持有；历史分批加仓授权已消费，本轮新增可执行0股",
         "name": "洛阳钼业",
         "neutral_value": 28.12766979232306,
-        "pnl_pct": -15.22,
+        "pnl_pct": -10.65,
         "quantity": 1100,
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
         "valuation_confidence": "HIGH",
@@ -10745,7 +10746,7 @@
       },
       {
         "capability": "资金计划 + 执行价覆盖",
-        "result": "cash=50000.0 / immediate=0.0 / quotes=4/4",
+        "result": "cash=50000.0 / immediate=0.0 / quotes=0/4",
         "status": "ACTIVE"
       }
     ],
@@ -10759,10 +10760,10 @@
     "cash_after_immediate_plan_cny": 50000.0,
     "deployment_budget_cny": 0.0,
     "immediate_execution_ready": false,
-    "live_quote_applied_count": 4,
-    "live_quote_coverage_complete": true,
+    "live_quote_applied_count": 0,
+    "live_quote_coverage_complete": false,
     "live_quote_expected_count": 4,
-    "market_data_status": "OK",
+    "market_data_status": "DEGRADED",
     "market_session_state": "UNKNOWN",
     "no_auto_trade": true,
     "operations": [],
