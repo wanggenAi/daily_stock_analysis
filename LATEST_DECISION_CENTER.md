@@ -17,7 +17,7 @@
 
 100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
 
-- **洛阳钼业 603993**：2026-10-14收盘参考价¥16.64，低于模型估值下沿¥18.03约7.71%；现有1100股；假设额外100股约¥1664，平均成本约¥18.4590（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：MARKET_NEW_BUY_DISABLED, NO_CURRENT_FORMAL_HOLDING_ADD, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+- **洛阳钼业 603993**：2026-10-14收盘参考价¥16.64，低于模型估值下沿¥18.03约7.71%；现有1100股；假设额外100股约¥1664，平均成本约¥18.4590（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：MARKET_NEW_BUY_DISABLED, NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
 
 ### 每只持仓的决策链
 
@@ -93,7 +93,7 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 ## 4. 今日账户资金怎么处理
 
 - 可用现金：**¥50000.00**；可部署预算：**¥0.00**；本轮计划立即投入：**¥0.00**；计划后现金：**¥50000.00**。
-- 盘中价覆盖：**0/4**；交易时段：**UNKNOWN**；行情状态：**DEGRADED**。
+- 盘中价覆盖：**0/0**；交易时段：**UNKNOWN**；行情状态：**UNAVAILABLE**。
 - **本轮没有已授权的新资金投入，约¥50000现金继续保留；已有持仓只按既有 Formal 动作管理，不为了凑交易而买入。**
 
 ### 今日最终操作表
@@ -114,7 +114,7 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -129,7 +129,7 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38654578617 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=0 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=21 / REJECT=0 |
-| 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
+| 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/0 |
 
 - Candidate Lifecycle：当前 ACTIVE **100**；DORMANT **26**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **14396**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
 - 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。

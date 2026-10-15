@@ -254,7 +254,7 @@
       "PENDING": 100
     }
   },
-  "canonical_snapshot_id": "427d06b97b33614ebde8",
+  "canonical_snapshot_id": "77a11ad784fdd1b6e2ca",
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
   "data_freshness_execution_guard": {
     "block_reason": null,
@@ -275,7 +275,7 @@
     "package_status": "READY",
     "pending_external_fresh_evidence_count": 0,
     "research_input_contract": "GEN_GE_RESEARCH_INPUT_LOCK_V1",
-    "research_input_locked_at": "2026-10-15T00:04:33.283249+00:00",
+    "research_input_locked_at": "2026-10-15T00:47:45.116368+00:00",
     "research_mode": "hourly",
     "snapshot_id": "f4626757e040c2104b6c"
   },
@@ -301,7 +301,7 @@
     "financial_capital_evidence_available": true,
     "global_market_pulse_available": true,
     "global_market_pulse_formal_authority_granted": false,
-    "live_execution_quote_coverage_complete": false,
+    "live_execution_quote_coverage_complete": true,
     "portfolio_actions_available": true,
     "pre_open_intelligence_available": true,
     "rule": "缺少深算或映射证据时明确显示 gap；UNKNOWN 不得冒充 PASS，也不得为了填满页面制造机会。",
@@ -554,7 +554,7 @@
   },
   "formal_action_recomputed": false,
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-  "generated_at": "2026-10-15T00:04:33+00:00",
+  "generated_at": "2026-10-15T00:47:45+00:00",
   "holding_valuation_continuity": {
     "available": true,
     "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
@@ -569,7 +569,7 @@
   "holding_valuation_watch": {
     "authority": "READ_ONLY_RESEARCH_SCENARIO",
     "buy_now": [],
-    "canonical_snapshot_id": "427d06b97b33614ebde8",
+    "canonical_snapshot_id": "77a11ad784fdd1b6e2ca",
     "contract_version": "GEN_GE_HOLDING_VALUATION_WATCH_V1",
     "deep_profile_lineage_verified": true,
     "executable_orders": [],
@@ -583,6 +583,7 @@
         "blockers": [
           "MARKET_NEW_BUY_DISABLED",
           "NO_CURRENT_FORMAL_HOLDING_ADD",
+          "PRIOR_ADD_ALLOWANCE_CONSUMED",
           "DEEP_GATES_NOT_ALL_PASS",
           "BROKER_CASH_UNVERIFIED_LIVE",
           "EXECUTION_QUOTE_NOT_LIVE"
@@ -594,7 +595,7 @@
         ],
         "discount_to_model_low_pct": 7.71,
         "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
-        "existing_add_allowance_consumed": false,
+        "existing_add_allowance_consumed": true,
         "existing_registered_stock_concentration_pct": 37.57,
         "existing_shares_from_confirmed_snapshot": 1100,
         "formal_action_unchanged": "HOLD",
@@ -641,8 +642,7 @@
     "interpretation": "ACTION_COMPLETE means the report still gives a concrete hold/buy-wait/do-not-buy/cash action without promoting missing evidence. EVIDENCE completeness is tracked separately.",
     "limitations": [
       "DEEP_RESEARCH_EVIDENCE_PARTIAL",
-      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED",
-      "LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION"
+      "ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED"
     ],
     "no_auto_trade": true,
     "status": "ACTION_COMPLETE"
@@ -9651,7 +9651,7 @@
       },
       {
         "capability": "资金计划 + 执行价覆盖",
-        "result": "cash=50000.0 / immediate=0.0 / quotes=0/4",
+        "result": "cash=50000.0 / immediate=0.0 / quotes=0/0",
         "status": "ACTIVE"
       }
     ],
@@ -9666,9 +9666,9 @@
     "deployment_budget_cny": 0.0,
     "immediate_execution_ready": false,
     "live_quote_applied_count": 0,
-    "live_quote_coverage_complete": false,
-    "live_quote_expected_count": 4,
-    "market_data_status": "DEGRADED",
+    "live_quote_coverage_complete": true,
+    "live_quote_expected_count": 0,
+    "market_data_status": "UNAVAILABLE",
     "market_session_state": "UNKNOWN",
     "no_auto_trade": true,
     "operations": [],
