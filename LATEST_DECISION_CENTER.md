@@ -38,7 +38,7 @@
 
 | 趋势 | 信心 | 结构 | 产业 | A股研究映射 |
 |---|---:|---:|---:|---|
-| digital_infrastructure | 52.05 | 57.06 | 67.44 | 尚未映射 |
+| digital_infrastructure | 70.16 | 57.06 | 71.06 | 尚未映射 |
 | automotive_industry | 16.09 | 50.00 | 62.50 | 汽车 |
 | software_digital_economy | 15.03 | 50.00 | 58.81 | 尚未映射 |
 | equipment_investment | 14.65 | 50.00 | 56.89 | 尚未映射 |
@@ -49,7 +49,7 @@
 
 ### 资金流证据覆盖
 
-- 覆盖状态：**PARTIAL**；政策资本 **0**；产业资本 **6**；金融资本 **4**；真实需求 **5**。
+- 覆盖状态：**MULTI_LAYER_COVERED**；政策资本 **1**；产业资本 **6**；金融资本 **4**；真实需求 **5**。
 - 金融资本已有直接证据，但仍需与政策、产业资本、真实需求和个股深算交叉验证。
 
 ### 近期市场行为代理
@@ -127,7 +127,7 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 | Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=100 / dormant=26 / archived-invalidated=0 / events=14496 / focus=7 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=31 / verified-pass=224 / unresolved=123 |
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38719115383 / unverified-pass=0 |
-| 世界 / 社会 / 资本趋势雷达 | **PARTIAL** | POLICY_CAPITAL=0 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
+| 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=29 / REJECT=1 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
