@@ -5,7 +5,7 @@
   "entity_count": 25,
   "execution_status": "SUCCESS",
   "formal_trading_authority": false,
-  "generated_at": "2026-10-15T04:29:49+00:00",
+  "generated_at": "2026-10-15T04:32:15+00:00",
   "mutates_authoritative_decision": false,
   "no_auto_trade": true,
   "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -28,11 +28,11 @@
       "decisions": {
         "attention_priority": {
           "choice": "HIGH",
-          "confidence": 0.95,
+          "confidence": 0.97,
           "probabilities": {
-            "HIGH": 0.97,
+            "HIGH": 0.98,
             "LOW": 0.01,
-            "MEDIUM": 0.02
+            "MEDIUM": 0.01
           },
           "type": "choice"
         },
@@ -62,9 +62,9 @@
         },
         "needs_deep_research": {
           "answer": true,
-          "confidence": 0.4,
+          "confidence": 0.38,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.7,
+          "probability": 0.69,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -78,9 +78,9 @@
           "choice": "EVIDENCE_REFRESH",
           "confidence": 0.3,
           "probabilities": {
-            "DEEP_RESEARCH": 0.3,
+            "DEEP_RESEARCH": 0.29,
             "EVIDENCE_REFRESH": 0.44,
-            "HUMAN_REVIEW": 0.26,
+            "HUMAN_REVIEW": 0.27,
             "NO_ESCALATION": 0.0,
             "VALUATION_CLOSURE": 0.0
           },
@@ -94,7 +94,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": true,
-      "latency_ms": 342.495,
+      "latency_ms": 410.769,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -285,9 +285,9 @@
         },
         "needs_deep_research": {
           "answer": true,
-          "confidence": 0.2,
+          "confidence": 0.22,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.6,
+          "probability": 0.61,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -299,11 +299,11 @@
         },
         "research_route": {
           "choice": "EVIDENCE_REFRESH",
-          "confidence": 0.47,
+          "confidence": 0.45,
           "probabilities": {
-            "DEEP_RESEARCH": 0.29,
-            "EVIDENCE_REFRESH": 0.58,
-            "HUMAN_REVIEW": 0.13,
+            "DEEP_RESEARCH": 0.32,
+            "EVIDENCE_REFRESH": 0.56,
+            "HUMAN_REVIEW": 0.12,
             "NO_ESCALATION": 0.0,
             "VALUATION_CLOSURE": 0.0
           },
@@ -317,7 +317,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": true,
-      "latency_ms": 201.449,
+      "latency_ms": 193.217,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -497,9 +497,9 @@
         },
         "needs_deep_research": {
           "answer": true,
-          "confidence": 0.4,
+          "confidence": 0.34,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.7,
+          "probability": 0.67,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -510,12 +510,12 @@
           "type": "noul"
         },
         "research_route": {
-          "choice": "DEEP_RESEARCH",
-          "confidence": 0.2,
+          "choice": "EVIDENCE_REFRESH",
+          "confidence": 0.26,
           "probabilities": {
             "DEEP_RESEARCH": 0.36,
-            "EVIDENCE_REFRESH": 0.35,
-            "HUMAN_REVIEW": 0.29,
+            "EVIDENCE_REFRESH": 0.41,
+            "HUMAN_REVIEW": 0.23,
             "NO_ESCALATION": 0.0,
             "VALUATION_CLOSURE": 0.0
           },
@@ -529,7 +529,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": true,
-      "latency_ms": 172.584,
+      "latency_ms": 179.761,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -665,7 +665,7 @@
       "unknown_is_pass": false,
       "usage": {
         "input_tokens": 3225,
-        "output_tokens": 303
+        "output_tokens": 302
       }
     },
     {
@@ -685,24 +685,24 @@
       "decisions": {
         "attention_priority": {
           "choice": "HIGH",
-          "confidence": 0.89,
+          "confidence": 0.91,
           "probabilities": {
-            "HIGH": 0.93,
+            "HIGH": 0.94,
             "LOW": 0.03,
-            "MEDIUM": 0.04
+            "MEDIUM": 0.03
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.96,
+          "confidence": 0.94,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
-            "ENTRY_NOW": 0.02,
+            "ENTRY_NOW": 0.03,
             "INVALIDATED": 0.0,
             "NO_JUDGMENT": 0.0,
-            "WAIT_EVIDENCE": 0.97,
-            "WAIT_PRICE": 0.01
+            "WAIT_EVIDENCE": 0.95,
+            "WAIT_PRICE": 0.02
           },
           "type": "choice"
         },
@@ -719,9 +719,9 @@
         },
         "needs_deep_research": {
           "answer": true,
-          "confidence": 0.22,
+          "confidence": 0.2,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.61,
+          "probability": 0.6,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -733,11 +733,11 @@
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.37,
+          "confidence": 0.44,
           "probabilities": {
-            "DEEP_RESEARCH": 0.5,
-            "EVIDENCE_REFRESH": 0.43,
-            "HUMAN_REVIEW": 0.07,
+            "DEEP_RESEARCH": 0.55,
+            "EVIDENCE_REFRESH": 0.39,
+            "HUMAN_REVIEW": 0.06,
             "NO_ESCALATION": 0.0,
             "VALUATION_CLOSURE": 0.0
           },
@@ -751,7 +751,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": true,
-      "latency_ms": 157.014,
+      "latency_ms": 184.053,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -885,24 +885,24 @@
       "decisions": {
         "attention_priority": {
           "choice": "HIGH",
-          "confidence": 0.79,
+          "confidence": 0.82,
           "probabilities": {
-            "HIGH": 0.86,
-            "LOW": 0.04,
-            "MEDIUM": 0.1
+            "HIGH": 0.88,
+            "LOW": 0.03,
+            "MEDIUM": 0.09
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "ENTRY_NOW",
-          "confidence": 0.78,
+          "confidence": 0.8,
           "probabilities": {
             "DO_NOT_CHASE": 0.01,
-            "ENTRY_NOW": 0.82,
+            "ENTRY_NOW": 0.83,
             "INVALIDATED": 0.0,
             "NO_JUDGMENT": 0.01,
             "WAIT_EVIDENCE": 0.12,
-            "WAIT_PRICE": 0.04
+            "WAIT_PRICE": 0.03
           },
           "type": "choice"
         },
@@ -926,20 +926,20 @@
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.3,
+          "confidence": 0.28,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.65,
+          "probability": 0.64,
           "type": "noul"
         },
         "research_route": {
           "choice": "VALUATION_CLOSURE",
-          "confidence": 0.96,
+          "confidence": 0.95,
           "probabilities": {
-            "DEEP_RESEARCH": 0.02,
+            "DEEP_RESEARCH": 0.03,
             "EVIDENCE_REFRESH": 0.0,
             "HUMAN_REVIEW": 0.01,
             "NO_ESCALATION": 0.0,
-            "VALUATION_CLOSURE": 0.97
+            "VALUATION_CLOSURE": 0.96
           },
           "type": "choice"
         }
@@ -951,7 +951,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 161.226,
+      "latency_ms": 177.783,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -1071,32 +1071,32 @@
           "choice": "MEDIUM",
           "confidence": 0.82,
           "probabilities": {
-            "HIGH": 0.03,
-            "LOW": 0.09,
+            "HIGH": 0.04,
+            "LOW": 0.08,
             "MEDIUM": 0.88
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.69,
+          "confidence": 0.7,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.26,
-            "WAIT_EVIDENCE": 0.74,
+            "NO_JUDGMENT": 0.25,
+            "WAIT_EVIDENCE": 0.75,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.96,
+          "confidence": 0.97,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.03,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.02,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.97,
+            "INSUFFICIENT": 0.98,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
@@ -1110,9 +1110,9 @@
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.78,
+          "confidence": 0.8,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.89,
+          "probability": 0.9,
           "type": "noul"
         },
         "research_route": {
@@ -1120,9 +1120,9 @@
           "confidence": 0.44,
           "probabilities": {
             "DEEP_RESEARCH": 0.55,
-            "EVIDENCE_REFRESH": 0.33,
-            "HUMAN_REVIEW": 0.07,
-            "NO_ESCALATION": 0.05,
+            "EVIDENCE_REFRESH": 0.34,
+            "HUMAN_REVIEW": 0.06,
+            "NO_ESCALATION": 0.04,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -1135,7 +1135,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 141.192,
+      "latency_ms": 175.797,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -1226,34 +1226,34 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.35,
+          "confidence": 0.41,
           "probabilities": {
-            "HIGH": 0.04,
-            "LOW": 0.57,
-            "MEDIUM": 0.39
+            "HIGH": 0.03,
+            "LOW": 0.61,
+            "MEDIUM": 0.36
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.66,
+          "confidence": 0.7,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.28,
-            "WAIT_EVIDENCE": 0.72,
+            "NO_JUDGMENT": 0.25,
+            "WAIT_EVIDENCE": 0.75,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.92,
+          "confidence": 0.88,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.06,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.09,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.94,
+            "INSUFFICIENT": 0.91,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
@@ -1274,13 +1274,13 @@
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.68,
+          "confidence": 0.71,
           "probabilities": {
-            "DEEP_RESEARCH": 0.74,
-            "EVIDENCE_REFRESH": 0.15,
+            "DEEP_RESEARCH": 0.77,
+            "EVIDENCE_REFRESH": 0.12,
             "HUMAN_REVIEW": 0.02,
-            "NO_ESCALATION": 0.08,
-            "VALUATION_CLOSURE": 0.01
+            "NO_ESCALATION": 0.09,
+            "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
         }
@@ -1292,7 +1292,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 165.155,
+      "latency_ms": 188.364,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -1390,11 +1390,11 @@
       "decisions": {
         "attention_priority": {
           "choice": "MEDIUM",
-          "confidence": 0.49,
+          "confidence": 0.43,
           "probabilities": {
             "HIGH": 0.02,
-            "LOW": 0.32,
-            "MEDIUM": 0.66
+            "LOW": 0.36,
+            "MEDIUM": 0.62
           },
           "type": "choice"
         },
@@ -1437,13 +1437,13 @@
           "type": "noul"
         },
         "research_route": {
-          "choice": "EVIDENCE_REFRESH",
-          "confidence": 0.29,
+          "choice": "DEEP_RESEARCH",
+          "confidence": 0.3,
           "probabilities": {
-            "DEEP_RESEARCH": 0.43,
+            "DEEP_RESEARCH": 0.44,
             "EVIDENCE_REFRESH": 0.42,
             "HUMAN_REVIEW": 0.12,
-            "NO_ESCALATION": 0.03,
+            "NO_ESCALATION": 0.02,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -1456,7 +1456,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 138.145,
+      "latency_ms": 200.965,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -1594,7 +1594,7 @@
       "unknown_is_pass": false,
       "usage": {
         "input_tokens": 3280,
-        "output_tokens": 303
+        "output_tokens": 304
       }
     },
     {
@@ -1648,9 +1648,9 @@
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.54,
+          "confidence": 0.56,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.23,
+          "probability": 0.22,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -1662,11 +1662,11 @@
         },
         "research_route": {
           "choice": "EVIDENCE_REFRESH",
-          "confidence": 0.39,
+          "confidence": 0.35,
           "probabilities": {
-            "DEEP_RESEARCH": 0.35,
-            "EVIDENCE_REFRESH": 0.51,
-            "HUMAN_REVIEW": 0.11,
+            "DEEP_RESEARCH": 0.4,
+            "EVIDENCE_REFRESH": 0.48,
+            "HUMAN_REVIEW": 0.09,
             "NO_ESCALATION": 0.03,
             "VALUATION_CLOSURE": 0.0
           },
@@ -1680,7 +1680,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 131.399,
+      "latency_ms": 183.806,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -1827,60 +1827,60 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.4,
+          "confidence": 0.46,
           "probabilities": {
-            "HIGH": 0.04,
-            "LOW": 0.6,
-            "MEDIUM": 0.36
+            "HIGH": 0.03,
+            "LOW": 0.64,
+            "MEDIUM": 0.33
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.58,
+          "confidence": 0.59,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.35,
-            "WAIT_EVIDENCE": 0.65,
+            "NO_JUDGMENT": 0.34,
+            "WAIT_EVIDENCE": 0.66,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.85,
+          "confidence": 0.89,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.1,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.07,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.89,
+            "INSUFFICIENT": 0.92,
             "STALE_OR_LINEAGE_UNCLEAR": 0.01
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.64,
+          "confidence": 0.68,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.18,
+          "probability": 0.16,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.74,
+          "confidence": 0.7,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.87,
+          "probability": 0.85,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.27,
+          "confidence": 0.29,
           "probabilities": {
-            "DEEP_RESEARCH": 0.42,
-            "EVIDENCE_REFRESH": 0.36,
+            "DEEP_RESEARCH": 0.43,
+            "EVIDENCE_REFRESH": 0.38,
             "HUMAN_REVIEW": 0.05,
-            "NO_ESCALATION": 0.17,
+            "NO_ESCALATION": 0.14,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -1893,7 +1893,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 137.498,
+      "latency_ms": 189.143,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -1991,24 +1991,24 @@
       "decisions": {
         "attention_priority": {
           "choice": "MEDIUM",
-          "confidence": 0.69,
+          "confidence": 0.66,
           "probabilities": {
             "HIGH": 0.01,
-            "LOW": 0.2,
-            "MEDIUM": 0.79
+            "LOW": 0.22,
+            "MEDIUM": 0.77
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.99,
+          "confidence": 1.0,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
             "NO_JUDGMENT": 0.0,
-            "WAIT_EVIDENCE": 0.99,
-            "WAIT_PRICE": 0.01
+            "WAIT_EVIDENCE": 1.0,
+            "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
@@ -2025,9 +2025,9 @@
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.44,
+          "confidence": 0.46,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.28,
+          "probability": 0.27,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -2039,12 +2039,12 @@
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.76,
+          "confidence": 0.71,
           "probabilities": {
-            "DEEP_RESEARCH": 0.81,
-            "EVIDENCE_REFRESH": 0.16,
+            "DEEP_RESEARCH": 0.77,
+            "EVIDENCE_REFRESH": 0.21,
             "HUMAN_REVIEW": 0.01,
-            "NO_ESCALATION": 0.02,
+            "NO_ESCALATION": 0.01,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -2057,7 +2057,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 248.435,
+      "latency_ms": 179.742,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -2186,60 +2186,60 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.48,
+          "confidence": 0.4,
           "probabilities": {
-            "HIGH": 0.02,
-            "LOW": 0.65,
-            "MEDIUM": 0.33
+            "HIGH": 0.04,
+            "LOW": 0.6,
+            "MEDIUM": 0.36
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.65,
+          "confidence": 0.64,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.29,
-            "WAIT_EVIDENCE": 0.71,
+            "NO_JUDGMENT": 0.3,
+            "WAIT_EVIDENCE": 0.7,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.88,
+          "confidence": 0.92,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.08,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.06,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.91,
-            "STALE_OR_LINEAGE_UNCLEAR": 0.01
+            "INSUFFICIENT": 0.94,
+            "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.66,
+          "confidence": 0.7,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.17,
+          "probability": 0.15,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.74,
+          "confidence": 0.68,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.87,
+          "probability": 0.84,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.3,
+          "confidence": 0.27,
           "probabilities": {
-            "DEEP_RESEARCH": 0.44,
-            "EVIDENCE_REFRESH": 0.35,
-            "HUMAN_REVIEW": 0.06,
-            "NO_ESCALATION": 0.15,
+            "DEEP_RESEARCH": 0.42,
+            "EVIDENCE_REFRESH": 0.39,
+            "HUMAN_REVIEW": 0.05,
+            "NO_ESCALATION": 0.14,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -2252,7 +2252,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 148.143,
+      "latency_ms": 180.972,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -2342,9 +2342,9 @@
           "choice": "LOW",
           "confidence": 0.35,
           "probabilities": {
-            "HIGH": 0.03,
+            "HIGH": 0.02,
             "LOW": 0.57,
-            "MEDIUM": 0.4
+            "MEDIUM": 0.41
           },
           "type": "choice"
         },
@@ -2363,11 +2363,11 @@
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.89,
+          "confidence": 0.91,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.08,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.07,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.92,
+            "INSUFFICIENT": 0.93,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
@@ -2381,19 +2381,19 @@
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.7,
+          "confidence": 0.72,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.85,
+          "probability": 0.86,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.68,
+          "confidence": 0.69,
           "probabilities": {
-            "DEEP_RESEARCH": 0.74,
-            "EVIDENCE_REFRESH": 0.17,
+            "DEEP_RESEARCH": 0.75,
+            "EVIDENCE_REFRESH": 0.15,
             "HUMAN_REVIEW": 0.02,
-            "NO_ESCALATION": 0.07,
+            "NO_ESCALATION": 0.08,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -2406,7 +2406,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 166.427,
+      "latency_ms": 184.36,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -2504,11 +2504,11 @@
       "decisions": {
         "attention_priority": {
           "choice": "MEDIUM",
-          "confidence": 0.64,
+          "confidence": 0.55,
           "probabilities": {
             "HIGH": 0.03,
-            "LOW": 0.21,
-            "MEDIUM": 0.76
+            "LOW": 0.27,
+            "MEDIUM": 0.7
           },
           "type": "choice"
         },
@@ -2545,18 +2545,18 @@
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.92,
+          "confidence": 0.94,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.96,
+          "probability": 0.97,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.36,
+          "confidence": 0.42,
           "probabilities": {
-            "DEEP_RESEARCH": 0.49,
-            "EVIDENCE_REFRESH": 0.33,
-            "HUMAN_REVIEW": 0.17,
+            "DEEP_RESEARCH": 0.54,
+            "EVIDENCE_REFRESH": 0.32,
+            "HUMAN_REVIEW": 0.13,
             "NO_ESCALATION": 0.01,
             "VALUATION_CLOSURE": 0.0
           },
@@ -2570,7 +2570,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 164.877,
+      "latency_ms": 193.333,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -2706,34 +2706,34 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.45,
+          "confidence": 0.51,
           "probabilities": {
-            "HIGH": 0.01,
-            "LOW": 0.63,
-            "MEDIUM": 0.36
+            "HIGH": 0.0,
+            "LOW": 0.67,
+            "MEDIUM": 0.33
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.64,
+          "confidence": 0.63,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.3,
-            "WAIT_EVIDENCE": 0.7,
+            "NO_JUDGMENT": 0.31,
+            "WAIT_EVIDENCE": 0.69,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.95,
+          "confidence": 0.97,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.04,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.02,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.96,
+            "INSUFFICIENT": 0.98,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
@@ -2747,19 +2747,19 @@
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.76,
+          "confidence": 0.8,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.88,
+          "probability": 0.9,
           "type": "noul"
         },
         "research_route": {
           "choice": "EVIDENCE_REFRESH",
-          "confidence": 0.3,
+          "confidence": 0.33,
           "probabilities": {
             "DEEP_RESEARCH": 0.42,
-            "EVIDENCE_REFRESH": 0.44,
+            "EVIDENCE_REFRESH": 0.46,
             "HUMAN_REVIEW": 0.04,
-            "NO_ESCALATION": 0.1,
+            "NO_ESCALATION": 0.08,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -2772,7 +2772,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 136.135,
+      "latency_ms": 200.804,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -2862,11 +2862,11 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.52,
+          "confidence": 0.49,
           "probabilities": {
             "HIGH": 0.0,
-            "LOW": 0.68,
-            "MEDIUM": 0.32
+            "LOW": 0.66,
+            "MEDIUM": 0.34
           },
           "type": "choice"
         },
@@ -2885,37 +2885,37 @@
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.96,
+          "confidence": 0.95,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.03,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.04,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.97,
+            "INSUFFICIENT": 0.96,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.66,
+          "confidence": 0.64,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.17,
+          "probability": 0.18,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.82,
+          "confidence": 0.8,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.91,
+          "probability": 0.9,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.36,
+          "confidence": 0.33,
           "probabilities": {
-            "DEEP_RESEARCH": 0.49,
-            "EVIDENCE_REFRESH": 0.4,
-            "HUMAN_REVIEW": 0.03,
-            "NO_ESCALATION": 0.08,
+            "DEEP_RESEARCH": 0.46,
+            "EVIDENCE_REFRESH": 0.41,
+            "HUMAN_REVIEW": 0.04,
+            "NO_ESCALATION": 0.09,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -2928,7 +2928,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 134.619,
+      "latency_ms": 196.67,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -3018,23 +3018,23 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.38,
+          "confidence": 0.36,
           "probabilities": {
             "HIGH": 0.0,
-            "LOW": 0.59,
-            "MEDIUM": 0.41
+            "LOW": 0.57,
+            "MEDIUM": 0.43
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.72,
+          "confidence": 0.68,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.23,
-            "WAIT_EVIDENCE": 0.77,
+            "NO_JUDGMENT": 0.27,
+            "WAIT_EVIDENCE": 0.73,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
@@ -3052,24 +3052,24 @@
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.64,
+          "confidence": 0.6,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.18,
+          "probability": 0.2,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.8,
+          "confidence": 0.78,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.9,
+          "probability": 0.89,
           "type": "noul"
         },
         "research_route": {
-          "choice": "DEEP_RESEARCH",
-          "confidence": 0.31,
+          "choice": "EVIDENCE_REFRESH",
+          "confidence": 0.3,
           "probabilities": {
-            "DEEP_RESEARCH": 0.45,
-            "EVIDENCE_REFRESH": 0.41,
+            "DEEP_RESEARCH": 0.42,
+            "EVIDENCE_REFRESH": 0.44,
             "HUMAN_REVIEW": 0.05,
             "NO_ESCALATION": 0.09,
             "VALUATION_CLOSURE": 0.0
@@ -3084,7 +3084,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 135.527,
+      "latency_ms": 203.449,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -3164,7 +3164,7 @@
       "unknown_is_pass": false,
       "usage": {
         "input_tokens": 2436,
-        "output_tokens": 303
+        "output_tokens": 302
       }
     },
     {
@@ -3174,43 +3174,43 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.56,
+          "confidence": 0.58,
           "probabilities": {
             "HIGH": 0.0,
-            "LOW": 0.71,
-            "MEDIUM": 0.29
+            "LOW": 0.72,
+            "MEDIUM": 0.28
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.62,
+          "confidence": 0.59,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.32,
-            "WAIT_EVIDENCE": 0.68,
+            "NO_JUDGMENT": 0.34,
+            "WAIT_EVIDENCE": 0.66,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.88,
+          "confidence": 0.77,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.09,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.16,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.91,
-            "STALE_OR_LINEAGE_UNCLEAR": 0.0
+            "INSUFFICIENT": 0.83,
+            "STALE_OR_LINEAGE_UNCLEAR": 0.01
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.66,
+          "confidence": 0.68,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.17,
+          "probability": 0.16,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -3222,12 +3222,12 @@
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.26,
+          "confidence": 0.3,
           "probabilities": {
-            "DEEP_RESEARCH": 0.41,
-            "EVIDENCE_REFRESH": 0.37,
+            "DEEP_RESEARCH": 0.44,
+            "EVIDENCE_REFRESH": 0.33,
             "HUMAN_REVIEW": 0.05,
-            "NO_ESCALATION": 0.17,
+            "NO_ESCALATION": 0.18,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -3240,7 +3240,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 134.824,
+      "latency_ms": 172.137,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -3326,60 +3326,60 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.64,
+          "confidence": 0.52,
           "probabilities": {
             "HIGH": 0.0,
-            "LOW": 0.76,
-            "MEDIUM": 0.24
+            "LOW": 0.68,
+            "MEDIUM": 0.32
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.62,
+          "confidence": 0.63,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.32,
-            "WAIT_EVIDENCE": 0.68,
+            "NO_JUDGMENT": 0.31,
+            "WAIT_EVIDENCE": 0.69,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.85,
+          "confidence": 0.93,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.11,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.05,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.89,
+            "INSUFFICIENT": 0.95,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.68,
+          "confidence": 0.66,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.16,
+          "probability": 0.17,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.66,
+          "confidence": 0.68,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.83,
+          "probability": 0.84,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.24,
+          "confidence": 0.27,
           "probabilities": {
-            "DEEP_RESEARCH": 0.39,
-            "EVIDENCE_REFRESH": 0.31,
+            "DEEP_RESEARCH": 0.42,
+            "EVIDENCE_REFRESH": 0.34,
             "HUMAN_REVIEW": 0.06,
-            "NO_ESCALATION": 0.24,
+            "NO_ESCALATION": 0.18,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -3392,7 +3392,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 115.987,
+      "latency_ms": 171.381,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -3478,61 +3478,61 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.49,
+          "confidence": 0.46,
           "probabilities": {
             "HIGH": 0.0,
-            "LOW": 0.66,
-            "MEDIUM": 0.34
+            "LOW": 0.64,
+            "MEDIUM": 0.36
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.59,
+          "confidence": 0.63,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.34,
-            "WAIT_EVIDENCE": 0.66,
+            "NO_JUDGMENT": 0.31,
+            "WAIT_EVIDENCE": 0.69,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.83,
+          "confidence": 0.88,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.13,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.09,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.87,
+            "INSUFFICIENT": 0.91,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.68,
+          "confidence": 0.66,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.16,
+          "probability": 0.17,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.64,
+          "confidence": 0.72,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.82,
+          "probability": 0.86,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.21,
+          "confidence": 0.26,
           "probabilities": {
-            "DEEP_RESEARCH": 0.37,
-            "EVIDENCE_REFRESH": 0.35,
-            "HUMAN_REVIEW": 0.07,
-            "NO_ESCALATION": 0.2,
-            "VALUATION_CLOSURE": 0.01
+            "DEEP_RESEARCH": 0.41,
+            "EVIDENCE_REFRESH": 0.39,
+            "HUMAN_REVIEW": 0.06,
+            "NO_ESCALATION": 0.14,
+            "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
         }
@@ -3544,7 +3544,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 127.846,
+      "latency_ms": 187.64,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -3640,11 +3640,11 @@
       "decisions": {
         "attention_priority": {
           "choice": "MEDIUM",
-          "confidence": 0.69,
+          "confidence": 0.7,
           "probabilities": {
             "HIGH": 0.01,
-            "LOW": 0.2,
-            "MEDIUM": 0.79
+            "LOW": 0.19,
+            "MEDIUM": 0.8
           },
           "type": "choice"
         },
@@ -3674,9 +3674,9 @@
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.48,
+          "confidence": 0.5,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.26,
+          "probability": 0.25,
           "type": "noul"
         },
         "needs_more_evidence": {
@@ -3687,12 +3687,12 @@
           "type": "noul"
         },
         "research_route": {
-          "choice": "DEEP_RESEARCH",
-          "confidence": 0.33,
+          "choice": "EVIDENCE_REFRESH",
+          "confidence": 0.29,
           "probabilities": {
-            "DEEP_RESEARCH": 0.46,
-            "EVIDENCE_REFRESH": 0.4,
-            "HUMAN_REVIEW": 0.12,
+            "DEEP_RESEARCH": 0.41,
+            "EVIDENCE_REFRESH": 0.43,
+            "HUMAN_REVIEW": 0.14,
             "NO_ESCALATION": 0.02,
             "VALUATION_CLOSURE": 0.0
           },
@@ -3706,7 +3706,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 150.77,
+      "latency_ms": 174.126,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -3840,7 +3840,7 @@
       "unknown_is_pass": false,
       "usage": {
         "input_tokens": 3258,
-        "output_tokens": 304
+        "output_tokens": 303
       }
     },
     {
@@ -3860,11 +3860,11 @@
       "decisions": {
         "attention_priority": {
           "choice": "MEDIUM",
-          "confidence": 0.62,
+          "confidence": 0.66,
           "probabilities": {
             "HIGH": 0.01,
-            "LOW": 0.24,
-            "MEDIUM": 0.75
+            "LOW": 0.22,
+            "MEDIUM": 0.77
           },
           "type": "choice"
         },
@@ -3908,7 +3908,7 @@
         },
         "research_route": {
           "choice": "EVIDENCE_REFRESH",
-          "confidence": 0.32,
+          "confidence": 0.33,
           "probabilities": {
             "DEEP_RESEARCH": 0.42,
             "EVIDENCE_REFRESH": 0.46,
@@ -3926,7 +3926,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 180.076,
+      "latency_ms": 177.839,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -4082,48 +4082,48 @@
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.66,
+          "confidence": 0.69,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.28,
-            "WAIT_EVIDENCE": 0.72,
+            "NO_JUDGMENT": 0.26,
+            "WAIT_EVIDENCE": 0.74,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.88,
+          "confidence": 0.92,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.09,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.06,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.91,
+            "INSUFFICIENT": 0.94,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.68,
+          "confidence": 0.62,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.16,
+          "probability": 0.19,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.68,
+          "confidence": 0.74,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.84,
+          "probability": 0.87,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.66,
+          "confidence": 0.65,
           "probabilities": {
-            "DEEP_RESEARCH": 0.73,
-            "EVIDENCE_REFRESH": 0.16,
+            "DEEP_RESEARCH": 0.72,
+            "EVIDENCE_REFRESH": 0.17,
             "HUMAN_REVIEW": 0.02,
             "NO_ESCALATION": 0.09,
             "VALUATION_CLOSURE": 0.0
@@ -4138,7 +4138,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 196.034,
+      "latency_ms": 186.851,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -4234,11 +4234,11 @@
       "decisions": {
         "attention_priority": {
           "choice": "MEDIUM",
-          "confidence": 0.55,
+          "confidence": 0.48,
           "probabilities": {
             "HIGH": 0.01,
-            "LOW": 0.29,
-            "MEDIUM": 0.7
+            "LOW": 0.34,
+            "MEDIUM": 0.65
           },
           "type": "choice"
         },
@@ -4282,12 +4282,12 @@
         },
         "research_route": {
           "choice": "EVIDENCE_REFRESH",
-          "confidence": 0.42,
+          "confidence": 0.36,
           "probabilities": {
-            "DEEP_RESEARCH": 0.33,
-            "EVIDENCE_REFRESH": 0.54,
-            "HUMAN_REVIEW": 0.1,
-            "NO_ESCALATION": 0.02,
+            "DEEP_RESEARCH": 0.39,
+            "EVIDENCE_REFRESH": 0.49,
+            "HUMAN_REVIEW": 0.09,
+            "NO_ESCALATION": 0.03,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -4300,7 +4300,7 @@
       "existing_needs_more_evidence": true,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 141.506,
+      "latency_ms": 185.688,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -4446,60 +4446,60 @@
       "decisions": {
         "attention_priority": {
           "choice": "LOW",
-          "confidence": 0.49,
+          "confidence": 0.52,
           "probabilities": {
             "HIGH": 0.0,
-            "LOW": 0.66,
-            "MEDIUM": 0.34
+            "LOW": 0.68,
+            "MEDIUM": 0.32
           },
           "type": "choice"
         },
         "entry_judgment": {
           "choice": "WAIT_EVIDENCE",
-          "confidence": 0.71,
+          "confidence": 0.75,
           "probabilities": {
             "DO_NOT_CHASE": 0.0,
             "ENTRY_NOW": 0.0,
             "INVALIDATED": 0.0,
-            "NO_JUDGMENT": 0.24,
-            "WAIT_EVIDENCE": 0.76,
+            "NO_JUDGMENT": 0.21,
+            "WAIT_EVIDENCE": 0.79,
             "WAIT_PRICE": 0.0
           },
           "type": "choice"
         },
         "evidence_state": {
           "choice": "INSUFFICIENT",
-          "confidence": 0.92,
+          "confidence": 0.89,
           "probabilities": {
-            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.06,
+            "ADEQUATE_FOR_CURRENT_RESEARCH_STATE": 0.08,
             "CONFLICTED": 0.0,
-            "INSUFFICIENT": 0.94,
+            "INSUFFICIENT": 0.92,
             "STALE_OR_LINEAGE_UNCLEAR": 0.0
           },
           "type": "choice"
         },
         "needs_deep_research": {
           "answer": false,
-          "confidence": 0.62,
+          "confidence": 0.64,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.19,
+          "probability": 0.18,
           "type": "noul"
         },
         "needs_more_evidence": {
           "answer": true,
-          "confidence": 0.72,
+          "confidence": 0.74,
           "confidence_kind": "derived_from_binary_probability",
-          "probability": 0.86,
+          "probability": 0.87,
           "type": "noul"
         },
         "research_route": {
           "choice": "DEEP_RESEARCH",
-          "confidence": 0.69,
+          "confidence": 0.73,
           "probabilities": {
-            "DEEP_RESEARCH": 0.75,
-            "EVIDENCE_REFRESH": 0.16,
+            "DEEP_RESEARCH": 0.78,
+            "EVIDENCE_REFRESH": 0.12,
             "HUMAN_REVIEW": 0.01,
-            "NO_ESCALATION": 0.08,
+            "NO_ESCALATION": 0.09,
             "VALUATION_CLOSURE": 0.0
           },
           "type": "choice"
@@ -4512,7 +4512,7 @@
       "existing_needs_more_evidence": false,
       "formal_trading_authority": false,
       "is_current_holding": false,
-      "latency_ms": 156.847,
+      "latency_ms": 177.472,
       "mutates_authoritative_decision": false,
       "no_auto_trade": true,
       "question_set_version": "GEN_GE_JEV_RESEARCH_ROUTING_ENTRY_V4",
@@ -4594,9 +4594,9 @@
   ],
   "shadow_mode": true,
   "source_workflow_event": "workflow_dispatch",
-  "source_workflow_head_sha": "05ceecb9b3f5708ed7fa5a94c84f211759e62100",
+  "source_workflow_head_sha": "e4956d6681dd493bdcfef37cf059b18696e44568",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38681612472",
+  "source_workflow_run_id": "38681689380",
   "state_schema_version": "GEN_GE_JEV_STOCK_STATE_V3",
   "summary": {
     "calls": 25,
@@ -4622,18 +4622,18 @@
         "TRUE": 25
       },
       "research_route": {
-        "DEEP_RESEARCH": 17,
-        "EVIDENCE_REFRESH": 7,
+        "DEEP_RESEARCH": 15,
+        "EVIDENCE_REFRESH": 9,
         "VALUATION_CLOSURE": 1
       }
     },
     "evidence_agreement_count": 12,
     "evidence_agreement_rate": 0.48,
     "evidence_comparable_count": 25,
-    "high_confidence_evidence_disagreement_count": 2,
+    "high_confidence_evidence_disagreement_count": 3,
     "judgments": 150,
-    "latency_ms_p50": 150.77,
-    "latency_ms_p95": 239.038,
+    "latency_ms_p50": 184.36,
+    "latency_ms_p95": 202.952,
     "served_models": {
       "jev-1.13.0": 25
     },
