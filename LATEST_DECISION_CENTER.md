@@ -8,23 +8,23 @@
 
 | 股票 | 现价 | 价值中枢 | 盈亏% | 正式动作 | 现在怎么办 | 估值信心 | 持续研究 | 深算状态 |
 |---|---:|---:|---:|---|---|---|---|---|
-| 国电南瑞 600406 | 22.49 | 17.46 | -2.75 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=279 | DEEP_REVIEW_PARTIAL |
-| 润贝航科 001316 | 25.29 | 49.37 | -1.77 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=281 | DEEP_REVIEW_PARTIAL |
-| 中国平安 601318 | 51.78 | 83.07 | -7.48 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=206 | DEEP_REVIEW_PARTIAL |
-| 洛阳钼业 603993 | 15.99 | 28.13 | -14.14 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=248 | DEEP_REVIEW_PARTIAL |
+| 国电南瑞 600406 | 22.49 | 17.46 | -2.75 | REDUCE_25 | **维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）** | HIGH | ACTIVE/seen=280 | DEEP_REVIEW_PARTIAL |
+| 润贝航科 001316 | 25.29 | 49.37 | -1.77 | HOLD_REVIEW | **持有观察** | LOW | ACTIVE/seen=282 | DEEP_REVIEW_PARTIAL |
+| 中国平安 601318 | 51.78 | 83.07 | -7.48 | HOLD | **继续持有** | MEDIUM | ACTIVE/seen=207 | DEEP_REVIEW_PARTIAL |
+| 洛阳钼业 603993 | 15.99 | 28.13 | -14.14 | HOLD | **继续持有；历史分批加仓授权已消费，本轮新增可执行0股** | HIGH | ACTIVE/seen=249 | DEEP_REVIEW_PARTIAL |
 
 ### 估值折价观察（非买单）
 
 100股仅用于展示追加仓位的现金/成本情景；任何正式新增动作都要重新核验市场、授权、已消费额度和即时券商数据。
 
-- **洛阳钼业 603993**：2026-10-15收盘参考价¥15.99，低于模型估值下沿¥18.03约11.31%；现有1100股；假设额外100股约¥1599，平均成本约¥18.4049（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：MARKET_NEW_BUY_DISABLED, NO_CURRENT_FORMAL_HOLDING_ADD, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
+- **洛阳钼业 603993**：2026-10-15收盘参考价¥15.99，低于模型估值下沿¥18.03约11.31%；现有1100股；假设额外100股约¥1599，平均成本约¥18.4049（未计费用）。**实际可执行0股；不产生新Formal BUY。** 阻断原因：MARKET_NEW_BUY_DISABLED, NO_CURRENT_FORMAL_HOLDING_ADD, PRIOR_ADD_ALLOWANCE_CONSUMED, DEEP_GATES_NOT_ALL_PASS, BROKER_CASH_UNVERIFIED_LIVE, EXECUTION_QUOTE_NOT_LIVE。
 
 ### 每只持仓的决策链
 
-- **国电南瑞 600406**：现价 22.49 / 价值中枢 17.46（价/值 1.29；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=279**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
-- **润贝航科 001316**：现价 25.29 / 价值中枢 49.37（价/值 0.51；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=281**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
-- **中国平安 601318**：现价 51.78 / 价值中枢 83.07（价/值 0.62；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=206**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.623<1.00`。
-- **洛阳钼业 603993**：现价 15.99 / 价值中枢 28.13（价/值 0.57；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=248**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
+- **国电南瑞 600406**：现价 22.49 / 价值中枢 17.46（价/值 1.29；价值区间 12.84–26.09；区位 **UPPER_VALUE**）；估值信心 **HIGH**；Formal **REDUCE_25**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=280**；原因码：`V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION`。
+- **润贝航科 001316**：现价 25.29 / 价值中枢 49.37（价/值 0.51；价值区间 21.64–70.29；区位 **FAIR_VALUE**）；估值信心 **LOW**；Formal **HOLD_REVIEW**；Deep **PASS 2 / FAIL 0 / UNKNOWN 3**；Lifecycle **ACTIVE / seen=282**；原因码：`VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE`。
+- **中国平安 601318**：现价 51.78 / 价值中枢 83.07（价/值 0.62；价值区间 未形成完整区间；区位 **UNKNOWN**）；估值信心 **MEDIUM**；Formal **HOLD**；Deep **PASS 0 / FAIL 0 / UNKNOWN 5**；Lifecycle **ACTIVE / seen=207**；原因码：`INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.623<1.00`。
+- **洛阳钼业 603993**：现价 15.99 / 价值中枢 28.13（价/值 0.57；价值区间 18.03–43.07；区位 **BELOW_VALUE**）；估值信心 **HIGH**；Formal **HOLD**；Deep **PASS 4 / FAIL 0 / UNKNOWN 1**；Lifecycle **ACTIVE / seen=249**；原因码：`FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD`。
 
 ## 2. 世界/社会/市场：钱可能在哪里
 
@@ -69,23 +69,23 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 <!-- GEN_GE_DIVERSIFIED_RESEARCH_RADAR_START -->
 ### 行业去重研究雷达（研究候选，不是买单）
 
-- 全量候选 **501** → 雷达合格 **106**；覆盖 **42** 个行业；同业备选保留 **64** 只。
+- 全量候选 **501** → 雷达合格 **102**；覆盖 **43** 个行业；同业备选保留 **59** 只。
 - 投资者 Top **10** 只 / **10** 个不同行业；其中新研究候选 **9** 只、当前持仓 **1** 只。
-- 选择规则：`ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY`；source run：`38592347086`。
+- 选择规则：`ONE_REPRESENTATIVE_PER_OFFICIAL_INDUSTRY`；source run：`38762286190`。
 - **这只是 RESEARCH_ONLY 研究入口，不是 BUY/WAIT_PRICE，更不会因为进 Top 就获得 Formal BUY。UNKNOWN 仍然不是 PASS。**
 
 | Top | 全局雷达排名 | 股票 | 行业 | 与账户关系 | 研究层级 | PASS | UNKNOWN | Quant | 下一步 |
 |---:|---:|---|---|---|---|---:|---:|---:|---|
-| 1 | 1 | 伯特利 603596 | C36汽车制造业 | 新研究候选 | FULL_EVIDENCE | 5 | 0 | 56.7845 | VALUATION_CLOSURE |
-| 2 | 2 | 洛阳钼业 603993 | B09有色金属矿采选业 | 当前持仓 | UNKNOWN_RESEARCH | 4 | 1 | 30.844 | EVIDENCE_CLOSURE；待补：predictability |
-| 3 | 3 | 老百姓 603883 | F52零售业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 90.2985 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
-| 4 | 4 | 华恒生物 688639 | C26化学原料和化学制品制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 84.4516 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
-| 5 | 5 | 百润股份 002568 | C15酒、饮料和精制茶制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 80.2908 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
-| 6 | 8 | 宝钢股份 600019 | C31黑色金属冶炼和压延加工业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 76.3018 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
-| 7 | 9 | 小熊电器 002959 | C38电气机械和器材制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 75.4476 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
-| 8 | 11 | 涪陵榨菜 002507 | C14食品制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 74.5389 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
-| 9 | 12 | 新产业 300832 | C27医药制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 74.4424 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
-| 10 | 14 | 白云机场 600004 | G56航空运输业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 73.4068 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 1 | 1 | 伯特利 603596 | C36汽车制造业 | 新研究候选 | FULL_EVIDENCE | 5 | 0 | 56.1976 | VALUATION_CLOSURE |
+| 2 | 2 | 洛阳钼业 603993 | B09有色金属矿采选业 | 当前持仓 | UNKNOWN_RESEARCH | 4 | 1 | 30.5767 | EVIDENCE_CLOSURE；待补：predictability |
+| 3 | 3 | 百润股份 002568 | C15酒、饮料和精制茶制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 79.7504 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 4 | 4 | 宝立食品 603170 | C14食品制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 78.4577 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 5 | 6 | 宝钢股份 600019 | C31黑色金属冶炼和压延加工业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 76.2159 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 6 | 7 | 小熊电器 002959 | C38电气机械和器材制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 75.1164 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 7 | 8 | 新产业 300832 | C27医药制造业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 74.7001 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 8 | 9 | 白云机场 600004 | G56航空运输业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 73.6201 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 9 | 10 | 益丰药房 603939 | F52零售业 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 72.6994 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
+| 10 | 12 | 红塔证券 601236 | J67资本市场服务 | 新研究候选 | UNKNOWN_RESEARCH | 2 | 3 | 71.4798 | EVIDENCE_CLOSURE；待补：predictability、long_term_demand、moat |
 
 - 每只股票的 `global_radar_rank + industry + diversified_rank + PASS/UNKNOWN` 都保留在机器数据里，用来回答“它为什么进榜、为什么不是同业另一只”。
 <!-- GEN_GE_DIVERSIFIED_RESEARCH_RADAR_END -->
@@ -124,22 +124,22 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | RED / score=19.15 / 2026-10-15 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=100 / dormant=26 / archived-invalidated=0 / events=14646 / focus=7 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=100 / dormant=26 / archived-invalidated=0 / events=14696 / focus=7 |
 | Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=31 / verified-pass=216 / unresolved=123 |
 | Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38759714965 / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
 | Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=29 / REJECT=1 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
-- Candidate Lifecycle：当前 ACTIVE **100**；DORMANT **26**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **14646**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
+- Candidate Lifecycle：当前 ACTIVE **100**；DORMANT **26**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **14696**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
 - 上表只统计已经进入生产链并影响最终汇报的能力；仅存在于设计文档、孤立模块或过期 artifact 的功能不算 ACTIVE。
 
 ### 当前持仓的持续研究记忆
 
-- 国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 279 次。
-- 润贝航科 001316：ACTIVE / tier=PENDING / 历史被系统重新看见 281 次。
-- 中国平安 601318：ACTIVE / tier=PENDING / 历史被系统重新看见 206 次。
-- 洛阳钼业 603993：ACTIVE / tier=PENDING / 历史被系统重新看见 248 次。
+- 国电南瑞 600406：ACTIVE / tier=PENDING / 历史被系统重新看见 280 次。
+- 润贝航科 001316：ACTIVE / tier=PENDING / 历史被系统重新看见 282 次。
+- 中国平安 601318：ACTIVE / tier=PENDING / 历史被系统重新看见 207 次。
+- 洛阳钼业 603993：ACTIVE / tier=PENDING / 历史被系统重新看见 249 次。
 
 ## 自动深算运行状态
 
