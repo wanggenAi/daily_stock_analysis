@@ -254,7 +254,7 @@
       "PENDING": 100
     }
   },
-  "canonical_snapshot_id": "77a11ad784fdd1b6e2ca",
+  "canonical_snapshot_id": "3691d7a4cd02834f5635",
   "contract_version": "GEN_GE_THREE_PILLAR_DECISION_CENTER_V1",
   "data_freshness_execution_guard": {
     "block_reason": "DATA_PACKAGE_STALE_NOT_EXECUTABLE",
@@ -275,7 +275,7 @@
     "package_status": "STALE",
     "pending_external_fresh_evidence_count": 0,
     "research_input_contract": "GEN_GE_RESEARCH_INPUT_LOCK_V1",
-    "research_input_locked_at": "2026-10-15T14:10:46.008256+00:00",
+    "research_input_locked_at": "2026-10-15T14:13:40.905243+00:00",
     "research_mode": "hourly",
     "snapshot_id": "f11e5cf260fe0593a527"
   },
@@ -605,13 +605,13 @@
     "research_reject_count": 1,
     "research_terminal_requested_count": 31,
     "research_wait_price_count": 0,
-    "terminal_reject_count": 78,
+    "terminal_reject_count": 93,
     "urgent_evidence_queue_count": 3,
     "validated_macro_handoffs": 0
   },
   "formal_action_recomputed": false,
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
-  "generated_at": "2026-10-15T14:10:46+00:00",
+  "generated_at": "2026-10-15T14:13:41+00:00",
   "holding_valuation_continuity": {
     "available": true,
     "contract_version": "V311_HOLDING_SELL_RATIONALE_V3",
@@ -626,12 +626,12 @@
   "holding_valuation_watch": {
     "authority": "READ_ONLY_RESEARCH_SCENARIO",
     "buy_now": [],
-    "canonical_snapshot_id": "77a11ad784fdd1b6e2ca",
+    "canonical_snapshot_id": "3691d7a4cd02834f5635",
     "contract_version": "GEN_GE_HOLDING_VALUATION_WATCH_V1",
     "deep_profile_lineage_verified": true,
     "executable_orders": [],
     "formal_action_recomputed": false,
-    "market_as_of": "2026-10-14",
+    "market_as_of": "2026-10-15",
     "model_screen_rule": "HIGH_CONFIDENCE_PRICE_BELOW_MODEL_LOW_ONLY",
     "no_auto_trade": true,
     "no_threshold_change": true,
@@ -640,6 +640,7 @@
         "blockers": [
           "MARKET_NEW_BUY_DISABLED",
           "NO_CURRENT_FORMAL_HOLDING_ADD",
+          "PRIOR_ADD_ALLOWANCE_CONSUMED",
           "DEEP_GATES_NOT_ALL_PASS",
           "BROKER_CASH_UNVERIFIED_LIVE",
           "EXECUTION_QUOTE_NOT_LIVE"
@@ -649,10 +650,10 @@
         "deep_gate_unverified": [
           "predictability"
         ],
-        "discount_to_model_low_pct": 7.71,
+        "discount_to_model_low_pct": 11.31,
         "display_bucket": "VALUATION_WATCH_NOT_ACTIONABLE",
-        "existing_add_allowance_consumed": false,
-        "existing_registered_stock_concentration_pct": 37.57,
+        "existing_add_allowance_consumed": true,
+        "existing_registered_stock_concentration_pct": 36.75,
         "existing_shares_from_confirmed_snapshot": 1100,
         "formal_action_unchanged": "HOLD",
         "manual_recheck": [
@@ -667,26 +668,26 @@
         "model_value_low": 18.02971886915772,
         "name": "洛阳钼业",
         "non_authorized_scenario": {
-          "assumed_price": 16.64,
+          "assumed_price": 15.99,
           "authorized": false,
-          "estimated_cash_cny_ex_fees": 1664.0,
-          "estimated_new_average_cost_ex_fees": 18.459,
+          "estimated_cash_cny_ex_fees": 1599.0,
+          "estimated_new_average_cost_ex_fees": 18.4049,
           "estimated_new_total_shares": 1200,
           "executable_shares": 0,
           "is_order": false,
           "kind": "ILLUSTRATIVE_100_SHARES_ONLY",
-          "loss_if_scenario_price_falls_another_10pct_cny": 166.4,
+          "loss_if_scenario_price_falls_another_10pct_cny": 159.9,
           "order_limit_price": null,
-          "planning_cash_after_cny_ex_fees": 48336.0,
+          "planning_cash_after_cny_ex_fees": 48401.0,
           "planning_cash_cny": 50000.0,
           "planning_cash_cny_as_of": "2026-09-20",
           "shares": 100
         },
-        "price_as_of": "2026-10-14",
+        "price_as_of": "2026-10-15",
         "price_evidence": "CANONICAL_EOD_NOT_LIVE",
         "reason": "PRICE_BELOW_MODELED_LOWER_VALUE_BOUND",
-        "reference_price": 16.64,
-        "registered_stock_value_cny": 48724.0,
+        "reference_price": 15.99,
+        "registered_stock_value_cny": 47857.0,
         "valuation_confidence": "HIGH"
       }
     ],
@@ -704,7 +705,7 @@
     "no_auto_trade": true,
     "status": "ACTION_COMPLETE"
   },
-  "latest_trade_date": "2026-10-14",
+  "latest_trade_date": "2026-10-15",
   "no_auto_trade": true,
   "pillar_1_holdings_deep_analysis": {
     "complete_deep_review_count": 0,
@@ -727,7 +728,7 @@
           "seen_count": 277
         },
         "code": "600406",
-        "current_price": 22.18,
+        "current_price": 22.49,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -783,7 +784,7 @@
         "investor_action": "维持减仓25%目标；本轮无新增减仓/退出信号；目标减50股，当前可执行0股（手数约束；禁止向上取整）",
         "name": "国电南瑞",
         "neutral_value": 17.457807170543802,
-        "pnl_pct": -4.09,
+        "pnl_pct": -2.75,
         "quantity": 200,
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
         "valuation_confidence": "HIGH",
@@ -815,7 +816,7 @@
           "seen_count": 279
         },
         "code": "001316",
-        "current_price": 27.46,
+        "current_price": 25.29,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -871,7 +872,7 @@
         "investor_action": "持有观察",
         "name": "润贝航科",
         "neutral_value": 49.36957125214809,
-        "pnl_pct": 6.66,
+        "pnl_pct": -1.77,
         "quantity": 200,
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
         "valuation_confidence": "LOW",
@@ -903,7 +904,7 @@
           "seen_count": 204
         },
         "code": "601318",
-        "current_price": 51.23,
+        "current_price": 51.78,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -959,9 +960,9 @@
         "investor_action": "继续持有",
         "name": "中国平安",
         "neutral_value": 83.07,
-        "pnl_pct": -8.46,
+        "pnl_pct": -7.48,
         "quantity": 400,
-        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.617<1.00",
+        "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.623<1.00",
         "valuation_confidence": "MEDIUM",
         "valuation_continuity": {
           "action": "HOLD",
@@ -991,7 +992,7 @@
           "seen_count": 246
         },
         "code": "603993",
-        "current_price": 16.64,
+        "current_price": 15.99,
         "deep_review": {
           "complete": false,
           "fail_count": 0,
@@ -1096,7 +1097,7 @@
         "investor_action": "继续持有；历史分批加仓授权已消费，本轮新增可执行0股",
         "name": "洛阳钼业",
         "neutral_value": 28.12766979232306,
-        "pnl_pct": -10.65,
+        "pnl_pct": -14.14,
         "quantity": 1100,
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
         "valuation_confidence": "HIGH",
@@ -1119,22 +1120,23 @@
   },
   "pillar_2_world_social_market_capital_map": {
     "a_share_market_snapshot": {
-      "above_ma20_ratio": 0.2538,
-      "above_ma60_ratio": 0.37,
-      "advance_ratio": 0.1865,
+      "above_ma20_ratio": 0.1637,
+      "above_ma60_ratio": 0.2415,
+      "advance_ratio": 0.0821,
       "allow_new_buy": false,
-      "as_of_date": "2026-10-14",
+      "as_of_date": "2026-10-15",
       "data_quality": "OK",
-      "distribution_ratio": 0.0631,
-      "limit_down_count": 13,
+      "distribution_ratio": 0.1759,
+      "limit_down_count": 34,
       "limit_up_count": 36,
-      "median_return_1d_pct": -1.9337,
+      "median_return_1d_pct": -3.059,
       "position_multiplier": 0.0,
       "risk_reasons": [
         "weak_market_breadth",
-        "negative_median_return"
+        "negative_median_return",
+        "external_market_risk_medium"
       ],
-      "score": 30.31,
+      "score": 19.15,
       "status": "RED"
     },
     "capital_evidence_coverage": {
@@ -2412,44 +2414,44 @@
     ],
     "tactical_market_behavior_proxy": [
       {
-        "industry": "A02林业",
-        "score": 100.0,
-        "status": "STRONG"
-      },
-      {
-        "industry": "G53铁路运输业",
-        "score": 91.7,
-        "status": "STRONG"
-      },
-      {
-        "industry": "B07石油和天然气开采业",
-        "score": 91.22,
-        "status": "STRONG"
-      },
-      {
         "industry": "R86新闻和出版业",
-        "score": 82.78,
-        "status": "STRONG"
+        "score": 59.36,
+        "status": "NEUTRAL"
       },
       {
-        "industry": "R87广播、电视、电影和录音制作业",
-        "score": 75.45,
-        "status": "STRONG"
+        "industry": "J67资本市场服务",
+        "score": 52.11,
+        "status": "NEUTRAL"
       },
       {
-        "industry": "I63电信、广播电视和卫星传输服务",
-        "score": 73.73,
-        "status": "STRONG"
+        "industry": "C15酒、饮料和精制茶制造业",
+        "score": 51.97,
+        "status": "NEUTRAL"
       },
       {
-        "industry": "B11开采专业及辅助性活动",
-        "score": 70.0,
-        "status": "STRONG"
+        "industry": "J68保险业",
+        "score": 46.04,
+        "status": "NEUTRAL"
       },
       {
-        "industry": "D45燃气生产和供应业",
-        "score": 69.81,
-        "status": "STRONG"
+        "industry": "Q84卫生",
+        "score": 42.96,
+        "status": "WEAK"
+      },
+      {
+        "industry": "C24文教、工美、体育和娱乐用品制造业",
+        "score": 39.85,
+        "status": "WEAK"
+      },
+      {
+        "industry": "C14食品制造业",
+        "score": 39.33,
+        "status": "WEAK"
+      },
+      {
+        "industry": "J66货币金融服务",
+        "score": 39.05,
+        "status": "WEAK"
       }
     ],
     "validated_a_share_research_handoffs": [],
@@ -2815,7 +2817,7 @@
     "jev_entry_authority_rule": "Jev entry judgments are ADVISORY_ONLY. Numeric price/sizing fields are deterministically validated; they never create Canonical Formal BUY or orders.",
     "jev_entry_judgment_count": 20,
     "jev_entry_judgment_invalid_row_count": 5,
-    "jev_entry_judgment_source_run_id": "38748494370",
+    "jev_entry_judgment_source_run_id": "38749008843",
     "jev_entry_judgment_stale_row_count": 0,
     "jev_entry_judgment_status": "CURRENT",
     "jev_entry_judgments": [
@@ -2835,22 +2837,22 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "ENTRY_NOW",
         "jev_route": "VALUATION_CLOSURE",
-        "jev_route_confidence": 0.96,
-        "judgment_confidence": 0.75,
+        "jev_route_confidence": 0.95,
+        "judgment_confidence": 0.77,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.01,
-          "ENTRY_NOW": 0.79,
+          "ENTRY_NOW": 0.81,
           "INVALIDATED": 0.0,
           "NO_JUDGMENT": 0.01,
-          "WAIT_EVIDENCE": 0.15,
-          "WAIT_PRICE": 0.04
+          "WAIT_EVIDENCE": 0.14,
+          "WAIT_PRICE": 0.03
         },
         "max_manual_position_pct": 3.0,
         "name": "伯特利",
         "no_auto_trade": true,
         "reference_price": 24.9,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -2877,7 +2879,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.42,
+        "jev_route_confidence": 0.46,
         "judgment_confidence": 1.0,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -2892,7 +2894,7 @@
         "no_auto_trade": true,
         "reference_price": 25.29,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -2919,7 +2921,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.39,
+        "jev_route_confidence": 0.49,
         "judgment_confidence": 1.0,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -2934,7 +2936,7 @@
         "no_auto_trade": true,
         "reference_price": 8.95,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -2961,7 +2963,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.39,
+        "jev_route_confidence": 0.36,
         "judgment_confidence": 1.0,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -2976,49 +2978,7 @@
         "no_auto_trade": true,
         "reference_price": 11.31,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
-        "source_lineage": {
-          "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
-          "dashboard_source_run_id": "38652803393",
-          "deep_code_epoch_sha": "1ff8252a590f6f976bd7a9b5544e63ce051def5a",
-          "deep_lambda_run_id": "38747246133"
-        },
-        "terminal_research_bucket": "RESEARCH_GAP",
-        "validated_judgment": "WAIT_EVIDENCE",
-        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE"
-      },
-      {
-        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
-        "authority": "ADVISORY_ONLY",
-        "automatic_execution_allowed": false,
-        "code": "601069",
-        "deterministically_supported": true,
-        "do_not_chase_condition": "PRICE_ABOVE_45.6019_REQUIRES_REVALUATION",
-        "entry_price_zone_high": 45.6019,
-        "entry_price_zone_low": null,
-        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
-        "formal_buy_authorized": false,
-        "initial_manual_position_pct": 0.0,
-        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
-        "jev_judgment": "WAIT_EVIDENCE",
-        "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.62,
-        "judgment_confidence": 1.0,
-        "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.0,
-          "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.0,
-          "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 1.0,
-          "WAIT_PRICE": 0.0
-        },
-        "max_manual_position_pct": 0.0,
-        "name": "西部黄金",
-        "no_auto_trade": true,
-        "reference_price": 23.99,
-        "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3045,7 +3005,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.25,
+        "jev_route_confidence": 0.29,
         "judgment_confidence": 1.0,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3060,7 +3020,7 @@
         "no_auto_trade": true,
         "reference_price": null,
         "reference_trade_date": "",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3087,7 +3047,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.41,
+        "jev_route_confidence": 0.4,
         "judgment_confidence": 1.0,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3102,7 +3062,7 @@
         "no_auto_trade": true,
         "reference_price": 13.8,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3129,7 +3089,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.29,
+        "jev_route_confidence": 0.36,
         "judgment_confidence": 1.0,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3144,7 +3104,7 @@
         "no_auto_trade": true,
         "reference_price": 186.4,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3171,7 +3131,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.34,
+        "jev_route_confidence": 0.41,
         "judgment_confidence": 1.0,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3186,7 +3146,7 @@
         "no_auto_trade": true,
         "reference_price": 278.22,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3228,7 +3188,7 @@
         "no_auto_trade": true,
         "reference_price": null,
         "reference_trade_date": "",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3255,7 +3215,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.76,
+        "jev_route_confidence": 0.79,
         "judgment_confidence": 0.99,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3270,7 +3230,7 @@
         "no_auto_trade": true,
         "reference_price": null,
         "reference_trade_date": "",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3297,7 +3257,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.46,
+        "jev_route_confidence": 0.49,
         "judgment_confidence": 0.99,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3312,49 +3272,7 @@
         "no_auto_trade": true,
         "reference_price": null,
         "reference_trade_date": "",
-        "source_jev_run_id": "38748494370",
-        "source_lineage": {
-          "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
-          "dashboard_source_run_id": "38652803393",
-          "deep_code_epoch_sha": "1ff8252a590f6f976bd7a9b5544e63ce051def5a",
-          "deep_lambda_run_id": "38747246133"
-        },
-        "terminal_research_bucket": "RESEARCH_GAP",
-        "validated_judgment": "WAIT_EVIDENCE",
-        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE"
-      },
-      {
-        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
-        "authority": "ADVISORY_ONLY",
-        "automatic_execution_allowed": false,
-        "code": "603098",
-        "deterministically_supported": true,
-        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
-        "entry_price_zone_high": null,
-        "entry_price_zone_low": null,
-        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
-        "formal_buy_authorized": false,
-        "initial_manual_position_pct": 0.0,
-        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
-        "jev_judgment": "WAIT_EVIDENCE",
-        "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.42,
-        "judgment_confidence": 0.99,
-        "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.0,
-          "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.01,
-          "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.99,
-          "WAIT_PRICE": 0.0
-        },
-        "max_manual_position_pct": 0.0,
-        "name": "森特股份",
-        "no_auto_trade": true,
-        "reference_price": null,
-        "reference_trade_date": "",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3381,7 +3299,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.41,
+        "jev_route_confidence": 0.46,
         "judgment_confidence": 0.98,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.01,
@@ -3396,49 +3314,7 @@
         "no_auto_trade": true,
         "reference_price": 7.76,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
-        "source_lineage": {
-          "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
-          "dashboard_source_run_id": "38652803393",
-          "deep_code_epoch_sha": "1ff8252a590f6f976bd7a9b5544e63ce051def5a",
-          "deep_lambda_run_id": "38747246133"
-        },
-        "terminal_research_bucket": "RESEARCH_GAP",
-        "validated_judgment": "WAIT_EVIDENCE",
-        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE"
-      },
-      {
-        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
-        "authority": "ADVISORY_ONLY",
-        "automatic_execution_allowed": false,
-        "code": "600318",
-        "deterministically_supported": true,
-        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
-        "entry_price_zone_high": null,
-        "entry_price_zone_low": null,
-        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
-        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
-        "formal_buy_authorized": false,
-        "initial_manual_position_pct": 0.0,
-        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
-        "jev_judgment": "WAIT_EVIDENCE",
-        "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.42,
-        "judgment_confidence": 0.98,
-        "judgment_probabilities": {
-          "DO_NOT_CHASE": 0.0,
-          "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.02,
-          "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.98,
-          "WAIT_PRICE": 0.0
-        },
-        "max_manual_position_pct": 0.0,
-        "name": "新力金融",
-        "no_auto_trade": true,
-        "reference_price": null,
-        "reference_trade_date": "",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3466,13 +3342,13 @@
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
         "jev_route_confidence": 0.33,
-        "judgment_confidence": 0.96,
+        "judgment_confidence": 0.98,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.03,
+          "INVALIDATED": 0.02,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.97,
+          "WAIT_EVIDENCE": 0.98,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -3480,7 +3356,91 @@
         "no_auto_trade": true,
         "reference_price": 13.9,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
+        "source_lineage": {
+          "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
+          "dashboard_source_run_id": "38652803393",
+          "deep_code_epoch_sha": "1ff8252a590f6f976bd7a9b5544e63ce051def5a",
+          "deep_lambda_run_id": "38747246133"
+        },
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE"
+      },
+      {
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "code": "601069",
+        "deterministically_supported": true,
+        "do_not_chase_condition": "PRICE_ABOVE_45.6019_REQUIRES_REVALUATION",
+        "entry_price_zone_high": 45.6019,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "jev_route": "DEEP_RESEARCH",
+        "jev_route_confidence": 0.62,
+        "judgment_confidence": 0.98,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.01,
+          "INVALIDATED": 0.0,
+          "NO_JUDGMENT": 0.0,
+          "WAIT_EVIDENCE": 0.98,
+          "WAIT_PRICE": 0.01
+        },
+        "max_manual_position_pct": 0.0,
+        "name": "西部黄金",
+        "no_auto_trade": true,
+        "reference_price": 23.99,
+        "reference_trade_date": "2026-10-15",
+        "source_jev_run_id": "38749008843",
+        "source_lineage": {
+          "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
+          "dashboard_source_run_id": "38652803393",
+          "deep_code_epoch_sha": "1ff8252a590f6f976bd7a9b5544e63ce051def5a",
+          "deep_lambda_run_id": "38747246133"
+        },
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE"
+      },
+      {
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "code": "603098",
+        "deterministically_supported": true,
+        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
+        "entry_price_zone_high": null,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.4,
+        "judgment_confidence": 0.98,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.0,
+          "INVALIDATED": 0.02,
+          "NO_JUDGMENT": 0.0,
+          "WAIT_EVIDENCE": 0.98,
+          "WAIT_PRICE": 0.0
+        },
+        "max_manual_position_pct": 0.0,
+        "name": "森特股份",
+        "no_auto_trade": true,
+        "reference_price": null,
+        "reference_trade_date": "",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3507,7 +3467,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.46,
+        "jev_route_confidence": 0.41,
         "judgment_confidence": 0.96,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3522,7 +3482,7 @@
         "no_auto_trade": true,
         "reference_price": 8.01,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3549,14 +3509,14 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.22,
-        "judgment_confidence": 0.95,
+        "jev_route_confidence": 0.29,
+        "judgment_confidence": 0.96,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.02,
           "ENTRY_NOW": 0.0,
           "INVALIDATED": 0.01,
-          "NO_JUDGMENT": 0.01,
-          "WAIT_EVIDENCE": 0.96,
+          "NO_JUDGMENT": 0.0,
+          "WAIT_EVIDENCE": 0.97,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -3564,7 +3524,49 @@
         "no_auto_trade": true,
         "reference_price": 22.49,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
+        "source_lineage": {
+          "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
+          "dashboard_source_run_id": "38652803393",
+          "deep_code_epoch_sha": "1ff8252a590f6f976bd7a9b5544e63ce051def5a",
+          "deep_lambda_run_id": "38747246133"
+        },
+        "terminal_research_bucket": "RESEARCH_GAP",
+        "validated_judgment": "WAIT_EVIDENCE",
+        "validation_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE"
+      },
+      {
+        "add_condition": "NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED",
+        "authority": "ADVISORY_ONLY",
+        "automatic_execution_allowed": false,
+        "code": "600318",
+        "deterministically_supported": true,
+        "do_not_chase_condition": "NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE",
+        "entry_price_zone_high": null,
+        "entry_price_zone_low": null,
+        "entry_reason": "DETERMINISTIC_RESEARCH_EVIDENCE_INCOMPLETE",
+        "entry_trigger": "RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE",
+        "formal_buy_authorized": false,
+        "initial_manual_position_pct": 0.0,
+        "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
+        "jev_judgment": "WAIT_EVIDENCE",
+        "jev_route": "EVIDENCE_REFRESH",
+        "jev_route_confidence": 0.46,
+        "judgment_confidence": 0.95,
+        "judgment_probabilities": {
+          "DO_NOT_CHASE": 0.0,
+          "ENTRY_NOW": 0.0,
+          "INVALIDATED": 0.03,
+          "NO_JUDGMENT": 0.01,
+          "WAIT_EVIDENCE": 0.96,
+          "WAIT_PRICE": 0.0
+        },
+        "max_manual_position_pct": 0.0,
+        "name": "新力金融",
+        "no_auto_trade": true,
+        "reference_price": null,
+        "reference_trade_date": "",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3591,7 +3593,7 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "WAIT_EVIDENCE",
         "jev_route": "DEEP_RESEARCH",
-        "jev_route_confidence": 0.44,
+        "jev_route_confidence": 0.42,
         "judgment_confidence": 0.94,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
@@ -3606,7 +3608,7 @@
         "no_auto_trade": true,
         "reference_price": 15.99,
         "reference_trade_date": "2026-10-15",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -3633,14 +3635,14 @@
         "invalidation_condition": "ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY",
         "jev_judgment": "INVALIDATED",
         "jev_route": "EVIDENCE_REFRESH",
-        "jev_route_confidence": 0.2,
-        "judgment_confidence": 0.76,
+        "jev_route_confidence": 0.26,
+        "judgment_confidence": 0.68,
         "judgment_probabilities": {
           "DO_NOT_CHASE": 0.0,
           "ENTRY_NOW": 0.0,
-          "INVALIDATED": 0.8,
+          "INVALIDATED": 0.73,
           "NO_JUDGMENT": 0.0,
-          "WAIT_EVIDENCE": 0.2,
+          "WAIT_EVIDENCE": 0.27,
           "WAIT_PRICE": 0.0
         },
         "max_manual_position_pct": 0.0,
@@ -3648,7 +3650,7 @@
         "no_auto_trade": true,
         "reference_price": null,
         "reference_trade_date": "",
-        "source_jev_run_id": "38748494370",
+        "source_jev_run_id": "38749008843",
         "source_lineage": {
           "dashboard_snapshot_id": "77a11ad784fdd1b6e2ca",
           "dashboard_source_run_id": "38652803393",
@@ -7496,7 +7498,7 @@
     "research_reject_count": 1,
     "research_terminal_current": true,
     "research_wait_price": [],
-    "terminal_reject_count": 78,
+    "terminal_reject_count": 93,
     "terminal_research_snapshot": {
       "all_requested_terminal": true,
       "automatic_formal_buy_allowed": false,
@@ -7733,7 +7735,7 @@
         "WAIT_PRICE": 0
       },
       "formal_trading_authority": false,
-      "generated_at": "2026-10-15T14:06:38+00:00",
+      "generated_at": "2026-10-15T14:13:34+00:00",
       "no_auto_trade": true,
       "requested_count": 31,
       "research_authority": "RESEARCH_ONLY",
@@ -11825,7 +11827,7 @@
     "capabilities": [
       {
         "capability": "市场大趋势 / 全A脉搏",
-        "result": "RED / score=30.31 / 2026-10-14",
+        "result": "RED / score=19.15 / 2026-10-15",
         "status": "ACTIVE"
       },
       {
