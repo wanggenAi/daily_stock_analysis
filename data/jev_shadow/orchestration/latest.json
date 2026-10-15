@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38760350896",
+  "orchestrator_run_id": "38765754228",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -63,6 +63,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "601069",
       "entity_name": "西部黄金",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "603268",
+      "entity_name": "松发股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -117,13 +124,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "600523",
-      "entity_name": "贵航股份",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "601136",
       "entity_name": "首创证券",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -133,13 +133,6 @@
       "attention_priority": "MEDIUM",
       "entity_id": "603098",
       "entity_name": "森特股份",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "MEDIUM",
-      "entity_id": "603268",
-      "entity_name": "松发股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -187,6 +180,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600523",
+      "entity_name": "贵航股份",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "603038",
       "entity_name": "华立股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-15T15:25:49+00:00",
-  "source_workflow_head_sha": "0377299ac7e1ec292148efa1191a10fa1c86f839",
+  "source_generated_at": "2026-10-15T16:02:56+00:00",
+  "source_workflow_head_sha": "e79f0e112007ae0dfff84c73c51e13881eaf3916",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38759975486",
+  "source_workflow_run_id": "38765392264",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 358,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38759975486",
+  "trigger_source": "JEV_ORCHESTRATOR_38765392264",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-15T15:28:33+00:00",
+  "updated_at": "2026-10-15T16:05:31+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.85,
+      "attention_confidence": 0.77,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "38758462790",
+        "deep_lambda_run_id": "38763880760",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
