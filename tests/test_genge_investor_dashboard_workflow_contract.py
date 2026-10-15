@@ -176,3 +176,27 @@ def test_v4_h1_runs_after_final_overlays_and_persists_in_same_commit() -> None:
     assert "data/investor_chatgpt_handoff/latest.json" in workflow.split(
         "- name: Upload investor decision artifact", 1
     )[1]
+
+
+def test_dashboard_finalizer_workflow_run_pins_exact_triggering_authority() -> None:
+    workflow = _workflow()
+    authority = workflow.split("- name: Locate latest successful authorized Canonical", 1)[1].split(
+        "- name: Download latest usable Terminal BUY WAIT_PRICE REJECT truth", 1
+    )[0]
+
+    assert "EVENT_NAME: " + "$" + "{{ github.event_name }}" in authority
+    assert "TRIGGER_WORKFLOW: " + "$" + "{{ github.event.workflow_run.name }}" in authority
+    assert "TRIGGER_RUN_ID: " + "$" + "{{ github.event.workflow_run.id }}" in authority
+    assert 'if [ "$EVENT_NAME" = "workflow_run" ] && [ "$TRIGGER_WORKFLOW" = "GenGe V3.1.1 Production Finalizer" ]; then' in authority
+    assert 'selected="$TRIGGER_RUN_ID"' in authority
+    assert 'actions/runs/${selected}' in authority
+    assert '.conclusion // empty' in authority
+    assert '.name // empty' in authority
+    assert 'FINALIZER_RUN_ID="$selected"' in authority
+    assert "assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])" in authority
+    assert "assert len(str(a['source_head_sha'])) == 40" in authority
+
+    finalizer_branch = authority.split(
+        'if [ "$EVENT_NAME" = "workflow_run" ] && [ "$TRIGGER_WORKFLOW" = "GenGe V3.1.1 Production Finalizer" ]; then', 1
+    )[1].split('          else', 1)[0]
+    assert 'genge-v311-production-finalizer.yml/runs?status=success' not in finalizer_branch
