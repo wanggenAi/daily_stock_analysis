@@ -11,6 +11,10 @@ permissions:
   contents: write
   actions: write
 
+concurrency:
+  group: repair-dashboard-lineage-v3
+  cancel-in-progress: false
+
 jobs:
   repair:
     runs-on: ubuntu-latest
@@ -20,23 +24,29 @@ jobs:
           ref: main
           fetch-depth: 0
 
-      - name: Patch exact Finalizer lineage
+      - name: Patch exact Finalizer lineage and regression contract
         run: |
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
-          p = Path('.github/workflows/genge-investor-decision-dashboard.yml')
-          lines = p.read_text(encoding='utf-8').splitlines()
+
+          workflow_path = Path('.github/workflows/genge-investor-decision-dashboard.yml')
+          lines = workflow_path.read_text(encoding='utf-8').splitlines()
           step = '      - name: Locate latest successful authorized Canonical'
           if lines.count(step) != 1:
               raise SystemExit('authority step count mismatch')
           s = lines.index(step)
-          gh = next(i for i in range(s, s + 12) if lines[i].strip().startswith('GH_TOKEN:'))
-          if not any(x.strip().startswith('EVENT_NAME:') for x in lines[gh + 1:gh + 5]):
+          gh = next(i for i in range(s, min(len(lines), s + 16)) if lines[i].strip().startswith('GH_TOKEN:'))
+          if not any(x.strip().startswith('EVENT_NAME:') for x in lines[gh + 1:gh + 6]):
               op = '$' + '{{ '
               cl = ' }}'
-              extra = ['          EVENT_NAME: ' + op + 'github.event_name' + cl, '          TRIGGER_WORKFLOW: ' + op + 'github.event.workflow_run.name' + cl, '          TRIGGER_RUN_ID: ' + op + 'github.event.workflow_run.id' + cl]
+              extra = [
+                  '          EVENT_NAME: ' + op + 'github.event_name' + cl,
+                  '          TRIGGER_WORKFLOW: ' + op + 'github.event.workflow_run.name' + cl,
+                  '          TRIGGER_RUN_ID: ' + op + 'github.event.workflow_run.id' + cl,
+              ]
               lines[gh + 1:gh + 1] = extra
+
           start = lines.index('          rm -rf incoming-authority; mkdir incoming-authority', s)
           end = lines.index('          test -n "$selected"', start)
           replacement = [
@@ -63,28 +73,55 @@ jobs:
               '          test -n "$selected"',
           ]
           lines[start:end + 1] = replacement
+
           old = '          CANONICAL="$canonical" AUTHORITY="$authority" RECONCILIATION="$reconciliation" python - <<\'PY\''
           new = '          FINALIZER_RUN_ID="$selected" CANONICAL="$canonical" AUTHORITY="$authority" RECONCILIATION="$reconciliation" python - <<\'PY\''
           if old not in lines and new not in lines:
               raise SystemExit('authority validation launcher missing')
           if old in lines:
               lines[lines.index(old)] = new
+
           anchor = "          assert a['authorized'] is True"
-          assertion = "          assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])"
+          run_assertion = "          assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])"
+          sha_assertion = "          assert len(str(a['source_head_sha'])) == 40"
           ai = lines.index(anchor, s)
-          if assertion not in lines[ai:ai + 4]:
-              lines.insert(ai + 1, assertion)
-          p.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          nearby = lines[ai:ai + 8]
+          insert_at = ai + 1
+          if run_assertion not in nearby:
+              lines.insert(insert_at, run_assertion)
+              insert_at += 1
+          if sha_assertion not in lines[ai:ai + 9]:
+              lines.insert(insert_at, sha_assertion)
+          workflow_path.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+
+          test_path = Path('tests/test_genge_investor_dashboard_workflow_contract.py')
+          tests = test_path.read_text(encoding='utf-8')
+          test_name = 'test_dashboard_finalizer_workflow_run_pins_exact_triggering_authority'
+          if test_name not in tests:
+              tests += '''\n\ndef test_dashboard_finalizer_workflow_run_pins_exact_triggering_authority() -> None:\n    workflow = _workflow()\n    authority = workflow.split("- name: Locate latest successful authorized Canonical", 1)[1].split(\n        "- name: Download latest usable Terminal BUY WAIT_PRICE REJECT truth", 1\n    )[0]\n\n    assert "EVENT_NAME: " + "$" + "{{ github.event_name }}" in authority\n    assert "TRIGGER_WORKFLOW: " + "$" + "{{ github.event.workflow_run.name }}" in authority\n    assert "TRIGGER_RUN_ID: " + "$" + "{{ github.event.workflow_run.id }}" in authority\n    assert 'if [ "$EVENT_NAME" = "workflow_run" ] && [ "$TRIGGER_WORKFLOW" = "GenGe V3.1.1 Production Finalizer" ]; then' in authority\n    assert 'selected="$TRIGGER_RUN_ID"' in authority\n    assert 'actions/runs/${selected}' in authority\n    assert '.conclusion // empty' in authority\n    assert '.name // empty' in authority\n    assert 'FINALIZER_RUN_ID="$selected"' in authority\n    assert "assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])" in authority\n    assert "assert len(str(a['source_head_sha'])) == 40" in authority\n\n    finalizer_branch = authority.split(\n        'if [ "$EVENT_NAME" = "workflow_run" ] && [ "$TRIGGER_WORKFLOW" = "GenGe V3.1.1 Production Finalizer" ]; then', 1\n    )[1].split('          else', 1)[0]\n    assert 'genge-v311-production-finalizer.yml/runs?status=success' not in finalizer_branch\n'''
+              test_path.write_text(tests, encoding='utf-8')
           PY
           grep -F 'selected="$TRIGGER_RUN_ID"' .github/workflows/genge-investor-decision-dashboard.yml
           grep -F "assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])" .github/workflows/genge-investor-decision-dashboard.yml
+          grep -F "assert len(str(a['source_head_sha'])) == 40" .github/workflows/genge-investor-decision-dashboard.yml
+
+      - name: Run lineage regression gate
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import runpy
+          namespace = runpy.run_path('tests/test_genge_investor_dashboard_workflow_contract.py')
+          namespace['test_dashboard_finalizer_workflow_run_pins_exact_triggering_authority']()
+          namespace['test_dashboard_consumes_reconciliation_from_same_authorized_artifact_and_fails_closed']()
+          print('dashboard lineage regression gate passed')
+          PY
 
       - name: Commit patch and self-delete
         run: |
           set -euo pipefail
           git config user.name "genge-repair-bot"
           git config user.email "31836791+wanggenAi@users.noreply.github.com"
-          git add .github/workflows/genge-investor-decision-dashboard.yml
+          git add .github/workflows/genge-investor-decision-dashboard.yml tests/test_genge_investor_dashboard_workflow_contract.py
           git rm .github/workflows/repair-dashboard-lineage-v3.yml
           git commit -m "Pin investor dashboard to triggering Finalizer epoch"
           git pull --rebase origin main
