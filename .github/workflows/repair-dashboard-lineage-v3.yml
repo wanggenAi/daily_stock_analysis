@@ -1,0 +1,109 @@
+name: Apply exact dashboard lineage repair
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/repair-dashboard-lineage-v3.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Patch exact Finalizer lineage
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          p = Path('.github/workflows/genge-investor-decision-dashboard.yml')
+          lines = p.read_text(encoding='utf-8').splitlines()
+          step = '      - name: Locate latest successful authorized Canonical'
+          if lines.count(step) != 1:
+              raise SystemExit('authority step count mismatch')
+          s = lines.index(step)
+          gh = next(i for i in range(s, s + 12) if lines[i].strip().startswith('GH_TOKEN:'))
+          if not any(x.strip().startswith('EVENT_NAME:') for x in lines[gh + 1:gh + 5]):
+              op = '$' + '{{ '
+              cl = ' }}'
+              extra = ['          EVENT_NAME: ' + op + 'github.event_name' + cl, '          TRIGGER_WORKFLOW: ' + op + 'github.event.workflow_run.name' + cl, '          TRIGGER_RUN_ID: ' + op + 'github.event.workflow_run.id' + cl]
+              lines[gh + 1:gh + 1] = extra
+          start = lines.index('          rm -rf incoming-authority; mkdir incoming-authority', s)
+          end = lines.index('          test -n "$selected"', start)
+          replacement = [
+              '          rm -rf incoming-authority; mkdir incoming-authority',
+              '          selected=""',
+              '          if [ "$EVENT_NAME" = "workflow_run" ] && [ "$TRIGGER_WORKFLOW" = "GenGe V3.1.1 Production Finalizer" ]; then',
+              '            selected="$TRIGGER_RUN_ID"',
+              '            test -n "$selected"',
+              '            run_json=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${selected}")',
+              '            test "$(printf \'%s\' "$run_json" | jq -r \'.conclusion // empty\')" = "success"',
+              '            test "$(printf \'%s\' "$run_json" | jq -r \'.name // empty\')" = "GenGe V3.1.1 Production Finalizer"',
+              '            artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${selected}/artifacts?per_page=100")',
+              '            test "$(printf \'%s\' "$artifacts" | jq \'[.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))] | length\')" -gt 0',
+              '            echo "Pinning Canonical authority to triggering Finalizer run ${selected}"',
+              '          else',
+              '            runs=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=40")',
+              '            for run_id in $(printf \'%s\' "$runs" | jq -r \'.workflow_runs[] | select(.conclusion == "success") | .id\'); do',
+              '              artifacts=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/artifacts?per_page=100")',
+              '              if [ "$(printf \'%s\' "$artifacts" | jq \'[.artifacts[] | select(.expired == false and (.name | startswith("genge-v311-authoritative-canonical-")))] | length\')" -gt 0 ]; then',
+              '                selected="$run_id"; break',
+              '              fi',
+              '            done',
+              '          fi',
+              '          test -n "$selected"',
+          ]
+          lines[start:end + 1] = replacement
+          old = '          CANONICAL="$canonical" AUTHORITY="$authority" RECONCILIATION="$reconciliation" python - <<\'PY\''
+          new = '          FINALIZER_RUN_ID="$selected" CANONICAL="$canonical" AUTHORITY="$authority" RECONCILIATION="$reconciliation" python - <<\'PY\''
+          if old not in lines and new not in lines:
+              raise SystemExit('authority validation launcher missing')
+          if old in lines:
+              lines[lines.index(old)] = new
+          anchor = "          assert a['authorized'] is True"
+          assertion = "          assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])"
+          ai = lines.index(anchor, s)
+          if assertion not in lines[ai:ai + 4]:
+              lines.insert(ai + 1, assertion)
+          p.write_text('\n'.join(lines) + '\n', encoding='utf-8')
+          PY
+          grep -F 'selected="$TRIGGER_RUN_ID"' .github/workflows/genge-investor-decision-dashboard.yml
+          grep -F "assert str(a['finalizer_run_id']) == str(os.environ['FINALIZER_RUN_ID'])" .github/workflows/genge-investor-decision-dashboard.yml
+
+      - name: Commit patch and self-delete
+        run: |
+          set -euo pipefail
+          git config user.name "genge-repair-bot"
+          git config user.email "31836791+wanggenAi@users.noreply.github.com"
+          git add .github/workflows/genge-investor-decision-dashboard.yml
+          git rm .github/workflows/repair-dashboard-lineage-v3.yml
+          git commit -m "Pin investor dashboard to triggering Finalizer epoch"
+          git pull --rebase origin main
+          git push origin HEAD:main
+
+      - name: Dispatch Finalizer replay
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          latest=$(gh api -X GET "repos/${GITHUB_REPOSITORY}/actions/workflows/genge-v311-production-finalizer.yml/runs?status=success&per_page=20" | jq -r '.workflow_runs[0].id // empty')
+          test -n "$latest"
+          rm -rf /tmp/a; mkdir -p /tmp/a
+          gh run download "$latest" --repo "$GITHUB_REPOSITORY" --pattern 'genge-v311-authoritative-canonical-*' --dir /tmp/a
+          authority=$(find /tmp/a -name production_authority.json -print -quit)
+          test -n "$authority"
+          source_run=$(jq -r '.canonical_source_run_id // empty' "$authority")
+          source_workflow=$(jq -r '.source_workflow // empty' "$authority")
+          test -n "$source_run"
+          test -n "$source_workflow"
+          gh workflow run genge-v311-production-finalizer.yml --repo "$GITHUB_REPOSITORY" --ref main -f source_run_id="$source_run" -f source_workflow="$source_workflow"
+          echo "Finalizer replay dispatched for ${source_workflow} / ${source_run}"
