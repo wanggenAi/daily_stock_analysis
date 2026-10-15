@@ -215,15 +215,15 @@ A02林业(100.00)、G53铁路运输业(91.70)、B07石油和天然气开采业(9
 - **SP500**：休市以来 +0.00%；最近1日 -1.08%；5日 -1.15%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **NASDAQ**：休市以来 +0.00%；最近1日 -1.85%；5日 -2.42%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **SOX**：休市以来 +0.00%；最近1日 -4.27%；5日 -7.04%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **VIX**：休市以来 +0.00%；最近1日 +10.30%；5日 +13.73%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **US10Y**：休市以来 +0.00%；最近1日 -0.52%；5日 -1.03%；market_date=2026-10-14；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **DXY**：休市以来 +0.00%；最近1日 -0.09%；5日 -0.13%；market_date=2026-10-15；freshness=FRESH。
-- **USDCNH**：休市以来 +0.00%；最近1日 -0.02%；5日 -0.00%；market_date=2026-10-15；freshness=FRESH。
-- **HANGSENG**：休市以来 +0.00%；最近1日 -1.39%；5日 -0.92%；market_date=2026-10-15；freshness=FRESH。
-- **COPPER**：休市以来 +0.00%；最近1日 -0.85%；5日 +0.55%；market_date=2026-10-15；freshness=FRESH。
-- **GOLD**：休市以来 +0.00%；最近1日 +1.34%；5日 +0.14%；market_date=2026-10-15；freshness=FRESH。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 -1.13%；5日 +2.77%；market_date=2026-10-15；freshness=FRESH。
-- **BTC**：休市以来 +0.00%；最近1日 -3.05%；5日 -2.16%；market_date=2026-10-15；freshness=FRESH。
+- **VIX**：休市以来 +0.17%；最近1日 +10.45%；5日 +17.52%；market_date=2026-10-15；freshness=FRESH。
+- **US10Y**：休市以来 -2.39%；最近1日 -4.63%；5日 -3.39%；market_date=2026-10-15；freshness=FRESH。
+- **DXY**：休市以来 +0.00%；最近1日 -0.78%；5日 -0.13%；market_date=2026-10-15；freshness=FRESH。
+- **USDCNH**：休市以来 -0.02%；最近1日 -0.14%；5日 -0.03%；market_date=2026-10-15；freshness=FRESH。
+- **HANGSENG**：休市以来 +0.19%；最近1日 -1.03%；5日 -0.61%；market_date=2026-10-15；freshness=FRESH。
+- **COPPER**：休市以来 +0.00%；最近1日 -1.07%；5日 +0.34%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +0.00%；最近1日 +1.62%；5日 +0.42%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 -0.67%；5日 +3.24%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 -1.39%；最近1日 -2.37%；5日 -2.97%；market_date=2026-10-15；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
