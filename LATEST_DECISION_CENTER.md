@@ -212,18 +212,18 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 +0.02%；最近1日 +0.20%；5日 -1.13%；market_date=2026-10-15；freshness=FRESH。
-- **NASDAQ**：休市以来 -0.43%；最近1日 -0.33%；5日 -2.84%；market_date=2026-10-15；freshness=FRESH。
-- **SOX**：休市以来 -2.56%；最近1日 -2.77%；5日 -9.42%；market_date=2026-10-15；freshness=FRESH。
-- **VIX**：休市以来 -4.31%；最近1日 -2.74%；5日 +12.26%；market_date=2026-10-15；freshness=FRESH。
-- **US10Y**：休市以来 -1.91%；最近1日 -1.81%；5日 -2.92%；market_date=2026-10-15；freshness=FRESH。
-- **DXY**：休市以来 -0.09%；最近1日 -0.54%；5日 -0.22%；market_date=2026-10-15；freshness=FRESH。
-- **USDCNH**：休市以来 -0.03%；最近1日 -0.08%；5日 -0.03%；market_date=2026-10-15；freshness=FRESH。
+- **SP500**：休市以来 +0.29%；最近1日 +0.29%；5日 -0.86%；market_date=2026-10-15；freshness=FRESH。
+- **NASDAQ**：休市以来 +0.04%；最近1日 +0.04%；5日 -2.38%；market_date=2026-10-15；freshness=FRESH。
+- **SOX**：休市以来 -0.90%；最近1日 -0.90%；5日 -7.88%；market_date=2026-10-15；freshness=FRESH。
+- **VIX**：休市以来 -5.46%；最近1日 -2.31%；5日 +10.92%；market_date=2026-10-15；freshness=FRESH。
+- **US10Y**：休市以来 -1.95%；最近1日 -1.95%；5日 -2.96%；market_date=2026-10-15；freshness=FRESH。
+- **DXY**：休市以来 -0.09%；最近1日 -0.51%；5日 -0.22%；market_date=2026-10-15；freshness=FRESH。
+- **USDCNH**：休市以来 -0.04%；最近1日 -0.07%；5日 -0.05%；market_date=2026-10-15；freshness=FRESH。
 - **HANGSENG**：休市以来 +0.19%；最近1日 -1.03%；5日 -0.61%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +0.00%；最近1日 -0.80%；5日 +0.61%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **GOLD**：休市以来 +0.00%；最近1日 +1.67%；5日 +0.47%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.60%；5日 +5.60%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 +0.79%；最近1日 +0.56%；5日 -1.05%；market_date=2026-10-15；freshness=FRESH。
+- **COPPER**：休市以来 +0.00%；最近1日 -0.65%；5日 +0.76%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +0.00%；最近1日 +2.04%；5日 +0.83%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.20%；5日 +5.18%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 +1.12%；最近1日 +0.97%；5日 -0.81%；market_date=2026-10-15；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
