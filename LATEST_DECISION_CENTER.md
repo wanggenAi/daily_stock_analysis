@@ -114,7 +114,7 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 ## 今日汇报可执行性
 
 - 行动结论完整：**True**；证据完整：**False**。
-- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
+- 当前限制：DEEP_RESEARCH_EVIDENCE_PARTIAL、TERMINAL_RESEARCH_NOT_CURRENT_FOR_ACTIVE_DEEP、ERA_TO_A_SHARE_HANDOFF_NOT_VALIDATED、LIVE_EXECUTION_QUOTE_COVERAGE_INCOMPLETE_OR_OFF_SESSION。
 - 证据不完整不会被冒充 PASS；但它必须被翻译成暂不买、等待、持有或保留现金等明确动作。
 
 ## 本次汇报真正用了哪些系统能力
@@ -124,11 +124,11 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 | 市场大趋势 / 全A脉搏 | **ACTIVE** | RED / score=19.15 / 2026-10-15 |
 | 持仓 + 估值 + Formal Action | **ACTIVE** | holdings=4 / valuation-covered=4 / formal-source=FINALIZED_CANONICAL_ONLY |
 | 持仓估值连续性 / 价值区间 | **ACTIVE** | matched=4 / tracked=6 / formal-recomputed=False |
-| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=100 / dormant=26 / archived-invalidated=0 / events=14896 / focus=7 |
-| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=31 / verified-pass=216 / unresolved=123 |
-| Deep Provenance 证据审计 | **ACTIVE** | audit=True / run=38833597836 / unverified-pass=0 |
+| Candidate Lifecycle 持续研究记忆 | **ACTIVE** | active=100 / dormant=26 / archived-invalidated=0 / events=14896 / focus=4 |
+| Deep 五类硬门槛 + 官方证据 | **ACTIVE** | requested=30 / verified-pass=0 / unresolved=123 |
+| Deep Provenance 证据审计 | **PARTIAL** | audit=False / run=— / unverified-pass=0 |
 | 世界 / 社会 / 资本趋势雷达 | **MULTI_LAYER_COVERED** | POLICY_CAPITAL=1 / INDUSTRIAL_CAPITAL=6 / FINANCIAL_CAPITAL=4 / REAL_DEMAND=5 / TECHNOLOGY=0 / GLOBAL_STRUCTURE=6 |
-| Deep Research Terminal | **ACTIVE** | BUY=1 / WAIT=0 / GAP=29 / REJECT=1 |
+| Deep Research Terminal | **PARTIAL** | BUY=0 / WAIT=0 / GAP=0 / REJECT=0 |
 | 资金计划 + 执行价覆盖 | **ACTIVE** | cash=50000.0 / immediate=0.0 / quotes=0/4 |
 
 - Candidate Lifecycle：当前 ACTIVE **100**；DORMANT **26**；ARCHIVED/INVALIDATED **0**；累计生命周期事件 **14896**。DORMANT 表示当前证据 epoch 的研究策略已耗尽，等待新研究证据；它不是归档或失效。
@@ -144,54 +144,41 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 ## 自动深算运行状态
 
 - 当前运行状态来源：**TERMINAL_STATUS**
-- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`38832732344`；与当前运行一致：**True**
+- 深算资料来源：**AUTOMATIC_DEEP_CALCULATION**；资料 Lambda：`38834104334`；与当前运行一致：**True**
 - 深算 profile lineage 与当前 runtime 一致。
-- Lambda run：`38832732344`
-- 触发来源：`PREDICTABILITY_PARENT_SCOPE_FIX`
+- Lambda run：`38834104334`
+- 触发来源：`GenGe V3.1.1 Hourly Deep Overlay`
 - 计算执行：**SUCCESS**
 - 运行状态：**COMPLETED**
 - 研究过程终态：**EVIDENCE_EXHAUSTED**
-- 请求深算：**31**；已处理：**31**；完整：**1**；证据穷尽：**30**。
-- Workset profile：总数 **501**；请求代码已落 profile **31**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
-- 同轮补证据尝试：**2**；取得证据：**85**；推进硬门槛：**10**。
+- 请求深算：**30**；已处理：**30**；完整：**0**；证据穷尽：**30**。
+- Workset profile：总数 **501**；请求代码已落 profile **30**；handoff 未完成 **0**；覆盖可审计：**True**；完整覆盖：**True**。
+- 同轮补证据尝试：**2**；取得证据：**84**；推进硬门槛：**10**。
 - 尚未解决硬门槛：**123**。
 - 未决原因摘要：涉及 30 只；门槛分布：predictability×28、moat×26、long_term_demand×25、earnings_authenticity×22、financial_safety×22；Top原因：OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET×25、INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS×24、SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT×22、SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT×22、INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE×19；样例：000096[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000415[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000557[long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET、moat:INSUFFICIENT_MULTI_YEAR_MOAT_EVIDENCE]；000596[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]；000703[earnings_authenticity:SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT、financial_safety:SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT、long_term_demand:OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET]
 - 请求但未进入本次研究工件：**无**。
-- 上一次完整终态 run：`38832732344`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
+- 上一次完整终态 run：`38834104334`；执行 **SUCCESS**；研究终态 **EVIDENCE_EXHAUSTED**。
 - 是否需要你手工开启下一轮：**False**。
 - **执行 SUCCESS 不等于研究 COMPLETE**；EVIDENCE_EXHAUSTED 只表示已进入 profile 的对象完成了有界补证；HANDOFF_INCOMPLETE 表示仍有请求代码未进入 profile，二者都不会把 UNKNOWN 当成 PASS。
 
 ## 五类硬门槛已通过的研究线索
 
-- 当前 runtime 中非持仓、非 Formal BUY/WAIT_PRICE、五类硬门槛全部明确 PASS：**0**。
+- 当前 runtime 中非持仓、非 Formal BUY/WAIT_PRICE、五类硬门槛全部明确 PASS：**1**。
+- **603596 伯特利**（C36汽车制造业）：硬门槛 **5/5 PASS**；下一步 **继续估值、价格与 Formal authority 闭环**；当前账户动作 **暂不买**。
 - 这是一层研究资格可见性，不是 BUY/WAIT_PRICE；不会改变阈值、不会把 UNKNOWN 当 PASS，也不会创建 Formal 交易权限。
 
 ## 深算终态研究决策
 
-- 终态快照存在：**True**；与当前 Deep Lambda 一致：**True**。
-- 终态来源 Lambda：`38832732344`；当前 Lambda：`38832732344`。
-- 请求：**31**；研究 BUY：**1**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**29**；研究 REJECT：**1**。
-- 高吸引力但证据不足、优先补证：600406 国电南瑞(quant=45.7808；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；601318 中国平安(quant=32.938；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat、financial_safety、earnings_authenticity)；001316 润贝航科(quant=22.1976；暂不投入新增资金；等待补齐：predictability、long_term_demand、moat)
-- 风险预算层 BUILD/PROBE 候选：**2**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
-  - 603596 伯特利: **BUILD**；conviction=0.8974；建议账户上限=3.0%
-  - 603198 迎驾贡酒: **PROBE**；conviction=0.6236；建议账户上限=0.75%
+- 终态快照存在：**True**；与当前 Deep Lambda 一致：**False**。
+- 终态来源 Lambda：`38832732344`；当前 Lambda：`38834104334`。
+- 请求：**0**；研究 BUY：**0**；研究 WAIT_PRICE：**0**；研究 RESEARCH_GAP：**0**；研究 REJECT：**0**。
+- 高吸引力但证据不足、优先补证：无
+- 风险预算层 BUILD/PROBE 候选：**0**；该层只把不确定性映射为仓位上限，不把 UNKNOWN 改成 PASS。
 - **研究 BUY/WAIT_PRICE 与 Formal/Production 权限严格分离**；风险预算建议同样不创建 Formal BUY、持仓加仓授权或自动交易。
 
 ## Jev 买入判断（研究建议，不是 Formal BUY）
 
-- 当前可用判断：**12**；其中 ENTRY_NOW **1**；Jev run：`38834297048`。
-- **603596 伯特利**：**ENTRY_NOW**；触发=CURRENT_5_OF_5_PASS_TERMINAL_BUY_AND_PRICE_AT_OR_BELOW_RESEARCH_BUY_CEILING；买入价上限=37.3431；首仓=1.0%；最大研究仓位=3.0%；加仓条件=REVALIDATE_5_OF_5_PASS_AND_TERMINAL_BUY_WITH_PRICE_AT_OR_BELOW_CEILING；不追条件=PRICE_ABOVE_37.3431_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000596 古井贡酒**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=105.424；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_105.4240_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **001316 润贝航科**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=30.3172；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_30.3172_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **601318 中国平安**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000768 中航西飞**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=28.7767；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_28.7767_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **600406 国电南瑞**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=21.7675；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_21.7675_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000096 广聚能源**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=18.0111；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_18.0111_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000415 渤海租赁**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000833 粤桂股份**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000703 恒逸石化**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=24.0384；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_24.0384_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **603993 洛阳钼业**：**WAIT_EVIDENCE**；触发=RESOLVE_CURRENT_EVIDENCE_OR_HARD_GATE_GAPS_THEN_REVALUE；买入价上限=17.1026；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=PRICE_ABOVE_17.1026_REQUIRES_REVALUATION；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
-- **000557 西部创业**：**INVALIDATED**；触发=NO_ENTRY_UNTIL_INVALIDATING_EVIDENCE_IS_REVERSED_AND_FULL_REVALIDATION_PASSES；买入价上限=—；首仓=0.0%；最大研究仓位=0.0%；加仓条件=NO_ADD_UNTIL_ENTRY_CONDITIONS_ARE_REVALIDATED；不追条件=NO_VERIFIED_PRICE_CEILING_DO_NOT_CHASE；失效条件=ANY_HARD_GATE_FAIL_OR_UNKNOWN_OR_STALE_LINEAGE_INVALIDATES_ENTRY。
+- 当前可用判断：**0**；其中 ENTRY_NOW **0**；Jev run：`38834297048`。
 - Jev 负责判断；价格阈值和仓位必须通过 deterministic 校验。该层 authority=ADVISORY_ONLY，Formal BUY=false，automatic execution=false。
 
 > 自动触发、自动计算、同轮补证据/有界重试、自动终结、自动持久化、自动刷新决策中心；Formal BUY 权限仍只来自既有 Canonical/Production authority，no_auto_trade=true。
