@@ -569,6 +569,19 @@ def _metric_context_is_quarterly(text: str, label_start: int) -> bool:
     return len(quarter_labels) >= 2
 
 
+_FINANCIAL_STATEMENT_SCOPE_RE = re.compile(
+    r"(?P<parent>母\s*公\s*司\s*(?:利\s*润\s*表|现\s*金\s*流\s*量\s*表))|"
+    r"(?P<consolidated>合\s*并\s*(?:利\s*润\s*表|现\s*金\s*流\s*量\s*表))"
+)
+_PARENT_STATEMENT_LOOKBACK = 900
+
+
+def _metric_context_is_parent_company_statement(text: str, label_start: int) -> bool:
+    """Reject explicitly parent-company-only statement rows as consolidated evidence."""
+    before = text[max(0, label_start - _PARENT_STATEMENT_LOOKBACK):label_start]
+    matches = list(_FINANCIAL_STATEMENT_SCOPE_RE.finditer(before))
+    return bool(matches and matches[-1].group("parent"))
+
 def _nearby_header_unit(text: str, label_start: int) -> tuple[str | None, str]:
     """Use the closest coherent unit header inside the current report section."""
     before = _current_section_prefix(text, label_start)
@@ -837,6 +850,9 @@ def _metric_measurement(text: str, labels: Iterable[str], fiscal_year: int) -> d
         for label_match in _label_pattern(label).finditer(normalized):
             if _metric_context_is_quarterly(normalized, label_match.start()):
                 reasons.append("QUARTERLY_METRIC_NOT_ANNUAL")
+                continue
+            if _metric_context_is_parent_company_statement(normalized, label_match.start()):
+                reasons.append("PARENT_COMPANY_STATEMENT_NOT_CONSOLIDATED")
                 continue
             if _metric_context_is_scoped(normalized, label_match.start(), label_match.end()):
                 reasons.append("SCOPED_SUBTOTAL_NOT_COMPANY_METRIC")

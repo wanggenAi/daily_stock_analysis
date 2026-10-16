@@ -853,3 +853,60 @@ def test_cninfo_history_uses_browser_form_query_contract():
     assert captured["kwargs"]["data"]["stock"] == "000001,gssz0000001"
     assert captured["kwargs"]["data"]["category"] == "category_ndbg_szsh"
 
+
+
+def test_parent_company_statement_rows_cannot_conflict_with_consolidated_metrics():
+    text = """
+    七、近三年主要会计数据和财务指标
+    单位：元
+    2025年 2024年
+    营业收入 6,000.00 5,000.00
+    归属于上市公司股东的净利润 800.00 700.00
+    经营活动产生的现金流量净额 1,200.00 1,100.00
+
+    合并利润表
+    单位：元
+    2025年度 2024年度
+    营业收入 6,000.00 5,000.00
+
+    母公司利润表
+    单位：元
+    2025年度 2024年度
+    营业收入 600.00 500.00
+
+    合并现金流量表
+    单位：元
+    2025年度 2024年度
+    经营活动产生的现金流量净额 1,200.00 1,100.00
+
+    母公司现金流量表
+    单位：元
+    2025年度 2024年度
+    经营活动产生的现金流量净额 120.00 110.00
+    """
+    metrics = extract_report_metrics(text, 2025)
+    assert metrics["revenue"] == 6000.0
+    assert metrics["net_profit"] == 800.0
+    assert metrics["operating_cash_flow"] == 1200.0
+    assert metrics["metric_provenance"]["revenue"]["verified"] is True
+    assert metrics["metric_provenance"]["operating_cash_flow"]["verified"] is True
+
+
+def test_parent_company_only_statement_cannot_supply_consolidated_metric_evidence():
+    text = """
+    母公司利润表
+    单位：元
+    2025年度 2024年度
+    营业收入 600.00 500.00
+
+    母公司现金流量表
+    单位：元
+    2025年度 2024年度
+    经营活动产生的现金流量净额 120.00 110.00
+    """
+    metrics = extract_report_metrics(text, 2025)
+    for metric in ("revenue", "operating_cash_flow"):
+        assert metrics[metric] is None
+        provenance = metrics["metric_provenance"][metric]
+        assert provenance["verified"] is False
+        assert provenance["reason"] == "PARENT_COMPANY_STATEMENT_NOT_CONSOLIDATED"
