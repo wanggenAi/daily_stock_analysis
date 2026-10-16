@@ -12,7 +12,9 @@ on:
     - cron: "20 0 * * 1-5"
     - cron: "20 7 * * 1-5"
   push:
-    branches: [main]
+    branches:
+      - main
+      - "v2-production-*"
     paths:
       - "stock_v2/**"
       - "tests/test_stock_v2.py"
@@ -48,7 +50,6 @@ jobs:
 
       - name: Fresh all-A facts and price plans
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_full_scan != true }}
-        continue-on-error: true
         timeout-minutes: 102
         env:
           PYTHONUNBUFFERED: "1"
@@ -77,6 +78,8 @@ jobs:
 
           payload = json.loads(Path("data/v2/latest_run.json").read_text(encoding="utf-8"))
           assert str(payload["schema_version"]).startswith("v2."), payload["schema_version"]
+          assert payload["source"]["mode"] == "LIVE_SCAN", payload["source"]
+          assert payload["source"].get("degraded") is False, payload["source"]
           assert payload["stats"]["visible_pool"] >= 10, payload["stats"]
           assert len(payload["candidates"]) == payload["stats"]["visible_pool"]
           assert all(row["state"] in {"BUY", "NEAR_BUY", "WATCH"} for row in payload["candidates"])
