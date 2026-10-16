@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import re
 from collections import Counter
-from typing import Any, Iterable
+from typing import Any, Iterable, Mapping
 
 from .models import Candidate
 
@@ -116,11 +116,44 @@ def _source_hint(row: dict[str, Any], source_name: str) -> str:
     return explicit or source_name
 
 
-def build_candidate(row: dict[str, Any], source_name: str, holdings: set[str]) -> Candidate | None:
+def _global_score_delta(transmission: Mapping[str, Any]) -> float:
+    direction = str(transmission.get("direction") or transmission.get("signal") or "NEUTRAL").upper()
+    magnitude = str(transmission.get("magnitude") or "LOW").upper()
+    base = {"LOW": 1.0, "MEDIUM": 2.5, "HIGH": 4.0}.get(magnitude, 1.0)
+    if any(token in direction for token in ("POSITIVE", "BENEFICIAL", "FAVORABLE", "BULLISH")):
+        return base
+    if any(token in direction for token in ("NEGATIVE", "ADVERSE", "UNFAVORABLE", "BEARISH")):
+        return -base
+    return 0.0
+
+
+def _apply_global_transmission(candidate: Candidate, transmission: Mapping[str, Any] | None) -> None:
+    if not transmission:
+        return
+    delta = _global_score_delta(transmission)
+    candidate.score = round(max(0.0, min(100.0, candidate.score + delta)), 2)
+    factors = [str(v) for v in transmission.get("factors") or [] if str(v)]
+    direction = str(transmission.get("direction") or transmission.get("signal") or "NEUTRAL")
+    magnitude = str(transmission.get("magnitude") or "LOW")
+    factor_text = ",".join(factors) if factors else "GLOBAL"
+    candidate.reasons = list(dict.fromkeys([
+        *candidate.reasons,
+        f"global={factor_text}:{direction}/{magnitude}",
+    ]))[:8]
+    refs = [str(v) for v in transmission.get("evidence_refs") or [] if str(v)]
+    candidate.evidence = list(dict.fromkeys([*candidate.evidence, *refs]))[:10]
+    if delta < 0:
+        candidate.risks = list(dict.fromkeys([
+            *candidate.risks,
+            f"explicit_global_transmission={direction}/{magnitude}",
+        ]))[:8]
+
+
+def build_candidate(row: dict[str, Any], source_name: str, holdings: set[str], global_transmission: Mapping[str, Any] | None = None) -> Candidate | None:
     code = _clean_code(_first(row, CODE_KEYS))
     if not re.fullmatch(r"[036]\d{5}", code):
         return None
-    score = _score(row)
+    base_score = _score(row)
     current = _float(_first(row, PRICE_KEYS))
     buy_low, buy_high = _price_zone(row)
     distance = _distance(current, buy_low, buy_high)
@@ -133,9 +166,9 @@ def build_candidate(row: dict[str, Any], source_name: str, holdings: set[str]) -
         state = "BUY"
     elif "near_ready" in source_lower:
         state = "NEAR_BUY"
-    elif distance == 0 and score >= 65:
+    elif distance == 0 and base_score >= 65:
         state = "BUY"
-    elif distance is not None and distance <= 6 and score >= 55:
+    elif distance is not None and distance <= 6 and base_score >= 55:
         state = "NEAR_BUY"
 
     evidence: list[str] = []
@@ -162,13 +195,13 @@ def build_candidate(row: dict[str, Any], source_name: str, holdings: set[str]) -
         bool(evidence),
         bool(reasons or risks),
     ])
-    confidence = "HIGH" if score >= 70 and completeness >= 4 else "MEDIUM" if score >= 55 and completeness >= 2 else "LOW"
+    confidence = "HIGH" if base_score >= 70 and completeness >= 4 else "MEDIUM" if base_score >= 55 and completeness >= 2 else "LOW"
 
-    return Candidate(
+    candidate = Candidate(
         code=code,
         name=str(_first(row, NAME_KEYS, code)).strip() or code,
         industry=str(_first(row, INDUSTRY_KEYS, "UNKNOWN")).strip() or "UNKNOWN",
-        score=score,
+        score=base_score,
         state=state,
         confidence=confidence,
         current_price=current,
@@ -182,13 +215,17 @@ def build_candidate(row: dict[str, Any], source_name: str, holdings: set[str]) -
         evidence=evidence,
         holding=code in holdings,
     )
+    _apply_global_transmission(candidate, global_transmission)
+    return candidate
 
 
-def rank_candidates(raw_rows: list[dict[str, Any]], source_name: str, holdings: set[str], *, top_n: int = 30, industry_cap: int = 3) -> tuple[list[Candidate], list[Candidate]]:
+def rank_candidates(raw_rows: list[dict[str, Any]], source_name: str, holdings: set[str], *, top_n: int = 30, industry_cap: int = 3, global_transmission: Mapping[str, Mapping[str, Any]] | None = None) -> tuple[list[Candidate], list[Candidate]]:
     candidates: list[Candidate] = []
     seen: set[str] = set()
+    global_transmission = global_transmission or {}
     for row in raw_rows:
-        candidate = build_candidate(row, source_name, holdings)
+        code = _clean_code(_first(row, CODE_KEYS))
+        candidate = build_candidate(row, source_name, holdings, global_transmission.get(code))
         if candidate and candidate.code not in seen:
             candidates.append(candidate)
             seen.add(candidate.code)

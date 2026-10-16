@@ -29,12 +29,20 @@ def run(root: Path, *, top_n: int, industry_cap: int, output: Path, json_output:
     raw_rows, source_meta = load_candidates(root)
     holdings = load_holdings(root)
     market = load_market_context(root)
-    chosen, all_candidates = rank_candidates(raw_rows, source_meta.get("source", ""), holdings, top_n=top_n, industry_cap=industry_cap)
+    global_transmission = ((market.get("global") or {}).get("security_transmission") or {})
+    chosen, all_candidates = rank_candidates(
+        raw_rows,
+        source_meta.get("source", ""),
+        holdings,
+        top_n=top_n,
+        industry_cap=industry_cap,
+        global_transmission=global_transmission,
+    )
     previous = _load_json(json_output)
     removed = apply_changes(chosen, previous)
 
     payload = {
-        "schema_version": "v2.0",
+        "schema_version": "v2.1",
         "run_id": run_id,
         "generated_at": now.isoformat(),
         "source": source_meta,
@@ -47,6 +55,7 @@ def run(root: Path, *, top_n: int, industry_cap: int, output: Path, json_output:
             "near_buy": sum(c.state == "NEAR_BUY" for c in chosen),
             "watch": sum(c.state == "WATCH" for c in chosen),
             "holdings_in_pool": sum(c.holding for c in chosen),
+            "global_transmission_mapped": sum(c.code in global_transmission for c in chosen),
         },
         "removed": removed,
         "candidates": [c.to_dict() for c in chosen],
@@ -73,7 +82,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = Path(args.root).resolve()
     payload = run(root, top_n=max(10, min(50, args.top)), industry_cap=max(1, args.industry_cap), output=root / args.output, json_output=root / args.json_output)
-    print(f"[V2] {payload['run_id']} mode={payload['source']['mode']} visible={payload['stats']['visible_pool']} buy={payload['stats']['buy']} near_buy={payload['stats']['near_buy']}", flush=True)
+    print(f"[V2] {payload['run_id']} mode={payload['source']['mode']} visible={payload['stats']['visible_pool']} buy={payload['stats']['buy']} near_buy={payload['stats']['near_buy']} global_mapped={payload['stats']['global_transmission_mapped']}", flush=True)
     return 0
 
 

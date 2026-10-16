@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import unittest
 from pathlib import Path
 
 from stock_v2.engine import build_candidate, rank_candidates
 from stock_v2.pipeline import run
+from stock_v2.sources import load_market_context
 
 
 class StockV2Tests(unittest.TestCase):
@@ -32,6 +34,39 @@ class StockV2Tests(unittest.TestCase):
         chosen, _ = rank_candidates(rows, "top30_deep_review.csv", set(), top_n=10, industry_cap=2)
         self.assertEqual(len(chosen), 10)
         self.assertLessEqual(sum(c.industry == "同行业" for c in chosen[:6]), 2)
+
+    def test_global_transmission_adjusts_score_but_not_buy_state(self):
+        row = {"code": "603993", "stock_name": "样本", "industry": "资源", "actionability_score": "60"}
+        transmission = {
+            "direction": "POSITIVE", "magnitude": "HIGH", "factors": ["COPPER", "GOLD"],
+            "evidence_refs": ["https://example.com/issuer"],
+        }
+        candidate = build_candidate(row, "top30_deep_review.csv", set(), transmission)
+        self.assertEqual(candidate.state, "WATCH")
+        self.assertEqual(candidate.score, 64.0)
+        self.assertTrue(any("COPPER,GOLD" in reason for reason in candidate.reasons))
+        self.assertIn("https://example.com/issuer", candidate.evidence)
+
+    def test_global_context_loader_uses_explicit_security_mapping(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            path = root / "data/global_market_pulse/latest.json"
+            path.parent.mkdir(parents=True)
+            path.write_text(json.dumps({
+                "generated_at": "2026-10-16T00:00:00+00:00",
+                "coverage": {"status": "OK", "ok_count": 2, "instrument_count": 2},
+                "risk_regime": {"status": "NEUTRAL", "score": 52.0},
+                "pre_open_intelligence": {"status": "AVAILABLE", "holiday_gap_risk": "NORMAL"},
+                "series": {"SOX": {"status": "OK", "change_24h_pct": -1.2, "freshness": "FRESH"}},
+                "security_transmission": [{
+                    "code": "603993", "direction": "POSITIVE", "magnitude": "LOW",
+                    "relevant_global_factors": ["COPPER"], "evidence_refs": ["https://example.com/cmoc"],
+                }],
+            }, ensure_ascii=False), encoding="utf-8")
+            context = load_market_context(root)
+            self.assertTrue(context["global"]["available"])
+            self.assertEqual(context["global"]["risk_regime"]["status"], "NEUTRAL")
+            self.assertIn("603993", context["global"]["security_transmission"])
 
     def test_pipeline_fallback_builds_dashboard(self):
         with tempfile.TemporaryDirectory() as tmp:
