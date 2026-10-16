@@ -8,6 +8,10 @@ from typing import Any, Iterable
 
 
 _CODE_RE = re.compile(r"(?<!\d)([036]\d{5})(?!\d)")
+_GLOBAL_FACTOR_IDS = (
+    "SP500", "NASDAQ", "NASDAQ100", "SOX", "VIX", "US10Y", "DXY", "USDCNH",
+    "HANGSENG", "HANGSENGTECH", "COPPER", "GOLD", "SILVER", "CRUDE_OIL", "BTC", "ETH",
+)
 
 
 def _latest(paths: Iterable[Path]) -> Path | None:
@@ -15,6 +19,16 @@ def _latest(paths: Iterable[Path]) -> Path | None:
     if not paths:
         return None
     return max(paths, key=lambda p: (p.stat().st_mtime_ns, str(p)))
+
+
+def _load_json(path: Path) -> dict[str, Any]:
+    if not path.exists():
+        return {}
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+        return value if isinstance(value, dict) else {}
+    except Exception:
+        return {}
 
 
 def latest_scan_file(root: Path) -> Path | None:
@@ -150,25 +164,100 @@ def load_holdings(root: Path) -> set[str]:
     return holdings
 
 
-def load_market_context(root: Path) -> dict[str, Any]:
-    candidates = list((root / "reports" / "all_a_full_scan").glob("**/market_regime.json"))
-    latest = _latest(candidates)
-    if latest:
-        try:
-            payload = json.loads(latest.read_text(encoding="utf-8"))
-            return {
-                "status": str(payload.get("market_regime_status") or payload.get("status") or "AVAILABLE"),
-                "score": payload.get("market_regime_score") or payload.get("score"),
-                "external_risk": payload.get("external_risk_level") or payload.get("external_risk"),
-                "reasons": payload.get("market_regime_risk_reasons") or payload.get("risk_reasons") or [],
-                "source": str(latest.relative_to(root)),
+def _global_context(root: Path) -> dict[str, Any]:
+    path = root / "data" / "global_market_pulse" / "latest.json"
+    payload = _load_json(path)
+    if not payload:
+        return {
+            "available": False,
+            "source": "",
+            "generated_at": None,
+            "coverage": {},
+            "risk_regime": {},
+            "pre_open": {},
+            "factors": {},
+            "security_transmission": {},
+        }
+
+    series = payload.get("series") or {}
+    factors: dict[str, dict[str, Any]] = {}
+    if isinstance(series, dict):
+        for factor_id in _GLOBAL_FACTOR_IDS:
+            row = series.get(factor_id)
+            if not isinstance(row, dict) or row.get("status") != "OK":
+                continue
+            factors[factor_id] = {
+                "label": row.get("label") or factor_id,
+                "latest": row.get("latest"),
+                "market_date": row.get("market_date"),
+                "freshness": row.get("freshness"),
+                "change_24h_pct": row.get("change_24h_pct") if row.get("change_24h_pct") is not None else row.get("change_1d_pct"),
+                "change_5d_pct": row.get("change_5d_pct"),
+                "since_last_a_share_close_pct": row.get("since_last_a_share_close_pct"),
             }
-        except Exception:
-            pass
+
+    transmission: dict[str, dict[str, Any]] = {}
+    for row in payload.get("security_transmission") or []:
+        if not isinstance(row, dict):
+            continue
+        code_match = _CODE_RE.search(str(row.get("code") or ""))
+        if not code_match:
+            continue
+        code = code_match.group(1)
+        transmission[code] = {
+            "direction": row.get("direction") or row.get("signal") or "NEUTRAL",
+            "signal": row.get("signal") or row.get("direction") or "NEUTRAL",
+            "magnitude": row.get("magnitude") or "LOW",
+            "confidence": row.get("confidence"),
+            "factors": list(row.get("relevant_global_factors") or []),
+            "evidence_refs": list(row.get("evidence_refs") or []),
+            "research_implication": row.get("research_implication"),
+            "freshness": row.get("freshness"),
+        }
+
     return {
+        "available": True,
+        "source": str(path.relative_to(root)),
+        "generated_at": payload.get("generated_at"),
+        "coverage": payload.get("coverage") or {},
+        "risk_regime": payload.get("risk_regime") or {},
+        "pre_open": payload.get("pre_open_intelligence") or {},
+        "factors": factors,
+        "security_transmission": transmission,
+    }
+
+
+def load_market_context(root: Path) -> dict[str, Any]:
+    global_context = _global_context(root)
+    result: dict[str, Any] = {
         "status": "DEGRADED",
         "score": None,
         "external_risk": "UNKNOWN",
         "reasons": ["live market_regime.json unavailable"],
         "source": "",
+        "global": global_context,
     }
+
+    candidates = list((root / "reports" / "all_a_full_scan").glob("**/market_regime.json"))
+    latest = _latest(candidates)
+    if latest:
+        payload = _load_json(latest)
+        if payload:
+            result.update({
+                "status": str(payload.get("market_regime_status") or payload.get("status") or "AVAILABLE"),
+                "score": payload.get("market_regime_score") if payload.get("market_regime_score") is not None else payload.get("score"),
+                "external_risk": payload.get("external_risk_level") or payload.get("external_risk") or "UNKNOWN",
+                "reasons": payload.get("market_regime_risk_reasons") or payload.get("risk_reasons") or [],
+                "source": str(latest.relative_to(root)),
+            })
+    elif global_context.get("available"):
+        regime = global_context.get("risk_regime") or {}
+        pre_open = global_context.get("pre_open") or {}
+        result.update({
+            "status": str(regime.get("status") or "GLOBAL_ONLY"),
+            "score": regime.get("score"),
+            "external_risk": pre_open.get("holiday_gap_risk") or "GLOBAL_CONTEXT_AVAILABLE",
+            "reasons": list(pre_open.get("next_a_share_open_watch") or []),
+            "source": global_context.get("source") or "",
+        })
+    return result
