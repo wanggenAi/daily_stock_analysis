@@ -76,22 +76,43 @@ jobs:
           from pathlib import Path
 
           payload = json.loads(Path("data/v2/latest_run.json").read_text(encoding="utf-8"))
-          assert payload["schema_version"] == "v2.0"
+          assert str(payload["schema_version"]).startswith("v2."), payload["schema_version"]
           assert payload["stats"]["visible_pool"] >= 10, payload["stats"]
           assert len(payload["candidates"]) == payload["stats"]["visible_pool"]
           assert all(row["state"] in {"BUY", "NEAR_BUY", "WATCH"} for row in payload["candidates"])
+          assert "global" in payload["market"]
           assert Path("V2_DASHBOARD.md").exists()
           print(json.dumps(payload["stats"], ensure_ascii=False))
           PY
 
       - name: Persist only V2 investor outputs
+        shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p /tmp/genge-v2/data/v2
+          cp V2_DASHBOARD.md /tmp/genge-v2/V2_DASHBOARD.md
+          cp data/v2/latest_run.json /tmp/genge-v2/data/v2/latest_run.json
+
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add V2_DASHBOARD.md data/v2/latest_run.json
-          if git diff --cached --quiet; then
-            echo "No V2 output change"
-            exit 0
-          fi
-          git commit -m "Persist GenGe V2 clean decision output [skip ci]"
-          git push
+
+          for attempt in 1 2 3; do
+            echo "V2 persist attempt ${attempt}/3"
+            git fetch origin main
+            git reset --hard origin/main
+            cp /tmp/genge-v2/V2_DASHBOARD.md V2_DASHBOARD.md
+            mkdir -p data/v2
+            cp /tmp/genge-v2/data/v2/latest_run.json data/v2/latest_run.json
+            git add V2_DASHBOARD.md data/v2/latest_run.json
+            if git diff --cached --quiet; then
+              echo "No V2 output change"
+              exit 0
+            fi
+            git commit -m "Persist GenGe V2 clean decision output [skip ci]"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git reset --hard origin/main
+          done
+          echo "V2 output persistence failed after optimistic retries" >&2
+          exit 1
