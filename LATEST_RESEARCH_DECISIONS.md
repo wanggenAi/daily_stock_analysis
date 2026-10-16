@@ -1,7 +1,7 @@
 # GenGe V3.1 Terminal Research Decisions
 
-- requested: **31**
-- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **29** / REJECT: **1**
+- requested: **32**
+- BUY: **1** / WAIT_PRICE: **0** / RESEARCH_GAP: **30** / REJECT: **1**
 - all requested terminal: **True**
 - authority: **RESEARCH_ONLY**; Formal/Production authority unchanged; UNKNOWN != PASS; no auto-trade.
 
@@ -14,7 +14,7 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **1** / WATCH: **6** / BLOCK: **23**
+- BUILD: **1** / PROBE: **1** / WATCH: **6** / BLOCK: **24**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8974 / max_portfolio=3.0%
 - 603198 迎驾贡酒: **PROBE** / conviction=0.6236 / max_portfolio=0.75%
@@ -33,6 +33,7 @@
 - 600318 新力金融: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 000096 广聚能源: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 600523 贵航股份: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
+- 002530 金财互联: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 002420 毅昌科技: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 603098 森特股份: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
 - 601601 中国太保: **RESEARCH_GAP** / EVIDENCE_INSUFFICIENT_AFTER_BOUNDED_RETRY
@@ -55,12 +56,12 @@
 
 # GenGe V3.1 Deep Decision Closure V2
 
-- decision ready: **3/31** (9.7%)
-- evidence complete: **1/31** (3.2%)
+- decision ready: **3/32** (9.4%)
+- evidence complete: **1/32** (3.1%)
 - FULL_EVIDENCE: **1**
 - DECISION_READY_WITH_UNCERTAINTY: **1**
 - DECISIVE_REJECT: **1**
-- RESEARCH_REQUIRED: **28**
+- RESEARCH_REQUIRED: **29**
 - UNKNOWN remains UNKNOWN. Bounded uncertainty never grants Formal BUY or auto-trade.
 
 - 603596 伯特利: **FULL_EVIDENCE**; decision_ready=True; unknown=NONE
@@ -75,6 +76,7 @@
 - 600318 新力金融: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 000096 广聚能源: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600523 贵航股份: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
+- 002530 金财互联: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 002420 毅昌科技: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 603098 森特股份: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 601601 中国太保: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
