@@ -6,7 +6,7 @@
 - complete: **1**
 - evidence exhausted: **31**
 - evidence collection attempts: **2**
-- new evidence rows: **88**
+- new evidence rows: **90**
 - progressed gates: **10**
 - predictability resolved gates: **1**
 - moat resolved gates: **3**
