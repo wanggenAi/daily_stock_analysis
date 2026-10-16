@@ -2,10 +2,10 @@
 
 This is a dated source index, not a live order sheet. ChatGPT Web is on demand only.
 
-Snapshot: e79e1606a4927940d0184a04
+Snapshot: 01791861314c5388e4d8adf0
 Market as-of: 2026-10-15
-Generated at (not market freshness): 2026-10-15T22:15:57+00:00
-Canonical/source run: 336b8195e6e619d4a8ca / 38799044653
+Generated at (not market freshness): 2026-10-16T00:01:12+00:00
+Canonical/source run: 00d6e5a77b3d075b9d8f / 38822677148
 Market state: UPSTREAM_FRESH_CALENDAR_UNVERIFIED
 Current brokerage funds, executable prices and trade quantities: UNKNOWN / 0.
 
@@ -25,13 +25,13 @@ Current brokerage funds, executable prices and trade quantities: UNKNOWN / 0.
 Blockers: CENTER_DIFFERENT_EPOCH_OR_MISSING, FUND_POSITION_CONFIRMATION_MISSING, NO_CURRENT_BROKER_CASH_OR_POSITION_PROOF, NO_CURRENT_EXECUTABLE_QUOTE_PROOF, NO_INDEPENDENT_EXCHANGE_CALENDAR_VERIFICATION
 
 ## Exact repository source references
-- [data/investor_decision_dashboard/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/investor_decision_dashboard/latest.json) (at publication: sha256 2351452710747bf2b8b45b5314908ae9798f033228e92eb926c9ccb2aedd5bd3; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/3c92de5f4e3e3f927166dfc6441350c8c03fb4ba))
-- [data/decision_center/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/decision_center/latest.json) (at publication: sha256 2aec61238fbad49779fc2cafed57249381d7fcd659e1a3a0619092baa5c44ec4; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/fb96ceb94ce47368cf18e19132edb6efec5e5cea))
+- [data/investor_decision_dashboard/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/investor_decision_dashboard/latest.json) (at publication: sha256 87cce69d11740f33d606218cf4b9234fef2679acee822db162b4df0847a48f69; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/8d28d11e9f5d6cd20afad6cfa55aa27216d8eb96))
+- [data/decision_center/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/decision_center/latest.json) (at publication: sha256 0733d988439d20ed5ef8e7fd8e0890a79c2056c102fab5324561b541cceb681d; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/57d0cedecb7c21bcc80b592df15ed398dd19c386))
 - [data/era_radar/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/era_radar/latest.json) (at publication: sha256 75a4fa9dd6d41ba9822b1eec2fe876869c664b11ee7244a98837fe98ba75e128; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/524c1d0052cfaa64c173475ed73c101da15dc3ef))
 - [CURRENT_CAPITAL.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/CURRENT_CAPITAL.json) (at publication: sha256 b31ca1e1e03a6709d305ff39b0eaf70f9248c4f58d122c0f8aa8d839360133e5; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b31f3fec7f0731da559f4ccdbe87c08638a1397d))
 - [CURRENT_FUNDS.md](https://github.com/wanggenAi/daily_stock_analysis/blob/main/CURRENT_FUNDS.md) (at publication: sha256 34998c31e6c5ca7ff8c7698d272cf7ca5c58d3fc4ead50aa6465357cab34db20; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/6923d96f3e133462f8070117d5c6ce1491afac0b))
 - [data/manual_execution_quotes/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/manual_execution_quotes/latest.json) (at publication: sha256 638ed83336571b338a48b88182a03dae36c3bf547f3d0d10610655fc5e787a65; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b6be622af21f1bcddc0aee5c51ae9b038b753b2c))
-- [data/formal_decision_outcomes/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/formal_decision_outcomes/latest.json) (at publication: sha256 d3aa5dc1cac8e9839a339dd6ee860480baa489ce489444eb6bc870e39719116b; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/b3be4b9bb1cc079b470ac60c15888bd1ab5fe872))
+- [data/formal_decision_outcomes/latest.json](https://github.com/wanggenAi/daily_stock_analysis/blob/main/data/formal_decision_outcomes/latest.json) (at publication: sha256 d0551001e1f190edef86d5e6796ba4059d985d98350908156311eb95d10b95fb; [pinned Git blob](https://api.github.com/repos/wanggenAi/daily_stock_analysis/git/blobs/d6b39f9adac720305463c9f937182cae0f129e31))
 
 WARNING: downstream overlay or three-pillar jobs may change mutable main
 after this H1 snapshot. Recompute source SHA-256 before trusting a main
