@@ -2,23 +2,23 @@
   "authority": "RESEARCH_ONLY",
   "automatic_formal_buy_allowed": false,
   "contract": "GEN_GE_V31_AUTOMATIC_DEEP_CALC_V1",
-  "deep_code_epoch_sha": "48a2a16d78af5c938d7cd40dc6364b01c4ea4f07",
+  "deep_code_epoch_sha": "1c4391dd9029f2ac34732e522ba4ae8214c2a31c",
   "execution_status": "SUCCESS",
   "formal_trading_authority": false,
   "gap_closure_attempt_count": 2,
   "gap_closure_contract": "GEN_GE_V31_DEEP_GAP_CLOSURE_V1",
-  "gap_closure_generated_at": "2026-10-16T05:19:03+00:00",
-  "generated_at": "2026-10-16T05:11:06+00:00",
+  "gap_closure_generated_at": "2026-10-16T07:12:50+00:00",
+  "generated_at": "2026-10-16T07:05:24+00:00",
   "historical_material_event_evidence_count": 1,
   "historical_material_event_failed_gate_count": 0,
   "immediate_retry_required": false,
-  "lambda_run_id": "38854329206",
+  "lambda_run_id": "38864895894",
   "material_event_failed_gate_count": 2,
   "material_event_pass_override_count": 1,
   "material_event_risk_ledger_complete": true,
   "material_event_risk_ledger_count": 1,
   "moat_resolved_gate_count": 3,
-  "new_evidence_count": 84,
+  "new_evidence_count": 88,
   "no_auto_trade": true,
   "predictability_resolved_gate_count": 1,
   "profiles": {
@@ -7963,7 +7963,8 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified earnings-authenticity PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_EARNINGS_AUTHENTICITY_EVIDENCE_INSUFFICIENT"
         },
         "financial_safety": {
           "confidence": "MACHINE",
@@ -7975,32 +7976,346 @@
           ],
           "rationale": "Same-run PIT evidence is insufficient for a verified financial-safety PASS or FAIL.",
           "source": "AUTOMATIC_MACHINE",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "SAME_RUN_PIT_FINANCIAL_SAFETY_EVIDENCE_INSUFFICIENT"
         },
         "long_term_demand": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "direction": "POSITIVE",
+              "publish_date": "2026-10-14",
+              "source_domain": "www.stats.gov.cn",
+              "source_family": "stats.gov.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "summary": "2026年9月份工业生产者出厂价格同比上涨5.0% 环比上涨1.2%（匹配词：工业生产者出厂价格）：金属制品业 0.1 1.7 0.8 通用设备制造业 0.0 ",
+              "url": "https://www.stats.gov.cn/sj/zxfb/202610/t20261014_1965476.html"
+            }
+          ],
+          "gap_closure_rationale": "Fewer than two independent same-direction verified official source families; evidence threshold not met.",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "OFFICIAL_EVIDENCE_RETRY_EXHAUSTED_OR_CORROBORATION_NOT_MET"
         },
         "moat": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "publish_date": "2026-08-25",
+              "reason_code": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
+              "rule_version": "DURABLE_MOAT_MULTI_YEAR_OFFICIAL_V1",
+              "signals_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "signals": []
+                },
+                {
+                  "fiscal_year": 2024,
+                  "signals": [
+                    {
+                      "category": "ip_scale",
+                      "excerpt": "得到了客户及市场的好评。真空热压扩散焊接炉,成功应用于新能源汽车、储能、数据中心、氢能源设备等领域的各类铜基、镍基等高导材料换热器的真空焊接工艺,具有广阔的市场应用前景。报告期内,公司在技术创新、设计创新及学术研究方面均取得显著成果:新增发明专利授权12项,实用新型专利授权40项,外观设计专利授权1项,发表相关专业论文8篇。丰东热技术荣登“2024年度盐城市企业专利创新排行榜”,被江苏省科学技术协会认定为“江苏省院士专家(企业)创新中心”,同时被江苏省工业和信息化厅认定为“省级智能化示范车间”,“推盘式氮化热处理连续化生产装备”获得江苏省工业和信息化厅颁",
+                      "fiscal_year": 2024,
+                      "strength": "SUPPORTING"
+                    }
+                  ]
+                },
+                {
+                  "fiscal_year": 2023,
+                  "signals": [
+                    {
+                      "category": "ip_scale",
+                      "excerpt": "6000智能大型预抽真空可控气氛多用炉具有“超大装炉量、控制精度高、安全环保”的特点,符合国家倡导的“节能环保、清洁生产”产业要求,被评为“2023年度盐城市创新产品”。报告期内,公司热处理板块新增专利授权71项,其中发明专利授权14项,实用新型专利授权57项;发表专业论文8篇;新增研发项目9个。公司始终将产品质量视为企业生存和发展的生命线,以持续提升公司质量管理水平和产品/服务质量作为增强公司核心竞争力的重要发展战略,对制造及加工实施全过程质量控制。2023年7月,丰东热技术数字化运营平台全面上线,同金财互联控股股份有限公司2023",
+                      "fiscal_year": 2023,
+                      "strength": "SUPPORTING"
+                    }
+                  ]
+                },
+                {
+                  "fiscal_year": 2022,
+                  "signals": [
+                    {
+                      "category": "ip_scale",
+                      "excerpt": "公司的信息技术水平,更是推动了热处理行业的智能化发展;“国家重点研发计划轴齿类清洁热处理”之课题3--“可控气氛精密控制及减量化技术”于2022年8月通过验收并顺利结题;报告期内,公司新增授权专利71项,其中发明专利5项、实用新型专利66项,新增软件著作权2项。公司始终将产品质量视为企业生存和发展的生命线,以持续提升公司质量管理水平和产品/服务质量作为增强公司核心竞争力的重要发展战略,对制造及加工实施全过程质量控制。报告期内,丰东热技术通过了质量和环境管理体系监督审核;与此同时,为降低公司业务发展运行中的信息安全风",
+                      "fiscal_year": 2022,
+                      "strength": "SUPPORTING"
+                    }
+                  ]
+                },
+                {
+                  "fiscal_year": 2021,
+                  "signals": [
+                    {
+                      "category": "market_leadership",
+                      "excerpt": "机械制造业的发展态势息息相关,如主要下游汽车零部件行业、工程机械行业等是典型的周期性行业,热处理行业伴随着机械制造业景气度的变化以及下游产业的周期性变化而呈现出较强的周期性特点。②公司所处的行业地位丰东热技术是国内领先、国际先进的热处理综合解决方案供应商。公司始终注重自我研发能力的培养,不断满足和超越顾客需求,主持和参与起草、制定了24项热处理国家标准和9项行业标准。2018年,丰东热技术被国家工信部评为“制造业单项冠军示范企业”,是行业内唯一获此殊荣的企业;2021年,公司通过了“制造业单项冠军示范企业”的复审。丰东热技术及设",
+                      "fiscal_year": 2021,
+                      "strength": "STRONG"
+                    }
+                  ]
+                }
+              ],
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/9dd97f30-5d55-4da8-a94e-04e107d46862.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/c6883fe1-ed9a-423d-955b-1a787aef9154.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2024-04-25/e10c991b-cf70-4d13-b546-be1f82247151.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2023-04-24/372f1026-6007-478e-aa05-0e5c5f9c1967.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2022-04-29/c67a5336-a44c-482f-af99-1546c2eb4147.PDF"
+              ],
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/9dd97f30-5d55-4da8-a94e-04e107d46862.PDF"
+            }
+          ],
+          "gap_closure_rationale": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "DURABLE_MOAT_CORROBORATION_THRESHOLD_NOT_MET"
         },
         "predictability": {
           "confidence": "",
           "evidence": [],
+          "gap_closure_evidence": [
+            {
+              "classification": "UNKNOWN",
+              "coverage_years": [
+                2024,
+                2025
+              ],
+              "cyclical_or_resource": true,
+              "metrics_by_year": [
+                {
+                  "fiscal_year": 2025,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "归属于上市公司股东的净利润(元) 64,856,809.68 -9,160,925.46 807.97% -84,246,241.20\n归属于上市公司股东的扣除非经常性损\n益的净利润(元) 75,620,901.07 -25,352,473.27 398.28% -94,024,803.20\n经营活动产生的现金流量净额(元) 95,560",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": 64856809.68,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": 64856809.68,
+                      "verified": true
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "经营活动产生的现金流量净额(元) 95,560,688.04 61,693,650.83 54.90% -2,702,809.66\n金财互联控股股份有限公司2025 年年度报告全文\n8\n基本每股收益(元/股) 0.08 -0.01 900.00% -0.11\n稀释每股收益(元/股) 0.08 -0.01 900.00% -0.11\n加权平",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": 95560688.04,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": 95560688.04,
+                      "verified": true
+                    },
+                    "revenue": {
+                      "excerpt": "营业收入(元) 1,045,799,969.06 1,265,731,054.02 -17.38% 1,203,854,865.76\n归属于上市公司股东的净利润(元) 64,856,809.68 -9,160,925.46 807.97% -84,246,241.20\n归属于上市公司股东的扣除非经常性损\n益的净利润(元) 75",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": 1045799969.06,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": 1045799969.06,
+                      "verified": true
+                    }
+                  },
+                  "net_profit": 64856809.68,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": 95560688.04,
+                  "revenue": 1045799969.06,
+                  "unit_provenance_required": true
+                },
+                {
+                  "fiscal_year": 2024,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "归属于上市公司股\n东的净利润(元) -9,160,925.46 -84,246,241.20 -84,246,241.20 89.13% -340,587,428.59 -340,587,428.59\n归属于上市公司股\n东的扣除非经常性\n损益的净利润\n(元)\n-25,352,473.27 -94,024,803.20 -94,024,803",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": -9160925.46,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": -9160925.46,
+                      "verified": true
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "经营活动产生的现\n金流量净额(元) 61,693,650.83 -2,702,809.66 -2,702,809.66 2,382.57% 38,289,600.61 38,289,600.61\n基本每股收益\n(元/股) -0.01 -0.11 -0.11 90.91% -0.44 -0.44\n稀释每股收益\n(元/股) -0.01 -0.1",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": 61693650.83,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": 61693650.83,
+                      "verified": true
+                    },
+                    "revenue": {
+                      "excerpt": "营业收入(元) 1,265,731,054.02 1,203,854,865.76 1,203,854,865.76 5.14% 1,219,713,476.36 1,219,713,476.36\n归属于上市公司股\n东的净利润(元) -9,160,925.46 -84,246,241.20 -84,246,241.20 89.",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": 1265731054.02,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": 1265731054.02,
+                      "verified": true
+                    }
+                  },
+                  "net_profit": -9160925.46,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": 61693650.83,
+                  "revenue": 1265731054.02,
+                  "unit_provenance_required": true
+                },
+                {
+                  "fiscal_year": 2023,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "归属于上市公司股东的净利润(元) -84,246,241.20 -340,587,428.59 75.26% -397,076,257.62 \n归属于上市公司股东的扣除非经常性\n损益的净利润(元) -94,024,803.20 -299,227,121.68 68.58% -408,874,938.96 \n经营活动产生的现金流量净额(元)",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": -84246241.2,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": -84246241.2,
+                      "verified": true
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "经营活动产生的现金流量净额(元) -2,702,809.66 38,289,600.61 -107.06% -20,392,828.81 \n基本每股收益(元/股) -0.11 -0.44 75.00% -0.51 \n稀释每股收益(元/股) -0.11 -0.44 75.00% -0.51 \n加权平均净资产收益率 -6.35% -22.07",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": -2702809.66,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": -2702809.66,
+                      "verified": true
+                    },
+                    "revenue": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "NO_TRUSTED_UNIT_HEADER",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    }
+                  },
+                  "net_profit": -84246241.2,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": -2702809.66,
+                  "revenue": null,
+                  "unit_provenance_required": true
+                },
+                {
+                  "fiscal_year": 2022,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "归属于上市公司股东的净利润(元) -340,587,428.59 -397,076,257.62 14.23% -1,243,619,838.77 \n归属于上市公司股东的扣除非经常性\n损益的净利润(元) -299,227,121.68 -408,874,938.96 26.82% -1,287,094,710.18 \n经营活动产生的现金流量净",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": -340587428.59,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": -340587428.59,
+                      "verified": true
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "经营活动产生的现金流量净额(元) 38,289,600.61 -20,392,828.81 287.76% -6,151,461.34 \n基本每股收益(元/股) -0.44 -0.51 13.73% -1.60 \n稀释每股收益(元/股) -0.44 -0.51 13.73% -1.60 \n加权平均净资产收益率 -22.07% -20.73",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": 38289600.61,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": 38289600.61,
+                      "verified": true
+                    },
+                    "revenue": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "NO_TRUSTED_UNIT_HEADER",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    }
+                  },
+                  "net_profit": -340587428.59,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": 38289600.61,
+                  "revenue": null,
+                  "unit_provenance_required": true
+                },
+                {
+                  "fiscal_year": 2021,
+                  "metric_provenance": {
+                    "net_profit": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "QUARTERLY_METRIC_NOT_ANNUAL",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    },
+                    "operating_cash_flow": {
+                      "excerpt": "经营活动产生的现金流量净额(元) -20,392,828.81 -6,151,461.34 -231.51% -58,953,167.50 \n基本每股收益(元/股) -0.51 -1.60 68.13% -0.87 \n稀释每股收益(元/股) -0.51 -1.60 68.13% -0.87 \n加权平均净资产收益率 -20.73% -45.3",
+                      "extraction_mode": "HEADER_COLUMN_FISCAL_YEAR",
+                      "raw_value": -20392828.81,
+                      "reason": "TRUSTED_UNIT_NORMALIZED_TO_YUAN",
+                      "unit": "元",
+                      "unit_source": "METRIC_LABEL",
+                      "value_yuan": -20392828.81,
+                      "verified": true
+                    },
+                    "revenue": {
+                      "excerpt": "",
+                      "extraction_mode": null,
+                      "raw_value": null,
+                      "reason": "NO_TRUSTED_UNIT_HEADER",
+                      "unit": null,
+                      "unit_source": null,
+                      "value_yuan": null,
+                      "verified": false
+                    }
+                  },
+                  "net_profit": null,
+                  "normalization_unit": "CNY_YUAN",
+                  "operating_cash_flow": -20392828.81,
+                  "revenue": null,
+                  "unit_provenance_required": true
+                }
+              ],
+              "publish_date": "2026-08-25",
+              "reason_code": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
+              "rule_version": "PREDICTABILITY_MULTI_YEAR_OFFICIAL_V2",
+              "source_domain": "disc.static.szse.cn",
+              "source_type": "OFFICIAL_REPORT",
+              "source_urls": [
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/9dd97f30-5d55-4da8-a94e-04e107d46862.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/c6883fe1-ed9a-423d-955b-1a787aef9154.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2024-04-25/e10c991b-cf70-4d13-b546-be1f82247151.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2023-04-24/372f1026-6007-478e-aa05-0e5c5f9c1967.PDF",
+                "https://disc.static.szse.cn/download/disc/disk03/finalpage/2022-04-29/c67a5336-a44c-482f-af99-1546c2eb4147.PDF"
+              ],
+              "summary": "UNKNOWN:INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS; years=[2024, 2025]; unit_provenance=required; normalization=CNY_YUAN",
+              "url": "https://disc.static.szse.cn/download/disc/disk03/finalpage/2026-08-25/9dd97f30-5d55-4da8-a94e-04e107d46862.PDF"
+            }
+          ],
+          "gap_closure_rationale": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS",
           "rationale": "This qualitative gate requires verified evidence beyond deterministic same-run financial checks.",
           "source": "AUTOMATIC_ATTEMPT",
-          "status": "UNKNOWN"
+          "status": "UNKNOWN",
+          "terminal_unresolved_reason": "INSUFFICIENT_CONSECUTIVE_COMPLETE_FISCAL_YEARS"
         }
       },
       "industry": "C33金属制品业",
-      "name": "金财互联"
+      "name": "金财互联",
+      "research_disposition": "EVIDENCE_BLOCKED",
+      "research_terminal_state": "EVIDENCE_EXHAUSTED"
     },
     "002557": {
       "gates": {
@@ -30060,7 +30375,9 @@
         }
       },
       "industry": "C36汽车制造业",
-      "name": "伯特利"
+      "name": "伯特利",
+      "research_disposition": "DEEP_REVIEW_COMPLETE",
+      "research_terminal_state": "COMPLETE"
     },
     "603658": {
       "gates": {
@@ -34100,7 +34417,7 @@
   "run_state": "COMPLETED",
   "runtime_optimization": "PARALLEL_PREDICTABILITY_AND_SELECTIVE_RETRY_V1",
   "source_run_id": "38853196386",
-  "trigger_source": "EVERY_INDUSTRY_READY",
+  "trigger_source": "GenGe V3.1.1 Hourly Deep Overlay",
   "unknown_is_pass": false,
   "unverified_pass_downgraded_count": 0,
   "unverified_pass_gate_count": 0,
