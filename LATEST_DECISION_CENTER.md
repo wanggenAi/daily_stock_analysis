@@ -204,26 +204,26 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 +0.29%；最近1日 +0.29%；5日 -0.86%；market_date=2026-10-15；freshness=FRESH。
-- **NASDAQ**：休市以来 +0.04%；最近1日 +0.04%；5日 -2.38%；market_date=2026-10-15；freshness=FRESH。
-- **SOX**：休市以来 -0.90%；最近1日 -0.90%；5日 -7.88%；market_date=2026-10-15；freshness=FRESH。
-- **VIX**：休市以来 -5.46%；最近1日 -2.31%；5日 +10.92%；market_date=2026-10-15；freshness=FRESH。
-- **US10Y**：休市以来 -1.95%；最近1日 -1.95%；5日 -2.96%；market_date=2026-10-15；freshness=FRESH。
-- **DXY**：休市以来 -0.02%；最近1日 -0.11%；5日 -0.15%；market_date=2026-10-16；freshness=FRESH。
-- **USDCNH**：休市以来 -0.02%；最近1日 -0.02%；5日 -0.03%；market_date=2026-10-16；freshness=FRESH。
-- **HANGSENG**：休市以来 +0.19%；最近1日 -1.03%；5日 -0.61%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +0.00%；最近1日 -0.87%；5日 +0.54%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **GOLD**：休市以来 +0.00%；最近1日 +1.66%；5日 +0.46%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +0.96%；5日 +4.93%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 +0.88%；最近1日 +0.73%；5日 -0.86%；market_date=2026-10-16；freshness=FRESH。
+- **SP500**：休市以来 +0.29%；最近1日 +0.29%；5日 -0.86%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **NASDAQ**：休市以来 +0.04%；最近1日 +0.04%；5日 -2.38%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **SOX**：休市以来 -0.90%；最近1日 -0.90%；5日 -7.88%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **VIX**：休市以来 -5.46%；最近1日 -2.31%；5日 +10.92%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **US10Y**：休市以来 -1.95%；最近1日 -1.95%；5日 -2.96%；market_date=2026-10-15；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **DXY**：休市以来 -0.19%；最近1日 -0.17%；5日 -0.32%；market_date=2026-10-16；freshness=FRESH。
+- **USDCNH**：休市以来 -0.05%；最近1日 -0.06%；5日 -0.06%；market_date=2026-10-16；freshness=FRESH。
+- **HANGSENG**：休市以来 +1.20%；最近1日 +1.43%；5日 +0.39%；market_date=2026-10-16；freshness=FRESH。
+- **COPPER**：休市以来 +1.77%；最近1日 +1.77%；5日 -0.24%；market_date=2026-10-16；freshness=FRESH。
+- **GOLD**：休市以来 +0.64%；最近1日 +0.64%；5日 -0.46%；market_date=2026-10-16；freshness=FRESH。
+- **CRUDE_OIL**：休市以来 -2.34%；最近1日 -2.34%；5日 +4.17%；market_date=2026-10-16；freshness=FRESH。
+- **BTC**：休市以来 +0.77%；最近1日 +1.95%；5日 -1.09%；market_date=2026-10-16；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
-- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、GOLD休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、GOLD休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **601020 **：**NEUTRAL / LOW**；GOLD休市以来+0.00%(NEUTRAL)、SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
-- **000426 **：**NEUTRAL / LOW**；SILVER休市以来+0.00%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **603993 洛阳钼业**：**NEUTRAL / LOW**；COPPER休市以来+1.77%(NEUTRAL)、GOLD休市以来+0.64%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601899 **：**NEUTRAL / LOW**；COPPER休市以来+1.77%(NEUTRAL)、GOLD休市以来+0.64%(NEUTRAL)、SILVER休市以来+1.84%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601168 **：**NEUTRAL / LOW**；COPPER休市以来+1.77%(NEUTRAL)、SILVER休市以来+1.84%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **601020 **：**NEUTRAL / LOW**；GOLD休市以来+0.64%(NEUTRAL)、SILVER休市以来+1.84%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
+- **000426 **：**NEUTRAL / LOW**；SILVER休市以来+1.84%(NEUTRAL)；研究动作：**MONITOR_EXTERNAL_CONTEXT**。
 
 ### 下一次A股开盘最该盯什么
 
