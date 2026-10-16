@@ -36,11 +36,16 @@ jobs:
               raise SystemExit('unexpected push trigger shape; refusing rewrite')
           text = text.replace(old_push, new_push, 1)
 
-          old_concurrency = '''concurrency:\n  group: genge-opportunity-discovery-${{ github.ref }}\n  cancel-in-progress: false\n'''
-          new_concurrency = '''concurrency:\n  group: genge-opportunity-discovery-${{ github.ref }}\n  # Code-validation bursts only need the newest push/PR. Never cancel a scheduled\n  # or manually requested production research run.\n  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}\n'''
-          if text.count(old_concurrency) != 1:
-              raise SystemExit('unexpected concurrency block; refusing rewrite')
-          text = text.replace(old_concurrency, new_concurrency, 1)
+          expression = '$' + "{{ github.event_name == 'push' || github.event_name == 'pull_request' }}"
+          old_cancel = '  cancel-in-progress: false\n\njobs:\n'
+          new_cancel = (
+              '  # Code-validation bursts only need the newest push/PR. Never cancel a scheduled\n'
+              '  # or manually requested production research run.\n'
+              f'  cancel-in-progress: {expression}\n\njobs:\n'
+          )
+          if text.count(old_cancel) != 1:
+              raise SystemExit('unexpected concurrency cancel line; refusing rewrite')
+          text = text.replace(old_cancel, new_cancel, 1)
 
           required = [
               'schedule:',
