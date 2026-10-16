@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38836746660",
+  "orchestrator_run_id": "38852303697",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -54,13 +54,6 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000703",
-      "entity_name": "恒逸石化",
-      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "MEDIUM",
       "entity_id": "000096",
       "entity_name": "广聚能源",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -77,6 +70,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "000596",
       "entity_name": "古井贡酒",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "000703",
+      "entity_name": "恒逸石化",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -152,13 +152,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "002073",
-      "entity_name": "软控股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "002120",
       "entity_name": "韵达股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -187,17 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000557",
-      "entity_name": "西部创业",
+      "entity_id": "002073",
+      "entity_name": "软控股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000557",
+      "entity_name": "西部创业",
+      "reason": "ROUTE_NOT_AUTO_RESEARCH",
+      "route": "NO_ESCALATION"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-16T01:43:56+00:00",
-  "source_workflow_head_sha": "f04096e5f1d9c051e556c8c03e87c5c6614e9ef5",
+  "source_generated_at": "2026-10-16T04:45:28+00:00",
+  "source_workflow_head_sha": "3b0bbff7e30032b8c4c4b94cabf870da30584ff0",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38836546274",
+  "source_workflow_run_id": "38852119830",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 358,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38836546274",
+  "trigger_source": "JEV_ORCHESTRATOR_38852119830",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-16T01:46:31+00:00",
+  "updated_at": "2026-10-16T04:48:01+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.72,
+      "attention_confidence": 0.73,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "38835457504",
+        "deep_lambda_run_id": "38851298232",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.96,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
