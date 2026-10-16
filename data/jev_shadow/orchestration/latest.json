@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38855530723",
+  "orchestrator_run_id": "38865259607",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -61,8 +61,22 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000703",
-      "entity_name": "恒逸石化",
+      "entity_id": "000768",
+      "entity_name": "中航西飞",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600547",
+      "entity_name": "山东黄金",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "603198",
+      "entity_name": "迎驾贡酒",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "DEEP_RESEARCH"
     },
@@ -82,8 +96,8 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "000768",
-      "entity_name": "中航西飞",
+      "entity_id": "000703",
+      "entity_name": "恒逸石化",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -91,6 +105,13 @@
       "attention_priority": "MEDIUM",
       "entity_id": "000833",
       "entity_name": "粤桂股份",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
+      "entity_id": "600523",
+      "entity_name": "贵航股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -138,29 +159,8 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "002041",
-      "entity_name": "登海种业",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002042",
-      "entity_name": "华孚时尚",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002073",
-      "entity_name": "软控股份",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002120",
-      "entity_name": "韵达股份",
+      "entity_id": "002530",
+      "entity_name": "金财互联",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -169,21 +169,21 @@
       "entity_id": "600834",
       "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
       "entity_id": "603658",
       "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
+      "route": "DEEP_RESEARCH"
     },
     {
       "attention_priority": "LOW",
@@ -194,10 +194,10 @@
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-16T05:22:56+00:00",
-  "source_workflow_head_sha": "de51bb96f9ad963b376fa4771233b6789e9b9542",
+  "source_generated_at": "2026-10-16T07:07:04+00:00",
+  "source_workflow_head_sha": "7036680090c981712ba2b7470a1b004060f5f749",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38855313438",
+  "source_workflow_run_id": "38865004772",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,12 +210,12 @@
     "strategy_ledger_entry_count": 358,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38855313438",
+  "trigger_source": "JEV_ORCHESTRATOR_38865004772",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-16T05:25:28+00:00",
+  "updated_at": "2026-10-16T07:09:46+00:00",
   "valuation_closure": [
     {
-      "attention_confidence": 0.64,
+      "attention_confidence": 0.77,
       "attention_priority": "HIGH",
       "dispatch_mode": "DETERMINISTIC_VALUATION_CLOSURE",
       "entity_id": "603596",
@@ -274,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.94,
+      "route_confidence": 0.96,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
@@ -283,10 +283,11 @@
         "quant_score": 56.1976,
         "quant_status": "SECONDARY_RESEARCH",
         "research_priority": "P1",
-        "research_priority_score": 50,
+        "research_priority_score": 65,
         "screening_attractiveness": "NORMAL",
         "urgent_research": true,
         "urgent_research_reasons": [
+          "HOURLY_PRIORITY_RAISE",
           "DEEP_HARD_GATES_COMPLETE_RESEARCH_FOLLOWUP"
         ],
         "valuation": {
