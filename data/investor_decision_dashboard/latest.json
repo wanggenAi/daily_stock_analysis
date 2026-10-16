@@ -1,9 +1,9 @@
 {
   "contract_version": "GEN_GE_INVESTOR_DECISION_DASHBOARD_V3",
-  "mode": "FOLLOWUP",
-  "generated_at": "2026-10-16T04:25:13+00:00",
-  "canonical_snapshot_id": "55c6549aaa5ebf0a3970",
-  "canonical_source_run_id": "38834472293",
+  "mode": "HOURLY",
+  "generated_at": "2026-10-16T07:06:09+00:00",
+  "canonical_snapshot_id": "6868ab49536b7ada7212",
+  "canonical_source_run_id": "38853196386",
   "latest_trade_date": "2026-10-15",
   "formal_action_source": "FINALIZED_CANONICAL_ONLY",
   "formal_action_recomputed": false,
@@ -51,8 +51,8 @@
         "name": "国电南瑞",
         "quantity": 200,
         "average_cost": 23.1253,
-        "current_price": 22.59,
-        "pnl_pct": -2.31,
+        "current_price": 22.73,
+        "pnl_pct": -1.71,
         "formal_action": "REDUCE_25",
         "canonical_formal_action": "REDUCE_25",
         "formal_action_currently_usable": true,
@@ -99,19 +99,19 @@
           "no_auto_trade": true
         },
         "reason_codes": "V31_IMMEDIATE_VALUATION_SELL;REDUCE_25;SELL_RATIONALE_STABLE_VALUE_PRICE_OVEREXTENSION",
-        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "canonical_price": 22.49,
-        "price_observed_at": "2026-10-16T13:50:08+08:00",
+        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-10-16T15:03:20+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 36
+        "price_age_seconds": 169
       },
       {
         "code": "001316",
         "name": "润贝航科",
         "quantity": 200,
         "average_cost": 25.745,
-        "current_price": 26.36,
-        "pnl_pct": 2.39,
+        "current_price": 26.16,
+        "pnl_pct": 1.61,
         "formal_action": "HOLD_REVIEW",
         "canonical_formal_action": "HOLD_REVIEW",
         "formal_action_currently_usable": true,
@@ -144,19 +144,19 @@
           "no_auto_trade": true
         },
         "reason_codes": "VALUATION_CONFIDENCE_LOW;REALISTIC_GROWTH_UNSTABLE",
-        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "canonical_price": 25.29,
-        "price_observed_at": "2026-10-16T13:50:03+08:00",
+        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-10-16T15:03:24+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 41
+        "price_age_seconds": 165
       },
       {
         "code": "601318",
         "name": "中国平安",
         "quantity": 400,
         "average_cost": 55.9658,
-        "current_price": 51.34,
-        "pnl_pct": -8.27,
+        "current_price": 51.88,
+        "pnl_pct": -7.3,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -189,19 +189,19 @@
           "no_auto_trade": true
         },
         "reason_codes": "INSURER_EVIDENCE_VALID;NO_ACTION_THRESHOLD;price_to_neutral=0.623<1.00",
-        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
         "canonical_price": 51.78,
-        "price_observed_at": "2026-10-16T13:50:07+08:00",
+        "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-10-16T15:03:10+08:00",
         "price_provider": "tencent_quote",
-        "price_age_seconds": 37
+        "price_age_seconds": 179
       },
       {
         "code": "603993",
         "name": "洛阳钼业",
         "quantity": 1100,
         "average_cost": 18.6244,
-        "current_price": 15.76,
-        "pnl_pct": -15.38,
+        "current_price": 15.9,
+        "pnl_pct": -14.63,
         "formal_action": "HOLD",
         "canonical_formal_action": "HOLD",
         "formal_action_currently_usable": true,
@@ -234,13 +234,17 @@
           "no_auto_trade": true
         },
         "reason_codes": "FUNDAMENTALS_INTACT;NO_ACTION_THRESHOLD",
+        "canonical_price": 15.99,
         "price_source": "HOURLY_FRESH_EXECUTION_QUOTE",
+        "price_observed_at": "2026-10-16T15:03:24+08:00",
+        "price_provider": "tencent_quote",
+        "price_age_seconds": 165,
         "holding_add_consumption": {
           "status": "CONSUMED",
           "source_canonical_snapshot_id": "4e025e2112441ae19e05",
           "source_canonical_source_run_id": "34879450038",
-          "applied_to_canonical_snapshot_id": "55c6549aaa5ebf0a3970",
-          "applied_to_canonical_source_run_id": "38834472293",
+          "applied_to_canonical_snapshot_id": "6868ab49536b7ada7212",
+          "applied_to_canonical_source_run_id": "38853196386",
           "lineage_match": "CARRIED_FORWARD",
           "consumed_shares": 100,
           "allowance_shares": 100,
@@ -250,11 +254,7 @@
           "rearm_requires_explicit_authority": true,
           "formal_action_mutation_allowed": false,
           "no_auto_trade": true
-        },
-        "canonical_price": 15.99,
-        "price_observed_at": "2026-10-16T13:50:06+08:00",
-        "price_provider": "tencent_quote",
-        "price_age_seconds": 38
+        }
       }
     ]
   },
@@ -378,7 +378,7 @@
   },
   "hourly_context": {
     "available": true,
-    "research_as_of": "2026-10-16T01:30:00Z"
+    "research_as_of": "2026-10-16T05:09:39Z"
   },
   "data_health": {
     "canonical_authority_available": true,
@@ -421,10 +421,10 @@
     "formal_new_exposure_allowed": true,
     "fail_closed_applied": false,
     "reasons": [],
-    "evaluated_at": "2026-10-16T04:25:13+00:00",
-    "canonical_generated_at": "2026-10-16T01:30:00+00:00",
+    "evaluated_at": "2026-10-16T07:06:09+00:00",
+    "canonical_generated_at": "2026-10-16T05:09:39+00:00",
     "canonical_latest_trade_date": "2026-10-15",
-    "canonical_source_run_id": "38834472293",
+    "canonical_source_run_id": "38853196386",
     "expected_min_trade_date": "2026-10-15",
     "market_as_of": "2026-10-15",
     "holiday_calendar_mode": "OFFICIAL_SSE_2026",
@@ -432,10 +432,42 @@
     "holiday_calendar_url": "https://www.sse.com.cn/disclosure/announcement/general/c/c_20251222_10802507.shtml"
   },
   "formal_new_exposure_allowed": true,
+  "live_execution_overlay": {
+    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
+    "available": true,
+    "market_data_status": "OK",
+    "eligible_quote_count": 50,
+    "expected_code_count": 4,
+    "expected_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "applied_code_count": 4,
+    "applied_codes": [
+      "001316",
+      "600406",
+      "601318",
+      "603993"
+    ],
+    "missing_codes": [],
+    "coverage_ratio": 1.0,
+    "latest_quote_observed_at": "2026-10-16T15:03:30+08:00",
+    "max_quote_age_minutes": 15,
+    "canonical_snapshot_match": true,
+    "formal_action_recomputed": false,
+    "formal_action_mutation_allowed": false,
+    "quote_may_only_change_display_and_execution_reference": true,
+    "missing_quote_blocks_immediate_execution": true,
+    "no_auto_trade": true,
+    "freshness_blocks_new_exposure": false,
+    "formal_new_exposure_allowed": true
+  },
   "execution_consumption_reconciliation": {
     "contract_version": "GEN_GE_EXECUTION_CONSUMPTION_V1",
-    "canonical_snapshot_id": "55c6549aaa5ebf0a3970",
-    "canonical_source_run_id": "38834472293",
+    "canonical_snapshot_id": "6868ab49536b7ada7212",
+    "canonical_source_run_id": "38853196386",
     "matching_consumption_count": 1,
     "exact_lineage_consumption_count": 0,
     "carried_forward_consumption_count": 1,
@@ -464,9 +496,9 @@
     "requested_count": 31,
     "decision_counts": {
       "WAIT_PRICE": 0,
-      "REJECT": 1,
+      "RESEARCH_GAP": 29,
       "BUY": 1,
-      "RESEARCH_GAP": 29
+      "REJECT": 1
     },
     "research_authority": "RESEARCH_ONLY",
     "formal_trading_authority": false,
@@ -4592,41 +4624,5 @@
     "capital_probe_count": 2,
     "capital_advisory_authority": "ADVISORY_ONLY",
     "capital_advisory_automatic_execution_allowed": false
-  },
-  "live_execution_overlay": {
-    "version": "GEN_GE_INVESTOR_LIVE_EXECUTION_OVERLAY_V2",
-    "available": true,
-    "market_data_status": "OK",
-    "eligible_quote_count": 4,
-    "expected_code_count": 4,
-    "expected_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "applied_code_count": 4,
-    "applied_codes": [
-      "001316",
-      "600406",
-      "601318",
-      "603993"
-    ],
-    "missing_codes": [],
-    "coverage_ratio": 1.0,
-    "latest_quote_observed_at": "2026-10-16T13:50:08+08:00",
-    "max_quote_age_minutes": 15,
-    "canonical_snapshot_match": true,
-    "formal_action_recomputed": false,
-    "formal_action_mutation_allowed": false,
-    "quote_may_only_change_display_and_execution_reference": true,
-    "missing_quote_blocks_immediate_execution": true,
-    "no_auto_trade": true,
-    "freshness_blocks_new_exposure": false,
-    "formal_new_exposure_allowed": true,
-    "consumer_contract": "GEN_GE_LIVE_EXECUTION_QUOTE_CONSUMER_V1",
-    "source": "PERSISTED_LIVE_EXECUTION_QUOTE_SNAPSHOT",
-    "snapshot_contract": "GEN_GE_LIVE_EXECUTION_QUOTE_SNAPSHOT_V1",
-    "quote_snapshot_generated_at": "2026-10-16T05:50:09.741738+00:00"
   }
 }
