@@ -202,18 +202,18 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 
 ### A股休市以来关键外部变化
 
-- **SP500**：休市以来 -1.06%；最近1日 -1.06%；5日 -1.92%；market_date=2026-10-16；freshness=FRESH。
-- **NASDAQ**：休市以来 -2.10%；最近1日 -2.10%；5日 -4.43%；market_date=2026-10-16；freshness=FRESH。
-- **SOX**：休市以来 -3.70%；最近1日 -3.70%；5日 -11.28%；market_date=2026-10-16；freshness=FRESH。
-- **VIX**：休市以来 +26.17%；最近1日 +22.95%；5日 +36.46%；market_date=2026-10-16；freshness=FRESH。
+- **SP500**：休市以来 -1.10%；最近1日 -1.10%；5日 -1.95%；market_date=2026-10-16；freshness=FRESH。
+- **NASDAQ**：休市以来 -2.15%；最近1日 -2.15%；5日 -4.48%；market_date=2026-10-16；freshness=FRESH。
+- **SOX**：休市以来 -3.85%；最近1日 -3.85%；5日 -11.43%；market_date=2026-10-16；freshness=FRESH。
+- **VIX**：休市以来 +24.49%；最近1日 +21.39%；5日 +34.64%；market_date=2026-10-16；freshness=FRESH。
 - **US10Y**：休市以来 +0.18%；最近1日 +0.18%；5日 -2.78%；market_date=2026-10-16；freshness=FRESH。
-- **DXY**：休市以来 -0.02%；最近1日 -0.23%；5日 -0.42%；market_date=2026-10-16；freshness=FRESH。
-- **USDCNH**：休市以来 -0.00%；最近1日 -0.07%；5日 -0.10%；market_date=2026-10-16；freshness=FRESH。
+- **DXY**：休市以来 -0.03%；最近1日 -0.20%；5日 -0.44%；market_date=2026-10-16；freshness=FRESH。
+- **USDCNH**：休市以来 -0.00%；最近1日 -0.05%；5日 -0.10%；market_date=2026-10-16；freshness=FRESH。
 - **HANGSENG**：休市以来 +0.08%；最近1日 +0.52%；5日 -0.10%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **COPPER**：休市以来 +0.00%；最近1日 +0.90%；5日 -1.09%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **GOLD**：休市以来 +0.00%；最近1日 +0.48%；5日 -0.62%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.00%；5日 +7.73%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 -0.77%；最近1日 -0.91%；5日 -2.42%；market_date=2026-10-16；freshness=FRESH。
+- **COPPER**：休市以来 +0.00%；最近1日 +0.78%；5日 -1.21%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **GOLD**：休市以来 +0.00%；最近1日 +0.40%；5日 -0.70%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **CRUDE_OIL**：休市以来 +0.00%；最近1日 +1.09%；5日 +7.83%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
+- **BTC**：休市以来 -0.60%；最近1日 -0.83%；5日 -2.23%；market_date=2026-10-16；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
