@@ -58,7 +58,6 @@ jobs:
               'gh workflow run genge-v31-deep-provenance-audit.yml',
               'gh workflow run genge-v31-terminal-research-decision.yml',
               'DEEP_CODE_EPOCH_SHA=$(git rev-parse HEAD)',
-              'cancel-in-progress: ${{ github.event_name != \'workflow_run\' }}',
           ]
           for marker in required:
               if marker not in updated:
