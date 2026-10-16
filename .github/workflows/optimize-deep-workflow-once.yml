@@ -1,0 +1,98 @@
+name: Optimize Deep Workflow Bootstrap Once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/optimize-deep-workflow-once.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  optimize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout current main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 1
+
+      - name: Merge duplicate bootstrap into Deep calculation job
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/workflows/genge-v31-deep-calculation-lambda.yml')
+          text = path.read_text(encoding='utf-8')
+
+          start = text.index('  contracts:\n')
+          deep = text.index('  deep-calculate:\n', start)
+          prefix = text[:start]
+          rest = text[deep:]
+
+          rest = rest.replace(
+              '  deep-calculate:\n    needs: contracts\n    runs-on: ubuntu-latest\n',
+              "  deep-calculate:\n    if: >-\n      github.event_name != 'workflow_run' ||\n      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')\n    runs-on: ubuntu-latest\n",
+              1,
+          )
+
+          install = '''      - name: Install runtime dependencies\n        run: |\n          python -m pip install --upgrade pip --retries 5 --timeout 60\n          python -m pip install --prefer-binary --retries 5 --timeout 60 -r .github/requirements-ci.txt\n'''
+          contract = '''\n      - name: Validate automatic deep-calculation contracts\n        run: |\n          python -m pytest -q \\\n            tests/test_genge_v31_explicit_deep_review.py \\\n            tests/test_genge_v31_automatic_deep_calculation.py \\\n            tests/test_v31_deep_gap_closure.py \\\n            tests/test_v31_deep_gap_closure_optimized.py \\\n            tests/test_v31_deep_workset.py \\\n            tests/test_v31_multi_year_predictability.py \\\n            tests/test_v31_deep_provenance_audit.py \\\n            tests/test_runbei_archetype_deep_handoff.py \\\n            tests/test_genge_v31_deep_calculation_workflow_contract.py\n'''
+          if install not in rest:
+              raise SystemExit('runtime dependency block not found; refusing unsafe rewrite')
+          rest = rest.replace(install, install + contract, 1)
+          updated = prefix + rest
+
+          required = [
+              '  deep-calculate:\n    if: >-',
+              '- name: Validate automatic deep-calculation contracts',
+              '- name: Execute automatic deep calculation initial pass',
+              '- name: Close unresolved gates with optimized quality-preserving official evidence',
+              '- name: Fail closed if official-evidence closure did not terminate',
+          ]
+          for marker in required:
+              if marker not in updated:
+                  raise SystemExit(f'missing required marker after rewrite: {marker}')
+          if '  contracts:\n' in updated or '    needs: contracts\n' in updated:
+              raise SystemExit('duplicate contracts job still present')
+          if updated.count('- name: Install runtime dependencies') != 1:
+              raise SystemExit('expected exactly one runtime dependency install')
+          if updated.count('uses: actions/setup-python@v5') != 1:
+              raise SystemExit('expected exactly one setup-python action')
+
+          path.write_text(updated, encoding='utf-8')
+          PY
+
+      - name: Validate workflow contract after rewrite
+        run: |
+          set -euo pipefail
+          python -m pip install --quiet pytest pyyaml
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+          path = Path('.github/workflows/genge-v31-deep-calculation-lambda.yml')
+          payload = yaml.safe_load(path.read_text(encoding='utf-8'))
+          assert isinstance(payload, dict)
+          assert 'jobs' in payload
+          assert 'deep-calculate' in payload['jobs']
+          assert 'contracts' not in payload['jobs']
+          PY
+          python -m pytest -q tests/test_genge_v31_deep_calculation_workflow_contract.py
+
+      - name: Commit optimized workflow and remove one-shot helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/optimize-deep-workflow-once.yml
+          git add .github/workflows/genge-v31-deep-calculation-lambda.yml
+          git diff --cached --check
+          git commit -m "Optimize Deep calculation workflow bootstrap [skip ci]"
+          git pull --rebase origin main
+          git push origin HEAD:main
