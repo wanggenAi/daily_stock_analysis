@@ -126,14 +126,51 @@ def load_ledger_rows(root: Path, limit: int = 100) -> list[dict[str, str]]:
     return out
 
 
+def load_holding_rows(root: Path) -> list[dict[str, str]]:
+    path = root / "CURRENT_HOLDINGS.md"
+    rows = parse_markdown_table(path, {"Code", "Name", "Status"})
+    out: list[dict[str, str]] = []
+    seen: set[str] = set()
+    for row in rows:
+        if str(row.get("Status") or "").strip().upper() != "HELD":
+            continue
+        code_match = _CODE_RE.fullmatch(str(row.get("Code") or "").strip())
+        if not code_match or code_match.group(1) in seen:
+            continue
+        code = code_match.group(1)
+        out.append({
+            "code": code,
+            "stock_name": str(row.get("Name") or code).strip(),
+            "industry": "UNKNOWN",
+            "actionability_score": "52",
+            "source_tier": "CONFIRMED_HOLDING",
+            "follow_up": "HOLDING_REVIEW_REQUIRED",
+            "_source": path.name,
+        })
+        seen.add(code)
+    return out
+
+
+def _merge_holdings(rows: list[dict[str, Any]], holding_rows: list[dict[str, str]]) -> list[dict[str, Any]]:
+    merged = list(rows)
+    seen = {str(row.get("code") or row.get("stock_code") or row.get("symbol") or "") for row in merged}
+    for row in holding_rows:
+        code = str(row.get("code") or "")
+        if code and code not in seen:
+            merged.append(row)
+            seen.add(code)
+    return merged
+
+
 def load_candidates(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    holding_rows = load_holding_rows(root)
     scan = latest_scan_file(root)
     if scan:
         rows = load_csv_rows(scan)
         if rows:
-            return rows, {
+            return _merge_holdings(rows, holding_rows), {
                 "mode": "LIVE_SCAN",
-                "source": str(scan.relative_to(root)),
+                "source": f"{scan.relative_to(root)} + CURRENT_HOLDINGS.md",
                 "degraded": False,
             }
 
@@ -146,22 +183,22 @@ def load_candidates(root: Path) -> tuple[list[dict[str, Any]], dict[str, Any]]:
         if code and code not in seen:
             combined.append(row)
             seen.add(code)
-    return combined, {
-        "mode": "COMMITTED_SNAPSHOT_FALLBACK" if combined else "NO_DATA",
-        "source": "LATEST_RESEARCH_RADAR.md + V31_CANDIDATE_LEDGER.md" if combined else "",
+    combined = _merge_holdings(combined, holding_rows)
+    if combined:
+        return combined, {
+            "mode": "COMMITTED_SNAPSHOT_FALLBACK",
+            "source": "LATEST_RESEARCH_RADAR.md + V31_CANDIDATE_LEDGER.md + CURRENT_HOLDINGS.md",
+            "degraded": True,
+        }
+    return holding_rows, {
+        "mode": "HOLDINGS_ONLY" if holding_rows else "NO_DATA",
+        "source": "CURRENT_HOLDINGS.md" if holding_rows else "",
         "degraded": True,
     }
 
 
 def load_holdings(root: Path) -> set[str]:
-    holdings: set[str] = set()
-    for name in ("CURRENT_HOLDINGS.md", "CURRENT_EXECUTION_STATE.json"):
-        path = root / name
-        if not path.exists():
-            continue
-        text = path.read_text(encoding="utf-8", errors="replace")
-        holdings.update(_CODE_RE.findall(text))
-    return holdings
+    return {str(row.get("code")) for row in load_holding_rows(root) if row.get("code")}
 
 
 def _global_context(root: Path) -> dict[str, Any]:
