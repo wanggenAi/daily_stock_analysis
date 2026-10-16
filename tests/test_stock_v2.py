@@ -7,7 +7,7 @@ from pathlib import Path
 
 from stock_v2.engine import build_candidate, rank_candidates
 from stock_v2.pipeline import run
-from stock_v2.sources import load_market_context
+from stock_v2.sources import load_holdings, load_market_context
 
 
 class StockV2Tests(unittest.TestCase):
@@ -67,6 +67,37 @@ class StockV2Tests(unittest.TestCase):
             self.assertTrue(context["global"]["available"])
             self.assertEqual(context["global"]["risk_regime"]["status"], "NEUTRAL")
             self.assertIn("603993", context["global"]["security_transmission"])
+
+    def test_holdings_parser_excludes_closed_and_historical_mentions(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "CURRENT_HOLDINGS.md").write_text(
+                "# H\n\n| Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |\n|---|---|---:|---:|---|---|\n"
+                "| 601318 | 中国平安 | 400 | 55 | HELD | 2026-09-15 |\n"
+                "| 600276 | 恒瑞医药 | 0 | 46 | CLOSED | 2026-08-31 |\n\n"
+                "Historical mention: 603993.\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(load_holdings(root), {"601318"})
+
+    def test_pipeline_forces_confirmed_holding_into_visible_pool(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "LATEST_RESEARCH_RADAR.md").write_text(
+                "# Radar\n\n| Top | Code | Name | Industry | Tier | PASS | UNKNOWN | Quant | Follow-up |\n|---:|---|---|---|---|---:|---:|---:|---|\n" +
+                "\n".join(f"| {i+1} | 600{i:03d} | 样本{i} | 行业{i} | UNKNOWN_RESEARCH | 3 | 2 | {90-i} | EVIDENCE_CLOSURE |" for i in range(12)) + "\n",
+                encoding="utf-8",
+            )
+            (root / "CURRENT_HOLDINGS.md").write_text(
+                "| Code | Name | Quantity | Average cost (CNY) | Status | Evidence date |\n|---|---|---:|---:|---|---|\n"
+                "| 601318 | 中国平安 | 400 | 55 | HELD | 2026-09-15 |\n",
+                encoding="utf-8",
+            )
+            payload = run(root, top_n=10, industry_cap=3, output=root / "V2_DASHBOARD.md", json_output=root / "data/v2/latest_run.json")
+            codes = {row["code"] for row in payload["candidates"]}
+            self.assertEqual(payload["stats"]["holdings_in_pool"], 1)
+            self.assertEqual(payload["stats"]["confirmed_holdings"], 1)
+            self.assertIn("601318", codes)
 
     def test_pipeline_fallback_builds_dashboard(self):
         with tempfile.TemporaryDirectory() as tmp:
