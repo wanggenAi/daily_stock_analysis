@@ -1,0 +1,97 @@
+name: GenGe V2 Clean A-Share Decision
+
+on:
+  workflow_dispatch:
+    inputs:
+      skip_full_scan:
+        description: "Skip fresh full-A scan and rebuild from committed fallback only"
+        required: false
+        default: false
+        type: boolean
+  schedule:
+    - cron: "20 0 * * 1-5"
+    - cron: "20 7 * * 1-5"
+  push:
+    branches: [main]
+    paths:
+      - "stock_v2/**"
+      - "tests/test_stock_v2.py"
+      - ".github/workflows/genge-v2-clean.yml"
+      - "V2_README.md"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: genge-v2-clean-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-v2:
+    runs-on: ubuntu-latest
+    timeout-minutes: 115
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: V2 unit tests
+        run: python -m unittest tests.test_stock_v2 -v
+
+      - name: Fresh all-A facts and price plans
+        if: ${{ github.event_name != 'workflow_dispatch' || inputs.skip_full_scan != true }}
+        continue-on-error: true
+        timeout-minutes: 102
+        env:
+          PYTHONUNBUFFERED: "1"
+        run: |
+          timeout --signal=TERM 100m \
+          python -m src.strategies.genge_opportunity_discovery.all_a_progress_runner \
+            --max-workers 12 \
+            --evidence-queue-size 80 \
+            --deep-review-size 30 \
+            --max-watchlist 15 \
+            --fundamental-limit 30 \
+            --industry-evidence-file data/user_supplied/industry_cycle_evidence.csv \
+            --company-evidence-file data/user_supplied/company_cycle_evidence.csv \
+            --industry-evidence-schema config/industry_evidence_schema.yaml \
+            --industry-alias-map config/industry_alias_map.yaml \
+            --exit-profile-file data/opportunity_snapshots/exit_profile.csv
+
+      - name: Build single-truth V2 dashboard
+        run: python -m stock_v2.pipeline --top 30 --industry-cap 3
+
+      - name: Validate V2 contract
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("data/v2/latest_run.json").read_text(encoding="utf-8"))
+          assert payload["schema_version"] == "v2.0"
+          assert payload["stats"]["visible_pool"] >= 10, payload["stats"]
+          assert len(payload["candidates"]) == payload["stats"]["visible_pool"]
+          assert all(row["state"] in {"BUY", "NEAR_BUY", "WATCH"} for row in payload["candidates"])
+          assert Path("V2_DASHBOARD.md").exists()
+          print(json.dumps(payload["stats"], ensure_ascii=False))
+          PY
+
+      - name: Persist only V2 investor outputs
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add V2_DASHBOARD.md data/v2/latest_run.json
+          if git diff --cached --quiet; then
+            echo "No V2 output change"
+            exit 0
+          fi
+          git commit -m "Persist GenGe V2 clean decision output [skip ci]"
+          git push
