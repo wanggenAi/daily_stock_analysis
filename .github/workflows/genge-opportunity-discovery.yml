@@ -21,13 +21,22 @@ on:
       - '.github/recovery/**'
   push:
     branches: [main]
+    paths:
+      - ".github/workflows/genge-opportunity-discovery.yml"
+      - ".github/requirements-ci.txt"
+      - "requirements.txt"
+      - "src/strategies/genge_opportunity_discovery/**"
+      - "config/**"
+      - "tests/**"
 
 permissions:
   contents: read
 
 concurrency:
   group: genge-opportunity-discovery-${{ github.ref }}
-  cancel-in-progress: false
+  # Code-validation bursts only need the newest push/PR. Never cancel a scheduled
+  # or manually requested production research run.
+  cancel-in-progress: ${{ github.event_name == 'push' || github.event_name == 'pull_request' }}
 
 jobs:
   fixture-opportunity-smoke:
