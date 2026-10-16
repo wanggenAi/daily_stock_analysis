@@ -1,0 +1,55 @@
+name: Diagnose V31 Revenue Quarter Once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/diagnose-v31-revenue-quarter-once.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip --quiet
+          python -m pip install --prefer-binary -r .github/requirements-ci.txt --quiet
+      - name: Trace 600406 2025 annual revenue extraction
+        run: |
+          python - <<'PY'
+          import requests
+          from src.strategies.genge_opportunity_discovery.evidence_collectors import multi_year_predictability as m
+
+          url = 'https://static.cninfo.com.cn/finalpage/2026-04-30/1225257886.PDF'
+          r = requests.get(url, headers=m.REQUEST_HEADERS, timeout=30)
+          r.raise_for_status()
+          text, method = m.extract_text_from_response(r.content, r.headers.get('Content-Type',''), url)
+          n = m._normalize_pdf_text(text)
+          print('METHOD', method, 'TEXT_LEN', len(n))
+          print('FINAL', m._metric_measurement(n, m._METRIC_LABELS['revenue'], 2025))
+          label = m._label_pattern('营业收入')
+          for i, hit in enumerate(label.finditer(n), 1):
+              if i > 20:
+                  break
+              section = m._current_section_prefix(n, hit.start())
+              print('\nHIT', i, 'POS', hit.start())
+              print('QUARTER', m._metric_context_is_quarterly(n, hit.start()),
+                    'PARENT', m._metric_context_is_parent_company_statement(n, hit.start()),
+                    'SCOPED', m._metric_context_is_scoped(n, hit.start(), hit.end()))
+              print('YEARS', m._nearby_header_years(n, hit.start()),
+                    'UNIT', m._nearby_header_unit(n, hit.start()),
+                    'LABEL_UNIT', m._metric_label_unit(n, hit.end()))
+              print('SECTION_TAIL', repr(section[-1000:]))
+              print('AFTER', repr(n[hit.start():hit.start()+700]))
+          PY
