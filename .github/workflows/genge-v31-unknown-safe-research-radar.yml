@@ -29,7 +29,7 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
 
 concurrency:
   group: genge-v31-unknown-safe-research-radar
@@ -137,6 +137,10 @@ jobs:
           assert summary['top_count'] == len(top)
           assert summary['top_count'] <= 10
           assert summary['radar_eligible_count'] == len(eligible)
+          assert summary['economic_exposure_selection_policy'] == 'ONE_REPRESENTATIVE_PER_ECONOMIC_EXPOSURE_CLUSTER'
+
+          industries = set()
+          exposures = set()
           for row in top:
               assert row['fail_gate_count'] == 0
               assert row['verified_pass_gate_count'] >= 2
@@ -146,11 +150,20 @@ jobs:
               assert row['mutates_authoritative_decision'] is False
               assert row['unknown_is_pass'] is False
               assert row['no_auto_trade'] is True
+              assert row['selected_as_industry_representative'] is True
+              assert row['selected_as_exposure_representative'] is True
+              assert row['industry_key'] not in industries
+              assert row['economic_exposure_cluster'] not in exposures
+              industries.add(row['industry_key'])
+              exposures.add(row['economic_exposure_cluster'])
               if row['radar_tier'] == 'FULL_EVIDENCE':
                   assert row['unknown_gate_count'] == 0
               else:
                   assert row['radar_tier'] == 'UNKNOWN_RESEARCH'
                   assert row['unknown_gate_count'] > 0
+
+          assert summary['top_distinct_industry_count'] == len(industries)
+          assert summary['top_distinct_economic_exposure_count'] == len(exposures)
           PY
 
       - name: Upload research-only radar artifact
@@ -191,6 +204,15 @@ jobs:
           done
           echo 'Radar persistence failed after 4 optimistic replay attempts.' >&2
           exit 1
+
+      - name: Refresh Decision Center after radar convergence
+        if: github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh workflow run genge-three-pillar-decision-center.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
 
       - name: Publish summary
         if: always()
