@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "38966992543",
+  "orchestrator_run_id": "38967454891",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -24,13 +24,6 @@
   "should_dispatch": false,
   "should_dispatch_terminal_closure": true,
   "skipped": [
-    {
-      "attention_priority": "HIGH",
-      "entity_id": "600406",
-      "entity_name": "国电南瑞",
-      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
-      "route": "DEEP_RESEARCH"
-    },
     {
       "attention_priority": "HIGH",
       "entity_id": "603993",
@@ -42,6 +35,13 @@
       "attention_priority": "HIGH",
       "entity_id": "001316",
       "entity_name": "润贝航科",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "600406",
+      "entity_name": "国电南瑞",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -75,8 +75,8 @@
     },
     {
       "attention_priority": "MEDIUM",
-      "entity_id": "600523",
-      "entity_name": "贵航股份",
+      "entity_id": "002530",
+      "entity_name": "金财互联",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
       "route": "EVIDENCE_REFRESH"
     },
@@ -166,6 +166,13 @@
     },
     {
       "attention_priority": "LOW",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -173,31 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "603658",
-      "entity_name": "安图生物",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002530",
-      "entity_name": "金财互联",
+      "entity_id": "600523",
+      "entity_name": "贵航股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
+      "entity_id": "603658",
+      "entity_name": "安图生物",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-16T21:05:30+00:00",
-  "source_workflow_head_sha": "c403696a3d81ebee7b3709504a7594a17fc573e1",
+  "source_generated_at": "2026-10-16T21:09:25+00:00",
+  "source_workflow_head_sha": "49952dc435bf304aa7ceea96820efe6aa54cf691",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "38966403472",
+  "source_workflow_run_id": "38967099709",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -210,9 +210,9 @@
     "strategy_ledger_entry_count": 359,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_38966403472",
+  "trigger_source": "JEV_ORCHESTRATOR_38967099709",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-16T21:08:46+00:00",
+  "updated_at": "2026-10-16T21:12:15+00:00",
   "valuation_closure": [
     {
       "attention_confidence": 0.8,
@@ -231,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "38958261757",
+        "deep_lambda_run_id": "38966155283",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
