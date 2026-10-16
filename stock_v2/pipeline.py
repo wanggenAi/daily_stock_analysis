@@ -8,6 +8,7 @@ from zoneinfo import ZoneInfo
 
 from .dashboard import render_dashboard
 from .engine import apply_changes, rank_candidates
+from .models import Candidate
 from .sources import load_candidates, load_holdings, load_market_context
 
 
@@ -21,6 +22,27 @@ def _load_json(path: Path) -> dict:
         return json.loads(path.read_text(encoding="utf-8"))
     except Exception:
         return {}
+
+
+def _force_holdings_visible(chosen: list[Candidate], all_candidates: list[Candidate], holdings: set[str], top_n: int) -> list[Candidate]:
+    by_code = {c.code: c for c in all_candidates}
+    chosen_codes = {c.code for c in chosen}
+    for code in sorted(holdings):
+        candidate = by_code.get(code)
+        if not candidate or candidate.state == "REJECT" or code in chosen_codes:
+            continue
+        if len(chosen) >= top_n:
+            removable = next((idx for idx in range(len(chosen) - 1, -1, -1) if not chosen[idx].holding), None)
+            if removable is not None:
+                chosen.pop(removable)
+        chosen.append(candidate)
+        chosen_codes.add(code)
+
+    order = {c.code: idx for idx, c in enumerate(all_candidates)}
+    chosen.sort(key=lambda c: order.get(c.code, 10**9))
+    for idx, candidate in enumerate(chosen, 1):
+        candidate.rank = idx
+    return chosen
 
 
 def run(root: Path, *, top_n: int, industry_cap: int, output: Path, json_output: Path) -> dict:
@@ -38,11 +60,12 @@ def run(root: Path, *, top_n: int, industry_cap: int, output: Path, json_output:
         industry_cap=industry_cap,
         global_transmission=global_transmission,
     )
+    chosen = _force_holdings_visible(chosen, all_candidates, holdings, top_n)
     previous = _load_json(json_output)
     removed = apply_changes(chosen, previous)
 
     payload = {
-        "schema_version": "v2.1",
+        "schema_version": "v2.2",
         "run_id": run_id,
         "generated_at": now.isoformat(),
         "source": source_meta,
@@ -54,6 +77,7 @@ def run(root: Path, *, top_n: int, industry_cap: int, output: Path, json_output:
             "buy": sum(c.state == "BUY" for c in chosen),
             "near_buy": sum(c.state == "NEAR_BUY" for c in chosen),
             "watch": sum(c.state == "WATCH" for c in chosen),
+            "confirmed_holdings": len(holdings),
             "holdings_in_pool": sum(c.holding for c in chosen),
             "global_transmission_mapped": sum(c.code in global_transmission for c in chosen),
         },
@@ -65,6 +89,8 @@ def run(root: Path, *, top_n: int, industry_cap: int, output: Path, json_output:
     output.write_text(render_dashboard(run_id=run_id, generated_at=payload["generated_at"], source_meta=source_meta, market=market, candidates=chosen, removed=removed, total_raw=len(raw_rows)), encoding="utf-8")
     if not chosen:
         raise RuntimeError("V2 produced zero visible candidates: no usable live scan or committed fallback")
+    if holdings and not holdings.issubset({c.code for c in chosen}):
+        raise RuntimeError("V2 holdings visibility contract violated")
     return payload
 
 
@@ -82,7 +108,7 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     root = Path(args.root).resolve()
     payload = run(root, top_n=max(10, min(50, args.top)), industry_cap=max(1, args.industry_cap), output=root / args.output, json_output=root / args.json_output)
-    print(f"[V2] {payload['run_id']} mode={payload['source']['mode']} visible={payload['stats']['visible_pool']} buy={payload['stats']['buy']} near_buy={payload['stats']['near_buy']} global_mapped={payload['stats']['global_transmission_mapped']}", flush=True)
+    print(f"[V2] {payload['run_id']} mode={payload['source']['mode']} visible={payload['stats']['visible_pool']} buy={payload['stats']['buy']} near_buy={payload['stats']['near_buy']} holdings={payload['stats']['holdings_in_pool']}/{payload['stats']['confirmed_holdings']} global_mapped={payload['stats']['global_transmission_mapped']}", flush=True)
     return 0
 
 
