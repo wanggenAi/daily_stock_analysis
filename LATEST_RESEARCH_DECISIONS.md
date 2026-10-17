@@ -14,10 +14,9 @@
 
 ## Risk-budget capital advisory
 
-- BUILD: **1** / PROBE: **1** / WATCH: **2** / BLOCK: **6**
+- BUILD: **1** / PROBE: **0** / WATCH: **3** / BLOCK: **6**
 - Advisory only: sizing uncertainty is not evidence promotion; UNKNOWN != PASS; no auto-trade.
 - 603596 伯特利: **BUILD** / conviction=0.8974 / max_portfolio=3.0%
-- 603198 迎驾贡酒: **PROBE** / conviction=0.6236 / max_portfolio=0.75%
 
 ## Terminal rows
 
@@ -43,7 +42,7 @@
 - UNKNOWN remains UNKNOWN. Bounded uncertainty never grants Formal BUY or auto-trade.
 
 - 603596 伯特利: **FULL_EVIDENCE**; decision_ready=True; unknown=NONE
-- 603198 迎驾贡酒: **RESEARCH_REQUIRED**; decision_ready=False; unknown=long_term_demand,moat
+- 603198 迎驾贡酒: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat
 - 600406 国电南瑞: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 600523 贵航股份: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
 - 002530 金财互联: **RESEARCH_REQUIRED**; decision_ready=False; unknown=predictability,long_term_demand,moat,financial_safety,earnings_authenticity
