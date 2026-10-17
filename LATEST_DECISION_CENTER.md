@@ -213,7 +213,7 @@ R86新闻和出版业(59.36)、J67资本市场服务(52.11)、C15酒、饮料和
 - **COPPER**：休市以来 +0.00%；最近1日 +0.30%；5日 -1.68%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **GOLD**：休市以来 +0.00%；最近1日 +0.26%；5日 -0.83%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
 - **CRUDE_OIL**：休市以来 +0.00%；最近1日 +3.51%；5日 +10.41%；market_date=2026-10-16；freshness=LAST_VALID_MARKET_OBSERVATION。
-- **BTC**：休市以来 -0.88%；最近1日 -1.29%；5日 -2.22%；market_date=2026-10-17；freshness=FRESH。
+- **BTC**：休市以来 -0.96%；最近1日 +0.20%；5日 -1.49%；market_date=2026-10-17；freshness=FRESH。
 
 ### 对持仓 / 研究对象的明确传导
 
