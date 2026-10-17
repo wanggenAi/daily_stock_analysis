@@ -16,7 +16,7 @@
   "mutates_authoritative_decision": false,
   "next_expected_stage": "TERMINAL_THEN_INVESTOR_CONVERGENCE",
   "no_auto_trade": true,
-  "orchestrator_run_id": "39047351099",
+  "orchestrator_run_id": "39048933590",
   "pending_operation": null,
   "requested_codes": [],
   "requested_codes_csv": "",
@@ -35,6 +35,13 @@
       "attention_priority": "HIGH",
       "entity_id": "001316",
       "entity_name": "润贝航科",
+      "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "HIGH",
+      "entity_id": "600406",
+      "entity_name": "国电南瑞",
       "reason": "NO_NOVEL_RESEARCH_STRATEGY_IN_EVIDENCE_EPOCH",
       "route": "EVIDENCE_REFRESH"
     },
@@ -68,6 +75,13 @@
     },
     {
       "attention_priority": "MEDIUM",
+      "entity_id": "002530",
+      "entity_name": "金财互联",
+      "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
+      "route": "EVIDENCE_REFRESH"
+    },
+    {
+      "attention_priority": "MEDIUM",
       "entity_id": "600523",
       "entity_name": "贵航股份",
       "reason": "NOT_DETERMINISTICALLY_ELIGIBLE",
@@ -96,8 +110,15 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000567",
-      "entity_name": "海德股份",
+      "entity_id": "000576",
+      "entity_name": "甘化科工",
+      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
+      "route": "DEEP_RESEARCH"
+    },
+    {
+      "attention_priority": "LOW",
+      "entity_id": "000596",
+      "entity_name": "古井贡酒",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "DEEP_RESEARCH"
     },
@@ -145,13 +166,6 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "600834",
-      "entity_name": "申通地铁",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "DEEP_RESEARCH"
-    },
-    {
-      "attention_priority": "LOW",
       "entity_id": "603416",
       "entity_name": "信捷电气",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
@@ -166,31 +180,24 @@
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000576",
-      "entity_name": "甘化科工",
+      "entity_id": "000567",
+      "entity_name": "海德股份",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     },
     {
       "attention_priority": "LOW",
-      "entity_id": "000596",
-      "entity_name": "古井贡酒",
-      "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
-      "route": "EVIDENCE_REFRESH"
-    },
-    {
-      "attention_priority": "LOW",
-      "entity_id": "002530",
-      "entity_name": "金财互联",
+      "entity_id": "600834",
+      "entity_name": "申通地铁",
       "reason": "ATTENTION_BELOW_AUTO_RESEARCH",
       "route": "EVIDENCE_REFRESH"
     }
   ],
   "source_contract": "GEN_GE_JEV_ROUTING_BRIDGE_V1",
-  "source_generated_at": "2026-10-17T15:57:24+00:00",
-  "source_workflow_head_sha": "ba605276771e3428bf3e111a1991c642a3a190c6",
+  "source_generated_at": "2026-10-17T16:19:22+00:00",
+  "source_workflow_head_sha": "2c1029085858f024b13c72bcf22305edbb9ae922",
   "source_workflow_run_attempt": "1",
-  "source_workflow_run_id": "39047037322",
+  "source_workflow_run_id": "39048783233",
   "summary": {
     "deep_research_count": 0,
     "deterministic_fallback_count": 0,
@@ -198,14 +205,14 @@
     "holding_selected_count": 0,
     "human_review_count": 0,
     "selected_count": 0,
-    "skipped_count": 23,
+    "skipped_count": 24,
     "strategy_attempt_count": 0,
     "strategy_ledger_entry_count": 359,
     "valuation_closure_count": 1
   },
-  "trigger_source": "JEV_ORCHESTRATOR_39047037322",
+  "trigger_source": "JEV_ORCHESTRATOR_39048783233",
   "unknown_is_pass": false,
-  "updated_at": "2026-10-17T15:59:51+00:00",
+  "updated_at": "2026-10-17T16:21:46+00:00",
   "valuation_closure": [
     {
       "attention_confidence": 0.8,
@@ -224,7 +231,7 @@
       "research_authority": "ORCHESTRATED_RESEARCH_ONLY",
       "research_context": {
         "deep_execution_status": "SUCCESS",
-        "deep_lambda_run_id": "39045838610",
+        "deep_lambda_run_id": "39048208288",
         "deep_terminal_state": "EVIDENCE_EXHAUSTED",
         "hard_gate_failures": [],
         "hard_gate_pass_count": 5,
@@ -267,7 +274,7 @@
       },
       "research_evidence_fingerprint": "9f01f2e1a6eb469ee0d9",
       "route": "VALUATION_CLOSURE",
-      "route_confidence": 0.96,
+      "route_confidence": 0.95,
       "triage_context": {
         "industry": "C36汽车制造业",
         "mapping_gaps": [],
