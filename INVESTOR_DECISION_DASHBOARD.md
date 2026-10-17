@@ -68,12 +68,11 @@ R86新闻和出版业(NEUTRAL)、J67资本市场服务(NEUTRAL)、C15酒、饮�
 - 本轮深算：**10** 只；研究 BUY **1** / WAIT_PRICE **0** / RESEARCH_GAP **9** / REJECT **0**。
 - urgent research：**3** 只；这些标的仍是 RESEARCH_GAP，等待补证，不获得 Formal BUY。
 - 权限：**RESEARCH_ONLY**；UNKNOWN != PASS；Formal/Production authority 未改变；no-auto-trade=true。
-- 风险预算：BUILD **1** / PROBE **1** / WATCH **2** / BLOCK **6**；仅人工建议，不自动执行。
+- 风险预算：BUILD **1** / PROBE **0** / WATCH **3** / BLOCK **6**；仅人工建议，不自动执行。
 
 ### 风险预算 BUILD / PROBE
 
 - 伯特利 603596: **BUILD**；conviction=0.8974；建议账户仓位上限=3.0%；研究结论仍为 BUY。
-- 迎驾贡酒 603198: **PROBE**；conviction=0.6236；建议账户仓位上限=0.75%；研究结论仍为 RESEARCH_GAP。
 
 ### 我的持仓深算
 
